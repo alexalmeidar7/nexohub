@@ -420,6 +420,7 @@ export type Database = {
           link_url: string | null
           media_type: string
           nome: string
+          placements: string[]
           priority: number
           skip_enabled: boolean
           updated_at: string
@@ -445,6 +446,7 @@ export type Database = {
           link_url?: string | null
           media_type?: string
           nome?: string
+          placements?: string[]
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
@@ -470,6 +472,7 @@ export type Database = {
           link_url?: string | null
           media_type?: string
           nome?: string
+          placements?: string[]
           priority?: number
           skip_enabled?: boolean
           updated_at?: string

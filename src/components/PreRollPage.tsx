@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Plus, Film, Eye, MousePointerClick, Image, Monitor, Play, Tag, Video, Calendar as CalendarLucide, Settings2, Sparkles } from "lucide-react";
+import { Loader2, Trash2, Pencil, Plus, Film, Eye, MousePointerClick, Image, Monitor, Play, Tag, Video, Calendar as CalendarLucide, Settings2, Sparkles, Globe, MapPin } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { toast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
@@ -35,6 +35,7 @@ interface PreRoll {
   aspect_ratio: string;
   video_position: string;
   is_midroll: boolean;
+  placements: string[] | null;
 }
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -66,6 +67,7 @@ export default function PreRollPage() {
   const [videoPosition, setVideoPosition] = useState<"center" | "left" | "right">("center");
   const [showPreview, setShowPreview] = useState(false);
   const [isMidroll, setIsMidroll] = useState(false);
+  const [placements, setPlacements] = useState<string[]>(["pre_roll"]);
 
   const bgInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,7 +94,7 @@ export default function PreRollPage() {
     setYoutubeUrl(""); setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined);
     setEditId(null); setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9");
-    setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
+    setVideoPosition("center"); setShowPreview(false); setIsMidroll(false); setPlacements(["pre_roll"]);
   };
 
   const startEdit = (p: PreRoll) => {
@@ -109,6 +111,9 @@ export default function PreRollPage() {
     setVideoPosition((p.video_position || "center") as any);
     setBackgroundPreview(p.background_url || "");
     setIsMidroll(p.is_midroll || false);
+    const pl = (p as any).placements as string[] | null | undefined;
+    if (pl && pl.length > 0) setPlacements(pl);
+    else setPlacements(p.is_midroll ? ["pre_roll", "mid_roll"] : ["pre_roll"]);
   };
 
   const toggleDia = (dia: string) => {
@@ -156,7 +161,8 @@ export default function PreRollPage() {
         background_url: bgUrl || null,
         aspect_ratio: aspectRatio,
         video_position: videoPosition,
-        is_midroll: isMidroll,
+        is_midroll: placements.includes("mid_roll") || isMidroll,
+        placements: placements.length > 0 ? placements : ["pre_roll"],
       };
 
       if (editId) {
@@ -268,6 +274,50 @@ export default function PreRollPage() {
                 </label>
               </div>
             </div>
+
+            {/* ──── ONDE VAMOS ANUNCIAR? ──── */}
+            {sectionHeader(<MapPin size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Onde vamos anunciar?")}
+            <div>
+              <p className="text-[11px] mb-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                Selecione um ou mais locais onde este anúncio será exibido.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {([
+                  { value: "site", label: "SITE", desc: "Portal de notícias", icon: Globe },
+                  { value: "pre_roll", label: "PRE ROLL", desc: "Antes do conteúdo", icon: Film },
+                  { value: "mid_roll", label: "MID ROLL", desc: "Durante o conteúdo", icon: Play },
+                ] as const).map(({ value, label, desc, icon: Icon }) => {
+                  const selected = placements.includes(value);
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => {
+                        setPlacements((prev) => {
+                          const next = prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
+                          return next.length === 0 ? [value] : next;
+                        });
+                        if (value === "mid_roll") setIsMidroll((prev) => !prev);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                      style={{
+                        border: selected ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                        backgroundColor: selected ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
+                      }}
+                    >
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: selected ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+                        <Icon size={16} style={{ color: selected ? "#ffffff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: selected ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
+                        <div className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>{desc}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
 
             {/* ──── SEÇÃO 2: MÍDIA ──── */}
             {sectionHeader(<Video size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />, "Mídia")}
