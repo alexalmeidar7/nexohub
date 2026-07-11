@@ -111,6 +111,9 @@ export default function PreRollPage() {
     setVideoPosition((p.video_position || "center") as any);
     setBackgroundPreview(p.background_url || "");
     setIsMidroll(p.is_midroll || false);
+    const pl = (p as any).placements as string[] | null | undefined;
+    if (pl && pl.length > 0) setPlacements(pl);
+    else setPlacements(p.is_midroll ? ["pre_roll", "mid_roll"] : ["pre_roll"]);
   };
 
   const toggleDia = (dia: string) => {
