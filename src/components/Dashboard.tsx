@@ -729,7 +729,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </TooltipTrigger>
                   <TooltipContent side="right">
                     <p className="text-xs capitalize">
-                      {item.label === "home" ? "Home HouseMix" : item.label}
+                      {item.label === "home" ? "Home nexohub" : item.label}
                     </p>
                   </TooltipContent>
 
@@ -825,7 +825,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
               <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <img src={logoMenu} alt="HouseMix" className="h-6 w-auto" />
+                <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
                   <X size={16} className="text-white" />
                 </button>
@@ -927,7 +927,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {isDashboard && (
                   <div className="flex items-center gap-1.5">
                     {[
-                      { Icon: HouseMixIcon, name: "House Mix", label: "HouseMix" },
+                      { Icon: HouseMixIcon, name: "nexohub", label: "nexohub" },
                       { Icon: BusinessIcon, name: "Business" },
                       { Icon: ChatbotIcon, name: "Chatbot" },
                       { Icon: SocialDesignIcon, name: "Social Design" },
