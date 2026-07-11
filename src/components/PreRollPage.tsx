@@ -35,6 +35,7 @@ interface PreRoll {
   aspect_ratio: string;
   video_position: string;
   is_midroll: boolean;
+  placements: string[] | null;
 }
 
 const DIAS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
