@@ -3,7 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Layout cache-bust: bump this version to force all clients to drop stale layout caches
-const LAYOUT_VERSION = "2026-07-10-v2";
+const LAYOUT_VERSION = "2026-07-11-v1";
 const LAYOUT_VERSION_KEY = "__layout_version__";
 try {
   const stored = localStorage.getItem(LAYOUT_VERSION_KEY);
