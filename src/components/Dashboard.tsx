@@ -825,7 +825,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="lg:hidden fixed inset-0 z-50 flex">
             <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
               <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <img src={logoMenu} alt="HouseMix" className="h-6 w-auto" />
+                <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
                 <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
                   <X size={16} className="text-white" />
                 </button>
