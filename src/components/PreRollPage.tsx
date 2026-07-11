@@ -161,7 +161,8 @@ export default function PreRollPage() {
         background_url: bgUrl || null,
         aspect_ratio: aspectRatio,
         video_position: videoPosition,
-        is_midroll: isMidroll,
+        is_midroll: placements.includes("mid_roll") || isMidroll,
+        placements: placements.length > 0 ? placements : ["pre_roll"],
       };
 
       if (editId) {
