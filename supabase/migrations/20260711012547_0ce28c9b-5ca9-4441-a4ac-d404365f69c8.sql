@@ -1,0 +1,2 @@
+ALTER TABLE public.comercial_preroll ADD COLUMN IF NOT EXISTS placements text[] NOT NULL DEFAULT ARRAY['pre_roll']::text[];
+UPDATE public.comercial_preroll SET placements = CASE WHEN is_midroll THEN ARRAY['pre_roll','mid_roll']::text[] ELSE ARRAY['pre_roll']::text[] END WHERE placements = ARRAY['pre_roll']::text[];
