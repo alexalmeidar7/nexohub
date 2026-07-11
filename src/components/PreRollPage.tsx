@@ -94,7 +94,7 @@ export default function PreRollPage() {
     setYoutubeUrl(""); setDiasSemana([]); setHorarioInicio("00:00"); setHorarioFim("23:59");
     setPriority("1"); setLinkUrl(""); setDataInicial(new Date()); setDataFinal(undefined);
     setEditId(null); setBackgroundFile(null); setBackgroundPreview(""); setAspectRatio("16:9");
-    setVideoPosition("center"); setShowPreview(false); setIsMidroll(false);
+    setVideoPosition("center"); setShowPreview(false); setIsMidroll(false); setPlacements(["pre_roll"]);
   };
 
   const startEdit = (p: PreRoll) => {
