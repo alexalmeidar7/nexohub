@@ -729,7 +729,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </TooltipTrigger>
                   <TooltipContent side="right">
                     <p className="text-xs capitalize">
-                      {item.label === "home" ? "Home HouseMix" : item.label}
+                      {item.label === "home" ? "Home nexohub" : item.label}
                     </p>
                   </TooltipContent>
 
