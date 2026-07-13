@@ -104,6 +104,39 @@ export default function PromocoesKiosk() {
       return p?.date === today ? p : null;
     } catch { return null; }
   });
+  const [audienceDetailsOpen, setAudienceDetailsOpen] = useState(false);
+  const [audienceChart, setAudienceChart] = useState<Array<{ hora: string; audio: number; video: number; total: number; programa: string }>>([]);
+  const [audienceChartLoading, setAudienceChartLoading] = useState(false);
+
+  useEffect(() => {
+    if (!audienceDetailsOpen || !audienceUserId) return;
+    let cancelled = false;
+    (async () => {
+      setAudienceChartLoading(true);
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("programa, audio, video, created_at")
+        .eq("user_id", audienceUserId as any)
+        .gte("created_at", since.toISOString())
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      const rows = (data || []).map((r: any) => {
+        const d = new Date(r.created_at);
+        return {
+          hora: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          audio: Number(r.audio) || 0,
+          video: Number(r.video) || 0,
+          total: (Number(r.audio) || 0) + (Number(r.video) || 0),
+          programa: r.programa || "",
+        };
+      });
+      setAudienceChart(rows);
+      setAudienceChartLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [audienceDetailsOpen, audienceUserId]);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
