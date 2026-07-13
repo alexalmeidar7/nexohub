@@ -1,0 +1,1 @@
+UPDATE public.empresa_config SET audio_stream_api_url = 'https://radio.saopaulo01.com.br:10895/status-json.xsl', audio_stream_xpath = 'icestats.source.listeners' WHERE audio_stream_api_url = 'https://video.logicahost.com.br/api-json/WTIxR2EyRlhPWGRpTTA1d1pFZHNNbGxYV25RPSsz';
