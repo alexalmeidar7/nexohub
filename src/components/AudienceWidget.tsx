@@ -96,6 +96,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioXPathError, setAudioXPathError] = useState<string | null>(null);
   const [videoXPathError, setVideoXPathError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
+  const [probing, setProbing] = useState<"audio" | "video" | null>(null);
+  const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
+  const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
+  const [probeError, setProbeError] = useState<string | null>(null);
+
 
 
 
@@ -406,6 +411,46 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     return ok;
   };
 
+  const probeXPath = async (kind: "audio" | "video") => {
+    const url = (kind === "audio" ? sources.audio_stream_api_url : sources.video_stream_api_url).trim();
+    setProbeError(null);
+    if (kind === "audio") setAudioSuggestions([]);
+    else setVideoSuggestions([]);
+    if (!url) {
+      setProbeError("Informe a URL antes de detectar o XPath.");
+      return;
+    }
+    setProbing(kind);
+    try {
+      const { data, error } = await supabase.functions.invoke("probe-stream-xpath", { body: { url } });
+      if (error || !data || !(data as any).ok) {
+        setProbeError("Não foi possível analisar a resposta do servidor.");
+        return;
+      }
+      const list = ((data as any).suggestions || []) as Array<{ xpath: string; value: number }>;
+      if (list.length === 0) {
+        setProbeError("Nenhum campo numérico plausível de audiência encontrado.");
+        return;
+      }
+      if (kind === "audio") {
+        setAudioSuggestions(list);
+        // Auto-fill with the best suggestion
+        setSources((s) => ({ ...s, audio_stream_xpath: list[0].xpath }));
+        setAudioXPathError(null);
+      } else {
+        setVideoSuggestions(list);
+        setSources((s) => ({ ...s, video_stream_xpath: list[0].xpath }));
+        setVideoXPathError(null);
+      }
+    } catch {
+      setProbeError("Falha ao consultar o servidor.");
+    } finally {
+      setProbing(null);
+    }
+  };
+
+
+
 
 
 
@@ -553,6 +598,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.audio_stream_xpath}
               onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
               error={audioXPathError}
+              actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
+              onAction={() => probeXPath("audio")}
+              actionDisabled={probing !== null}
+              suggestions={audioSuggestions}
+              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
+              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de ouvintes."
             />
             <SourceField
               icon={<MonitorPlay size={14} />}
@@ -567,7 +618,17 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.video_stream_xpath}
               onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
               error={videoXPathError}
+              actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
+              onAction={() => probeXPath("video")}
+              actionDisabled={probing !== null}
+              suggestions={videoSuggestions}
+              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
+              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de espectadores."
             />
+            {probeError && (
+              <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>{probeError}</span>
+            )}
+
 
             <button
               type="button"
@@ -599,6 +660,12 @@ function SourceField({
   value,
   onChange,
   error,
+  actionLabel,
+  onAction,
+  actionDisabled,
+  suggestions,
+  onPickSuggestion,
+  helperText,
 }: {
   icon?: React.ReactNode;
   label: string;
@@ -606,6 +673,12 @@ function SourceField({
   value: string;
   onChange: (v: string) => void;
   error?: string | null;
+  actionLabel?: string;
+  onAction?: () => void;
+  actionDisabled?: boolean;
+  suggestions?: Array<{ xpath: string; value: number }>;
+  onPickSuggestion?: (xpath: string) => void;
+  helperText?: string;
 }) {
   return (
     <label className="flex flex-col gap-1">
@@ -614,28 +687,75 @@ function SourceField({
         {label}
       </span>
 
-      <input
-        type="text"
-        value={value}
-        placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full px-4 py-2.5 text-sm outline-none transition-all"
-        style={{
-          background: "#fff",
-          border: `2px solid ${error ? "#E11D48" : "#00BFF0"}`,
-          borderRadius: 999,
-          color: "#0A2540",
-          fontFamily: "Montserrat, sans-serif",
-        }}
-      />
+      <div className="relative flex items-center">
+        <input
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-4 py-2.5 text-sm outline-none transition-all"
+          style={{
+            background: "#fff",
+            border: `2px solid ${error ? "#E11D48" : "#00BFF0"}`,
+            borderRadius: 999,
+            color: "#0A2540",
+            fontFamily: "Montserrat, sans-serif",
+            paddingRight: actionLabel ? 130 : undefined,
+          }}
+        />
+        {actionLabel && onAction && (
+          <button
+            type="button"
+            onClick={onAction}
+            disabled={actionDisabled}
+            className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ background: "#00BFF0", color: "#fff", fontFamily: "Montserrat, sans-serif" }}
+          >
+            {actionLabel}
+          </button>
+        )}
+      </div>
+      {helperText && !error && (
+        <span className="text-[10px] px-3" style={{ color: "#0A2540", opacity: 0.55 }}>
+          {helperText}
+        </span>
+      )}
       {error && (
         <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>
           {error}
         </span>
       )}
+      {suggestions && suggestions.length > 0 && (
+        <div className="flex flex-col gap-1 mt-1 px-1">
+          <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: "#0A2540", opacity: 0.55 }}>
+            Sugestões encontradas
+          </span>
+          {suggestions.map((s) => {
+            const isActive = s.xpath === value;
+            return (
+              <button
+                key={s.xpath}
+                type="button"
+                onClick={() => onPickSuggestion?.(s.xpath)}
+                className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-full text-[11px] transition-all hover:scale-[1.01] text-left"
+                style={{
+                  background: isActive ? "#C6F03C" : "#fff",
+                  border: `1.5px solid ${isActive ? "#8FBB1F" : "#00BFF0"}`,
+                  color: "#0A2540",
+                  fontFamily: "Montserrat, sans-serif",
+                }}
+              >
+                <span className="font-mono truncate">{s.xpath}</span>
+                <span className="font-black shrink-0" style={{ color: "#00BFF0" }}>{s.value}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </label>
   );
 }
+
 
 
 function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
