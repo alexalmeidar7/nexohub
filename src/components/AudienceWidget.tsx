@@ -159,17 +159,79 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     return () => { cancelled = true; clearInterval(iv); };
   }, [dataUserId]);
 
-  // Compara ao vivo — se contagem atual passar do pico, atualiza
+  // Alertas de pico do dia (persistidos por dia em localStorage)
+  interface PeakAlert { id: string; type: "audio" | "video"; value: number; at: string; }
+  const [alerts, setAlerts] = useState<PeakAlert[]>([]);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const peaksInitializedRef = useRef(false);
+  const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${new Date().toISOString().slice(0, 10)}` : null;
+
+  // Marca inicialização de picos após primeira carga do DB
   useEffect(() => {
-    if (typeof streamingCount === "number") {
-      setAudioPeak((p) => (p === null || streamingCount > p ? streamingCount : p));
+    if (audioPeak !== null && videoPeak !== null && !peaksInitializedRef.current) {
+      peaksInitializedRef.current = true;
     }
+  }, [audioPeak, videoPeak]);
+
+  // Carrega alertas persistidos do dia
+  useEffect(() => {
+    if (!alertsStorageKey) return;
+    try {
+      const raw = localStorage.getItem(alertsStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as PeakAlert[];
+        setAlerts(parsed);
+      }
+    } catch { /* ignore */ }
+  }, [alertsStorageKey]);
+
+  const pushAlert = (type: "audio" | "video", value: number) => {
+    const alert: PeakAlert = {
+      id: `${type}-${Date.now()}`,
+      type,
+      value,
+      at: new Date().toISOString(),
+    };
+    setAlerts((prev) => {
+      const next = [alert, ...prev].slice(0, 20);
+      try { if (alertsStorageKey) localStorage.setItem(alertsStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+    setUnread((u) => u + 1);
+    toast.success(
+      type === "audio" ? "🎙️ Novo pico de áudio!" : "📺 Novo pico de vídeo!",
+      {
+        description: `${value.toLocaleString("pt-BR")} ${type === "audio" ? "ouvintes" : "espectadores"} simultâneos — recorde do dia.`,
+        duration: 8000,
+      }
+    );
+  };
+
+  // Compara ao vivo — se contagem atual passar do pico, alerta e atualiza
+  useEffect(() => {
+    if (typeof streamingCount !== "number") return;
+    setAudioPeak((p) => {
+      if (p === null) return streamingCount;
+      if (streamingCount > p && peaksInitializedRef.current && streamingCount > 0) {
+        pushAlert("audio", streamingCount);
+        return streamingCount;
+      }
+      return p;
+    });
   }, [streamingCount]);
   useEffect(() => {
-    if (typeof videoCount === "number") {
-      setVideoPeak((p) => (p === null || videoCount > p ? videoCount : p));
-    }
+    if (typeof videoCount !== "number") return;
+    setVideoPeak((p) => {
+      if (p === null) return videoCount;
+      if (videoCount > p && peaksInitializedRef.current && videoCount > 0) {
+        pushAlert("video", videoCount);
+        return videoCount;
+      }
+      return p;
+    });
   }, [videoCount]);
+
 
 
 
