@@ -489,15 +489,26 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         borderRadius: 24,
       }}
     >
-      <button
-        onClick={openConfig}
-        aria-label="Configurar fontes"
-        title="Configurar fontes"
-        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-        style={{ background: "rgba(10,37,64,0.12)", color: dark }}
-      >
-        <Settings size={14} />
-      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+        <button
+          onClick={() => setReportOpen(true)}
+          aria-label="Relatório de audiência"
+          title="Relatório de audiência"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
+        >
+          <FileBarChart size={14} />
+        </button>
+        <button
+          onClick={openConfig}
+          aria-label="Configurar fontes"
+          title="Configurar fontes"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
+        >
+          <Settings size={14} />
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3 pr-10">
         <div className="flex items-center gap-2 min-w-0">
