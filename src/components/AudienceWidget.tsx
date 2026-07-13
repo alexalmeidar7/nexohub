@@ -939,97 +939,170 @@ function AudienceReportDialog({
         </div>
 
         <div className="p-6 flex flex-col gap-4 max-h-[75vh] overflow-hidden">
-          {/* Filtro + Highlights */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
-              <CalendarIcon size={14} style={{ color: CYAN }} />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="text-sm font-bold outline-none bg-transparent"
-                style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
-              />
-            </div>
+          {/* Tabs Dia / 6 Meses */}
+          <div className="flex items-center gap-2 p-1 rounded-full self-start" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
             <button
               type="button"
-              onClick={() => setDate(todayStr())}
-              className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
-              style={{ background: LIME, color: DARK }}
+              onClick={() => setView("day")}
+              className="text-[10px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full transition-all"
+              style={{
+                background: view === "day" ? CYAN : "transparent",
+                color: view === "day" ? "#fff" : DARK,
+              }}
             >
-              Hoje
+              Dia
             </button>
-            <div className="flex-1" />
-            {stats && (
-              <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
-                <Trophy size={14} style={{ color: LIME }} />
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
-                <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
-                <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setView("trend")}
+              className="text-[10px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full transition-all"
+              style={{
+                background: view === "trend" ? CYAN : "transparent",
+                color: view === "trend" ? "#fff" : DARK,
+              }}
+            >
+              6 Meses · Tendência
+            </button>
           </div>
 
-          {/* Stat cards */}
-          {stats && (
-            <div className="grid grid-cols-4 gap-3">
-              <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-            </div>
+          {view === "day" && (
+            <>
+              {/* Filtro + Highlights */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
+                  <CalendarIcon size={14} style={{ color: CYAN }} />
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="text-sm font-bold outline-none bg-transparent"
+                    style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDate(todayStr())}
+                  className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
+                  style={{ background: LIME, color: DARK }}
+                >
+                  Hoje
+                </button>
+                <div className="flex-1" />
+                {stats && (
+                  <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
+                    <Trophy size={14} style={{ color: LIME }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
+                    <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                    <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Stat cards */}
+              {stats && (
+                <div className="grid grid-cols-4 gap-3">
+                  <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+                </div>
+              )}
+
+              {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
+              {rows.length > 0 && (
+                <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                  <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: DARK, opacity: 0.7 }}>
+                    Curva do dia · Áudio vs Vídeo
+                  </div>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <AreaChart data={[...rows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
+                      <defs>
+                        <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={AUDIO_COLOR} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gVideo" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
+                          <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
+                      <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 10 }} />
+                      <YAxis tick={{ fill: DARK, fontSize: 10 }} />
+                      <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
+                      <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
+                      <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Table */}
+              <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                <div className="overflow-auto flex-1">
+                  <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+                    <thead className="sticky top-0 z-10">
+                      <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
+                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
+                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading && (
+                        <tr><td colSpan={5} className="py-10 text-center">
+                          <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
+                        </td></tr>
+                      )}
+                      {!loading && rows.length === 0 && (
+                        <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                          Nenhum registro encontrado para essa data.
+                        </td></tr>
+                      )}
+                      {!loading && rows.map((r, i) => {
+                        const isPeak = stats && r.id === stats.peakTotal.id;
+                        return (
+                          <tr key={r.id} style={{
+                            background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
+                            borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
+                          }}>
+                            <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
+                            <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
+                            <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
+                              {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
+                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
+                  <span>{rows.length} registros</span>
+                  <span>Registro a cada 15 min · retenção de 6 meses</span>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Table */}
-          <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
-            <div className="overflow-auto flex-1">
-              <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
-                <thead className="sticky top-0 z-10">
-                  <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && (
-                    <tr><td colSpan={5} className="py-10 text-center">
-                      <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
-                    </td></tr>
-                  )}
-                  {!loading && rows.length === 0 && (
-                    <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
-                      Nenhum registro encontrado para essa data.
-                    </td></tr>
-                  )}
-                  {!loading && rows.map((r, i) => {
-                    const isPeak = stats && r.id === stats.peakTotal.id;
-                    return (
-                      <tr key={r.id} style={{
-                        background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
-                        borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
-                      }}>
-                        <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
-                        <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
-                        <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
-                          {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
-                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
-              <span>{rows.length} registros</span>
-              <span>Registro a cada 15 min · retenção de 6 meses</span>
-            </div>
-          </div>
+          {view === "trend" && (
+            <TrendPanel
+              loading={trendLoading}
+              data={trendRows}
+              cyan={CYAN}
+              lime={LIME}
+              dark={DARK}
+              bg={BG}
+              audioColor={AUDIO_COLOR}
+              videoColor={VIDEO_COLOR}
+            />
+          )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
