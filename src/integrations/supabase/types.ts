@@ -2117,6 +2117,244 @@ export type Database = {
         }
         Relationships: []
       }
+      wa_broadcasts: {
+        Row: {
+          audience_filter: Json
+          created_at: string
+          fail_count: number
+          finished_at: string | null
+          id: string
+          message: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          total_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_filter?: Json
+          created_at?: string
+          fail_count?: number
+          finished_at?: string | null
+          id?: string
+          message: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_filter?: Json
+          created_at?: string
+          fail_count?: number
+          finished_at?: string | null
+          id?: string
+          message?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_config: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_phone: string | null
+          id: string
+          phone_number_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_phone?: string | null
+          id?: string
+          phone_number_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_phone?: string | null
+          id?: string
+          phone_number_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_contacts: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          flow_id: string | null
+          flow_state: Json
+          human_takeover: boolean
+          id: string
+          last_inbound_at: string | null
+          last_message_at: string | null
+          name: string | null
+          ouvinte_id: string | null
+          phone: string
+          profile_name: string | null
+          tags: string[]
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          flow_id?: string | null
+          flow_state?: Json
+          human_takeover?: boolean
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          name?: string | null
+          ouvinte_id?: string | null
+          phone: string
+          profile_name?: string | null
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          flow_id?: string | null
+          flow_state?: Json
+          human_takeover?: boolean
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          name?: string | null
+          ouvinte_id?: string | null
+          phone?: string
+          profile_name?: string | null
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_contacts_ouvinte_id_fkey"
+            columns: ["ouvinte_id"]
+            isOneToOne: false
+            referencedRelation: "ouvintes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wa_flows: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          steps: Json
+          trigger: string
+          trigger_value: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          steps?: Json
+          trigger?: string
+          trigger_value?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          steps?: Json
+          trigger?: string
+          trigger_value?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_messages: {
+        Row: {
+          automation_id: string | null
+          body: string | null
+          contact_id: string
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          media_url: string | null
+          status: string
+          type: string
+          user_id: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          automation_id?: string | null
+          body?: string | null
+          contact_id: string
+          created_at?: string
+          direction: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          status?: string
+          type?: string
+          user_id: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          automation_id?: string | null
+          body?: string | null
+          contact_id?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "wa_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       watch_history: {
         Row: {
           channel_cover_url: string | null

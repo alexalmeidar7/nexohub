@@ -1,5 +1,8 @@
 project_id = "zzjfzxxvxbspbdkodoix"
 
+[functions.whatsapp-webhook]
+verify_jwt = false
+
 [functions.elevenlabs-scribe-token]
 verify_jwt = false
 
