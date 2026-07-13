@@ -380,18 +380,47 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
-  const isPodcast = (p: Programa) => /podcast/i.test(p.estudio || "");
-  const isFm = (p: Programa) => /fm/i.test(p.estudio || "");
 
-  const buildGroup = (filterFn: (p: Programa) => boolean) =>
-    sortedProgramas
-      .filter(filterFn)
-      .map((p) => ({ programa: p, logos: logos.filter((l) => l.programa_id === p.id && l.ativo) }))
-      .filter((g) => g.logos.length > 0);
+  // Normaliza o rótulo do estúdio para exibição/agrupamento (traz TODOS os estúdios)
+  const normalizeEstudio = (raw?: string | null) => {
+    const s = (raw || "").trim();
+    if (!s) return "Sem estúdio";
+    if (/podcast/i.test(s)) return "Estúdio Podcast";
+    if (/fm/i.test(s)) return "Estúdio FM";
+    if (/news|redação|redacao/i.test(s)) return "Redação / Newsroom";
+    return s;
+  };
+  const estudioIcon = (label: string) => {
+    if (/podcast/i.test(label)) return "🎙️";
+    if (/fm/i.test(label)) return "📻";
+    if (/news|redação|redacao/i.test(label)) return "📰";
+    if (/sem estúdio/i.test(label)) return "📦";
+    return "🎬";
+  };
+  const estudioColor = (label: string) => {
+    if (/podcast/i.test(label)) return "#8B5CF6";
+    if (/fm/i.test(label)) return "#00BFF0";
+    if (/news|redação|redacao/i.test(label)) return "#F59E0B";
+    return "#64748B";
+  };
 
-  const groupedFM = buildGroup(isFm);
-  const groupedPodcast = buildGroup(isPodcast);
-  const groupedOutros = buildGroup((p) => !isFm(p) && !isPodcast(p));
+  // Agrupa dinamicamente por estúdio (qualquer estúdio existente)
+  const groupedByStudio = useMemo(() => {
+    const map = new Map<string, { programa: Programa; logos: Logo[] }[]>();
+    sortedProgramas.forEach((p) => {
+      const key = normalizeEstudio(p.estudio);
+      const gLogos = logos.filter((l) => l.programa_id === p.id && l.ativo);
+      if (!gLogos.length) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push({ programa: p, logos: gLogos });
+    });
+    // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
+    const order = (label: string) =>
+      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : 3;
+    return Array.from(map.entries())
+      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .map(([label, items]) => ({ label, items }));
+  }, [sortedProgramas, logos]);
 
   const groupedExcluded = programas
     .map((p) => ({
@@ -399,6 +428,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       logos: excludedLogos.filter((l) => l.programa_id === p.id),
     }))
     .filter((g) => g.logos.length > 0);
+
 
   const logosXmlUrl = useMemo(() => {
     if (!dataUserId) return "";
