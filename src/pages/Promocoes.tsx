@@ -630,19 +630,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <MessageCircle size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                       <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <Phone size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                       <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>telefone comercial</span>
                   </div>
                 )}
               </div>
