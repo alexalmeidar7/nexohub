@@ -301,6 +301,17 @@
   50% { transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 0 0 2px rgba(0,0,0,0.7), 0 0 14px rgba(250,204,21,1); }
 }
 
+@keyframes cover-slide-in-right {
+  0% { transform: translateX(28%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes cover-slide-in-left {
+  0% { transform: translateX(-28%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+
+
 
 *::-webkit-scrollbar {
   width: 6px;
