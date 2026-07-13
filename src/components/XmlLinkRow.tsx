@@ -28,6 +28,11 @@ function sanitizeFileName(label: string, scopeKey?: string): string {
   return `${base}${scope}.xml`;
 }
 
+function sanitizeFolder(id: string): string {
+  return id.toLowerCase().replace(/[^a-z0-9\-]/g, "");
+}
+
+
 export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact, scopeKey }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
@@ -51,12 +56,21 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
     const upload = async () => {
       setUploading(true);
       try {
+        // Storage RLS requires the first folder segment to equal auth.uid().
+        // Prefix path with the authenticated user's id so uploads pass RLS.
+        const { data: authData } = await supabase.auth.getUser();
+        const uid = authData?.user?.id;
+        if (!uid) {
+          setUploading(false);
+          return;
+        }
         const fileName = sanitizeFileName(label, scopeKey);
+        const path = `${sanitizeFolder(uid)}/${fileName}`;
         const file = new Blob([xmlContent], { type: "application/xml" });
 
         const { error } = await supabase.storage
           .from("xml-files")
-          .upload(fileName, file, { upsert: true, contentType: "application/xml" });
+          .upload(path, file, { upsert: true, contentType: "application/xml" });
 
         if (error) {
           console.error("Upload XML error:", error);
@@ -66,16 +80,17 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
 
         const { data: urlData } = supabase.storage
           .from("xml-files")
-          .getPublicUrl(fileName);
+          .getPublicUrl(path);
 
         if (urlData?.publicUrl) {
-          setUrl(urlData.publicUrl);
+          setUrl(`${urlData.publicUrl}?t=${Date.now()}`);
         }
       } catch (err) {
         console.error("Upload XML error:", err);
       }
       setUploading(false);
     };
+
 
     upload();
   }, [xmlContent, label, externalUrl, scopeKey]);
