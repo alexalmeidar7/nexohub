@@ -674,7 +674,12 @@ export default function PromocoesKiosk() {
               .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
               .reduce((map, p) => {
                 const key = p.nome.trim().toLowerCase();
-                if (!map.has(key)) map.set(key, p);
+                const existing = map.get(key);
+                if (!existing) {
+                  map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
+                } else {
+                  existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
+                }
                 return map;
               }, new Map<string, ProgramaGrade>())
               .values(),
