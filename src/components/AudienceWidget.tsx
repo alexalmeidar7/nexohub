@@ -173,21 +173,27 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll Icecast/Shoutcast stats for live audio listener count.
+  // Poll audio stream stats using ONLY the URL + XPath configured in the popup.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
+    const overrideUrl = sources.audio_stream_api_url?.trim();
+    const xpath = sources.audio_stream_xpath?.trim();
+    if (!overrideUrl || !xpath) {
+      setStreamingCount(null);
+      setLoadingStreaming(false);
+      return;
+    }
     const tick = async () => {
-      const overrideUrl = sources.audio_stream_api_url?.trim();
-      const xpath = sources.audio_stream_xpath?.trim();
-      const body: Record<string, unknown> = { userId: dataUserId };
-      if (overrideUrl) body.urls = [overrideUrl];
-      if (xpath) body.xpath = xpath;
-      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+      const { data } = await supabase.functions.invoke("count-stream-listeners", {
+        body: { userId: dataUserId, urls: [overrideUrl], xpath },
+      });
       if (cancelled) return;
       if (data && (data as any).ok) {
         const n = (data as any).listeners;
         setStreamingCount(typeof n === "number" ? n : null);
+      } else {
+        setStreamingCount(null);
       }
       setLoadingStreaming(false);
     };
@@ -198,6 +204,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       clearInterval(iv);
     };
   }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+
 
 
   // Poll GA4 Realtime API for site visitors.
@@ -223,67 +230,36 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll Logicahost video streaming API for connected viewers.
+  // Poll video streaming stats using ONLY the URL + XPath configured in the popup.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-
-
-
+    const url = sources.video_stream_api_url?.trim();
+    const xpath = sources.video_stream_xpath?.trim();
+    if (!url || !xpath) {
+      setVideoCount(null);
+      setLoadingVideo(false);
+      return;
+    }
     const tick = async () => {
-      const url =
-        (sources.video_stream_api_url?.trim() ||
-          videoApiUrlRef.current ||
-          "https://video.logicahost.com.br/api/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS");
-      const xpath = sources.video_stream_xpath?.trim();
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
-        let count: number | null = null;
-
-        // If XPath configured, use it directly (works for XML or JSON path).
-        if (xpath) {
-          count = extractByPath(text, xpath);
-        } else if (text.startsWith("{") || text.startsWith("[") || text === "false" || text === "true" || text === "null") {
-          try {
-            const j = JSON.parse(text);
-            if (j === false || j === null) {
-              count = 0;
-            } else if (typeof j === "number") {
-              count = j;
-            } else if (j && typeof j === "object") {
-              const raw =
-                (j as any).espectadores_conectados ??
-                (j as any).espectadores ??
-                (j as any).viewers ??
-                (j as any).connected ??
-                (j as any).count ??
-                (j as any).info?.espectadores_conectados;
-              const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
-              count = typeof n === "number" && !Number.isNaN(n) ? n : null;
-            }
-          } catch { count = null; }
-        } else {
-          const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
-          count = m ? parseInt(m[1], 10) : null;
-        }
-
-        if (!cancelled) setVideoCount(count);
+        const count = extractByPath(text, xpath);
+        if (!cancelled) setVideoCount(typeof count === "number" ? count : null);
       } catch {
         if (!cancelled) setVideoCount(null);
       }
       if (!cancelled) setLoadingVideo(false);
     };
-    // Delay first tick slightly so empresa_config load has a chance to populate ref.
-    const t0 = setTimeout(tick, 800);
+    tick();
     const iv = setInterval(tick, VIDEO_MS);
     return () => {
       cancelled = true;
-      clearTimeout(t0);
       clearInterval(iv);
-
     };
   }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
+
 
 
   // Rotate social display every 3s (only across configured networks)
@@ -294,9 +270,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + (videoCount || 0) + (streamingCount || 0) + (siteCount || 0);
+  const viewersNow = (streamingCount || 0) + (videoCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
+
 
   // Rotation list — only networks that have a URL configured
   const rotation: {
@@ -473,32 +450,61 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         <Settings size={14} />
       </button>
 
-      <div className="flex items-center gap-2 mb-3 pr-10">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{ background: dark }}
-        >
-          <Users size={16} style={{ color: bg }} />
-        </div>
-        <div className="flex flex-col">
-          <span
-            className="text-[9px] font-bold uppercase"
-            style={{ color: dark, opacity: 0.6, letterSpacing: 1.5 }}
+      <div className="grid grid-cols-2 gap-2 mb-3 pr-10">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
           >
-            Audiência Online
-          </span>
-          {loadingConfig ? (
-            <Skeleton width={72} height={18} dark={dark} />
-          ) : (
+            <Users size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
             <span
-              className="text-xl font-black leading-none"
-              style={{ color: dark }}
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              {total.toLocaleString("pt-BR")}
+              Total de seguidores
             </span>
-          )}
+            {loadingConfig || loadingSocial ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {socialTotal.toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Radio size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              Espectadores agora
+            </span>
+            {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {viewersNow.toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
 
       <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
         <StatCell
