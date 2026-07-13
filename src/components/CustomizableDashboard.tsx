@@ -2283,150 +2283,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const rafRef = useRef<number | null>(null);
   const analyserFailedRef = useRef(false);
 
+  // Wave spectrum analyser removed: calling createMediaElementSource on the
+  // radio <audio> element (which lacks CORS) taints the media graph and the
+  // browser silently mutes playback — this caused the widget to appear to
+  // "switch to break and stop the audio" after ~1s of play. Bars now idle.
   useEffect(() => {
-    const prefersReduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (!isBreak || !isPlaying || prefersReduced) {
-      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-      const idle = prefersReduced ? "22px" : "8px";
-      barRefs.current.forEach((el) => { if (el) el.style.height = idle; });
-      return;
-    }
-
-    // Pick the media element that is actually producing sound right now
-    const activeMediaEl: HTMLMediaElement | null = (isVideo && showVideo)
-      ? videoRef.current
-      : audioRef.current;
-    if (!activeMediaEl) return;
-
-    const ensureAnalyser = (): boolean => {
-      if (analyserFailedRef.current) return false;
-      try {
-        const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
-        if (!audioCtxRef.current) audioCtxRef.current = new Ctx();
-        const ctx = audioCtxRef.current!;
-
-        if (!analyserRef.current) {
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 256;
-          analyser.smoothingTimeConstant = 0.88;
-          analyser.connect(ctx.destination);
-          analyserRef.current = analyser;
-        }
-        const analyser = analyserRef.current!;
-
-        // Get or create the source for THIS media element
-        let source = sourceMapRef.current.get(activeMediaEl) || null;
-        if (!source) {
-          source = ctx.createMediaElementSource(activeMediaEl);
-          sourceMapRef.current.set(activeMediaEl, source);
-        }
-
-        // Rewire if the analyser is currently on a different source
-        if (activeSourceRef.current !== source) {
-          try { activeSourceRef.current?.disconnect(analyser); } catch {}
-          source.connect(analyser);
-          activeSourceRef.current = source;
-        }
-        return true;
-      } catch (e) {
-        analyserFailedRef.current = true;
-        return false;
-      }
-    };
-
-    const ok = ensureAnalyser();
-    if (audioCtxRef.current?.state === "suspended") {
-      audioCtxRef.current.resume().catch(() => {});
-    }
-
-    // Smoothing state
-    const IDLE_H = 6;
-    const smoothed = new Array(BAR_COUNT).fill(IDLE_H);
-    const ATTACK = 0.35;
-    const RELEASE = 0.09;
-    const DEADBAND = 0.6;
-
-    const analyser = ok ? analyserRef.current! : null;
-    const bins = analyser ? analyser.frequencyBinCount : 0;
-    const data = analyser ? new Uint8Array(bins) : null;
-
-    const step = analyser ? Math.max(1, Math.floor(bins / BAR_COUNT)) : 0;
-
-    // Single rAF clock drives both analyser sampling and bar rendering,
-    // so there's no drift between "what we hear" and "what we draw".
-    let startTs = 0;
-    let lastTs = 0;
-    let zeroFrames = 0;
-    let analyserUsable = !!analyser;
-
-    // Cancel any prior loop to guarantee a single scheduler per effect run.
     if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-
-    const tick = (ts: number) => {
-      if (!startTs) { startTs = ts; lastTs = ts; }
-      // Clamp dt so a throttled/hidden tab doesn't produce a huge catch-up jump
-      // that would look like accumulated latency when the tab becomes active.
-      const dtRaw = (ts - lastTs) / 1000;
-      const dt = dtRaw > 0.1 ? 0.1 : dtRaw < 0 ? 0 : dtRaw;
-      lastTs = ts;
-      const t = (ts - startTs) / 1000;
-
-      // Sample the analyser on the SAME frame we draw — no setInterval, no
-      // separate clock, no queued reads. This keeps audio<->visual in sync.
-      let overall = 0;
-      let hasAudioData = false;
-      if (analyserUsable && analyser && data) {
-        analyser.getByteFrequencyData(data);
-        let total = 0;
-        for (let k = 0; k < data.length; k++) total += data[k];
-        overall = total / data.length / 255;
-        if (overall < 0.005) {
-          zeroFrames++;
-          if (zeroFrames > 180) analyserUsable = false;
-        } else {
-          zeroFrames = 0;
-        }
-        hasAudioData = overall > 0.005;
-      }
-
-      const baseAmp = hasAudioData ? 0.35 + overall * 0.9 : 0.85;
-      // Frame-rate independent smoothing: convert per-frame alpha (tuned at
-      // 60fps) into a time-based factor so 30/120Hz displays behave the same.
-      const attackK = 1 - Math.pow(1 - ATTACK, dt * 60);
-      const releaseK = 1 - Math.pow(1 - RELEASE, dt * 60);
-
-      for (let i = 0; i < BAR_COUNT; i++) {
-        const el = barRefs.current[i];
-        if (!el) continue;
-
-        const wave = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 0.42) * Math.sin(t * 1.15 + i * 0.63);
-        let binAmp = 0;
-        if (hasAudioData && data) {
-          let sum = 0;
-          const s = i * step;
-          for (let j = 0; j < step; j++) sum += data[s + j] || 0;
-          binAmp = (sum / step) / 255;
-        }
-        const combined = hasAudioData
-          ? Math.max(wave * baseAmp * 0.55, binAmp * 1.1)
-          : wave * baseAmp;
-
-        const target = IDLE_H + Math.min(1, combined) * 56;
-        const alpha = target > smoothed[i] ? attackK : releaseK;
-        smoothed[i] = smoothed[i] + (target - smoothed[i]) * alpha;
-
-        const current = parseFloat(el.style.height || "0");
-        if (Math.abs(smoothed[i] - current) >= DEADBAND) {
-          el.style.height = `${smoothed[i]}px`;
-        }
-      }
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
-    };
-
+    barRefs.current.forEach((el) => { if (el) el.style.height = "8px"; });
   }, [isBreak, isPlaying, isVideo, showVideo]);
 
 
@@ -2508,30 +2371,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
 
-      {/* Wave bars layer — fades in on break */}
-      <div
-        className="absolute inset-0 pointer-events-none flex items-center justify-between gap-[2px] px-3 sm:px-4"
-        style={{
-          opacity: isBreak ? 1 : 0,
-          transform: isBreak && !reducedMotion ? "translateY(0)" : reducedMotion ? "none" : "translateY(8px)",
-          transition: fadeTransformTransition,
-        }}
-      >
-        {Array.from({ length: BAR_COUNT }).map((_, i) => (
-          <span
-            key={i}
-            ref={(el) => { barRefs.current[i] = el; }}
-            className="block rounded-full flex-1"
-            style={{
-              maxWidth: 2,
-              background: "#c3f628",
-              height: reducedMotion ? 18 : 6,
-              transition: barTransition,
-              opacity: isPlaying ? 0.95 : 0.35,
-            }}
-          />
-        ))}
-      </div>
+      {/* Wave bars removed per project decision (see mem: player-audio-visuals) */}
 
 
 
