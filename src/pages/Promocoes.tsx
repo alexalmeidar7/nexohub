@@ -532,26 +532,42 @@ export default function PromocoesKiosk() {
 
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
-    const r = 5;
-    const circumference = 2 * Math.PI * r;
-    const dashoffset = circumference - (progress / 100) * circumference;
     if (!active) {
       return (
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <circle cx="7" cy="7" r={r} fill="white" />
-        </svg>
+        <span
+          className="block rounded-full transition-all duration-300"
+          style={{
+            width: 6,
+            height: 6,
+            backgroundColor: "rgba(255,255,255,0.45)",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+          }}
+        />
       );
     }
     return (
-      <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="7" cy="7" r={r} fill="none" stroke="white" strokeWidth="2" />
-        <circle cx="7" cy="7" r={r} fill="none" stroke="#d70d0e" strokeWidth="2"
-          strokeDasharray={circumference} strokeDashoffset={dashoffset}
-          style={{ transition: "stroke-dashoffset 50ms linear" }}
+      <span
+        className="relative block rounded-full overflow-hidden transition-all duration-300"
+        style={{
+          width: 28,
+          height: 6,
+          backgroundColor: "rgba(255,255,255,0.35)",
+          boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+        }}
+      >
+        <span
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${Math.min(100, Math.max(0, progress))}%`,
+            backgroundColor: "#ffffff",
+            transition: "width 50ms linear",
+            boxShadow: "0 0 6px rgba(255,255,255,0.5)",
+          }}
         />
-      </svg>
+      </span>
     );
   };
+
 
   // Spacebar to toggle play/pause when a modal is open
   useEffect(() => {
@@ -791,9 +807,9 @@ export default function PromocoesKiosk() {
                     >
                       <ChevronRight size={20} />
                     </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
                       {banners.map((_, i) => (
-                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
+                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer flex items-center justify-center hover:opacity-80 transition-opacity" aria-label={`Ir para banner ${i + 1}`}>
                           <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
                         </button>
                       ))}
