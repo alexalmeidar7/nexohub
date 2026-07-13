@@ -204,7 +204,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>("nexohub");
+  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>(() => {
+    try { return localStorage.getItem("nexohub_home_pill") || "nexohub"; } catch { return "nexohub"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
+  }, [selectedHeaderPill]);
+  // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
+  const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
+  const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
+  useEffect(() => {
+    if (selectedHeaderPill === displayedPill) return;
+    setPillPhase("out");
+    const t = setTimeout(() => {
+      setDisplayedPill(selectedHeaderPill);
+      setPillPhase("in");
+    }, 260);
+    return () => clearTimeout(t);
+  }, [selectedHeaderPill, displayedPill]);
+  const pillAnimClass = pillPhase === "in" ? "animate-fade-in" : "animate-fade-out";
+
 
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
