@@ -108,6 +108,70 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
   useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
 
+  // Delta de seguidores (vs último valor conhecido, persistido em localStorage)
+  const [socialDelta, setSocialDelta] = useState<{ youtube: number | null; instagram: number | null; facebook: number | null }>({ youtube: null, instagram: null, facebook: null });
+
+  // Pico do dia (áudio/vídeo) — carregado do histórico + atualizado ao vivo
+  const [audioPeak, setAudioPeak] = useState<number | null>(null);
+  const [videoPeak, setVideoPeak] = useState<number | null>(null);
+
+  // Atualiza deltas quando novos valores sociais chegam
+  useEffect(() => {
+    if (!dataUserId) return;
+    (Object.keys(social) as Array<keyof SocialCounts>).forEach((key) => {
+      const v = social[key];
+      if (typeof v !== "number") return;
+      const storageKey = `audience:social:${dataUserId}:${key}`;
+      try {
+        const prevRaw = localStorage.getItem(storageKey);
+        const prev = prevRaw !== null ? parseInt(prevRaw, 10) : NaN;
+        if (Number.isFinite(prev)) {
+          setSocialDelta((d) => ({ ...d, [key]: v - prev }));
+        }
+        localStorage.setItem(storageKey, String(v));
+      } catch { /* ignore */ }
+    });
+  }, [social, dataUserId]);
+
+  // Carrega picos do dia a partir do histórico
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("audio, video")
+        .eq("user_id", dataUserId as any)
+        .gte("created_at", start.toISOString());
+      if (cancelled || !data) return;
+      let pa = 0, pv = 0;
+      for (const r of data as any[]) {
+        if ((r.audio ?? 0) > pa) pa = r.audio;
+        if ((r.video ?? 0) > pv) pv = r.video;
+      }
+      setAudioPeak(pa);
+      setVideoPeak(pv);
+    };
+    load();
+    const iv = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [dataUserId]);
+
+  // Compara ao vivo — se contagem atual passar do pico, atualiza
+  useEffect(() => {
+    if (typeof streamingCount === "number") {
+      setAudioPeak((p) => (p === null || streamingCount > p ? streamingCount : p));
+    }
+  }, [streamingCount]);
+  useEffect(() => {
+    if (typeof videoCount === "number") {
+      setVideoPeak((p) => (p === null || videoCount > p ? videoCount : p));
+    }
+  }, [videoCount]);
+
+
+
 
 
 
