@@ -88,6 +88,7 @@ export default function PromocoesKiosk() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
+  const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
@@ -730,12 +731,16 @@ export default function PromocoesKiosk() {
           const currentProg = scheduleList[activeIdx] ?? null;
           const goPrev = (e: React.MouseEvent) => {
             e.stopPropagation();
+            e.preventDefault();
             if (!scheduleList.length) return;
+            setCoverSlideDir("left");
             setCoverIndex((activeIdx - 1 + scheduleList.length) % scheduleList.length);
           };
           const goNext = (e: React.MouseEvent) => {
             e.stopPropagation();
+            e.preventDefault();
             if (!scheduleList.length) return;
+            setCoverSlideDir("right");
             setCoverIndex((activeIdx + 1) % scheduleList.length);
           };
           return (
@@ -787,21 +792,31 @@ export default function PromocoesKiosk() {
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276 }}
-                  onClick={() => setSelectedProgram(currentProg)}
+                  onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
                 >
-                  <img src={currentProg.capa} alt={currentProg.nome} className="absolute inset-0 w-full h-full object-cover" />
+                  <img
+                    key={currentProg.id}
+                    src={currentProg.capa}
+                    alt={currentProg.nome}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{
+                      animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
+                    }}
+                  />
                   {scheduleList.length > 1 && (
                     <>
                       <button
+                        type="button"
                         onClick={goPrev}
-                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity z-10"
+                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
                         aria-label="Programa anterior"
                       >
                         <ChevronLeft size={16} />
                       </button>
                       <button
+                        type="button"
                         onClick={goNext}
-                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity z-10"
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
                         aria-label="Próximo programa"
                       >
                         <ChevronRight size={16} />
