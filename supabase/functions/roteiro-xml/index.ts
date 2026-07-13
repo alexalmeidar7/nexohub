@@ -182,6 +182,29 @@ Deno.serve(async (req) => {
 
     xml += `</items>`;
 
+    // Optionally persist the generated XML to storage using service role,
+    // bypassing storage RLS (needed because the client cannot write into
+    // express/<owner>/ when the current auth.uid() is a sub-user, and the
+    // existing "Authenticated users can upload empresa assets" policy
+    // requires foldername[1] = auth.uid()).
+    const persist = url.searchParams.get("persist") === "1";
+    if (persist && typeof roteiro.subtitulo === "string" && roteiro.subtitulo.startsWith("express_xml::")) {
+      try {
+        const xmlUrl = roteiro.subtitulo.replace("express_xml::", "");
+        const pathMatch = new URL(xmlUrl).pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+        if (pathMatch) {
+          const filePath = decodeURIComponent(pathMatch[1]);
+          const bytes = new TextEncoder().encode(xml);
+          const { error: upErr } = await supabase.storage
+            .from("empresa-assets")
+            .upload(filePath, bytes, { upsert: true, contentType: "application/xml", cacheControl: "0" });
+          if (upErr) console.warn("[roteiro-xml] persist upload error:", upErr);
+        }
+      } catch (e) {
+        console.warn("[roteiro-xml] persist error:", e);
+      }
+    }
+
     return new Response(xml, {
       status: 200,
       headers: {
