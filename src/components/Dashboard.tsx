@@ -936,26 +936,45 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       { Icon: ChatbotIcon, name: "Chatbot" },
                       { Icon: SocialDesignIcon, name: "Social Design" },
                       { Icon: TvAppIcon, name: "TV App" },
-                    ].map(({ Icon, name, label }) => (
-                      <Tooltip key={name}>
-                        <TooltipTrigger asChild>
-                          {label ? (
-                            <span
-                              className="inline-flex items-center gap-1.5 cursor-default rounded-full pl-0.5 pr-3 py-0.5"
-                              style={{ backgroundColor: "#00dbff", color: "#002132" }}
-                            >
-                              <Icon size={28} />
-                              <span className="text-xs font-bold tracking-wide">{label}</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex cursor-default"><Icon size={28} /></span>
-                          )}
-                        </TooltipTrigger>
-                        <TooltipContent side="bottom"><p className="text-xs">{name}</p></TooltipContent>
-                      </Tooltip>
-                    ))}
+                    ].map(({ Icon, name }) => {
+                      const isSelected = selectedHeaderPill === name;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => setSelectedHeaderPill(name)}
+                          className="header-pill inline-flex items-center gap-1.5 rounded-full pl-0.5 py-0.5 overflow-hidden transition-all duration-300"
+                          style={{
+                            backgroundColor: "#00dbff",
+                            color: "#002132",
+                            paddingRight: isSelected ? 12 : 2,
+                            maxWidth: isSelected ? 220 : 34,
+                          }}
+                          data-selected={isSelected ? "true" : "false"}
+                          aria-label={name}
+                        >
+                          <Icon size={28} />
+                          <span
+                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap transition-opacity duration-200"
+                            style={{ opacity: isSelected ? 1 : 0 }}
+                          >
+                            {name}
+                          </span>
+                        </button>
+                      );
+                    })}
+                    <style>{`
+                      .header-pill:hover {
+                        padding-right: 12px !important;
+                        max-width: 220px !important;
+                      }
+                      .header-pill:hover .header-pill-label {
+                        opacity: 1 !important;
+                      }
+                    `}</style>
                   </div>
                 )}
+
               </div>
             </div>
           </div>
