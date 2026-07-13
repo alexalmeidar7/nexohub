@@ -149,24 +149,45 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Música atual: último registro em musicas_tocadas
+    // Música atual: prioriza o snapshot em user_settings.dashboard_items
+    // (atualizado a cada 2s pelo cliente via useGlobalMusicSync — reflete
+    // fielmente o XML/arquivo local mesmo em jingles/breaks que não geram
+    // novas linhas em musicas_tocadas por causa da regra de deduplicação).
     let titulo = "";
     let artista = "";
     let capa = "";
-    const { data: ultimaMusica } = await supabase
-      .from("musicas_tocadas")
-      .select("musica, artista")
+    const { data: userSettings } = await supabase
+      .from("user_settings")
+      .select("dashboard_items")
       .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(1)
       .maybeSingle();
-    if (ultimaMusica) {
-      titulo = ultimaMusica.musica || "";
-      artista = ultimaMusica.artista || "";
+    const items = (userSettings?.dashboard_items || {}) as Record<string, unknown>;
+    const liveTitle = String(items.music_current_title || "").trim();
+    const liveArtist = String(items.music_current_artist || "").trim();
+    const liveCover = String(items.music_current_cover || "").trim();
+    const liveStart = Number(items.music_start_time || 0);
+    // Considera o snapshot "vivo" se foi atualizado nos últimos 3 minutos.
+    const isLive = liveStart > 0 && Date.now() - liveStart < 3 * 60 * 1000;
+    if (isLive && liveTitle) {
+      titulo = liveTitle;
+      artista = liveArtist;
+      capa = liveCover;
+    } else {
+      const { data: ultimaMusica } = await supabase
+        .from("musicas_tocadas")
+        .select("musica, artista")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (ultimaMusica) {
+        titulo = ultimaMusica.musica || "";
+        artista = ultimaMusica.artista || "";
+      }
     }
 
-    // Capa via iTunes
-    if (titulo && artista) {
+    // Capa via iTunes (se ainda não veio do snapshot)
+    if (!capa && titulo && artista) {
       try {
         const q = encodeURIComponent(`${artista} ${titulo}`);
         const r = await fetch(`https://itunes.apple.com/search?term=${q}&limit=1&media=music`);
@@ -179,6 +200,7 @@ Deno.serve(async (req) => {
         // ignore
       }
     }
+
 
     // Imagem do artista no Deezer
     const artistaImg = await fetchDeezerArtistImage(artista);
