@@ -235,7 +235,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           if (!sameTrack) return;
 
           if (data.capa && cur.capa !== data.capa) {
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: data.capa }));
+            writeMusicData(user.id, { ...cur, capa: data.capa });
           }
 
           if (user?.id) {
