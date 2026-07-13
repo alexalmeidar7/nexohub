@@ -3,10 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { musicDataKey, musicStartKey, botXmlLastRunKey } from "@/lib/musicStorageKeys";
+import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
+
+const BREAK_LABELS = new Set(["break", "ebs curtas", "intervalo", "commercial break"]);
+
+function isBreakTrack(data: { titulo?: string; artista?: string }) {
+  const t = (data.titulo || "").trim().toLowerCase();
+  const a = (data.artista || "").trim().toLowerCase();
+  return BREAK_LABELS.has(t) || BREAK_LABELS.has(a);
+}
 
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   const titulo = (data.titulo || "").trim().toLowerCase();
@@ -138,16 +146,20 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
+        // Debounce rapid switches — BUT never let a BREAK/intervalo entry
+        // hold the widget hostage. If the previous stored track is a BREAK
+        // label, always accept the new incoming track immediately.
+        const prevIsBreak = prev ? isBreakTrack(prev) : false;
         const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
-        if (existingStartStr && prev) {
+        if (!prevIsBreak && existingStartStr && prev) {
           const age = Date.now() - parseInt(existingStartStr, 10);
           if (age < 5000) return;
         }
 
         const now = Date.now();
-        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify(data));
+        writeMusicData(user.id, data);
         localStorage.setItem(MUSIC_START_KEY, now.toString());
-        
+
         (async () => {
           await applyTrackChangeWithCuriosityGuard({
             userId: user.id,
@@ -170,7 +182,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           });
         })();
       } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
-        localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...prev, capa: data.capa }));
+        writeMusicData(user.id, { ...prev, capa: data.capa });
         (async () => {
           try {
             await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
@@ -178,7 +190,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         })();
       }
 
-      if (!isPlaceholderTrack(data)) {
+      if (!isPlaceholderTrack(data) && !isBreakTrack(data)) {
         void recordToHistory(data.titulo, data.artista || "Desconhecido");
       }
     };
@@ -223,7 +235,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           if (!sameTrack) return;
 
           if (data.capa && cur.capa !== data.capa) {
-            localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...cur, capa: data.capa }));
+            writeMusicData(user.id, { ...cur, capa: data.capa });
           }
 
           if (user?.id) {
