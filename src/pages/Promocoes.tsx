@@ -870,9 +870,9 @@ export default function PromocoesKiosk() {
           const videoWins = hasData && v > a;
           const confettiColors = ["#d70d0e", "#ffffff", "#fbd837", "#000000"];
           return (
-            <div className="w-full px-2 -mt-2">
+            <div className="w-full px-2 -mt-2 flex items-center gap-2">
               <div
-                className="relative w-full h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
                 style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
