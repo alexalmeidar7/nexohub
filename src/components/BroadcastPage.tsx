@@ -1066,12 +1066,38 @@ function MockupPreview({
 
       {/* ── Top bar ── */}
       <div className="absolute flex items-center justify-between" style={{ top: "5%", left: "4%", right: "4%" }}>
-        {/* Logo empresa */}
+        {/* Logo empresa + logos patrocinadores ao lado */}
         <div className="flex items-center gap-3">
           {empresaLogo ? (
             <img src={empresaLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
           ) : (
             <div className="h-10 w-10 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>LOGO</div>
+          )}
+          {sponsorLogos.length > 0 && (
+            <div className="flex items-center gap-2 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.15)" }}>
+              {currentSponsor && (
+                <div
+                  className="transition-all duration-400 bg-white/90 rounded-md px-2 py-1 flex items-center"
+                  style={{
+                    opacity: sponsorVisible ? 1 : 0,
+                    transform: sponsorVisible ? "scale(1)" : "scale(0.92)",
+                    height: 40,
+                  }}
+                  title={currentSponsor.nome}
+                >
+                  <img
+                    src={currentSponsor.logo_url}
+                    alt={currentSponsor.nome}
+                    className="h-6 max-w-[120px] object-contain"
+                  />
+                </div>
+              )}
+              {sponsorLogos.length > 1 && (
+                <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#ffffff50" }}>
+                  +{sponsorLogos.length - 1}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
