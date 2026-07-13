@@ -1474,10 +1474,10 @@ function SourceField({
 
 
 
-function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
+function Skeleton({ width, height, dark, className }: { width: number | string; height: number; dark: string; className?: string }) {
   return (
     <span
-      className="inline-block rounded-md animate-pulse"
+      className={`inline-block animate-pulse ${className || "rounded-md"}`}
       style={{
         width,
         height,
