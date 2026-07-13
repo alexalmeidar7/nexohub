@@ -271,13 +271,51 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
 
-
+  // Log audiência a cada 5 minutos para o relatório histórico
+  useEffect(() => {
+    if (!dataUserId) return;
+    const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const logNow = async () => {
+      const audio = streamingRef.current ?? 0;
+      const video = videoRef.current ?? 0;
+      if (audio === 0 && video === 0) return;
+      // Descobre programa atual
+      const now = new Date();
+      const dia = DIAS[now.getDay()];
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      let programa: string | null = null;
+      try {
+        const { data: progs } = await supabase
+          .from("programas")
+          .select("nome, dias_semana, horario_inicio, horario_fim, ativo")
+          .eq("user_id", dataUserId as any);
+        const onAir = (progs || []).find((p: any) => {
+          if (p.ativo === false) return false;
+          const dias: string[] = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+          if (!dias.includes(dia)) return false;
+          return hhmm >= String(p.horario_inicio).slice(0, 5) && hhmm < String(p.horario_fim).slice(0, 5);
+        });
+        programa = onAir?.nome || null;
+      } catch { /* ignore */ }
+      await supabase.from("audiencia_historico").insert({
+        user_id: dataUserId,
+        programa,
+        audio,
+        video,
+      } as any);
+    };
+    // primeiro log após 30s (para dar tempo dos contadores)
+    const first = setTimeout(logNow, 30 * 1000);
+    const iv = setInterval(logNow, 5 * 60 * 1000);
+    return () => { clearTimeout(first); clearInterval(iv); };
+  }, [dataUserId]);
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
     const iv = setInterval(() => setRotIdx((i) => i + 1), ROTATE_MS);
     return () => clearInterval(iv);
   }, []);
+
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
