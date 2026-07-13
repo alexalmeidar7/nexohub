@@ -619,6 +619,23 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     >
       <div className="absolute top-3 right-3 flex items-center gap-1.5">
         <button
+          onClick={() => { setAlertsOpen(true); setUnread(0); }}
+          aria-label="Alertas de pico"
+          title={unread > 0 ? `${unread} novo(s) pico(s) do dia` : "Alertas de pico do dia"}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110 relative"
+          style={{ background: alerts.length > 0 ? "rgba(198,240,60,0.85)" : "rgba(10,37,64,0.12)", color: dark }}
+        >
+          <Bell size={14} className={unread > 0 ? "animate-pulse" : ""} />
+          {unread > 0 && (
+            <span
+              className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center text-[9px] font-black"
+              style={{ background: "#DC2626", color: "#fff", boxShadow: "0 0 0 2px #d9ff65" }}
+            >
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
+        </button>
+        <button
           onClick={() => setReportOpen(true)}
           aria-label="Relatório de audiência"
           title="Relatório de audiência"
