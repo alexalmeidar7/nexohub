@@ -1236,8 +1236,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
-                <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                <div key={displayedPill} className={pillAnimClass}>
+                  {displayedPill === "Chatbot" ? (
+                    <ChatbotHome />
+                  ) : (
+                    <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                  )}
+                </div>
               </div>
+
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
