@@ -847,6 +847,81 @@ export default function PromocoesKiosk() {
           </div>
         </div>
 
+        {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
+        {(() => {
+          const a = Math.max(0, audioCount ?? 0);
+          const v = Math.max(0, videoCount ?? 0);
+          const total = a + v;
+          const hasData = (audioCount !== null) || (videoCount !== null);
+          const audioPct = total > 0 ? (a / total) * 100 : 50;
+          const videoPct = 100 - audioPct;
+          const fmt = (n: number | null) => n === null ? "—" : n.toLocaleString("pt-BR");
+          return (
+            <div className="w-full px-2 -mt-2">
+              <div
+                className="relative w-full h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}
+                title="Audiência ao vivo: áudio × vídeo"
+              >
+                {/* Preenchimento áudio (vermelho) */}
+                <div
+                  className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${audioPct}%`,
+                    background: "linear-gradient(90deg, #d70d0e 0%, #a60101 100%)",
+                    boxShadow: "inset 0 0 12px rgba(0,0,0,0.35)",
+                  }}
+                />
+                {/* Preenchimento vídeo (branco/cinza) */}
+                <div
+                  className="absolute inset-y-0 right-0 transition-[width] duration-700 ease-out"
+                  style={{
+                    width: `${videoPct}%`,
+                    background: "linear-gradient(270deg, #ffffff 0%, #d4d4d4 100%)",
+                    boxShadow: "inset 0 0 12px rgba(0,0,0,0.15)",
+                  }}
+                />
+                {/* Divisor central animado */}
+                <div
+                  className="absolute top-0 bottom-0 w-[2px] bg-black transition-[left] duration-700 ease-out"
+                  style={{ left: `calc(${audioPct}% - 1px)`, boxShadow: "0 0 6px rgba(0,0,0,0.6)" }}
+                />
+                {/* Conteúdo à esquerda (áudio) */}
+                <div className="relative z-10 flex items-center gap-2 pl-3 pr-4 h-full">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/40">
+                    <Headphones size={14} className="text-white" />
+                  </div>
+                  <div className="flex items-baseline gap-1.5 text-white">
+                    <span className="font-black text-sm leading-none tabular-nums drop-shadow">{fmt(audioCount)}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-80">Áudio</span>
+                  </div>
+                </div>
+                {/* Conteúdo à direita (vídeo) */}
+                <div className="relative z-10 flex items-center gap-2 pr-3 pl-4 h-full ml-auto">
+                  <div className="flex items-baseline gap-1.5 text-black">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-80">Vídeo</span>
+                    <span className="font-black text-sm leading-none tabular-nums">{fmt(videoCount)}</span>
+                  </div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white/70">
+                    <MonitorPlay size={14} className="text-black" />
+                  </div>
+                </div>
+                {/* Selo AO VIVO no centro sobre o divisor */}
+                {hasData && (
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-[left] duration-700 ease-out"
+                    style={{ left: `${audioPct}%`, backgroundColor: "#000", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    Ao Vivo
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
           // Programas ordenados pela grade (horário de início), deduplicados por nome
