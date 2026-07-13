@@ -1045,13 +1045,13 @@ export default function PromocoesKiosk() {
                       const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                       return (
                         <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(251,216,55,0.18), transparent)" }}>
-                            <Trophy size={16} style={{ color: "#fbd837" }} />
-                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: "#fbd837" }}>Melhor audiência do dia</span>
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.55), transparent)" }}>
+                            <Trophy size={16} style={{ color: "#ffffff" }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider text-white">Melhor audiência do dia</span>
                           </div>
                           <div className="px-3 py-2.5 space-y-1.5">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black tabular-nums leading-none">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience.total.toLocaleString("pt-BR")}</span>
                               <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
                             </div>
                             <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
@@ -1063,11 +1063,12 @@ export default function PromocoesKiosk() {
                             <button
                               type="button"
                               onClick={() => setAudienceDetailsOpen(true)}
-                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors"
-                              style={{ backgroundColor: "#fbd837", color: "#000" }}
+                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
+                              style={{ background: "linear-gradient(135deg, #d70d0e 0%, #7a0708 100%)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.2)" }}
                             >
                               Ver detalhes
                             </button>
+
                           </div>
                         </div>
                       );
