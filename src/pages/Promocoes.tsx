@@ -295,9 +295,30 @@ export default function PromocoesKiosk() {
     name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .toUpperCase();
+
+  const mergeProgramList = (list: ProgramaGrade[]) => Array.from(
+    list
+      .slice()
+      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+      .reduce((map, programa) => {
+        const dedupeKey = normalizeProgramName(programa.nome);
+        const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
+        const existing = map.get(dedupeKey);
+        if (!existing) {
+          map.set(dedupeKey, { ...programa, mergedIds });
+        } else {
+          existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...mergedIds]));
+          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
+          existing.schedules = [...existing.schedules, ...programa.schedules];
+        }
+        return map;
+      }, new Map<string, ProgramaGrade>())
+      .values(),
+  );
 
   const todayDateStr = new Date().toISOString().split("T")[0];
   const programIdsWithTestemunhais = new Set(
@@ -310,23 +331,8 @@ export default function PromocoesKiosk() {
       .map(t => t.programa_id)
   );
 
-  const filteredPrograms = Array.from(
-    programas
-      .filter(p => programIdsWithTestemunhais.has(p.id))
-      .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-      .reduce((map, programa) => {
-        const dedupeKey = normalizeProgramName(programa.nome);
-        if (!map.has(dedupeKey)) {
-          map.set(dedupeKey, { ...programa });
-        } else {
-          const existing = map.get(dedupeKey)!;
-          existing.mergedIds = [...existing.mergedIds, ...programa.mergedIds];
-          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
-          existing.schedules = [...existing.schedules, ...programa.schedules];
-        }
-        return map;
-      }, new Map<string, ProgramaGrade>())
-      .values(),
+  const filteredPrograms = mergeProgramList(
+    programas.filter(p => programIdsWithTestemunhais.has(p.id))
   );
 
   const todayDateNow = new Date().toISOString().split("T")[0];
@@ -467,22 +473,7 @@ export default function PromocoesKiosk() {
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const list = Array.from(
-        programas
-          .slice()
-          .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-          .reduce((map, p) => {
-            const key = p.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
-            const existing = map.get(key);
-            if (!existing) {
-              map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
-            } else {
-              existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
-            }
-            return map;
-          }, new Map<string, ProgramaGrade>())
-          .values(),
-      );
+      const list = mergeProgramList(programas);
       if (!list.length) return;
       const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
       const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
@@ -733,22 +724,7 @@ export default function PromocoesKiosk() {
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
           // Programas ordenados pela grade (horário de início), deduplicados por nome
-          const scheduleList = Array.from(
-            programas
-              .slice()
-              .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-              .reduce((map, p) => {
-                const key = p.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
-                const existing = map.get(key);
-                if (!existing) {
-                  map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
-                } else {
-                  existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
-                }
-                return map;
-              }, new Map<string, ProgramaGrade>())
-              .values(),
-          );
+          const scheduleList = mergeProgramList(programas);
           const onAirIdx = onAirProgram
             ? scheduleList.findIndex(p => p.nome === onAirProgram.nome)
             : -1;
@@ -816,15 +792,15 @@ export default function PromocoesKiosk() {
               {currentProg?.capa && (
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
-                  style={{ width: 207, height: 276 }}
+                  style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
                   onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
                 >
-                  <img
-                    key={currentProg.id}
-                    src={currentProg.capa}
-                    alt={currentProg.nome}
-                    className="absolute inset-0 w-full h-full object-cover"
+                  <div
+                    key={`${normalizeProgramName(currentProg.nome)}-${currentProg.capa}`}
+                    aria-label={currentProg.nome}
+                    className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
                     style={{
+                      backgroundImage: `url(${currentProg.capa})`,
                       animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
                     }}
                   />
