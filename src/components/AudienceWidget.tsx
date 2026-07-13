@@ -816,10 +816,15 @@ function AudienceReportDialog({
   const LIME = "#C6F03C";
   const DARK = "#0A2540";
   const BG = "#D6F4FB";
+  const AUDIO_COLOR = "#00BFF0";
+  const VIDEO_COLOR = "#0A2540";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState<string>(todayStr());
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"day" | "trend">("day");
+  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number }>>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -843,6 +848,51 @@ function AudienceReportDialog({
     load();
     return () => { cancelled = true; };
   }, [open, userId, date]);
+
+  // Carrega tendência dos últimos 6 meses (agregado por dia)
+  useEffect(() => {
+    if (!open || !userId || view !== "trend") return;
+    let cancelled = false;
+    const load = async () => {
+      setTrendLoading(true);
+      const start = new Date();
+      start.setMonth(start.getMonth() - 6);
+      start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("created_at, audio, video")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString())
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      const buckets = new Map<string, { audio: number; video: number; count: number; peakAudio: number; peakVideo: number }>();
+      for (const r of (data as any[]) || []) {
+        const d = new Date(r.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const b = buckets.get(key) || { audio: 0, video: 0, count: 0, peakAudio: 0, peakVideo: 0 };
+        b.audio += r.audio || 0;
+        b.video += r.video || 0;
+        b.count += 1;
+        if ((r.audio || 0) > b.peakAudio) b.peakAudio = r.audio || 0;
+        if ((r.video || 0) > b.peakVideo) b.peakVideo = r.video || 0;
+        buckets.set(key, b);
+      }
+      const arr = Array.from(buckets.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, b]) => ({
+          day,
+          audio: Math.round(b.audio / Math.max(1, b.count)),
+          video: Math.round(b.video / Math.max(1, b.count)),
+          peakAudio: b.peakAudio,
+          peakVideo: b.peakVideo,
+        }));
+      setTrendRows(arr);
+      setTrendLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, view]);
+
 
   const stats = useMemo(() => {
     if (rows.length === 0) return null;
