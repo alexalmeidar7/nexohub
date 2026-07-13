@@ -887,23 +887,23 @@ export default function PromocoesKiosk() {
                   style={{ left: `calc(${audioPct}% - 1px)`, boxShadow: "0 0 6px rgba(0,0,0,0.6)" }}
                 />
                 {/* Conteúdo à esquerda (áudio) */}
-                <div className="relative z-10 flex items-center gap-2 pl-3 pr-4 h-full">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/40">
+                <div className="relative z-10 flex items-center gap-2 pl-2 pr-4 h-full">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60">
                     <Headphones size={14} className="text-white" />
                   </div>
-                  <div className="flex items-baseline gap-1.5 text-white">
-                    <span className="font-black text-sm leading-none tabular-nums drop-shadow">{fmt(audioCount)}</span>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-80">Áudio</span>
+                  <div className="flex items-baseline gap-1.5 text-white px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}>
+                    <span className="font-black text-sm leading-none tabular-nums">{fmt(audioCount)}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Áudio</span>
                   </div>
                 </div>
                 {/* Conteúdo à direita (vídeo) */}
-                <div className="relative z-10 flex items-center gap-2 pr-3 pl-4 h-full ml-auto">
-                  <div className="flex items-baseline gap-1.5 text-black">
-                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-80">Vídeo</span>
+                <div className="relative z-10 flex items-center gap-2 pr-2 pl-4 h-full ml-auto">
+                  <div className="flex items-baseline gap-1.5 text-white px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Vídeo</span>
                     <span className="font-black text-sm leading-none tabular-nums">{fmt(videoCount)}</span>
                   </div>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-white/70">
-                    <MonitorPlay size={14} className="text-black" />
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60">
+                    <MonitorPlay size={14} className="text-white" />
                   </div>
                 </div>
               </div>
