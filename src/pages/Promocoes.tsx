@@ -166,7 +166,14 @@ export default function PromocoesKiosk() {
           instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
           plano: empresa.plano || "",
         });
+        setStreamCfg({
+          audioUrl: empresa.audio_stream_api_url || "",
+          audioXpath: empresa.audio_stream_xpath || "",
+          videoUrl: empresa.video_stream_api_url || "",
+          videoXpath: empresa.video_stream_xpath || "",
+        });
       }
+      if (data.userId) setAudienceUserId(data.userId);
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (data.promocoes || []).filter((p: any) => 
