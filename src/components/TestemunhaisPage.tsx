@@ -295,6 +295,18 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
   };
 
+  const stripHtml = (html: string) =>
+    (html || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const previewTexto = (html: string, max = 110) => {
+    const clean = stripHtml(html);
+    return clean.length > max ? clean.slice(0, max).trimEnd() + "…" : clean;
+  };
+  const formatDate = (d: string) => {
+    if (!d) return "—";
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
+  };
+
   if (loading || !dataUserId) return <ModulePageSkeleton variant="form" />;
 
   const today = new Date().toLocaleDateString("pt-BR");
