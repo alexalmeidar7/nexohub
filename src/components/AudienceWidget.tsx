@@ -21,6 +21,8 @@ interface SourcesConfig {
   audio_stream_api_url: string;
   audio_stream_xpath: string;
   video_stream_api_url: string;
+  video_stream_xpath: string;
+
 }
 
 
