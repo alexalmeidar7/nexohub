@@ -281,7 +281,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.youtube !== sources.youtube ||
       initial.audio_stream_api_url !== sources.audio_stream_api_url ||
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
-      initial.video_stream_api_url !== sources.video_stream_api_url;
+      initial.video_stream_api_url !== sources.video_stream_api_url ||
+      initial.video_stream_xpath !== sources.video_stream_xpath;
     if (!changed) return;
 
     const payload = {
@@ -292,7 +293,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       audio_stream_api_url: sources.audio_stream_api_url.trim() || null,
       audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
+      video_stream_xpath: sources.video_stream_xpath.trim() || null,
     };
+
     await supabase
       .from("empresa_config")
       .upsert(payload as any, { onConflict: "user_id" });
