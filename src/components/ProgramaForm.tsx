@@ -1260,14 +1260,23 @@ export default function ProgramaForm() {
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[2px]">
               <thead className="sticky top-0 z-10">
-                <tr style={{ background: CYAN }}>
-                  <th style={{ padding: "10px 12px", textAlign: "left", width: 78, fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
+                <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)` }}>
+                  <th style={{ padding: "12px 12px", textAlign: "right", width: 78, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => {
                     const isToday = dia === diaAtual;
                     return (
-                      <th key={dia} style={{ padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF", background: isToday ? DARK : undefined }}>
-                        <div>{dia.slice(0, 3)}</div>
-                        <div style={{ fontSize: 10, marginTop: 2, opacity: 0.85 }}>{weekDates[dia]}</div>
+                      <th key={dia} style={{
+                        padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase",
+                        color: isToday ? DARK : "#FFFFFF",
+                        background: isToday ? LIME : "transparent",
+                        borderBottom: isToday ? `3px solid ${DARK}` : "3px solid transparent",
+                        position: "relative",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          {isToday && <span style={{ width: 6, height: 6, borderRadius: "50%", background: DARK, display: "inline-block" }} />}
+                          {dia.slice(0, 3)}
+                        </div>
+                        <div style={{ fontSize: 10, marginTop: 2, opacity: isToday ? 0.75 : 0.85, fontWeight: 700 }}>{weekDates[dia]}</div>
                       </th>
                     );
                   })}
