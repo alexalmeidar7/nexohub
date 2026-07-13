@@ -2525,8 +2525,10 @@ export default function AgendaPage() {
                 )}
               </div>
             </div>
+            </div>
 
           </div>
+
         </div>
 
         <div className="mt-5 text-[10px] text-center opacity-50">
