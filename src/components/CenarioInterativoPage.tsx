@@ -1677,8 +1677,8 @@ export default function CenarioInterativoPage() {
             <MonitorPlay size={18} />
           </div>
           <div>
-            <h3 className="text-base font-bold drop-shadow-sm">Cenário Interativo</h3>
-            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Configure os elementos do cenário para suas transmissões</p>
+            <h3 className="text-base font-bold drop-shadow-sm" style={{ color: "inherit" }}>Cenário Interativo</h3>
+            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8, color: "inherit" }}>Configure os elementos do cenário para suas transmissões</p>
           </div>
         </div>
 
