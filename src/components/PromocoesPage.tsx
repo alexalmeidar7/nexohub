@@ -1,93 +1,100 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Underline, Palette, Check, Save } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Italic, Underline, Palette, Save, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
-const RICH_COLORS = ["#ff0000", "#ff8800", "#00aa00", "#0066ff", "#9900cc", "#000000", "#ffffff"];
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte / Citações
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+
+const TOOLBAR_COLORS = ["#000000", "#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed", "#db2777", CYAN];
+
+const pillInput: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${CYAN}`,
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 13,
+  color: DARK,
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: DARK,
+  marginBottom: 8,
+  display: "block",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HTMLDivElement>; onInput: () => void }) {
-  const exec = (cmd: string, val?: string) => {
-    editorRef.current?.focus();
-    document.execCommand(cmd, false, val);
-    onInput();
-  };
   const [showColors, setShowColors] = useState(false);
 
+  const exec = (cmd: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, value);
+    onInput();
+  };
+
+  const btnStyle: React.CSSProperties = {
+    background: "#FFFFFF",
+    color: DARK,
+    border: `1px solid ${CYAN}`,
+    borderRadius: 999,
+    width: 30,
+    height: 30,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    position: "relative",
+  };
+
   return (
-    <div className="flex items-center gap-1 px-2 py-1.5 border-b" style={{ borderColor: "var(--layout-border-color, #333333)" }}>
-      <button type="button" title="Negrito" onClick={() => exec("bold")}
-        className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-        <Bold size={14} />
-      </button>
-      <button type="button" title="Sublinhado" onClick={() => exec("underline")}
-        className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-        <Underline size={14} />
-      </button>
-      <div className="relative">
-        <button type="button" title="Cor do texto" onClick={() => setShowColors(!showColors)}
-          className="p-1.5 rounded-lg hover:opacity-70 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-          <Palette size={14} />
-        </button>
+    <div style={{
+      display: "flex",
+      gap: 6,
+      padding: "8px 12px",
+      background: CARD_BG,
+      borderBottom: `2px solid ${CYAN}`,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    }}>
+      <button type="button" style={btnStyle} onClick={() => exec("bold")} title="Negrito"><Bold size={14} /></button>
+      <button type="button" style={btnStyle} onClick={() => exec("italic")} title="Itálico"><Italic size={14} /></button>
+      <button type="button" style={btnStyle} onClick={() => exec("underline")} title="Sublinhado"><Underline size={14} /></button>
+      <div style={{ position: "relative" }}>
+        <button type="button" style={btnStyle} onClick={() => setShowColors(!showColors)} title="Cor do texto"><Palette size={14} /></button>
         {showColors && (
-          <div className="absolute top-full left-0 mt-1 flex gap-1 p-1.5 rounded-lg shadow-lg z-50" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)" }}>
-            {RICH_COLORS.map(c => (
-              <button key={c} type="button" className="w-5 h-5 rounded-full border border-black/20" style={{ backgroundColor: c }}
-                onClick={() => { exec("foreColor", c); setShowColors(false); }} />
+          <div style={{ position: "absolute", top: 36, left: 0, zIndex: 20, background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 16, padding: 8, display: "flex", gap: 5, boxShadow: "0 10px 24px rgba(10,37,64,0.15)" }}>
+            {TOOLBAR_COLORS.map(c => (
+              <button key={c} type="button" onClick={() => { exec("foreColor", c); setShowColors(false); }}
+                style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: c === "#ffffff" ? "1px solid #ccc" : "1px solid transparent", cursor: "pointer" }} />
             ))}
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-function EditableCell({ value, onSave, className, textClassName }: { value: string; onSave: (val: string) => void; className?: string; textClassName?: string }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempValue, setTempValue] = useState(value);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (isEditing) inputRef.current?.focus();
-  }, [isEditing]);
-
-  const handleBlur = () => {
-    setIsEditing(false);
-    if (tempValue !== value) onSave(tempValue);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      inputRef.current?.blur();
-    } else if (e.key === "Escape") {
-      setTempValue(value);
-      setIsEditing(false);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <td className={className}>
-        <input
-          ref={inputRef}
-          value={tempValue}
-          onChange={(e) => setTempValue(e.target.value)}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          className="w-full px-2 py-1 text-xs outline-none bg-white rounded border border-blue-500 shadow-sm"
-          style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-        />
-      </td>
-    );
-  }
-
-  return (
-    <td className={`${className} cursor-pointer hover:bg-black/5 transition-colors group relative`} onClick={() => setIsEditing(true)}>
-      <p className={`${textClassName} pr-4`}>{value || <span className="opacity-30">—</span>}</p>
-      <Pencil size={10} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity" />
-    </td>
   );
 }
 
@@ -102,10 +109,6 @@ interface Promocao {
   data_fim: string;
   created_at: string;
 }
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
-};
 
 interface PromocoesPageProps {
   effectiveUserId?: string | null;
@@ -137,7 +140,6 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
       setDataUserId(effectiveUserId);
       return;
     }
-
     if (!user) return;
     let cancelled = false;
 
@@ -151,9 +153,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
         setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user, effectiveUserId]);
 
   const loadData = async (targetUserId = dataUserId) => {
@@ -211,6 +211,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setImageFile(null);
     setBannerLPreview(item.banner_l_url || "");
     setBannerLFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelEdit = () => {
@@ -220,13 +221,17 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !texto || !dataInicio || !dataFim) return;
+    if (!user || !dataUserId) return;
+    if (!texto || !dataInicio || !dataFim) {
+      toast({ title: "Preencha texto, data de início e fim", variant: "destructive" });
+      return;
+    }
     setSaving(true);
 
     try {
       let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
-      
+
       let banner_l_url = editingId ? bannerLPreview : "";
       if (bannerLFile) banner_l_url = await uploadImage(bannerLFile);
 
@@ -246,7 +251,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
         toast({ title: "Promoção atualizada!" });
       } else {
         const { error } = await supabase.from("promocoes").insert({
-          user_id: dataUserId!,
+          user_id: dataUserId,
           imagem_url,
           banner_l_url,
           botao_url,
@@ -269,17 +274,6 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     }
   };
 
-  const handleInlineUpdate = async (id: string, updates: Partial<Promocao>) => {
-    try {
-      const { error } = await supabase.from("promocoes").update(updates).eq("id", id);
-      if (error) throw error;
-      setItems(prev => prev.map(item => item.id === id ? { ...item, ...updates } : item));
-      toast({ title: "Atualizado com sucesso" });
-    } catch (err: any) {
-      toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
-    }
-  };
-
   const resetForm = () => {
     setTitulo("");
     setTexto("");
@@ -295,6 +289,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Excluir esta promoção?")) return;
     await supabase.from("promocoes").delete().eq("id", id);
     await loadData();
   };
@@ -303,286 +298,491 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
   };
 
-  const getStatus = (item: Promocao): "ativa" | "agendada" => {
-    const today = new Date().toISOString().split("T")[0];
-    return item.data_inicio <= today ? "ativa" : "agendada";
+  if (loading || !dataUserId) return <ModulePageSkeleton variant="form" />;
+
+  const today = new Date().toLocaleDateString("pt-BR");
+
+  const uploadBoxStyle: React.CSSProperties = {
+    ...pillInput,
+    flex: 1,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    fontWeight: 700,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    cursor: "pointer",
+    background: "#FFFFFF",
   };
 
-  if (loading || !dataUserId) {
-    return (
-      <div className="nexo-scope">
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent overflow-hidden">
-          <div className="h-full animate-pulse rounded-r" style={{ width: "60%", background: "var(--layout-accent-color, #e53e3e)", animation: "loadbar 1.2s ease-in-out infinite" }} />
-        </div>
-        <style>{`@keyframes loadbar { 0% { width: 10%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 10%; margin-left: 90%; } }`}</style>
-        <ModulePageSkeleton variant="form" />
-      </div>
-    );
-  }
-
   return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <ImageIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-          </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Promoções</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie campanhas promocionais com banners e oferecimentos</p>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-              {editingId ? "✏️ Editar Promoção" : "➕ Nova Promoção"}
-            </h3>
-            {editingId && (
-              <button type="button" onClick={cancelEdit}
-                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.3)" }}
-              >
-                <X size={10} /> Cancelar
-              </button>
-            )}
-          </div>
-
-          <div className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner da Promoção <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(1920×850px)</span></label>
-                    <div className="flex items-center gap-3">
-                      {imagePreview ? (
-                        <img src={imagePreview} alt="banner" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                      ) : (
-                        <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                          <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                        </div>
-                      )}
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
-                      >
-                        <Upload size={12} /> Enviar banner
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Banner L <span className="font-normal" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>(PNG)</span></label>
-                    <div className="flex items-center gap-3">
-                      {bannerLPreview ? (
-                        <img src={bannerLPreview} alt="banner L" className="w-24 h-14 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                      ) : (
-                        <div className="w-24 h-14 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                          <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                        </div>
-                      )}
-                      <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                        style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
-                      >
-                        <Upload size={12} /> Enviar banner L
-                        <input type="file" accept="image/png" className="hidden" onChange={handleBannerLChange} />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Título da Promoção</label>
-                  <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex: Super Burguer Positiva"
-                    className="w-full px-4 py-1.5 text-sm outline-none"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Promoção</label>
-                  <div className="overflow-hidden" style={{ ...inputStyle, borderRadius: "12px" }}>
-                    <RichTextToolbar editorRef={textoEditorRef} onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")} />
-                    <div
-                      ref={textoEditorRef}
-                      contentEditable
-                      data-placeholder="Descrição da campanha..."
-                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
-                      style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
-                      onInput={() => setTexto(textoEditorRef.current?.innerHTML || "")}
-                      suppressContentEditableWarning
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Oferecimento</label>
-                  <div className="overflow-hidden" style={{ ...inputStyle, borderRadius: "12px" }}>
-                    <RichTextToolbar editorRef={oferecimentoEditorRef} onInput={() => setOferecimento(oferecimentoEditorRef.current?.innerHTML || "")} />
-                    <div
-                      ref={oferecimentoEditorRef}
-                      contentEditable
-                      data-placeholder="Quem assina a promoção"
-                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px]"
-                      style={{ color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "transparent" }}
-                      onInput={() => setOferecimento(oferecimentoEditorRef.current?.innerHTML || "")}
-                      suppressContentEditableWarning
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Início</label>
-                    <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required
-                      className="w-full px-4 py-1.5 text-sm outline-none"
-                      style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Fim</label>
-                    <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
-                      className="w-full px-4 py-1.5 text-sm outline-none"
-                      style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" disabled={saving}
-                  className="w-full px-6 py-2 font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 rounded-full"
-                  style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", border: "none" }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 15px color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 40%, transparent)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = "none"; }}
-                >
-                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Promoção" : "Cadastrar Promoção"}
-                </button>
-              </div>
+    <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD */}
+      <section
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 40, height: 40, borderRadius: 999, background: CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Tag size={20} style={{ color: "#FFFFFF" }} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
+                {editingId ? "Editar Promoção" : "Nova Promoção"}
+              </h3>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>
+                Campanhas promocionais com banners e oferecimentos
+              </p>
             </div>
           </div>
-        </form>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : today}</span>
+          </div>
+        </div>
 
-        {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Promoções Cadastradas</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            {/* Banner principal */}
+            <Field label="Banner da Promoção (1920×850px)">
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="preview"
+                    style={{ width: 72, height: 44, borderRadius: 12, objectFit: "cover", border: `2px solid ${CYAN}` }}
+                  />
+                ) : (
+                  <div style={{ width: 72, height: 44, borderRadius: 12, background: "#FFFFFF", border: `2px solid ${CYAN}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ImageIcon size={18} style={{ color: CYAN }} />
+                  </div>
+                )}
+                <label style={uploadBoxStyle}>
+                  <Upload size={14} /> Enviar banner
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              </div>
+            </Field>
+
+            {/* Banner L */}
+            <Field label="Banner L (PNG)">
+              <div className="flex items-center gap-3">
+                {bannerLPreview ? (
+                  <img
+                    src={bannerLPreview}
+                    alt="banner L"
+                    style={{ width: 72, height: 44, borderRadius: 12, objectFit: "cover", border: `2px solid ${CYAN}` }}
+                  />
+                ) : (
+                  <div style={{ width: 72, height: 44, borderRadius: 12, background: "#FFFFFF", border: `2px solid ${CYAN}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ImageIcon size={18} style={{ color: CYAN }} />
+                  </div>
+                )}
+                <label style={uploadBoxStyle}>
+                  <Upload size={14} /> Enviar banner L
+                  <input type="file" accept="image/png" className="hidden" onChange={handleBannerLChange} />
+                </label>
+              </div>
+            </Field>
+
+            {/* Título */}
+            <div className="md:col-span-2">
+              <Field label="Título da Promoção">
+                <input
+                  value={titulo}
+                  onChange={(e) => setTitulo(e.target.value)}
+                  placeholder="Ex: Super Burguer Positiva"
+                  style={pillInput}
+                />
+              </Field>
+            </div>
+
+            {/* Texto (full width) */}
+            <div className="md:col-span-2">
+              <Field label="Texto da Promoção">
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: `2px solid ${CYAN}`,
+                    borderRadius: 20,
+                    overflow: "hidden",
+                  }}
+                >
+                  <RichTextToolbar
+                    editorRef={textoEditorRef}
+                    onInput={() => { if (textoEditorRef.current) setTexto(textoEditorRef.current.innerHTML); }}
+                  />
+                  <div
+                    ref={textoEditorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="w-full px-5 py-3 text-sm outline-none min-h-[100px] max-h-[220px] overflow-y-auto"
+                    style={{ color: DARK, background: "transparent", fontFamily: "'Montserrat', sans-serif" }}
+                    onInput={() => { if (textoEditorRef.current) setTexto(textoEditorRef.current.innerHTML); }}
+                    data-placeholder="Descrição da campanha..."
+                  />
+                </div>
+              </Field>
+            </div>
+
+            {/* Oferecimento (full width) */}
+            <div className="md:col-span-2">
+              <Field label="Oferecimento">
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: `2px solid ${CYAN}`,
+                    borderRadius: 20,
+                    overflow: "hidden",
+                  }}
+                >
+                  <RichTextToolbar
+                    editorRef={oferecimentoEditorRef}
+                    onInput={() => { if (oferecimentoEditorRef.current) setOferecimento(oferecimentoEditorRef.current.innerHTML); }}
+                  />
+                  <div
+                    ref={oferecimentoEditorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="w-full px-5 py-3 text-sm outline-none min-h-[80px] max-h-[180px] overflow-y-auto"
+                    style={{ color: DARK, background: "transparent", fontFamily: "'Montserrat', sans-serif" }}
+                    onInput={() => { if (oferecimentoEditorRef.current) setOferecimento(oferecimentoEditorRef.current.innerHTML); }}
+                    data-placeholder="Quem assina a promoção..."
+                  />
+                </div>
+              </Field>
+            </div>
+
+            {/* Datas */}
+            <Field label="Início">
+              <input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                required
+                style={pillInput}
+              />
+            </Field>
+            <Field label="Fim">
+              <input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                required
+                style={pillInput}
+              />
+            </Field>
           </div>
 
-          {items.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma promoção cadastrada.</p>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden md:block">
-                <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Banner</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Título</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Texto</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Oferecimento</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Validade</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Editar</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Excluir</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, i) => {
-                      const dias = diasRestantes(item.data_fim);
-                      return (
-                        <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-                          <td className="px-4 py-2">
-                            {item.imagem_url ? (
-                              <img src={item.imagem_url} alt="" className="w-20 h-10 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                            ) : (
-                              <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>—</span>
-                            )}
-                          </td>
-                          <EditableCell
-                            value={item.botao_url || ""}
-                            onSave={(val) => handleInlineUpdate(item.id, { botao_url: val })}
-                            className="px-4 py-2 max-w-[150px]"
-                            textClassName="truncate text-xs font-semibold"
-                          />
-                          <EditableCell
-                            value={item.texto}
-                            onSave={(val) => handleInlineUpdate(item.id, { texto: val })}
-                            className="px-4 py-2 max-w-[200px]"
-                            textClassName="truncate text-xs"
-                          />
-                          <EditableCell
-                            value={item.oferecimento || ""}
-                            onSave={(val) => handleInlineUpdate(item.id, { oferecimento: val })}
-                            className="px-4 py-2 text-xs"
-                          />
-                          <td className="px-4 py-2 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                              {dias}d restante{dias !== 1 ? "s" : ""}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button onClick={() => startEdit(item)} title="Editar Completo" className="hover:opacity-70 transition-opacity">
-                              <Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-                            </button>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button onClick={() => handleDelete(item.id)} title="Remover" className="hover:opacity-70 transition-opacity">
-                              <Trash2 size={14} style={{ color: "#dc2626" }} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          <div className="mt-8 flex items-center justify-end gap-3">
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                style={{
+                  height: 44,
+                  padding: "0 22px",
+                  borderRadius: 999,
+                  background: "#FFFFFF",
+                  border: `2px solid ${CYAN}`,
+                  color: DARK,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+              >
+                <X size={16} /> Cancelar
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                height: 44,
+                padding: "0 28px",
+                borderRadius: 999,
+                background: LIME,
+                border: "none",
+                color: DARK,
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                cursor: saving ? "wait" : "pointer",
+                opacity: saving ? 0.7 : 1,
+                boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {editingId ? "Atualizar Promoção" : "Cadastrar Promoção"}
+            </button>
+          </div>
+        </form>
+      </section>
 
-              {/* Mobile cards */}
-              <div className="md:hidden p-3 space-y-3">
-                {items.map((item) => {
-                  const dias = diasRestantes(item.data_fim);
-                  return (
-                    <div key={item.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                      <div className="flex items-start gap-3">
-                        {item.imagem_url && (
-                          <img src={item.imagem_url} alt="" className="w-16 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          {item.botao_url && <p className="text-xs font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.botao_url}</p>}
-                          <p className="text-xs truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.texto}</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{item.oferecimento || "Sem oferecimento"}</p>
+      {/* LIST CARD */}
+      <section
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 28,
+          padding: "20px 24px 28px",
+          border: "1px solid #E5F5FB",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+          <div className="flex items-center gap-2" style={{ color: DARK }}>
+            <Tag size={18} style={{ color: CYAN }} />
+            <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+              Promoções Cadastradas
+            </h3>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: CARD_BG,
+                color: DARK,
+                padding: "3px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {items.length}
+            </span>
+          </div>
+        </div>
+
+        {items.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0" }}>
+            Nenhuma promoção cadastrada.
+          </p>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block" style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: CYAN, color: "#FFFFFF" }}>
+                    {["Banner", "Título", "Texto", "Oferecimento", "Validade", "Ações"].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: "12px 14px",
+                          textAlign: h === "Ações" ? "right" : "left",
+                          fontWeight: 800,
+                          letterSpacing: 1.2,
+                          textTransform: "uppercase",
+                          fontSize: 10,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, idx) => {
+                    const dias = diasRestantes(item.data_fim);
+                    const expiring = dias <= 3;
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{
+                          background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                          color: DARK,
+                        }}
+                      >
+                        <td style={{ padding: "12px 14px" }}>
+                          {item.imagem_url ? (
+                            <img src={item.imagem_url} alt="" style={{ width: 72, height: 40, borderRadius: 10, objectFit: "cover", border: `2px solid ${CYAN}` }} />
+                          ) : (
+                            <span style={{ color: "#94A3B8" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px", maxWidth: 180, fontWeight: 700 }}>
+                          <div className="truncate">{item.botao_url || <span style={{ color: "#94A3B8" }}>—</span>}</div>
+                        </td>
+                        <td style={{ padding: "12px 14px", maxWidth: 240 }}>
+                          <div
+                            className="truncate"
+                            style={{ fontSize: 12 }}
+                            dangerouslySetInnerHTML={{ __html: item.texto }}
+                          />
+                        </td>
+                        <td style={{ padding: "12px 14px", maxWidth: 180 }}>
+                          <div
+                            className="truncate"
+                            style={{ fontSize: 12 }}
+                            dangerouslySetInnerHTML={{ __html: item.oferecimento || "—" }}
+                          />
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              fontWeight: 800,
+                              fontSize: 10,
+                              letterSpacing: 1,
+                              textTransform: "uppercase",
+                              background: expiring ? "#FEE2E2" : CARD_BG,
+                              color: expiring ? "#DC2626" : DARK,
+                            }}
+                          >
+                            {dias}d {dias === 1 ? "restante" : "restantes"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                          <div style={{ display: "inline-flex", gap: 6 }}>
+                            <button
+                              onClick={() => startEdit(item)}
+                              title="Editar"
+                              style={{
+                                width: 30, height: 30, borderRadius: "50%",
+                                background: CARD_BG, border: "none", cursor: "pointer",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                color: DARK,
+                              }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              title="Excluir"
+                              style={{
+                                width: 30, height: 30, borderRadius: "50%",
+                                background: "#FEE2E2", border: "none", cursor: "pointer",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                color: "#DC2626",
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {items.map((item) => {
+                const dias = diasRestantes(item.data_fim);
+                const expiring = dias <= 3;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: "#FFFFFF",
+                      border: `1px solid ${CARD_BG}`,
+                      borderRadius: 20,
+                      padding: 14,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      boxShadow: "0 2px 8px rgba(10, 37, 64, 0.04)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      {item.imagem_url ? (
+                        <img src={item.imagem_url} alt="" style={{ width: 72, height: 44, borderRadius: 10, objectFit: "cover", border: `2px solid ${CYAN}`, flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 72, height: 44, borderRadius: 10, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <ImageIcon size={16} style={{ color: CYAN }} />
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                          {dias}d restante{dias !== 1 ? "s" : ""}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => startEdit(item)}><Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} /></button>
-                          <button onClick={() => handleDelete(item.id)}><Trash2 size={14} style={{ color: "#dc2626" }} /></button>
-                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {item.botao_url && <p style={{ fontSize: 12, fontWeight: 800, color: DARK, margin: 0 }} className="truncate">{item.botao_url}</p>}
+                        <div
+                          className="line-clamp-2"
+                          style={{ fontSize: 12, color: DARK, marginTop: 2 }}
+                          dangerouslySetInnerHTML={{ __html: item.texto }}
+                        />
+                        <div
+                          style={{ fontSize: 10, color: "#64748B", marginTop: 4, fontWeight: 600 }}
+                          dangerouslySetInnerHTML={{ __html: item.oferecimento || "Sem oferecimento" }}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontWeight: 800,
+                          fontSize: 10,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                          background: expiring ? "#FEE2E2" : CARD_BG,
+                          color: expiring ? "#DC2626" : DARK,
+                        }}
+                      >
+                        {dias}d {dias === 1 ? "restante" : "restantes"}
+                      </span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => startEdit(item)}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: CARD_BG, border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: DARK,
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }
