@@ -2808,11 +2808,13 @@ export default function CenarioInterativoPage() {
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
-                  className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  className="relative overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  data-nexo-skip
                   style={{
                     height: "100%",
                     width: "auto",
                     aspectRatio: "9 / 16",
+                    borderRadius: 20,
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
                     background: "#000",
                     transform: `scale(${previewZoom})`,
