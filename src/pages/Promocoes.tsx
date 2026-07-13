@@ -669,7 +669,7 @@ export default function PromocoesKiosk() {
           const onAirProg = onAirProgram ? programas.find(p => p.nome === onAirProgram.nome) : null;
           return (
             <div className="w-full flex gap-4 items-stretch">
-              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ maxHeight: 340 }}>
+              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 240 }}>
                 {banners.length > 0 ? (
                   <div className="relative w-full h-full overflow-hidden">
                     <div
