@@ -146,7 +146,8 @@ export default function PromocoesKiosk() {
 
   useEffect(() => {
     const loadPublic = async () => {
-      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: userSlug } });
+      if (!validSlug) return;
+      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: validSlug } });
       if (error || !data) return;
 
       const empresa = data.empresa;
