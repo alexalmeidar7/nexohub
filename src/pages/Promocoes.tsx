@@ -472,7 +472,7 @@ export default function PromocoesKiosk() {
           .slice()
           .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
           .reduce((map, p) => {
-            const key = p.nome.trim().toLowerCase();
+            const key = p.nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
             const existing = map.get(key);
             if (!existing) {
               map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
