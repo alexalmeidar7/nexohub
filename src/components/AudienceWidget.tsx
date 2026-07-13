@@ -165,6 +165,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [alerts, setAlerts] = useState<PeakAlert[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [alertsEnabled, setAlertsEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem("audience:peakAlerts:enabled") !== "0"; } catch { return true; }
+  });
+  const toggleAlertsEnabled = (v: boolean) => {
+    setAlertsEnabled(v);
+    try { localStorage.setItem("audience:peakAlerts:enabled", v ? "1" : "0"); } catch { /* ignore */ }
+  };
   const peaksInitializedRef = useRef(false);
   const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${new Date().toISOString().slice(0, 10)}` : null;
 
@@ -188,6 +195,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   }, [alertsStorageKey]);
 
   const pushAlert = (type: "audio" | "video", value: number) => {
+    if (!alertsEnabled) return;
     const alert: PeakAlert = {
       id: `${type}-${Date.now()}`,
       type,
@@ -195,7 +203,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       at: new Date().toISOString(),
     };
     setAlerts((prev) => {
-      const next = [alert, ...prev].slice(0, 20);
+      const next = [alert, ...prev].slice(0, 4);
       try { if (alertsStorageKey) localStorage.setItem(alertsStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
@@ -896,15 +904,52 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             </DialogHeader>
           </div>
 
+          {/* Switch ligar/desligar alertas */}
+          <div className="mx-4 mt-4 rounded-2xl p-3 flex items-center justify-between" style={{ background: "#fff", border: "1px solid rgba(0,191,240,0.35)" }}>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: dark }}>
+                Notificações de pico
+              </span>
+              <span className="text-[10px] font-semibold" style={{ color: dark, opacity: 0.55 }}>
+                {alertsEnabled ? "Você receberá alertas de novos recordes." : "Alertas desligados — nenhum novo pico será registrado."}
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={alertsEnabled}
+              onClick={() => toggleAlertsEnabled(!alertsEnabled)}
+              className="relative inline-flex items-center rounded-full transition-colors shrink-0"
+              style={{
+                width: 44,
+                height: 24,
+                background: alertsEnabled ? "#00BFF0" : "rgba(10,37,64,0.2)",
+              }}
+            >
+              <span
+                className="inline-block rounded-full bg-white shadow transition-transform"
+                style={{
+                  width: 18,
+                  height: 18,
+                  transform: alertsEnabled ? "translateX(23px)" : "translateX(3px)",
+                }}
+              />
+            </button>
+          </div>
+
           <div className="p-4 flex flex-col gap-2 max-h-[60vh] overflow-auto">
             {alerts.length === 0 && (
               <div className="text-center py-10 text-xs font-semibold" style={{ color: dark, opacity: 0.55 }}>
-                Nenhum novo pico registrado hoje.
+                {alertsEnabled ? "Nenhum novo pico registrado hoje." : "Alertas desligados."}
                 <br />
-                <span className="text-[10px]">Você será notificado quando a audiência bater um recorde.</span>
+                <span className="text-[10px]">
+                  {alertsEnabled
+                    ? "Você será notificado quando a audiência bater um recorde."
+                    : "Ative acima para voltar a receber notificações."}
+                </span>
               </div>
             )}
-            {alerts.map((a) => {
+            {alerts.slice(0, 4).map((a) => {
               const isAudio = a.type === "audio";
               const time = new Date(a.at);
               const hhmm = `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;

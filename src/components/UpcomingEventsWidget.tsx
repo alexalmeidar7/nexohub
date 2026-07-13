@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock, Radio } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock, Radio, Circle } from "lucide-react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,7 @@ function matches(evt: Evt, date: Date) {
 }
 
 const typeColors: Record<string, { bg: string; text: string; label: string }> = {
-  live: { bg: "#ef4444", text: "#ffffff", label: "AO VIVO" },
+  live: { bg: "#ef4444", text: "#ffffff", label: "LIVE" },
   gravacao: { bg: "#8b5cf6", text: "#ffffff", label: "GRAVAÇÃO" },
   reuniao: { bg: "#3b82f6", text: "#ffffff", label: "REUNIÃO" },
   evento: { bg: "#f59e0b", text: "#111111", label: "EVENTO" },
@@ -281,16 +281,40 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
                     {evt.tipo_evento === "live" || !evt.tipo_evento ? (
-                      <span className="flex items-center gap-0.5 shrink-0">
-                        <Radio size={10} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-                        <span className="font-black text-[9px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
-                          AO VIVO
+                      <span
+                        className="inline-flex items-center gap-1 shrink-0 rounded-full pl-1.5 pr-2 py-[2px] font-black text-[9px] tracking-[0.12em] uppercase"
+                        style={{
+                          background: "linear-gradient(135deg, #ff2d2d 0%, #b91c1c 100%)",
+                          color: "#fff",
+                          boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 6px rgba(239,68,68,0.45)",
+                        }}
+                      >
+                        <span className="relative inline-flex w-1.5 h-1.5">
+                          <span className="absolute inset-0 rounded-full animate-ping" style={{ background: "#fff", opacity: 0.75 }} />
+                          <span className="relative inline-block w-1.5 h-1.5 rounded-full" style={{ background: "#fff" }} />
                         </span>
+                        LIVE
+                      </span>
+                    ) : evt.tipo_evento === "gravacao" ? (
+                      <span
+                        className="inline-flex items-center gap-1 shrink-0 rounded-full pl-1.5 pr-2 py-[2px] font-black text-[9px] tracking-[0.12em] uppercase"
+                        style={{
+                          background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
+                          color: "#fff",
+                          boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 6px rgba(139,92,246,0.45)",
+                        }}
+                      >
+                        <Circle size={7} fill="#fff" strokeWidth={0} />
+                        REC
                       </span>
                     ) : (
                       <span
-                        className="text-[8px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
-                        style={{ backgroundColor: type.bg, color: type.text }}
+                        className="inline-flex items-center shrink-0 rounded-full px-2 py-[2px] font-black text-[9px] tracking-[0.12em] uppercase"
+                        style={{
+                          background: type.bg,
+                          color: type.text,
+                          boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset",
+                        }}
                       >
                         {type.label}
                       </span>
