@@ -309,7 +309,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   onClick={() => openAgenda(evt.id)}
                   className="relative w-full text-left rounded-lg p-1.5 transition-transform duration-300 ease-out will-change-transform group-hover:-translate-x-[112px] active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
                   style={{
-                    background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 92%, transparent)",
+                    background: "transparent",
                     borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
                   }}
                 >
