@@ -429,8 +429,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }
 
   return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
+    <div className="nexo-scope animate-fade-in">
+      <div className="rounded-2xl" style={{ background: "#D6F4FB", boxShadow: "0 8px 32px rgba(0,191,240,0.15)", padding: "20px", border: "1.5px solid #00BFF0" }}>
+
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>

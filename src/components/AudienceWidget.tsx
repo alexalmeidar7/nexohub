@@ -19,8 +19,10 @@ interface SourcesConfig {
   facebook: string;
   youtube: string;
   audio_stream_api_url: string;
+  audio_stream_xpath: string;
   video_stream_api_url: string;
 }
+
 
 const ROTATE_MS = 3000;
 // Redes sociais: 5x por dia (a cada ~4h48m)
@@ -50,8 +52,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     facebook: "",
     youtube: "",
     audio_stream_api_url: "",
+    audio_stream_xpath: "",
     video_stream_api_url: "",
   });
+
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
 
 
@@ -66,7 +70,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url")
+        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (!cancelled && data) {
@@ -81,8 +85,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           facebook: (data as any).facebook || "",
           youtube: (data as any).youtube || "",
           audio_stream_api_url: (data as any).audio_stream_api_url || "",
+          audio_stream_xpath: (data as any).audio_stream_xpath || "",
           video_stream_api_url: (data as any).video_stream_api_url || "",
         };
+
         setSources(s);
       }
       if (!cancelled) setLoadingConfig(false);
@@ -268,6 +274,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.facebook !== sources.facebook ||
       initial.youtube !== sources.youtube ||
       initial.audio_stream_api_url !== sources.audio_stream_api_url ||
+      initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url;
     if (!changed) return;
 
@@ -277,6 +284,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       facebook: sources.facebook.trim() || null,
       youtube: sources.youtube.trim() || null,
       audio_stream_api_url: sources.audio_stream_api_url.trim() || null,
+      audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
     };
     await supabase
@@ -289,7 +297,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       facebook: payload.facebook || undefined,
     };
     videoApiUrlRef.current = payload.video_stream_api_url || null;
+    initialSourcesRef.current = { ...sources };
   };
+
 
   return (
     <div
@@ -425,15 +435,31 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
             />
             <SourceField
+              label="XPath (nódulo XML do Source Audio)"
+              placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
+              value={sources.audio_stream_xpath}
+              onChange={(v) => setSources((s) => ({ ...s, audio_stream_xpath: v }))}
+            />
+            <SourceField
               icon={<MonitorPlay size={14} />}
               label="Source Video"
               placeholder="https://video.logicahost.com.br/api/..."
               value={sources.video_stream_api_url}
               onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
             />
+
+            <button
+              type="button"
+              onClick={async () => { await persistIfChanged(); setConfigOpen(false); }}
+              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02]"
+              style={{ background: "#C6F03C", color: "#0A2540", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(198,240,60,0.4)" }}
+            >
+              Salvar
+            </button>
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
@@ -445,7 +471,7 @@ function SourceField({
   value,
   onChange,
 }: {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
   placeholder: string;
   value: string;
@@ -454,9 +480,10 @@ function SourceField({
   return (
     <label className="flex flex-col gap-1">
       <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#0A2540", opacity: 0.7 }}>
-        <span style={{ color: "#00BFF0" }}>{icon}</span>
+        {icon && <span style={{ color: "#00BFF0" }}>{icon}</span>}
         {label}
       </span>
+
       <input
         type="text"
         value={value}

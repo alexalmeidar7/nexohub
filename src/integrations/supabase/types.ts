@@ -649,6 +649,7 @@ export type Database = {
         Row: {
           ativo: boolean
           audio_stream_api_url: string | null
+          audio_stream_xpath: string | null
           background_url: string | null
           endereco: string | null
           facebook: string | null
@@ -671,6 +672,7 @@ export type Database = {
         Insert: {
           ativo?: boolean
           audio_stream_api_url?: string | null
+          audio_stream_xpath?: string | null
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
@@ -693,6 +695,7 @@ export type Database = {
         Update: {
           ativo?: boolean
           audio_stream_api_url?: string | null
+          audio_stream_xpath?: string | null
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
