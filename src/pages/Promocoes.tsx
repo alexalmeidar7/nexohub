@@ -301,7 +301,7 @@ export default function PromocoesKiosk() {
       .toUpperCase();
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
-  const canonicalCoverByName = React.useMemo(() => {
+  const canonicalCoverByName = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of programas) {
       if (!p.capa) continue;
