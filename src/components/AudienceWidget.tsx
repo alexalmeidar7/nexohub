@@ -1255,82 +1255,99 @@ function AudienceReportDialog({
                 </div>
               )}
 
-              {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
-              {filteredRows.length > 0 && (
-                <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
-                  <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: DARK, opacity: 0.7 }}>
-                    Curva do dia · Áudio vs Vídeo
+              {/* Gráfico + Tabela lado a lado */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 flex-1 min-h-0">
+                {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
+                <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                  <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
+                    <span style={{ opacity: 0.7 }}>Curva do dia · Áudio vs Vídeo</span>
+                    <span className="flex items-center gap-3">
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Áudio</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />Vídeo</span>
+                    </span>
                   </div>
-                  <ResponsiveContainer width="100%" height={140}>
-                    <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
-                      <defs>
-                        <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
-                          <stop offset="100%" stopColor={AUDIO_COLOR} stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="gVideo" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
-                          <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
-                      <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 10 }} />
-                      <YAxis tick={{ fill: DARK, fontSize: 10 }} />
-                      <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
-                      <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
-                      <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                  <div className="flex-1 min-h-[180px]">
+                    {filteredRows.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
+                              <stop offset="100%" stopColor={AUDIO_COLOR} stopOpacity={0} />
+                            </linearGradient>
+                            <linearGradient id="gVideo" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
+                              <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
+                          <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 9 }} interval="preserveStartEnd" />
+                          <YAxis tick={{ fill: DARK, fontSize: 9 }} width={38} />
+                          <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
+                          <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
+                          <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full flex items-center justify-center text-[11px] font-semibold" style={{ color: DARK, opacity: 0.4 }}>
+                        Sem dados para plotar
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
 
-              {/* Table */}
-              <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
-                <div className="overflow-auto flex-1">
-                  <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
-                    <thead className="sticky top-0 z-10">
-                      <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
-                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {loading && (
-                        <tr><td colSpan={5} className="py-10 text-center">
-                          <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
-                        </td></tr>
-                      )}
-                      {!loading && filteredRows.length === 0 && (
-                        <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
-                          Nenhum registro encontrado para essa data.
-                        </td></tr>
-                      )}
-                      {!loading && filteredRows.map((r, i) => {
-                        const isPeak = stats && r.id === stats.peakTotal.id;
-                        return (
-                          <tr key={r.id} style={{
-                            background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
-                            borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
-                          }}>
-                            <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
-                            <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
-                            <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
-                              {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
-                            </td>
-                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
-                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
-                  <span>{filteredRows.length} registros</span>
-                  <span>Registro a cada 15 min · retenção de 6 meses</span>
+                {/* Table */}
+                <div className="lg:col-span-3 rounded-2xl overflow-hidden flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                  <div className="overflow-auto flex-1">
+                    <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+                      <thead className="sticky top-0 z-10">
+                        <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
+                          <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {loading && (
+                          <tr><td colSpan={5} className="py-10 text-center">
+                            <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
+                          </td></tr>
+                        )}
+                        {!loading && filteredRows.length === 0 && (
+                          <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                            Nenhum registro encontrado para essa data.
+                          </td></tr>
+                        )}
+                        {!loading && filteredRows.map((r, i) => {
+                          const isPeak = stats && r.id === stats.peakTotal.id;
+                          const total = (r.audio || 0) + (r.video || 0);
+                          return (
+                            <tr key={r.id} style={{
+                              background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
+                              borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
+                            }}>
+                              <td className="px-3 py-2 text-xs font-mono font-bold whitespace-nowrap" style={{ color: CYAN }}>
+                                {fmtTime(r.created_at)}
+                                {isPeak && <Trophy size={11} className="inline-block ml-1" style={{ color: DARK }} />}
+                              </td>
+                              <td className="px-3 py-2 text-xs font-bold" style={{ color: DARK, maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={r.programa || ""}>
+                                {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
+                              </td>
+                              <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: AUDIO_COLOR }}>{r.audio.toLocaleString("pt-BR")}</td>
+                              <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: VIDEO_COLOR }}>{r.video.toLocaleString("pt-BR")}</td>
+                              <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: DARK }}>{total.toLocaleString("pt-BR")}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
+                    <span>{filteredRows.length} registros</span>
+                    <span>Registro a cada 15 min · retenção de 6 meses</span>
+                  </div>
                 </div>
               </div>
             </>
