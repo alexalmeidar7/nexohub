@@ -1328,3 +1328,147 @@ function PeakBadge({ peak, dark }: { peak: number | null; dark: string }) {
   );
 }
 
+function TrendPanel({
+  loading,
+  data,
+  cyan,
+  lime,
+  dark,
+  bg,
+  audioColor,
+  videoColor,
+}: {
+  loading: boolean;
+  data: Array<{ day: string; audio: number; video: number; peakAudio?: number; peakVideo?: number }>;
+  cyan: string;
+  lime: string;
+  dark: string;
+  bg: string;
+  audioColor: string;
+  videoColor: string;
+}) {
+  const totals = useMemo(() => {
+    const tAudio = data.reduce((s, r) => s + r.audio, 0);
+    const tVideo = data.reduce((s, r) => s + r.video, 0);
+    const peakAudio = data.reduce((m, r) => ((r.peakAudio ?? r.audio) > m ? (r.peakAudio ?? r.audio) : m), 0);
+    const peakVideo = data.reduce((m, r) => ((r.peakVideo ?? r.video) > m ? (r.peakVideo ?? r.video) : m), 0);
+    const avgAudio = data.length ? Math.round(tAudio / data.length) : 0;
+    const avgVideo = data.length ? Math.round(tVideo / data.length) : 0;
+    const dominance = tAudio + tVideo > 0
+      ? Math.round((tAudio / (tAudio + tVideo)) * 100)
+      : 0;
+    return { tAudio, tVideo, peakAudio, peakVideo, avgAudio, avgVideo, dominance };
+  }, [data]);
+
+  // Agrupa por mês para o gráfico de barras comparativo
+  const monthly = useMemo(() => {
+    const map = new Map<string, { month: string; audio: number; video: number; count: number }>();
+    for (const r of data) {
+      const key = r.day.slice(0, 7); // YYYY-MM
+      const b = map.get(key) || { month: key, audio: 0, video: 0, count: 0 };
+      b.audio += r.audio;
+      b.video += r.video;
+      b.count += 1;
+      map.set(key, b);
+    }
+    const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    return Array.from(map.values())
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .map((b) => {
+        const [y, m] = b.month.split("-");
+        return {
+          month: `${MESES[parseInt(m, 10) - 1]}/${y.slice(2)}`,
+          audio: Math.round(b.audio / Math.max(1, b.count)),
+          video: Math.round(b.video / Math.max(1, b.count)),
+        };
+      });
+  }, [data]);
+
+  const fmtDay = (day: string) => {
+    const [, m, d] = day.split("-");
+    return `${d}/${m}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16" style={{ color: cyan }}>
+        <Loader2 className="animate-spin" size={28} />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="rounded-2xl p-10 text-center text-xs font-semibold" style={{ background: "#fff", color: dark, opacity: 0.6, border: `1px solid ${cyan}` }}>
+        Ainda não há histórico suficiente para gerar a tendência dos últimos 6 meses.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 overflow-auto pr-1" style={{ maxHeight: "60vh" }}>
+      {/* Resumo */}
+      <div className="grid grid-cols-4 gap-3">
+        <MiniStat label="Pico Áudio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico Vídeo · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Áudio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Vídeo" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+      </div>
+
+      {/* Dominância */}
+      <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: dark, opacity: 0.6 }}>Composição da audiência (6 meses)</span>
+          <span className="text-[10px] font-bold" style={{ color: dark, opacity: 0.6 }}>
+            <span style={{ color: audioColor, fontWeight: 900 }}>{totals.dominance}%</span> áudio · <span style={{ color: videoColor, fontWeight: 900 }}>{100 - totals.dominance}%</span> vídeo
+          </span>
+        </div>
+        <div className="h-3 rounded-full overflow-hidden flex" style={{ background: `${cyan}22` }}>
+          <div style={{ width: `${totals.dominance}%`, background: audioColor }} />
+          <div style={{ width: `${100 - totals.dominance}%`, background: videoColor }} />
+        </div>
+      </div>
+
+      {/* Tendência diária */}
+      <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
+          Tendência diária · Áudio vs Vídeo
+        </div>
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={data.map((r) => ({ day: fmtDay(r.day), audio: r.audio, video: r.video }))}>
+            <CartesianGrid strokeDasharray="3 3" stroke={`${cyan}33`} />
+            <XAxis dataKey="day" tick={{ fill: dark, fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
+            <YAxis tick={{ fill: dark, fontSize: 10 }} />
+            <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${cyan}`, borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+            <Line type="monotone" dataKey="audio" stroke={audioColor} strokeWidth={2.5} dot={false} name="Áudio" />
+            <Line type="monotone" dataKey="video" stroke={videoColor} strokeWidth={2.5} dot={false} name="Vídeo" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Comparação mensal */}
+      <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
+          Comparação mensal · Média por mês
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={monthly} barGap={4}>
+            <CartesianGrid strokeDasharray="3 3" stroke={`${cyan}33`} />
+            <XAxis dataKey="month" tick={{ fill: dark, fontSize: 10 }} />
+            <YAxis tick={{ fill: dark, fontSize: 10 }} />
+            <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${cyan}`, borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+            <Bar dataKey="audio" fill={audioColor} name="Áudio" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="video" fill={videoColor} name="Vídeo" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="text-[10px] font-bold uppercase tracking-widest text-center" style={{ color: dark, opacity: 0.55 }}>
+        Baseado em registros a cada 15 min · retenção de 6 meses
+      </div>
+    </div>
+  );
+}
+
