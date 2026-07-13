@@ -118,14 +118,29 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   };
 
   const [dismissing, setDismissing] = useState<Set<string>>(new Set());
+  const [confirming, setConfirming] = useState<Set<string>>(new Set());
 
   const encerrarEvento = (evtId: string) => {
-    setDismissing((cur) => {
+    // Phase 1 — confirmation flash (green glow + check pop)
+    setConfirming((cur) => {
       const s = new Set(cur);
       s.add(evtId);
       return s;
     });
-    // Wait for the smoke animation to finish before removing the item
+    // Phase 2 — smoke out
+    window.setTimeout(() => {
+      setConfirming((cur) => {
+        const s = new Set(cur);
+        s.delete(evtId);
+        return s;
+      });
+      setDismissing((cur) => {
+        const s = new Set(cur);
+        s.add(evtId);
+        return s;
+      });
+    }, 520);
+    // Phase 3 — actually remove + persist
     window.setTimeout(async () => {
       const prev = eventos;
       setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
@@ -136,8 +151,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       });
       const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
       if (error) setEventos(prev);
-    }, 640);
+    }, 520 + 640);
   };
+
 
 
 
