@@ -87,6 +87,7 @@ export default function PromocoesKiosk() {
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
+  const [coverIndex, setCoverIndex] = useState<number | null>(null);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
