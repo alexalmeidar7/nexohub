@@ -2373,6 +2373,8 @@ export default function AgendaPage() {
               </div>
             </div>
 
+            {/* Upcoming + Past Events (side by side) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Upcoming 7 days */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
