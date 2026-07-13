@@ -1,12 +1,61 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, CheckCircle, Bold, Italic, Underline, Palette, Droplets } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, MessageSquareQuote, Bold, Italic, Underline, Palette } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
-const TOOLBAR_COLORS = ["#000000", "#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed", "#db2777", "#ffffff"];
+// Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+
+const TOOLBAR_COLORS = ["#000000", "#dc2626", "#2563eb", "#16a34a", "#d97706", "#7c3aed", "#db2777", CYAN];
+
+const pillInput: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${CYAN}`,
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 13,
+  color: DARK,
+  outline: "none",
+};
+
+const pillSelect: React.CSSProperties = {
+  ...pillInput,
+  appearance: "none",
+  backgroundImage:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2300BFF0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 18px center",
+  paddingRight: 44,
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: DARK,
+  marginBottom: 8,
+  display: "block",
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelStyle}>{label}</label>
+      {children}
+    </div>
+  );
+}
 
 function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HTMLDivElement>; onInput: () => void }) {
   const [showColors, setShowColors] = useState(false);
@@ -18,28 +67,36 @@ function RichTextToolbar({ editorRef, onInput }: { editorRef: React.RefObject<HT
   };
 
   const btnStyle: React.CSSProperties = {
-    background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-    color: "var(--layout-page-text, #1a1a1a)",
-    border: "none",
-    borderRadius: "6px",
-    width: 28,
-    height: 28,
+    background: "#FFFFFF",
+    color: DARK,
+    border: `1px solid ${CYAN}`,
+    borderRadius: 999,
+    width: 30,
+    height: 30,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    position: "relative" as const,
+    position: "relative",
   };
 
   return (
-    <div style={{ display: "flex", gap: 4, padding: "6px 8px", borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)", borderRadius: "12px 12px 0 0" }}>
+    <div style={{
+      display: "flex",
+      gap: 6,
+      padding: "8px 12px",
+      background: CARD_BG,
+      borderBottom: `2px solid ${CYAN}`,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+    }}>
       <button type="button" style={btnStyle} onClick={() => exec("bold")} title="Negrito"><Bold size={14} /></button>
       <button type="button" style={btnStyle} onClick={() => exec("italic")} title="Itálico"><Italic size={14} /></button>
       <button type="button" style={btnStyle} onClick={() => exec("underline")} title="Sublinhado"><Underline size={14} /></button>
       <div style={{ position: "relative" }}>
         <button type="button" style={btnStyle} onClick={() => setShowColors(!showColors)} title="Cor do texto"><Palette size={14} /></button>
         {showColors && (
-          <div style={{ position: "absolute", top: 32, left: 0, zIndex: 20, background: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", borderRadius: 8, padding: 6, display: "flex", gap: 4, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+          <div style={{ position: "absolute", top: 36, left: 0, zIndex: 20, background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 16, padding: 8, display: "flex", gap: 5, boxShadow: "0 10px 24px rgba(10,37,64,0.15)" }}>
             {TOOLBAR_COLORS.map(c => (
               <button key={c} type="button" onClick={() => { exec("foreColor", c); setShowColors(false); }}
                 style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: c === "#ffffff" ? "1px solid #ccc" : "1px solid transparent", cursor: "pointer" }} />
@@ -66,10 +123,6 @@ interface Programa {
   id: string;
   nome: string;
 }
-
-const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px",
-};
 
 interface TestemunhaisPageProps {
   effectiveUserId?: string | null;
@@ -98,7 +151,6 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
       setDataUserId(effectiveUserId);
       return;
     }
-
     if (!user) return;
     let cancelled = false;
 
@@ -112,9 +164,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
         setDataUserId(data?.ativo && data.parent_user_id ? data.parent_user_id : user.id);
       });
 
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user, effectiveUserId]);
 
   const loadData = async (targetUserId = dataUserId) => {
@@ -168,6 +218,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     setDataFim(item.data_fim);
     setImagePreview(item.imagem_url || "");
     setImageFile(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const cancelEdit = () => {
@@ -177,7 +228,11 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !dataUserId || !texto || !dataInicio || !dataFim) return;
+    if (!user || !dataUserId) return;
+    if (!texto || !dataInicio || !dataFim) {
+      toast({ title: "Preencha texto, data de início e fim", variant: "destructive" });
+      return;
+    }
     setSaving(true);
 
     try {
@@ -228,6 +283,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
   };
 
   const handleDelete = async (id: string) => {
+    if (!confirm("Excluir esta citação?")) return;
     await supabase.from("testemunhais").delete().eq("id", id);
     await loadData();
   };
@@ -236,232 +292,429 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
   };
 
-  if (loading || !dataUserId) {
-    return (
-      <div className="nexo-scope">
-        <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent overflow-hidden">
-          <div className="h-full animate-pulse rounded-r" style={{ width: "60%", background: "var(--layout-accent-color, #e53e3e)", animation: "loadbar 1.2s ease-in-out infinite" }} />
-        </div>
-        <style>{`@keyframes loadbar { 0% { width: 10%; margin-left: 0; } 50% { width: 60%; margin-left: 20%; } 100% { width: 10%; margin-left: 90%; } }`}</style>
-        <ModulePageSkeleton variant="form" />
-      </div>
-    );
-  }
+  if (loading || !dataUserId) return <ModulePageSkeleton variant="form" />;
+
+  const today = new Date().toLocaleDateString("pt-BR");
 
   return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <ImageIcon size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-          </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Citações</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie depoimentos de clientes vinculados a programas</p>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-              {editingId ? "✏️ Editar Citação" : "➕ Nova Citação"}
-            </h3>
-            {editingId && (
-              <button type="button" onClick={cancelEdit}
-                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)", border: "1px solid rgba(255,255,255,0.3)" }}
-              >
-                <X size={10} /> Cancelar
-              </button>
-            )}
-          </div>
-
-          <div className="p-5">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Foto do Cliente</label>
-                  <div className="flex items-center gap-3">
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="preview" className="w-16 h-16 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                    ) : (
-                      <div className="w-16 h-16 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(13,4,70,0.04)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                        <ImageIcon size={20} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                      </div>
-                    )}
-                    <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold transition-all rounded-full"
-                      style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; (e.currentTarget as HTMLElement).style.color = "#ffffff"; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#ffffff"; (e.currentTarget as HTMLElement).style.color = "var(--layout-header-bg, #1a1a1a)"; }}
-                    >
-                      <Upload size={12} /> Enviar imagem
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Texto da Citação</label>
-                  <div style={{ ...inputStyle, borderRadius: "12px", overflow: "hidden" }}
-                    onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = "#be0101"; }}
-                    onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  >
-                    <RichTextToolbar editorRef={editorRef} onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }} />
-                    <div
-                      ref={editorRef}
-                      contentEditable
-                      suppressContentEditableWarning
-                      className="w-full px-4 py-2 text-sm outline-none min-h-[80px] max-h-[200px] overflow-y-auto"
-                      style={{ color: "var(--layout-page-text, #1a1a1a)", background: "transparent" }}
-                      onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }}
-                      data-placeholder="Relato do cliente..."
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Vínculo com Programa</label>
-                  <select value={programaId} onChange={(e) => setProgramaId(e.target.value)}
-                    className="w-full px-4 py-1.5 text-sm outline-none appearance-none"
-                    style={inputStyle}
-                    onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                  >
-                    <option value="">Selecione um programa</option>
-                    {programas.map((p) => (
-                      <option key={p.id} value={p.id}>{p.nome}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Início</label>
-                    <input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} required
-                      className="w-full px-4 py-1.5 text-sm outline-none"
-                      style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>Fim</label>
-                    <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} required
-                      className="w-full px-4 py-1.5 text-sm outline-none"
-                      style={inputStyle}
-                      onFocus={e => { e.currentTarget.style.borderColor = "#be0101"; }}
-                      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
-                    />
-                  </div>
-                </div>
-
-                <button type="submit" disabled={saving}
-                  className="btn-skyglass-accent w-full py-2.5 text-sm disabled:opacity-50"
-                >
-                  {saving ? <><Loader2 className="animate-spin" size={14} /> Salvando...</> : editingId ? "Atualizar Citação" : "Cadastrar Citação"}
-                </button>
-              </div>
+    <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD */}
+      <section
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div style={{ width: 40, height: 40, borderRadius: 999, background: CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <MessageSquareQuote size={20} style={{ color: "#FFFFFF" }} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
+                {editingId ? "Editar Citação" : "Nova Citação"}
+              </h3>
+              <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>
+                Depoimentos de clientes vinculados a programas
+              </p>
             </div>
           </div>
-        </form>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : today}</span>
+          </div>
+        </div>
 
-        {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📋 Citações Cadastradas</h3>
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            {/* Foto */}
+            <Field label="Foto do Cliente">
+              <div className="flex items-center gap-3">
+                {imagePreview ? (
+                  <img
+                    src={imagePreview}
+                    alt="preview"
+                    style={{ width: 56, height: 56, borderRadius: 999, objectFit: "cover", border: `2px solid ${CYAN}` }}
+                  />
+                ) : (
+                  <div style={{ width: 56, height: 56, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${CYAN}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <ImageIcon size={20} style={{ color: CYAN }} />
+                  </div>
+                )}
+                <label
+                  style={{
+                    ...pillInput,
+                    flex: 1,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                    fontWeight: 700,
+                    fontSize: 11,
+                    letterSpacing: 1.2,
+                    textTransform: "uppercase",
+                    cursor: "pointer",
+                    background: "#FFFFFF",
+                  }}
+                >
+                  <Upload size={14} /> Enviar imagem
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                </label>
+              </div>
+            </Field>
+
+            {/* Programa */}
+            <Field label="Vínculo com Programa">
+              <select style={pillSelect} value={programaId} onChange={(e) => setProgramaId(e.target.value)}>
+                <option value="">Selecione um programa</option>
+                {programas.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            </Field>
+
+            {/* Texto (full width) */}
+            <div className="md:col-span-2">
+              <Field label="Texto da Citação">
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: `2px solid ${CYAN}`,
+                    borderRadius: 20,
+                    overflow: "hidden",
+                  }}
+                >
+                  <RichTextToolbar
+                    editorRef={editorRef}
+                    onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }}
+                  />
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    suppressContentEditableWarning
+                    className="w-full px-5 py-3 text-sm outline-none min-h-[100px] max-h-[220px] overflow-y-auto"
+                    style={{ color: DARK, background: "transparent", fontFamily: "'Montserrat', sans-serif" }}
+                    onInput={() => { if (editorRef.current) setTexto(editorRef.current.innerHTML); }}
+                    data-placeholder="Relato do cliente..."
+                  />
+                </div>
+              </Field>
+            </div>
+
+            {/* Datas */}
+            <Field label="Início">
+              <input
+                type="date"
+                value={dataInicio}
+                onChange={(e) => setDataInicio(e.target.value)}
+                required
+                style={pillInput}
+              />
+            </Field>
+            <Field label="Fim">
+              <input
+                type="date"
+                value={dataFim}
+                onChange={(e) => setDataFim(e.target.value)}
+                required
+                style={pillInput}
+              />
+            </Field>
           </div>
 
-          {items.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhuma citação cadastrada.</p>
-          ) : (
-            <>
-              {/* Desktop table */}
-              <div className="hidden md:block">
-                <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "rgba(13,4,70,0.04)" }}>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Imagem</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Texto</th>
-                      <th className="px-4 py-2 text-left font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Programa</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Validade</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Editar</th>
-                      <th className="px-4 py-2 text-center font-semibold text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>Excluir</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item, i) => {
-                      const dias = diasRestantes(item.data_fim);
-                      return (
-                        <tr key={item.id} style={{ backgroundColor: i % 2 === 0 ? "#ffffff" : "#f8f8fc", borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-                          <td className="px-4 py-2">
-                            {item.imagem_url ? (
-                              <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                            ) : (
-                              <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>—</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 max-w-[200px]">
-                            <p className="truncate text-xs">{item.texto}</p>
-                          </td>
-                          <td className="px-4 py-2 text-xs">{item.programa?.nome || "Sem programa"}</td>
-                          <td className="px-4 py-2 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                              {dias}d restante{dias !== 1 ? "s" : ""}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button onClick={() => startEdit(item)} title="Editar" className="hover:opacity-70 transition-opacity">
-                              <Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-                            </button>
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button onClick={() => handleDelete(item.id)} title="Remover" className="hover:opacity-70 transition-opacity">
-                              <Trash2 size={14} style={{ color: "#dc2626" }} />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+          <div className="mt-8 flex items-center justify-end gap-3">
+            {editingId && (
+              <button
+                type="button"
+                onClick={cancelEdit}
+                style={{
+                  height: 44,
+                  padding: "0 22px",
+                  borderRadius: 999,
+                  background: "#FFFFFF",
+                  border: `2px solid ${CYAN}`,
+                  color: DARK,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+              >
+                <X size={16} /> Cancelar
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                height: 44,
+                padding: "0 28px",
+                borderRadius: 999,
+                background: LIME,
+                border: "none",
+                color: DARK,
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                cursor: saving ? "wait" : "pointer",
+                opacity: saving ? 0.7 : 1,
+                boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              {editingId ? "Atualizar Citação" : "Cadastrar Citação"}
+            </button>
+          </div>
+        </form>
+      </section>
 
-              {/* Mobile cards */}
-              <div className="md:hidden p-3 space-y-3">
-                {items.map((item) => {
-                  const dias = diasRestantes(item.data_fim);
-                  return (
-                    <div key={item.id} className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                      <div className="flex items-start gap-3">
-                        {item.imagem_url && (
-                          <img src={item.imagem_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }} />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs line-clamp-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{item.texto}</p>
-                          <p className="text-[10px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{item.programa?.nome || "Sem programa"}</p>
+      {/* LIST CARD */}
+      <section
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 28,
+          padding: "20px 24px 28px",
+          border: "1px solid #E5F5FB",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+          <div className="flex items-center gap-2" style={{ color: DARK }}>
+            <MessageSquareQuote size={18} style={{ color: CYAN }} />
+            <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+              Citações Cadastradas
+            </h3>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: CARD_BG,
+                color: DARK,
+                padding: "3px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {items.length}
+            </span>
+          </div>
+        </div>
+
+        {items.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0" }}>
+            Nenhuma citação cadastrada.
+          </p>
+        ) : (
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block" style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+              <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: CYAN, color: "#FFFFFF" }}>
+                    {["Imagem", "Texto", "Programa", "Validade", "Ações"].map((h) => (
+                      <th
+                        key={h}
+                        style={{
+                          padding: "12px 14px",
+                          textAlign: h === "Ações" ? "right" : "left",
+                          fontWeight: 800,
+                          letterSpacing: 1.2,
+                          textTransform: "uppercase",
+                          fontSize: 10,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, idx) => {
+                    const dias = diasRestantes(item.data_fim);
+                    const expiring = dias <= 3;
+                    return (
+                      <tr
+                        key={item.id}
+                        style={{
+                          background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                          color: DARK,
+                        }}
+                      >
+                        <td style={{ padding: "12px 14px" }}>
+                          {item.imagem_url ? (
+                            <img src={item.imagem_url} alt="" style={{ width: 40, height: 40, borderRadius: 999, objectFit: "cover", border: `2px solid ${CYAN}` }} />
+                          ) : (
+                            <span style={{ color: "#94A3B8" }}>—</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "12px 14px", maxWidth: 260 }}>
+                          <div
+                            className="truncate"
+                            style={{ fontSize: 12 }}
+                            dangerouslySetInnerHTML={{ __html: item.texto }}
+                          />
+                        </td>
+                        <td style={{ padding: "12px 14px" }}>{item.programa?.nome || "—"}</td>
+                        <td style={{ padding: "12px 14px" }}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              fontWeight: 800,
+                              fontSize: 10,
+                              letterSpacing: 1,
+                              textTransform: "uppercase",
+                              background: expiring ? "#FEE2E2" : CARD_BG,
+                              color: expiring ? "#DC2626" : DARK,
+                            }}
+                          >
+                            {dias}d {dias === 1 ? "restante" : "restantes"}
+                          </span>
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                          <div style={{ display: "inline-flex", gap: 6 }}>
+                            <button
+                              onClick={() => startEdit(item)}
+                              title="Editar"
+                              style={{
+                                width: 30, height: 30, borderRadius: "50%",
+                                background: CARD_BG, border: "none", cursor: "pointer",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                color: DARK,
+                              }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              title="Excluir"
+                              style={{
+                                width: 30, height: 30, borderRadius: "50%",
+                                background: "#FEE2E2", border: "none", cursor: "pointer",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                color: "#DC2626",
+                              }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {items.map((item) => {
+                const dias = diasRestantes(item.data_fim);
+                const expiring = dias <= 3;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      background: "#FFFFFF",
+                      border: `1px solid ${CARD_BG}`,
+                      borderRadius: 20,
+                      padding: 14,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 10,
+                      boxShadow: "0 2px 8px rgba(10, 37, 64, 0.04)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                      {item.imagem_url ? (
+                        <img src={item.imagem_url} alt="" style={{ width: 44, height: 44, borderRadius: 999, objectFit: "cover", border: `2px solid ${CYAN}`, flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 999, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <ImageIcon size={16} style={{ color: CYAN }} />
                         </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${dias <= 3 ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700"}`}>
-                          {dias}d restante{dias !== 1 ? "s" : ""}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <button onClick={() => startEdit(item)}><Pencil size={14} style={{ color: "var(--layout-page-text, #1a1a1a)" }} /></button>
-                          <button onClick={() => handleDelete(item.id)}><Trash2 size={14} style={{ color: "#dc2626" }} /></button>
-                        </div>
+                      )}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          className="line-clamp-2"
+                          style={{ fontSize: 12, color: DARK }}
+                          dangerouslySetInnerHTML={{ __html: item.texto }}
+                        />
+                        <p style={{ fontSize: 10, color: "#64748B", marginTop: 4, fontWeight: 600 }}>
+                          {item.programa?.nome || "Sem programa"}
+                        </p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          fontWeight: 800,
+                          fontSize: 10,
+                          letterSpacing: 1,
+                          textTransform: "uppercase",
+                          background: expiring ? "#FEE2E2" : CARD_BG,
+                          color: expiring ? "#DC2626" : DARK,
+                        }}
+                      >
+                        {dias}d {dias === 1 ? "restante" : "restantes"}
+                      </span>
+                      <div style={{ display: "flex", gap: 6 }}>
+                        <button
+                          onClick={() => startEdit(item)}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: CARD_BG, border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: DARK,
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626",
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }
