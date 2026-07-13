@@ -536,7 +536,24 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
           40%  { opacity: 0.85; transform: scale(1.15); }
           100% { opacity: 0; transform: scale(1.6); }
         }
+        @keyframes evtConfirmPulse {
+          0%   { transform: scale(1); }
+          40%  { transform: scale(1.035); }
+          100% { transform: scale(1); }
+        }
+        @keyframes evtConfirmGlow {
+          0%   { opacity: 0; }
+          35%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        @keyframes evtCheckPop {
+          0%   { opacity: 0; transform: scale(0.4); }
+          45%  { opacity: 1; transform: scale(1.15); }
+          70%  { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(0.9); }
+        }
       `}</style>
+
     </div>
   );
 }
