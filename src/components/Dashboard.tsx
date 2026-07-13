@@ -1081,8 +1081,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {isDashboard && (
-          <div className="px-3 lg:px-6 pb-4 relative z-[1]">
+        {isDashboard && displayedPill !== "Chatbot" && (
+          <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
+
             <div className="flex flex-row gap-4 items-stretch">
             <div
               className="rounded-3xl relative shrink min-w-0"
