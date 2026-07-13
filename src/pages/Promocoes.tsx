@@ -667,7 +667,33 @@ export default function PromocoesKiosk() {
 
         {/* Banner rotativo + capa do programa no ar */}
         {(() => {
-          const onAirProg = onAirProgram ? programas.find(p => p.nome === onAirProgram.nome) : null;
+          // Programas ordenados pela grade (horário de início), deduplicados por nome
+          const scheduleList = Array.from(
+            programas
+              .slice()
+              .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+              .reduce((map, p) => {
+                const key = p.nome.trim().toLowerCase();
+                if (!map.has(key)) map.set(key, p);
+                return map;
+              }, new Map<string, ProgramaGrade>())
+              .values(),
+          );
+          const onAirIdx = onAirProgram
+            ? scheduleList.findIndex(p => p.nome === onAirProgram.nome)
+            : -1;
+          const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
+          const currentProg = scheduleList[activeIdx] ?? null;
+          const goPrev = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!scheduleList.length) return;
+            setCoverIndex((activeIdx - 1 + scheduleList.length) % scheduleList.length);
+          };
+          const goNext = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            if (!scheduleList.length) return;
+            setCoverIndex((activeIdx + 1) % scheduleList.length);
+          };
           return (
             <div className="w-full flex gap-4 items-stretch">
               <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 276 }}>
