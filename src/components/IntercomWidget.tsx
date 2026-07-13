@@ -502,11 +502,11 @@ export default function IntercomWidget() {
   }, [listenerVolume]);
 
   const glassStyle = {
-    backgroundColor: "rgba(0,0,0,0.75)",
-    backdropFilter: "blur(24px)",
-    WebkitBackdropFilter: "blur(24px)",
-    boxShadow: "0 12px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    backgroundColor: "#ffffff",
+    backdropFilter: "none",
+    WebkitBackdropFilter: "none",
+    boxShadow: "0 20px 50px rgba(0,33,50,0.18), 0 0 0 4px rgba(0,191,240,0.06)",
+    border: "1px solid rgba(0,191,240,0.22)",
   } as const;
 
   // ─── FAB (hidden — trigger is provided by Dashboard box) ───
