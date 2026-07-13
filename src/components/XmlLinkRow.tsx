@@ -28,6 +28,11 @@ function sanitizeFileName(label: string, scopeKey?: string): string {
   return `${base}${scope}.xml`;
 }
 
+function sanitizeFolder(id: string): string {
+  return id.toLowerCase().replace(/[^a-z0-9\-]/g, "");
+}
+
+
 export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact, scopeKey }: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
