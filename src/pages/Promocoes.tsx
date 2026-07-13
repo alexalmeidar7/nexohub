@@ -94,6 +94,15 @@ export default function PromocoesKiosk() {
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [peakAudience, setPeakAudience] = useState<{ total: number; programa: string; locutor: string; timestamp: string; date: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem("promo-peak-audience");
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      const today = new Date().toISOString().split("T")[0];
+      return p?.date === today ? p : null;
+    } catch { return null; }
+  });
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
