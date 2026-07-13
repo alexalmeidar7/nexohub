@@ -1066,12 +1066,38 @@ function MockupPreview({
 
       {/* ── Top bar ── */}
       <div className="absolute flex items-center justify-between" style={{ top: "5%", left: "4%", right: "4%" }}>
-        {/* Logo empresa */}
+        {/* Logo empresa + logos patrocinadores ao lado */}
         <div className="flex items-center gap-3">
           {empresaLogo ? (
             <img src={empresaLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
           ) : (
             <div className="h-10 w-10 rounded-full flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: accentColor, color: "#000" }}>LOGO</div>
+          )}
+          {sponsorLogos.length > 0 && (
+            <div className="flex items-center gap-2 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.15)" }}>
+              {currentSponsor && (
+                <div
+                  className="transition-all duration-400 bg-white/90 rounded-md px-2 py-1 flex items-center"
+                  style={{
+                    opacity: sponsorVisible ? 1 : 0,
+                    transform: sponsorVisible ? "scale(1)" : "scale(0.92)",
+                    height: 40,
+                  }}
+                  title={currentSponsor.nome}
+                >
+                  <img
+                    src={currentSponsor.logo_url}
+                    alt={currentSponsor.nome}
+                    className="h-6 max-w-[120px] object-contain"
+                  />
+                </div>
+              )}
+              {sponsorLogos.length > 1 && (
+                <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "#ffffff50" }}>
+                  +{sponsorLogos.length - 1}
+                </span>
+              )}
+            </div>
           )}
         </div>
 
@@ -1089,26 +1115,11 @@ function MockupPreview({
         </div>
       </div>
 
-      {/* ── Center: QR Code (if enabled) ── */}
-      {showQrCode && whatsappNumber && (
-        <div className="absolute flex flex-col items-center gap-1" style={{ bottom: "28%", left: "4%" }}>
-          <div className="bg-white rounded-lg p-2 shadow-lg" style={{ boxShadow: `0 4px 20px ${accentColor}30` }}>
-            <QRCodeSVG
-              value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
-              size={56}
-              bgColor="#ffffff"
-              fgColor="#111111"
-            />
-          </div>
-          <span className="text-[7px] font-semibold uppercase tracking-wider" style={{ color: "#ffffff50" }}>WhatsApp</span>
-        </div>
-      )}
-
       {/* ── Bottom section ── */}
       <div className="absolute" style={{ bottom: "4%", left: "4%", right: "4%" }}>
 
-        {/* Locutor + Assunto + Social row */}
-        <div className="flex items-end">
+        {/* Locutor + QR + Assunto + Insert Live row */}
+        <div className="flex items-end gap-2">
           <div className="flex-shrink-0" style={{ maxWidth: "45%" }}>
             {/* Locutor box */}
             <div
@@ -1172,31 +1183,31 @@ function MockupPreview({
             </div>
           </div>
 
-          {/* Sponsor logo + Social item cycling */}
+          {/* QR Code ao lado do locutor */}
+          {showQrCode && whatsappNumber && (
+            <div className="flex flex-col items-center gap-1 flex-shrink-0 pb-1">
+              <div className="bg-white rounded-lg p-1.5 shadow-lg" style={{ boxShadow: `0 4px 20px ${accentColor}30` }}>
+                <QRCodeSVG
+                  value={`https://wa.me/${whatsappNumber.replace(/\D/g, "")}`}
+                  size={64}
+                  bgColor="#ffffff"
+                  fgColor="#111111"
+                />
+              </div>
+              <span className="text-[7px] font-semibold uppercase tracking-wider" style={{ color: "#ffffff70" }}>WhatsApp</span>
+            </div>
+          )}
+
+          {/* Insert Live + Social item */}
           <div className="flex-1 flex flex-col items-end justify-end pb-2 pr-1 gap-2" style={{ minHeight: 40 }}>
-            {/* Insert Live art (above sponsor) */}
+            {/* Insert Live art — banner grande */}
             {insertLiveArt && (
               <img
                 src={insertLiveArt}
                 alt="Insert Live"
-                className="h-[60px] max-w-[180px] object-contain"
+                className="object-contain"
+                style={{ height: 120, maxWidth: 360, filter: `drop-shadow(0 6px 18px ${accentColor}55)` }}
               />
-            )}
-            {/* Sponsor logo */}
-            {currentSponsor && (
-              <div
-                className="transition-all duration-400"
-                style={{
-                  opacity: sponsorVisible ? 1 : 0,
-                  transform: sponsorVisible ? "scale(1)" : "scale(0.9)",
-                }}
-              >
-                <img
-                  src={currentSponsor.logo_url}
-                  alt={currentSponsor.nome}
-                  className="h-[52px] max-w-[160px] object-contain"
-                />
-              </div>
             )}
             {/* Social item */}
             {currentSocial && (
