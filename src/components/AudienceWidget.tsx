@@ -411,6 +411,46 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     return ok;
   };
 
+  const probeXPath = async (kind: "audio" | "video") => {
+    const url = (kind === "audio" ? sources.audio_stream_api_url : sources.video_stream_api_url).trim();
+    setProbeError(null);
+    if (kind === "audio") setAudioSuggestions([]);
+    else setVideoSuggestions([]);
+    if (!url) {
+      setProbeError("Informe a URL antes de detectar o XPath.");
+      return;
+    }
+    setProbing(kind);
+    try {
+      const { data, error } = await supabase.functions.invoke("probe-stream-xpath", { body: { url } });
+      if (error || !data || !(data as any).ok) {
+        setProbeError("Não foi possível analisar a resposta do servidor.");
+        return;
+      }
+      const list = ((data as any).suggestions || []) as Array<{ xpath: string; value: number }>;
+      if (list.length === 0) {
+        setProbeError("Nenhum campo numérico plausível de audiência encontrado.");
+        return;
+      }
+      if (kind === "audio") {
+        setAudioSuggestions(list);
+        // Auto-fill with the best suggestion
+        setSources((s) => ({ ...s, audio_stream_xpath: list[0].xpath }));
+        setAudioXPathError(null);
+      } else {
+        setVideoSuggestions(list);
+        setSources((s) => ({ ...s, video_stream_xpath: list[0].xpath }));
+        setVideoXPathError(null);
+      }
+    } catch {
+      setProbeError("Falha ao consultar o servidor.");
+    } finally {
+      setProbing(null);
+    }
+  };
+
+
+
 
 
 
