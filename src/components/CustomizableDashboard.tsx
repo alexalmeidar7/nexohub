@@ -2427,12 +2427,18 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
           {/* Status label — only in standard mode */}
           {!compactMode && (
-            <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center justify-between gap-2">
               <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
                 {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
               </span>
+              {isPlaying && !isLoading && (
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 flex-shrink-0">
+                  {isVideo ? "vídeo" : "áudio"}
+                </span>
+              )}
             </div>
           )}
+
 
           {/* Song info — inline in compact, pinned bottom in standard */}
           <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-auto pr-16"}>
