@@ -536,238 +536,345 @@ export default function BroadcastPage() {
     void handleSave(next);
   }, [handleSave]);
 
+  const NAVY = "#0A2540";
+  const NAVY_DEEP = "#07192b";
+  const NAVY_BORDER = "#1a3a5a";
+  const CYAN = "#00BFF0";
+  const LIME = "#C6F03C";
+
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: NAVY_DEEP,
+    border: `1px solid ${NAVY_BORDER}`,
+    color: "#fff",
+    outline: "none",
+  };
+
   return (
-    <div className="nexo-scope flex flex-col lg:flex-row gap-4 h-full min-h-0 px-2 pt-2 pb-4">
-      {/* ── Left: Mockup Preview ── */}
-      <div className="flex-1 min-w-0">
-        <MockupPreview
-          empresaLogo={empresaLogo}
-          programaNome={programaNome}
-          programaLogo={programaLogo}
-          displayLocutor={displayLocutor}
-          locutorInstagram={locutorInstagram}
-          locutorFoto={locutorFoto}
-          accentColor={accentColor}
-          assunto={data.assunto}
-          showQrCode={data.showQrCode}
-          whatsappNumber={whatsappNumber}
-          empresaSocials={empresaSocials}
-          composedTicker={composedTicker}
-          sponsorLogos={sponsorLogos}
-          assuntoBgUrl={effectiveAssuntoBgUrl}
-          insertLiveArt={insertLiveArt}
-        />
-      </div>
-
-      {/* ── Right: Form controls stacked ── */}
-      <div className="w-full lg:w-[360px] flex-shrink-0 overflow-y-auto" style={{ maxHeight: "calc(100vh - 180px)" }}>
-        <div className="grid grid-cols-1 gap-4">
-
-          {/* Card: Assunto + Locutor */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Identidade</h3>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Assunto / Título</label>
-              <input
-                type="text"
-                value={data.assunto}
-                onChange={e => setData({ ...data, assunto: e.target.value })}
-                placeholder="Base para assunto"
-                className="w-full px-3 py-2 rounded-xl text-xs outline-none"
-                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
-                onBlur={onFieldBlur}
+    <div className="nexo-scope px-2 pt-2 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <div
+        className="w-full flex flex-col lg:flex-row overflow-hidden rounded-2xl shadow-2xl h-full min-h-0"
+        style={{ backgroundColor: NAVY, border: `4px solid ${NAVY}` }}
+      >
+        {/* ── Left: Preview + tactical strip ── */}
+        <div className="flex-1 min-w-0 flex flex-col" style={{ backgroundColor: NAVY_DEEP, borderRight: `1px solid ${NAVY_BORDER}` }}>
+          {/* Preview header */}
+          <div className="px-4 py-3 flex justify-between items-center" style={{ backgroundColor: NAVY }}>
+            <div className="flex items-center gap-3">
+              <div
+                className="w-3 h-3 rounded-full animate-pulse"
+                style={{ backgroundColor: "#dc2626", boxShadow: "0 0 10px rgba(220,38,38,0.8)" }}
               />
-            </div>
-
-            <div className="space-y-1 relative">
-              <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Locutor (override)</label>
-              <div className="relative">
-                <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "var(--layout-icon-color, #888)" }} />
-                <input
-                  type="text"
-                  value={data.locutor_override}
-                  onChange={async e => {
-                    const val = e.target.value;
-                    setData({ ...data, locutor_override: val });
-                    if (val.trim().length >= 2 && user) {
-                      const { data: results } = await supabase
-                        .from("apresentadores")
-                        .select("nome, instagram, foto")
-                        .eq("user_id", user.id)
-                        .ilike("nome", `%${val.trim()}%`)
-                        .limit(5);
-                      setLocutorSearchResults(results || []);
-                      setShowLocutorDropdown(true);
-                    } else {
-                      setLocutorSearchResults([]);
-                      setShowLocutorDropdown(false);
-                    }
-                  }}
-                  onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-                  onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                  placeholder={locutorNome || "Buscar locutor..."}
-                  className="w-full pl-7 pr-3 py-2 rounded-xl text-xs outline-none"
-                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
-                />
-              </div>
-              {showLocutorDropdown && locutorSearchResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 rounded-xl shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}>
-                  {locutorSearchResults.map((r, i) => (
-                    <button
-                      key={i}
-                      onMouseDown={e => {
-                        e.preventDefault();
-                        setData({ ...data, locutor_override: r.nome });
-                        if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
-                        if (r.foto) setLocutorFoto(r.foto);
-                        setShowLocutorDropdown(false);
-                        setLocutorSearchResults([]);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs hover:brightness-110 transition-all flex items-center gap-2"
-                      style={{ color: "var(--layout-page-text, #1a1a1a)", borderBottom: i < locutorSearchResults.length - 1 ? "1px solid color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" : "none" }}
-                    >
-                      {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
-                      <span className="font-semibold flex-1 truncate">{r.nome}</span>
-                      {r.instagram && <span className="text-[10px]" style={{ color: "var(--layout-accent-color, #dc2626)" }}>@{r.instagram.replace("@", "")}</span>}
-                    </button>
-                  ))}
-                </div>
+              <span className="text-white font-extrabold tracking-tight text-sm uppercase">Program Preview</span>
+              {programaNome && (
+                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#ffffff80" }}>
+                  / {programaNome}
+                </span>
               )}
             </div>
-
-            {/* Background image upload for Assunto */}
-            <div className="space-y-1 pt-2 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-              <label className="text-[10px] font-semibold uppercase tracking-wider flex items-center justify-between" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                <span>Fundo do Assunto (.png)</span>
-                {data.assuntoBgUrl && (
-                  <label className="flex items-center gap-1 cursor-pointer normal-case tracking-normal text-[9px]">
-                    <input
-                      type="checkbox"
-                      checked={data.useCustomAssuntoBg}
-                      onChange={e => {
-                        const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
-                        setData(next);
-                        void handleSave(next);
-                      }}
-                      style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
-                    />
-                    Usar
-                  </label>
-                )}
-              </label>
-              {data.assuntoBgUrl ? (
-                <div className="relative rounded-xl overflow-hidden" style={{ backgroundColor: "#0a0a0a", aspectRatio: "16/4" }}>
-                  <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
-                  <button
-                    onClick={removeBgImage}
-                    className="absolute top-1 right-1 p-1 rounded-full"
-                    style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
-                    title="Remover"
-                  >
-                    <X size={11} />
-                  </button>
-                </div>
-              ) : (
-                <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl cursor-pointer text-[11px] font-medium border-2 border-dashed" style={{ borderColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", color: "var(--layout-icon-color, #888)" }}>
-                  {uploadingBg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                  <span>{uploadingBg ? "Enviando..." : "Enviar PNG"}</span>
-                  <input
-                    type="file"
-                    accept="image/png"
-                    className="hidden"
-                    onChange={e => {
-                      const f = e.target.files?.[0];
-                      if (f) handleBgUpload(f);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-              )}
-              <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
-                Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
-              </p>
-
-              {/* Vincular fundo a programas */}
-              {data.assuntoBgUrl && (
-                <div className="space-y-1 pt-2 relative">
-                  <label className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    Vincular a programas
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => setShowProgramDropdown(v => !v)}
-                    className="w-full px-3 py-2 rounded-xl text-[11px] outline-none text-left flex items-center justify-between"
-                    style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
-                  >
-                    <span className="truncate">
-                      {data.assuntoBgProgramaIds.length === 0
-                        ? "Todos os programas (global)"
-                        : `${data.assuntoBgProgramaIds.length} programa(s) selecionado(s)`}
-                    </span>
-                    <span className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>{showProgramDropdown ? "▲" : "▼"}</span>
-                  </button>
-                  {showProgramDropdown && (
-                    <div
-                      className="absolute z-50 w-full mt-1 rounded-xl shadow-lg overflow-y-auto max-h-48"
-                      style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
-                    >
-                      {allProgramas.length === 0 ? (
-                        <div className="px-3 py-2 text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Nenhum programa cadastrado</div>
-                      ) : (
-                        allProgramas.map(p => {
-                          const checked = data.assuntoBgProgramaIds.includes(p.id);
-                          return (
-                            <label
-                              key={p.id}
-                              className="flex items-center gap-2 px-3 py-2 cursor-pointer hover:brightness-110"
-                              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={e => {
-                                  const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
-                                  if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
-                                  const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
-                                  setData(next);
-                                  void handleSave(next);
-                                }}
-                                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
-                              />
-                              <span className="text-[11px] flex-1 truncate">{p.nome}</span>
-                            </label>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                  <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>
-                    Vazio = aplica em todos. Selecione múltiplos para reusar a mesma arte.
-                  </p>
-                </div>
-              )}
+            <div className="flex gap-2 items-center">
+              {saving && <Loader2 size={12} className="animate-spin text-white/60" />}
+              <span className="px-3 py-1 text-[10px] font-bold rounded-full" style={{ backgroundColor: "#dc2626", color: "#fff" }}>LIVE</span>
+              <span className="px-3 py-1 text-[10px] font-bold rounded-full" style={{ backgroundColor: CYAN, color: NAVY }}>vMix</span>
             </div>
           </div>
 
-          {/* Card: Redes Sociais */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Redes Sociais</h3>
+          {/* 16:9 canvas */}
+          <div className="w-full">
+            <MockupPreview
+              empresaLogo={empresaLogo}
+              programaNome={programaNome}
+              programaLogo={programaLogo}
+              displayLocutor={displayLocutor}
+              locutorInstagram={locutorInstagram}
+              locutorFoto={locutorFoto}
+              accentColor={accentColor}
+              assunto={data.assunto}
+              showQrCode={data.showQrCode}
+              whatsappNumber={whatsappNumber}
+              empresaSocials={empresaSocials}
+              composedTicker={composedTicker}
+              sponsorLogos={sponsorLogos}
+              assuntoBgUrl={effectiveAssuntoBgUrl}
+              insertLiveArt={insertLiveArt}
+            />
+          </div>
+
+          {/* Tactical status grid (real telemetry, no fake controls) */}
+          <div className="flex-1 p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
+            <div className="col-span-4 flex justify-between items-center mb-1">
+              <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Status do Broadcast</h3>
+              <span className="text-[9px] font-mono uppercase" style={{ color: "#ffffff40" }}>Live · XML sync</span>
+            </div>
+
+            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
+              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Locutor</span>
+              <span className="text-xs font-black text-white truncate">{displayLocutor}</span>
+            </div>
+
+            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
+              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Assunto</span>
+              <span className="text-xs font-black text-white truncate" title={data.assunto}>
+                {data.assunto || "—"}
+              </span>
+            </div>
+
+            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
+              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Patrocínios</span>
+              <span className="text-xs font-black" style={{ color: CYAN }}>{sponsorLogos.length}</span>
+            </div>
+
+            <div
+              className="rounded-xl border-2 p-3 flex flex-col justify-between h-16"
+              style={{
+                backgroundColor: insertLiveArt ? "rgba(198,240,60,0.08)" : NAVY,
+                borderColor: insertLiveArt ? "rgba(198,240,60,0.4)" : NAVY_BORDER,
+              }}
+            >
+              <span className="text-[9px] font-bold uppercase" style={{ color: insertLiveArt ? LIME : "#ffffff60" }}>Insert Live</span>
+              <span className="text-xs font-black" style={{ color: insertLiveArt ? LIME : "#fff" }}>
+                {insertLiveArt ? `${insertLiveSchedule.length} slots` : "off"}
+              </span>
+            </div>
+
+            {/* Overlay indicators */}
+            <div className="col-span-2 p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY, border: `1px solid ${NAVY_BORDER}` }}>
+              <span className="text-white text-xs font-bold uppercase tracking-wide">Overlay · Identidade</span>
+              <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: LIME }}>
+                <div className="absolute right-1 top-1 w-3 h-3 rounded-full" style={{ backgroundColor: NAVY }} />
+              </div>
+            </div>
+            <div className="col-span-2 p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY, border: `1px solid ${NAVY_BORDER}` }}>
+              <span className="text-white text-xs font-bold uppercase tracking-wide">Overlay · Ticker</span>
+              <div
+                className="w-10 h-5 rounded-full relative"
+                style={{ backgroundColor: composedTicker ? LIME : "rgba(255,255,255,0.1)" }}
+              >
+                <div
+                  className={`absolute top-1 w-3 h-3 rounded-full ${composedTicker ? "right-1" : "left-1"}`}
+                  style={{ backgroundColor: composedTicker ? NAVY : "rgba(255,255,255,0.4)" }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right: dark sidebar with parameter panels ── */}
+        <div className="w-full lg:w-[360px] shrink-0 overflow-y-auto" style={{ backgroundColor: NAVY, maxHeight: "calc(100vh - 180px)" }}>
+
+          {/* Identidade */}
+          <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: CYAN }} />
+              <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Identidade</h2>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Assunto / Título</label>
+                <input
+                  type="text"
+                  value={data.assunto}
+                  onChange={e => setData({ ...data, assunto: e.target.value })}
+                  onBlur={onFieldBlur}
+                  placeholder="Base para assunto"
+                  className="w-full px-3 py-2 rounded-lg text-xs focus:border-[#00BFF0]"
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className="relative">
+                <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Locutor (override)</label>
+                <div className="relative">
+                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "#ffffff60" }} />
+                  <input
+                    type="text"
+                    value={data.locutor_override}
+                    onChange={async e => {
+                      const val = e.target.value;
+                      setData({ ...data, locutor_override: val });
+                      if (val.trim().length >= 2 && user) {
+                        const { data: results } = await supabase
+                          .from("apresentadores")
+                          .select("nome, instagram, foto")
+                          .eq("user_id", user.id)
+                          .ilike("nome", `%${val.trim()}%`)
+                          .limit(5);
+                        setLocutorSearchResults(results || []);
+                        setShowLocutorDropdown(true);
+                      } else {
+                        setLocutorSearchResults([]);
+                        setShowLocutorDropdown(false);
+                      }
+                    }}
+                    onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
+                    onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
+                    placeholder={locutorNome || "Buscar locutor..."}
+                    className="w-full pl-7 pr-3 py-2 rounded-lg text-xs"
+                    style={inputStyle}
+                  />
+                </div>
+                {showLocutorDropdown && locutorSearchResults.length > 0 && (
+                  <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                    {locutorSearchResults.map((r, i) => (
+                      <button
+                        key={i}
+                        onMouseDown={e => {
+                          e.preventDefault();
+                          setData({ ...data, locutor_override: r.nome });
+                          if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
+                          if (r.foto) setLocutorFoto(r.foto);
+                          setShowLocutorDropdown(false);
+                          setLocutorSearchResults([]);
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 text-white hover:bg-white/5"
+                        style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
+                      >
+                        {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
+                        <span className="font-semibold flex-1 truncate">{r.nome}</span>
+                        {r.instagram && <span className="text-[10px]" style={{ color: CYAN }}>@{r.instagram.replace("@", "")}</span>}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Fundo do Assunto */}
+              <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+                <label className="text-[10px] font-bold uppercase mb-1 flex items-center justify-between" style={{ color: "#ffffff80" }}>
+                  <span>Fundo do Assunto (.png)</span>
+                  {data.assuntoBgUrl && (
+                    <label className="flex items-center gap-1 cursor-pointer normal-case tracking-normal text-[9px]" style={{ color: "#fff" }}>
+                      <input
+                        type="checkbox"
+                        checked={data.useCustomAssuntoBg}
+                        onChange={e => {
+                          const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
+                          setData(next);
+                          void handleSave(next);
+                        }}
+                        style={{ accentColor: CYAN }}
+                      />
+                      Usar
+                    </label>
+                  )}
+                </label>
+                {data.assuntoBgUrl ? (
+                  <div className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#000", aspectRatio: "16/4" }}>
+                    <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
+                    <button
+                      onClick={removeBgImage}
+                      className="absolute top-1 right-1 p-1 rounded-full"
+                      style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
+                      title="Remover"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg cursor-pointer text-[11px] font-medium border-2 border-dashed" style={{ borderColor: NAVY_BORDER, color: "#ffffff80" }}>
+                    {uploadingBg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                    <span>{uploadingBg ? "Enviando..." : "Enviar PNG"}</span>
+                    <input
+                      type="file"
+                      accept="image/png"
+                      className="hidden"
+                      onChange={e => {
+                        const f = e.target.files?.[0];
+                        if (f) handleBgUpload(f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
+                <p className="text-[9px] mt-1" style={{ color: "#ffffff50" }}>
+                  Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
+                </p>
+
+                {data.assuntoBgUrl && (
+                  <div className="pt-2 relative">
+                    <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>
+                      Vincular a programas
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowProgramDropdown(v => !v)}
+                      className="w-full px-3 py-2 rounded-lg text-[11px] text-left flex items-center justify-between text-white"
+                      style={inputStyle}
+                    >
+                      <span className="truncate">
+                        {data.assuntoBgProgramaIds.length === 0
+                          ? "Todos os programas (global)"
+                          : `${data.assuntoBgProgramaIds.length} programa(s)`}
+                      </span>
+                      <span className="text-[9px]" style={{ color: "#ffffff60" }}>{showProgramDropdown ? "▲" : "▼"}</span>
+                    </button>
+                    {showProgramDropdown && (
+                      <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-y-auto max-h-48" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                        {allProgramas.length === 0 ? (
+                          <div className="px-3 py-2 text-[10px]" style={{ color: "#ffffff60" }}>Nenhum programa cadastrado</div>
+                        ) : (
+                          allProgramas.map(p => {
+                            const checked = data.assuntoBgProgramaIds.includes(p.id);
+                            return (
+                              <label key={p.id} className="flex items-center gap-2 px-3 py-2 cursor-pointer text-white hover:bg-white/5">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={e => {
+                                    const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
+                                    if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
+                                    const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
+                                    setData(next);
+                                    void handleSave(next);
+                                  }}
+                                  style={{ accentColor: CYAN }}
+                                />
+                                <span className="text-[11px] flex-1 truncate">{p.nome}</span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleSave()}
+                className="w-full py-2 rounded-full text-[10px] font-black uppercase tracking-widest"
+                style={{ backgroundColor: CYAN, color: NAVY, boxShadow: "0 4px 10px rgba(0,191,240,0.3)" }}
+              >
+                Atualizar GC
+              </button>
+            </div>
+          </div>
+
+          {/* Redes Sociais */}
+          <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: LIME }} />
+                <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Redes Sociais</h2>
+              </div>
+              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>
+            </div>
+
             {empresaSocials.length === 0 ? (
-              <p className="text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Nenhuma rede social cadastrada.</p>
+              <p className="text-[10px]" style={{ color: "#ffffff60" }}>Nenhuma rede social cadastrada.</p>
             ) : (
               <div className="space-y-1.5">
                 {empresaSocials.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
-                    <span style={{ color: "var(--layout-accent-color, #dc2626)" }}>{s.icon}</span>
-                    <span className="text-[11px]" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{s.valor}</span>
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                    <span style={{ color: CYAN }}>{s.icon}</span>
+                    <span className="text-[11px] text-white truncate">{s.valor}</span>
                   </div>
                 ))}
               </div>
             )}
 
             {whatsappNumber && (
-              <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer mt-1" style={{ backgroundColor: data.showQrCode ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+              <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP, border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}` }}>
                 <input
                   type="checkbox"
                   checked={data.showQrCode}
@@ -776,124 +883,120 @@ export default function BroadcastPage() {
                     setData(nextData);
                     void handleSave(nextData);
                   }}
-                  className="accent-current"
-                  style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
+                  style={{ accentColor: CYAN }}
                 />
-                <MessageCircle size={12} style={{ color: data.showQrCode ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
+                <MessageCircle size={12} style={{ color: data.showQrCode ? CYAN : "#ffffff60" }} />
                 <div>
-                  <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>QR Code WhatsApp</span>
-                  <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Exibir QR Code para enviar mensagem</p>
+                  <span className="text-[11px] font-semibold text-white">QR Code WhatsApp</span>
+                  <p className="text-[9px]" style={{ color: "#ffffff60" }}>Exibir QR para enviar mensagem</p>
                 </div>
               </label>
             )}
           </div>
 
-          {/* Card: Insert Live */}
+          {/* Insert Live */}
           {insertLiveArt && (
-            <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Insert Live</h3>
+            <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: "#f97316" }} />
+                  <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Insert Live (30s)</h2>
+                </div>
+                <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>
+              </div>
+
               {insertLiveSchedule.length > 0 ? (
-                <div>
-                  <p className="text-[10px] mb-2" style={{ color: "var(--layout-icon-color, #888)" }}>
-                    Horários programados (30s cada):
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {insertLiveSchedule.map((t, i) => (
-                      <span key={i} className="text-[11px] font-mono font-semibold px-2 py-1 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #dc2626) 10%, transparent)", color: "var(--layout-accent-color, #dc2626)" }}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {insertLiveSchedule.map((t, i) => (
+                    <div
+                      key={i}
+                      className="rounded-lg py-2 text-center font-mono font-bold text-[11px]"
+                      style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#f97316" }}
+                    >
+                      {t}
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <p className="text-[10px]" style={{ color: "var(--layout-icon-color, #888)" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
+                <p className="text-[10px] mb-3" style={{ color: "#ffffff60" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
               )}
+
               <button
                 onClick={handleInsertNow}
                 disabled={insertingNow}
-                className="w-full px-3 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all disabled:opacity-60"
-                style={{ backgroundColor: "var(--layout-accent-color, #dc2626)", color: "#fff" }}
+                className="w-full px-3 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60"
+                style={{ backgroundColor: "#f97316", color: "#fff", boxShadow: "0 4px 10px rgba(249,115,22,0.3)" }}
               >
-                {insertingNow ? "Inserindo (30s)..." : "Inserir agora"}
+                {insertingNow ? "Inserindo (30s)..." : "Inserir Agora"}
               </button>
             </div>
           )}
 
-          {/* Card: Ticker */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)", boxShadow: "0 2px 16px rgba(0,0,0,0.06)" }}>
-            <h3 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-icon-color, #888)" }}>Ticker</h3>
+          {/* Ticker */}
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: CYAN }} />
+              <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Ticker System</h2>
+            </div>
 
-            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerNews ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
-              <input
-                type="checkbox"
-                checked={data.tickerNews}
-                onChange={e => {
-                  const nextData = { ...latestDataRef.current, tickerNews: e.target.checked };
-                  setData(nextData);
-                  void handleSave(nextData);
-                }}
-                className="accent-current"
-                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
-              />
-              <Newspaper size={12} style={{ color: data.tickerNews ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
-              <div>
-                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Notícias</span>
-                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Títulos das últimas notícias</p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerWeather ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
-              <input
-                type="checkbox"
-                checked={data.tickerWeather}
-                onChange={e => {
-                  const nextData = { ...latestDataRef.current, tickerWeather: e.target.checked };
-                  setData(nextData);
-                  void handleSave(nextData);
-                }}
-                className="accent-current"
-                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
-              />
-              <CloudSun size={12} style={{ color: data.tickerWeather ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
-              <div>
-                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Previsão do Tempo</span>
-                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Tempo atual e amanhã</p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer" style={{ backgroundColor: data.tickerQuotes ? "color-mix(in srgb, var(--layout-accent-color, #dc2626) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
-              <input
-                type="checkbox"
-                checked={data.tickerQuotes}
-                onChange={e => {
-                  const nextData = { ...latestDataRef.current, tickerQuotes: e.target.checked };
-                  setData(nextData);
-                  void handleSave(nextData);
-                }}
-                className="accent-current"
-                style={{ accentColor: "var(--layout-accent-color, #dc2626)" }}
-              />
-              <TrendingUp size={12} style={{ color: data.tickerQuotes ? "var(--layout-accent-color, #dc2626)" : "var(--layout-icon-color, #888)" }} />
-              <div>
-                <span className="text-[11px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cotações</span>
-                <p className="text-[9px]" style={{ color: "var(--layout-icon-color, #888)" }}>Dólar, Euro e bolsas financeiras</p>
-              </div>
-            </label>
-
+            <div className="space-y-2">
+              {([
+                { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
+                { key: "tickerWeather", icon: <CloudSun size={12} />, label: "Previsão do Tempo", desc: "Tempo atual e amanhã" },
+                { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar, Euro e bolsas" },
+              ] as const).map(({ key, icon, label, desc }) => {
+                const active = data[key];
+                return (
+                  <label
+                    key={key}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer"
+                    style={{
+                      backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                      border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={active}
+                      onChange={e => {
+                        const nextData = { ...latestDataRef.current, [key]: e.target.checked };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      style={{ accentColor: CYAN }}
+                    />
+                    <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-semibold text-white block">{label}</span>
+                      <p className="text-[9px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
 
             <textarea
               value={data.ticker}
               onChange={e => setData({ ...data, ticker: e.target.value })}
+              onBlur={onFieldBlur}
               placeholder="Texto adicional (opcional)..."
               rows={2}
-              className="w-full px-3 py-2 rounded-xl text-[11px] outline-none resize-none"
-              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 5%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "none" }}
-              onBlur={onFieldBlur}
+              className="w-full px-3 py-2 rounded-lg text-[11px] resize-none mt-3"
+              style={inputStyle}
             />
 
-            <XmlLinkRow label="Broadcast XML" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
-            <XmlLinkRow label="TClock Shows" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
+            <div className="mt-4 space-y-2">
+              <div className="p-3 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <div className="text-[9px] font-bold uppercase mb-1" style={{ color: "#ffffff60" }}>Endpoint: Broadcast XML</div>
+                <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
+              </div>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <div className="text-[9px] font-bold uppercase mb-1" style={{ color: "#ffffff60" }}>Endpoint: TClock Shows</div>
+                <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
     </div>
