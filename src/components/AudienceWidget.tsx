@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings } from "lucide-react";
+import { useEffect, useState, useRef, useMemo } from "react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -81,6 +81,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   // Config popup state
   const [configOpen, setConfigOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [sources, setSources] = useState<SourcesConfig>({
     instagram: "",
     facebook: "",
@@ -100,6 +101,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [probeError, setProbeError] = useState<string | null>(null);
+
+  // Refs to keep latest counts for the periodic history logger
+  const streamingRef = useRef<number | null>(null);
+  const videoRef = useRef<number | null>(null);
+  useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
+  useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
+
 
 
 
@@ -263,13 +271,51 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
 
-
+  // Log audiência a cada 5 minutos para o relatório histórico
+  useEffect(() => {
+    if (!dataUserId) return;
+    const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const logNow = async () => {
+      const audio = streamingRef.current ?? 0;
+      const video = videoRef.current ?? 0;
+      if (audio === 0 && video === 0) return;
+      // Descobre programa atual
+      const now = new Date();
+      const dia = DIAS[now.getDay()];
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      let programa: string | null = null;
+      try {
+        const { data: progs } = await supabase
+          .from("programas")
+          .select("nome, dias_semana, horario_inicio, horario_fim, ativo")
+          .eq("user_id", dataUserId as any);
+        const onAir = (progs || []).find((p: any) => {
+          if (p.ativo === false) return false;
+          const dias: string[] = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+          if (!dias.includes(dia)) return false;
+          return hhmm >= String(p.horario_inicio).slice(0, 5) && hhmm < String(p.horario_fim).slice(0, 5);
+        });
+        programa = onAir?.nome || null;
+      } catch { /* ignore */ }
+      await supabase.from("audiencia_historico").insert({
+        user_id: dataUserId,
+        programa,
+        audio,
+        video,
+      } as any);
+    };
+    // primeiro log após 30s (para dar tempo dos contadores)
+    const first = setTimeout(logNow, 30 * 1000);
+    const iv = setInterval(logNow, 5 * 60 * 1000);
+    return () => { clearTimeout(first); clearInterval(iv); };
+  }, [dataUserId]);
 
   // Rotate social display every 3s (only across configured networks)
   useEffect(() => {
     const iv = setInterval(() => setRotIdx((i) => i + 1), ROTATE_MS);
     return () => clearInterval(iv);
   }, []);
+
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
@@ -443,15 +489,26 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         borderRadius: 24,
       }}
     >
-      <button
-        onClick={openConfig}
-        aria-label="Configurar fontes"
-        title="Configurar fontes"
-        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-        style={{ background: "rgba(10,37,64,0.12)", color: dark }}
-      >
-        <Settings size={14} />
-      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+        <button
+          onClick={() => setReportOpen(true)}
+          aria-label="Relatório de audiência"
+          title="Relatório de audiência"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
+        >
+          <FileBarChart size={14} />
+        </button>
+        <button
+          onClick={openConfig}
+          aria-label="Configurar fontes"
+          title="Configurar fontes"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+          style={{ background: "rgba(10,37,64,0.12)", color: dark }}
+        >
+          <Settings size={14} />
+        </button>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-3 pr-10">
         <div className="flex items-center gap-2 min-w-0">
@@ -495,7 +552,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               Espectadores agora
             </span>
             {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
-              <Skeleton width={72} height={18} dark={dark} />
+              <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
+                <Loader2 size={16} className="animate-spin" />
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+              </span>
             ) : (
               <span
                 className="text-xl font-black leading-none"
@@ -657,10 +717,218 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         </DialogContent>
       </Dialog>
 
+      <AudienceReportDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        userId={dataUserId}
+      />
 
     </div>
   );
 }
+
+/* ==================== REPORT DIALOG ==================== */
+interface HistRow {
+  id: string;
+  created_at: string;
+  programa: string | null;
+  audio: number;
+  video: number;
+}
+function AudienceReportDialog({
+  open,
+  onOpenChange,
+  userId,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  userId?: string;
+}) {
+  const CYAN = "#00BFF0";
+  const LIME = "#C6F03C";
+  const DARK = "#0A2540";
+  const BG = "#D6F4FB";
+  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState<string>(todayStr());
+  const [rows, setRows] = useState<HistRow[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !userId) return;
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      const start = new Date(`${date}T00:00:00`);
+      const end = new Date(`${date}T23:59:59.999`);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("id, created_at, programa, audio, video")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString())
+        .lte("created_at", end.toISOString())
+        .order("created_at", { ascending: false });
+      if (!cancelled) {
+        setRows((data as any as HistRow[]) || []);
+        setLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, date]);
+
+  const stats = useMemo(() => {
+    if (rows.length === 0) return null;
+    const peakAudio = rows.reduce((m, r) => (r.audio > m.audio ? r : m), rows[0]);
+    const peakVideo = rows.reduce((m, r) => (r.video > m.video ? r : m), rows[0]);
+    const peakTotal = rows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), rows[0]);
+    const avgAudio = Math.round(rows.reduce((s, r) => s + r.audio, 0) / rows.length);
+    const avgVideo = Math.round(rows.reduce((s, r) => s + r.video, 0) / rows.length);
+    return { peakAudio, peakVideo, peakTotal, avgAudio, avgVideo };
+  }, [rows]);
+
+  const fmtTime = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="max-w-4xl w-[95vw] p-0 overflow-hidden"
+        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif" }}
+      >
+        <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "20px 24px" }}>
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
+                <FileBarChart size={20} color="#fff" />
+              </div>
+              <div className="flex flex-col">
+                <DialogTitle className="text-lg font-black uppercase tracking-wider text-white">
+                  Relatório de Audiência
+                </DialogTitle>
+                <DialogDescription className="text-xs text-white/85">
+                  Histórico consolidado de áudio e vídeo por programa.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+        </div>
+
+        <div className="p-6 flex flex-col gap-4 max-h-[75vh] overflow-hidden">
+          {/* Filtro + Highlights */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
+              <CalendarIcon size={14} style={{ color: CYAN }} />
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="text-sm font-bold outline-none bg-transparent"
+                style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setDate(todayStr())}
+              className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
+              style={{ background: LIME, color: DARK }}
+            >
+              Hoje
+            </button>
+            <div className="flex-1" />
+            {stats && (
+              <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
+                <Trophy size={14} style={{ color: LIME }} />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
+                <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Stat cards */}
+          {stats && (
+            <div className="grid grid-cols-4 gap-3">
+              <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+              <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+              <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+              <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+            <div className="overflow-auto flex-1">
+              <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+                <thead className="sticky top-0 z-10">
+                  <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
+                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading && (
+                    <tr><td colSpan={5} className="py-10 text-center">
+                      <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
+                    </td></tr>
+                  )}
+                  {!loading && rows.length === 0 && (
+                    <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                      Nenhum registro encontrado para essa data.
+                    </td></tr>
+                  )}
+                  {!loading && rows.map((r, i) => {
+                    const isPeak = stats && r.id === stats.peakTotal.id;
+                    return (
+                      <tr key={r.id} style={{
+                        background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
+                        borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
+                      }}>
+                        <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
+                        <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
+                        <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
+                          {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
+                        </td>
+                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
+                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
+              <span>{rows.length} registros</span>
+              <span>Atualizado a cada 5 min</span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MiniStat({ label, value, time, icon, cyan, dark }: { label: string; value: number; time?: string; icon: React.ReactNode; cyan: string; dark: string }) {
+  return (
+    <div className="rounded-2xl p-3 flex flex-col gap-1" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+      <div className="flex items-center gap-1.5" style={{ color: cyan }}>
+        {icon}
+        <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: dark, opacity: 0.6 }}>{label}</span>
+      </div>
+      <span className="text-2xl font-black leading-none" style={{ color: dark }}>{value.toLocaleString("pt-BR")}</span>
+      {time && <span className="text-[9px] font-bold" style={{ color: dark, opacity: 0.55 }}>às {time}</span>}
+    </div>
+  );
+}
+
 
 function SourceField({
   icon,
@@ -805,7 +1073,10 @@ function StatCell({
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
         {loading ? (
-          <Skeleton width="70%" height={22} dark={dark} />
+          <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
+            <Loader2 size={18} className="animate-spin" />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+          </span>
         ) : (
           <span
             className="text-2xl font-black leading-none truncate"

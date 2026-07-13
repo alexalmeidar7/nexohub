@@ -192,6 +192,33 @@ export type Database = {
         }
         Relationships: []
       }
+      audiencia_historico: {
+        Row: {
+          audio: number
+          created_at: string
+          id: string
+          programa: string | null
+          user_id: string
+          video: number
+        }
+        Insert: {
+          audio?: number
+          created_at?: string
+          id?: string
+          programa?: string | null
+          user_id: string
+          video?: number
+        }
+        Update: {
+          audio?: number
+          created_at?: string
+          id?: string
+          programa?: string | null
+          user_id?: string
+          video?: number
+        }
+        Relationships: []
+      }
       available_modules: {
         Row: {
           created_at: string
