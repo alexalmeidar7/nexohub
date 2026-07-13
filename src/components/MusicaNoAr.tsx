@@ -638,12 +638,23 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }
     syncingRef.current = true;
     try {
+      // Storage RLS requires foldername[1] = auth.uid() for INSERT and
+      // owner = auth.uid() for UPDATE. Prefix path with the authenticated
+      // user's id (independent of effectiveUserId used for multi-tenant reads).
+      const { data: authData } = await supabase.auth.getUser();
+      const authUid = authData?.user?.id;
+      if (!authUid) throw new Error("not authenticated");
       const utf8Blob = new Blob([new TextEncoder().encode(text)], { type: "application/xml" });
-      const filePath = `local-xml-${uid}.xml`;
-      await supabase.storage.from("xml-files").upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+      const filePath = `${authUid}/local-xml-${uid}.xml`;
+      const { error: upErr } = await supabase.storage
+        .from("xml-files")
+        .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
+      if (upErr) throw upErr;
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
       setUploadHistory(await addUploadLogToDb(uid, "pasta", deviceNameRef.current));
-    } catch { }
+    } catch (err) {
+      console.warn("[MusicaNoAr] syncToStorage failed:", err);
+    }
     syncingRef.current = false;
     const queued = pendingSyncRef.current;
     pendingSyncRef.current = null;
