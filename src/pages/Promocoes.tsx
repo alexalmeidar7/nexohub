@@ -731,6 +731,16 @@ export default function PromocoesKiosk() {
         .promo-scroll{scrollbar-width:thin;scrollbar-color:white var(--layout-accent-color, #a60101)}
         @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
+        @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
+        @keyframes audience-glow-red{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.35),0 0 12px rgba(215,13,14,.55)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.35),0 0 22px rgba(255,60,60,.95)}}
+        @keyframes audience-glow-white{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.15),0 0 12px rgba(255,255,255,.55)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.15),0 0 22px rgba(255,255,255,.95)}}
+        @keyframes audience-crown{0%,100%{transform:translateY(-50%) rotate(-8deg) scale(1)}50%{transform:translateY(-70%) rotate(8deg) scale(1.15)}}
+        @keyframes audience-confetti{0%{transform:translateY(-6px) rotate(0);opacity:0}20%{opacity:1}100%{transform:translateY(28px) rotate(360deg);opacity:0}}
+        .audience-winner-stripes{background-image:linear-gradient(115deg,rgba(255,255,255,.28) 0 12px,transparent 12px 24px);background-size:40px 100%;animation:audience-shimmer 1.1s linear infinite}
+        .audience-winner-red{animation:audience-glow-red 1.4s ease-in-out infinite}
+        .audience-winner-white{animation:audience-glow-white 1.4s ease-in-out infinite}
+        .audience-crown{animation:audience-crown 1.2s ease-in-out infinite;transform-origin:center}
+        .audience-confetti{position:absolute;top:0;width:4px;height:8px;border-radius:1px;animation:audience-confetti 1.6s ease-in infinite}
       `}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
