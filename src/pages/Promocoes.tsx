@@ -669,7 +669,7 @@ export default function PromocoesKiosk() {
           const onAirProg = onAirProgram ? programas.find(p => p.nome === onAirProgram.nome) : null;
           return (
             <div className="w-full flex gap-4 items-stretch">
-              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ maxHeight: 340 }}>
+              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 240 }}>
                 {banners.length > 0 ? (
                   <div className="relative w-full h-full overflow-hidden">
                     <div
@@ -678,7 +678,7 @@ export default function PromocoesKiosk() {
                     >
                       {banners.map((banner) => (
                         <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-black/20">
-                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" style={{ maxHeight: 340 }} />
+                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>
@@ -715,7 +715,7 @@ export default function PromocoesKiosk() {
               {onAirProg?.capa && (
                 <div
                   className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative"
-                  style={{ width: 340, height: 340, backgroundColor: "var(--layout-accent-color, #be0101)" }}
+                  style={{ width: 180, height: 240, backgroundColor: "var(--layout-accent-color, #be0101)" }}
                 >
                   <img src={onAirProg.capa} alt={onAirProg.nome} className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
