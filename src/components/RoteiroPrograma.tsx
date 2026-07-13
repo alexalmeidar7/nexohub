@@ -424,10 +424,11 @@ export default function RoteiroPrograma() {
     try {
       if (!r?.subtitulo || !String(r.subtitulo).startsWith("express_xml::")) return false;
 
-      // Pega XML completo direto da edge function (sempre fresco)
+      // Delega geração + upload à edge function (service role bypassa RLS do storage,
+      // que exige foldername[1] = auth.uid() e falha para paths express/<owner>/...).
       const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID || "zzjfzxxvxbspbdkodoix";
       const anonKey = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || "";
-      const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${r.id}&force=1&t=${Date.now()}`;
+      const fnUrl = `https://${projectId}.supabase.co/functions/v1/roteiro-xml?id=${r.id}&force=1&persist=1&t=${Date.now()}`;
       const resp = await fetch(fnUrl, {
         headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
         cache: "no-store",
@@ -439,21 +440,6 @@ export default function RoteiroPrograma() {
       const xml = await resp.text();
       if (!xml || xml.includes("<error>")) {
         console.warn("[RegenXML] xml inválido", xml.slice(0, 200));
-        return false;
-      }
-
-      const xmlUrl = r.subtitulo!.replace("express_xml::", "");
-      const urlObj = new URL(xmlUrl);
-      const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
-      if (!pathMatch) return false;
-      const filePath = decodeURIComponent(pathMatch[1]);
-
-      const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
-      const { error } = await supabase.storage
-        .from("empresa-assets")
-        .upload(filePath, blob, { upsert: true, contentType: "application/xml", cacheControl: "0" });
-      if (error) {
-        console.warn("[RegenXML] upload error", error);
         return false;
       }
       return true;
