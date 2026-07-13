@@ -221,7 +221,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         {upcoming.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center opacity-40">
             <CalendarDays size={18} className="mb-1" style={{ color: textColor }} />
-            <p className="text-[9px]" style={{ color: textColor }}>Sem eventos próximos</p>
+            <p className="text-[11px] font-semibold" style={{ color: textColor }}>Sem eventos próximos</p>
           </div>
         ) : (
           <>
