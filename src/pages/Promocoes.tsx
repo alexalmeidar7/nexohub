@@ -715,7 +715,7 @@ export default function PromocoesKiosk() {
               {onAirProg?.capa && (
                 <div
                   className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative"
-                  style={{ width: 340, height: 340, backgroundColor: "var(--layout-accent-color, #be0101)" }}
+                  style={{ width: 180, height: 240, backgroundColor: "var(--layout-accent-color, #be0101)" }}
                 >
                   <img src={onAirProg.capa} alt={onAirProg.nome} className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
