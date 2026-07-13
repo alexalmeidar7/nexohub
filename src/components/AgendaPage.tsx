@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
+import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
@@ -2188,6 +2189,9 @@ export default function AgendaPage() {
               )}
             </div>
           </div>
+            {/* Datas Comemorativas + Aniversários de Cidades */}
+            <DatasComemorativasCidades />
+
             {/* Próximos Feriados Section */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
