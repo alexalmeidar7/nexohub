@@ -49,6 +49,8 @@ const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
+const ChatbotHome = lazy(() => import("./ChatbotHome"));
+
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
 const CenariosPage = lazy(() => import("./CenariosPage"));
@@ -204,7 +206,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
-  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>("nexohub");
+  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>(() => {
+    try { return localStorage.getItem("nexohub_home_pill") || "nexohub"; } catch { return "nexohub"; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
+  }, [selectedHeaderPill]);
+  // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
+  const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
+  const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
+  useEffect(() => {
+    if (selectedHeaderPill === displayedPill) return;
+    setPillPhase("out");
+    const t = setTimeout(() => {
+      setDisplayedPill(selectedHeaderPill);
+      setPillPhase("in");
+    }, 260);
+    return () => clearTimeout(t);
+  }, [selectedHeaderPill, displayedPill]);
+  const pillAnimClass = pillPhase === "in" ? "animate-fade-in" : "animate-fade-out";
+
 
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1215,8 +1236,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
-                <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                <div key={displayedPill} className={pillAnimClass}>
+                  {displayedPill === "Chatbot" ? (
+                    <ChatbotHome />
+                  ) : (
+                    <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                  )}
+                </div>
               </div>
+
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
