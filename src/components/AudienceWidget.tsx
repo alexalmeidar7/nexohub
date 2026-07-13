@@ -641,6 +641,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           loading={loadingConfig || loadingSocial}
           dark={dark}
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
+          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} /> : null}
         />
         <StatCell
           icon={<Radio size={14} />}
@@ -648,6 +649,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
+          badge={<PeakBadge peak={audioPeak} dark={dark} />}
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
@@ -655,6 +657,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
+          badge={<PeakBadge peak={videoPeak} dark={dark} />}
         />
         <StatCell
           icon={<Globe size={14} />}
@@ -663,6 +666,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           loading={loadingSite && siteCount === null}
           dark={dark}
         />
+
       </div>
 
       <Dialog
