@@ -116,13 +116,16 @@ interface Testemunhal {
   data_inicio: string;
   data_fim: string;
   created_at: string;
-  programa?: { nome: string };
+  programa?: { nome: string; thumb?: string; capa?: string };
 }
 
 interface Programa {
   id: string;
   nome: string;
+  thumb?: string;
+  capa?: string;
 }
+
 
 interface TestemunhaisPageProps {
   effectiveUserId?: string | null;
