@@ -1059,6 +1059,14 @@ export default function PromocoesKiosk() {
                               <span><span className="opacity-60">Data:</span> {dataStr}</span>
                               <span><span className="opacity-60">Hora:</span> {horaStr}</span>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setAudienceDetailsOpen(true)}
+                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors"
+                              style={{ backgroundColor: "#fbd837", color: "#000" }}
+                            >
+                              Ver detalhes
+                            </button>
                           </div>
                         </div>
                       );
