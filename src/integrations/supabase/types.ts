@@ -666,6 +666,7 @@ export type Database = {
           updated_at: string
           user_id: string
           video_stream_api_url: string | null
+          video_stream_xpath: string | null
           youtube: string | null
           youtube_subs: number | null
         }
@@ -689,6 +690,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           video_stream_api_url?: string | null
+          video_stream_xpath?: string | null
           youtube?: string | null
           youtube_subs?: number | null
         }
@@ -712,6 +714,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           video_stream_api_url?: string | null
+          video_stream_xpath?: string | null
           youtube?: string | null
           youtube_subs?: number | null
         }
