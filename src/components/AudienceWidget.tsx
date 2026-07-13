@@ -1571,8 +1571,8 @@ function DeltaBadge({ delta, dark, loading }: { delta: number | null; dark: stri
 function PeakBadge({ peak, dark, loading }: { peak: number | null; dark: string; loading?: boolean }) {
   if (loading) {
     return (
-      <div className="rounded-full px-1.5 py-0.5 animate-pulse" style={{ background: `${dark}33` }}>
-        <Skeleton width={32} height={10} dark={dark} />
+      <div className="rounded-full px-1.5 py-0.5" style={{ background: `${dark}33` }}>
+        <Skeleton width={32} height={10} dark={dark} className="rounded-full" />
       </div>
     );
   }
