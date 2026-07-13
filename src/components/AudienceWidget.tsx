@@ -722,7 +722,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           loading={loadingConfig || loadingSocial}
           dark={dark}
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
-          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} /> : null}
+          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
         />
         <StatCell
           icon={<Radio size={14} />}
@@ -730,7 +730,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
-          badge={<PeakBadge peak={audioPeak} dark={dark} />}
+          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
@@ -738,7 +738,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} />}
+          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
         />
         <StatCell
           icon={<Globe size={14} />}
@@ -1474,10 +1474,10 @@ function SourceField({
 
 
 
-function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
+function Skeleton({ width, height, dark, className }: { width: number | string; height: number; dark: string; className?: string }) {
   return (
     <span
-      className="inline-block rounded-md animate-pulse"
+      className={`inline-block animate-pulse ${className || "rounded-md"}`}
       style={{
         width,
         height,
@@ -1540,7 +1540,14 @@ function StatCell({
   );
 }
 
-function DeltaBadge({ delta, dark }: { delta: number | null; dark: string }) {
+function DeltaBadge({ delta, dark, loading }: { delta: number | null; dark: string; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="rounded-full px-1.5 py-0.5" style={{ background: `${dark}33` }}>
+        <Skeleton width={38} height={10} dark={dark} className="rounded-full" />
+      </div>
+    );
+  }
   if (delta === null || delta === undefined) return null;
   const up = delta > 0;
   const down = delta < 0;
@@ -1561,7 +1568,14 @@ function DeltaBadge({ delta, dark }: { delta: number | null; dark: string }) {
   );
 }
 
-function PeakBadge({ peak, dark }: { peak: number | null; dark: string }) {
+function PeakBadge({ peak, dark, loading }: { peak: number | null; dark: string; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="rounded-full px-1.5 py-0.5" style={{ background: `${dark}33` }}>
+        <Skeleton width={32} height={10} dark={dark} className="rounded-full" />
+      </div>
+    );
+  }
   if (peak === null || peak <= 0) return null;
   return (
     <div
