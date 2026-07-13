@@ -13,7 +13,9 @@ const corsHeaders = {
 // For XML: walks tag names in order (first match at each level).
 // For JSON: walks object keys; if a value is an array, uses the first element.
 function extractByPath(text: string, rawPath: string): number | null {
-  const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
+  // Accept both slash- and dot-separated paths (e.g. "icestats/source/listeners"
+  // and "icestats.source.listeners"), which is how users commonly write them.
+  const path = rawPath.replace(/^\/+/, "").split(/[\/.]/).map(s => s.trim()).filter(Boolean);
   if (path.length === 0) return null;
   const trimmed = text.trim();
 
@@ -59,6 +61,9 @@ async function fetchWithXPath(url: string, xpath: string): Promise<number | null
 
 // Generic listener extractor when no XPath was configured. Tries common tags
 // used by Icecast/Shoutcast/CentovaCast/SonicPanel/etc.
+// NOTE: do NOT include "connected" here — in Icecast that field is the source
+// uptime in seconds, not the current listener count, and would appear before
+// "listeners" in the JSON, corrupting the auto-detect result.
 const LISTENER_TAGS = [
   "listeners",
   "currentlisteners",
@@ -66,7 +71,6 @@ const LISTENER_TAGS = [
   "espectadores_conectados",
   "espectadores",
   "ouvintes",
-  "connected",
 ];
 
 function autoDetectListeners(text: string): number | null {
