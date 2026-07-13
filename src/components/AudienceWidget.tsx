@@ -33,6 +33,38 @@ const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
 const VIDEO_MS = 30 * 1000; // 30s for video viewers
 
+// Extract a numeric value from XML or JSON text using a simple slash-separated
+// path (leading //, /, or bare "a/b/c"). Returns null if not found or not numeric.
+function extractByPath(text: string, rawPath: string): number | null {
+  const path = rawPath.replace(/^\/+/, "").split("/").map((s) => s.trim()).filter(Boolean);
+  if (path.length === 0) return null;
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      let cur: any = JSON.parse(trimmed);
+      for (const key of path) {
+        if (cur == null) return null;
+        if (Array.isArray(cur)) cur = cur[0];
+        cur = cur?.[key];
+      }
+      if (Array.isArray(cur)) cur = cur[0];
+      const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
+      return Number.isFinite(n) ? n : null;
+    } catch { /* fall through */ }
+  }
+  let scope = trimmed;
+  for (const tag of path) {
+    const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+    const m = scope.match(re);
+    if (!m) return null;
+    scope = m[1];
+  }
+  const inner = scope.replace(/<[^>]+>/g, "").trim();
+  const n = parseInt(inner, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [videoCount, setVideoCount] = useState<number | null>(null);
@@ -61,6 +93,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   });
 
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
+  const [audioXPathError, setAudioXPathError] = useState<string | null>(null);
+  const [videoXPathError, setVideoXPathError] = useState<string | null>(null);
+  const [validating, setValidating] = useState(false);
+
+
 
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
@@ -185,34 +222,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const extractByPath = (text: string, rawPath: string): number | null => {
-      const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
-      if (path.length === 0) return null;
-      const trimmed = text.trim();
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          let cur: any = JSON.parse(trimmed);
-          for (const key of path) {
-            if (cur == null) return null;
-            if (Array.isArray(cur)) cur = cur[0];
-            cur = cur?.[key];
-          }
-          if (Array.isArray(cur)) cur = cur[0];
-          const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
-          return Number.isFinite(n) ? n : null;
-        } catch { /* fall through */ }
-      }
-      let scope = trimmed;
-      for (const tag of path) {
-        const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
-        const m = scope.match(re);
-        if (!m) return null;
-        scope = m[1];
-      }
-      const inner = scope.replace(/<[^>]+>/g, "").trim();
-      const n = parseInt(inner, 10);
-      return Number.isFinite(n) ? n : null;
-    };
+
+
 
     const tick = async () => {
       const url =
@@ -342,6 +353,61 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     initialSourcesRef.current = { ...sources };
   };
 
+  const validateXPaths = async (): Promise<boolean> => {
+    setAudioXPathError(null);
+    setVideoXPathError(null);
+    const aUrl = sources.audio_stream_api_url.trim();
+    const aXp = sources.audio_stream_xpath.trim();
+    const vUrl = sources.video_stream_api_url.trim();
+    const vXp = sources.video_stream_xpath.trim();
+    if (!aXp && !vXp) return true;
+    setValidating(true);
+    let ok = true;
+    try {
+      if (aUrl && aXp) {
+        try {
+          const { data } = await supabase.functions.invoke("count-stream-listeners", {
+            body: { userId: dataUserId, urls: [aUrl], xpath: aXp },
+          });
+          const n = (data as any)?.listeners;
+          if (typeof n !== "number") {
+            setAudioXPathError("XPath inválido: nenhum valor numérico encontrado no Source Audio.");
+            ok = false;
+          }
+        } catch {
+          setAudioXPathError("Não foi possível validar o XPath do Source Audio.");
+          ok = false;
+        }
+      } else if (aXp && !aUrl) {
+        setAudioXPathError("Informe a URL do Source Audio para validar o XPath.");
+        ok = false;
+      }
+
+      if (vUrl && vXp) {
+        try {
+          const r = await fetch(vUrl, { cache: "no-store" });
+          const text = await r.text();
+          const n = extractByPath(text, vXp);
+          if (typeof n !== "number") {
+            setVideoXPathError("XPath inválido: nenhum valor numérico encontrado no Source Video.");
+            ok = false;
+          }
+        } catch {
+          setVideoXPathError("Não foi possível acessar a URL do Source Video para validar o XPath.");
+          ok = false;
+        }
+      } else if (vXp && !vUrl) {
+        setVideoXPathError("Informe a URL do Source Video para validar o XPath.");
+        ok = false;
+      }
+    } finally {
+      setValidating(false);
+    }
+    return ok;
+  };
+
+
+
 
   return (
     <div
@@ -425,6 +491,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         open={configOpen}
         onOpenChange={async (open) => {
           if (!open) {
+            const ok = await validateXPaths();
+            if (!ok) {
+              // Keep dialog open when validation fails
+              return;
+            }
             await persistIfChanged();
           }
           setConfigOpen(open);
@@ -441,7 +512,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   Fontes da Audiência
                 </DialogTitle>
                 <DialogDescription className="text-xs" style={{ color: "#0A2540", opacity: 0.6 }}>
-                  Salvo automaticamente ao fechar.
+                  Validado ao salvar.
                 </DialogDescription>
               </div>
             </div>
@@ -480,7 +551,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               label="XPath (nódulo XML do Source Audio)"
               placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
               value={sources.audio_stream_xpath}
-              onChange={(v) => setSources((s) => ({ ...s, audio_stream_xpath: v }))}
+              onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
+              error={audioXPathError}
             />
             <SourceField
               icon={<MonitorPlay size={14} />}
@@ -493,21 +565,28 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               label="XPath (nódulo XML do Source Video)"
               placeholder="//info/espectadores_conectados"
               value={sources.video_stream_xpath}
-              onChange={(v) => setSources((s) => ({ ...s, video_stream_xpath: v }))}
+              onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
+              error={videoXPathError}
             />
-
 
             <button
               type="button"
-              onClick={async () => { await persistIfChanged(); setConfigOpen(false); }}
-              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02]"
+              disabled={validating}
+              onClick={async () => {
+                const ok = await validateXPaths();
+                if (!ok) return;
+                await persistIfChanged();
+                setConfigOpen(false);
+              }}
+              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ background: "#C6F03C", color: "#0A2540", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(198,240,60,0.4)" }}
             >
-              Salvar
+              {validating ? "Validando..." : "Salvar"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
+
 
     </div>
   );
@@ -519,12 +598,14 @@ function SourceField({
   placeholder,
   value,
   onChange,
+  error,
 }: {
   icon?: React.ReactNode;
   label: string;
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  error?: string | null;
 }) {
   return (
     <label className="flex flex-col gap-1">
@@ -541,15 +622,21 @@ function SourceField({
         className="w-full px-4 py-2.5 text-sm outline-none transition-all"
         style={{
           background: "#fff",
-          border: "2px solid #00BFF0",
+          border: `2px solid ${error ? "#E11D48" : "#00BFF0"}`,
           borderRadius: 999,
           color: "#0A2540",
           fontFamily: "Montserrat, sans-serif",
         }}
       />
+      {error && (
+        <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>
+          {error}
+        </span>
+      )}
     </label>
   );
 }
+
 
 function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
   return (
