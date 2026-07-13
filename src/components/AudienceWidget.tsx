@@ -598,12 +598,14 @@ function SourceField({
   placeholder,
   value,
   onChange,
+  error,
 }: {
   icon?: React.ReactNode;
   label: string;
   placeholder: string;
   value: string;
   onChange: (v: string) => void;
+  error?: string | null;
 }) {
   return (
     <label className="flex flex-col gap-1">
@@ -620,15 +622,21 @@ function SourceField({
         className="w-full px-4 py-2.5 text-sm outline-none transition-all"
         style={{
           background: "#fff",
-          border: "2px solid #00BFF0",
+          border: `2px solid ${error ? "#E11D48" : "#00BFF0"}`,
           borderRadius: 999,
           color: "#0A2540",
           fontFamily: "Montserrat, sans-serif",
         }}
       />
+      {error && (
+        <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>
+          {error}
+        </span>
+      )}
     </label>
   );
 }
+
 
 function Skeleton({ width, height, dark }: { width: number | string; height: number; dark: string }) {
   return (
