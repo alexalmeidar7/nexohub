@@ -186,64 +186,132 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
     return apresentadores.find(a => a.id === apresentadorId) || null;
   };
 
+  const CYAN = "#00BFF0";
+  const LIME = "#C6F03C";
+  const DARK = "#0A2540";
+  const CARD_BG = "#D6F4FB";
+
   return (
     <>
+      <style>{`
+        .grade-cell { transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
+        .grade-cell:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(10,37,64,0.10); border-color: ${CYAN} !important; }
+        .grade-cell:hover .grade-info-btn { background: ${LIME} !important; color: ${DARK} !important; }
+        .grade-onair-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:${LIME}; box-shadow:0 0 0 3px rgba(198,240,60,0.25); animation: gradePulse 1.4s ease-in-out infinite; margin-right:6px; vertical-align:middle; }
+        @keyframes gradePulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.55; transform:scale(1.35);} }
+        .grade-empty-cell { background: repeating-linear-gradient(135deg, ${CARD_BG} 0 8px, #EEFAFE 8px 16px) !important; }
+      `}</style>
       <tbody>
-        {gradeSlots.map((slot) => {
+        {gradeSlots.map((slot, rowIdx) => {
           const slotParts = slot.split(":");
           const slotMinutes = parseInt(slotParts[0]) * 60 + parseInt(slotParts[1]);
           const nextSlotMinutes = slotMinutes + 30;
           const currentParts = currentTimeStr.split(":");
           const currentMinutes = parseInt(currentParts[0]) * 60 + parseInt(currentParts[1]);
           const isNeedleRow = currentMinutes >= slotMinutes && currentMinutes < nextSlotMinutes;
+          const isHour = slot.endsWith(":00");
+          const zebra = rowIdx % 2 === 0;
 
           return (
             <tr key={slot} data-needle-row={isNeedleRow ? "true" : undefined} data-needle-percent={isNeedleRow ? ((currentMinutes - slotMinutes) / 30) * 100 : undefined}>
-              <td className="px-2 py-2 font-mono text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{slot.slice(0, 5)}</td>
+              <td style={{
+                padding: "6px 8px",
+                fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                fontSize: 10,
+                fontWeight: isHour ? 800 : 600,
+                color: isHour ? DARK : "rgba(10,37,64,0.55)",
+                background: isHour ? CARD_BG : "#F4FBFD",
+                borderRight: `2px solid ${isHour ? CYAN : "transparent"}`,
+                textAlign: "right",
+                letterSpacing: 0.5,
+              }}>{slot.slice(0, 5)}</td>
               {diasSemana.map(dia => {
                 const key = `${dia}-${slot}`;
                 if (skipMap[key]) return null;
                 const cellData = spanMap[key];
-                if (!cellData) return <td key={dia} className="px-1 py-1" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }} />;
+                if (!cellData) return <td key={dia} className="grade-empty-cell" style={{ padding: 0, height: 34 }} />;
                 const { prog, rowSpan } = cellData;
                 const isOnAir = prog && dia === diaAtual && currentTimeStr >= prog.horarioInicio && currentTimeStr < prog.horarioFim;
+                const presenter = getPresenter(prog.apresentadorId);
                 return (
                   <td key={dia} rowSpan={rowSpan}
-                    className="transition-all relative group"
+                    className="grade-cell"
                     style={{
                       background: isOnAir
-                        ? "var(--layout-header-bg, #1a1a1a)"
-                        : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))",
+                        ? `linear-gradient(135deg, ${DARK} 0%, #123454 100%)`
+                        : zebra ? "#FFFFFF" : "#FAFDFE",
                       verticalAlign: "top",
                       padding: "8px 10px",
+                      borderRadius: 10,
+                      border: isOnAir
+                        ? `2px solid ${CYAN}`
+                        : `1px solid ${CARD_BG}`,
                       borderLeft: isOnAir
-                        ? "3px solid var(--layout-accent-color, #2563eb)"
-                        : "3px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
-                      boxShadow: isOnAir ? "0 4px 16px rgba(0,0,0,0.15)" : undefined,
+                        ? `4px solid ${LIME}`
+                        : `4px solid ${CYAN}`,
+                      boxShadow: isOnAir
+                        ? `0 6px 20px rgba(0,191,240,0.35), inset 0 0 0 1px rgba(198,240,60,0.15)`
+                        : `0 1px 2px rgba(10,37,64,0.04)`,
+                      cursor: "pointer",
+                      position: "relative",
+                    }}
+                    onClick={() => setDetailProg(prog)}
+                  >
+                    {isOnAir && (
+                      <div style={{
+                        position: "absolute", top: 6, right: 6,
+                        background: LIME, color: DARK,
+                        fontSize: 8, fontWeight: 900, letterSpacing: 1,
+                        padding: "2px 6px", borderRadius: 4,
+                        textTransform: "uppercase",
+                      }}>
+                        <span className="grade-onair-dot" />AO VIVO
+                      </div>
+                    )}
+                    <div style={{
+                      fontSize: 12, fontWeight: 800, lineHeight: 1.25,
+                      wordBreak: "break-word",
+                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                      color: isOnAir ? "#FFFFFF" : DARK,
+                      paddingRight: isOnAir ? 60 : 0,
+                    }}>{prog.nome}</div>
+                    <div style={{
+                      fontSize: 10, marginTop: 4, fontWeight: 700,
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      color: isOnAir ? CYAN : "rgba(10,37,64,0.55)",
+                      letterSpacing: 0.3,
                     }}>
-                    <div className="text-[12px] font-extrabold leading-snug" style={{ wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", color: isOnAir ? "var(--layout-header-text, #ffffff)" : "var(--layout-page-text, #1a1a1a)" }}>{prog.nome}</div>
-                    {prog.classificacaoEtaria && <div className="mt-1"><ClassificacaoBadge value={prog.classificacaoEtaria} size={14} /></div>}
-                    <div className="text-[10px] mt-1 font-medium" style={{ color: isOnAir ? "color-mix(in srgb, var(--layout-header-text, #ffffff) 75%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
+                      {prog.horarioInicio.slice(0, 5)} — {prog.horarioFim.slice(0, 5)}
                     </div>
                     {(() => {
                       const names = getPresenterNames(prog);
                       return names ? (
-                        <div className="text-[9px] font-semibold mt-0.5" style={{ color: isOnAir ? "color-mix(in srgb, var(--layout-header-text, #ffffff) 80%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                          {names}
+                        <div style={{
+                          display: "flex", alignItems: "center", gap: 6, marginTop: 6,
+                        }}>
+                          {presenter?.foto ? (
+                            <img src={presenter.foto} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", border: `1.5px solid ${isOnAir ? CYAN : CARD_BG}` }} />
+                          ) : (
+                            <div style={{ width: 18, height: 18, borderRadius: "50%", background: isOnAir ? "rgba(255,255,255,0.15)" : CARD_BG, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 800, color: isOnAir ? "#FFFFFF" : DARK }}>
+                              {names[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <div style={{
+                            fontSize: 9, fontWeight: 700,
+                            color: isOnAir ? "rgba(255,255,255,0.85)" : "rgba(10,37,64,0.65)",
+                            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                            flex: 1, minWidth: 0,
+                          }}>
+                            {names}
+                          </div>
                         </div>
                       ) : null;
                     })()}
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setDetailProg(prog); }}
-                      className="mt-1.5 px-2.5 py-1 rounded-md text-[8px] font-bold flex items-center gap-1 transition-all hover:opacity-80"
-                      style={{
-                        backgroundColor: isOnAir ? "color-mix(in srgb, var(--layout-header-text, #ffffff) 20%, transparent)" : "var(--layout-header-bg, #1a1a1a)",
-                        color: isOnAir ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-text, #ffffff)",
-                      }}
-                    >
-                      + informações
-                    </button>
+                    {prog.classificacaoEtaria && (
+                      <div style={{ marginTop: 6 }}>
+                        <ClassificacaoBadge value={prog.classificacaoEtaria} size={14} />
+                      </div>
+                    )}
                   </td>
                 );
               })}
@@ -254,30 +322,30 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 
       {/* Detail popup */}
       {detailProg && createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.5)" }} onClick={() => setDetailProg(null)}>
-          <div className="rounded-xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", padding: "20px" }} onClick={e => e.stopPropagation()}>
-            <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              <X size={18} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: "rgba(10,37,64,0.55)", backdropFilter: "blur(4px)" }} onClick={() => setDetailProg(null)}>
+          <div className="rounded-3xl max-w-2xl w-full mx-4 relative" style={{ backgroundColor: "#FFFFFF", padding: "24px", border: `1px solid ${CARD_BG}`, boxShadow: "0 20px 60px rgba(10,37,64,0.25)" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setDetailProg(null)} className="absolute top-4 right-4 z-10 font-bold text-sm rounded-full p-1.5" style={{ color: DARK, background: CARD_BG }}>
+              <X size={16} />
             </button>
             <div className="flex gap-5">
               {detailProg.capa && (
-                <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-lg shrink-0" />
+                <img src={detailProg.capa} alt={detailProg.nome} className="w-48 h-48 object-cover rounded-2xl shrink-0" style={{ border: `2px solid ${CARD_BG}` }} />
               )}
               <div className="space-y-2 flex-1 min-w-0">
-                <h2 className="text-lg font-bold pr-6" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{detailProg.nome}</h2>
-                <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                  <Clock size={12} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
+                <h2 className="text-xl font-extrabold pr-6" style={{ color: DARK }}>{detailProg.nome}</h2>
+                <p className="text-xs flex items-center gap-1.5 font-semibold" style={{ color: "rgba(10,37,64,0.6)" }}>
+                  <Clock size={12} style={{ color: CYAN }} /> {detailProg.horarioInicio.slice(0, 5)} — {detailProg.horarioFim.slice(0, 5)}
                 </p>
-                <p className="text-xs flex items-center gap-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                  <Calendar size={12} /> {detailProg.diasSemana.join(", ")}
+                <p className="text-xs flex items-center gap-1.5 font-semibold" style={{ color: "rgba(10,37,64,0.6)" }}>
+                  <Calendar size={12} style={{ color: CYAN }} /> {detailProg.diasSemana.join(", ")}
                 </p>
                 {getPresenterName(detailProg.apresentadorId) && (
-                  <p className="text-xs font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    Locutor: {getPresenterName(detailProg.apresentadorId)}
+                  <p className="text-xs font-bold" style={{ color: DARK }}>
+                    Locutor: <span style={{ color: CYAN }}>{getPresenterName(detailProg.apresentadorId)}</span>
                   </p>
                 )}
                 {detailProg.descricao && (
-                  <p className="text-sm mt-2 leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>{detailProg.descricao}</p>
+                  <p className="text-sm mt-2 leading-relaxed" style={{ color: "rgba(10,37,64,0.75)" }}>{detailProg.descricao}</p>
                 )}
               </div>
             </div>
@@ -1192,14 +1260,23 @@ export default function ProgramaForm() {
           >
             <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[2px]">
               <thead className="sticky top-0 z-10">
-                <tr style={{ background: CYAN }}>
-                  <th style={{ padding: "10px 12px", textAlign: "left", width: 78, fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
+                <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)` }}>
+                  <th style={{ padding: "12px 12px", textAlign: "right", width: 78, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
                   {DIAS_SEMANA.map(dia => {
                     const isToday = dia === diaAtual;
                     return (
-                      <th key={dia} style={{ padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#FFFFFF", background: isToday ? DARK : undefined }}>
-                        <div>{dia.slice(0, 3)}</div>
-                        <div style={{ fontSize: 10, marginTop: 2, opacity: 0.85 }}>{weekDates[dia]}</div>
+                      <th key={dia} style={{
+                        padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase",
+                        color: isToday ? DARK : "#FFFFFF",
+                        background: isToday ? LIME : "transparent",
+                        borderBottom: isToday ? `3px solid ${DARK}` : "3px solid transparent",
+                        position: "relative",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          {isToday && <span style={{ width: 6, height: 6, borderRadius: "50%", background: DARK, display: "inline-block" }} />}
+                          {dia.slice(0, 3)}
+                        </div>
+                        <div style={{ fontSize: 10, marginTop: 2, opacity: isToday ? 0.75 : 0.85, fontWeight: 700 }}>{weekDates[dia]}</div>
                       </th>
                     );
                   })}
