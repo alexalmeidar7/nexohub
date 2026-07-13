@@ -2291,75 +2291,63 @@ export default function AgendaPage() {
                   <Download size={10} /> Exportar
                 </button>
               </div>
-              <div className="p-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-1.5">
+              <div className="p-3 flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "thin" }}>
                 {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
                   const isToday = isSameDay(date, now);
+                  const isSelected = selectedDate && isSameDay(date, selectedDate);
                   const feriadoNome = getFeriadoNome(date);
                     return (
-                      <div
+                      <button
+                        type="button"
                         key={dateStr}
                         onClick={() => setSelectedDate(date)}
-                        className="text-left rounded-lg p-1.5 flex flex-col gap-1 hover:shadow-md transition-all cursor-pointer group"
+                        className="flex-shrink-0 rounded-3xl p-3 flex flex-col items-center justify-between transition-all hover:scale-[1.03] group"
                         style={{
-                          backgroundColor: feriadoNome 
-                            ? "rgba(239, 68, 68, 0.04)" 
+                          width: 112,
+                          minHeight: 128,
+                          background: isSelected
+                            ? NEXO_CYAN
+                            : feriadoNome
+                            ? "rgba(239, 68, 68, 0.06)"
+                            : "#FFFFFF",
+                          color: isSelected ? "#FFFFFF" : NEXO_DARK,
+                          border: isSelected
+                            ? `2px solid ${NEXO_CYAN}`
+                            : feriadoNome
+                            ? "2px solid rgba(239, 68, 68, 0.25)"
                             : isToday
-                            ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)"
-                            : "rgba(13,4,70,0.03)",
-                          border: feriadoNome
-                            ? "1px solid rgba(239, 68, 68, 0.2)"
-                            : `1px solid color-mix(in srgb, var(--layout-border-color, #333333) ${isToday ? 50 : 20}%, transparent)`,
-                          minHeight: 80,
+                            ? `2px solid ${NEXO_CYAN}`
+                            : "2px solid #E5F5FB",
+                          boxShadow: isSelected ? "0 8px 20px rgba(0, 191, 240, 0.35)" : "none",
                         }}
                       >
-                        <div className="flex items-baseline justify-between">
-                          <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                        <div className="flex flex-col items-center gap-0.5">
+                          <span className="text-[10px] uppercase font-bold tracking-wider" style={{ opacity: isSelected ? 0.9 : 0.55 }}>
                             {format(date, "EEE", { locale: ptBR }).substring(0, 3)}
                           </span>
-                          <span className="text-[10px] font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                            {format(date, "dd/MM")}
+                          <span className="text-2xl font-black leading-none">
+                            {format(date, "dd")}
                           </span>
                         </div>
-                        <div className="flex-1 flex flex-col justify-center">
-                          <span className="text-[11px] font-black text-center transition-transform group-hover:scale-110" style={{ color: feriadoNome ? "#ef4444" : "var(--layout-accent-color, #2563eb)" }}>
+                        <div className="flex flex-col items-center mt-1">
+                          <span className="text-[11px] font-black" style={{ color: isSelected ? "#FFFFFF" : feriadoNome ? "#ef4444" : NEXO_CYAN }}>
                             {dayEvents.length}
                           </span>
-                          <span className="text-[7px] uppercase font-bold text-center opacity-60">
-                            Evento{dayEvents.length !== 1 ? 's' : ''}
+                          <span className="text-[8px] uppercase font-bold tracking-wider" style={{ opacity: 0.6 }}>
+                            evento{dayEvents.length !== 1 ? "s" : ""}
                           </span>
                         </div>
-                        {dayEvents.length > 0 && (
-                          <div className="mt-auto pt-1 flex flex-col gap-0.5">
-                            {dayEvents.slice(0, 2).map(e => (
-                              <div 
-                                key={e.id} 
-                                onClick={(clickEvt) => {
-                                  clickEvt.stopPropagation();
-                                  setViewingEvent(e);
-                                  setViewEventDialogOpen(true);
-                                }}
-                                className="text-[7px] font-semibold truncate px-1 rounded bg-white/40 border border-black/5 hover:bg-white/80 transition-colors"
-                              >
-                                {e.programa?.nome || "Evento"}
-                              </div>
-                            ))}
-                            {dayEvents.length > 2 && (
-                              <div className="text-[6px] font-bold text-center opacity-40">
-                                + {dayEvents.length - 2} mais
-                              </div>
-                            )}
-                          </div>
-                        )}
                         {feriadoNome && (
-                          <div className="text-[7px] font-bold text-red-500 uppercase truncate text-center mt-1">
+                          <div className="text-[8px] font-bold uppercase truncate text-center mt-1 w-full" style={{ color: isSelected ? "#FFFFFF" : "#ef4444" }}>
                             Feriado
                           </div>
                         )}
-                      </div>
+                      </button>
                     );
                 })}
               </div>
             </div>
+
             {/* Events of selected day */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
