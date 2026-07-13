@@ -277,19 +277,19 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[11px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
+                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
                     {evt.tipo_evento === "live" || !evt.tipo_evento ? (
                       <span className="flex items-center gap-0.5 shrink-0">
-                        <Radio size={9} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-                        <span className="font-bold text-[8px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
+                        <Radio size={10} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+                        <span className="font-black text-[9px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
                           AO VIVO
                         </span>
                       </span>
                     ) : (
                       <span
-                        className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
+                        className="text-[8px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
                         style={{ backgroundColor: type.bg, color: type.text }}
                       >
                         {type.label}
@@ -298,19 +298,19 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
-                      <span className="flex items-center gap-0.5 text-[9px] tabular-nums" style={{ color: textColor, opacity: 0.7 }}>
-                        <Clock size={8} />
+                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: textColor, opacity: 0.85 }}>
+                        <Clock size={9} />
                         {hora.slice(0, 5)}{horaFim ? `–${horaFim.slice(0, 5)}` : ""}
                       </span>
                     )}
                     {evt.recorrencia && evt.recorrencia !== "unico" && (
-                      <span className="text-[8px] uppercase font-semibold" style={{ color: accent, opacity: 0.9 }}>
+                      <span className="text-[9px] uppercase font-bold" style={{ color: accent, opacity: 1 }}>
                         {evt.recorrencia === "semanal" ? "Semanal" : evt.recorrencia === "mensal" ? "Mensal" : evt.recorrencia}
                       </span>
                     )}
                   </div>
                   {evt.descricao && evt.programa?.nome && (
-                    <p className="text-[9px] mt-0.5 leading-tight truncate" style={{ color: textColor, opacity: 0.55 }}>
+                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: textColor, opacity: 0.8 }}>
                       {evt.descricao}
                     </p>
                   )}
