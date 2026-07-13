@@ -1963,16 +1963,159 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     hlsInitUrlRef.current = "";
   };
 
-  const stopAll = () => {
-    destroyHls();
+  const audioCleanupRef = useRef<(() => void) | null>(null);
+
+  const cleanupAudio = () => {
+    try { audioCleanupRef.current?.(); } catch {}
+    audioCleanupRef.current = null;
     if (audioRef.current) {
       try { audioRef.current.pause(); } catch {}
       try { audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
       audioRef.current = null;
     }
+  };
+
+  const startAudioChannel = (channel: any) => {
+    if (!channel?.url) return;
+
+    cleanupAudio();
+    if (prefetchRef.current) {
+      try {
+        prefetchRef.current.audio.pause();
+        prefetchRef.current.audio.removeAttribute("src");
+        prefetchRef.current.audio.load();
+      } catch {}
+      prefetchRef.current = null;
+    }
+
+    const streamUrl = String(channel.url);
+    const buildSrc = () => {
+      const sep = streamUrl.includes("?") ? "&" : "?";
+      return `${streamUrl}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
+    };
+
+    const audio = new Audio();
+    audio.preload = "none";
+    audio.volume = volume;
+    audio.muted = isMuted;
+    audioRef.current = audio;
+    setShowVideo(false);
+    setIsLoading(true);
+
+    let reconnectTimer: number | null = null;
+    let reconnectAttempts = 0;
+    let playStarted = false;
+    let lastTime = 0;
+    let stuckSince = Date.now();
+
+    const scheduleReconnect = (reason: string) => {
+      if (audioRef.current !== audio) return;
+      if (reconnectTimer !== null) return;
+      reconnectAttempts += 1;
+      const delay = Math.min(600 * reconnectAttempts, 4500);
+      console.warn(`[Player audio] reconectando (${reason}) tentativa ${reconnectAttempts} em ${delay}ms`);
+      setIsLoading(true);
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = null;
+        if (audioRef.current !== audio) return;
+        try {
+          audio.pause();
+          audio.src = buildSrc();
+          audio.load();
+          audio.play().catch(() => scheduleReconnect("play-failed"));
+        } catch {
+          scheduleReconnect("catch");
+        }
+      }, delay);
+    };
+
+    const clearLoading = () => setIsLoading(false);
+    const onPlaying = () => {
+      playStarted = true;
+      reconnectAttempts = 0;
+      if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      setIsLoading(false);
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      try {
+        const seek = audio.seekable;
+        if (seek && seek.length > 0) {
+          const end = seek.end(seek.length - 1);
+          if (isFinite(end) && end - audio.currentTime > 2) audio.currentTime = end;
+        }
+      } catch {}
+    };
+    const onError = () => scheduleReconnect("error");
+    const onEnded = () => scheduleReconnect("ended");
+    const onStalled = () => scheduleReconnect("stalled");
+    const onWaiting = () => setIsLoading(true);
+    const onPause = () => {
+      if (audioRef.current === audio && playStarted) {
+        window.setTimeout(() => {
+          if (audioRef.current === audio && audio.paused && isPlayingRef.current) scheduleReconnect("paused-unexpected");
+        }, 3000);
+      }
+    };
+
+    audio.addEventListener("canplay", clearLoading);
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("error", onError);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("stalled", onStalled);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("pause", onPause);
+
+    const watchdog = window.setInterval(() => {
+      if (audioRef.current !== audio) { window.clearInterval(watchdog); return; }
+      if (!isPlayingRef.current && !isLoading) return;
+      const t = audio.currentTime;
+      const now = Date.now();
+      if (t !== lastTime) { lastTime = t; stuckSince = now; return; }
+      if (!stuckSince) stuckSince = now;
+      if ((audio.readyState < 2 || audio.paused || t === 0) && now - stuckSince > 7000) {
+        stuckSince = now;
+        scheduleReconnect("watchdog-stuck");
+      }
+    }, 2000);
+
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      if (audioRef.current !== audio) return;
+      if (isPlayingRef.current && (audio.paused || audio.readyState < 2)) scheduleReconnect("visibility");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    audioCleanupRef.current = () => {
+      if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      window.clearInterval(watchdog);
+      document.removeEventListener("visibilitychange", onVisibility);
+      audio.removeEventListener("canplay", clearLoading);
+      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("stalled", onStalled);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("pause", onPause);
+    };
+
+    audio.src = buildSrc();
+    audio.load();
+    audio.play().then(() => {
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+    }).catch((err) => {
+      console.warn("Audio play failed:", err);
+      if (audioRef.current === audio) scheduleReconnect("initial-play-failed");
+    });
+  };
+
+  const stopAll = () => {
+    destroyHls();
+    cleanupAudio();
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setIsPlaying(false);
+    isPlayingRef.current = false;
     setIsLoading(false);
   };
 
@@ -1981,10 +2124,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     if (isPlaying || isLoading) { stopAll(); return; }
     // Stop any previous playback without calling stopAll (which resets isPlaying)
     destroyHls();
-    if (audioRef.current) {
-      try { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
-      audioRef.current = null;
-    }
+    cleanupAudio();
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
 
@@ -1992,134 +2132,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      // Descarta qualquer prefetch — buffers antigos causariam repetição de áudio
-      // atrasado. O prefetch serve apenas para aquecer DNS/TLS.
-      if (prefetchRef.current) {
-        try {
-          prefetchRef.current.audio.pause();
-          prefetchRef.current.audio.removeAttribute("src");
-          prefetchRef.current.audio.load();
-        } catch {}
-        prefetchRef.current = null;
-      }
-
-      const streamUrl = activeChannel.url;
-      const buildSrc = () => {
-        const sep = streamUrl.includes("?") ? "&" : "?";
-        return `${streamUrl}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
-      };
-
-      // Sempre cria um Audio novo para garantir stream ao vivo (sem buffer stale)
-      const audio = new Audio();
-      audio.preload = "none";
-      audio.volume = volume;
-      audio.muted = isMuted;
-      audioRef.current = audio;
-      setIsLoading(true);
-
-      // Reconexão automática em caso de stall/end/erro do stream ao vivo
-      let reconnectTimer: number | null = null;
-      let reconnectAttempts = 0;
-      const scheduleReconnect = (reason: string) => {
-        if (audioRef.current !== audio) return; // já substituído
-        if (reconnectTimer !== null) return;
-        reconnectAttempts += 1;
-        const delay = Math.min(500 * reconnectAttempts, 4000);
-        console.warn(`[Player audio] reconectando (${reason}) tentativa ${reconnectAttempts} em ${delay}ms`);
-        setIsLoading(true);
-        reconnectTimer = window.setTimeout(() => {
-          reconnectTimer = null;
-          if (audioRef.current !== audio) return;
-          try {
-            audio.src = buildSrc();
-            audio.load();
-            audio.play().catch(() => scheduleReconnect("play-failed"));
-          } catch {
-            scheduleReconnect("catch");
-          }
-        }, delay);
-      };
-
-      const clearLoading = () => setIsLoading(false);
-      const onPlaying = () => {
-        reconnectAttempts = 0;
-        if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-        setIsLoading(false);
-        setIsPlaying(true);
-        // Força ir para o live edge quando o buffer permitir
-        try {
-          const seek = audio.seekable;
-          if (seek && seek.length > 0) {
-            const end = seek.end(seek.length - 1);
-            if (isFinite(end) && end - audio.currentTime > 2) {
-              audio.currentTime = end;
-            }
-          }
-        } catch {}
-      };
-      const onError = () => scheduleReconnect("error");
-      const onEnded = () => scheduleReconnect("ended");
-      const onStalled = () => scheduleReconnect("stalled");
-      const onWaiting = () => setIsLoading(true);
-      const onPause = () => {
-        // Se pausou mas o usuário não pediu (isPlayingRef ainda true), reconecta
-        if (audioRef.current === audio && !audio.ended && audio.currentTime > 0) {
-          // Deixamos o browser tentar por 3s antes de reconectar
-          window.setTimeout(() => {
-            if (audioRef.current === audio && audio.paused && isPlayingRef.current) {
-              scheduleReconnect("paused-unexpected");
-            }
-          }, 3000);
-        }
-      };
-      audio.addEventListener("canplay", clearLoading, { once: true });
-      audio.addEventListener("playing", onPlaying);
-      audio.addEventListener("error", onError);
-      audio.addEventListener("ended", onEnded);
-      audio.addEventListener("stalled", onStalled);
-      audio.addEventListener("waiting", onWaiting);
-      audio.addEventListener("pause", onPause);
-
-      // ── Watchdog: se currentTime não avança por 8s enquanto usuário quer tocar, reconecta ──
-      let lastTime = 0;
-      let stuckSince = 0;
-      const watchdog = window.setInterval(() => {
-        if (audioRef.current !== audio) { window.clearInterval(watchdog); return; }
-        if (!isPlayingRef.current) return;
-        const t = audio.currentTime;
-        const now = Date.now();
-        if (t !== lastTime) { lastTime = t; stuckSince = now; return; }
-        if (audio.paused) { stuckSince = stuckSince || now; }
-        if (stuckSince && now - stuckSince > 8000) {
-          stuckSince = now; // evita disparar em loop
-          scheduleReconnect("watchdog-stuck");
-        }
-      }, 2000);
-
-      // ── Retomar quando a aba volta a ficar visível ──
-      const onVisibility = () => {
-        if (document.visibilityState !== "visible") return;
-        if (audioRef.current !== audio) return;
-        if (!isPlayingRef.current) return;
-        if (audio.paused || audio.readyState < 2) scheduleReconnect("visibility");
-      };
-      document.addEventListener("visibilitychange", onVisibility);
-
-      // ── Cleanup quando este audio for substituído ──
-      const cleanupTimer = window.setInterval(() => {
-        if (audioRef.current !== audio) {
-          window.clearInterval(watchdog);
-          window.clearInterval(cleanupTimer);
-          document.removeEventListener("visibilitychange", onVisibility);
-        }
-      }, 3000);
-
-      audio.src = buildSrc();
-      audio.play().then(() => setIsPlaying(true)).catch((err) => {
-        console.warn("Audio play failed:", err);
-        setIsLoading(false);
-        setIsPlaying(false);
-      });
+      startAudioChannel(activeChannel);
     }
   };
 
@@ -2145,19 +2158,18 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
   const switchTo = (idx: number) => {
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    cleanupAudio();
     setActiveIdx(idx);
     const ch = channels[idx];
     const chIsVideo = (ch?.type || "").includes("video");
-    if (isPlaying) {
+    if (isPlaying || isLoading) {
       if (chIsVideo) {
         // Keep showVideo true, just let useEffect re-init with new URL
         setShowVideo(true);
       } else {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
         setShowVideo(false);
-        const audio = audioRef.current;
-        if (audio) { audio.src = ch.url; audio.play().catch(() => {}); }
+        startAudioChannel(ch);
       }
     } else {
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
