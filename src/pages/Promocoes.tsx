@@ -367,6 +367,29 @@ export default function PromocoesKiosk() {
     return () => { cancelled = true; clearInterval(iv); };
   }, [streamCfg.videoUrl, streamCfg.videoXpath]);
 
+  // Rastreia o pico de audiência do dia
+  useEffect(() => {
+    if (audioCount === null && videoCount === null) return;
+    const total = (audioCount ?? 0) + (videoCount ?? 0);
+    if (total <= 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    const presenter = onAirProgram?.apresentadorId
+      ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
+      : null;
+    setPeakAudience(prev => {
+      if (prev && prev.date === today && prev.total >= total) return prev;
+      const next = {
+        total,
+        programa: onAirProgram?.nome || "Programação Musical",
+        locutor: presenter?.nome || "—",
+        timestamp: new Date().toISOString(),
+        date: today,
+      };
+      try { localStorage.setItem("promo-peak-audience", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, [audioCount, videoCount, onAirProgram, apresentadores]);
+
   useEffect(() => {
     const update = () => {
       const current = findCurrentProgram(programas as any);
