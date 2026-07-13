@@ -2371,30 +2371,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
 
-      {/* Wave bars layer — fades in on break */}
-      <div
-        className="absolute inset-0 pointer-events-none flex items-center justify-between gap-[2px] px-3 sm:px-4"
-        style={{
-          opacity: isBreak ? 1 : 0,
-          transform: isBreak && !reducedMotion ? "translateY(0)" : reducedMotion ? "none" : "translateY(8px)",
-          transition: fadeTransformTransition,
-        }}
-      >
-        {Array.from({ length: BAR_COUNT }).map((_, i) => (
-          <span
-            key={i}
-            ref={(el) => { barRefs.current[i] = el; }}
-            className="block rounded-full flex-1"
-            style={{
-              maxWidth: 2,
-              background: "#c3f628",
-              height: reducedMotion ? 18 : 6,
-              transition: barTransition,
-              opacity: isPlaying ? 0.95 : 0.35,
-            }}
-          />
-        ))}
-      </div>
+      {/* Wave bars removed per project decision (see mem: player-audio-visuals) */}
 
 
 
