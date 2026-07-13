@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
@@ -68,7 +68,13 @@ export default function PromocoesKiosk() {
   usePageTitle("Promoções");
   useLayoutColors();
   const { userSlug } = useParams<{ userSlug?: string }>();
-  const isPublicMode = !!userSlug;
+  // Guard against the literal ":userSlug" segment (happens when something
+  // navigates to the route template without interpolating the param).
+  const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
+  const isPublicMode = !!validSlug;
+  if (userSlug === ":userSlug") {
+    return <Navigate to="/telapromo" replace />;
+  }
   const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
@@ -140,7 +146,8 @@ export default function PromocoesKiosk() {
 
   useEffect(() => {
     const loadPublic = async () => {
-      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: userSlug } });
+      if (!validSlug) return;
+      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: validSlug } });
       if (error || !data) return;
 
       const empresa = data.empresa;
