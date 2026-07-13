@@ -107,14 +107,23 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     setWeekAnchor(startOfWeek(t, { weekStartsOn: 1 }));
   };
 
-  const openAgenda = (evtId?: string) => {
+  const openAgenda = (evtId?: string, intent?: "edit") => {
     if (evtId) sessionStorage.setItem("agenda_focus_event", evtId);
+    if (intent === "edit" && evtId) sessionStorage.setItem("agenda_edit_event", evtId);
     try {
       sessionStorage.setItem("agenda_focus_date", format(selected, "yyyy-MM-dd"));
       sessionStorage.setItem("agenda_focus_week", format(weekAnchor, "yyyy-MM-dd"));
     } catch {}
     onNavigate?.("agenda" as Page);
   };
+
+  const encerrarEvento = async (evtId: string) => {
+    const prev = eventos;
+    setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
+    const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
+    if (error) setEventos(prev);
+  };
+
 
   const textColor = "var(--layout-widget-text, #ffffff)";
   const accent = "var(--layout-accent-color, #2563eb)";
