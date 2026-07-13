@@ -300,6 +300,17 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
+  // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
+  const canonicalCoverByName = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of programas) {
+      if (!p.capa) continue;
+      const key = normalizeProgramName(p.nome);
+      if (!map.has(key)) map.set(key, p.capa);
+    }
+    return map;
+  }, [programas]);
+
   const mergeProgramList = (list: ProgramaGrade[]) => Array.from(
     list
       .slice()
@@ -307,13 +318,15 @@ export default function PromocoesKiosk() {
       .reduce((map, programa) => {
         const dedupeKey = normalizeProgramName(programa.nome);
         const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
+        const canonicalCover = canonicalCoverByName.get(dedupeKey) || programa.capa || "";
         const existing = map.get(dedupeKey);
         if (!existing) {
-          map.set(dedupeKey, { ...programa, mergedIds });
+          map.set(dedupeKey, { ...programa, capa: canonicalCover, mergedIds });
         } else {
           existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...mergedIds]));
           existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
           existing.schedules = [...existing.schedules, ...programa.schedules];
+          if (canonicalCover) existing.capa = canonicalCover;
         }
         return map;
       }, new Map<string, ProgramaGrade>())
