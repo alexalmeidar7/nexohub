@@ -807,9 +807,9 @@ export default function PromocoesKiosk() {
                     >
                       <ChevronRight size={20} />
                     </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
                       {banners.map((_, i) => (
-                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
+                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer flex items-center justify-center hover:opacity-80 transition-opacity" aria-label={`Ir para banner ${i + 1}`}>
                           <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
                         </button>
                       ))}
