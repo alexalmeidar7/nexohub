@@ -61,6 +61,9 @@ async function fetchWithXPath(url: string, xpath: string): Promise<number | null
 
 // Generic listener extractor when no XPath was configured. Tries common tags
 // used by Icecast/Shoutcast/CentovaCast/SonicPanel/etc.
+// NOTE: do NOT include "connected" here — in Icecast that field is the source
+// uptime in seconds, not the current listener count, and would appear before
+// "listeners" in the JSON, corrupting the auto-detect result.
 const LISTENER_TAGS = [
   "listeners",
   "currentlisteners",
@@ -68,7 +71,6 @@ const LISTENER_TAGS = [
   "espectadores_conectados",
   "espectadores",
   "ouvintes",
-  "connected",
 ];
 
 function autoDetectListeners(text: string): number | null {
