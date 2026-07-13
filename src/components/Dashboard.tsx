@@ -1140,13 +1140,36 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 }}
               >
                 {onAirLocutorFoto && (
-                  <img
-                    src={onAirLocutorFoto}
-                    alt="Locutor no ar"
-                    className="w-full h-full object-cover"
-                    
-                  />
+                  <>
+                    <style>{`
+                      @keyframes locutorEntrada {
+                        0%   { opacity: 0; transform: scale(1.18) translateY(24px); filter: blur(6px); }
+                        60%  { opacity: 1; filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+                      }
+                      @keyframes locutorGlow {
+                        0%   { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
+                        50%  { box-shadow: inset 0 0 60px 10px rgba(195,246,40,0.35); }
+                        100% { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
+                      }
+                    `}</style>
+                    <img
+                      src={onAirLocutorFoto}
+                      alt="Locutor no ar"
+                      className="w-full h-full object-cover"
+                      style={{
+                        animation: "locutorEntrada 0.95s cubic-bezier(0.22,1,0.36,1) both",
+                        transformOrigin: "center 65%",
+                        willChange: "transform, opacity, filter",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none rounded-2xl"
+                      style={{ animation: "locutorGlow 1.1s ease-out both" }}
+                    />
+                  </>
                 )}
+
                 {onAirTimes && <ProgramProgressBar inicio={onAirTimes.inicio} fim={onAirTimes.fim} nowTick={nowTick} />}
 
                 {/* Overlay: Próximo programa/locutor */}
