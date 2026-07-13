@@ -1077,18 +1077,19 @@ function MockupPreview({
             <div className="flex items-center gap-2 pl-3" style={{ borderLeft: "1px solid rgba(255,255,255,0.15)" }}>
               {currentSponsor && (
                 <div
-                  className="transition-all duration-400 bg-white/90 rounded-md px-2 py-1 flex items-center"
+                  className="transition-all duration-400 flex items-center"
                   style={{
                     opacity: sponsorVisible ? 1 : 0,
                     transform: sponsorVisible ? "scale(1)" : "scale(0.92)",
-                    height: 40,
+                    height: 44,
                   }}
                   title={currentSponsor.nome}
                 >
                   <img
                     src={currentSponsor.logo_url}
                     alt={currentSponsor.nome}
-                    className="h-6 max-w-[120px] object-contain"
+                    className="h-10 max-w-[140px] object-contain"
+                    style={{ filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }}
                   />
                 </div>
               )}
