@@ -731,12 +731,16 @@ export default function PromocoesKiosk() {
           const currentProg = scheduleList[activeIdx] ?? null;
           const goPrev = (e: React.MouseEvent) => {
             e.stopPropagation();
+            e.preventDefault();
             if (!scheduleList.length) return;
+            setCoverSlideDir("left");
             setCoverIndex((activeIdx - 1 + scheduleList.length) % scheduleList.length);
           };
           const goNext = (e: React.MouseEvent) => {
             e.stopPropagation();
+            e.preventDefault();
             if (!scheduleList.length) return;
+            setCoverSlideDir("right");
             setCoverIndex((activeIdx + 1) % scheduleList.length);
           };
           return (
