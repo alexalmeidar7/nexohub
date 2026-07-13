@@ -96,6 +96,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioXPathError, setAudioXPathError] = useState<string | null>(null);
   const [videoXPathError, setVideoXPathError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
+  const [probing, setProbing] = useState<"audio" | "video" | null>(null);
+  const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
+  const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
+  const [probeError, setProbeError] = useState<string | null>(null);
+
 
 
 
