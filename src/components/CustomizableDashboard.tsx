@@ -2000,7 +2000,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     audio.preload = "none";
     audio.volume = volume;
     audio.muted = isMuted;
-    audio.autoplay = true;
+    audio.autoplay = false;
     audioRef.current = audio;
     setShowVideo(false);
     setIsLoading(true);
@@ -2551,7 +2551,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         }}
       >
         <div className="relative w-full pointer-events-auto" style={{ background: "#000" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full block" style={{ aspectRatio: "16/9" }} />
+          <video ref={videoRef} muted={isMuted} playsInline className="w-full block" style={{ aspectRatio: "16/9" }} />
           {videoLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
               <Loader2 size={20} className="text-white/70 animate-spin" />
