@@ -895,7 +895,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               </Collapsible>
             ))}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
