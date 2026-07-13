@@ -19,8 +19,10 @@ interface SourcesConfig {
   facebook: string;
   youtube: string;
   audio_stream_api_url: string;
+  audio_stream_xpath: string;
   video_stream_api_url: string;
 }
+
 
 const ROTATE_MS = 3000;
 // Redes sociais: 5x por dia (a cada ~4h48m)
