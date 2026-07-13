@@ -805,20 +805,30 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
     const pollStorage = async () => {
       try {
-        const filePath = `local-xml-${dataUserId}.xml`;
-        const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-        if (!data?.publicUrl) return;
-        const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
-        if (!res.ok) return;
-        const text = await res.text();
-        if (!text || text === localFileContentRef.current) return;
-        localFileContentRef.current = text;
-        setLocalFileContent(text);
-        lastLocalSuccessRef.current = Date.now();
-        setLocalDelay(false);
-        setLocalError(null);
-        const parsed = parseXmlString(text);
-        if (parsed) processMusicRef.current(parsed, "pasta");
+        // Try new path (auth.uid()/local-xml-<dataUserId>.xml) then fall back to legacy flat path
+        const { data: authData } = await supabase.auth.getUser();
+        const authUid = authData?.user?.id || dataUserId;
+        const candidates = [
+          `${authUid}/local-xml-${dataUserId}.xml`,
+          `local-xml-${dataUserId}.xml`,
+        ];
+        for (const filePath of candidates) {
+          const { data } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+          if (!data?.publicUrl) continue;
+          const res = await fetch(data.publicUrl + `?t=${Date.now()}`);
+          if (!res.ok) continue;
+          const text = await res.text();
+          if (!text) continue;
+          if (text === localFileContentRef.current) return;
+          localFileContentRef.current = text;
+          setLocalFileContent(text);
+          lastLocalSuccessRef.current = Date.now();
+          setLocalDelay(false);
+          setLocalError(null);
+          const parsed = parseXmlString(text);
+          if (parsed) processMusicRef.current(parsed, "pasta");
+          return;
+        }
       } catch {}
     };
 
