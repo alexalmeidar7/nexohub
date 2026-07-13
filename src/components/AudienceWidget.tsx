@@ -1540,7 +1540,14 @@ function StatCell({
   );
 }
 
-function DeltaBadge({ delta, dark }: { delta: number | null; dark: string }) {
+function DeltaBadge({ delta, dark, loading }: { delta: number | null; dark: string; loading?: boolean }) {
+  if (loading) {
+    return (
+      <div className="rounded-full px-1.5 py-0.5 animate-pulse" style={{ background: `${dark}33` }}>
+        <Skeleton width={38} height={10} dark={dark} />
+      </div>
+    );
+  }
   if (delta === null || delta === undefined) return null;
   const up = delta > 0;
   const down = delta < 0;
