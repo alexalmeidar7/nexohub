@@ -3,10 +3,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { musicDataKey, musicStartKey, botXmlLastRunKey } from "@/lib/musicStorageKeys";
+import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
+
+const BREAK_LABELS = new Set(["break", "ebs curtas", "intervalo", "commercial break"]);
+
+function isBreakTrack(data: { titulo?: string; artista?: string }) {
+  const t = (data.titulo || "").trim().toLowerCase();
+  const a = (data.artista || "").trim().toLowerCase();
+  return BREAK_LABELS.has(t) || BREAK_LABELS.has(a);
+}
 
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   const titulo = (data.titulo || "").trim().toLowerCase();
