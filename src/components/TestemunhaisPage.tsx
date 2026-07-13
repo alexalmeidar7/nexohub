@@ -116,13 +116,16 @@ interface Testemunhal {
   data_inicio: string;
   data_fim: string;
   created_at: string;
-  programa?: { nome: string };
+  programa?: { nome: string; thumb?: string; capa?: string };
 }
 
 interface Programa {
   id: string;
   nome: string;
+  thumb?: string;
+  capa?: string;
 }
+
 
 interface TestemunhaisPageProps {
   effectiveUserId?: string | null;
@@ -172,7 +175,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     const [, { data: tData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
       supabase.from("testemunhais").select("*").eq("user_id", targetUserId).order("data_fim"),
-      supabase.from("programas").select("id, nome").eq("user_id", targetUserId).eq("ativo", true),
+      supabase.from("programas").select("id, nome, thumb, capa").eq("user_id", targetUserId).eq("ativo", true),
     ]);
 
     const testemunhais = tData || [];
@@ -290,6 +293,18 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
 
   const diasRestantes = (dataFim: string) => {
     return Math.ceil((new Date(dataFim + "T23:59:59").getTime() - Date.now()) / 86400000);
+  };
+
+  const stripHtml = (html: string) =>
+    (html || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const previewTexto = (html: string, max = 110) => {
+    const clean = stripHtml(html);
+    return clean.length > max ? clean.slice(0, max).trimEnd() + "…" : clean;
+  };
+  const formatDate = (d: string) => {
+    if (!d) return "—";
+    const [y, m, day] = d.split("-");
+    return `${day}/${m}/${y}`;
   };
 
   if (loading || !dataUserId) return <ModulePageSkeleton variant="form" />;
@@ -533,11 +548,11 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                    {["Imagem", "Texto", "Programa", "Validade", "Ações"].map((h) => (
+                    {["Programa", "Validade", "Texto", "Ações"].map((h) => (
                       <th
                         key={h}
                         style={{
-                          padding: "12px 14px",
+                          padding: "14px 16px",
                           textAlign: h === "Ações" ? "right" : "left",
                           fontWeight: 800,
                           letterSpacing: 1.2,
@@ -555,47 +570,98 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                   {items.map((item, idx) => {
                     const dias = diasRestantes(item.data_fim);
                     const expiring = dias <= 3;
+                    const expired = dias < 0;
+                    const programaImg = item.programa?.thumb || item.programa?.capa || item.imagem_url || "";
                     return (
                       <tr
                         key={item.id}
                         style={{
                           background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
                           color: DARK,
+                          borderTop: idx === 0 ? "none" : `1px solid ${CARD_BG}`,
                         }}
                       >
-                        <td style={{ padding: "12px 14px" }}>
-                          {item.imagem_url ? (
-                            <img src={item.imagem_url} alt="" style={{ width: 40, height: 40, borderRadius: 999, objectFit: "cover", border: `2px solid ${CYAN}` }} />
-                          ) : (
-                            <span style={{ color: "#94A3B8" }}>—</span>
-                          )}
+                        {/* PROGRAMA (nome em cima, imagem embaixo) */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", minWidth: 180 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>
+                              {item.programa?.nome || "Sem programa"}
+                            </span>
+                            {programaImg ? (
+                              <img
+                                src={programaImg}
+                                alt={item.programa?.nome || ""}
+                                style={{
+                                  width: 96,
+                                  height: 54,
+                                  borderRadius: 10,
+                                  objectFit: "cover",
+                                  border: `1px solid ${CARD_BG}`,
+                                  background: CARD_BG,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: 96, height: 54, borderRadius: 10,
+                                  background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center",
+                                  color: "#94A3B8", fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                                }}
+                              >
+                                SEM IMAGEM
+                              </div>
+                            )}
+                          </div>
                         </td>
-                        <td style={{ padding: "12px 14px", maxWidth: 260 }}>
-                          <div
-                            className="truncate"
-                            style={{ fontSize: 12 }}
-                            dangerouslySetInnerHTML={{ __html: item.texto }}
-                          />
+
+                        {/* VALIDADE (data + dias) */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK }}>
+                              {formatDate(item.data_fim)}
+                            </span>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "3px 10px",
+                                borderRadius: 999,
+                                fontWeight: 800,
+                                fontSize: 10,
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                background: expired ? "#FEE2E2" : expiring ? "#FEF3C7" : CARD_BG,
+                                color: expired ? "#DC2626" : expiring ? "#B45309" : DARK,
+                                width: "fit-content",
+                              }}
+                            >
+                              {expired
+                                ? "Expirada"
+                                : `${dias}d ${dias === 1 ? "restante" : "restantes"}`}
+                            </span>
+                          </div>
                         </td>
-                        <td style={{ padding: "12px 14px" }}>{item.programa?.nome || "—"}</td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <span
+
+                        {/* TEXTO (prévia padronizada) */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", maxWidth: 420 }}>
+                          <p
                             style={{
-                              display: "inline-block",
-                              padding: "4px 10px",
-                              borderRadius: 999,
-                              fontWeight: 800,
-                              fontSize: 10,
-                              letterSpacing: 1,
-                              textTransform: "uppercase",
-                              background: expiring ? "#FEE2E2" : CARD_BG,
-                              color: expiring ? "#DC2626" : DARK,
+                              margin: 0,
+                              fontSize: 12.5,
+                              lineHeight: 1.5,
+                              color: "#334155",
+                              fontFamily: "'Montserrat', system-ui, sans-serif",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
                             }}
                           >
-                            {dias}d {dias === 1 ? "restante" : "restantes"}
-                          </span>
+                            {previewTexto(item.texto)}
+                          </p>
                         </td>
-                        <td style={{ padding: "12px 14px", textAlign: "right" }}>
+
+                        {/* AÇÕES */}
+                        <td style={{ padding: "14px 16px", textAlign: "right", verticalAlign: "top" }}>
                           <div style={{ display: "inline-flex", gap: 6 }}>
                             <button
                               onClick={() => startEdit(item)}
@@ -629,6 +695,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                 </tbody>
               </table>
             </div>
+
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
