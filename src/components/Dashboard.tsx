@@ -655,7 +655,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
       <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
         <img
-          src={nexoCantoLogo.url}
+          src={nexoCantoLogo}
           alt="Nexo"
           style={{ width: 40, height: "auto", display: "block", marginBottom: 4 }}
         />
