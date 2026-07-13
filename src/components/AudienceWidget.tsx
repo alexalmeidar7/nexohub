@@ -267,7 +267,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       clearInterval(iv);
 
     };
-  }, [dataUserId, sources.video_stream_api_url]);
+  }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
 
 
   // Rotate social display every 3s (only across configured networks)
