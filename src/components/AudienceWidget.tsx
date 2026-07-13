@@ -270,9 +270,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const total = socialTotal + (videoCount || 0) + (streamingCount || 0) + (siteCount || 0);
+  const viewersNow = (streamingCount || 0) + (videoCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
+
 
   // Rotation list — only networks that have a URL configured
   const rotation: {
