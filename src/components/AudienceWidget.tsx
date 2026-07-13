@@ -1088,13 +1088,13 @@ function AudienceReportDialog({
               )}
 
               {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
-              {rows.length > 0 && (
+              {filteredRows.length > 0 && (
                 <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: DARK, opacity: 0.7 }}>
                     Curva do dia · Áudio vs Vídeo
                   </div>
                   <ResponsiveContainer width="100%" height={140}>
-                    <AreaChart data={[...rows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
+                    <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
                       <defs>
                         <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -1135,12 +1135,12 @@ function AudienceReportDialog({
                           <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
                         </td></tr>
                       )}
-                      {!loading && rows.length === 0 && (
+                      {!loading && filteredRows.length === 0 && (
                         <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
                           Nenhum registro encontrado para essa data.
                         </td></tr>
                       )}
-                      {!loading && rows.map((r, i) => {
+                      {!loading && filteredRows.map((r, i) => {
                         const isPeak = stats && r.id === stats.peakTotal.id;
                         return (
                           <tr key={r.id} style={{
@@ -1161,7 +1161,7 @@ function AudienceReportDialog({
                   </table>
                 </div>
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
-                  <span>{rows.length} registros</span>
+                  <span>{filteredRows.length} registros</span>
                   <span>Registro a cada 15 min · retenção de 6 meses</span>
                 </div>
               </div>
