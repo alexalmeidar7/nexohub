@@ -456,6 +456,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.video_stream_api_url}
               onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
             />
+            <SourceField
+              label="XPath (nódulo XML do Source Video)"
+              placeholder="//info/espectadores_conectados"
+              value={sources.video_stream_xpath}
+              onChange={(v) => setSources((s) => ({ ...s, video_stream_xpath: v }))}
+            />
+
 
             <button
               type="button"
