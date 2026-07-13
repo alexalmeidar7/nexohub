@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useMemo } from "react";
 import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
 
 interface Props {
   dataUserId?: string;
@@ -816,10 +817,15 @@ function AudienceReportDialog({
   const LIME = "#C6F03C";
   const DARK = "#0A2540";
   const BG = "#D6F4FB";
+  const AUDIO_COLOR = "#00BFF0";
+  const VIDEO_COLOR = "#0A2540";
   const todayStr = () => new Date().toISOString().slice(0, 10);
   const [date, setDate] = useState<string>(todayStr());
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [view, setView] = useState<"day" | "trend">("day");
+  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number }>>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -843,6 +849,51 @@ function AudienceReportDialog({
     load();
     return () => { cancelled = true; };
   }, [open, userId, date]);
+
+  // Carrega tendência dos últimos 6 meses (agregado por dia)
+  useEffect(() => {
+    if (!open || !userId || view !== "trend") return;
+    let cancelled = false;
+    const load = async () => {
+      setTrendLoading(true);
+      const start = new Date();
+      start.setMonth(start.getMonth() - 6);
+      start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("created_at, audio, video")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString())
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      const buckets = new Map<string, { audio: number; video: number; count: number; peakAudio: number; peakVideo: number }>();
+      for (const r of (data as any[]) || []) {
+        const d = new Date(r.created_at);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const b = buckets.get(key) || { audio: 0, video: 0, count: 0, peakAudio: 0, peakVideo: 0 };
+        b.audio += r.audio || 0;
+        b.video += r.video || 0;
+        b.count += 1;
+        if ((r.audio || 0) > b.peakAudio) b.peakAudio = r.audio || 0;
+        if ((r.video || 0) > b.peakVideo) b.peakVideo = r.video || 0;
+        buckets.set(key, b);
+      }
+      const arr = Array.from(buckets.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([day, b]) => ({
+          day,
+          audio: Math.round(b.audio / Math.max(1, b.count)),
+          video: Math.round(b.video / Math.max(1, b.count)),
+          peakAudio: b.peakAudio,
+          peakVideo: b.peakVideo,
+        }));
+      setTrendRows(arr);
+      setTrendLoading(false);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, view]);
+
 
   const stats = useMemo(() => {
     if (rows.length === 0) return null;
@@ -888,97 +939,170 @@ function AudienceReportDialog({
         </div>
 
         <div className="p-6 flex flex-col gap-4 max-h-[75vh] overflow-hidden">
-          {/* Filtro + Highlights */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
-              <CalendarIcon size={14} style={{ color: CYAN }} />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="text-sm font-bold outline-none bg-transparent"
-                style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
-              />
-            </div>
+          {/* Tabs Dia / 6 Meses */}
+          <div className="flex items-center gap-2 p-1 rounded-full self-start" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
             <button
               type="button"
-              onClick={() => setDate(todayStr())}
-              className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
-              style={{ background: LIME, color: DARK }}
+              onClick={() => setView("day")}
+              className="text-[10px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full transition-all"
+              style={{
+                background: view === "day" ? CYAN : "transparent",
+                color: view === "day" ? "#fff" : DARK,
+              }}
             >
-              Hoje
+              Dia
             </button>
-            <div className="flex-1" />
-            {stats && (
-              <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
-                <Trophy size={14} style={{ color: LIME }} />
-                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
-                <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
-                <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setView("trend")}
+              className="text-[10px] font-black uppercase tracking-wider px-4 py-1.5 rounded-full transition-all"
+              style={{
+                background: view === "trend" ? CYAN : "transparent",
+                color: view === "trend" ? "#fff" : DARK,
+              }}
+            >
+              6 Meses · Tendência
+            </button>
           </div>
 
-          {/* Stat cards */}
-          {stats && (
-            <div className="grid grid-cols-4 gap-3">
-              <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-              <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-            </div>
+          {view === "day" && (
+            <>
+              {/* Filtro + Highlights */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
+                  <CalendarIcon size={14} style={{ color: CYAN }} />
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className="text-sm font-bold outline-none bg-transparent"
+                    style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDate(todayStr())}
+                  className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
+                  style={{ background: LIME, color: DARK }}
+                >
+                  Hoje
+                </button>
+                <div className="flex-1" />
+                {stats && (
+                  <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
+                    <Trophy size={14} style={{ color: LIME }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
+                    <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                    <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Stat cards */}
+              {stats && (
+                <div className="grid grid-cols-4 gap-3">
+                  <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
+                  <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
+                </div>
+              )}
+
+              {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
+              {rows.length > 0 && (
+                <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                  <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: DARK, opacity: 0.7 }}>
+                    Curva do dia · Áudio vs Vídeo
+                  </div>
+                  <ResponsiveContainer width="100%" height={140}>
+                    <AreaChart data={[...rows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
+                      <defs>
+                        <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
+                          <stop offset="100%" stopColor={AUDIO_COLOR} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gVideo" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
+                          <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
+                      <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 10 }} />
+                      <YAxis tick={{ fill: DARK, fontSize: 10 }} />
+                      <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
+                      <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
+                      <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+
+              {/* Table */}
+              <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+                <div className="overflow-auto flex-1">
+                  <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
+                    <thead className="sticky top-0 z-10">
+                      <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
+                        <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
+                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
+                        <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loading && (
+                        <tr><td colSpan={5} className="py-10 text-center">
+                          <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
+                        </td></tr>
+                      )}
+                      {!loading && rows.length === 0 && (
+                        <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                          Nenhum registro encontrado para essa data.
+                        </td></tr>
+                      )}
+                      {!loading && rows.map((r, i) => {
+                        const isPeak = stats && r.id === stats.peakTotal.id;
+                        return (
+                          <tr key={r.id} style={{
+                            background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
+                            borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
+                          }}>
+                            <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
+                            <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
+                            <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
+                              {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
+                            <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
+                  <span>{rows.length} registros</span>
+                  <span>Registro a cada 15 min · retenção de 6 meses</span>
+                </div>
+              </div>
+            </>
           )}
 
-          {/* Table */}
-          <div className="rounded-2xl overflow-hidden flex-1 min-h-0 flex flex-col" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
-            <div className="overflow-auto flex-1">
-              <table className="w-full text-sm" style={{ borderCollapse: "collapse" }}>
-                <thead className="sticky top-0 z-10">
-                  <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Data</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading && (
-                    <tr><td colSpan={5} className="py-10 text-center">
-                      <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
-                    </td></tr>
-                  )}
-                  {!loading && rows.length === 0 && (
-                    <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
-                      Nenhum registro encontrado para essa data.
-                    </td></tr>
-                  )}
-                  {!loading && rows.map((r, i) => {
-                    const isPeak = stats && r.id === stats.peakTotal.id;
-                    return (
-                      <tr key={r.id} style={{
-                        background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
-                        borderLeft: isPeak ? `4px solid ${LIME}` : "4px solid transparent",
-                      }}>
-                        <td className="px-4 py-2.5 text-xs font-semibold" style={{ color: DARK }}>{fmtDate(r.created_at)}</td>
-                        <td className="px-4 py-2.5 text-xs font-mono font-bold" style={{ color: CYAN }}>{fmtTime(r.created_at)}</td>
-                        <td className="px-4 py-2.5 text-xs font-bold" style={{ color: DARK }}>
-                          {r.programa || <span style={{ opacity: 0.4, fontWeight: 500 }}>— sem programa —</span>}
-                        </td>
-                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.audio.toLocaleString("pt-BR")}</td>
-                        <td className="px-4 py-2.5 text-xs font-black text-right" style={{ color: DARK }}>{r.video.toLocaleString("pt-BR")}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
-              <span>{rows.length} registros</span>
-              <span>Registro a cada 15 min · retenção de 6 meses</span>
-            </div>
-          </div>
+          {view === "trend" && (
+            <TrendPanel
+              loading={trendLoading}
+              data={trendRows}
+              cyan={CYAN}
+              lime={LIME}
+              dark={DARK}
+              bg={BG}
+              audioColor={AUDIO_COLOR}
+              videoColor={VIDEO_COLOR}
+            />
+          )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
@@ -1200,6 +1324,150 @@ function PeakBadge({ peak, dark }: { peak: number | null; dark: string }) {
     >
       <Trophy size={9} strokeWidth={3} />
       <span>{peak.toLocaleString("pt-BR")}</span>
+    </div>
+  );
+}
+
+function TrendPanel({
+  loading,
+  data,
+  cyan,
+  lime,
+  dark,
+  bg,
+  audioColor,
+  videoColor,
+}: {
+  loading: boolean;
+  data: Array<{ day: string; audio: number; video: number; peakAudio?: number; peakVideo?: number }>;
+  cyan: string;
+  lime: string;
+  dark: string;
+  bg: string;
+  audioColor: string;
+  videoColor: string;
+}) {
+  const totals = useMemo(() => {
+    const tAudio = data.reduce((s, r) => s + r.audio, 0);
+    const tVideo = data.reduce((s, r) => s + r.video, 0);
+    const peakAudio = data.reduce((m, r) => ((r.peakAudio ?? r.audio) > m ? (r.peakAudio ?? r.audio) : m), 0);
+    const peakVideo = data.reduce((m, r) => ((r.peakVideo ?? r.video) > m ? (r.peakVideo ?? r.video) : m), 0);
+    const avgAudio = data.length ? Math.round(tAudio / data.length) : 0;
+    const avgVideo = data.length ? Math.round(tVideo / data.length) : 0;
+    const dominance = tAudio + tVideo > 0
+      ? Math.round((tAudio / (tAudio + tVideo)) * 100)
+      : 0;
+    return { tAudio, tVideo, peakAudio, peakVideo, avgAudio, avgVideo, dominance };
+  }, [data]);
+
+  // Agrupa por mês para o gráfico de barras comparativo
+  const monthly = useMemo(() => {
+    const map = new Map<string, { month: string; audio: number; video: number; count: number }>();
+    for (const r of data) {
+      const key = r.day.slice(0, 7); // YYYY-MM
+      const b = map.get(key) || { month: key, audio: 0, video: 0, count: 0 };
+      b.audio += r.audio;
+      b.video += r.video;
+      b.count += 1;
+      map.set(key, b);
+    }
+    const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    return Array.from(map.values())
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .map((b) => {
+        const [y, m] = b.month.split("-");
+        return {
+          month: `${MESES[parseInt(m, 10) - 1]}/${y.slice(2)}`,
+          audio: Math.round(b.audio / Math.max(1, b.count)),
+          video: Math.round(b.video / Math.max(1, b.count)),
+        };
+      });
+  }, [data]);
+
+  const fmtDay = (day: string) => {
+    const [, m, d] = day.split("-");
+    return `${d}/${m}`;
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16" style={{ color: cyan }}>
+        <Loader2 className="animate-spin" size={28} />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="rounded-2xl p-10 text-center text-xs font-semibold" style={{ background: "#fff", color: dark, opacity: 0.6, border: `1px solid ${cyan}` }}>
+        Ainda não há histórico suficiente para gerar a tendência dos últimos 6 meses.
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4 overflow-auto pr-1" style={{ maxHeight: "60vh" }}>
+      {/* Resumo */}
+      <div className="grid grid-cols-4 gap-3">
+        <MiniStat label="Pico Áudio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico Vídeo · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Áudio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Vídeo" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+      </div>
+
+      {/* Dominância */}
+      <div className="rounded-2xl p-4 flex flex-col gap-2" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: dark, opacity: 0.6 }}>Composição da audiência (6 meses)</span>
+          <span className="text-[10px] font-bold" style={{ color: dark, opacity: 0.6 }}>
+            <span style={{ color: audioColor, fontWeight: 900 }}>{totals.dominance}%</span> áudio · <span style={{ color: videoColor, fontWeight: 900 }}>{100 - totals.dominance}%</span> vídeo
+          </span>
+        </div>
+        <div className="h-3 rounded-full overflow-hidden flex" style={{ background: `${cyan}22` }}>
+          <div style={{ width: `${totals.dominance}%`, background: audioColor }} />
+          <div style={{ width: `${100 - totals.dominance}%`, background: videoColor }} />
+        </div>
+      </div>
+
+      {/* Tendência diária */}
+      <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
+          Tendência diária · Áudio vs Vídeo
+        </div>
+        <ResponsiveContainer width="100%" height={240}>
+          <LineChart data={data.map((r) => ({ day: fmtDay(r.day), audio: r.audio, video: r.video }))}>
+            <CartesianGrid strokeDasharray="3 3" stroke={`${cyan}33`} />
+            <XAxis dataKey="day" tick={{ fill: dark, fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
+            <YAxis tick={{ fill: dark, fontSize: 10 }} />
+            <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${cyan}`, borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+            <Line type="monotone" dataKey="audio" stroke={audioColor} strokeWidth={2.5} dot={false} name="Áudio" />
+            <Line type="monotone" dataKey="video" stroke={videoColor} strokeWidth={2.5} dot={false} name="Vídeo" />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Comparação mensal */}
+      <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
+        <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
+          Comparação mensal · Média por mês
+        </div>
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={monthly} barGap={4}>
+            <CartesianGrid strokeDasharray="3 3" stroke={`${cyan}33`} />
+            <XAxis dataKey="month" tick={{ fill: dark, fontSize: 10 }} />
+            <YAxis tick={{ fill: dark, fontSize: 10 }} />
+            <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${cyan}`, borderRadius: 12, fontSize: 12 }} />
+            <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700 }} />
+            <Bar dataKey="audio" fill={audioColor} name="Áudio" radius={[6, 6, 0, 0]} />
+            <Bar dataKey="video" fill={videoColor} name="Vídeo" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="text-[10px] font-bold uppercase tracking-widest text-center" style={{ color: dark, opacity: 0.55 }}>
+        Baseado em registros a cada 15 min · retenção de 6 meses
+      </div>
     </div>
   );
 }
