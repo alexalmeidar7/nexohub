@@ -2322,23 +2322,32 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   const barTransition = reducedMotion ? "height 0.01s linear" : "height 90ms linear";
 
 
+  const [hoverVideo, setHoverVideo] = useState(false);
+  const videoActive = showVideo && isVideo;
+  const hideChromeForVideo = videoActive && !hoverVideo;
+
   return (
-    <div className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden" style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}>
+    <div
+      className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden"
+      style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}
+      onMouseEnter={() => setHoverVideo(true)}
+      onMouseLeave={() => setHoverVideo(false)}
+    >
       {/* Break background color layer — crossfades with artist image */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           background: "#002233",
-          opacity: isBreak ? 1 : 0,
+          opacity: isBreak && !videoActive ? 1 : 0,
           transition: fadeTransition,
         }}
       />
 
-      {/* Artist image layer — fades out on break */}
+      {/* Artist image layer — hidden when video is active */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          opacity: isBreak ? 0 : 1,
+          opacity: isBreak || videoActive ? 0 : 1,
           transition: fadeTransition,
         }}
       >
@@ -2357,11 +2366,6 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             className="absolute inset-0 w-full h-full object-cover object-center"
             style={{ transition: imgFadeTransition, opacity: artOpacity }}
           />
-
-
-
-
-
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <Tv size={40} className="text-white/10" />
@@ -2371,34 +2375,39 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
 
-      {/* Wave bars removed per project decision (see mem: player-audio-visuals) */}
-
-
-
-
-      {/* Video overlay (grows upward) */}
+      {/* Video layer — fills the widget (which becomes 16:9 when active) */}
       <div
-        className="absolute left-0 right-0 overflow-hidden rounded-3xl pointer-events-none"
+        className="absolute inset-0 overflow-hidden"
         style={{
-          bottom: "100%",
-          marginBottom: showVideo && isVideo ? "8px" : "0px",
-          height: showVideo && isVideo ? "auto" : "0px",
-          opacity: showVideo && isVideo ? 1 : 0,
-          transform: showVideo && isVideo ? "translateY(0)" : "translateY(20px)",
-          transition: "opacity 0.35s ease, transform 0.4s cubic-bezier(0.4,0,0.2,1)",
-          boxShadow: showVideo && isVideo ? "0 12px 40px rgba(0,0,0,0.7)" : "none",
-          zIndex: 20,
+          opacity: videoActive ? 1 : 0,
+          pointerEvents: videoActive ? "auto" : "none",
+          transition: "opacity 0.35s ease",
+          background: "#000",
+          zIndex: 5,
         }}
       >
-        <div className="relative w-full pointer-events-auto" style={{ background: "#000" }}>
-          <video ref={videoRef} muted={isMuted} playsInline className="w-full block" style={{ aspectRatio: "16/9" }} />
-          {videoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
-              <Loader2 size={20} className="text-white/70 animate-spin" />
-              <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
-            </div>
-          )}
-        </div>
+        <video
+          ref={videoRef}
+          muted={isMuted}
+          playsInline
+          className="absolute inset-0 w-full h-full"
+          style={{ objectFit: "cover" }}
+        />
+        {videoLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
+            <Loader2 size={20} className="text-white/70 animate-spin" />
+            <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
+          </div>
+        )}
+        {/* Hover vignette so overlaid chrome stays readable */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            opacity: hoverVideo ? 1 : 0,
+            transition: "opacity 0.35s ease",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.75) 100%)",
+          }}
+        />
       </div>
 
       {channels.length === 0 ? (
@@ -2406,8 +2415,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
       ) : (
         <div
           className={`relative z-10 flex h-full w-full overflow-hidden ${compactMode ? "flex-row items-center gap-2 p-2 sm:p-2.5" : "flex-col justify-between p-2.5 sm:p-3.5"}`}
-          style={{ minHeight: 0, maxHeight: "100%", transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease" }}
+          style={{
+            minHeight: 0,
+            maxHeight: "100%",
+            transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease, opacity 0.3s ease",
+            opacity: hideChromeForVideo ? 0 : 1,
+            pointerEvents: hideChromeForVideo ? "none" : "auto",
+          }}
         >
+
 
           {/* Status label — only in standard mode */}
           {!compactMode && (
