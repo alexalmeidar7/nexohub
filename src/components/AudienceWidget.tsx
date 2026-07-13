@@ -450,32 +450,61 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         <Settings size={14} />
       </button>
 
-      <div className="flex items-center gap-2 mb-3 pr-10">
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{ background: dark }}
-        >
-          <Users size={16} style={{ color: bg }} />
-        </div>
-        <div className="flex flex-col">
-          <span
-            className="text-[9px] font-bold uppercase"
-            style={{ color: dark, opacity: 0.6, letterSpacing: 1.5 }}
+      <div className="grid grid-cols-2 gap-2 mb-3 pr-10">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
           >
-            Audiência Online
-          </span>
-          {loadingConfig ? (
-            <Skeleton width={72} height={18} dark={dark} />
-          ) : (
+            <Users size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
             <span
-              className="text-xl font-black leading-none"
-              style={{ color: dark }}
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              {total.toLocaleString("pt-BR")}
+              Total de seguidores
             </span>
-          )}
+            {loadingConfig || loadingSocial ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {socialTotal.toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Radio size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              Espectadores agora
+            </span>
+            {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {viewersNow.toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
 
       <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
         <StatCell
