@@ -872,6 +872,94 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         userId={dataUserId}
       />
 
+      {/* Alertas de pico */}
+      <Dialog open={alertsOpen} onOpenChange={setAlertsOpen}>
+        <DialogContent
+          className="max-w-md w-[95vw] p-0 overflow-hidden"
+          style={{ background: "#D6F4FB", borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif" }}
+        >
+          <div style={{ background: "linear-gradient(135deg, #00BFF0 0%, #00A9D6 100%)", padding: "20px 24px" }}>
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
+                  <Bell size={20} color="#fff" />
+                </div>
+                <div className="flex flex-col">
+                  <DialogTitle className="text-lg font-black uppercase tracking-wider text-white">
+                    Alertas de Pico
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-white/85">
+                    Novos recordes de audiência do dia.
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+          </div>
+
+          <div className="p-4 flex flex-col gap-2 max-h-[60vh] overflow-auto">
+            {alerts.length === 0 && (
+              <div className="text-center py-10 text-xs font-semibold" style={{ color: dark, opacity: 0.55 }}>
+                Nenhum novo pico registrado hoje.
+                <br />
+                <span className="text-[10px]">Você será notificado quando a audiência bater um recorde.</span>
+              </div>
+            )}
+            {alerts.map((a) => {
+              const isAudio = a.type === "audio";
+              const time = new Date(a.at);
+              const hhmm = `${String(time.getHours()).padStart(2, "0")}:${String(time.getMinutes()).padStart(2, "0")}`;
+              return (
+                <div
+                  key={a.id}
+                  className="rounded-2xl p-3 flex items-center gap-3"
+                  style={{
+                    background: "#fff",
+                    border: `2px solid ${isAudio ? "#00BFF0" : "#0A2540"}`,
+                  }}
+                >
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: isAudio ? "#00BFF0" : "#0A2540", color: "#fff" }}
+                  >
+                    {isAudio ? <Radio size={16} /> : <MonitorPlay size={16} />}
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: dark, opacity: 0.6 }}>
+                      Pico de {isAudio ? "áudio" : "vídeo"} · {hhmm}
+                    </span>
+                    <span className="text-xl font-black leading-tight" style={{ color: dark }}>
+                      {a.value.toLocaleString("pt-BR")} {isAudio ? "ouvintes" : "espectadores"}
+                    </span>
+                  </div>
+                  <Trophy size={18} style={{ color: "#C6F03C" }} />
+                </div>
+              );
+            })}
+          </div>
+
+          {alerts.length > 0 && (
+            <div className="px-4 py-3 flex items-center justify-between border-t" style={{ borderColor: "rgba(0,191,240,0.25)" }}>
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: dark, opacity: 0.55 }}>
+                {alerts.length} alerta{alerts.length > 1 ? "s" : ""} hoje
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setAlerts([]);
+                  setUnread(0);
+                  try { if (alertsStorageKey) localStorage.removeItem(alertsStorageKey); } catch { /* ignore */ }
+                }}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full"
+                style={{ background: "rgba(10,37,64,0.1)", color: dark }}
+              >
+                Limpar
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
     </div>
   );
 }
