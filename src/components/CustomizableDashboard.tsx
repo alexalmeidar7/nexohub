@@ -1766,11 +1766,15 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid]);
 
-  useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
+  // Parent passes inline arrow fns for these callbacks, so they change identity
+  // every render. Depending on them here causes an infinite update loop (freezes
+  // the widget on BREAK). Only re-run when the underlying state actually changes.
+  useEffect(() => { onVideoChange?.(showVideo); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showVideo]);
   useEffect(() => {
     try { localStorage.setItem(compactStorageKey, compactMode ? "1" : "0"); } catch {}
     onCompactChange?.(compactMode);
-  }, [compactMode, compactStorageKey, onCompactChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compactMode, compactStorageKey]);
   useEffect(() => {
     try { setCompactMode(localStorage.getItem(compactStorageKey) === "1"); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
