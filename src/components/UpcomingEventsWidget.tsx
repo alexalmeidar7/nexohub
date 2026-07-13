@@ -263,13 +263,13 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     color: isToday ? "var(--layout-header-text, #ffffff)" : textColor,
                   }}
                 >
-                  <span className="text-[7px] uppercase font-bold leading-none" style={{ opacity: 0.75 }}>
+                <span className="text-[8px] uppercase font-bold leading-none" style={{ opacity: 0.85 }}>
                     {format(date, "MMM", { locale: ptBR })}
                   </span>
                   <span className="text-[13px] font-black leading-none tabular-nums mt-0.5">
                     {date.getDate()}
                   </span>
-                  <span className="text-[6.5px] uppercase leading-none mt-0.5" style={{ opacity: 0.6 }}>
+                  <span className="text-[7.5px] uppercase font-bold leading-none mt-0.5" style={{ opacity: 0.75 }}>
                     {format(date, "EEE", { locale: ptBR }).replace(".", "")}
                   </span>
                 </div>
