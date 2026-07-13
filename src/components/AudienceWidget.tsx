@@ -491,6 +491,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         open={configOpen}
         onOpenChange={async (open) => {
           if (!open) {
+            const ok = await validateXPaths();
+            if (!ok) {
+              // Keep dialog open when validation fails
+              return;
+            }
             await persistIfChanged();
           }
           setConfigOpen(open);
@@ -507,7 +512,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   Fontes da Audiência
                 </DialogTitle>
                 <DialogDescription className="text-xs" style={{ color: "#0A2540", opacity: 0.6 }}>
-                  Salvo automaticamente ao fechar.
+                  Validado ao salvar.
                 </DialogDescription>
               </div>
             </div>
@@ -546,7 +551,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               label="XPath (nódulo XML do Source Audio)"
               placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
               value={sources.audio_stream_xpath}
-              onChange={(v) => setSources((s) => ({ ...s, audio_stream_xpath: v }))}
+              onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
+              error={audioXPathError}
             />
             <SourceField
               icon={<MonitorPlay size={14} />}
@@ -559,21 +565,28 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               label="XPath (nódulo XML do Source Video)"
               placeholder="//info/espectadores_conectados"
               value={sources.video_stream_xpath}
-              onChange={(v) => setSources((s) => ({ ...s, video_stream_xpath: v }))}
+              onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
+              error={videoXPathError}
             />
-
 
             <button
               type="button"
-              onClick={async () => { await persistIfChanged(); setConfigOpen(false); }}
-              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02]"
+              disabled={validating}
+              onClick={async () => {
+                const ok = await validateXPaths();
+                if (!ok) return;
+                await persistIfChanged();
+                setConfigOpen(false);
+              }}
+              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ background: "#C6F03C", color: "#0A2540", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(198,240,60,0.4)" }}
             >
-              Salvar
+              {validating ? "Validando..." : "Salvar"}
             </button>
           </div>
         </DialogContent>
       </Dialog>
+
 
     </div>
   );
