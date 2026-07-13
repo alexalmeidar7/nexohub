@@ -13,7 +13,9 @@ const corsHeaders = {
 // For XML: walks tag names in order (first match at each level).
 // For JSON: walks object keys; if a value is an array, uses the first element.
 function extractByPath(text: string, rawPath: string): number | null {
-  const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
+  // Accept both slash- and dot-separated paths (e.g. "icestats/source/listeners"
+  // and "icestats.source.listeners"), which is how users commonly write them.
+  const path = rawPath.replace(/^\/+/, "").split(/[\/.]/).map(s => s.trim()).filter(Boolean);
   if (path.length === 0) return null;
   const trimmed = text.trim();
 
