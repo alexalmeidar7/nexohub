@@ -57,6 +57,68 @@ async function fetchWithXPath(url: string, xpath: string): Promise<number | null
   } catch { return null; }
 }
 
+// Generic listener extractor when no XPath was configured. Tries common tags
+// used by Icecast/Shoutcast/CentovaCast/SonicPanel/etc.
+const LISTENER_TAGS = [
+  "listeners",
+  "currentlisteners",
+  "current_listeners",
+  "espectadores_conectados",
+  "espectadores",
+  "ouvintes",
+  "connected",
+];
+
+function autoDetectListeners(text: string): number | null {
+  const trimmed = text.trim();
+  // Try JSON first
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const j = JSON.parse(trimmed);
+      const walk = (node: any): number | null => {
+        if (node == null) return null;
+        if (Array.isArray(node)) {
+          for (const it of node) { const v = walk(it); if (v != null) return v; }
+          return null;
+        }
+        if (typeof node === "object") {
+          for (const [k, v] of Object.entries(node)) {
+            if (LISTENER_TAGS.includes(k.toLowerCase())) {
+              const n = typeof v === "string" ? parseInt(v, 10) : Number(v);
+              if (Number.isFinite(n)) return n;
+            }
+          }
+          for (const v of Object.values(node)) {
+            const r = walk(v); if (r != null) return r;
+          }
+        }
+        return null;
+      };
+      const n = walk(j); if (n != null) return n;
+    } catch { /* fall through */ }
+  }
+  // XML: look for common tags anywhere in the document
+  for (const tag of LISTENER_TAGS) {
+    const re = new RegExp(`<${tag}[^>]*>\\s*(\\d+)\\s*<\\/${tag}>`, "i");
+    const m = trimmed.match(re);
+    if (m) return parseInt(m[1], 10);
+  }
+  return null;
+}
+
+async function fetchGenericListeners(url: string): Promise<number | null> {
+  try {
+    const r = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return null;
+    const text = await r.text();
+    return autoDetectListeners(text);
+  } catch { return null; }
+}
+
+
 async function fetchListenersForUrl(streamUrl: string): Promise<number | null> {
   try {
     const u = new URL(streamUrl);
