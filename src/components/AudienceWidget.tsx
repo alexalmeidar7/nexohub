@@ -824,8 +824,10 @@ function AudienceReportDialog({
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"day" | "trend">("day");
-  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number }>>([]);
+  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number; peakAudio: number; peakVideo: number }>>([]);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
+  const [programOptions, setProgramOptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -850,6 +852,31 @@ function AudienceReportDialog({
     return () => { cancelled = true; };
   }, [open, userId, date]);
 
+  // Carrega lista de programas com registro nos últimos 6 meses
+  useEffect(() => {
+    if (!open || !userId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date();
+      start.setMonth(start.getMonth() - 6);
+      start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("programa")
+        .eq("user_id", userId as any)
+        .not("programa", "is", null)
+        .gte("created_at", start.toISOString());
+      if (cancelled) return;
+      const set = new Set<string>();
+      for (const r of (data as any[]) || []) {
+        if (r.programa) set.add(r.programa as string);
+      }
+      setProgramOptions(Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR")));
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId]);
+
   // Carrega tendência dos últimos 6 meses (agregado por dia)
   useEffect(() => {
     if (!open || !userId || view !== "trend") return;
@@ -861,13 +888,16 @@ function AudienceReportDialog({
       start.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from("audiencia_historico")
-        .select("created_at, audio, video")
+        .select("created_at, audio, video, programa")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString())
         .order("created_at", { ascending: true });
       if (cancelled) return;
+      const filtered = (data as any[] || []).filter((r) =>
+        programaFilter === "__ALL__" ? true : (r.programa || "") === programaFilter
+      );
       const buckets = new Map<string, { audio: number; video: number; count: number; peakAudio: number; peakVideo: number }>();
-      for (const r of (data as any[]) || []) {
+      for (const r of filtered) {
         const d = new Date(r.created_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         const b = buckets.get(key) || { audio: 0, video: 0, count: 0, peakAudio: 0, peakVideo: 0 };
@@ -892,18 +922,24 @@ function AudienceReportDialog({
     };
     load();
     return () => { cancelled = true; };
-  }, [open, userId, view]);
+  }, [open, userId, view, programaFilter]);
 
+  // Aplica filtro de programa às linhas do dia
+  const filteredRows = useMemo(() => {
+    if (programaFilter === "__ALL__") return rows;
+    return rows.filter((r) => (r.programa || "") === programaFilter);
+  }, [rows, programaFilter]);
 
   const stats = useMemo(() => {
-    if (rows.length === 0) return null;
-    const peakAudio = rows.reduce((m, r) => (r.audio > m.audio ? r : m), rows[0]);
-    const peakVideo = rows.reduce((m, r) => (r.video > m.video ? r : m), rows[0]);
-    const peakTotal = rows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), rows[0]);
-    const avgAudio = Math.round(rows.reduce((s, r) => s + r.audio, 0) / rows.length);
-    const avgVideo = Math.round(rows.reduce((s, r) => s + r.video, 0) / rows.length);
+    if (filteredRows.length === 0) return null;
+    const peakAudio = filteredRows.reduce((m, r) => (r.audio > m.audio ? r : m), filteredRows[0]);
+    const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
+    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), filteredRows[0]);
+    const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
+    const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
     return { peakAudio, peakVideo, peakTotal, avgAudio, avgVideo };
-  }, [rows]);
+  }, [filteredRows]);
+
 
   const fmtTime = (iso: string) => {
     const d = new Date(iso);
@@ -965,6 +1001,49 @@ function AudienceReportDialog({
             </button>
           </div>
 
+          {/* Filtro de programa (aplica a Dia e 6 Meses) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>
+              Programa
+            </span>
+            <div className="relative">
+              <select
+                value={programaFilter}
+                onChange={(e) => setProgramaFilter(e.target.value)}
+                className="appearance-none text-xs font-bold outline-none pl-4 pr-9 py-2 rounded-full cursor-pointer"
+                style={{
+                  background: "#fff",
+                  border: `2px solid ${CYAN}`,
+                  color: DARK,
+                  fontFamily: "Montserrat, sans-serif",
+                  minWidth: 220,
+                }}
+              >
+                <option value="__ALL__">Todos os programas</option>
+                {programOptions.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black" style={{ color: CYAN }}>▼</span>
+            </div>
+            {programaFilter !== "__ALL__" && (
+              <button
+                type="button"
+                onClick={() => setProgramaFilter("__ALL__")}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03] inline-flex items-center gap-1"
+                style={{ background: `${DARK}12`, color: DARK }}
+              >
+                <X size={10} /> Limpar
+              </button>
+            )}
+            <span className="text-[10px] font-bold" style={{ color: DARK, opacity: 0.5 }}>
+              {programaFilter === "__ALL__"
+                ? "Estatísticas somam todos os registros"
+                : `Picos e médias apenas de "${programaFilter}"`}
+            </span>
+          </div>
+
+
           {view === "day" && (
             <>
               {/* Filtro + Highlights */}
@@ -1009,13 +1088,13 @@ function AudienceReportDialog({
               )}
 
               {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
-              {rows.length > 0 && (
+              {filteredRows.length > 0 && (
                 <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: DARK, opacity: 0.7 }}>
                     Curva do dia · Áudio vs Vídeo
                   </div>
                   <ResponsiveContainer width="100%" height={140}>
-                    <AreaChart data={[...rows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
+                    <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))}>
                       <defs>
                         <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -1056,12 +1135,12 @@ function AudienceReportDialog({
                           <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
                         </td></tr>
                       )}
-                      {!loading && rows.length === 0 && (
+                      {!loading && filteredRows.length === 0 && (
                         <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
                           Nenhum registro encontrado para essa data.
                         </td></tr>
                       )}
-                      {!loading && rows.map((r, i) => {
+                      {!loading && filteredRows.map((r, i) => {
                         const isPeak = stats && r.id === stats.peakTotal.id;
                         return (
                           <tr key={r.id} style={{
@@ -1082,7 +1161,7 @@ function AudienceReportDialog({
                   </table>
                 </div>
                 <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
-                  <span>{rows.length} registros</span>
+                  <span>{filteredRows.length} registros</span>
                   <span>Registro a cada 15 min · retenção de 6 meses</span>
                 </div>
               </div>
