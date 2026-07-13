@@ -117,12 +117,28 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     onNavigate?.("agenda" as Page);
   };
 
-  const encerrarEvento = async (evtId: string) => {
-    const prev = eventos;
-    setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
-    const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
-    if (error) setEventos(prev);
+  const [dismissing, setDismissing] = useState<Set<string>>(new Set());
+
+  const encerrarEvento = (evtId: string) => {
+    setDismissing((cur) => {
+      const s = new Set(cur);
+      s.add(evtId);
+      return s;
+    });
+    // Wait for the smoke animation to finish before removing the item
+    window.setTimeout(async () => {
+      const prev = eventos;
+      setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
+      setDismissing((cur) => {
+        const s = new Set(cur);
+        s.delete(evtId);
+        return s;
+      });
+      const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
+      if (error) setEventos(prev);
+    }, 640);
   };
+
 
 
   const textColor = "var(--layout-widget-text, #ffffff)";
