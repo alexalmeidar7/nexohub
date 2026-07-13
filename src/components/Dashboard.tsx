@@ -1260,14 +1260,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
               <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
-                <div key={displayedPill} className={pillAnimClass}>
-                  {displayedPill === "Chatbot" ? (
-                    <ChatbotHome />
-                  ) : (
-                    <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
-                  )}
+                {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
+                <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
+                  <ChatbotHome />
+                </div>
+                <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
+                  <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
                 </div>
               </div>
+
 
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
