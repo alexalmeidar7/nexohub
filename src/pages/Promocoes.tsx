@@ -1020,7 +1020,8 @@ export default function PromocoesKiosk() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-help"
+                      onClick={() => setAudienceDetailsOpen(true)}
+                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
                       style={{
                         background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
                         border: "1px solid rgba(255,255,255,0.15)",
