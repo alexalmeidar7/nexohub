@@ -598,6 +598,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.audio_stream_xpath}
               onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
               error={audioXPathError}
+              actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
+              onAction={() => probeXPath("audio")}
+              actionDisabled={probing !== null}
+              suggestions={audioSuggestions}
+              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
+              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de ouvintes."
             />
             <SourceField
               icon={<MonitorPlay size={14} />}
@@ -612,7 +618,17 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.video_stream_xpath}
               onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
               error={videoXPathError}
+              actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
+              onAction={() => probeXPath("video")}
+              actionDisabled={probing !== null}
+              suggestions={videoSuggestions}
+              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
+              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de espectadores."
             />
+            {probeError && (
+              <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>{probeError}</span>
+            )}
+
 
             <button
               type="button"
