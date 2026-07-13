@@ -143,17 +143,27 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const prevHasRealTrack = !!prev && !isPlaceholderTrack(prev);
       if (prevHasRealTrack && isPlaceholderTrack(data)) return;
 
+      const dataIsBreak = isBreakTrack(data);
+      const prevIsBreak = prev ? isBreakTrack(prev) : false;
+      const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
+      const prevAgeMs = existingStartStr ? Date.now() - parseInt(existingStartStr, 10) : Infinity;
+
+      // Anti ping-pong: quando uma fonte retorna BREAK mas ainda temos uma
+      // faixa real recente (< 4 min), ignore o BREAK. Isso evita o widget
+      // alternar entre artista e "Intervalo" a cada poucos segundos quando
+      // as duas fontes (online + local) discordam.
+      if (dataIsBreak && prevHasRealTrack && !prevIsBreak && prevAgeMs < 4 * 60 * 1000) {
+        return;
+      }
+
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
         // Debounce rapid switches — BUT never let a BREAK/intervalo entry
         // hold the widget hostage. If the previous stored track is a BREAK
         // label, always accept the new incoming track immediately.
-        const prevIsBreak = prev ? isBreakTrack(prev) : false;
-        const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
         if (!prevIsBreak && existingStartStr && prev) {
-          const age = Date.now() - parseInt(existingStartStr, 10);
-          if (age < 5000) return;
+          if (prevAgeMs < 5000) return;
         }
 
         const now = Date.now();
@@ -194,6 +204,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         void recordToHistory(data.titulo, data.artista || "Desconhecido");
       }
     };
+
 
     const fetchCoverAndArtistImg = (data: { titulo: string; artista: string; capa: string }) => {
       const cacheKey = `${data.artista}-${data.titulo}`;
