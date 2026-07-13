@@ -866,6 +866,9 @@ export default function PromocoesKiosk() {
           const audioPct = total > 0 ? (a / total) * 100 : 50;
           const videoPct = 100 - audioPct;
           const fmt = (n: number | null) => n === null ? "—" : n.toLocaleString("pt-BR");
+          const audioWins = hasData && a > v;
+          const videoWins = hasData && v > a;
+          const confettiColors = ["#d70d0e", "#ffffff", "#fbd837", "#000000"];
           return (
             <div className="w-full px-2 -mt-2">
               <div
@@ -875,31 +878,57 @@ export default function PromocoesKiosk() {
               >
                 {/* Preenchimento áudio (vermelho) */}
                 <div
-                  className="absolute inset-y-0 left-0 transition-[width] duration-700 ease-out"
+                  className={`absolute inset-y-0 left-0 transition-[width] duration-700 ease-out ${audioWins ? "audience-winner-red" : ""}`}
                   style={{
                     width: `${audioPct}%`,
                     background: "linear-gradient(90deg, #d70d0e 0%, #a60101 100%)",
                     boxShadow: "inset 0 0 12px rgba(0,0,0,0.35)",
                   }}
-                />
+                >
+                  {audioWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" />}
+                </div>
                 {/* Preenchimento vídeo (branco/cinza) */}
                 <div
-                  className="absolute inset-y-0 right-0 transition-[width] duration-700 ease-out"
+                  className={`absolute inset-y-0 right-0 transition-[width] duration-700 ease-out ${videoWins ? "audience-winner-white" : ""}`}
                   style={{
                     width: `${videoPct}%`,
                     background: "linear-gradient(270deg, #ffffff 0%, #d4d4d4 100%)",
                     boxShadow: "inset 0 0 12px rgba(0,0,0,0.15)",
                   }}
-                />
+                >
+                  {videoWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" style={{ backgroundImage: "linear-gradient(115deg,rgba(0,0,0,.18) 0 12px,transparent 12px 24px)" }} />}
+                </div>
                 {/* Divisor central animado */}
                 <div
                   className="absolute top-0 bottom-0 w-[2px] bg-black transition-[left] duration-700 ease-out"
                   style={{ left: `calc(${audioPct}% - 1px)`, boxShadow: "0 0 6px rgba(0,0,0,0.6)" }}
                 />
+                {/* Confetes festivos sobre o lado vencedor */}
+                {(audioWins || videoWins) && (
+                  <div
+                    className="pointer-events-none absolute top-0 bottom-0 overflow-hidden z-[5]"
+                    style={audioWins ? { left: 0, width: `${audioPct}%` } : { right: 0, width: `${videoPct}%` }}
+                  >
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="audience-confetti"
+                        style={{
+                          left: `${(i * 13 + 5) % 95}%`,
+                          backgroundColor: confettiColors[i % confettiColors.length],
+                          animationDelay: `${(i * 0.18).toFixed(2)}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
                 {/* Conteúdo à esquerda (áudio) */}
                 <div className="relative z-10 flex items-center gap-2 pl-2 pr-4 h-full">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60 relative">
                     <Headphones size={14} className="text-white" />
+                    {audioWins && (
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: "#fbd837", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                    )}
                   </div>
                   <div className="flex items-baseline gap-1.5 text-white px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}>
                     <span className="font-black text-sm leading-none tabular-nums">{fmt(audioCount)}</span>
