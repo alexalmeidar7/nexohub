@@ -824,8 +824,10 @@ function AudienceReportDialog({
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"day" | "trend">("day");
-  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number }>>([]);
+  const [trendRows, setTrendRows] = useState<Array<{ day: string; audio: number; video: number; peakAudio: number; peakVideo: number }>>([]);
   const [trendLoading, setTrendLoading] = useState(false);
+  const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
+  const [programOptions, setProgramOptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -850,6 +852,31 @@ function AudienceReportDialog({
     return () => { cancelled = true; };
   }, [open, userId, date]);
 
+  // Carrega lista de programas com registro nos últimos 6 meses
+  useEffect(() => {
+    if (!open || !userId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date();
+      start.setMonth(start.getMonth() - 6);
+      start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("programa")
+        .eq("user_id", userId as any)
+        .not("programa", "is", null)
+        .gte("created_at", start.toISOString());
+      if (cancelled) return;
+      const set = new Set<string>();
+      for (const r of (data as any[]) || []) {
+        if (r.programa) set.add(r.programa as string);
+      }
+      setProgramOptions(Array.from(set).sort((a, b) => a.localeCompare(b, "pt-BR")));
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId]);
+
   // Carrega tendência dos últimos 6 meses (agregado por dia)
   useEffect(() => {
     if (!open || !userId || view !== "trend") return;
@@ -861,13 +888,16 @@ function AudienceReportDialog({
       start.setHours(0, 0, 0, 0);
       const { data } = await supabase
         .from("audiencia_historico")
-        .select("created_at, audio, video")
+        .select("created_at, audio, video, programa")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString())
         .order("created_at", { ascending: true });
       if (cancelled) return;
+      const filtered = (data as any[] || []).filter((r) =>
+        programaFilter === "__ALL__" ? true : (r.programa || "") === programaFilter
+      );
       const buckets = new Map<string, { audio: number; video: number; count: number; peakAudio: number; peakVideo: number }>();
-      for (const r of (data as any[]) || []) {
+      for (const r of filtered) {
         const d = new Date(r.created_at);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         const b = buckets.get(key) || { audio: 0, video: 0, count: 0, peakAudio: 0, peakVideo: 0 };
@@ -892,18 +922,24 @@ function AudienceReportDialog({
     };
     load();
     return () => { cancelled = true; };
-  }, [open, userId, view]);
+  }, [open, userId, view, programaFilter]);
 
+  // Aplica filtro de programa às linhas do dia
+  const filteredRows = useMemo(() => {
+    if (programaFilter === "__ALL__") return rows;
+    return rows.filter((r) => (r.programa || "") === programaFilter);
+  }, [rows, programaFilter]);
 
   const stats = useMemo(() => {
-    if (rows.length === 0) return null;
-    const peakAudio = rows.reduce((m, r) => (r.audio > m.audio ? r : m), rows[0]);
-    const peakVideo = rows.reduce((m, r) => (r.video > m.video ? r : m), rows[0]);
-    const peakTotal = rows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), rows[0]);
-    const avgAudio = Math.round(rows.reduce((s, r) => s + r.audio, 0) / rows.length);
-    const avgVideo = Math.round(rows.reduce((s, r) => s + r.video, 0) / rows.length);
+    if (filteredRows.length === 0) return null;
+    const peakAudio = filteredRows.reduce((m, r) => (r.audio > m.audio ? r : m), filteredRows[0]);
+    const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
+    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), filteredRows[0]);
+    const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
+    const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
     return { peakAudio, peakVideo, peakTotal, avgAudio, avgVideo };
-  }, [rows]);
+  }, [filteredRows]);
+
 
   const fmtTime = (iso: string) => {
     const d = new Date(iso);
