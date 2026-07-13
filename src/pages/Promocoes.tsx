@@ -463,44 +463,69 @@ export default function PromocoesKiosk() {
     return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
   };
 
-  // Pré-carrega imagens das citações dos programas atual/anterior/próximo da capa lateral
+  // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
+  const preloadedUrlsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const list = Array.from(
-      programas
-        .slice()
-        .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
-        .reduce((map, p) => {
-          const key = p.nome.trim().toLowerCase();
-          const existing = map.get(key);
-          if (!existing) {
-            map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
-          } else {
-            existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
+    const timer = window.setTimeout(() => {
+      const list = Array.from(
+        programas
+          .slice()
+          .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+          .reduce((map, p) => {
+            const key = p.nome.trim().toLowerCase();
+            const existing = map.get(key);
+            if (!existing) {
+              map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
+            } else {
+              existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
+            }
+            return map;
+          }, new Map<string, ProgramaGrade>())
+          .values(),
+      );
+      if (!list.length) return;
+      const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
+      const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
+      const targets = [
+        list[activeIdx],
+        list[(activeIdx + 1) % list.length],
+        list[(activeIdx - 1 + list.length) % list.length],
+      ].filter(Boolean);
+      const urls = new Set<string>();
+      for (const prog of targets) {
+        if (prog?.capa) urls.add(prog.capa);
+        const tests = getTestemunhaisForProgram(prog!);
+        for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
+      }
+      const cache = preloadedUrlsRef.current;
+      const pending: HTMLImageElement[] = [];
+      urls.forEach(url => {
+        if (cache.has(url)) return;
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+        img.onload = img.onerror = () => cache.add(url);
+        pending.push(img);
+      });
+      // Guarda handles para cancelamento caso o efeito seja limpo antes de terminar
+      (timer as unknown as { pending?: HTMLImageElement[] }).pending = pending;
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+      const pending = (timer as unknown as { pending?: HTMLImageElement[] }).pending;
+      if (pending) {
+        for (const img of pending) {
+          if (!img.complete) {
+            img.onload = null;
+            img.onerror = null;
+            img.src = ""; // aborta o download em navegadores modernos
           }
-          return map;
-        }, new Map<string, ProgramaGrade>())
-        .values(),
-    );
-    if (!list.length) return;
-    const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
-    const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
-    const targets = [
-      list[activeIdx],
-      list[(activeIdx + 1) % list.length],
-      list[(activeIdx - 1 + list.length) % list.length],
-    ].filter(Boolean);
-    const urls = new Set<string>();
-    for (const prog of targets) {
-      if (prog?.capa) urls.add(prog.capa);
-      const tests = getTestemunhaisForProgram(prog!);
-      for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
-    }
-    urls.forEach(url => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = url;
-    });
+        }
+      }
+    };
   }, [coverIndex, onAirProgram, programas, testemunhais]);
+
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
     const r = 5;
