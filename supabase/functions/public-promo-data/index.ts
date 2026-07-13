@@ -30,6 +30,7 @@ Deno.serve(async (req) => {
       userId = slug;
     } else {
       const slugLower = slug.toLowerCase();
+      // 1) Try master profile by email prefix
       const { data: matched } = await supabase
         .from("profiles")
         .select("user_id, email")
@@ -37,10 +38,32 @@ Deno.serve(async (req) => {
         .limit(1)
         .maybeSingle();
       if (matched?.user_id) userId = matched.user_id;
+
+      // 2) Fallback: sub-user by email prefix — resolves to parent's data
+      if (!userId) {
+        const { data: sub } = await supabase
+          .from("sub_users")
+          .select("auth_user_id, parent_user_id, ativo, email")
+          .ilike("email", `${slugLower}@%`)
+          .limit(1)
+          .maybeSingle();
+        if (sub?.auth_user_id) userId = sub.auth_user_id;
+      }
+
+      // 3) Fallback: full email match (slug contains @)
+      if (!userId && slug.includes("@")) {
+        const { data: byFull } = await supabase
+          .from("profiles")
+          .select("user_id")
+          .ilike("email", slug)
+          .limit(1)
+          .maybeSingle();
+        if (byFull?.user_id) userId = byFull.user_id;
+      }
     }
 
     if (!userId) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      return new Response(JSON.stringify({ error: "User not found", slug }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
