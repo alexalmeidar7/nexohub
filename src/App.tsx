@@ -154,7 +154,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <ChunkErrorBoundary>
-          <Suspense fallback={<LoadingSpinner fullscreen />}>
+          <Suspense fallback={<RouteProgress />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
