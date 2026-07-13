@@ -185,22 +185,54 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
+    const extractByPath = (text: string, rawPath: string): number | null => {
+      const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
+      if (path.length === 0) return null;
+      const trimmed = text.trim();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          let cur: any = JSON.parse(trimmed);
+          for (const key of path) {
+            if (cur == null) return null;
+            if (Array.isArray(cur)) cur = cur[0];
+            cur = cur?.[key];
+          }
+          if (Array.isArray(cur)) cur = cur[0];
+          const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
+          return Number.isFinite(n) ? n : null;
+        } catch { /* fall through */ }
+      }
+      let scope = trimmed;
+      for (const tag of path) {
+        const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+        const m = scope.match(re);
+        if (!m) return null;
+        scope = m[1];
+      }
+      const inner = scope.replace(/<[^>]+>/g, "").trim();
+      const n = parseInt(inner, 10);
+      return Number.isFinite(n) ? n : null;
+    };
+
     const tick = async () => {
       const url =
         (sources.video_stream_api_url?.trim() ||
           videoApiUrlRef.current ||
           "https://video.logicahost.com.br/api/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS");
+      const xpath = sources.video_stream_xpath?.trim();
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
         let count: number | null = null;
 
-        // Try JSON first (Logicahost /api-json/...)
-        if (text.startsWith("{") || text.startsWith("[") || text === "false" || text === "true" || text === "null") {
+        // If XPath configured, use it directly (works for XML or JSON path).
+        if (xpath) {
+          count = extractByPath(text, xpath);
+        } else if (text.startsWith("{") || text.startsWith("[") || text === "false" || text === "true" || text === "null") {
           try {
             const j = JSON.parse(text);
             if (j === false || j === null) {
-              count = 0; // stream offline
+              count = 0;
             } else if (typeof j === "number") {
               count = j;
             } else if (j && typeof j === "object") {
@@ -214,11 +246,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
               count = typeof n === "number" && !Number.isNaN(n) ? n : null;
             }
-          } catch {
-            count = null;
-          }
+          } catch { count = null; }
         } else {
-          // Fallback: legacy XML endpoint (/api/...)
           const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
           count = m ? parseInt(m[1], 10) : null;
         }
@@ -236,6 +265,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearTimeout(t0);
       clearInterval(iv);
+
     };
   }, [dataUserId, sources.video_stream_api_url]);
 
