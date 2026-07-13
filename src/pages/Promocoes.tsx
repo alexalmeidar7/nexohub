@@ -941,8 +941,11 @@ export default function PromocoesKiosk() {
                     <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Vídeo</span>
                     <span className="font-black text-sm leading-none tabular-nums">{fmt(videoCount)}</span>
                   </div>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60 relative">
                     <MonitorPlay size={14} className="text-white" />
+                    {videoWins && (
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: "#fbd837", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                    )}
                   </div>
                 </div>
               </div>
