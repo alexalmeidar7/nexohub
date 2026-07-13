@@ -1207,7 +1207,7 @@ function MockupPreview({
                 src={insertLiveArt}
                 alt="Insert Live"
                 className="object-contain"
-                style={{ height: 120, maxWidth: 360, filter: `drop-shadow(0 6px 18px ${accentColor}55)` }}
+                style={{ height: 190, maxWidth: 520, filter: `drop-shadow(0 8px 22px ${accentColor}66)` }}
               />
             )}
             {/* Social item */}
