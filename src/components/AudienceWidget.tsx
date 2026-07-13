@@ -1142,7 +1142,7 @@ function AudienceReportDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-6 flex flex-col gap-4 max-h-[75vh] overflow-hidden">
+        <div className="p-5 flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
           {/* Tabs Dia / 6 Meses */}
           <div className="flex items-center gap-2 p-1 rounded-full self-start" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
             <button
