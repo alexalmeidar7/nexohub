@@ -961,15 +961,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
 
           <div
-            className="flex items-center gap-2 rounded-full px-3 py-0.5"
-            style={{ backgroundColor: "#f1f3f5" }}
+            className="flex items-center gap-1 rounded-full pl-2 pr-3 py-1"
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid rgba(0,191,240,0.22)",
+              boxShadow: "0 6px 18px rgba(0,33,50,0.06)",
+            }}
           >
             {!isDashboard && playerState.hasChannel && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
-                    className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                    className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                     style={{ color: "#002132" }}
                     aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
                   >
@@ -991,7 +995,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                   style={{ color: "#002132" }}
                 >
                   <Radio size={18} />
@@ -1006,7 +1010,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setCurrentPage("configuracoes")}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                   style={{ color: "#002132" }}
                 >
                   <Settings size={18} />
@@ -1018,7 +1022,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipTrigger asChild>
                 <button
                   onClick={onLogout}
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all hover:bg-black/5"
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                   style={{ color: "#002132" }}
                 >
                   <LogOut size={18} />
@@ -1026,8 +1030,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
             </Tooltip>
-            <div className="w-px h-6 mx-1" style={{ backgroundColor: "rgba(0,33,50,0.15)" }} />
+            <div className="w-px h-7 mx-2" style={{ backgroundColor: "rgba(0,33,50,0.10)" }} />
             <ServerClock />
+            <style>{`
+              .nexo-toolbar-btn:hover { background-color: rgba(0,191,240,0.14); color: #0087aa; }
+              .nexo-toolbar-btn:active { transform: scale(0.94); }
+            `}</style>
           </div>
         </div>
 
