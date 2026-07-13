@@ -90,6 +90,10 @@ export default function PromocoesKiosk() {
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
+  const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
+  const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
+  const [audioCount, setAudioCount] = useState<number | null>(null);
+  const [videoCount, setVideoCount] = useState<number | null>(null);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
