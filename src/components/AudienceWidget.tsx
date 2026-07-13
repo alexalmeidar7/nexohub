@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe } from "lucide-react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 interface Props {
   dataUserId?: string;
@@ -11,6 +12,14 @@ interface SocialCounts {
   youtube: number | null;
   instagram: number | null;
   facebook: number | null;
+}
+
+interface SourcesConfig {
+  instagram: string;
+  facebook: string;
+  youtube: string;
+  audio_stream_api_url: string;
+  video_stream_api_url: string;
 }
 
 const ROTATE_MS = 3000;
@@ -34,6 +43,17 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const socialUrlsRef = useRef<{ youtube?: string; instagram?: string; facebook?: string }>({});
   const videoApiUrlRef = useRef<string | null>(null);
 
+  // Config popup state
+  const [configOpen, setConfigOpen] = useState(false);
+  const [sources, setSources] = useState<SourcesConfig>({
+    instagram: "",
+    facebook: "",
+    youtube: "",
+    audio_stream_api_url: "",
+    video_stream_api_url: "",
+  });
+  const initialSourcesRef = useRef<SourcesConfig | null>(null);
+
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
   // lookup of empresa_config URLs and manual overrides using service role).
@@ -46,7 +66,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook, video_stream_api_url")
+        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (!cancelled && data) {
@@ -56,6 +76,14 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           facebook: (data as any).facebook || undefined,
         };
         videoApiUrlRef.current = (data as any).video_stream_api_url || null;
+        const s: SourcesConfig = {
+          instagram: (data as any).instagram || "",
+          facebook: (data as any).facebook || "",
+          youtube: (data as any).youtube || "",
+          audio_stream_api_url: (data as any).audio_stream_api_url || "",
+          video_stream_api_url: (data as any).video_stream_api_url || "",
+        };
+        setSources(s);
       }
       if (!cancelled) setLoadingConfig(false);
 
@@ -96,9 +124,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     let cancelled = false;
     const tick = async () => {
-      const { data } = await supabase.functions.invoke("count-stream-listeners", {
-        body: { userId: dataUserId },
-      });
+      const overrideUrl = sources.audio_stream_api_url?.trim();
+      const body: Record<string, unknown> = { userId: dataUserId };
+      if (overrideUrl) body.urls = [overrideUrl];
+      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
       if (cancelled) return;
       if (data && (data as any).ok) {
         const n = (data as any).listeners;
@@ -112,7 +141,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId]);
+  }, [dataUserId, sources.audio_stream_api_url]);
 
   // Poll GA4 Realtime API for site visitors.
   useEffect(() => {
@@ -143,8 +172,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     let cancelled = false;
     const tick = async () => {
       const url =
-        videoApiUrlRef.current ||
-        "https://video.logicahost.com.br/api/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS";
+        (sources.video_stream_api_url?.trim() ||
+          videoApiUrlRef.current ||
+          "https://video.logicahost.com.br/api/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS");
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
@@ -192,7 +222,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       clearTimeout(t0);
       clearInterval(iv);
     };
-  }, [dataUserId]);
+  }, [dataUserId, sources.video_stream_api_url]);
 
 
   // Rotate social display every 3s (only across configured networks)
@@ -224,16 +254,63 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const current =
     rotation.length > 0 ? rotation[rotIdx % rotation.length] : null;
 
+  const openConfig = () => {
+    initialSourcesRef.current = { ...sources };
+    setConfigOpen(true);
+  };
+
+  const persistIfChanged = async () => {
+    if (!dataUserId) return;
+    const initial = initialSourcesRef.current;
+    if (!initial) return;
+    const changed =
+      initial.instagram !== sources.instagram ||
+      initial.facebook !== sources.facebook ||
+      initial.youtube !== sources.youtube ||
+      initial.audio_stream_api_url !== sources.audio_stream_api_url ||
+      initial.video_stream_api_url !== sources.video_stream_api_url;
+    if (!changed) return;
+
+    const payload = {
+      user_id: dataUserId,
+      instagram: sources.instagram.trim() || null,
+      facebook: sources.facebook.trim() || null,
+      youtube: sources.youtube.trim() || null,
+      audio_stream_api_url: sources.audio_stream_api_url.trim() || null,
+      video_stream_api_url: sources.video_stream_api_url.trim() || null,
+    };
+    await supabase
+      .from("empresa_config")
+      .upsert(payload as any, { onConflict: "user_id" });
+    // Update refs so live pollers pick up new URLs immediately.
+    socialUrlsRef.current = {
+      youtube: payload.youtube || undefined,
+      instagram: payload.instagram || undefined,
+      facebook: payload.facebook || undefined,
+    };
+    videoApiUrlRef.current = payload.video_stream_api_url || null;
+  };
+
   return (
     <div
-      className="rounded-3xl flex flex-col p-5 w-full h-full"
+      className="rounded-3xl flex flex-col p-5 w-full h-full relative"
       style={{
         background: bg,
         boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
         borderRadius: 24,
       }}
     >
-      <div className="flex items-center gap-2 mb-3">
+      <button
+        onClick={openConfig}
+        aria-label="Configurar fontes"
+        title="Configurar fontes"
+        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+        style={{ background: "rgba(10,37,64,0.12)", color: dark }}
+      >
+        <Settings size={14} />
+      </button>
+
+      <div className="flex items-center gap-2 mb-3 pr-10">
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center"
           style={{ background: dark }}
@@ -291,7 +368,110 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           dark={dark}
         />
       </div>
+
+      <Dialog
+        open={configOpen}
+        onOpenChange={async (open) => {
+          if (!open) {
+            await persistIfChanged();
+          }
+          setConfigOpen(open);
+        }}
+      >
+        <DialogContent className="max-w-lg" style={{ background: "#D6F4FB", borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif" }}>
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#00BFF0" }}>
+                <Settings size={18} color="#fff" />
+              </div>
+              <div className="flex flex-col">
+                <DialogTitle className="text-base font-black uppercase tracking-wider" style={{ color: "#0A2540" }}>
+                  Fontes da Audiência
+                </DialogTitle>
+                <DialogDescription className="text-xs" style={{ color: "#0A2540", opacity: 0.6 }}>
+                  Salvo automaticamente ao fechar.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-3 mt-2">
+            <SourceField
+              icon={<Instagram size={14} />}
+              label="Instagram"
+              placeholder="https://instagram.com/seu_perfil"
+              value={sources.instagram}
+              onChange={(v) => setSources((s) => ({ ...s, instagram: v }))}
+            />
+            <SourceField
+              icon={<Facebook size={14} />}
+              label="Facebook"
+              placeholder="https://facebook.com/sua_pagina"
+              value={sources.facebook}
+              onChange={(v) => setSources((s) => ({ ...s, facebook: v }))}
+            />
+            <SourceField
+              icon={<Youtube size={14} />}
+              label="YouTube"
+              placeholder="https://youtube.com/@seu_canal"
+              value={sources.youtube}
+              onChange={(v) => setSources((s) => ({ ...s, youtube: v }))}
+            />
+            <SourceField
+              icon={<Radio size={14} />}
+              label="Source Audio"
+              placeholder="https://seu-servidor:8000/stream"
+              value={sources.audio_stream_api_url}
+              onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
+            />
+            <SourceField
+              icon={<MonitorPlay size={14} />}
+              label="Source Video"
+              placeholder="https://video.logicahost.com.br/api/..."
+              value={sources.video_stream_api_url}
+              onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function SourceField({
+  icon,
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#0A2540", opacity: 0.7 }}>
+        <span style={{ color: "#00BFF0" }}>{icon}</span>
+        {label}
+      </span>
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full px-4 py-2.5 text-sm outline-none transition-all"
+        style={{
+          background: "#fff",
+          border: "2px solid #00BFF0",
+          borderRadius: 999,
+          color: "#0A2540",
+          fontFamily: "Montserrat, sans-serif",
+        }}
+      />
+    </label>
   );
 }
 
