@@ -607,11 +607,11 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
                 <thead>
                   <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                    {["Banner", "Título", "Texto", "Oferecimento", "Validade", "Ações"].map((h) => (
+                    {["Promoção", "Validade", "Texto", "Oferecimento", "Ações"].map((h) => (
                       <th
                         key={h}
                         style={{
-                          padding: "12px 14px",
+                          padding: "14px 16px",
                           textAlign: h === "Ações" ? "right" : "left",
                           fontWeight: 800,
                           letterSpacing: 1.2,
@@ -628,57 +628,118 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
                 <tbody>
                   {items.map((item, idx) => {
                     const dias = diasRestantes(item.data_fim);
-                    const expiring = dias <= 3;
+                    const expiring = dias >= 0 && dias <= 3;
+                    const expired = dias < 0;
+                    const bannerImg = item.imagem_url || item.banner_l_url || "";
                     return (
                       <tr
                         key={item.id}
                         style={{
                           background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
                           color: DARK,
+                          borderTop: idx === 0 ? "none" : `1px solid ${CARD_BG}`,
                         }}
                       >
-                        <td style={{ padding: "12px 14px" }}>
-                          {item.imagem_url ? (
-                            <img src={item.imagem_url} alt="" style={{ width: 72, height: 40, borderRadius: 10, objectFit: "cover", border: `2px solid ${CYAN}` }} />
-                          ) : (
-                            <span style={{ color: "#94A3B8" }}>—</span>
-                          )}
+                        {/* PROMOÇÃO: nome + banner embaixo */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", minWidth: 220 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.25 }}>
+                              {tituloPromocao(item.texto)}
+                            </span>
+                            {bannerImg ? (
+                              <img
+                                src={bannerImg}
+                                alt=""
+                                style={{
+                                  width: 160,
+                                  height: 60,
+                                  borderRadius: 10,
+                                  objectFit: "cover",
+                                  border: `1px solid ${CARD_BG}`,
+                                  background: CARD_BG,
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  width: 160, height: 60, borderRadius: 10,
+                                  background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center",
+                                  color: "#94A3B8", fontSize: 10, fontWeight: 700, letterSpacing: 1,
+                                }}
+                              >
+                                SEM BANNER
+                              </div>
+                            )}
+                          </div>
                         </td>
-                        <td style={{ padding: "12px 14px", maxWidth: 180, fontWeight: 700 }}>
-                          <div className="truncate">{item.botao_url || <span style={{ color: "#94A3B8" }}>—</span>}</div>
+
+                        {/* VALIDADE */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", whiteSpace: "nowrap" }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK }}>
+                              {formatDate(item.data_fim)}
+                            </span>
+                            <span
+                              style={{
+                                display: "inline-block",
+                                padding: "3px 10px",
+                                borderRadius: 999,
+                                fontWeight: 800,
+                                fontSize: 10,
+                                letterSpacing: 1,
+                                textTransform: "uppercase",
+                                background: expired ? "#FEE2E2" : expiring ? "#FEF3C7" : CARD_BG,
+                                color: expired ? "#DC2626" : expiring ? "#B45309" : DARK,
+                                width: "fit-content",
+                              }}
+                            >
+                              {expired
+                                ? "Expirada"
+                                : `${dias}d ${dias === 1 ? "restante" : "restantes"}`}
+                            </span>
+                          </div>
                         </td>
-                        <td style={{ padding: "12px 14px", maxWidth: 240 }}>
-                          <div
-                            className="truncate"
-                            style={{ fontSize: 12 }}
-                            dangerouslySetInnerHTML={{ __html: item.texto }}
-                          />
-                        </td>
-                        <td style={{ padding: "12px 14px", maxWidth: 180 }}>
-                          <div
-                            className="truncate"
-                            style={{ fontSize: 12 }}
-                            dangerouslySetInnerHTML={{ __html: item.oferecimento || "—" }}
-                          />
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <span
+
+                        {/* TEXTO – prévia padronizada */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", maxWidth: 340 }}>
+                          <p
                             style={{
-                              display: "inline-block",
-                              padding: "4px 10px",
-                              borderRadius: 999,
-                              fontWeight: 800,
-                              fontSize: 10,
-                              letterSpacing: 1,
-                              textTransform: "uppercase",
-                              background: expiring ? "#FEE2E2" : CARD_BG,
-                              color: expiring ? "#DC2626" : DARK,
+                              margin: 0,
+                              fontSize: 12.5,
+                              lineHeight: 1.5,
+                              color: "#334155",
+                              fontFamily: "'Montserrat', system-ui, sans-serif",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
                             }}
                           >
-                            {dias}d {dias === 1 ? "restante" : "restantes"}
-                          </span>
+                            {previewTexto(item.texto)}
+                          </p>
                         </td>
-                        <td style={{ padding: "12px 14px", textAlign: "right" }}>
+
+                        {/* OFERECIMENTO */}
+                        <td style={{ padding: "14px 16px", verticalAlign: "top", maxWidth: 200 }}>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 12,
+                              lineHeight: 1.4,
+                              color: "#475569",
+                              fontFamily: "'Montserrat', system-ui, sans-serif",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
+                          >
+                            {previewTexto(item.oferecimento, 80) || "—"}
+                          </p>
+                        </td>
+
+                        {/* AÇÕES */}
+                        <td style={{ padding: "14px 16px", textAlign: "right", verticalAlign: "top" }}>
                           <div style={{ display: "inline-flex", gap: 6 }}>
                             <button
                               onClick={() => startEdit(item)}
@@ -712,6 +773,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
                 </tbody>
               </table>
             </div>
+
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
