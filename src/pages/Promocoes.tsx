@@ -906,16 +906,6 @@ export default function PromocoesKiosk() {
                     <MonitorPlay size={14} className="text-black" />
                   </div>
                 </div>
-                {/* Selo AO VIVO no centro sobre o divisor */}
-                {hasData && (
-                  <div
-                    className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 transition-[left] duration-700 ease-out"
-                    style={{ left: `${audioPct}%`, backgroundColor: "#000", color: "#fff", border: "1px solid rgba(255,255,255,0.25)" }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                    Ao Vivo
-                  </div>
-                )}
               </div>
             </div>
           );
