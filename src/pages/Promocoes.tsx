@@ -678,7 +678,7 @@ export default function PromocoesKiosk() {
                     >
                       {banners.map((banner) => (
                         <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-black/20">
-                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" style={{ maxHeight: 340 }} />
+                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" />
                         </div>
                       ))}
                     </div>
