@@ -862,7 +862,10 @@ function StatCell({
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
         {loading ? (
-          <Skeleton width="70%" height={22} dark={dark} />
+          <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
+            <Loader2 size={18} className="animate-spin" />
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+          </span>
         ) : (
           <span
             className="text-2xl font-black leading-none truncate"
