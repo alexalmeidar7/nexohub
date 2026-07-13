@@ -669,7 +669,7 @@ export default function PromocoesKiosk() {
           const onAirProg = onAirProgram ? programas.find(p => p.nome === onAirProgram.nome) : null;
           return (
             <div className="w-full flex gap-4 items-stretch">
-              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 240 }}>
+              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 276 }}>
                 {banners.length > 0 ? (
                   <div className="relative w-full h-full overflow-hidden">
                     <div
@@ -714,8 +714,9 @@ export default function PromocoesKiosk() {
 
               {onAirProg?.capa && (
                 <div
-                  className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative"
-                  style={{ width: 180, height: 240, backgroundColor: "var(--layout-accent-color, #be0101)" }}
+                  className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
+                  style={{ width: 207, height: 276, backgroundColor: "var(--layout-accent-color, #be0101)" }}
+                  onClick={() => setSelectedProgram(onAirProg)}
                 >
                   <img src={onAirProg.capa} alt={onAirProg.nome} className="absolute inset-0 w-full h-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
