@@ -931,7 +931,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {empresa.nome || "NexoHUB"}
                 </h1>
                 {isDashboard && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 rounded-full px-1 py-1" style={{ backgroundColor: "#D6F4FB" }}>
                     {[
                       { Icon: HouseMixIcon, name: "nexohub", label: "nexohub" },
                       { Icon: BusinessIcon, name: "Business" },
