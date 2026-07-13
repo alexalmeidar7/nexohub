@@ -221,7 +221,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         {upcoming.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center opacity-40">
             <CalendarDays size={18} className="mb-1" style={{ color: textColor }} />
-            <p className="text-[9px]" style={{ color: textColor }}>Sem eventos próximos</p>
+            <p className="text-[11px] font-semibold" style={{ color: textColor }}>Sem eventos próximos</p>
           </div>
         ) : (
           <>
@@ -263,13 +263,13 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     color: isToday ? "var(--layout-header-text, #ffffff)" : textColor,
                   }}
                 >
-                  <span className="text-[7px] uppercase font-bold leading-none" style={{ opacity: 0.75 }}>
+                <span className="text-[8px] uppercase font-bold leading-none" style={{ opacity: 0.85 }}>
                     {format(date, "MMM", { locale: ptBR })}
                   </span>
                   <span className="text-[13px] font-black leading-none tabular-nums mt-0.5">
                     {date.getDate()}
                   </span>
-                  <span className="text-[6.5px] uppercase leading-none mt-0.5" style={{ opacity: 0.6 }}>
+                  <span className="text-[7.5px] uppercase font-bold leading-none mt-0.5" style={{ opacity: 0.75 }}>
                     {format(date, "EEE", { locale: ptBR }).replace(".", "")}
                   </span>
                 </div>
@@ -277,19 +277,19 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[11px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
+                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
                     {evt.tipo_evento === "live" || !evt.tipo_evento ? (
                       <span className="flex items-center gap-0.5 shrink-0">
-                        <Radio size={9} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-                        <span className="font-bold text-[8px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
+                        <Radio size={10} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
+                        <span className="font-black text-[9px] tracking-wider animate-pulse" style={{ color: "var(--layout-accent-color)" }}>
                           AO VIVO
                         </span>
                       </span>
                     ) : (
                       <span
-                        className="text-[7px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
+                        className="text-[8px] font-black px-1 py-[1px] rounded-sm shrink-0 tracking-wider"
                         style={{ backgroundColor: type.bg, color: type.text }}
                       >
                         {type.label}
@@ -298,19 +298,19 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
-                      <span className="flex items-center gap-0.5 text-[9px] tabular-nums" style={{ color: textColor, opacity: 0.7 }}>
-                        <Clock size={8} />
+                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: textColor, opacity: 0.85 }}>
+                        <Clock size={9} />
                         {hora.slice(0, 5)}{horaFim ? `–${horaFim.slice(0, 5)}` : ""}
                       </span>
                     )}
                     {evt.recorrencia && evt.recorrencia !== "unico" && (
-                      <span className="text-[8px] uppercase font-semibold" style={{ color: accent, opacity: 0.9 }}>
+                      <span className="text-[9px] uppercase font-bold" style={{ color: accent, opacity: 1 }}>
                         {evt.recorrencia === "semanal" ? "Semanal" : evt.recorrencia === "mensal" ? "Mensal" : evt.recorrencia}
                       </span>
                     )}
                   </div>
                   {evt.descricao && evt.programa?.nome && (
-                    <p className="text-[9px] mt-0.5 leading-tight truncate" style={{ color: textColor, opacity: 0.55 }}>
+                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: textColor, opacity: 0.8 }}>
                       {evt.descricao}
                     </p>
                   )}
