@@ -435,15 +435,31 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
             />
             <SourceField
+              label="XPath (nódulo XML do Source Audio)"
+              placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
+              value={sources.audio_stream_xpath}
+              onChange={(v) => setSources((s) => ({ ...s, audio_stream_xpath: v }))}
+            />
+            <SourceField
               icon={<MonitorPlay size={14} />}
               label="Source Video"
               placeholder="https://video.logicahost.com.br/api/..."
               value={sources.video_stream_api_url}
               onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
             />
+
+            <button
+              type="button"
+              onClick={async () => { await persistIfChanged(); setConfigOpen(false); }}
+              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02]"
+              style={{ background: "#C6F03C", color: "#0A2540", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(198,240,60,0.4)" }}
+            >
+              Salvar
+            </button>
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
