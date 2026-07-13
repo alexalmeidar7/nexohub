@@ -949,6 +949,21 @@ export default function PromocoesKiosk() {
                   </div>
                 </div>
               </div>
+              {/* Total de espectadores */}
+              <div
+                className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                style={{
+                  background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+                title="Total de espectadores ao vivo"
+              >
+                <Users size={14} className="text-white" />
+                <div className="flex items-baseline gap-1 text-white">
+                  <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
+                </div>
+              </div>
             </div>
           );
         })()}
