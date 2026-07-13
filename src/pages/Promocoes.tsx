@@ -562,7 +562,7 @@ export default function PromocoesKiosk() {
           <div className="flex items-center gap-3">
             <Radio size={16} style={{ color: "var(--layout-accent-color, #be0101)" }} className="animate-pulse" />
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-accent-color, #be0101)" }}>No Ar</span>
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>No Ar</span>
               <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
