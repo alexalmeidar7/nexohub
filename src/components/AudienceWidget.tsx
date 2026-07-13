@@ -1001,6 +1001,49 @@ function AudienceReportDialog({
             </button>
           </div>
 
+          {/* Filtro de programa (aplica a Dia e 6 Meses) */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>
+              Programa
+            </span>
+            <div className="relative">
+              <select
+                value={programaFilter}
+                onChange={(e) => setProgramaFilter(e.target.value)}
+                className="appearance-none text-xs font-bold outline-none pl-4 pr-9 py-2 rounded-full cursor-pointer"
+                style={{
+                  background: "#fff",
+                  border: `2px solid ${CYAN}`,
+                  color: DARK,
+                  fontFamily: "Montserrat, sans-serif",
+                  minWidth: 220,
+                }}
+              >
+                <option value="__ALL__">Todos os programas</option>
+                {programOptions.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black" style={{ color: CYAN }}>▼</span>
+            </div>
+            {programaFilter !== "__ALL__" && (
+              <button
+                type="button"
+                onClick={() => setProgramaFilter("__ALL__")}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03] inline-flex items-center gap-1"
+                style={{ background: `${DARK}12`, color: DARK }}
+              >
+                <X size={10} /> Limpar
+              </button>
+            )}
+            <span className="text-[10px] font-bold" style={{ color: DARK, opacity: 0.5 }}>
+              {programaFilter === "__ALL__"
+                ? "Estatísticas somam todos os registros"
+                : `Picos e médias apenas de "${programaFilter}"`}
+            </span>
+          </div>
+
+
           {view === "day" && (
             <>
               {/* Filtro + Highlights */}
