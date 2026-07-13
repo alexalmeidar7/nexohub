@@ -2000,7 +2000,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     audio.preload = "none";
     audio.volume = volume;
     audio.muted = isMuted;
-    audio.autoplay = true;
+    audio.autoplay = false;
     audioRef.current = audio;
     setShowVideo(false);
     setIsLoading(true);
