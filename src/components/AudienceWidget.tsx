@@ -52,8 +52,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     facebook: "",
     youtube: "",
     audio_stream_api_url: "",
+    audio_stream_xpath: "",
     video_stream_api_url: "",
   });
+
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
 
 
