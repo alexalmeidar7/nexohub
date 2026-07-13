@@ -4,7 +4,15 @@ import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+
+// Redirect helper that interpolates :userSlug from the current URL params.
+// Plain <Navigate to="/:userSlug/..."> does NOT substitute params and would
+// send the browser literally to "/:userSlug/...", producing a blank page.
+function SlugRedirect({ template }: { template: string }) {
+  const { userSlug = "" } = useParams();
+  return <Navigate to={template.replace(":userSlug", userSlug)} replace />;
+}
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
@@ -200,16 +208,16 @@ const App = () => (
             <Route path="/user/login" element={<Index />} />
             <Route path="/user/nexohub/home" element={<Navigate to="/home" replace />} />
             <Route path="/user/nexohub/telapromo" element={<Navigate to="/telapromo" replace />} />
-            <Route path="/user/:userSlug/nexohub/telapromo" element={<Navigate to="/:userSlug/telapromo" replace />} />
+            <Route path="/user/:userSlug/nexohub/telapromo" element={<SlugRedirect template="/:userSlug/telapromo" />} />
             <Route path="/user/nexohub/player" element={<Navigate to="/player" replace />} />
-            <Route path="/user/:userSlug/nexohub/player" element={<Navigate to="/:userSlug/player" replace />} />
+            <Route path="/user/:userSlug/nexohub/player" element={<SlugRedirect template="/:userSlug/player" />} />
             <Route path="/user/nexohub/player/watch" element={<Navigate to="/player/watch" replace />} />
-            <Route path="/user/:userSlug/nexohub/player/watch" element={<Navigate to="/:userSlug/player/watch" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/watch" element={<SlugRedirect template="/:userSlug/player/watch" />} />
             <Route path="/user/nexohub/player/catalog" element={<Navigate to="/player/catalog" replace />} />
-            <Route path="/user/:userSlug/nexohub/player/catalog" element={<Navigate to="/:userSlug/player/catalog" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/catalog" element={<SlugRedirect template="/:userSlug/player/catalog" />} />
             <Route path="/user/nexohub/player/app" element={<Navigate to="/player/app" replace />} />
-            <Route path="/user/:userSlug/nexohub/player/app" element={<Navigate to="/:userSlug/player/app" replace />} />
-            <Route path="/user/:userSlug/telainterativatelao" element={<Navigate to="/:userSlug/telainterativatelao" replace />} />
+            <Route path="/user/:userSlug/nexohub/player/app" element={<SlugRedirect template="/:userSlug/player/app" />} />
+            <Route path="/user/:userSlug/telainterativatelao" element={<SlugRedirect template="/:userSlug/telainterativatelao" />} />
 
             {/* Legacy redirects */}
             <Route path="/masterview/home" element={<Navigate to="/home" replace />} />
