@@ -175,7 +175,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     const [, { data: tData }, { data: pData }] = await Promise.all([
       supabase.rpc("cleanup_comercial"),
       supabase.from("testemunhais").select("*").eq("user_id", targetUserId).order("data_fim"),
-      supabase.from("programas").select("id, nome").eq("user_id", targetUserId).eq("ativo", true),
+      supabase.from("programas").select("id, nome, thumb, capa").eq("user_id", targetUserId).eq("ativo", true),
     ]);
 
     const testemunhais = tData || [];
