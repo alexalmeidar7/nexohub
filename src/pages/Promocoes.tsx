@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
@@ -85,6 +85,7 @@ export default function PromocoesKiosk() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
+  const [programasSectionOpen, setProgramasSectionOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
@@ -532,26 +533,42 @@ export default function PromocoesKiosk() {
 
 
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
-    const r = 5;
-    const circumference = 2 * Math.PI * r;
-    const dashoffset = circumference - (progress / 100) * circumference;
     if (!active) {
       return (
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <circle cx="7" cy="7" r={r} fill="white" />
-        </svg>
+        <span
+          className="block rounded-full transition-all duration-300"
+          style={{
+            width: 6,
+            height: 6,
+            backgroundColor: "rgba(255,255,255,0.45)",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+          }}
+        />
       );
     }
     return (
-      <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="7" cy="7" r={r} fill="none" stroke="white" strokeWidth="2" />
-        <circle cx="7" cy="7" r={r} fill="none" stroke="#d70d0e" strokeWidth="2"
-          strokeDasharray={circumference} strokeDashoffset={dashoffset}
-          style={{ transition: "stroke-dashoffset 50ms linear" }}
+      <span
+        className="relative block rounded-full overflow-hidden transition-all duration-300"
+        style={{
+          width: 28,
+          height: 6,
+          backgroundColor: "rgba(255,255,255,0.35)",
+          boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+        }}
+      >
+        <span
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${Math.min(100, Math.max(0, progress))}%`,
+            backgroundColor: "#ffffff",
+            transition: "width 50ms linear",
+            boxShadow: "0 0 6px rgba(255,255,255,0.5)",
+          }}
         />
-      </svg>
+      </span>
     );
   };
+
 
   // Spacebar to toggle play/pause when a modal is open
   useEffect(() => {
@@ -791,9 +808,9 @@ export default function PromocoesKiosk() {
                     >
                       <ChevronRight size={20} />
                     </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
                       {banners.map((_, i) => (
-                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
+                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer flex items-center justify-center hover:opacity-80 transition-opacity" aria-label={`Ir para banner ${i + 1}`}>
                           <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
                         </button>
                       ))}
@@ -845,45 +862,75 @@ export default function PromocoesKiosk() {
 
         {/* Programação - sem título */}
         {filteredPrograms.length > 0 && (
-          <div className="relative group">
-            <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronLeft size={36} />
-            </div>
-            <div onMouseEnter={() => startScroll(scrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronRight size={36} />
-            </div>
-
-            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
-              {filteredPrograms.map(prog => (
-                <div
-                  key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
-                  onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
-                  onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
-                  onClick={() => setSelectedProgram(prog)}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <button
+              type="button"
+              onClick={() => setProgramasSectionOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+              aria-expanded={programasSectionOpen}
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-200"
+                  style={{
+                    backgroundColor: "var(--layout-accent-color, #a60101)",
+                    transform: programasSectionOpen ? "rotate(45deg)" : "rotate(0deg)",
+                  }}
                 >
-                  {prog.capa ? (
-                    <img src={prog.capa} alt={prog.nome} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 w-full h-full bg-zinc-800 flex items-center justify-center">
-                      <Clock size={24} className="text-zinc-600" />
-                    </div>
-                  )}
-                  {onAirProgram?.nome === prog.nome && (
-                    <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
-                      No Ar
-                    </span>
-                  )}
-                  <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
-                    {prog.schedules.map((s, i) => (
-                      <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--layout-accent-color, rgba(0,0,0,0.5))" }}>
-                        {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
-                      </span>
-                    ))}
-                  </div>
+                  <Plus size={16} className="text-white" strokeWidth={2.5} />
+                </span>
+                <span className="text-white font-semibold tracking-wide uppercase text-sm">Programas</span>
+                <span className="text-white/40 text-xs">({filteredPrograms.length})</span>
+              </div>
+              <ChevronRight
+                size={18}
+                className="text-white/60 transition-transform duration-200"
+                style={{ transform: programasSectionOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+              />
+            </button>
+
+            {programasSectionOpen && (
+              <div className="relative group px-4 pb-4 pt-1">
+                <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+                  <ChevronLeft size={36} />
                 </div>
-              ))}
-            </div>
+                <div onMouseEnter={() => startScroll(scrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+                  <ChevronRight size={36} />
+                </div>
+
+                <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
+                  {filteredPrograms.map(prog => (
+                    <div
+                      key={prog.id}
+                      className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
+                      onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                      onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
+                      onClick={() => setSelectedProgram(prog)}
+                    >
+                      {prog.capa ? (
+                        <img src={prog.capa} alt={prog.nome} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 w-full h-full bg-zinc-800 flex items-center justify-center">
+                          <Clock size={24} className="text-zinc-600" />
+                        </div>
+                      )}
+                      {onAirProgram?.nome === prog.nome && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
+                          No Ar
+                        </span>
+                      )}
+                      <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
+                        {prog.schedules.map((s, i) => (
+                          <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--layout-accent-color, rgba(0,0,0,0.5))" }}>
+                            {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
