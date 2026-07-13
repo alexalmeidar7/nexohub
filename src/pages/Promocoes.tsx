@@ -4,7 +4,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
@@ -94,6 +94,15 @@ export default function PromocoesKiosk() {
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [peakAudience, setPeakAudience] = useState<{ total: number; programa: string; locutor: string; timestamp: string; date: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem("promo-peak-audience");
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      const today = new Date().toISOString().split("T")[0];
+      return p?.date === today ? p : null;
+    } catch { return null; }
+  });
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
@@ -357,6 +366,29 @@ export default function PromocoesKiosk() {
     const iv = setInterval(tick, 30000);
     return () => { cancelled = true; clearInterval(iv); };
   }, [streamCfg.videoUrl, streamCfg.videoXpath]);
+
+  // Rastreia o pico de audiência do dia
+  useEffect(() => {
+    if (audioCount === null && videoCount === null) return;
+    const total = (audioCount ?? 0) + (videoCount ?? 0);
+    if (total <= 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    const presenter = onAirProgram?.apresentadorId
+      ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
+      : null;
+    setPeakAudience(prev => {
+      if (prev && prev.date === today && prev.total >= total) return prev;
+      const next = {
+        total,
+        programa: onAirProgram?.nome || "Programação Musical",
+        locutor: presenter?.nome || "—",
+        timestamp: new Date().toISOString(),
+        date: today,
+      };
+      try { localStorage.setItem("promo-peak-audience", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, [audioCount, videoCount, onAirProgram, apresentadores]);
 
   useEffect(() => {
     const update = () => {
@@ -870,9 +902,9 @@ export default function PromocoesKiosk() {
           const videoWins = hasData && v > a;
           const confettiColors = ["#d70d0e", "#ffffff", "#fbd837", "#000000"];
           return (
-            <div className="w-full px-2 -mt-2">
+            <div className="w-full px-2 -mt-2 flex items-center gap-2">
               <div
-                className="relative w-full h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
                 style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
@@ -949,6 +981,62 @@ export default function PromocoesKiosk() {
                   </div>
                 </div>
               </div>
+              {/* Total de espectadores + Tooltip com pico do dia */}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-help"
+                      style={{
+                        background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <Users size={14} className="text-white" />
+                      <div className="flex items-baseline gap-1 text-white">
+                        <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="border border-white/15 p-0 overflow-hidden"
+                    style={{ backgroundColor: "#000", color: "#fff" }}
+                  >
+                    {peakAudience ? (() => {
+                      const d = new Date(peakAudience.timestamp);
+                      const dataStr = d.toLocaleDateString("pt-BR");
+                      const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                      return (
+                        <div className="min-w-[220px]">
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(251,216,55,0.18), transparent)" }}>
+                            <Trophy size={16} style={{ color: "#fbd837" }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: "#fbd837" }}>Melhor audiência do dia</span>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl font-black tabular-nums leading-none">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
+                            </div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Locutor:</span> <span className="font-semibold">{peakAudience.locutor}</span></div>
+                            <div className="text-[11px] opacity-90 flex items-center gap-2 pt-0.5">
+                              <span><span className="opacity-60">Data:</span> {dataStr}</span>
+                              <span><span className="opacity-60">Hora:</span> {horaStr}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
+                        <Trophy size={14} style={{ color: "#fbd837" }} />
+                        <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           );
         })()}
