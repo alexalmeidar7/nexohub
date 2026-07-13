@@ -380,18 +380,47 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
 
   const sortedProgramas = [...programas].sort((a, b) => (a.horario_inicio || "99:99").localeCompare(b.horario_inicio || "99:99"));
-  const isPodcast = (p: Programa) => /podcast/i.test(p.estudio || "");
-  const isFm = (p: Programa) => /fm/i.test(p.estudio || "");
 
-  const buildGroup = (filterFn: (p: Programa) => boolean) =>
-    sortedProgramas
-      .filter(filterFn)
-      .map((p) => ({ programa: p, logos: logos.filter((l) => l.programa_id === p.id && l.ativo) }))
-      .filter((g) => g.logos.length > 0);
+  // Normaliza o rótulo do estúdio para exibição/agrupamento (traz TODOS os estúdios)
+  const normalizeEstudio = (raw?: string | null) => {
+    const s = (raw || "").trim();
+    if (!s) return "Sem estúdio";
+    if (/podcast/i.test(s)) return "Estúdio Podcast";
+    if (/fm/i.test(s)) return "Estúdio FM";
+    if (/news|redação|redacao/i.test(s)) return "Redação / Newsroom";
+    return s;
+  };
+  const estudioIcon = (label: string) => {
+    if (/podcast/i.test(label)) return "🎙️";
+    if (/fm/i.test(label)) return "📻";
+    if (/news|redação|redacao/i.test(label)) return "📰";
+    if (/sem estúdio/i.test(label)) return "📦";
+    return "🎬";
+  };
+  const estudioColor = (label: string) => {
+    if (/podcast/i.test(label)) return "#8B5CF6";
+    if (/fm/i.test(label)) return "#00BFF0";
+    if (/news|redação|redacao/i.test(label)) return "#F59E0B";
+    return "#64748B";
+  };
 
-  const groupedFM = buildGroup(isFm);
-  const groupedPodcast = buildGroup(isPodcast);
-  const groupedOutros = buildGroup((p) => !isFm(p) && !isPodcast(p));
+  // Agrupa dinamicamente por estúdio (qualquer estúdio existente)
+  const groupedByStudio = useMemo(() => {
+    const map = new Map<string, { programa: Programa; logos: Logo[] }[]>();
+    sortedProgramas.forEach((p) => {
+      const key = normalizeEstudio(p.estudio);
+      const gLogos = logos.filter((l) => l.programa_id === p.id && l.ativo);
+      if (!gLogos.length) return;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push({ programa: p, logos: gLogos });
+    });
+    // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
+    const order = (label: string) =>
+      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : 3;
+    return Array.from(map.entries())
+      .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
+      .map(([label, items]) => ({ label, items }));
+  }, [sortedProgramas, logos]);
 
   const groupedExcluded = programas
     .map((p) => ({
@@ -399,6 +428,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       logos: excludedLogos.filter((l) => l.programa_id === p.id),
     }))
     .filter((g) => g.logos.length > 0);
+
 
   const logosXmlUrl = useMemo(() => {
     if (!dataUserId) return "";
@@ -560,8 +590,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                         setProgramaIds((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))
                                       }
                                     />
-                                    <span className="text-sm">{p.nome}</span>
+                                    <span className="text-sm flex-1 truncate">{p.nome}</span>
+                                    <span
+                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                      style={{
+                                        background: `${estudioColor(normalizeEstudio(p.estudio))}22`,
+                                        color: estudioColor(normalizeEstudio(p.estudio)),
+                                      }}
+                                    >
+                                      {estudioIcon(normalizeEstudio(p.estudio))} {normalizeEstudio(p.estudio)}
+                                    </span>
                                   </label>
+
                                 );
                               })}
                             {programas.filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase())).length === 0 && (
@@ -733,34 +773,64 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           </div>
         </Collapsible>
 
-        {/* Render a labeled section (FM / PODCAST / OUTROS) with collapsible programs */}
-        {([
-          { label: "📻 Estúdio FM", items: groupedFM },
-          { label: "🎙️ Estúdio Podcast", items: groupedPodcast },
-          { label: "📦 Outros", items: groupedOutros },
-        ] as const).filter(s => s.items.length > 0).map(section => (
-          <div key={section.label} className="mb-5">
-            <h2 className="text-xs font-bold uppercase tracking-wider mb-2 px-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-              {section.label}
-            </h2>
+        {/* Renderiza uma seção por estúdio (dinâmico — todos os estúdios existentes) */}
+        {groupedByStudio.map(section => {
+          const color = estudioColor(section.label);
+          const icon = estudioIcon(section.label);
+          const totalLogos = section.items.reduce((sum, g) => sum + g.logos.length, 0);
+          return (
+          <div key={section.label} className="mb-6">
+            <div
+              className="flex items-center gap-3 mb-3 px-3 py-2 rounded-xl"
+              style={{
+                background: `linear-gradient(90deg, ${color}18, transparent)`,
+                borderLeft: `3px solid ${color}`,
+              }}
+            >
+              <span
+                className="flex items-center justify-center rounded-lg text-sm"
+                style={{ width: 30, height: 30, background: `${color}22`, color }}
+              >
+                {icon}
+              </span>
+              <h2
+                className="text-[13px] font-extrabold uppercase tracking-wider"
+                style={{ color: "var(--layout-page-text, #1a1a1a)", letterSpacing: 1.5 }}
+              >
+                {section.label}
+              </h2>
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: color, color: "#fff" }}
+              >
+                {section.items.length} {section.items.length === 1 ? "programa" : "programas"}
+              </span>
+              <span
+                className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ background: `${color}22`, color }}
+              >
+                {totalLogos} {totalLogos === 1 ? "logo" : "logos"}
+              </span>
+            </div>
             {section.items.map(({ programa, logos: gLogos }) => (
               <Collapsible key={programa.id} defaultOpen={false}>
-                <div className="rounded-xl overflow-hidden mb-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}
+                <div className="rounded-xl overflow-hidden mb-3 transition-all hover:shadow-lg" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", border: `1px solid ${color}20` }}
                   onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={(e) => handleDrop(e, programa.id)}
                   onContextMenu={(e) => handleProgramaContextMenu(e, programa)}
                 >
                   <CollapsibleTrigger asChild>
-                    <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-                      <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+                    <button className="w-full px-4 py-2.5 flex items-center justify-between cursor-pointer" style={{ background: `linear-gradient(135deg, ${color}, color-mix(in srgb, ${color} 70%, black 30%))` }}>
+                      <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "#ffffff" }}>
                         {programa.horario_inicio && (
-                          <span className="text-[10px] font-mono opacity-70">{programa.horario_inicio.slice(0,5)}</span>
+                          <span className="text-[10px] font-mono opacity-80 px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.2)" }}>{programa.horario_inicio.slice(0,5)}</span>
                         )}
                         {programa.nome}
-                        <span className="text-[10px] font-normal opacity-60">({gLogos.length})</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "rgba(255,255,255,0.25)" }}>{gLogos.length}</span>
                       </h3>
-                      <ChevronDown size={16} className="transition-transform duration-200 ui-open:rotate-180" style={{ color: "var(--layout-header-text, #ffffff)" }} />
+                      <ChevronDown size={16} className="transition-transform duration-200 ui-open:rotate-180" style={{ color: "#ffffff" }} />
                     </button>
                   </CollapsibleTrigger>
+
                   {copyPrompt && copyPrompt.programa.id === programa.id && (
                     <div className="px-4 py-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #ffffff))", borderTop: "1px solid var(--layout-border-color, #333333)", borderBottom: "1px solid var(--layout-border-color, #333333)" }}>
                       <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -835,7 +905,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               </Collapsible>
             ))}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
