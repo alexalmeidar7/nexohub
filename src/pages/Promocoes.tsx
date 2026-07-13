@@ -560,9 +560,9 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <Radio size={16} style={{ color: "var(--layout-accent-color, #be0101)" }} className="animate-pulse" />
+            <Radio size={16} style={{ color: "#ff0000" }} className="animate-pulse" />
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-accent-color, #be0101)" }}>No Ar</span>
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>No Ar</span>
               <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
@@ -630,19 +630,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <MessageCircle size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                       <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "var(--layout-accent-color, #FF0000)" }} />
+                      <Phone size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
                       <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-accent-color, #FF0000)" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>telefone comercial</span>
                   </div>
                 )}
               </div>
@@ -664,49 +664,75 @@ export default function PromocoesKiosk() {
           </div>
         </div>
 
-        {/* Banner with slide animation */}
-        <div className="w-full overflow-hidden rounded-xl shadow-2xl relative">
-          {banners.length > 0 ? (
-            <div className="relative w-full overflow-hidden">
-              <div
-                className="flex transition-transform duration-700 ease-in-out"
-                style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
-              >
-                {banners.map((banner) => (
-                  <div key={banner.id} className="w-full flex-shrink-0">
-                    <img src={banner.imagem_url} alt={banner.texto} className="w-full h-auto object-contain" />
+        {/* Banner rotativo + capa do programa no ar */}
+        {(() => {
+          const onAirProg = onAirProgram ? programas.find(p => p.nome === onAirProgram.nome) : null;
+          return (
+            <div className="w-full flex gap-4 items-stretch">
+              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ maxHeight: 340 }}>
+                {banners.length > 0 ? (
+                  <div className="relative w-full h-full overflow-hidden">
+                    <div
+                      className="flex transition-transform duration-700 ease-in-out h-full"
+                      style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
+                    >
+                      {banners.map((banner) => (
+                        <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-black/20">
+                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" style={{ maxHeight: 340 }} />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
-          )}
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
+                )}
 
-          {banners.length > 1 && (
-            <>
-              <button
-                onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
-              >
-                <ChevronRight size={20} />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
-                {banners.map((_, i) => (
-                  <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
-                    <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
-                  </button>
-                ))}
+                {banners.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
+                      {banners.map((_, i) => (
+                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
+                          <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
-            </>
-          )}
-        </div>
+
+              {onAirProg?.capa && (
+                <div
+                  className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative"
+                  style={{ width: 340, height: 340, backgroundColor: "var(--layout-accent-color, #be0101)" }}
+                >
+                  <img src={onAirProg.capa} alt={onAirProg.nome} className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Radio size={12} className="animate-pulse" style={{ color: "var(--layout-accent-color, #d70d0e)" }} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-white">No Ar</span>
+                    </div>
+                    <p className="text-white text-sm font-bold truncate">{onAirProg.nome}</p>
+                    <p className="text-white/80 text-[11px]">
+                      {onAirProgram!.horarioInicio.slice(0, 5)} às {onAirProgram!.horarioFim.slice(0, 5)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Programação - sem título */}
         {filteredPrograms.length > 0 && (
