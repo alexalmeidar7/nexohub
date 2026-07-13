@@ -137,8 +137,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     let cancelled = false;
     const tick = async () => {
       const overrideUrl = sources.audio_stream_api_url?.trim();
+      const xpath = sources.audio_stream_xpath?.trim();
       const body: Record<string, unknown> = { userId: dataUserId };
       if (overrideUrl) body.urls = [overrideUrl];
+      if (xpath) body.xpath = xpath;
       const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
       if (cancelled) return;
       if (data && (data as any).ok) {
@@ -153,7 +155,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId, sources.audio_stream_api_url]);
+  }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+
 
   // Poll GA4 Realtime API for site visitors.
   useEffect(() => {
