@@ -286,6 +286,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             const horaFim = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
             const isToday = isSameDay(date, new Date());
             const isDismissing = dismissing.has(evt.id);
+            const isConfirming = confirming.has(evt.id);
             return (
               <div
                 key={`${evt.id}-${date.toISOString()}`}
@@ -296,17 +297,52 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   marginBottom: isDismissing ? 0 : undefined,
                   opacity: isDismissing ? 0 : 1,
                   overflow: "hidden",
-                  pointerEvents: isDismissing ? "none" : "auto",
+                  pointerEvents: isDismissing || isConfirming ? "none" : "auto",
                   transition: "max-height 0.6s cubic-bezier(0.4,0,0.2,1), margin 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease",
                 }}
               >
               <div
                 className="group relative rounded-lg overflow-visible"
                 style={{
-                  animation: isDismissing ? "evtSmokeOut 0.6s cubic-bezier(0.4,0,0.2,1) forwards" : undefined,
+                  animation: isDismissing
+                    ? "evtSmokeOut 0.6s cubic-bezier(0.4,0,0.2,1) forwards"
+                    : isConfirming
+                      ? "evtConfirmPulse 0.52s cubic-bezier(0.34,1.56,0.64,1) forwards"
+                      : undefined,
                   transformOrigin: "50% 40%",
                 }}
               >
+                {/* Confirmation flash — green glow ring + check pop */}
+                {isConfirming && (
+                  <>
+                    <div
+                      className="absolute inset-0 pointer-events-none rounded-lg"
+                      style={{
+                        animation: "evtConfirmGlow 0.52s ease-out forwards",
+                        boxShadow: "0 0 0 2px rgba(34,197,94,0.9), 0 0 24px 4px rgba(34,197,94,0.55)",
+                        background:
+                          "linear-gradient(135deg, rgba(34,197,94,0.28) 0%, rgba(21,128,61,0.18) 100%)",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none flex items-center justify-center"
+                      style={{ animation: "evtCheckPop 0.52s cubic-bezier(0.34,1.56,0.64,1) forwards" }}
+                    >
+                      <div
+                        className="flex items-center justify-center rounded-full"
+                        style={{
+                          width: 34,
+                          height: 34,
+                          background: "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
+                          boxShadow: "0 6px 18px rgba(34,197,94,0.55), 0 0 0 3px rgba(255,255,255,0.9) inset",
+                        }}
+                      >
+                        <CheckCircle2 size={20} strokeWidth={3} style={{ color: "#ffffff" }} />
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 {/* Smoke puff overlay */}
                 {isDismissing && (
                   <div
@@ -320,6 +356,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     }}
                   />
                 )}
+
 
                 {/* Action rail (revealed when card slides left) */}
                 <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-1 pl-2 pointer-events-none">
