@@ -230,67 +230,36 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll Logicahost video streaming API for connected viewers.
+  // Poll video streaming stats using ONLY the URL + XPath configured in the popup.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-
-
-
+    const url = sources.video_stream_api_url?.trim();
+    const xpath = sources.video_stream_xpath?.trim();
+    if (!url || !xpath) {
+      setVideoCount(null);
+      setLoadingVideo(false);
+      return;
+    }
     const tick = async () => {
-      const url =
-        (sources.video_stream_api_url?.trim() ||
-          videoApiUrlRef.current ||
-          "https://video.logicahost.com.br/api/V1RJeFIyRXlSbGhQV0dScFRUQTFkMXBGWkhOTmJHeFlWMjVSUFE9PStS");
-      const xpath = sources.video_stream_xpath?.trim();
       try {
         const r = await fetch(url, { cache: "no-store" });
         const text = (await r.text()).trim();
-        let count: number | null = null;
-
-        // If XPath configured, use it directly (works for XML or JSON path).
-        if (xpath) {
-          count = extractByPath(text, xpath);
-        } else if (text.startsWith("{") || text.startsWith("[") || text === "false" || text === "true" || text === "null") {
-          try {
-            const j = JSON.parse(text);
-            if (j === false || j === null) {
-              count = 0;
-            } else if (typeof j === "number") {
-              count = j;
-            } else if (j && typeof j === "object") {
-              const raw =
-                (j as any).espectadores_conectados ??
-                (j as any).espectadores ??
-                (j as any).viewers ??
-                (j as any).connected ??
-                (j as any).count ??
-                (j as any).info?.espectadores_conectados;
-              const n = typeof raw === "string" ? parseInt(raw, 10) : raw;
-              count = typeof n === "number" && !Number.isNaN(n) ? n : null;
-            }
-          } catch { count = null; }
-        } else {
-          const m = text.match(/<espectadores_conectados>\s*(\d+)\s*<\/espectadores_conectados>/i);
-          count = m ? parseInt(m[1], 10) : null;
-        }
-
-        if (!cancelled) setVideoCount(count);
+        const count = extractByPath(text, xpath);
+        if (!cancelled) setVideoCount(typeof count === "number" ? count : null);
       } catch {
         if (!cancelled) setVideoCount(null);
       }
       if (!cancelled) setLoadingVideo(false);
     };
-    // Delay first tick slightly so empresa_config load has a chance to populate ref.
-    const t0 = setTimeout(tick, 800);
+    tick();
     const iv = setInterval(tick, VIDEO_MS);
     return () => {
       cancelled = true;
-      clearTimeout(t0);
       clearInterval(iv);
-
     };
   }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
+
 
 
   // Rotate social display every 3s (only across configured networks)
