@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
     const [yt, ig, fb] = await Promise.all([
       youtube ? fetchYoutube(youtube).catch(() => null) : Promise.resolve(null),
       instagram ? fetchInstagram(instagram, debug).catch((e) => { debug.push(`ig err ${e}`); return null; }) : Promise.resolve(null),
-      facebook ? fetchFacebook(facebook).catch(() => null) : Promise.resolve(null),
+      facebook ? fetchFacebook(facebook, debug).catch((e) => { debug.push(`fb err ${e}`); return null; }) : Promise.resolve(null),
     ]);
 
     return new Response(
