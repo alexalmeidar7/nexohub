@@ -981,21 +981,62 @@ export default function PromocoesKiosk() {
                   </div>
                 </div>
               </div>
-              {/* Total de espectadores */}
-              <div
-                className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
-                style={{
-                  background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                }}
-                title="Total de espectadores ao vivo"
-              >
-                <Users size={14} className="text-white" />
-                <div className="flex items-baseline gap-1 text-white">
-                  <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
-                </div>
-              </div>
+              {/* Total de espectadores + Tooltip com pico do dia */}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-help"
+                      style={{
+                        background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                      }}
+                    >
+                      <Users size={14} className="text-white" />
+                      <div className="flex items-baseline gap-1 text-white">
+                        <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="border border-white/15 p-0 overflow-hidden"
+                    style={{ backgroundColor: "#000", color: "#fff" }}
+                  >
+                    {peakAudience ? (() => {
+                      const d = new Date(peakAudience.timestamp);
+                      const dataStr = d.toLocaleDateString("pt-BR");
+                      const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                      return (
+                        <div className="min-w-[220px]">
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(251,216,55,0.18), transparent)" }}>
+                            <Trophy size={16} style={{ color: "#fbd837" }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: "#fbd837" }}>Melhor audiência do dia</span>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl font-black tabular-nums leading-none">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
+                            </div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Locutor:</span> <span className="font-semibold">{peakAudience.locutor}</span></div>
+                            <div className="text-[11px] opacity-90 flex items-center gap-2 pt-0.5">
+                              <span><span className="opacity-60">Data:</span> {dataStr}</span>
+                              <span><span className="opacity-60">Hora:</span> {horaStr}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
+                        <Trophy size={14} style={{ color: "#fbd837" }} />
+                        <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           );
         })()}
