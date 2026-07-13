@@ -81,6 +81,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   // Config popup state
   const [configOpen, setConfigOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const [sources, setSources] = useState<SourcesConfig>({
     instagram: "",
     facebook: "",
@@ -100,6 +101,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [probeError, setProbeError] = useState<string | null>(null);
+
+  // Refs to keep latest counts for the periodic history logger
+  const streamingRef = useRef<number | null>(null);
+  const videoRef = useRef<number | null>(null);
+  useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
+  useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
+
 
 
 
