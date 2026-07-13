@@ -306,7 +306,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
     // primeiro log após 30s (para dar tempo dos contadores)
     const first = setTimeout(logNow, 30 * 1000);
-    const iv = setInterval(logNow, 5 * 60 * 1000);
+    const iv = setInterval(logNow, 15 * 60 * 1000);
     return () => { clearTimeout(first); clearInterval(iv); };
   }, [dataUserId]);
 
