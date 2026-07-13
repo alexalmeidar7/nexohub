@@ -1,0 +1,1 @@
+ALTER TABLE public.empresa_config ADD COLUMN IF NOT EXISTS video_stream_xpath text;

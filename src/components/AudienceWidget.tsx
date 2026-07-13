@@ -21,6 +21,8 @@ interface SourcesConfig {
   audio_stream_api_url: string;
   audio_stream_xpath: string;
   video_stream_api_url: string;
+  video_stream_xpath: string;
+
 }
 
 
@@ -54,6 +56,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     audio_stream_api_url: "",
     audio_stream_xpath: "",
     video_stream_api_url: "",
+    video_stream_xpath: "",
+
   });
 
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
@@ -70,7 +74,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       // populate the rotation labels immediately.
       const { data } = await supabase
         .from("empresa_config")
-        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath")
+        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath")
         .eq("user_id", dataUserId as any)
         .maybeSingle();
       if (!cancelled && data) {
@@ -87,7 +91,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           audio_stream_api_url: (data as any).audio_stream_api_url || "",
           audio_stream_xpath: (data as any).audio_stream_xpath || "",
           video_stream_api_url: (data as any).video_stream_api_url || "",
+          video_stream_xpath: (data as any).video_stream_xpath || "",
         };
+
 
         setSources(s);
       }
@@ -275,7 +281,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.youtube !== sources.youtube ||
       initial.audio_stream_api_url !== sources.audio_stream_api_url ||
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
-      initial.video_stream_api_url !== sources.video_stream_api_url;
+      initial.video_stream_api_url !== sources.video_stream_api_url ||
+      initial.video_stream_xpath !== sources.video_stream_xpath;
     if (!changed) return;
 
     const payload = {
@@ -286,7 +293,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       audio_stream_api_url: sources.audio_stream_api_url.trim() || null,
       audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
+      video_stream_xpath: sources.video_stream_xpath.trim() || null,
     };
+
     await supabase
       .from("empresa_config")
       .upsert(payload as any, { onConflict: "user_id" });
@@ -447,6 +456,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               value={sources.video_stream_api_url}
               onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
             />
+            <SourceField
+              label="XPath (nódulo XML do Source Video)"
+              placeholder="//info/espectadores_conectados"
+              value={sources.video_stream_xpath}
+              onChange={(v) => setSources((s) => ({ ...s, video_stream_xpath: v }))}
+            />
+
 
             <button
               type="button"
