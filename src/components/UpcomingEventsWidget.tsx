@@ -470,6 +470,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         Ver agenda completa
         <ExternalLink size={11} className="opacity-80" />
       </button>
+
+      <style>{`
+        @keyframes evtSmokeOut {
+          0%   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px) saturate(1); }
+          35%  { opacity: 0.85; transform: translateY(-3px) scale(1.015); filter: blur(1.5px) saturate(1.1); }
+          70%  { opacity: 0.35; transform: translateY(-12px) scale(1.05); filter: blur(6px) saturate(0.6); }
+          100% { opacity: 0; transform: translateY(-26px) scale(1.09); filter: blur(12px) saturate(0.2); }
+        }
+        @keyframes evtSmokePuff {
+          0%   { opacity: 0; transform: scale(0.6); }
+          40%  { opacity: 0.85; transform: scale(1.15); }
+          100% { opacity: 0; transform: scale(1.6); }
+        }
+      `}</style>
     </div>
   );
 }
+
