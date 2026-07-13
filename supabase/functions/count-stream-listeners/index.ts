@@ -204,16 +204,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch each URL: if xpath is provided, use it directly; else auto-detect.
+    // Fetch each URL. Priority order:
+    //   1) explicit XPath, 2) generic listener tag auto-detect on the same URL,
+    //   3) Icecast/Shoutcast URL-shape auto-detect.
     const counts = await Promise.all(
       urls.map(async (u) => {
         if (xpath) {
           const v = await fetchWithXPath(u, xpath);
           if (v !== null) return v;
         }
+        const g = await fetchGenericListeners(u);
+        if (g !== null) return g;
         return fetchListenersForUrl(u);
       }),
     );
+
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
     const total = counts.reduce((a, n) => a + (n ?? 0), 0);
     const anyOk = counts.some((n) => n !== null);
