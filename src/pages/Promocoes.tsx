@@ -1328,6 +1328,76 @@ export default function PromocoesKiosk() {
           color: white !important;
         }
       `}</style>
+
+      {/* Dialog de detalhes de audiência do dia */}
+      <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
+        <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.35), transparent)" }}>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Trophy size={18} style={{ color: "#fbd837" }} />
+              Audiência do dia
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="px-5 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Programa</div>
+              <div className="text-sm font-bold truncate">{peakAudience?.programa || "—"}</div>
+            </div>
+            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Locutor</div>
+              <div className="text-sm font-bold truncate">{peakAudience?.locutor || "—"}</div>
+            </div>
+            <div className="rounded-lg p-3 border border-white/10" style={{ background: "linear-gradient(135deg, rgba(251,216,55,0.18), rgba(215,13,14,0.15))" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">Pico do dia</div>
+              <div className="text-2xl font-black tabular-nums leading-none">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
+              {peakAudience && (
+                <div className="text-[10px] opacity-70 mt-1">
+                  {new Date(peakAudience.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="px-5 py-4">
+            <div className="text-[11px] uppercase tracking-wider opacity-60 mb-2">Evolução ao longo do dia</div>
+            <div className="w-full h-[300px] rounded-lg border border-white/10 p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+              {audienceChartLoading ? (
+                <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">Carregando…</div>
+              ) : audienceChart.length === 0 ? (
+                <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Sem dados registrados hoje.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={audienceChart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradAudio" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#d70d0e" stopOpacity={0.7} />
+                        <stop offset="100%" stopColor="#d70d0e" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="gradVideo" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.7} />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity={0.05} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="hora" stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
+                    <RTooltip
+                      contentStyle={{ backgroundColor: "#000", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 8 }}
+                      labelStyle={{ color: "#fbd837", fontWeight: 700 }}
+                    />
+                    <Legend wrapperStyle={{ color: "#fff", fontSize: 12 }} />
+                    <Area type="monotone" dataKey="audio" name="Áudio" stroke="#d70d0e" strokeWidth={2} fill="url(#gradAudio)" />
+                    <Area type="monotone" dataKey="video" name="Vídeo" stroke="#ffffff" strokeWidth={2} fill="url(#gradVideo)" />
+                    <Area type="monotone" dataKey="total" name="Total" stroke="#fbd837" strokeWidth={2} fill="none" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
         <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
