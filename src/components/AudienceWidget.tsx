@@ -471,7 +471,7 @@ function SourceField({
   value,
   onChange,
 }: {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   label: string;
   placeholder: string;
   value: string;
@@ -480,9 +480,10 @@ function SourceField({
   return (
     <label className="flex flex-col gap-1">
       <span className="text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "#0A2540", opacity: 0.7 }}>
-        <span style={{ color: "#00BFF0" }}>{icon}</span>
+        {icon && <span style={{ color: "#00BFF0" }}>{icon}</span>}
         {label}
       </span>
+
       <input
         type="text"
         value={value}
