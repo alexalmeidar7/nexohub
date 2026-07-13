@@ -1023,9 +1023,10 @@ function MockupPreview({
                   src={locutorFoto}
                   alt={displayLocutor}
                   className="absolute bottom-0 left-0 object-contain object-left-bottom pointer-events-none"
-                  style={{ height: "140%", maxWidth: "42%", opacity: 0.92 }}
+                  style={{ height: "100%", maxWidth: "38%", opacity: 0.95 }}
                 />
               )}
+
               <div className="relative" style={{ marginLeft: locutorFoto ? "38%" : 0 }}>
                 <div className="text-sm font-black uppercase leading-tight tracking-wide" style={{ color: "#111" }}>
                   {displayLocutor}
