@@ -61,6 +61,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   });
 
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
+  const [audioXPathError, setAudioXPathError] = useState<string | null>(null);
+  const [videoXPathError, setVideoXPathError] = useState<string | null>(null);
+  const [validating, setValidating] = useState(false);
+
+
 
 
   // Fetch social follower counts via edge function (which also handles RLS-safe
