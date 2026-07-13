@@ -2000,6 +2000,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     audio.preload = "none";
     audio.volume = volume;
     audio.muted = isMuted;
+    audio.autoplay = true;
     audioRef.current = audio;
     setShowVideo(false);
     setIsLoading(true);
@@ -2009,6 +2010,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     let playStarted = false;
     let lastTime = 0;
     let stuckSince = Date.now();
+    let firstResponseTimer: number | null = null;
 
     const scheduleReconnect = (reason: string) => {
       if (audioRef.current !== audio) return;
@@ -2047,7 +2049,17 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         }
       } catch {}
     };
-    const onError = () => scheduleReconnect("error");
+    const onError = () => {
+      // Streams ao vivo podem fechar chunks e disparar error mesmo após iniciar.
+      // Só reconecta imediatamente se ainda não houve nenhum sinal de playback.
+      if (playStarted || audio.currentTime > 0 || audio.readyState >= 2) {
+        setIsLoading(false);
+        setIsPlaying(true);
+        isPlayingRef.current = true;
+        return;
+      }
+      scheduleReconnect("error");
+    };
     const onEnded = () => scheduleReconnect("ended");
     const onStalled = () => scheduleReconnect("stalled");
     const onWaiting = () => setIsLoading(true);
@@ -2060,6 +2072,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     };
 
     audio.addEventListener("canplay", clearLoading);
+    audio.addEventListener("loadeddata", clearLoading);
+    audio.addEventListener("timeupdate", onPlaying);
     audio.addEventListener("playing", onPlaying);
     audio.addEventListener("error", onError);
     audio.addEventListener("ended", onEnded);
@@ -2089,9 +2103,12 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
     audioCleanupRef.current = () => {
       if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      if (firstResponseTimer !== null) { clearTimeout(firstResponseTimer); firstResponseTimer = null; }
       window.clearInterval(watchdog);
       document.removeEventListener("visibilitychange", onVisibility);
       audio.removeEventListener("canplay", clearLoading);
+      audio.removeEventListener("loadeddata", clearLoading);
+      audio.removeEventListener("timeupdate", onPlaying);
       audio.removeEventListener("playing", onPlaying);
       audio.removeEventListener("error", onError);
       audio.removeEventListener("ended", onEnded);
@@ -2102,8 +2119,17 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
     audio.src = buildSrc();
     audio.load();
+    firstResponseTimer = window.setTimeout(() => {
+      if (audioRef.current !== audio) return;
+      if (audio.readyState > 0 || audio.networkState === HTMLMediaElement.NETWORK_LOADING) {
+        setIsLoading(false);
+        setIsPlaying(true);
+        isPlayingRef.current = true;
+      }
+    }, 3500);
     audio.play().then(() => {
       setIsPlaying(true);
+      setIsLoading(false);
       isPlayingRef.current = true;
     }).catch((err) => {
       console.warn("Audio play failed:", err);
