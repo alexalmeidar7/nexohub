@@ -1677,8 +1677,8 @@ export default function CenarioInterativoPage() {
             <MonitorPlay size={18} />
           </div>
           <div>
-            <h3 className="text-base font-bold drop-shadow-sm">Cenário Interativo</h3>
-            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8 }}>Configure os elementos do cenário para suas transmissões</p>
+            <h3 className="text-base font-bold drop-shadow-sm" style={{ color: "inherit" }}>Cenário Interativo</h3>
+            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8, color: "inherit" }}>Configure os elementos do cenário para suas transmissões</p>
           </div>
         </div>
 
@@ -2788,7 +2788,7 @@ export default function CenarioInterativoPage() {
               </div>
             )}
 
-            <div className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
+            <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
               {/* Zoom Control */}
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full border shadow-2xl z-20 transition-all bg-[var(--layout-page-bg, #ffffff)]" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
                 <Minus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
@@ -2808,11 +2808,13 @@ export default function CenarioInterativoPage() {
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
-                  className="relative rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  className="relative overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  data-nexo-skip
                   style={{
                     height: "100%",
                     width: "auto",
                     aspectRatio: "9 / 16",
+                    borderRadius: 20,
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
                     background: "#000",
                     transform: `scale(${previewZoom})`,

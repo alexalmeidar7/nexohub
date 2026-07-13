@@ -1346,15 +1346,15 @@ select:not([data-nx-skip]) option:checked {
 }
 
 /* Convert generic cards/panels to Nexo card look */
-.nexo-scope [class*="rounded-2xl"],
-.nexo-scope [class*="rounded-xl"] {
+.nexo-scope [class*="rounded-2xl"]:not([data-nexo-skip]):not([data-nexo-skip] *),
+.nexo-scope [class*="rounded-xl"]:not([data-nexo-skip]):not([data-nexo-skip] *) {
   background: #D6F4FB !important;
   box-shadow: 0 2px 12px rgba(10, 37, 64, 0.05) !important;
   color: #0A2540 !important;
 }
 
-.nexo-scope [class*="rounded-2xl"] [class*="rounded-xl"],
-.nexo-scope [class*="rounded-2xl"] [class*="rounded-2xl"] {
+.nexo-scope [class*="rounded-2xl"] [class*="rounded-xl"]:not([data-nexo-skip]):not([data-nexo-skip] *),
+.nexo-scope [class*="rounded-2xl"] [class*="rounded-2xl"]:not([data-nexo-skip]):not([data-nexo-skip] *) {
   background: #ffffff !important;
   border: 1.5px solid #00BFF0 !important;
 }
