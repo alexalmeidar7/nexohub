@@ -550,7 +550,7 @@ export default function BroadcastPage() {
   };
 
   return (
-    <div className="nexo-scope px-2 pt-2 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="px-2 pt-2 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       <div
         className="w-full flex flex-col lg:flex-row overflow-hidden rounded-2xl shadow-2xl h-full min-h-0"
         style={{ backgroundColor: NAVY, border: `4px solid ${NAVY}` }}
