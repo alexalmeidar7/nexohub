@@ -1950,8 +1950,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     // (buffers de streams ao vivo ficariam obsoletos e causariam repetição)
     pre.preload = "metadata";
     pre.muted = true;
-    const sep = url.includes("?") ? "&" : "?";
-    pre.src = `${url}${sep}_pf=${Date.now()}`;
+    // Alguns servidores de rádio retornam 400 quando recebem query params extras.
+    pre.src = url;
     try { pre.load(); } catch {}
     prefetchRef.current = { url, audio: pre };
     return () => {
@@ -1991,8 +1991,9 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
     const streamUrl = String(channel.url);
     const buildSrc = () => {
-      const sep = streamUrl.includes("?") ? "&" : "?";
-      return `${streamUrl}${sep}_t=${Date.now()}_r=${Math.random().toString(36).slice(2, 8)}`;
+      // Não adicionar cache-busting: muitos servidores Icecast/Shoutcast rejeitam
+      // query strings extras e deixam o widget preso em "carregando...".
+      return streamUrl;
     };
 
     const audio = new Audio();
