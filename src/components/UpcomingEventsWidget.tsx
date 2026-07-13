@@ -117,12 +117,28 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     onNavigate?.("agenda" as Page);
   };
 
-  const encerrarEvento = async (evtId: string) => {
-    const prev = eventos;
-    setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
-    const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
-    if (error) setEventos(prev);
+  const [dismissing, setDismissing] = useState<Set<string>>(new Set());
+
+  const encerrarEvento = (evtId: string) => {
+    setDismissing((cur) => {
+      const s = new Set(cur);
+      s.add(evtId);
+      return s;
+    });
+    // Wait for the smoke animation to finish before removing the item
+    window.setTimeout(async () => {
+      const prev = eventos;
+      setEventos((cur) => cur.map((e) => (e.id === evtId ? { ...e, status: "concluido" } : e)));
+      setDismissing((cur) => {
+        const s = new Set(cur);
+        s.delete(evtId);
+        return s;
+      });
+      const { error } = await supabase.from("agenda_eventos").update({ status: "concluido" }).eq("id", evtId);
+      if (error) setEventos(prev);
+    }, 640);
   };
+
 
 
   const textColor = "var(--layout-widget-text, #ffffff)";
@@ -253,11 +269,42 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             const hora = evt.horario_gravacao || evt.programa?.horario_inicio || "";
             const horaFim = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
             const isToday = isSameDay(date, new Date());
+            const isDismissing = dismissing.has(evt.id);
             return (
               <div
                 key={`${evt.id}-${date.toISOString()}`}
-                className="group relative rounded-lg overflow-hidden"
+                className="upcoming-evt-shell"
+                style={{
+                  maxHeight: isDismissing ? 0 : 200,
+                  marginTop: isDismissing ? 0 : undefined,
+                  marginBottom: isDismissing ? 0 : undefined,
+                  opacity: isDismissing ? 0 : 1,
+                  overflow: "hidden",
+                  pointerEvents: isDismissing ? "none" : "auto",
+                  transition: "max-height 0.6s cubic-bezier(0.4,0,0.2,1), margin 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease",
+                }}
               >
+              <div
+                className="group relative rounded-lg overflow-visible"
+                style={{
+                  animation: isDismissing ? "evtSmokeOut 0.6s cubic-bezier(0.4,0,0.2,1) forwards" : undefined,
+                  transformOrigin: "50% 40%",
+                }}
+              >
+                {/* Smoke puff overlay */}
+                {isDismissing && (
+                  <div
+                    className="absolute inset-0 pointer-events-none rounded-lg"
+                    style={{
+                      animation: "evtSmokePuff 0.6s ease-out forwards",
+                      background:
+                        "radial-gradient(ellipse at center, rgba(220,240,255,0.55) 0%, rgba(200,220,255,0.25) 45%, rgba(255,255,255,0) 75%)",
+                      filter: "blur(6px)",
+                      mixBlendMode: "screen",
+                    }}
+                  />
+                )}
+
                 {/* Action rail (revealed when card slides left) */}
                 <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-1 pl-2 pointer-events-none">
                   <button
@@ -400,6 +447,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 </div>
                 </div>
               </div>
+              </div>
+
 
             );
           })}
@@ -421,6 +470,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         Ver agenda completa
         <ExternalLink size={11} className="opacity-80" />
       </button>
+
+      <style>{`
+        @keyframes evtSmokeOut {
+          0%   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px) saturate(1); }
+          35%  { opacity: 0.85; transform: translateY(-3px) scale(1.015); filter: blur(1.5px) saturate(1.1); }
+          70%  { opacity: 0.35; transform: translateY(-12px) scale(1.05); filter: blur(6px) saturate(0.6); }
+          100% { opacity: 0; transform: translateY(-26px) scale(1.09); filter: blur(12px) saturate(0.2); }
+        }
+        @keyframes evtSmokePuff {
+          0%   { opacity: 0; transform: scale(0.6); }
+          40%  { opacity: 0.85; transform: scale(1.15); }
+          100% { opacity: 0; transform: scale(1.6); }
+        }
+      `}</style>
     </div>
   );
 }
+
