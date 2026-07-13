@@ -353,6 +353,61 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     initialSourcesRef.current = { ...sources };
   };
 
+  const validateXPaths = async (): Promise<boolean> => {
+    setAudioXPathError(null);
+    setVideoXPathError(null);
+    const aUrl = sources.audio_stream_api_url.trim();
+    const aXp = sources.audio_stream_xpath.trim();
+    const vUrl = sources.video_stream_api_url.trim();
+    const vXp = sources.video_stream_xpath.trim();
+    if (!aXp && !vXp) return true;
+    setValidating(true);
+    let ok = true;
+    try {
+      if (aUrl && aXp) {
+        try {
+          const { data } = await supabase.functions.invoke("count-stream-listeners", {
+            body: { userId: dataUserId, urls: [aUrl], xpath: aXp },
+          });
+          const n = (data as any)?.listeners;
+          if (typeof n !== "number") {
+            setAudioXPathError("XPath inválido: nenhum valor numérico encontrado no Source Audio.");
+            ok = false;
+          }
+        } catch {
+          setAudioXPathError("Não foi possível validar o XPath do Source Audio.");
+          ok = false;
+        }
+      } else if (aXp && !aUrl) {
+        setAudioXPathError("Informe a URL do Source Audio para validar o XPath.");
+        ok = false;
+      }
+
+      if (vUrl && vXp) {
+        try {
+          const r = await fetch(vUrl, { cache: "no-store" });
+          const text = await r.text();
+          const n = extractByPath(text, vXp);
+          if (typeof n !== "number") {
+            setVideoXPathError("XPath inválido: nenhum valor numérico encontrado no Source Video.");
+            ok = false;
+          }
+        } catch {
+          setVideoXPathError("Não foi possível acessar a URL do Source Video para validar o XPath.");
+          ok = false;
+        }
+      } else if (vXp && !vUrl) {
+        setVideoXPathError("Informe a URL do Source Video para validar o XPath.");
+        ok = false;
+      }
+    } finally {
+      setValidating(false);
+    }
+    return ok;
+  };
+
+
+
 
   return (
     <div
