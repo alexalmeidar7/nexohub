@@ -256,13 +256,63 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             return (
               <div
                 key={`${evt.id}-${date.toISOString()}`}
-                onClick={() => openAgenda(evt.id)}
-                className="group relative w-full text-left rounded-lg p-1.5 transition-all hover:bg-white/10 active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
-                }}
+                className="group relative rounded-lg overflow-hidden"
               >
+                {/* Action rail (revealed when card slides left) */}
+                <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-1 pl-2 pointer-events-none">
+                  <button
+                    type="button"
+                    title="Encerrar evento"
+                    onClick={(e) => { e.stopPropagation(); encerrarEvento(evt.id); }}
+                    className="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 hover:brightness-110 hover:scale-105 active:scale-95"
+                    style={{
+                      background: "linear-gradient(135deg, #22c55e 0%, #15803d 100%)",
+                      color: "#ffffff",
+                      boxShadow: "0 4px 10px rgba(34,197,94,0.35), 0 0 0 1px rgba(255,255,255,0.15) inset",
+                      transitionDelay: "60ms",
+                    }}
+                  >
+                    <CheckCircle2 size={15} strokeWidth={2.4} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Abrir na agenda"
+                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id); }}
+                    className="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 hover:brightness-110 hover:scale-105 active:scale-95"
+                    style={{
+                      background: "linear-gradient(135deg, #ffffff 0%, #e5e7eb 100%)",
+                      color: "#111827",
+                      boxShadow: "0 4px 10px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.06) inset",
+                      transitionDelay: "120ms",
+                    }}
+                  >
+                    <ArrowUpRight size={15} strokeWidth={2.4} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Editar evento"
+                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id, "edit"); }}
+                    className="pointer-events-auto flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 opacity-0 translate-x-3 group-hover:opacity-100 group-hover:translate-x-0 hover:brightness-110 hover:scale-105 active:scale-95"
+                    style={{
+                      background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb) 0%, color-mix(in srgb, var(--layout-accent-color, #2563eb) 55%, #000) 100%)",
+                      color: "var(--layout-header-text, #ffffff)",
+                      boxShadow: "0 4px 10px color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent), 0 0 0 1px rgba(255,255,255,0.15) inset",
+                      transitionDelay: "180ms",
+                    }}
+                  >
+                    <Pencil size={13} strokeWidth={2.4} />
+                  </button>
+                </div>
+
+                {/* Card (slides left on hover to reveal actions behind) */}
+                <div
+                  onClick={() => openAgenda(evt.id)}
+                  className="relative w-full text-left rounded-lg p-1.5 transition-transform duration-300 ease-out will-change-transform group-hover:-translate-x-[112px] active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
+                  style={{
+                    background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 92%, transparent)",
+                    borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                  }}
+                >
                 {/* Date badge */}
                 <div
                   className="flex flex-col items-center justify-center rounded-md px-1.5 shrink-0"
@@ -348,41 +398,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     </p>
                   )}
                 </div>
-
-                {/* Hover actions */}
-                <div
-                  className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    title="Encerrar evento"
-                    onClick={(e) => { e.stopPropagation(); encerrarEvento(evt.id); }}
-                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
-                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "#22c55e", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <CheckCircle2 size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    title="Abrir na agenda"
-                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id); }}
-                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
-                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <ArrowUpRight size={13} />
-                  </button>
-                  <button
-                    type="button"
-                    title="Editar evento"
-                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id, "edit"); }}
-                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
-                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid rgba(255,255,255,0.15)" }}
-                  >
-                    <Pencil size={12} />
-                  </button>
                 </div>
               </div>
+
             );
           })}
           </>
