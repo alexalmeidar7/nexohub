@@ -583,12 +583,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const masterEmail = parentEmail || user?.email || "";
     const masterSlug = masterEmail.includes("@") ? masterEmail.split("@")[0].toLowerCase() : (effectiveUserId || user?.id || "");
     if (parentLabel === "player" && child.label === "módulo externo") {
-      window.open(`/user/${masterSlug}/nexohub/player`, "_blank");
+      const url = masterSlug ? `/${masterSlug}/player` : "/player";
+      window.open(url, "_blank");
       setHoveredMenu(null);
       return;
     }
     if ((parentLabel === "ferramentas" || parentLabel === "comercial") && (child.label === "tela promo" || child.label === "módulo locutor")) {
-      window.open(`/user/${masterSlug}/nexohub/telapromo`, "_blank");
+      // Go directly to the slug-prefixed route to avoid the legacy /user/<slug>/nexohub/... redirect,
+      // which can land on an empty page if the slug can't be resolved.
+      const url = masterSlug ? `/${masterSlug}/telapromo` : "/telapromo";
+      window.open(url, "_blank");
       setHoveredMenu(null);
       return;
     }
