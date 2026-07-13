@@ -4,7 +4,15 @@ import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+
+// Redirect helper that interpolates :userSlug from the current URL params.
+// Plain <Navigate to="/:userSlug/..."> does NOT substitute params and would
+// send the browser literally to "/:userSlug/...", producing a blank page.
+function SlugRedirect({ template }: { template: string }) {
+  const { userSlug = "" } = useParams();
+  return <Navigate to={template.replace(":userSlug", userSlug)} replace />;
+}
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
