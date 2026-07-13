@@ -1045,13 +1045,13 @@ export default function PromocoesKiosk() {
                       const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                       return (
                         <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(251,216,55,0.18), transparent)" }}>
-                            <Trophy size={16} style={{ color: "#fbd837" }} />
-                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: "#fbd837" }}>Melhor audiência do dia</span>
+                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.55), transparent)" }}>
+                            <Trophy size={16} style={{ color: "#ffffff" }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider text-white">Melhor audiência do dia</span>
                           </div>
                           <div className="px-3 py-2.5 space-y-1.5">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black tabular-nums leading-none">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience.total.toLocaleString("pt-BR")}</span>
                               <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
                             </div>
                             <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
@@ -1063,17 +1063,18 @@ export default function PromocoesKiosk() {
                             <button
                               type="button"
                               onClick={() => setAudienceDetailsOpen(true)}
-                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-colors"
-                              style={{ backgroundColor: "#fbd837", color: "#000" }}
+                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
+                              style={{ background: "linear-gradient(135deg, #d70d0e 0%, #7a0708 100%)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.2)" }}
                             >
                               Ver detalhes
                             </button>
+
                           </div>
                         </div>
                       );
                     })() : (
                       <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
-                        <Trophy size={14} style={{ color: "#fbd837" }} />
+                        <Trophy size={14} style={{ color: "#d70d0e" }} />
                         <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
                       </div>
                     )}
@@ -1332,9 +1333,9 @@ export default function PromocoesKiosk() {
       {/* Dialog de detalhes de audiência do dia */}
       <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
         <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
-          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.35), transparent)" }}>
+          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <Trophy size={18} style={{ color: "#fbd837" }} />
+              <Trophy size={18} style={{ color: "#ffffff" }} />
               Audiência do dia
             </DialogTitle>
           </DialogHeader>
@@ -1348,11 +1349,11 @@ export default function PromocoesKiosk() {
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Locutor</div>
               <div className="text-sm font-bold truncate">{peakAudience?.locutor || "—"}</div>
             </div>
-            <div className="rounded-lg p-3 border border-white/10" style={{ background: "linear-gradient(135deg, rgba(251,216,55,0.18), rgba(215,13,14,0.15))" }}>
-              <div className="text-[10px] uppercase tracking-wider opacity-70 mb-1">Pico do dia</div>
-              <div className="text-2xl font-black tabular-nums leading-none">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
+            <div className="rounded-lg p-3 border" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)", borderColor: "rgba(255,255,255,0.2)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-80 mb-1 text-white">Pico do dia</div>
+              <div className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
               {peakAudience && (
-                <div className="text-[10px] opacity-70 mt-1">
+                <div className="text-[10px] opacity-80 mt-1 text-white">
                   {new Date(peakAudience.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                 </div>
               )}
@@ -1371,25 +1372,31 @@ export default function PromocoesKiosk() {
                   <AreaChart data={audienceChart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="gradAudio" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#d70d0e" stopOpacity={0.7} />
+                        <stop offset="0%" stopColor="#d70d0e" stopOpacity={0.85} />
                         <stop offset="100%" stopColor="#d70d0e" stopOpacity={0.05} />
                       </linearGradient>
                       <linearGradient id="gradVideo" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.7} />
-                        <stop offset="100%" stopColor="#ffffff" stopOpacity={0.05} />
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity={0.03} />
+                      </linearGradient>
+                      <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#d70d0e" stopOpacity={0.1} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                     <XAxis dataKey="hora" stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
                     <YAxis stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
                     <RTooltip
-                      contentStyle={{ backgroundColor: "#000", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", borderRadius: 8 }}
-                      labelStyle={{ color: "#fbd837", fontWeight: 700 }}
+                      contentStyle={{ backgroundColor: "#000", border: "1px solid #d70d0e", color: "#fff", borderRadius: 8 }}
+                      labelStyle={{ color: "#ffffff", fontWeight: 700 }}
+                      itemStyle={{ color: "#ffffff" }}
                     />
                     <Legend wrapperStyle={{ color: "#fff", fontSize: 12 }} />
-                    <Area type="monotone" dataKey="audio" name="Áudio" stroke="#d70d0e" strokeWidth={2} fill="url(#gradAudio)" />
+                    <Area type="monotone" dataKey="audio" name="Áudio" stroke="#d70d0e" strokeWidth={2.5} fill="url(#gradAudio)" />
                     <Area type="monotone" dataKey="video" name="Vídeo" stroke="#ffffff" strokeWidth={2} fill="url(#gradVideo)" />
-                    <Area type="monotone" dataKey="total" name="Total" stroke="#fbd837" strokeWidth={2} fill="none" />
+                    <Area type="monotone" dataKey="total" name="Total" stroke="#ffffff" strokeWidth={2} strokeDasharray="4 3" fill="none" />
+
                   </AreaChart>
                 </ResponsiveContainer>
               )}
