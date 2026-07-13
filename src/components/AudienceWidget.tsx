@@ -552,7 +552,10 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               Espectadores agora
             </span>
             {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
-              <Skeleton width={72} height={18} dark={dark} />
+              <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
+                <Loader2 size={16} className="animate-spin" />
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+              </span>
             ) : (
               <span
                 className="text-xl font-black leading-none"
