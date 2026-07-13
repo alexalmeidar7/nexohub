@@ -200,6 +200,13 @@ async function fetchFacebook(url: string, debug?: string[]): Promise<number | nu
     const html = await fetchHtml(url, ua);
     debug?.push(`fb ua=${ua.slice(0, 30)} html=${html ? html.length : 0}`);
     if (!html) continue;
+    if (debug) {
+      const og = html.match(/<meta[^>]+og:description[^>]+>/i);
+      debug.push(`fb has-og=${!!og} sample=${(og?.[0] || "").slice(0, 200)}`);
+      const anyCount = html.match(/(\d[\d,.\s\u00a0]{2,})\s*(followers|seguidores|curtidas|likes|gillar|volgers|aiment)/i);
+      debug.push(`fb anyCount=${anyCount ? anyCount[0].slice(0, 80) : "none"}`);
+    }
+
     const decode = (s: string) => s
       .replace(/&#xa0;|&nbsp;/gi, " ")
       .replace(/&#x([0-9a-f]+);/gi, (_s, h) => String.fromCharCode(parseInt(h, 16)))
