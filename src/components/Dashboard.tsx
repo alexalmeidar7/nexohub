@@ -204,6 +204,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>("nexohub");
+
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearMenuLeaveTimer = useCallback(() => {
