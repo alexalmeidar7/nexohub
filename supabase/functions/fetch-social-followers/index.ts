@@ -193,21 +193,63 @@ async function fetchInstagram(url: string, debug?: string[]): Promise<number | n
 }
 
 
-async function fetchFacebook(url: string): Promise<number | null> {
-  const html = await fetchHtml(url, UA_META);
-  if (!html) return null;
-  const m = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-  if (m) {
-    const desc = m[1]
+async function fetchFacebook(url: string, debug?: string[]): Promise<number | null> {
+  // Try multiple UAs; Meta blocks datacenter IPs on some fetches.
+  const uas = [UA_META, UA_DESKTOP, "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"];
+  for (const ua of uas) {
+    const html = await fetchHtml(url, ua);
+    debug?.push(`fb ua=${ua.slice(0, 30)} html=${html ? html.length : 0}`);
+    if (!html) continue;
+    const decode = (s: string) => s
       .replace(/&#xa0;|&nbsp;/gi, " ")
-      .replace(/&#x([0-9a-f]+);/gi, (_s, h) => String.fromCharCode(parseInt(h, 16)));
-    const words = "followers|seguidores|curtidas|likes|gillar|gefällt|aiment|gusta";
-    const re = new RegExp(`([\\d][\\d\\s.,\\u00a0]*[kmb]?)\\s*(?:${words})`, "i");
-    const f = desc.match(re);
-    if (f) return parseCompact(f[1]);
+      .replace(/&#x([0-9a-f]+);/gi, (_s, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/&#(\d+);/g, (_s, d) => String.fromCharCode(parseInt(d, 10)))
+      .replace(/&amp;/g, "&");
+    const words = "followers|seguidores|curtidas|likes|gillar|gefällt|aiment|gusta|volgers|obserwuj|подписчик";
+    const re = new RegExp(`([\\d][\\d\\s.,\\u00a0]*\\s?[kmb]?)\\s*(?:${words})`, "i");
+
+    // 1) og:description
+    const og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+    if (og) {
+      const desc = decode(og[1]);
+      debug?.push(`fb og="${desc.slice(0, 120)}"`);
+      const f = desc.match(re);
+      if (f) {
+        const n = parseCompact(f[1]);
+        debug?.push(`fb og count=${n}`);
+        if (n) return n;
+      }
+    }
+    // 2) meta description
+    const md = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
+    if (md) {
+      const desc = decode(md[1]);
+      debug?.push(`fb meta="${desc.slice(0, 120)}"`);
+      const f = desc.match(re);
+      if (f) {
+        const n = parseCompact(f[1]);
+        if (n) return n;
+      }
+    }
+    // 3) inline JSON follower_count / fan_count
+    const j = html.match(/"(?:follower_count|fan_count|page_likers)"\s*:\s*(\d+)/);
+    if (j) {
+      const n = parseInt(j[1], 10);
+      debug?.push(`fb json count=${n}`);
+      if (n) return n;
+    }
+    // 4) plain body match ("X followers/seguidores/curtidas")
+    const decoded = decode(html);
+    const f = decoded.match(re);
+    if (f) {
+      const n = parseCompact(f[1]);
+      debug?.push(`fb body count=${n}`);
+      if (n) return n;
+    }
   }
   return null;
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
