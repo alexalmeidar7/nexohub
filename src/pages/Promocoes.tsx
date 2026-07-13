@@ -462,6 +462,45 @@ export default function PromocoesKiosk() {
     return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
   };
 
+  // Pré-carrega imagens das citações dos programas atual/anterior/próximo da capa lateral
+  useEffect(() => {
+    const list = Array.from(
+      programas
+        .slice()
+        .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
+        .reduce((map, p) => {
+          const key = p.nome.trim().toLowerCase();
+          const existing = map.get(key);
+          if (!existing) {
+            map.set(key, { ...p, mergedIds: Array.from(new Set([...(p.mergedIds || []), p.id])) });
+          } else {
+            existing.mergedIds = Array.from(new Set([...(existing.mergedIds || []), ...(p.mergedIds || []), p.id]));
+          }
+          return map;
+        }, new Map<string, ProgramaGrade>())
+        .values(),
+    );
+    if (!list.length) return;
+    const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
+    const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
+    const targets = [
+      list[activeIdx],
+      list[(activeIdx + 1) % list.length],
+      list[(activeIdx - 1 + list.length) % list.length],
+    ].filter(Boolean);
+    const urls = new Set<string>();
+    for (const prog of targets) {
+      if (prog?.capa) urls.add(prog.capa);
+      const tests = getTestemunhaisForProgram(prog!);
+      for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
+    }
+    urls.forEach(url => {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+    });
+  }, [coverIndex, onAirProgram, programas, testemunhais]);
+
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
     const r = 5;
     const circumference = 2 * Math.PI * r;
