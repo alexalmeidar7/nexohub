@@ -1010,7 +1010,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               boxShadow: "0 6px 18px rgba(0,33,50,0.06)",
             }}
           >
-            {!isDashboard && playerState.hasChannel && (
+            {playerState.hasChannel && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
