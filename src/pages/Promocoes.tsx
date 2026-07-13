@@ -1074,7 +1074,7 @@ export default function PromocoesKiosk() {
                       );
                     })() : (
                       <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
-                        <Trophy size={14} style={{ color: "#fbd837" }} />
+                        <Trophy size={14} style={{ color: "#d70d0e" }} />
                         <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
                       </div>
                     )}
