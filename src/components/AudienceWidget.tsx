@@ -222,34 +222,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const extractByPath = (text: string, rawPath: string): number | null => {
-      const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
-      if (path.length === 0) return null;
-      const trimmed = text.trim();
-      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-        try {
-          let cur: any = JSON.parse(trimmed);
-          for (const key of path) {
-            if (cur == null) return null;
-            if (Array.isArray(cur)) cur = cur[0];
-            cur = cur?.[key];
-          }
-          if (Array.isArray(cur)) cur = cur[0];
-          const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
-          return Number.isFinite(n) ? n : null;
-        } catch { /* fall through */ }
-      }
-      let scope = trimmed;
-      for (const tag of path) {
-        const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
-        const m = scope.match(re);
-        if (!m) return null;
-        scope = m[1];
-      }
-      const inner = scope.replace(/<[^>]+>/g, "").trim();
-      const n = parseInt(inner, 10);
-      return Number.isFinite(n) ? n : null;
-    };
+
+
 
     const tick = async () => {
       const url =
