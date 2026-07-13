@@ -193,19 +193,43 @@ async function fetchInstagram(url: string, debug?: string[]): Promise<number | n
 }
 
 
+function extractFacebookHandle(input: string): string | null {
+  if (!input) return null;
+  const s = input.trim();
+  const m = s.match(/facebook\.com\/(?:pg\/)?([^/?#\s]+)/i);
+  if (m && m[1] && !/^(profile\.php|people|pages)$/i.test(m[1])) return m[1];
+  return s.replace(/^@/, "").replace(/^https?:\/\//, "").replace(/\/.*$/, "").trim() || null;
+}
+
+async function fetchFacebookViaSocialBlade(handle: string, debug?: string[]): Promise<number | null> {
+  const url = `https://socialblade.com/facebook/page/${encodeURIComponent(handle)}`;
+  const html = await fetchHtml(url, UA_DESKTOP);
+  debug?.push(`fb socialblade html=${html ? html.length : 0}`);
+  if (!html) return null;
+  const patterns = [
+    /"likes"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /"fanCount"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /"fan_count"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /"followers"\s*:\s*"?(\d[\d,.]*)"?/i,
+    /(\d[\d,.]*\s*[kmb]?)\s*(?:likes|followers|curtidas|seguidores)/i,
+  ];
+  for (const p of patterns) {
+    const m = html.match(p);
+    if (!m) continue;
+    const n = parseCompact(m[1]);
+    debug?.push(`fb sb ${p.source.slice(0, 25)} => ${n}`);
+    if (n && n > 0) return n;
+  }
+  return null;
+}
+
 async function fetchFacebook(url: string, debug?: string[]): Promise<number | null> {
-  // Try multiple UAs; Meta blocks datacenter IPs on some fetches.
+  // 1) Direct FB fetch (works when og:description isn't stripped for our IP)
   const uas = [UA_META, UA_DESKTOP, "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"];
   for (const ua of uas) {
     const html = await fetchHtml(url, ua);
     debug?.push(`fb ua=${ua.slice(0, 30)} html=${html ? html.length : 0}`);
     if (!html) continue;
-    if (debug) {
-      const og = html.match(/<meta[^>]+og:description[^>]+>/i);
-      debug.push(`fb has-og=${!!og} sample=${(og?.[0] || "").slice(0, 200)}`);
-      const anyCount = html.match(/(\d[\d,.\s\u00a0]{2,})\s*(followers|seguidores|curtidas|likes|gillar|volgers|aiment)/i);
-      debug.push(`fb anyCount=${anyCount ? anyCount[0].slice(0, 80) : "none"}`);
-    }
 
     const decode = (s: string) => s
       .replace(/&#xa0;|&nbsp;/gi, " ")
@@ -215,7 +239,6 @@ async function fetchFacebook(url: string, debug?: string[]): Promise<number | nu
     const words = "followers|seguidores|curtidas|likes|gillar|gefällt|aiment|gusta|volgers|obserwuj|подписчик";
     const re = new RegExp(`([\\d][\\d\\s.,\\u00a0]*\\s?[kmb]?)\\s*(?:${words})`, "i");
 
-    // 1) og:description
     const og = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
     if (og) {
       const desc = decode(og[1]);
@@ -223,39 +246,26 @@ async function fetchFacebook(url: string, debug?: string[]): Promise<number | nu
       const f = desc.match(re);
       if (f) {
         const n = parseCompact(f[1]);
-        debug?.push(`fb og count=${n}`);
         if (n) return n;
       }
     }
-    // 2) meta description
-    const md = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
-    if (md) {
-      const desc = decode(md[1]);
-      debug?.push(`fb meta="${desc.slice(0, 120)}"`);
-      const f = desc.match(re);
-      if (f) {
-        const n = parseCompact(f[1]);
-        if (n) return n;
-      }
-    }
-    // 3) inline JSON follower_count / fan_count
     const j = html.match(/"(?:follower_count|fan_count|page_likers)"\s*:\s*(\d+)/);
     if (j) {
       const n = parseInt(j[1], 10);
-      debug?.push(`fb json count=${n}`);
-      if (n) return n;
-    }
-    // 4) plain body match ("X followers/seguidores/curtidas")
-    const decoded = decode(html);
-    const f = decoded.match(re);
-    if (f) {
-      const n = parseCompact(f[1]);
-      debug?.push(`fb body count=${n}`);
       if (n) return n;
     }
   }
+
+  // 2) SocialBlade fallback (works from datacenter IPs)
+  const handle = extractFacebookHandle(url);
+  debug?.push(`fb handle=${handle}`);
+  if (handle) {
+    const n = await fetchFacebookViaSocialBlade(handle, debug);
+    if (n) return n;
+  }
   return null;
 }
+
 
 
 Deno.serve(async (req) => {
