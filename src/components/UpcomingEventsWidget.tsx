@@ -254,10 +254,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             const horaFim = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
             const isToday = isSameDay(date, new Date());
             return (
-              <button
+              <div
                 key={`${evt.id}-${date.toISOString()}`}
                 onClick={() => openAgenda(evt.id)}
-                className="w-full text-left rounded-lg p-1.5 transition-all hover:bg-white/10 active:scale-[0.99] border flex gap-2 items-stretch"
+                className="group relative w-full text-left rounded-lg p-1.5 transition-all hover:bg-white/10 active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
@@ -348,7 +348,41 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     </p>
                   )}
                 </div>
-              </button>
+
+                {/* Hover actions */}
+                <div
+                  className="absolute top-1 right-1 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    title="Encerrar evento"
+                    onClick={(e) => { e.stopPropagation(); encerrarEvento(evt.id); }}
+                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
+                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "#22c55e", border: "1px solid rgba(255,255,255,0.15)" }}
+                  >
+                    <CheckCircle2 size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Abrir na agenda"
+                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id); }}
+                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
+                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.15)" }}
+                  >
+                    <ArrowUpRight size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    title="Editar evento"
+                    onClick={(e) => { e.stopPropagation(); openAgenda(evt.id, "edit"); }}
+                    className="flex items-center justify-center w-6 h-6 rounded-md transition-transform hover:scale-110"
+                    style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid rgba(255,255,255,0.15)" }}
+                  >
+                    <Pencil size={12} />
+                  </button>
+                </div>
+              </div>
             );
           })}
           </>
@@ -359,6 +393,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       <button
         onClick={() => openAgenda()}
         className="mt-2 shrink-0 w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold uppercase tracking-wider transition-all hover:opacity-90 active:scale-[0.98]"
+
         style={{
           background: accent,
           color: "var(--layout-header-text, #ffffff)",
