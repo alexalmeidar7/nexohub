@@ -33,7 +33,7 @@ function matches(evt: Evt, date: Date) {
 }
 
 const typeColors: Record<string, { bg: string; text: string; label: string }> = {
-  live: { bg: "#ef4444", text: "#ffffff", label: "AO VIVO" },
+  live: { bg: "#ef4444", text: "#ffffff", label: "LIVE" },
   gravacao: { bg: "#8b5cf6", text: "#ffffff", label: "GRAVAÇÃO" },
   reuniao: { bg: "#3b82f6", text: "#ffffff", label: "REUNIÃO" },
   evento: { bg: "#f59e0b", text: "#111111", label: "EVENTO" },
