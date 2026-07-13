@@ -195,6 +195,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   }, [alertsStorageKey]);
 
   const pushAlert = (type: "audio" | "video", value: number) => {
+    if (!alertsEnabled) return;
     const alert: PeakAlert = {
       id: `${type}-${Date.now()}`,
       type,
@@ -202,7 +203,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       at: new Date().toISOString(),
     };
     setAlerts((prev) => {
-      const next = [alert, ...prev].slice(0, 20);
+      const next = [alert, ...prev].slice(0, 4);
       try { if (alertsStorageKey) localStorage.setItem(alertsStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
