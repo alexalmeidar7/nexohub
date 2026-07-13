@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X } from "lucide-react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
@@ -107,6 +107,70 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const videoRef = useRef<number | null>(null);
   useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
   useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
+
+  // Delta de seguidores (vs último valor conhecido, persistido em localStorage)
+  const [socialDelta, setSocialDelta] = useState<{ youtube: number | null; instagram: number | null; facebook: number | null }>({ youtube: null, instagram: null, facebook: null });
+
+  // Pico do dia (áudio/vídeo) — carregado do histórico + atualizado ao vivo
+  const [audioPeak, setAudioPeak] = useState<number | null>(null);
+  const [videoPeak, setVideoPeak] = useState<number | null>(null);
+
+  // Atualiza deltas quando novos valores sociais chegam
+  useEffect(() => {
+    if (!dataUserId) return;
+    (Object.keys(social) as Array<keyof SocialCounts>).forEach((key) => {
+      const v = social[key];
+      if (typeof v !== "number") return;
+      const storageKey = `audience:social:${dataUserId}:${key}`;
+      try {
+        const prevRaw = localStorage.getItem(storageKey);
+        const prev = prevRaw !== null ? parseInt(prevRaw, 10) : NaN;
+        if (Number.isFinite(prev)) {
+          setSocialDelta((d) => ({ ...d, [key]: v - prev }));
+        }
+        localStorage.setItem(storageKey, String(v));
+      } catch { /* ignore */ }
+    });
+  }, [social, dataUserId]);
+
+  // Carrega picos do dia a partir do histórico
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("audio, video")
+        .eq("user_id", dataUserId as any)
+        .gte("created_at", start.toISOString());
+      if (cancelled || !data) return;
+      let pa = 0, pv = 0;
+      for (const r of data as any[]) {
+        if ((r.audio ?? 0) > pa) pa = r.audio;
+        if ((r.video ?? 0) > pv) pv = r.video;
+      }
+      setAudioPeak(pa);
+      setVideoPeak(pv);
+    };
+    load();
+    const iv = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [dataUserId]);
+
+  // Compara ao vivo — se contagem atual passar do pico, atualiza
+  useEffect(() => {
+    if (typeof streamingCount === "number") {
+      setAudioPeak((p) => (p === null || streamingCount > p ? streamingCount : p));
+    }
+  }, [streamingCount]);
+  useEffect(() => {
+    if (typeof videoCount === "number") {
+      setVideoPeak((p) => (p === null || videoCount > p ? videoCount : p));
+    }
+  }, [videoCount]);
+
+
 
 
 
@@ -577,6 +641,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           loading={loadingConfig || loadingSocial}
           dark={dark}
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
+          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} /> : null}
         />
         <StatCell
           icon={<Radio size={14} />}
@@ -584,6 +649,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
+          badge={<PeakBadge peak={audioPeak} dark={dark} />}
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
@@ -591,6 +657,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
+          badge={<PeakBadge peak={videoPeak} dark={dark} />}
         />
         <StatCell
           icon={<Globe size={14} />}
@@ -599,6 +666,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           loading={loadingSite && siteCount === null}
           dark={dark}
         />
+
       </div>
 
       <Dialog
@@ -1055,6 +1123,7 @@ function StatCell({
   loading,
   dark,
   rotationKey,
+  badge,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -1062,14 +1131,18 @@ function StatCell({
   loading?: boolean;
   dark: string;
   rotationKey?: string;
+  badge?: React.ReactNode;
 }) {
   const display =
     value === null ? "..." : value.toLocaleString("pt-BR");
   return (
     <div
-      className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0"
+      className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0 relative"
       style={{ background: "rgba(255,255,255,0.35)" }}
     >
+      {badge && (
+        <div className="absolute top-1.5 right-1.5 z-10">{badge}</div>
+      )}
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
         {loading ? (
@@ -1095,3 +1168,39 @@ function StatCell({
     </div>
   );
 }
+
+function DeltaBadge({ delta, dark }: { delta: number | null; dark: string }) {
+  if (delta === null || delta === undefined) return null;
+  const up = delta > 0;
+  const down = delta < 0;
+  const zero = delta === 0;
+  const bg = up ? "#16A34A" : down ? "#DC2626" : `${dark}33`;
+  const color = zero ? dark : "#fff";
+  const Icon = up ? TrendingUp : down ? TrendingDown : Minus;
+  const label = zero ? "0" : `${up ? "+" : ""}${delta.toLocaleString("pt-BR")}`;
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
+      title={up ? "Ganhou seguidores" : down ? "Perdeu seguidores" : "Sem variação"}
+      style={{ background: bg, color, fontSize: 9, fontWeight: 900, lineHeight: 1 }}
+    >
+      <Icon size={9} strokeWidth={3} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function PeakBadge({ peak, dark }: { peak: number | null; dark: string }) {
+  if (peak === null || peak <= 0) return null;
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
+      title="Pico de audiência do dia"
+      style={{ background: dark, color: "#C6F03C", fontSize: 9, fontWeight: 900, lineHeight: 1 }}
+    >
+      <Trophy size={9} strokeWidth={3} />
+      <span>{peak.toLocaleString("pt-BR")}</span>
+    </div>
+  );
+}
+
