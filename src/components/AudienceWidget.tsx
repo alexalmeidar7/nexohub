@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X } from "lucide-react";
+import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Settings, FileBarChart, Loader2, Calendar as CalendarIcon, Trophy, X, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
