@@ -648,6 +648,27 @@ export default function PromocoesKiosk() {
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
             <Radio size={16} style={{ color: "#ff0000" }} className="animate-pulse" />
+
+            {/* Presenter photo - ao lado do ícone de ao vivo */}
+            {(() => {
+              const presenter = onAirProgram?.apresentadorId
+                ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
+                : null;
+              return presenter?.foto ? (
+                <div className="relative group/presenter">
+                  <div
+                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                    style={{ backgroundColor: "#d70d0e", boxShadow: "0 0 0 2px rgba(255,255,255,0.15)" }}
+                  >
+                    <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
+                  </div>
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10">
+                    {presenter.nome}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+
             <div>
               <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>No Ar</span>
               <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
@@ -668,22 +689,6 @@ export default function PromocoesKiosk() {
               )}
             </div>
 
-            {/* Presenter photo */}
-            {(() => {
-              const presenter = onAirProgram?.apresentadorId
-                ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
-                : null;
-              return presenter?.foto ? (
-                <div className="relative group/presenter ml-2">
-                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
-                    <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity">
-                    {presenter.nome}
-                  </div>
-                </div>
-              ) : null;
-            })()}
 
             {/* Contact info */}
             <TooltipProvider delayDuration={200}>
