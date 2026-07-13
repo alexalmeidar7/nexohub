@@ -165,6 +165,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [alerts, setAlerts] = useState<PeakAlert[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [alertsEnabled, setAlertsEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem("audience:peakAlerts:enabled") !== "0"; } catch { return true; }
+  });
+  const toggleAlertsEnabled = (v: boolean) => {
+    setAlertsEnabled(v);
+    try { localStorage.setItem("audience:peakAlerts:enabled", v ? "1" : "0"); } catch { /* ignore */ }
+  };
   const peaksInitializedRef = useRef(false);
   const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${new Date().toISOString().slice(0, 10)}` : null;
 
