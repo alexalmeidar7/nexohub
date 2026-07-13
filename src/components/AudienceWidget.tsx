@@ -173,21 +173,23 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll audio stream stats using ONLY the URL + XPath configured in the popup.
+  // Poll audio stream stats using the URL (and optionally the XPath) configured
+  // in the popup. If no XPath is provided, the edge function tries to detect a
+  // common listeners tag/field automatically.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
     const overrideUrl = sources.audio_stream_api_url?.trim();
     const xpath = sources.audio_stream_xpath?.trim();
-    if (!overrideUrl || !xpath) {
+    if (!overrideUrl) {
       setStreamingCount(null);
       setLoadingStreaming(false);
       return;
     }
     const tick = async () => {
-      const { data } = await supabase.functions.invoke("count-stream-listeners", {
-        body: { userId: dataUserId, urls: [overrideUrl], xpath },
-      });
+      const body: Record<string, unknown> = { userId: dataUserId, urls: [overrideUrl] };
+      if (xpath) body.xpath = xpath;
+      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
       if (cancelled) return;
       if (data && (data as any).ok) {
         const n = (data as any).listeners;
@@ -204,6 +206,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       clearInterval(iv);
     };
   }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+
 
 
 
