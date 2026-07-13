@@ -590,8 +590,18 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                                         setProgramaIds((prev) => (e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id)))
                                       }
                                     />
-                                    <span className="text-sm">{p.nome}</span>
+                                    <span className="text-sm flex-1 truncate">{p.nome}</span>
+                                    <span
+                                      className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap"
+                                      style={{
+                                        background: `${estudioColor(normalizeEstudio(p.estudio))}22`,
+                                        color: estudioColor(normalizeEstudio(p.estudio)),
+                                      }}
+                                    >
+                                      {estudioIcon(normalizeEstudio(p.estudio))} {normalizeEstudio(p.estudio)}
+                                    </span>
                                   </label>
+
                                 );
                               })}
                             {programas.filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase())).length === 0 && (
