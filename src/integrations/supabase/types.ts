@@ -2184,6 +2184,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_audiencia_historico: { Args: never; Returns: undefined }
       cleanup_comercial: { Args: never; Returns: undefined }
       cleanup_infomusic: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
