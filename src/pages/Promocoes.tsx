@@ -824,7 +824,11 @@ export default function PromocoesKiosk() {
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
                   onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
+                  title="Citações"
                 >
+                  <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white bg-black/70 backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg">
+                    Citações
+                  </div>
                   <div
                     key={`${normalizeProgramName(currentProg.nome)}-${currentProg.capa}`}
                     aria-label={currentProg.nome}
@@ -936,16 +940,10 @@ export default function PromocoesKiosk() {
 
         {/* Promoções */}
         {botoes.length > 0 && (
-          <div className="relative group">
+          <div>
             <h2 className="text-lg font-bold mb-4" style={{ color: "white" }}>Promoções</h2>
-            <div onMouseEnter={() => startScroll(promoScrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronLeft size={36} />
-            </div>
-            <div onMouseEnter={() => startScroll(promoScrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronRight size={36} />
-            </div>
 
-            <div ref={promoScrollRef} className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
+            <div className="grid grid-cols-4 gap-4">
               {botoes.map(promo => {
                 const title = (promo.botao_url || "").toLowerCase();
                 const PromoIcon =
@@ -967,7 +965,7 @@ export default function PromocoesKiosk() {
                 return (
                   <div
                     key={promo.id}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 font-bold text-sm outline-4 outline-transparent hover:scale-105 shadow-lg"
+                    className="w-full h-16 cursor-pointer transition-all duration-200 flex items-center gap-3 px-4 font-bold text-sm outline-4 outline-transparent hover:scale-[1.03] shadow-lg overflow-hidden"
                     style={{
                       background: `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`,
                       color: telaPromoConfig.btn_text_color,
@@ -977,10 +975,10 @@ export default function PromocoesKiosk() {
                     onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                     onClick={() => setSelectedPromo(promo)}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
-                    <span className="whitespace-nowrap">{promo.botao_url}</span>
+                    <span className="truncate">{promo.botao_url}</span>
                   </div>
                 );
               })}
