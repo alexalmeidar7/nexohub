@@ -213,6 +213,26 @@ export default function PromocoesKiosk() {
         supabase.from("user_settings").select("cenario_config").maybeSingle(),
       ]);
       setConfig(empresaData);
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const uid = authData?.user?.id;
+        if (uid) {
+          setAudienceUserId(uid);
+          const { data: ec } = await supabase
+            .from("empresa_config")
+            .select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath")
+            .eq("user_id", uid as any)
+            .maybeSingle();
+          if (ec) {
+            setStreamCfg({
+              audioUrl: (ec as any).audio_stream_api_url || "",
+              audioXpath: (ec as any).audio_stream_xpath || "",
+              videoUrl: (ec as any).video_stream_api_url || "",
+              videoXpath: (ec as any).video_stream_xpath || "",
+            });
+          }
+        }
+      } catch { /* ignore */ }
 
       if (settingsData?.cenario_config) {
         const raw = settingsData.cenario_config as any;
