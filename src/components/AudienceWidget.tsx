@@ -1123,6 +1123,7 @@ function StatCell({
   loading,
   dark,
   rotationKey,
+  badge,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -1130,14 +1131,18 @@ function StatCell({
   loading?: boolean;
   dark: string;
   rotationKey?: string;
+  badge?: React.ReactNode;
 }) {
   const display =
     value === null ? "..." : value.toLocaleString("pt-BR");
   return (
     <div
-      className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0"
+      className="rounded-2xl flex flex-col items-start justify-between p-3 min-w-0 relative"
       style={{ background: "rgba(255,255,255,0.35)" }}
     >
+      {badge && (
+        <div className="absolute top-1.5 right-1.5 z-10">{badge}</div>
+      )}
       <div style={{ color: dark, opacity: 0.75 }}>{icon}</div>
       <div key={rotationKey} className="flex flex-col min-w-0 w-full animate-fade-in">
         {loading ? (
@@ -1163,3 +1168,39 @@ function StatCell({
     </div>
   );
 }
+
+function DeltaBadge({ delta, dark }: { delta: number | null; dark: string }) {
+  if (delta === null || delta === undefined) return null;
+  const up = delta > 0;
+  const down = delta < 0;
+  const zero = delta === 0;
+  const bg = up ? "#16A34A" : down ? "#DC2626" : `${dark}33`;
+  const color = zero ? dark : "#fff";
+  const Icon = up ? TrendingUp : down ? TrendingDown : Minus;
+  const label = zero ? "0" : `${up ? "+" : ""}${delta.toLocaleString("pt-BR")}`;
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
+      title={up ? "Ganhou seguidores" : down ? "Perdeu seguidores" : "Sem variação"}
+      style={{ background: bg, color, fontSize: 9, fontWeight: 900, lineHeight: 1 }}
+    >
+      <Icon size={9} strokeWidth={3} />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+function PeakBadge({ peak, dark }: { peak: number | null; dark: string }) {
+  if (peak === null || peak <= 0) return null;
+  return (
+    <div
+      className="flex items-center gap-0.5 rounded-full px-1.5 py-0.5"
+      title="Pico de audiência do dia"
+      style={{ background: dark, color: "#C6F03C", fontSize: 9, fontWeight: 900, lineHeight: 1 }}
+    >
+      <Trophy size={9} strokeWidth={3} />
+      <span>{peak.toLocaleString("pt-BR")}</span>
+    </div>
+  );
+}
+
