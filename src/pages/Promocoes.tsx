@@ -739,23 +739,31 @@ export default function PromocoesKiosk() {
                 )}
               </div>
 
-              {onAirProg?.capa && (
+              {currentProg?.capa && (
                 <div
-                  className="flex-shrink-0 rounded-xl overflow-hidden shadow-2xl relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
-                  style={{ width: 207, height: 276, backgroundColor: "var(--layout-accent-color, #be0101)" }}
-                  onClick={() => setSelectedProgram(onAirProg)}
+                  className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
+                  style={{ width: 207, height: 276 }}
+                  onClick={() => setSelectedProgram(currentProg)}
                 >
-                  <img src={onAirProg.capa} alt={onAirProg.nome} className="absolute inset-0 w-full h-full object-cover" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/85 via-black/40 to-transparent">
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Radio size={12} className="animate-pulse" style={{ color: "var(--layout-accent-color, #d70d0e)" }} />
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-white">No Ar</span>
-                    </div>
-                    <p className="text-white text-sm font-bold truncate">{onAirProg.nome}</p>
-                    <p className="text-white/80 text-[11px]">
-                      {onAirProgram!.horarioInicio.slice(0, 5)} às {onAirProgram!.horarioFim.slice(0, 5)}
-                    </p>
-                  </div>
+                  <img src={currentProg.capa} alt={currentProg.nome} className="absolute inset-0 w-full h-full object-cover" />
+                  {scheduleList.length > 1 && (
+                    <>
+                      <button
+                        onClick={goPrev}
+                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity z-10"
+                        aria-label="Programa anterior"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        onClick={goNext}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 group-hover/cover:opacity-100 transition-opacity z-10"
+                        aria-label="Próximo programa"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
