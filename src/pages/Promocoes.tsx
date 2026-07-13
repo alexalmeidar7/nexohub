@@ -824,7 +824,11 @@ export default function PromocoesKiosk() {
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
                   onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
+                  title="Citações"
                 >
+                  <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white bg-black/70 backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg">
+                    Citações
+                  </div>
                   <div
                     key={`${normalizeProgramName(currentProg.nome)}-${currentProg.capa}`}
                     aria-label={currentProg.nome}
