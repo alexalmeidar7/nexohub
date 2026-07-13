@@ -85,6 +85,7 @@ export default function PromocoesKiosk() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
+  const [programasSectionOpen, setProgramasSectionOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
