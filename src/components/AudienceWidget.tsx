@@ -173,21 +173,27 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll Icecast/Shoutcast stats for live audio listener count.
+  // Poll audio stream stats using ONLY the URL + XPath configured in the popup.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
+    const overrideUrl = sources.audio_stream_api_url?.trim();
+    const xpath = sources.audio_stream_xpath?.trim();
+    if (!overrideUrl || !xpath) {
+      setStreamingCount(null);
+      setLoadingStreaming(false);
+      return;
+    }
     const tick = async () => {
-      const overrideUrl = sources.audio_stream_api_url?.trim();
-      const xpath = sources.audio_stream_xpath?.trim();
-      const body: Record<string, unknown> = { userId: dataUserId };
-      if (overrideUrl) body.urls = [overrideUrl];
-      if (xpath) body.xpath = xpath;
-      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+      const { data } = await supabase.functions.invoke("count-stream-listeners", {
+        body: { userId: dataUserId, urls: [overrideUrl], xpath },
+      });
       if (cancelled) return;
       if (data && (data as any).ok) {
         const n = (data as any).listeners;
         setStreamingCount(typeof n === "number" ? n : null);
+      } else {
+        setStreamingCount(null);
       }
       setLoadingStreaming(false);
     };
@@ -198,6 +204,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       clearInterval(iv);
     };
   }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+
 
 
   // Poll GA4 Realtime API for site visitors.
