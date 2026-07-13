@@ -49,6 +49,8 @@ const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
+const ChatbotHome = lazy(() => import("./ChatbotHome"));
+
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
 const CenariosPage = lazy(() => import("./CenariosPage"));
