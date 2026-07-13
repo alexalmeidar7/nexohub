@@ -907,7 +907,7 @@ function AudienceReportDialog({
             </div>
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest flex items-center justify-between" style={{ background: BG, color: DARK }}>
               <span>{rows.length} registros</span>
-              <span>Atualizado a cada 5 min</span>
+              <span>Registro a cada 15 min · retenção de 6 meses</span>
             </div>
           </div>
         </div>
