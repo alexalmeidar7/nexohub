@@ -274,6 +274,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.facebook !== sources.facebook ||
       initial.youtube !== sources.youtube ||
       initial.audio_stream_api_url !== sources.audio_stream_api_url ||
+      initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url;
     if (!changed) return;
 
@@ -283,6 +284,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       facebook: sources.facebook.trim() || null,
       youtube: sources.youtube.trim() || null,
       audio_stream_api_url: sources.audio_stream_api_url.trim() || null,
+      audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
     };
     await supabase
@@ -295,7 +297,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       facebook: payload.facebook || undefined,
     };
     videoApiUrlRef.current = payload.video_stream_api_url || null;
+    initialSourcesRef.current = { ...sources };
   };
+
 
   return (
     <div
