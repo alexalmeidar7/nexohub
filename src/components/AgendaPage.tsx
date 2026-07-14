@@ -373,6 +373,10 @@ export default function AgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewEventDialogOpen, setViewEventDialogOpen] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<Evento | null>(null);
+  const [viewingOccurrenceDate, setViewingOccurrenceDate] = useState<string | null>(null);
+  const [deleteChoice, setDeleteChoice] = useState<{ evt: Evento; dateStr: string } | null>(null);
+  const [holidayResolve, setHolidayResolve] = useState<{ evt: Evento; dateStr: string; feriadoNome: string } | null>(null);
+  const [holidayReplaceProg, setHolidayReplaceProg] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
