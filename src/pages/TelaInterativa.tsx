@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import CenarioTela from "./CenarioTela";
 
 export default function TelaInterativa() {
   usePageTitle("NexoHub - Tela Interativa");
   const { userSlug } = useParams<{ userSlug: string }>();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Tela Interativa");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
