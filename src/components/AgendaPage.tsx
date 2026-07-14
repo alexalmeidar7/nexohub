@@ -629,6 +629,10 @@ export default function AgendaPage() {
 
   const openNewDialog = () => {
     resetForm();
+    // Pré-preenche a data com o dia selecionado no calendário (ou hoje),
+    // para que o botão "Salvar Evento" não fique desabilitado quando o
+    // usuário escolhe uma recorrência (semanal/mensal) sem clicar de novo no calendário.
+    setFormData(selectedDate ?? new Date());
     setDialogOpen(true);
   };
 
