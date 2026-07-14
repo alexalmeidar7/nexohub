@@ -395,6 +395,18 @@ function TrafficMapModal({
 }) {
   const mapDivRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const [activeIdx, setActiveIdx] = useState<number | null>(null);
+
+  const focusJam = useCallback((i: number) => {
+    const map = mapRef.current;
+    const m = markersRef.current[i];
+    const jm = jams[i];
+    if (!map || !jm || jm.lat == null || jm.lon == null) return;
+    setActiveIdx(i);
+    map.flyTo([jm.lat, jm.lon], 16, { duration: 0.8 });
+    setTimeout(() => { if (m) m.openPopup(); }, 850);
+  }, [jams]);
 
   useEffect(() => {
     let cancelled = false;
@@ -420,37 +432,50 @@ function TrafficMapModal({
 
       // Incident markers
       const bounds: any[] = [[c.lat, c.lon]];
+      markersRef.current = [];
       jams.forEach((jm, i) => {
-        if (jm.lat == null || jm.lon == null) return;
+        if (jm.lat == null || jm.lon == null) { markersRef.current.push(null); return; }
         const color = jm.level >= 4 ? "#ff2d2d" : jm.level >= 3 ? "#ff8a1f" : "#ffd23d";
         const delayMin = Math.round((jm.delaySec || 0) / 60);
         const html = `
-          <div style="position:relative;transform:translate(-50%,-100%);">
-            <div style="
-              background:${color};color:#000;font-weight:900;font-size:13px;
-              padding:4px 8px;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.5);
-              border:2px solid #fff;white-space:nowrap;font-family:'Montserrat',sans-serif;">
-              ${i + 1} · ${delayMin}min
+          <div style="position:relative;transform:translate(-50%,-100%);pointer-events:auto;">
+            <div style="display:flex;align-items:center;gap:0;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.55));">
+              <div style="
+                background:#000;color:#fff;font-weight:900;font-size:14px;
+                width:26px;height:32px;display:flex;align-items:center;justify-content:center;
+                border-radius:8px 0 0 8px;border:2px solid ${color};border-right:none;
+                font-family:'Montserrat',sans-serif;">
+                ${i + 1}
+              </div>
+              <div style="
+                background:${color};color:#000;font-weight:900;font-size:14px;
+                height:32px;padding:0 10px;display:flex;align-items:center;
+                border-radius:0 8px 8px 0;border:2px solid ${color};
+                white-space:nowrap;font-family:'Montserrat',sans-serif;letter-spacing:0.3px;">
+                ${delayMin}<span style="font-size:9px;font-weight:800;margin-left:2px;">MIN</span>
+              </div>
             </div>
-            <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid ${color};margin:0 auto;"></div>
+            <div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid ${color};margin:-1px auto 0;"></div>
           </div>`;
-        const icon = L.divIcon({ html, className: "", iconSize: [0, 0] });
-        const marker = L.marker([jm.lat, jm.lon], { icon }).addTo(map);
+        const icon = L.divIcon({ html, className: "", iconSize: [0, 0], iconAnchor: [0, 0] });
+        const marker = L.marker([jm.lat, jm.lon], { icon, zIndexOffset: 1000 - i }).addTo(map);
         const popupHtml = `
-          <div style="font-family:'Montserrat',sans-serif;min-width:180px;">
-            <div style="font-weight:900;font-size:13px;margin-bottom:4px;">${jm.street}</div>
-            <div style="font-size:11px;color:#555;margin-bottom:6px;">
-              ${delayMin} min de atraso · ${jm.lengthM ? (jm.lengthM / 1000).toFixed(1) + " km" : ""}
+          <div style="font-family:'Montserrat',sans-serif;min-width:200px;">
+            <div style="font-weight:900;font-size:13px;margin-bottom:4px;color:#111;">${i + 1}. ${jm.street}</div>
+            <div style="font-size:11px;color:#555;margin-bottom:8px;">
+              <b style="color:${color === '#ffd23d' ? '#b48000' : color}">${delayMin} min</b> de atraso · ${jm.lengthM ? (jm.lengthM / 1000).toFixed(1) + " km" : ""}
             </div>
             <a href="https://www.google.com/maps/dir/?api=1&destination=${jm.lat},${jm.lon}&travelmode=driving"
                target="_blank" rel="noopener noreferrer"
                style="display:inline-flex;align-items:center;gap:4px;background:#d70d0e;color:#fff;
-                      padding:5px 10px;border-radius:6px;font-weight:800;font-size:11px;
+                      padding:6px 12px;border-radius:6px;font-weight:800;font-size:11px;
                       text-decoration:none;text-transform:uppercase;letter-spacing:0.5px;">
               ▶ Navegar
             </a>
           </div>`;
         marker.bindPopup(popupHtml);
+        marker.on("click", () => setActiveIdx(i));
+        markersRef.current.push(marker);
         bounds.push([jm.lat, jm.lon]);
       });
 
@@ -464,6 +489,7 @@ function TrafficMapModal({
 
     return () => {
       cancelled = true;
+      markersRef.current = [];
       if (mapRef.current) { try { mapRef.current.remove(); } catch { /* ignore */ } mapRef.current = null; }
     };
   }, [city, center, jams]);
@@ -480,26 +506,67 @@ function TrafficMapModal({
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(1000px, 96vw)", height: "min(720px, 90vh)",
+          width: "min(1100px, 96vw)", height: "min(760px, 92vh)",
           background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
           display: "flex", flexDirection: "column", overflow: "hidden",
         }}
       >
         <div
-          className="flex items-center justify-between px-4"
-          style={{ height: 48, borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#111" }}
+          className="flex items-center gap-3 px-4"
+          style={{ minHeight: 56, borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#111" }}
         >
-          <div className="flex items-center gap-2" style={{ color: TEXT }}>
+          <div className="flex items-center gap-2 shrink-0" style={{ color: TEXT }}>
             <MapIcon size={16} style={{ color: ACCENT }} />
             <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5 }}>
               Mapa de Trânsito
             </span>
-            <span style={{ fontSize: 11, color: MUTED, marginLeft: 4 }}>· {city}</span>
+            <span style={{ fontSize: 11, color: MUTED, marginLeft: 2 }}>· {city}</span>
           </div>
+
+          {/* Chips com os pontos críticos */}
+          <div
+            className="flex items-center gap-1.5 flex-1 overflow-x-auto py-2"
+            style={{ scrollbarWidth: "thin" }}
+          >
+            {jams.map((jm, i) => {
+              const color = jm.level >= 4 ? "#ff2d2d" : jm.level >= 3 ? "#ff8a1f" : "#ffd23d";
+              const delayMin = Math.round((jm.delaySec || 0) / 60);
+              const active = activeIdx === i;
+              return (
+                <button
+                  key={i}
+                  onClick={() => focusJam(i)}
+                  className="shrink-0 rounded-full flex items-center gap-1.5 px-2 py-1 transition-all"
+                  style={{
+                    background: active ? color : "rgba(255,255,255,0.06)",
+                    border: `1px solid ${active ? color : "rgba(255,255,255,0.12)"}`,
+                    color: active ? "#000" : TEXT,
+                    fontSize: 10, fontWeight: 800,
+                    fontFamily: "'Montserrat',sans-serif",
+                    maxWidth: 220,
+                    boxShadow: active ? `0 0 12px ${color}80` : "none",
+                  }}
+                  title={jm.street}
+                >
+                  <span
+                    style={{
+                      background: active ? "#000" : color, color: active ? "#fff" : "#000",
+                      width: 16, height: 16, borderRadius: 999,
+                      display: "inline-flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 9, fontWeight: 900, flexShrink: 0,
+                    }}
+                  >{i + 1}</span>
+                  <span className="truncate" style={{ maxWidth: 130 }}>{jm.street}</span>
+                  <span style={{ opacity: 0.85, fontSize: 9 }}>· {delayMin}min</span>
+                </button>
+              );
+            })}
+          </div>
+
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center"
+            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
             style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
             title="Fechar"
           >
