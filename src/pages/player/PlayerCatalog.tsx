@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
+import { usePublicHead } from "@/hooks/usePageTitle";
 
 interface Channel {
   id: string;
