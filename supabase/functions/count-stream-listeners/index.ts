@@ -175,6 +175,48 @@ async function fetchListenersForUrl(streamUrl: string): Promise<number | null> {
       }
     } catch { /* fall through */ }
 
+    // 4) Icecast status2.xsl (CSV) — used when status-json.xsl is broken (e.g. maxcast)
+    try {
+      const r = await fetch(`${base}/status2.xsl`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (r.ok) {
+        const t = await r.text();
+        const lines = t.split(/\r?\n/).filter(Boolean);
+        for (const ln of lines) {
+          if (!ln.startsWith("/")) continue;
+          const cols = ln.split(",");
+          if (cols[0]?.trim() === mount) {
+            const n = parseInt(cols[3]?.trim() ?? "", 10);
+            if (Number.isFinite(n)) return n;
+          }
+        }
+        let total = 0; let found = false;
+        for (const ln of lines) {
+          if (!ln.startsWith("/")) continue;
+          const n = parseInt(ln.split(",")[3]?.trim() ?? "", 10);
+          if (Number.isFinite(n)) { total += n; found = true; }
+        }
+        if (found) return total;
+      }
+    } catch { /* fall through */ }
+
+    // 5) Icecast status.xsl (HTML) — parse "Current Listeners:</td><td...>N"
+    try {
+      const r = await fetch(`${base}/status.xsl`, {
+        headers: { "User-Agent": "Mozilla/5.0" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (r.ok) {
+        const t = await r.text();
+        const mountIdx = t.indexOf(`Mount Point ${mount}`);
+        const scope = mountIdx >= 0 ? t.slice(mountIdx) : t;
+        const m = scope.match(/Current Listeners:\s*<\/td>\s*<td[^>]*>\s*(\d+)/i);
+        if (m) return parseInt(m[1], 10);
+      }
+    } catch { /* fall through */ }
+
     return null;
   } catch { return null; }
 }
