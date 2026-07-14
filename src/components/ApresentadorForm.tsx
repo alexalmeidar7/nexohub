@@ -338,12 +338,8 @@ export default function ApresentadorForm() {
     display: "block",
   };
 
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div>
-      <label style={labelStyle}>{label}</label>
-      {children}
-    </div>
-  );
+  // Field foi movido para fora do componente (ver FieldRow abaixo) para evitar
+  // remontagem a cada render, o que fazia o foco sair dos inputs/combos.
 
   if (loadingList && apresentadores.length === 0) {
     return <ModulePageSkeleton />;
