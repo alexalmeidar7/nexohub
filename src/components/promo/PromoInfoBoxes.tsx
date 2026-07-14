@@ -500,13 +500,18 @@ function TrafficMapModal({
       style={{
         position: "fixed", inset: 0, zIndex: 9999,
         background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
-        display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "16px",
+        overflowY: "auto",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "min(1100px, 96vw)", height: "min(760px, 92vh)",
+          width: "min(1100px, 96vw)",
+          height: "min(680px, calc(100vh - 32px))",
+          maxHeight: "calc(100vh - 32px)",
+          margin: "auto",
           background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
           borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
           display: "flex", flexDirection: "column", overflow: "hidden",
