@@ -347,6 +347,195 @@ function DatasBox() {
 
 // ================= TRÂNSITO =================
 const LS_TRAFFIC_CITY = "promo-traffic-city";
+const TOMTOM_BROWSER_KEY = "yojLAvHVJViICV1wu3PTvYdqWZ1q5svw";
+
+function loadLeaflet(): Promise<any> {
+  const w = window as any;
+  if (w.L) return Promise.resolve(w.L);
+  return new Promise((resolve, reject) => {
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    let script = document.getElementById("leaflet-js") as HTMLScriptElement | null;
+    if (script) {
+      script.addEventListener("load", () => resolve((window as any).L));
+      script.addEventListener("error", reject);
+      return;
+    }
+    script = document.createElement("script");
+    script.id = "leaflet-js";
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.onload = () => resolve((window as any).L);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+function TrafficMapModal({
+  city, center, jams, onClose,
+}: {
+  city: string;
+  center: { lat: number; lon: number } | null;
+  jams: any[];
+  onClose: () => void;
+}) {
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const L = await loadLeaflet();
+      if (cancelled || !mapDivRef.current) return;
+      const c = center || { lat: jams[0]?.lat ?? -23.55, lon: jams[0]?.lon ?? -46.63 };
+      const map = L.map(mapDivRef.current, { zoomControl: true, scrollWheelZoom: true })
+        .setView([c.lat, c.lon], 12);
+      mapRef.current = map;
+
+      // Base map
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap",
+        maxZoom: 19,
+      }).addTo(map);
+
+      // TomTom traffic flow overlay
+      L.tileLayer(
+        `https://api.tomtom.com/traffic/map/4/tile/flow/relative0/{z}/{x}/{y}.png?key=${TOMTOM_BROWSER_KEY}`,
+        { opacity: 0.85, maxZoom: 22 }
+      ).addTo(map);
+
+      // Incident markers
+      const bounds: any[] = [[c.lat, c.lon]];
+      jams.forEach((jm, i) => {
+        if (jm.lat == null || jm.lon == null) return;
+        const color = jm.level >= 4 ? "#ff2d2d" : jm.level >= 3 ? "#ff8a1f" : "#ffd23d";
+        const delayMin = Math.round((jm.delaySec || 0) / 60);
+        const html = `
+          <div style="position:relative;transform:translate(-50%,-100%);">
+            <div style="
+              background:${color};color:#000;font-weight:900;font-size:13px;
+              padding:4px 8px;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,0.5);
+              border:2px solid #fff;white-space:nowrap;font-family:'Montserrat',sans-serif;">
+              ${i + 1} · ${delayMin}min
+            </div>
+            <div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid ${color};margin:0 auto;"></div>
+          </div>`;
+        const icon = L.divIcon({ html, className: "", iconSize: [0, 0] });
+        const marker = L.marker([jm.lat, jm.lon], { icon }).addTo(map);
+        const popupHtml = `
+          <div style="font-family:'Montserrat',sans-serif;min-width:180px;">
+            <div style="font-weight:900;font-size:13px;margin-bottom:4px;">${jm.street}</div>
+            <div style="font-size:11px;color:#555;margin-bottom:6px;">
+              ${delayMin} min de atraso · ${jm.lengthM ? (jm.lengthM / 1000).toFixed(1) + " km" : ""}
+            </div>
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${jm.lat},${jm.lon}&travelmode=driving"
+               target="_blank" rel="noopener noreferrer"
+               style="display:inline-flex;align-items:center;gap:4px;background:#d70d0e;color:#fff;
+                      padding:5px 10px;border-radius:6px;font-weight:800;font-size:11px;
+                      text-decoration:none;text-transform:uppercase;letter-spacing:0.5px;">
+              ▶ Navegar
+            </a>
+          </div>`;
+        marker.bindPopup(popupHtml);
+        bounds.push([jm.lat, jm.lon]);
+      });
+
+      if (bounds.length > 1) {
+        try { map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 }); } catch { /* ignore */ }
+      }
+
+      // Force resize after modal render
+      setTimeout(() => map.invalidateSize(), 100);
+    })();
+
+    return () => {
+      cancelled = true;
+      if (mapRef.current) { try { mapRef.current.remove(); } catch { /* ignore */ } mapRef.current = null; }
+    };
+  }, [city, center, jams]);
+
+  const node = (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0, zIndex: 9999,
+        background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)",
+        display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "min(1000px, 96vw)", height: "min(720px, 90vh)",
+          background: "#0a0a0a", border: "1px solid rgba(255,255,255,0.12)",
+          borderRadius: 16, boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
+          display: "flex", flexDirection: "column", overflow: "hidden",
+        }}
+      >
+        <div
+          className="flex items-center justify-between px-4"
+          style={{ height: 48, borderBottom: "1px solid rgba(255,255,255,0.08)", background: "#111" }}
+        >
+          <div className="flex items-center gap-2" style={{ color: TEXT }}>
+            <MapIcon size={16} style={{ color: ACCENT }} />
+            <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 0.5 }}>
+              Mapa de Trânsito
+            </span>
+            <span style={{ fontSize: 11, color: MUTED, marginLeft: 4 }}>· {city}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+            title="Fechar"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div style={{ flex: 1, position: "relative" }}>
+          <div ref={mapDivRef} style={{ position: "absolute", inset: 0 }} />
+          {/* Legend */}
+          <div
+            style={{
+              position: "absolute", bottom: 12, left: 12, zIndex: 500,
+              background: "rgba(0,0,0,0.75)", color: TEXT, padding: "8px 12px",
+              borderRadius: 10, fontSize: 10, fontFamily: "'Montserrat',sans-serif",
+              border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(4px)",
+            }}
+          >
+            <div style={{ fontWeight: 900, fontSize: 9, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4, color: MUTED }}>
+              Criticidade
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 999, background: "#ffd23d" }} /> Leve</span>
+              <span className="flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 999, background: "#ff8a1f" }} /> Intenso</span>
+              <span className="flex items-center gap-1"><span style={{ width: 10, height: 10, borderRadius: 999, background: "#ff2d2d" }} /> Crítico</span>
+            </div>
+          </div>
+          {/* Instructions */}
+          <div
+            style={{
+              position: "absolute", top: 12, right: 12, zIndex: 500,
+              background: "rgba(0,0,0,0.75)", color: TEXT, padding: "6px 10px",
+              borderRadius: 10, fontSize: 10, fontFamily: "'Montserrat',sans-serif",
+              border: "1px solid rgba(255,255,255,0.15)", backdropFilter: "blur(4px)",
+              display: "flex", alignItems: "center", gap: 5,
+            }}
+          >
+            <Navigation size={11} style={{ color: ACCENT }} />
+            Clique nos pontos para navegar
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return createPortal(node, document.body);
+}
 
 function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
   const [city, setCity] = useState<string>(() => {
