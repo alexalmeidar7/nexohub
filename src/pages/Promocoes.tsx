@@ -260,9 +260,16 @@ export default function PromocoesKiosk() {
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
-        supabase.from("user_settings").select("cenario_config").maybeSingle(),
+        supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle(),
       ]);
       setConfig(empresaData);
+      if (settingsData) {
+        setWeatherInfo({
+          city: (settingsData as any).weather_city || null,
+          lat: (settingsData as any).weather_lat != null ? Number((settingsData as any).weather_lat) : null,
+          lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : null,
+        });
+      }
       try {
         const { data: authData } = await supabase.auth.getUser();
         const uid = authData?.user?.id;
