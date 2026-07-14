@@ -380,7 +380,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
 
   useEffect(() => {
     if (jams.length <= 1) return;
-    const iv = setInterval(() => setIdx((v) => (v + 1) % jams.length), 3500);
+    const iv = setInterval(() => setIdx((v) => (v + 1) % jams.length), 5000);
     return () => clearInterval(iv);
   }, [jams.length]);
 
@@ -459,9 +459,12 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
             <div className="min-w-0 flex-1">
               <div
                 style={{
-                  fontSize: 11.5, fontWeight: 800, lineHeight: 1.2,
+                  fontSize: 13.5, fontWeight: 900, lineHeight: 1.2,
+                  color: "#ffffff",
+                  textShadow: "0 1px 2px rgba(0,0,0,0.85)",
                   display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                   overflow: "hidden",
+                  letterSpacing: 0.2,
                 }}
                 title={j.street}
               >
