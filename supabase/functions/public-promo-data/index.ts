@@ -102,7 +102,10 @@ Deno.serve(async (req) => {
 
     const ownTelaPromo = (ownSettingsRes as any)?.data?.cenario_config?.tela_promo_bg || null;
     const parentTelaPromo = settingsRes.data?.cenario_config?.tela_promo_bg || null;
-    const telaPromoConfig = ownTelaPromo || parentTelaPromo;
+    // Sub-users must NOT inherit parent's tela_promo background — only use their own.
+    // Master users (userId === finalUserId) use their own config from settingsRes.
+    const isSubUser = userId !== finalUserId;
+    const telaPromoConfig = isSubUser ? ownTelaPromo : parentTelaPromo;
 
     // Merge empresa: keep parent's contact/streaming data, but override nome/logo
     // with sub-user's own branding when available.
