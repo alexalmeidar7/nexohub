@@ -889,18 +889,34 @@ export default function AgendaPage() {
 
   const locais = Array.from(new Set(eventos.map((e) => e.local).filter(Boolean)));
 
+  const getExcecao = (evt: Evento, dateStr: string): EventoExcecao | undefined => {
+    const list = Array.isArray(evt.excecoes) ? evt.excecoes : [];
+    return list.find(x => x && x.data === dateStr);
+  };
+
   const eventMatchesDate = (evt: Evento, dateStr: string) => {
-    if (evt.data === dateStr) return true;
-    const evtDate = new Date(evt.data + "T12:00:00");
-    const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false;
-    if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
-      return evtDate.getDay() === checkDate.getDay();
+    let matches = false;
+    if (evt.data === dateStr) {
+      matches = true;
+    } else {
+      const evtDate = new Date(evt.data + "T12:00:00");
+      const checkDate = new Date(dateStr + "T12:00:00");
+      if (checkDate < evtDate) return false;
+      if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
+        matches = evtDate.getDay() === checkDate.getDay();
+        // programa_semanal = segunda a sexta
+        if (evt.recorrencia === "programa_semanal") {
+          const dow = checkDate.getDay();
+          matches = dow >= 1 && dow <= 5;
+        }
+      } else if (evt.recorrencia === "mensal") {
+        matches = evtDate.getDate() === checkDate.getDate();
+      }
     }
-    if (evt.recorrencia === "mensal") {
-      return evtDate.getDate() === checkDate.getDate();
-    }
-    return false;
+    if (!matches) return false;
+    const exc = getExcecao(evt, dateStr);
+    if (exc && exc.acao === "skip") return false;
+    return true;
   };
 
   const todayStr = useMemo(() => {
