@@ -198,7 +198,29 @@ export default function OnAirWidget() {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col animate-pulse">
+      <div className="h-full flex flex-col animate-pulse"><span ref={anchorRef} className="hidden" aria-hidden="true" /></div>
+    );
+  }
+
+  if (!onAir) {
+    return (
+      <div className="h-full flex flex-col">
+        <span ref={anchorRef} className="hidden" aria-hidden="true" />
+        <div className="flex items-center gap-2 mb-2">
+          <Radio size={16} className="text-white/70" />
+          <span className="font-semibold text-white text-sm">NO AR</span>
+        </div>
+        <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
+        <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
+      </div>
+    );
+  }
+
+  const _tmp_never_used_ = null;
+  {/* original loading skeleton preserved below (unreachable) */}
+  return (
+    <div className="h-full flex flex-col animate-pulse">
+      <span ref={anchorRef} className="hidden" aria-hidden="true" />
         {/* NO AR label skeleton */}
         <div className="flex items-center gap-2 mb-2">
           <div className="w-3.5 h-3.5 rounded-full bg-white/10" />
