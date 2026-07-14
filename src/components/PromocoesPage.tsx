@@ -191,7 +191,11 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   const uploadImage = async (file: File, prefix = "promocoes"): Promise<string> => {
     const compressed = await compressImage(file);
     const ext = compressed.name.split(".").pop() || "jpg";
-    const path = `${prefix}/${Date.now()}.${ext}`;
+    // Storage RLS on the "comercial" bucket requires the first folder segment to equal auth.uid()
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id;
+    if (!uid) throw new Error("Sessão expirada. Faça login novamente.");
+    const path = `${uid}/${prefix}/${Date.now()}.${ext}`;
     const { error } = await supabase.storage.from("comercial").upload(path, compressed, { upsert: true });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
