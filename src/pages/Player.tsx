@@ -353,6 +353,7 @@ export default function PlayerPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
+  usePublicHead(isPublicMode ? userSlug : null, "Player");
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
