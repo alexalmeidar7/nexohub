@@ -875,13 +875,13 @@ export default function PromocoesKiosk() {
             })()}
 
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>No Ar</span>
-              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
+              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: telaPromoConfig.header_text_color }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 60%, transparent)" }}>
+                  <span className="text-[10px]" style={{ color: colorMix(telaPromoConfig.header_text_color, 60, "#ffffff") }}>
                     {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                   </span>
                   <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: telaPromoConfig.btn_color_a }}>
@@ -900,25 +900,25 @@ export default function PromocoesKiosk() {
               <div className="flex items-center gap-3 ml-3">
                 {config.site && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.site}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.instagram && (
                   <Tooltip>
-                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.instagram}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.youtube && (
                   <Tooltip>
-                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.youtube}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
@@ -927,19 +927,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
-                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
+                      <MessageCircle size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
-                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
+                      <Phone size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>telefone comercial</span>
                   </div>
                 )}
               </div>
@@ -1093,11 +1093,11 @@ export default function PromocoesKiosk() {
                         <div className="min-w-[220px]">
                           <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ background: promoAccentGradient, borderColor: colorMix(telaPromoConfig.card_border_color, 24, "#ffffff") }}>
                             <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
-                            <span className="text-[11px] font-black uppercase tracking-wider text-white">Melhor audiência do dia</span>
+                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
                           </div>
                           <div className="px-3 py-2.5 space-y-1.5">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-2xl font-black tabular-nums leading-none" style={{ color: telaPromoConfig.btn_text_color }}>{peakAudience.total.toLocaleString("pt-BR")}</span>
                               <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
                             </div>
                             <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
