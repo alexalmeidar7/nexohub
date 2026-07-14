@@ -1207,7 +1207,7 @@ export default function PromocoesKiosk() {
                   onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
                   title="Citações"
                 >
-                  <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white bg-black/70 backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg">
+                    <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
                     Citações
                   </div>
                   <div
@@ -1300,7 +1300,7 @@ export default function PromocoesKiosk() {
                         </div>
                       )}
                       {onAirProgram?.nome === prog.nome && (
-                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
+                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}>
                           No Ar
                         </span>
                       )}
