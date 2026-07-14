@@ -373,6 +373,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
       if (data?.ok) {
         setJams(data.jams || []);
         setUpdatedAt(data.updatedAt || null);
+        if (data.center?.lat != null && data.center?.lon != null) setCenter(data.center);
       }
     } catch { /* ignore */ }
     finally { setLoading(false); }
