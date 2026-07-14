@@ -2499,6 +2499,7 @@ export default function AgendaPage() {
                             style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
                             onClick={() => { 
                               setViewingEvent(evt);
+                              setViewingOccurrenceDate(dateStr);
                               setViewEventDialogOpen(true);
                             }}
                           >
