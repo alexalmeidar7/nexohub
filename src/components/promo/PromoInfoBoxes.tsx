@@ -457,10 +457,17 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
               <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000" }}>min</span>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate" style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.15 }} title={j.street}>
+              <div
+                style={{
+                  fontSize: 11.5, fontWeight: 800, lineHeight: 1.2,
+                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}
+                title={j.street}
+              >
                 {j.street}
               </div>
-              <div className="flex items-center gap-1.5 mt-1">
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <span
                   style={{
                     fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
@@ -470,7 +477,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                 >
                   {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
                 </span>
-                <span className="truncate" style={{ fontSize: 9, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>
+                <span style={{ fontSize: 9, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>
                   {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
                   {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
                 </span>
@@ -488,15 +495,30 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
 
           <div className="flex items-center justify-between mt-auto gap-2">
             <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-              Atualizado: {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
+              {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
             </span>
-            <div className="flex items-center gap-1">
-              {jams.map((_, i) => (
-                <span key={i} style={{
-                  width: 4, height: 4, borderRadius: 999,
-                  background: i === idx ? ACCENT : "rgba(255,255,255,0.2)",
-                }} />
-              ))}
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
+                className="w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                title="Anterior"
+              >
+                <ChevronLeft size={11} />
+              </button>
+              <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
+                {idx + 1}/{jams.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIdx((v) => (v + 1) % jams.length)}
+                className="w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                title="Próximo"
+              >
+                <ChevronRight size={11} />
+              </button>
             </div>
           </div>
         </>
