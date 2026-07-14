@@ -354,7 +354,19 @@ export default function RoteiroPrograma() {
     if (!user) return;
     const load = async () => {
       setLoading(true);
-      const { data: progs } = await supabase.from("programas").select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo").eq("ativo", true);
+      // Resolve effective user id: sub-users inherit parent's programs/schedule
+      const { data: sub } = await supabase
+        .from("sub_users")
+        .select("parent_user_id, ativo")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+      const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+
+      const { data: progs } = await supabase
+        .from("programas")
+        .select("id, nome, estudio, tipo_programa, horario_inicio, horario_fim, dias_semana, apresentador_id, capa, selo")
+        .eq("ativo", true)
+        .eq("user_id", effectiveUserId);
       const programasList = progs || [];
       setProgramas(programasList);
       const uniqueEstudios = [...new Set(programasList.map(p => p.estudio).filter(Boolean))] as string[];
