@@ -306,11 +306,13 @@ function DatasBox() {
             </div>
             <div className="min-w-0 flex-1">
               <div
-                className="truncate"
                 style={{
-                  fontSize: 12, fontWeight: 800, lineHeight: 1.15,
+                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
                   color: isToday ? "#FFD34D" : TEXT,
+                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
                 }}
+                title={cur.nome}
               >
                 {cur.nome}
               </div>
