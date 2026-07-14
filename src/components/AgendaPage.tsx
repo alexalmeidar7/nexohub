@@ -270,6 +270,13 @@ interface Participante {
   obrigatorio?: boolean;
 }
 
+export type ExcecaoAcao = "skip" | "substituir" | "automatico" | "manter";
+export interface EventoExcecao {
+  data: string; // YYYY-MM-DD
+  acao: ExcecaoAcao;
+  programa_id?: string | null;
+}
+
 interface Evento {
   id: string;
   programa_id: string;
@@ -288,6 +295,7 @@ interface Evento {
   edicao_concluida?: boolean;
   horario_gravacao?: string;
   horario_gravacao_fim?: string;
+  excecoes?: EventoExcecao[];
   programa?: Programa;
   participantes?: Participante[];
 }
@@ -365,6 +373,10 @@ export default function AgendaPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [viewEventDialogOpen, setViewEventDialogOpen] = useState(false);
   const [viewingEvent, setViewingEvent] = useState<Evento | null>(null);
+  const [viewingOccurrenceDate, setViewingOccurrenceDate] = useState<string | null>(null);
+  const [deleteChoice, setDeleteChoice] = useState<{ evt: Evento; dateStr: string } | null>(null);
+  const [holidayResolve, setHolidayResolve] = useState<{ evt: Evento; dateStr: string; feriadoNome: string } | null>(null);
+  const [holidayReplaceProg, setHolidayReplaceProg] = useState<string>("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [historyDateFilter, setHistoryDateFilter] = useState<Date | undefined>(undefined);
   const [pastEventDetail, setPastEventDetail] = useState<Evento | null>(null);
@@ -733,6 +745,35 @@ export default function AgendaPage() {
     fetchEventos();
   };
 
+  // Adiciona uma exceção (skip/substituir/automatico/manter) numa ocorrência específica
+  const upsertExcecao = async (evt: Evento, exc: EventoExcecao) => {
+    const current: EventoExcecao[] = Array.isArray(evt.excecoes) ? [...evt.excecoes] : [];
+    const idx = current.findIndex(x => x && x.data === exc.data);
+    if (idx >= 0) current[idx] = exc; else current.push(exc);
+    const { error } = await supabase
+      .from("agenda_eventos")
+      .update({ excecoes: current as any })
+      .eq("id", evt.id);
+    if (error) {
+      toast({ title: "Erro ao salvar exceção", description: error.message, variant: "destructive" });
+      return false;
+    }
+    await fetchEventos();
+    return true;
+  };
+
+  // Solicita a exclusão — se recorrente, abre diálogo de escolha
+  const requestDelete = (evt: Evento, occurrenceDateStr?: string) => {
+    const isRecorrente = evt.recorrencia && evt.recorrencia !== "unico";
+    if (!isRecorrente) {
+      if (confirm("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
+      return;
+    }
+    const dateStr = occurrenceDateStr || evt.data;
+    setDeleteChoice({ evt, dateStr });
+  };
+
+
   const handleCreateRoteiroFromEvento = async () => {
     if (!user || !formProgramaId || !formData) {
       toast({ title: "Selecione programa e data", variant: "destructive" });
@@ -881,18 +922,34 @@ export default function AgendaPage() {
 
   const locais = Array.from(new Set(eventos.map((e) => e.local).filter(Boolean)));
 
+  const getExcecao = (evt: Evento, dateStr: string): EventoExcecao | undefined => {
+    const list = Array.isArray(evt.excecoes) ? evt.excecoes : [];
+    return list.find(x => x && x.data === dateStr);
+  };
+
   const eventMatchesDate = (evt: Evento, dateStr: string) => {
-    if (evt.data === dateStr) return true;
-    const evtDate = new Date(evt.data + "T12:00:00");
-    const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false;
-    if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
-      return evtDate.getDay() === checkDate.getDay();
+    let matches = false;
+    if (evt.data === dateStr) {
+      matches = true;
+    } else {
+      const evtDate = new Date(evt.data + "T12:00:00");
+      const checkDate = new Date(dateStr + "T12:00:00");
+      if (checkDate < evtDate) return false;
+      if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") {
+        matches = evtDate.getDay() === checkDate.getDay();
+        // programa_semanal = segunda a sexta
+        if (evt.recorrencia === "programa_semanal") {
+          const dow = checkDate.getDay();
+          matches = dow >= 1 && dow <= 5;
+        }
+      } else if (evt.recorrencia === "mensal") {
+        matches = evtDate.getDate() === checkDate.getDate();
+      }
     }
-    if (evt.recorrencia === "mensal") {
-      return evtDate.getDate() === checkDate.getDate();
-    }
-    return false;
+    if (!matches) return false;
+    const exc = getExcecao(evt, dateStr);
+    if (exc && exc.acao === "skip") return false;
+    return true;
   };
 
   const todayStr = useMemo(() => {
@@ -1072,6 +1129,29 @@ export default function AgendaPage() {
     return days;
   }, [eventos, filterLocal, now]);
 
+  // Conflitos com feriados nos próximos 14 dias (só programa_semanal / semanal, sem exceção definida)
+  const holidayConflicts = useMemo(() => {
+    const results: { evt: Evento; dateStr: string; date: Date; feriadoNome: string }[] = [];
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const feriadoNome = getFeriadoNome(d);
+      if (!feriadoNome) continue;
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      for (const evt of eventos) {
+        if (evt.recorrencia !== "programa_semanal" && evt.recorrencia !== "semanal") continue;
+        if (evt.status === "cancelado" || evt.status === "concluido") continue;
+        if (!eventMatchesDate(evt, ds)) continue;
+        if (getExcecao(evt, ds)) continue; // já resolvido
+        results.push({ evt, dateStr: ds, date: new Date(d), feriadoNome });
+      }
+    }
+    return results;
+  }, [eventos, now]);
+
+
   // Past events from the last 6 months
   const pastEvents = useMemo(() => {
     const today = new Date(now);
@@ -1195,7 +1275,7 @@ export default function AgendaPage() {
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => startEdit(evt)}>
               <Pencil size={14} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDelete(evt.id)}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => requestDelete(evt, evt.data)}>
               <Trash2 size={14} className="text-destructive" />
             </Button>
           </div>
@@ -1273,6 +1353,126 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
+
+      {/* Diálogo: escolha ao excluir evento recorrente */}
+      <Dialog open={!!deleteChoice} onOpenChange={(o) => { if (!o) setDeleteChoice(null); }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
+          {deleteChoice && (
+            <div className="flex flex-col">
+              <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)", color: "#fff" }}>
+                <DialogTitle className="text-base font-bold m-0">Excluir evento recorrente</DialogTitle>
+                <p className="text-[11px] mt-1 opacity-90">
+                  {deleteChoice.evt.programa?.nome || "Evento"} • {format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")}
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Este é um evento <strong>{recorrenciaLabels[deleteChoice.evt.recorrencia] || deleteChoice.evt.recorrencia}</strong>. O que deseja fazer?
+                </p>
+                <Button
+                  className="w-full justify-start h-11 rounded-xl"
+                  style={{ backgroundColor: NEXO_CYAN, color: "#fff" }}
+                  onClick={async () => {
+                    const ok = await upsertExcecao(deleteChoice.evt, { data: deleteChoice.dateStr, acao: "skip" });
+                    if (ok) toast({ title: "Ocorrência removida", description: format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy") });
+                    setDeleteChoice(null);
+                  }}
+                >
+                  Excluir somente este dia
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-11 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
+                  onClick={async () => {
+                    await handleDelete(deleteChoice.evt.id);
+                    toast({ title: "Recorrência excluída", description: "Todos os dias futuros foram removidos." });
+                    setDeleteChoice(null);
+                  }}
+                >
+                  Excluir todos os próximos dias
+                </Button>
+                <Button variant="ghost" className="w-full h-9" onClick={() => setDeleteChoice(null)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo: resolver feriado nacional em evento recorrente */}
+      <Dialog open={!!holidayResolve} onOpenChange={(o) => { if (!o) { setHolidayResolve(null); setHolidayReplaceProg(""); } }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
+          {holidayResolve && (
+            <div className="flex flex-col">
+              <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)", color: "#fff" }}>
+                <DialogTitle className="text-base font-bold m-0 flex items-center gap-2">
+                  <AlertTriangle size={18} /> Feriado nacional
+                </DialogTitle>
+                <p className="text-[11px] mt-1 opacity-90">
+                  {holidayResolve.feriadoNome} • {format(new Date(holidayResolve.dateStr + "T12:00:00"), "EEEE, dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  O programa <strong>{holidayResolve.evt.programa?.nome || "recorrente"}</strong> cai neste feriado. O que fazer?
+                </p>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Substituir por outro programa</Label>
+                  <div className="flex gap-2">
+                    <Select value={holidayReplaceProg} onValueChange={setHolidayReplaceProg}>
+                      <SelectTrigger className="flex-1 h-10 rounded-xl">
+                        <SelectValue placeholder="Escolha um programa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {programas
+                          .filter(p => p.id !== holidayResolve.evt.programa_id)
+                          .map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.nome}{p.estudio ? ` • ${p.estudio}` : ""}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      disabled={!holidayReplaceProg}
+                      style={{ backgroundColor: NEXO_CYAN, color: "#fff" }}
+                      onClick={async () => {
+                        const ok = await upsertExcecao(holidayResolve.evt, { data: holidayResolve.dateStr, acao: "substituir", programa_id: holidayReplaceProg });
+                        if (ok) toast({ title: "Substituição salva" });
+                        setHolidayResolve(null);
+                        setHolidayReplaceProg("");
+                      }}
+                    >
+                      Substituir
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                  <Button
+                    variant="outline"
+                    className="w-full h-10 rounded-xl"
+                    onClick={async () => {
+                      const ok = await upsertExcecao(holidayResolve.evt, { data: holidayResolve.dateStr, acao: "automatico" });
+                      if (ok) toast({ title: "Definido como Programa Automático" });
+                      setHolidayResolve(null);
+                      setHolidayReplaceProg("");
+                    }}
+                  >
+                    Colocar como programa automático
+                  </Button>
+                </div>
+
+                <Button variant="ghost" className="w-full h-9" onClick={() => { setHolidayResolve(null); setHolidayReplaceProg(""); }}>
+                  Decidir depois
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
       
       <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -1398,10 +1598,8 @@ export default function AgendaPage() {
                     variant="outline"
                     className="h-9 w-9 p-0 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
                     onClick={() => { 
-                      if (confirm("Tem certeza que deseja excluir este evento?")) {
-                        setViewEventDialogOpen(false); 
-                        handleDelete(viewingEvent.id); 
-                      }
+                      setViewEventDialogOpen(false); 
+                      requestDelete(viewingEvent, viewingOccurrenceDate || viewingEvent.data);
                     }}
                   >
                     <Trash2 size={14} />
@@ -1449,6 +1647,42 @@ export default function AgendaPage() {
             </button>
           </div>
         </div>
+
+        {/* Banner de conflitos com feriados nacionais */}
+        {holidayConflicts.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {holidayConflicts.map(({ evt, dateStr, date, feriadoNome }) => (
+              <div
+                key={`${evt.id}-${dateStr}`}
+                className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+                style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", border: "1px solid #f59e0b" }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <AlertTriangle size={18} style={{ color: "#b45309", flexShrink: 0 }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold" style={{ color: "#78350f" }}>
+                      Feriado nacional: {feriadoNome} • {format(date, "EEE, dd/MM", { locale: ptBR })}
+                    </p>
+                    <p className="text-[11px]" style={{ color: "#92400e" }}>
+                      O programa <strong>{evt.programa?.nome || "recorrente"}</strong> cai neste dia. Escolha o que fazer.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8 rounded-full text-xs font-bold shrink-0"
+                  style={{ backgroundColor: "#b45309", color: "#fff" }}
+                  onClick={() => { setHolidayResolve({ evt, dateStr, feriadoNome }); setHolidayReplaceProg(""); }}
+                >
+                  Resolver
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+
+
 
 
 
@@ -2366,6 +2600,7 @@ export default function AgendaPage() {
                             style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
                             onClick={() => { 
                               setViewingEvent(evt);
+                              setViewingOccurrenceDate(dateStr);
                               setViewEventDialogOpen(true);
                             }}
                           >
@@ -2443,6 +2678,7 @@ export default function AgendaPage() {
                             style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
                             onClick={() => { 
                               setViewingEvent(evt);
+                              setViewingOccurrenceDate(dateStr);
                               setViewEventDialogOpen(true);
                             }}
                           >
