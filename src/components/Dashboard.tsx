@@ -874,8 +874,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <X size={16} className="text-white" />
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
-                {sidebarMenu.filter(item => {
+              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2 animate-fade-in">
+                {(displayedPill === "Chatbot"
+                  ? sidebarMenu
+                      .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
+                      .map(i => i.label === "cadastros" && i.children
+                        ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
+                        : i)
+                  : sidebarMenu
+                ).filter(item => {
                   if (subUserModules !== null) {
                     if (item.label === "home") return true;
                     if (item.children) {
