@@ -16,6 +16,9 @@ function SlugRedirect({ template }: { template: string }) {
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
+import InlineNotification from "@/components/InlineNotification";
+import { initGlobalNotifications } from "@/lib/notify";
+initGlobalNotifications();
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
