@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSiteConfig } from "@/hooks/useSiteConfig";
 import SiteMockup from "@/components/site/SiteMockup";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { supabase } from "@/integrations/supabase/client";
+import { applyPublicHead } from "@/hooks/usePageTitle";
 
 export default function SitePreview() {
   const { user, loading: authLoading } = useAuth();
@@ -16,9 +18,26 @@ export default function SitePreview() {
 
   const { config, loading } = useSiteConfig(effectiveUserId);
 
+  // Public tab head: always reflects the routed user (from ?user=), never the
+  // authenticated user's cached favicon/title.
   useEffect(() => {
-    if (config?.site_nome) document.title = config.site_nome;
-  }, [config?.site_nome]);
+    if (!effectiveUserId) return;
+    let cancelled = false;
+    const siteName = config?.site_nome || null;
+    // Optimistic pass with site data we already have.
+    applyPublicHead(siteName, null, "Notícias");
+    supabase
+      .from("empresa_config")
+      .select("nome, logo")
+      .eq("user_id", effectiveUserId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        const nome = siteName || data?.nome || null;
+        applyPublicHead(nome, data?.logo || null, "Notícias");
+      });
+    return () => { cancelled = true; };
+  }, [effectiveUserId, config?.site_nome]);
 
   if (authLoading || loading || !effectiveUserId || !config) {
     return <LoadingSpinner fullscreen />;
