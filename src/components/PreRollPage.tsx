@@ -604,22 +604,27 @@ export default function PreRollPage() {
               </div>
 
             {/* Submit */}
-            <Button variant="save" type="submit" disabled={saving}
-            >
-              {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-              {editId ? "Salvar Alterações" : "Cadastrar Anúncio"}
-            </Button>
+            <div className="flex justify-end pt-2">
+              <button type="submit" disabled={saving}
+                className="h-12 px-7 rounded-full text-sm font-black flex items-center gap-2 disabled:opacity-50 transition hover:brightness-95"
+                style={{ background: LIME, color: INK, boxShadow: `0 8px 24px ${LIME}66` }}>
+                {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                {editId ? "Salvar alterações" : "Cadastrar anúncio"}
+              </button>
+            </div>
           </div>
         </form>
 
         {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-            <h3 className="text-sm font-bold">📋 Anúncios Cadastrados</h3>
-            <span className="text-[9px] font-normal px-2.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              {prerolls.length} item{prerolls.length !== 1 ? "s" : ""}
+        <div className="rounded-2xl overflow-hidden bg-white" style={{ boxShadow: "0 4px 20px rgba(0,33,50,0.06)" }}>
+          <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${CYAN}1F`, color: CYAN }}><Film size={14}/></div>
+            <h3 className="text-sm font-black" style={{ color: INK }}>Anúncios cadastrados</h3>
+            <span className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}1F`, color: CYAN }}>
+              {prerolls.length}
             </span>
           </div>
+
 
           {prerolls.length === 0 ? (
             <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum pré-roll cadastrado.</p>
