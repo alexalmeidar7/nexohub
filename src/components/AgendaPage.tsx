@@ -1648,6 +1648,42 @@ export default function AgendaPage() {
           </div>
         </div>
 
+        {/* Banner de conflitos com feriados nacionais */}
+        {holidayConflicts.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {holidayConflicts.map(({ evt, dateStr, date, feriadoNome }) => (
+              <div
+                key={`${evt.id}-${dateStr}`}
+                className="rounded-xl px-4 py-3 flex items-center justify-between gap-3"
+                style={{ background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)", border: "1px solid #f59e0b" }}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <AlertTriangle size={18} style={{ color: "#b45309", flexShrink: 0 }} />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold" style={{ color: "#78350f" }}>
+                      Feriado nacional: {feriadoNome} • {format(date, "EEE, dd/MM", { locale: ptBR })}
+                    </p>
+                    <p className="text-[11px]" style={{ color: "#92400e" }}>
+                      O programa <strong>{evt.programa?.nome || "recorrente"}</strong> cai neste dia. Escolha o que fazer.
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-8 rounded-full text-xs font-bold shrink-0"
+                  style={{ backgroundColor: "#b45309", color: "#fff" }}
+                  onClick={() => { setHolidayResolve({ evt, dateStr, feriadoNome }); setHolidayReplaceProg(""); }}
+                >
+                  Resolver
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+
+
+
 
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
