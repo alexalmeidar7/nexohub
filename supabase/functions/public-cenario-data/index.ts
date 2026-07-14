@@ -186,41 +186,51 @@ Deno.serve(async (req) => {
       sponsorLogos = logosResult.data || [];
     }
 
-    // ─── Music data: prefer dashboard_items (synced by useGlobalMusicSync) ───
+    // ─── Music data: prefer LIVE XML (authoritative source) over cached dashboard_items ───
+    // The DB cache in dashboard_items is only refreshed by useGlobalMusicSync running
+    // in the master user's browser. If nobody is online, it stays stuck on the last
+    // track ever seen. The XML feed is updated by the radio automation continuously,
+    // so it must be preferred whenever available.
     let musicData: { titulo: string; artista: string; capa: string } | null = null;
     let musicStartTime: number | null = null;
-
     const dashItems = (settings as any)?.dashboard_items as Record<string, any> | null;
-    if (dashItems?.music_current_title && dashItems.music_current_title !== "Sem título") {
+    const xmlUrl = (settings as any)?.music_xml_url;
+
+    if (xmlUrl) {
+      try {
+        const xmlResp = await fetch(xmlUrl, {
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)", Accept: "application/xml, text/xml, */*" },
+          signal: AbortSignal.timeout(3000),
+        });
+        const buffer = await xmlResp.arrayBuffer();
+        const text = decodeXmlBuffer(buffer, xmlResp.headers.get("content-type") || "");
+
+        const titulo = decodeHtmlEntities(extractTag(text, "nome_musica", "titulo", "title")).trim();
+        const artista = decodeHtmlEntities(extractTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
+        const capa = extractTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
+
+        if (titulo && titulo !== "Sem título") {
+          musicData = { titulo, artista, capa };
+          // If the XML track matches the cached one, keep the cached start time so
+          // the elapsed counter stays consistent across polls.
+          if (
+            dashItems?.music_current_title === titulo &&
+            (dashItems?.music_current_artist || "") === artista
+          ) {
+            musicStartTime = dashItems?.music_start_time || null;
+          }
+        }
+      } catch { /* silent */ }
+    }
+
+    // Fallback to cached dashboard_items when XML is unavailable or empty
+    if (!musicData && dashItems?.music_current_title && dashItems.music_current_title !== "Sem título") {
       musicData = {
         titulo: dashItems.music_current_title,
         artista: dashItems.music_current_artist || "",
         capa: dashItems.music_current_cover || "",
       };
       musicStartTime = dashItems.music_start_time || null;
-    }
-
-    // Fallback: fetch XML only if dashboard has no music
-    if (!musicData) {
-      const xmlUrl = (settings as any)?.music_xml_url;
-      if (xmlUrl) {
-        try {
-          const xmlResp = await fetch(xmlUrl, {
-            headers: { "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)", Accept: "application/xml, text/xml, */*" },
-            signal: AbortSignal.timeout(3000),
-          });
-          const buffer = await xmlResp.arrayBuffer();
-          const text = decodeXmlBuffer(buffer, xmlResp.headers.get("content-type") || "");
-
-          const titulo = decodeHtmlEntities(extractTag(text, "nome_musica", "titulo", "title")).trim();
-          const artista = decodeHtmlEntities(extractTag(text, "interprete", "nome_interprete", "artista", "artist")).trim();
-          const capa = extractTag(text, "capa", "cover", "album_art", "artwork", "imagem").trim();
-
-          if (titulo && titulo !== "Sem título") {
-            musicData = { titulo, artista, capa };
-          }
-        } catch { /* silent */ }
-      }
     }
 
     // ─── YouTube Chat data: scrape live chat if URL is provided ───
