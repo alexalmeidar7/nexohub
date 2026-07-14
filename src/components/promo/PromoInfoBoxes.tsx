@@ -451,6 +451,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
             <div
               className="rounded-md flex flex-col items-center justify-center shrink-0"
               style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
+              title={`Nível ${j.level || 1} de 5`}
             >
               <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
               <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000" }}>min</span>
@@ -459,19 +460,44 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
               <div className="truncate" style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.15 }} title={j.street}>
                 {j.street}
               </div>
-              <div className="truncate" style={{ fontSize: 9, color: MUTED, marginTop: 2, textTransform: "uppercase", letterSpacing: 1 }}>
-                {j.city || city} · {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
-                {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
+              <div className="flex items-center gap-1.5 mt-1">
+                <span
+                  style={{
+                    fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
+                    padding: "1px 6px", borderRadius: 999,
+                    background: levelColor, color: "#000",
+                  }}
+                >
+                  {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
+                </span>
+                <span className="truncate" style={{ fontSize: 9, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>
+                  {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
+                  {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
+                </span>
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-center gap-1 mt-auto">
-            {jams.map((_, i) => (
-              <span key={i} style={{
-                width: 4, height: 4, borderRadius: 999,
-                background: i === idx ? ACCENT : "rgba(255,255,255,0.2)",
-              }} />
-            ))}
+
+          {/* Legenda de criticidade */}
+          <div className="flex items-center justify-between gap-1" style={{ fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>
+            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Leve</span>
+            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Mod.</span>
+            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff8a1f" }} />Intenso</span>
+            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff2d2d" }} />Crítico</span>
+          </div>
+
+          <div className="flex items-center justify-between mt-auto gap-2">
+            <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
+              Atualizado: {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
+            </span>
+            <div className="flex items-center gap-1">
+              {jams.map((_, i) => (
+                <span key={i} style={{
+                  width: 4, height: 4, borderRadius: 999,
+                  background: i === idx ? ACCENT : "rgba(255,255,255,0.2)",
+                }} />
+              ))}
+            </div>
           </div>
         </>
       ) : null}
