@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         userId,
-        empresa: empresaRes.data || null,
+        empresa: empresa,
         promocoes: promoRes.data || [],
         programas: progsRes.data || [],
         testemunhais: testRes.data || [],
