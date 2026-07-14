@@ -77,6 +77,7 @@ export default function PromocoesKiosk() {
   // In public mode we don't want the auth user's empresa name leaking into
   // the title, so pass empty and override via effect below using config.nome.
   usePageTitle(isPublicMode ? "" : "Promoções");
+  usePublicHead(isPublicMode ? validSlug : null, "Promoções");
   useLayoutColors();
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
