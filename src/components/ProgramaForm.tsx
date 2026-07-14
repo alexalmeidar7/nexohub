@@ -382,6 +382,10 @@ export default function ProgramaForm() {
   const [nome, setNome] = useState("");
   const nomeInputRef = useRef<HTMLInputElement>(null);
   const nomeDraftRef = useRef("");
+  const nomeIsFocusedRef = useRef(false);
+  const nomeLastTypingAtRef = useRef(0);
+  const nomePointerDownOutsideRef = useRef(false);
+  const nomeAllowKeyboardBlurRef = useRef(false);
   const [apresentadorId, setApresentadorId] = useState("");
   const [apresentadoresIds, setApresentadoresIds] = useState<string[]>([]);
   const [selo, setSelo] = useState("");
@@ -495,6 +499,51 @@ export default function ProgramaForm() {
       input.value = nome;
     }
   }, [nome]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const input = nomeInputRef.current;
+      nomePointerDownOutsideRef.current = !!input && !input.contains(event.target as Node);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Tab" || event.key === "Escape") {
+        nomeAllowKeyboardBlurRef.current = true;
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown, true);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown, true);
+    };
+  }, []);
+
+  const keepNomeFocusIfTyping = (value: string) => {
+    setNome(value);
+
+    const shouldRestoreFocus =
+      nomeIsFocusedRef.current &&
+      !nomePointerDownOutsideRef.current &&
+      !nomeAllowKeyboardBlurRef.current &&
+      Date.now() - nomeLastTypingAtRef.current < 1500;
+
+    if (!shouldRestoreFocus) {
+      nomeIsFocusedRef.current = false;
+      nomeAllowKeyboardBlurRef.current = false;
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const input = nomeInputRef.current;
+      if (!input) return;
+      input.focus({ preventScroll: true });
+      const cursorPosition = input.value.length;
+      input.setSelectionRange(cursorPosition, cursorPosition);
+    });
+  };
 
   // Auto-scroll disabled per user request
 
@@ -980,8 +1029,16 @@ export default function ProgramaForm() {
               ref={nomeInputRef}
               style={pillInput}
               defaultValue={nome}
-              onChange={(e) => { nomeDraftRef.current = e.target.value; }}
-              onBlur={(e) => setNome(e.target.value)}
+              onFocus={() => {
+                nomeIsFocusedRef.current = true;
+                nomePointerDownOutsideRef.current = false;
+                nomeAllowKeyboardBlurRef.current = false;
+              }}
+              onChange={(e) => {
+                nomeDraftRef.current = e.target.value;
+                nomeLastTypingAtRef.current = Date.now();
+              }}
+              onBlur={(e) => keepNomeFocusIfTyping(e.target.value)}
               placeholder="Digite o nome do programa"
             />
           </Field>
