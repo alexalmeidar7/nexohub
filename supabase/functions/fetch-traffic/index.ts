@@ -99,6 +99,22 @@ serve(async (req) => {
         const iconCat = typeof p.iconCategory === "number" ? p.iconCategory : 0;
         let street = road || streetFrom || streetTo || eventDesc || "Via";
         if (streetFrom && streetTo && !road) street = `${streetFrom} → ${streetTo}`;
+
+        // Extract representative lat/lon from geometry (LineString or MultiLineString)
+        let jLat: number | null = null;
+        let jLon: number | null = null;
+        const g = it?.geometry;
+        if (g?.type === "LineString" && Array.isArray(g.coordinates) && g.coordinates.length) {
+          const mid = g.coordinates[Math.floor(g.coordinates.length / 2)];
+          if (Array.isArray(mid) && mid.length >= 2) { jLon = mid[0]; jLat = mid[1]; }
+        } else if (g?.type === "MultiLineString" && Array.isArray(g.coordinates) && g.coordinates[0]?.length) {
+          const line = g.coordinates[0];
+          const mid = line[Math.floor(line.length / 2)];
+          if (Array.isArray(mid) && mid.length >= 2) { jLon = mid[0]; jLat = mid[1]; }
+        } else if (g?.type === "Point" && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
+          jLon = g.coordinates[0]; jLat = g.coordinates[1];
+        }
+
         return {
           street,
           city: city || "",
@@ -108,6 +124,8 @@ serve(async (req) => {
           level: magToLevel(typeof p.magnitudeOfDelay === "number" ? p.magnitudeOfDelay : 0),
           type: iconCategoryLabel(iconCat),
           description: eventDesc,
+          lat: jLat,
+          lon: jLon,
         };
       })
       .filter((j) => j.street && j.street !== "Via")
@@ -120,7 +138,7 @@ serve(async (req) => {
       .slice(0, 5);
 
     return new Response(
-      JSON.stringify({ ok: true, source: "tomtom", city: city || null, jams, updatedAt: new Date().toISOString() }),
+      JSON.stringify({ ok: true, source: "tomtom", city: city || null, center: { lat, lon }, jams, updatedAt: new Date().toISOString() }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
