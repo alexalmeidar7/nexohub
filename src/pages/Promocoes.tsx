@@ -70,9 +70,9 @@ export default function PromocoesKiosk() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
   const isPublicMode = !!validSlug;
-  // Only use auth-based title in authenticated mode; public mode sets its own
-  // title from the fetched empresa data (see effect below).
-  if (!isPublicMode) usePageTitle("Promoções");
+  // In public mode we don't want the auth user's empresa name leaking into
+  // the title, so pass empty and override via effect below using config.nome.
+  usePageTitle(isPublicMode ? "" : "Promoções");
   useLayoutColors();
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
