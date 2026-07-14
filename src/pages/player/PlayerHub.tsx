@@ -15,6 +15,8 @@ type Step = "splash" | "access" | "welcome" | "home";
 
 export default function PlayerHub() {
   usePageTitle("Player");
+  const { userSlug: _slugForHead } = useParams();
+  usePublicHead(_slugForHead && _slugForHead !== ":userSlug" ? _slugForHead : null, "Player");
   useLayoutColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
