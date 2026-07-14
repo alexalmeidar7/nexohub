@@ -90,7 +90,7 @@ export default function DatasComemorativasCidades() {
       >
         <div className="flex items-center gap-2 min-w-0">
           <Star size={12} style={{ color: NEXO_LIME, fill: NEXO_LIME }} />
-          <span className="truncate">Datas Comemorativas</span>
+          <span className="truncate" style={{ color: "#FFFFFF" }}>DATAS COMEMORATIVAS</span>
           <Popover open={ufOpen} onOpenChange={setUfOpen}>
             <PopoverTrigger asChild>
               <button
