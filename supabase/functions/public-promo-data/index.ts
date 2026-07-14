@@ -82,14 +82,23 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes] = await Promise.all([
+    const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes, ownSettingsRes] = await Promise.all([
       supabase.from("empresa_config").select("*").eq("user_id", finalUserId).maybeSingle(),
       supabase.from("promocoes").select("*").eq("user_id", finalUserId).order("data_inicio"),
       supabase.from("programas").select("*").eq("user_id", finalUserId).eq("ativo", true).ilike("estudio", "%fm%"),
       supabase.from("testemunhais").select("*").eq("user_id", finalUserId),
       supabase.from("apresentadores").select("*").eq("user_id", finalUserId).eq("ativo", true),
       supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").eq("user_id", finalUserId).maybeSingle(),
+      // Sub-user's own tela_promo config takes precedence over parent's, so each
+      // sub-user (e.g. Jornal FM under Positiva FM) can style their own promo screen.
+      userId !== finalUserId
+        ? supabase.from("user_settings").select("cenario_config").eq("user_id", userId).maybeSingle()
+        : Promise.resolve({ data: null } as any),
     ]);
+
+    const ownTelaPromo = (ownSettingsRes as any)?.data?.cenario_config?.tela_promo_bg || null;
+    const parentTelaPromo = settingsRes.data?.cenario_config?.tela_promo_bg || null;
+    const telaPromoConfig = ownTelaPromo || parentTelaPromo;
 
     return new Response(
       JSON.stringify({
