@@ -354,7 +354,9 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
   });
   const [tmpCity, setTmpCity] = useState(city);
   const [open, setOpen] = useState(false);
+  const [mapOpen, setMapOpen] = useState(false);
   const [jams, setJams] = useState<any[]>([]);
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [idx, setIdx] = useState(0);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
