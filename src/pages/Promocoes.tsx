@@ -14,6 +14,7 @@ import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
+import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
 
 interface Promocao {
   id: string;
@@ -92,6 +93,7 @@ export default function PromocoesKiosk() {
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
+  const [weatherInfo, setWeatherInfo] = useState<{ city: string | null; lat: number | null; lon: number | null }>({ city: null, lat: null, lon: null });
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
@@ -217,6 +219,11 @@ export default function PromocoesKiosk() {
         });
       }
       if (data.userId) setAudienceUserId(data.userId);
+      setWeatherInfo({
+        city: data.weather_city || null,
+        lat: data.weather_lat != null ? Number(data.weather_lat) : null,
+        lon: data.weather_lon != null ? Number(data.weather_lon) : null,
+      });
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (data.promocoes || []).filter((p: any) => 
@@ -253,9 +260,16 @@ export default function PromocoesKiosk() {
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
-        supabase.from("user_settings").select("cenario_config").maybeSingle(),
+        supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle(),
       ]);
       setConfig(empresaData);
+      if (settingsData) {
+        setWeatherInfo({
+          city: (settingsData as any).weather_city || null,
+          lat: (settingsData as any).weather_lat != null ? Number((settingsData as any).weather_lat) : null,
+          lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : null,
+        });
+      }
       try {
         const { data: authData } = await supabase.auth.getUser();
         const uid = authData?.user?.id;
@@ -922,6 +936,13 @@ export default function PromocoesKiosk() {
             )}
           </div>
         </div>
+
+        {/* Boxes informativos acima da barra de audiência */}
+        <PromoInfoBoxes
+          weatherCity={weatherInfo.city}
+          weatherLat={weatherInfo.lat}
+          weatherLon={weatherInfo.lon}
+        />
 
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
         {(() => {
