@@ -937,6 +937,13 @@ export default function PromocoesKiosk() {
           </div>
         </div>
 
+        {/* Boxes informativos acima da barra de audiência */}
+        <PromoInfoBoxes
+          weatherCity={weatherInfo.city}
+          weatherLat={weatherInfo.lat}
+          weatherLon={weatherInfo.lon}
+        />
+
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
         {(() => {
           const a = Math.max(0, audioCount ?? 0);
