@@ -581,7 +581,7 @@ export default function OuvintesPage() {
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                  {["Data", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
+                  {["Data", "Origem", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
                     <th
                       key={h}
                       style={{
