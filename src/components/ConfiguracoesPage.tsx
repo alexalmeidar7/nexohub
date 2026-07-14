@@ -412,18 +412,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const btnSecondary: React.CSSProperties = { backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" };
 
   return (
-    <div className="nexo-scope animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Save size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+    <div className="nexo-scope animate-fade-in" style={{ fontFamily: NEXO_FONT }}>
+      <div style={{ background: "transparent", padding: 0 }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className="flex items-center justify-center"
+            style={{ width: 44, height: 44, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+          >
+            <Save size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Configurações</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie os dados dos canais do player</p>
+            <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Configurações</h3>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie os dados dos canais do player</p>
           </div>
         </div>
         <div className="space-y-5">
+
 
       {/* Box 1: Configurações da Empresa */}
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
