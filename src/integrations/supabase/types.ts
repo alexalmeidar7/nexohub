@@ -1798,6 +1798,102 @@ export type Database = {
           },
         ]
       }
+      sorteio_premios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          id: string
+          imagem_url: string | null
+          nome: string
+          quantidade_estoque: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          nome: string
+          quantidade_estoque?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          imagem_url?: string | null
+          nome?: string
+          quantidade_estoque?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sorteio_sorteios: {
+        Row: {
+          created_at: string
+          data_entrega: string | null
+          data_sorteio: string
+          entregue: boolean
+          id: string
+          nome_ganhador: string
+          observacoes: string | null
+          ouvinte_id: string | null
+          premio_id: string
+          telefone_ganhador: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_entrega?: string | null
+          data_sorteio?: string
+          entregue?: boolean
+          id?: string
+          nome_ganhador: string
+          observacoes?: string | null
+          ouvinte_id?: string | null
+          premio_id: string
+          telefone_ganhador?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_entrega?: string | null
+          data_sorteio?: string
+          entregue?: boolean
+          id?: string
+          nome_ganhador?: string
+          observacoes?: string | null
+          ouvinte_id?: string | null
+          premio_id?: string
+          telefone_ganhador?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_sorteios_ouvinte_id_fkey"
+            columns: ["ouvinte_id"]
+            isOneToOne: false
+            referencedRelation: "ouvintes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_sorteios_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_premios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streaming_channels: {
         Row: {
           active: boolean
