@@ -229,6 +229,31 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     setSaving(true);
 
     try {
+      // Confirm live auth session before writing (avoids RLS violations from a stale token)
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authUid = sessionData.session?.user?.id;
+      if (!authUid) {
+        toast({ title: "Sessão expirada", description: "Faça login novamente para salvar.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
+
+      // Resolve the correct owner user_id (parent when this account is a sub-user)
+      let ownerUserId = dataUserId;
+      if (authUid !== ownerUserId) {
+        const { data: sub } = await supabase
+          .from("sub_users")
+          .select("parent_user_id, ativo")
+          .eq("auth_user_id", authUid)
+          .maybeSingle();
+        if (sub?.ativo && sub.parent_user_id) {
+          ownerUserId = sub.parent_user_id;
+        } else {
+          // Not a sub-user — write into own account to satisfy RLS
+          ownerUserId = authUid;
+        }
+      }
+
       let imagem_url = editingId ? imagePreview : "";
       if (imageFile) imagem_url = await uploadImage(imageFile);
 
@@ -251,7 +276,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
         toast({ title: "Promoção atualizada!" });
       } else {
         const { error } = await supabase.from("promocoes").insert({
-          user_id: dataUserId,
+          user_id: ownerUserId,
           imagem_url,
           banner_l_url,
           botao_url,
