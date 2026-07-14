@@ -16,6 +16,9 @@ function SlugRedirect({ template }: { template: string }) {
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
+import InlineNotification from "@/components/InlineNotification";
+import { initGlobalNotifications } from "@/lib/notify";
+initGlobalNotifications();
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -157,7 +160,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner toastOptions={{ style: { background: "#a5d121", color: "#0c0d0d", border: "none", borderRadius: 9999, fontWeight: 700 } }} />
+      <InlineNotification mode="fixed" />
       <LayoutVersionGuard />
       <AuthProvider>
         <BrowserRouter>
