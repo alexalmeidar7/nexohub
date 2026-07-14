@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         programas: progsRes.data || [],
         testemunhais: testRes.data || [],
         apresentadores: aprsRes.data || [],
-        tela_promo_config: settingsRes.data?.cenario_config?.tela_promo_bg || null,
+        tela_promo_config: telaPromoConfig,
         weather_city: settingsRes.data?.weather_city || null,
         weather_lat: settingsRes.data?.weather_lat ?? null,
         weather_lon: settingsRes.data?.weather_lon ?? null,
