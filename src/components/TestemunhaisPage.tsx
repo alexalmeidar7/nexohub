@@ -571,7 +571,6 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                     const dias = diasRestantes(item.data_fim);
                     const expiring = dias <= 3;
                     const expired = dias < 0;
-                    const programaImg = item.programa?.thumb || item.programa?.capa || item.imagem_url || "";
                     return (
                       <tr
                         key={item.id}
@@ -581,38 +580,13 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
                           borderTop: idx === 0 ? "none" : `1px solid ${CARD_BG}`,
                         }}
                       >
-                        {/* PROGRAMA (nome em cima, imagem embaixo) */}
+                        {/* PROGRAMA (apenas nome) */}
                         <td style={{ padding: "14px 16px", verticalAlign: "top", minWidth: 180 }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>
-                              {item.programa?.nome || "Sem programa"}
-                            </span>
-                            {programaImg ? (
-                              <img
-                                src={programaImg}
-                                alt={item.programa?.nome || ""}
-                                style={{
-                                  width: 96,
-                                  height: 54,
-                                  borderRadius: 10,
-                                  objectFit: "cover",
-                                  border: `1px solid ${CARD_BG}`,
-                                  background: CARD_BG,
-                                }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: 96, height: 54, borderRadius: 10,
-                                  background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center",
-                                  color: "#94A3B8", fontSize: 10, fontWeight: 700, letterSpacing: 1,
-                                }}
-                              >
-                                SEM IMAGEM
-                              </div>
-                            )}
-                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.2 }}>
+                            {item.programa?.nome || "Sem programa"}
+                          </span>
                         </td>
+
 
                         {/* VALIDADE (data + dias) */}
                         <td style={{ padding: "14px 16px", verticalAlign: "top", whiteSpace: "nowrap" }}>
