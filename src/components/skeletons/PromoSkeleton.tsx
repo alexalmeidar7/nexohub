@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PromoSkeleton() {
   return (
-    <div className="min-h-screen p-8 flex flex-col items-center" style={{ background: "url('/images/kiosk-bg.png') center center / cover no-repeat fixed", backgroundColor: "#000" }}>
+    <div className="min-h-screen p-8 flex flex-col items-center" style={{ backgroundColor: "#0a0a0a" }}>
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
         {/* Header skeleton */}
         <div className="flex justify-between items-center w-full px-2">
