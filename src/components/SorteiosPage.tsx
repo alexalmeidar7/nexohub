@@ -132,7 +132,7 @@ export default function SorteiosPage() {
     const [p, s, o] = await Promise.all([
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
-      supabase.from("ouvintes").select("id, nome, telefone, cidade").order("nome"),
+      supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
