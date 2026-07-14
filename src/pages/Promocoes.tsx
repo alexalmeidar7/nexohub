@@ -93,6 +93,7 @@ export default function PromocoesKiosk() {
   const [coverIndex, setCoverIndex] = useState<number | null>(null);
   const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
   const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
+  const [weatherInfo, setWeatherInfo] = useState<{ city: string | null; lat: number | null; lon: number | null }>({ city: null, lat: null, lon: null });
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
