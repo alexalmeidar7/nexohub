@@ -270,6 +270,13 @@ interface Participante {
   obrigatorio?: boolean;
 }
 
+export type ExcecaoAcao = "skip" | "substituir" | "automatico" | "manter";
+export interface EventoExcecao {
+  data: string; // YYYY-MM-DD
+  acao: ExcecaoAcao;
+  programa_id?: string | null;
+}
+
 interface Evento {
   id: string;
   programa_id: string;
@@ -288,6 +295,7 @@ interface Evento {
   edicao_concluida?: boolean;
   horario_gravacao?: string;
   horario_gravacao_fim?: string;
+  excecoes?: EventoExcecao[];
   programa?: Programa;
   participantes?: Participante[];
 }
