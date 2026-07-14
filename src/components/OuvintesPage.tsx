@@ -611,6 +611,23 @@ export default function OuvintesPage() {
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      {(() => {
+                        const isBot = o.origem_cadastro === "chatbot";
+                        return (
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            padding: "4px 10px", borderRadius: 999,
+                            background: isBot ? "#25D36622" : CARD_BG,
+                            color: isBot ? "#128C7E" : DARK,
+                            fontSize: 10, fontWeight: 800, letterSpacing: 0.6, textTransform: "uppercase",
+                          }}>
+                            {isBot ? <MessageCircle size={11} /> : <UserIcon size={11} />}
+                            {isBot ? "Chatbot" : "Manual"}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td style={{ padding: "12px 14px", fontWeight: 700 }}>{o.nome}</td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
                     <td style={{ padding: "12px 14px" }}>{o.telefone || "—"}</td>
