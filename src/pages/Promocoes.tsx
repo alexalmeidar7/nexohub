@@ -66,6 +66,10 @@ function renderBoldMarkdown(text: string) {
   );
 }
 
+function colorMix(color: string, amount: number, fallback: string) {
+  return `color-mix(in srgb, ${color || fallback} ${amount}%, transparent)`;
+}
+
 export default function PromocoesKiosk() {
   const { userSlug } = useParams<{ userSlug?: string }>();
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
@@ -165,6 +169,16 @@ export default function PromocoesKiosk() {
   scrollSpeedRef.current = scrollSpeed;
   const bannerTimerRef = useRef(0);
   const [bannerProgress, setBannerProgress] = useState(0);
+  const promoAccentGradient = `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`;
+  const promoAccentGradientReverse = `linear-gradient(270deg, ${telaPromoConfig.btn_color_b} 0%, ${telaPromoConfig.btn_color_a} 100%)`;
+  const promoDarkGradient = `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, color-mix(in srgb, ${telaPromoConfig.btn_color_b} 35%, black) 100%)`;
+  const promoThemeVars = {
+    "--promo-btn-a": telaPromoConfig.btn_color_a,
+    "--promo-btn-b": telaPromoConfig.btn_color_b,
+    "--promo-text": telaPromoConfig.btn_text_color,
+    "--promo-border": telaPromoConfig.card_border_color,
+    "--promo-header": telaPromoConfig.header_text_color,
+  } as React.CSSProperties;
 
   // Persist font size
   useEffect(() => {
@@ -810,23 +824,23 @@ export default function PromocoesKiosk() {
   }
 
   return (
-    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), color: telaPromoConfig.header_text_color }}>
+    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
         .promo-scroll::-webkit-scrollbar{width:10px}
-        .promo-scroll::-webkit-scrollbar-track{background:var(--layout-accent-color, #a60101);border-radius:5px}
-        .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
-        .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
-        .promo-scroll{scrollbar-width:thin;scrollbar-color:white var(--layout-accent-color, #a60101)}
-        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
+        .promo-scroll::-webkit-scrollbar-track{background:var(--promo-btn-a);border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-thumb{background:var(--promo-border);border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:var(--promo-border);border-radius:2px}
+        .promo-scroll{scrollbar-width:thin;scrollbar-color:var(--promo-border) var(--promo-btn-a)}
+        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px var(--promo-border)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--promo-border) 20%, transparent)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
         @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
-        @keyframes audience-glow-red{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.35),0 0 12px rgba(215,13,14,.55)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.35),0 0 22px rgba(255,60,60,.95)}}
-        @keyframes audience-glow-white{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.15),0 0 12px rgba(255,255,255,.55)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.15),0 0 22px rgba(255,255,255,.95)}}
+        @keyframes audience-glow-red{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.35),0 0 12px color-mix(in srgb,var(--promo-btn-b) 55%, transparent)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.35),0 0 22px color-mix(in srgb,var(--promo-btn-b) 95%, transparent)}}
+        @keyframes audience-glow-white{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.15),0 0 12px color-mix(in srgb,var(--promo-border) 55%, transparent)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.15),0 0 22px color-mix(in srgb,var(--promo-border) 95%, transparent)}}
         @keyframes audience-crown{0%,100%{transform:translateY(-50%) rotate(-8deg) scale(1)}50%{transform:translateY(-70%) rotate(8deg) scale(1.15)}}
         @keyframes audience-confetti{0%{transform:translateY(-6px) rotate(0);opacity:0}20%{opacity:1}100%{transform:translateY(28px) rotate(360deg);opacity:0}}
-        .audience-winner-stripes{background-image:linear-gradient(115deg,rgba(255,255,255,.28) 0 12px,transparent 12px 24px);background-size:40px 100%;animation:audience-shimmer 1.1s linear infinite}
+        .audience-winner-stripes{background-image:linear-gradient(115deg,color-mix(in srgb,var(--promo-text) 28%, transparent) 0 12px,transparent 12px 24px);background-size:40px 100%;animation:audience-shimmer 1.1s linear infinite}
         .audience-winner-red{animation:audience-glow-red 1.4s ease-in-out infinite}
         .audience-winner-white{animation:audience-glow-white 1.4s ease-in-out infinite}
         .audience-crown{animation:audience-crown 1.2s ease-in-out infinite;transform-origin:center}
@@ -838,7 +852,7 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <Radio size={16} style={{ color: "#ff0000" }} className="animate-pulse" />
+            <Radio size={16} style={{ color: telaPromoConfig.btn_color_b, filter: `drop-shadow(0 0 8px ${colorMix(telaPromoConfig.btn_color_b, 70, "#ffffff")})` }} className="animate-pulse" />
 
             {/* Presenter photo - ao lado do ícone de ao vivo */}
             {(() => {
@@ -849,11 +863,11 @@ export default function PromocoesKiosk() {
                 <div className="relative group/presenter">
                   <div
                     className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
-                    style={{ backgroundColor: "#d70d0e", boxShadow: "0 0 0 2px rgba(255,255,255,0.15)" }}
+                    style={{ background: promoAccentGradient, boxShadow: `0 0 0 2px ${colorMix(telaPromoConfig.card_border_color, 35, "#ffffff")}` }}
                   >
                     <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
                   </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10">
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
                     {presenter.nome}
                   </div>
                 </div>
@@ -861,19 +875,19 @@ export default function PromocoesKiosk() {
             })()}
 
             <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>No Ar</span>
-              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
+              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: telaPromoConfig.header_text_color }}>
                 {onAirProgram?.nome || "Programação Musical"}
               </p>
               {onAirProgram && (
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 60%, transparent)" }}>
+                  <span className="text-[10px]" style={{ color: colorMix(telaPromoConfig.header_text_color, 60, "#ffffff") }}>
                     {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
                   </span>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "var(--layout-accent-color, #d70d0e)" }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: telaPromoConfig.btn_color_a }}>
                     <div
                       className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "var(--layout-header-text, #ffffff)" }}
+                      style={{ width: `${onAirProgram.progress}%`, background: promoAccentGradient }}
                     />
                   </div>
                 </div>
@@ -886,25 +900,25 @@ export default function PromocoesKiosk() {
               <div className="flex items-center gap-3 ml-3">
                 {config.site && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.site}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.instagram && (
                   <Tooltip>
-                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.instagram}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.youtube && (
                   <Tooltip>
-                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.youtube}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: "var(--layout-header-text, #ffffff)" }} /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
@@ -913,19 +927,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
-                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneParticipacao}</span>
+                      <MessageCircle size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "var(--layout-header-text, #ffffff)" }} />
-                      <span className="font-bold text-[16px]" style={{ color: "var(--layout-header-text, #ffffff)" }}>{config.telefoneComercial}</span>
+                      <Phone size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "var(--layout-header-text, #ffffff)" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>telefone comercial</span>
                   </div>
                 )}
               </div>
@@ -965,35 +979,35 @@ export default function PromocoesKiosk() {
           const fmt = (n: number | null) => n === null ? "—" : n.toLocaleString("pt-BR");
           const audioWins = hasData && a > v;
           const videoWins = hasData && v > a;
-          const confettiColors = ["#d70d0e", "#ffffff", "#fbd837", "#000000"];
+          const confettiColors = [telaPromoConfig.btn_color_a, telaPromoConfig.btn_color_b, telaPromoConfig.card_border_color, telaPromoConfig.btn_text_color];
           return (
             <div className="w-full px-2 -mt-2 flex items-center gap-2">
               <div
                 className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
-                style={{ backgroundColor: "#0a0a0a", border: "1px solid rgba(255,255,255,0.08)" }}
+                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a"), border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 24, "#ffffff")}` }}
                 title="Audiência ao vivo: áudio × vídeo"
               >
-                {/* Preenchimento áudio (vermelho) */}
+                {/* Preenchimento áudio */}
                 <div
                   className={`absolute inset-y-0 left-0 transition-[width] duration-700 ease-out ${audioWins ? "audience-winner-red" : ""}`}
                   style={{
                     width: `${audioPct}%`,
-                    background: "linear-gradient(90deg, #d70d0e 0%, #a60101 100%)",
+                    background: promoAccentGradient,
                     boxShadow: "inset 0 0 12px rgba(0,0,0,0.35)",
                   }}
                 >
                   {audioWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" />}
                 </div>
-                {/* Preenchimento vídeo (branco/cinza) */}
+                {/* Preenchimento vídeo */}
                 <div
                   className={`absolute inset-y-0 right-0 transition-[width] duration-700 ease-out ${videoWins ? "audience-winner-white" : ""}`}
                   style={{
                     width: `${videoPct}%`,
-                    background: "linear-gradient(270deg, #ffffff 0%, #d4d4d4 100%)",
+                    background: promoAccentGradientReverse,
                     boxShadow: "inset 0 0 12px rgba(0,0,0,0.15)",
                   }}
                 >
-                  {videoWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" style={{ backgroundImage: "linear-gradient(115deg,rgba(0,0,0,.18) 0 12px,transparent 12px 24px)" }} />}
+                  {videoWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" />}
                 </div>
                 {/* Divisor central animado */}
                 <div
@@ -1021,27 +1035,27 @@ export default function PromocoesKiosk() {
                 )}
                 {/* Conteúdo à esquerda (áudio) */}
                 <div className="relative z-10 flex items-center gap-2 pl-2 pr-4 h-full">
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60 relative">
-                    <Headphones size={14} className="text-white" />
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center relative" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 55, "#000000"), color: telaPromoConfig.btn_text_color }}>
+                    <Headphones size={14} />
                     {audioWins && (
-                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: "#fbd837", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: telaPromoConfig.card_border_color, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
                     )}
                   </div>
-                  <div className="flex items-baseline gap-1.5 text-white px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}>
+                  <div className="flex items-baseline gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 62, "#000000"), color: telaPromoConfig.btn_text_color, backdropFilter: "blur(4px)" }}>
                     <span className="font-black text-sm leading-none tabular-nums">{fmt(audioCount)}</span>
                     <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Áudio</span>
                   </div>
                 </div>
                 {/* Conteúdo à direita (vídeo) */}
                 <div className="relative z-10 flex items-center gap-2 pr-2 pl-4 h-full ml-auto">
-                  <div className="flex items-baseline gap-1.5 text-white px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}>
+                  <div className="flex items-baseline gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 62, "#000000"), color: telaPromoConfig.btn_text_color, backdropFilter: "blur(4px)" }}>
                     <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Vídeo</span>
                     <span className="font-black text-sm leading-none tabular-nums">{fmt(videoCount)}</span>
                   </div>
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center bg-black/60 relative">
-                    <MonitorPlay size={14} className="text-white" />
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center relative" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_b, 55, "#000000"), color: telaPromoConfig.btn_text_color }}>
+                    <MonitorPlay size={14} />
                     {videoWins && (
-                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: "#fbd837", filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: telaPromoConfig.card_border_color, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
                     )}
                   </div>
                 </div>
@@ -1054,12 +1068,13 @@ export default function PromocoesKiosk() {
                       onClick={() => setAudienceDetailsOpen(true)}
                       className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
                       style={{
-                        background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)",
-                        border: "1px solid rgba(255,255,255,0.15)",
+                        background: promoDarkGradient,
+                        border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}`,
+                        color: telaPromoConfig.btn_text_color,
                       }}
                     >
-                      <Users size={14} className="text-white" />
-                      <div className="flex items-baseline gap-1 text-white">
+                      <Users size={14} />
+                      <div className="flex items-baseline gap-1">
                         <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
                         <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
                       </div>
@@ -1068,7 +1083,7 @@ export default function PromocoesKiosk() {
                   <TooltipContent
                     side="bottom"
                     className="border border-white/15 p-0 overflow-hidden"
-                    style={{ backgroundColor: "#000", color: "#fff" }}
+                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color, borderColor: colorMix(telaPromoConfig.card_border_color, 32, "#ffffff") }}
                   >
                     {peakAudience ? (() => {
                       const d = new Date(peakAudience.timestamp);
@@ -1076,13 +1091,13 @@ export default function PromocoesKiosk() {
                       const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
                       return (
                         <div className="min-w-[220px]">
-                          <div className="flex items-center gap-2 px-3 py-2 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.55), transparent)" }}>
-                            <Trophy size={16} style={{ color: "#ffffff" }} />
-                            <span className="text-[11px] font-black uppercase tracking-wider text-white">Melhor audiência do dia</span>
+                          <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ background: promoAccentGradient, borderColor: colorMix(telaPromoConfig.card_border_color, 24, "#ffffff") }}>
+                            <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
                           </div>
                           <div className="px-3 py-2.5 space-y-1.5">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-2xl font-black tabular-nums leading-none" style={{ color: telaPromoConfig.btn_text_color }}>{peakAudience.total.toLocaleString("pt-BR")}</span>
                               <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
                             </div>
                             <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
@@ -1095,7 +1110,7 @@ export default function PromocoesKiosk() {
                               type="button"
                               onClick={() => setAudienceDetailsOpen(true)}
                               className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
-                              style={{ background: "linear-gradient(135deg, #d70d0e 0%, #7a0708 100%)", color: "#ffffff", border: "1px solid rgba(255,255,255,0.2)" }}
+                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color, border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}` }}
                             >
                               Ver detalhes
                             </button>
@@ -1105,7 +1120,7 @@ export default function PromocoesKiosk() {
                       );
                     })() : (
                       <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
-                        <Trophy size={14} style={{ color: "#d70d0e" }} />
+                        <Trophy size={14} style={{ color: telaPromoConfig.btn_color_b }} />
                         <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
                       </div>
                     )}
@@ -1192,7 +1207,7 @@ export default function PromocoesKiosk() {
                   onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
                   title="Citações"
                 >
-                  <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white bg-black/70 backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg">
+                    <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
                     Citações
                   </div>
                   <div
@@ -1285,7 +1300,7 @@ export default function PromocoesKiosk() {
                         </div>
                       )}
                       {onAirProgram?.nome === prog.nome && (
-                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
+                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}>
                           No Ar
                         </span>
                       )}

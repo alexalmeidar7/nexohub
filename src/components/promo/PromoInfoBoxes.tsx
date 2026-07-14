@@ -25,14 +25,22 @@ const CARD_SHADOW = "0 4px 20px rgba(0,0,0,0.35)";
 const ACCENT = "#d70d0e";
 const TEXT = "#ffffff";
 const MUTED = "rgba(255,255,255,0.62)";
+const PROMO_ACCENT_A = "var(--promo-btn-a, #1a1a1a)";
+const PROMO_ACCENT_B = "var(--promo-btn-b, #d70d0e)";
+const PROMO_TEXT = "var(--promo-text, #ffffff)";
+const PROMO_BORDER = "var(--promo-border, #ffffff)";
+const PROMO_HEADER = "var(--promo-header, #ffffff)";
+const PROMO_CARD_BG = `linear-gradient(160deg, color-mix(in srgb, ${PROMO_ACCENT_A} 58%, black) 0%, color-mix(in srgb, ${PROMO_ACCENT_B} 32%, black) 100%)`;
+const PROMO_ACCENT_GRADIENT = `linear-gradient(135deg, ${PROMO_ACCENT_A}, ${PROMO_ACCENT_B})`;
+const PROMO_MUTED = `color-mix(in srgb, ${PROMO_HEADER} 62%, transparent)`;
 
 const cardStyle: React.CSSProperties = {
-  background: CARD_BG,
-  border: CARD_BORDER,
+  background: PROMO_CARD_BG,
+  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 18%, transparent)`,
   boxShadow: CARD_SHADOW,
   borderRadius: 14,
   padding: "10px 14px",
-  color: TEXT,
+  color: PROMO_TEXT,
   height: 148,
   display: "flex",
   flexDirection: "column",
@@ -46,7 +54,7 @@ const titleStyle: React.CSSProperties = {
   letterSpacing: 2,
   fontWeight: 800,
   textTransform: "uppercase",
-  color: "rgba(255,255,255,0.75)",
+  color: `color-mix(in srgb, ${PROMO_HEADER} 75%, transparent)`,
   fontFamily: "'Montserrat', sans-serif",
   display: "flex",
   alignItems: "center",
@@ -56,14 +64,14 @@ const titleStyle: React.CSSProperties = {
 // ================= WEATHER =================
 function weatherIcon(code: number, size = 26) {
   const c = code;
-  const cls = { color: TEXT } as React.CSSProperties;
-  if (c === 0 || c === 1) return <Sun size={size} style={{ ...cls, color: "#FFD34D" }} />;
+  const cls = { color: PROMO_TEXT } as React.CSSProperties;
+  if (c === 0 || c === 1) return <Sun size={size} style={{ ...cls, color: PROMO_BORDER }} />;
   if (c <= 3) return <Cloud size={size} style={cls} />;
   if (c === 45 || c === 48) return <Wind size={size} style={cls} />;
-  if (c >= 51 && c <= 67) return <CloudRain size={size} style={{ ...cls, color: "#7EC8FF" }} />;
+  if (c >= 51 && c <= 67) return <CloudRain size={size} style={{ ...cls, color: PROMO_ACCENT_B }} />;
   if (c >= 71 && c <= 77) return <CloudSnow size={size} style={cls} />;
-  if (c >= 80 && c <= 82) return <CloudRain size={size} style={{ ...cls, color: "#7EC8FF" }} />;
-  if (c >= 95) return <CloudLightning size={size} style={{ ...cls, color: "#FFD34D" }} />;
+  if (c >= 80 && c <= 82) return <CloudRain size={size} style={{ ...cls, color: PROMO_ACCENT_B }} />;
+  if (c >= 95) return <CloudLightning size={size} style={{ ...cls, color: PROMO_BORDER }} />;
   return <Cloud size={size} style={cls} />;
 }
 
@@ -125,11 +133,11 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
         <Cloud size={11} /> Previsão do Tempo
       </div>
       {!weatherCity ? (
-        <div style={{ fontSize: 11, color: MUTED, marginTop: 8 }}>
+        <div style={{ fontSize: 11, color: PROMO_MUTED, marginTop: 8 }}>
           Configure a "cidade tempo" em Previsão do Tempo.
         </div>
       ) : loading && !data ? (
-        <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
+        <div className="flex items-center gap-1" style={{ fontSize: 11, color: PROMO_MUTED }}>
           <Loader2 size={12} className="animate-spin" /> Carregando…
         </div>
       ) : data ? (
@@ -141,20 +149,20 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                 <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
                   {temp != null ? Math.round(temp) : "—"}°<span style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>C</span>
                 </div>
-                <div className="truncate" style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>
+                <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, marginTop: 2 }}>
                   {weatherLabel(code ?? 0)}
                 </div>
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: TEXT, opacity: 0.9 }} className="truncate max-w-[110px]">
+              <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[110px]">
                 <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
                 {weatherCity}
               </div>
-              <div style={{ fontSize: 9, color: MUTED, marginTop: 1 }}>
+              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>
                 {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
               </div>
-              <div style={{ fontSize: 9, color: MUTED }}>💧 {rain}%</div>
+              <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
             </div>
           </div>
           <div className="flex items-center justify-between mt-auto">
@@ -163,11 +171,11 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
               onClick={() => setDayIdx((v) => Math.max(0, v - 1))}
               disabled={idx === 0}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.08)", opacity: idx === 0 ? 0.35 : 1 }}
+              style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx === 0 ? 0.35 : 1 }}
             >
               <ChevronLeft size={13} />
             </button>
-            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: MUTED }}>
+            <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: PROMO_MUTED }}>
               {label}
             </span>
             <button
@@ -175,14 +183,14 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
               onClick={() => setDayIdx((v) => Math.min((days.length || 1) - 1, v + 1))}
               disabled={idx >= days.length - 1}
               className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.08)", opacity: idx >= days.length - 1 ? 0.35 : 1 }}
+              style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx >= days.length - 1 ? 0.35 : 1 }}
             >
               <ChevronRight size={13} />
             </button>
           </div>
         </>
       ) : (
-        <div style={{ fontSize: 11, color: MUTED }}>Sem dados.</div>
+        <div style={{ fontSize: 11, color: PROMO_MUTED }}>Sem dados.</div>
       )}
     </div>
   );
@@ -263,23 +271,23 @@ function DatasBox() {
       style={{
         ...cardStyle,
         ...(isToday ? {
-          background: "linear-gradient(160deg, rgba(215,13,14,0.35) 0%, rgba(0,0,0,0.85) 100%)",
-          border: "1px solid rgba(255,211,77,0.55)",
-          boxShadow: "0 0 24px rgba(255,211,77,0.25), 0 4px 20px rgba(0,0,0,0.4)",
+          background: PROMO_ACCENT_GRADIENT,
+          border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)`,
+          boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent), 0 4px 20px rgba(0,0,0,0.4)`,
         } : {}),
       }}
     >
       <div style={titleStyle} className="justify-between">
         <span className="flex items-center gap-1.5">
-          <Star size={11} style={{ color: "#FFD34D" }} /> Datas Comemorativas
+          <Star size={11} style={{ color: PROMO_BORDER }} /> Datas Comemorativas
         </span>
         {isToday && (
           <span
             style={{
               fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
               padding: "2px 7px", borderRadius: 999,
-              background: "#FFD34D", color: "#000",
-              boxShadow: "0 0 10px rgba(255,211,77,0.7)",
+              background: PROMO_BORDER, color: PROMO_ACCENT_A,
+              boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
               animation: "promo-datas-pulse 1.4s ease-in-out infinite",
             }}
           >
@@ -299,10 +307,10 @@ function DatasBox() {
               style={{
                 width: 42, height: 42,
                 background: isToday
-                  ? "linear-gradient(135deg, #FFD34D, #E08900)"
-                  : "linear-gradient(135deg, #d70d0e, #7a0505)",
-                color: isToday ? "#000" : TEXT,
-                boxShadow: isToday ? "0 0 12px rgba(255,211,77,0.6)" : "none",
+                  ? `linear-gradient(135deg, ${PROMO_BORDER}, ${PROMO_ACCENT_B})`
+                  : PROMO_ACCENT_GRADIENT,
+                color: PROMO_TEXT,
+                boxShadow: isToday ? `0 0 12px color-mix(in srgb, ${PROMO_BORDER} 60%, transparent)` : "none",
               }}
             >
               <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
@@ -314,7 +322,7 @@ function DatasBox() {
               <div
                 style={{
                   fontSize: 12, fontWeight: 800, lineHeight: 1.2,
-                  color: isToday ? "#FFD34D" : TEXT,
+                  color: isToday ? PROMO_BORDER : PROMO_TEXT,
                   display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                   overflow: "hidden",
                 }}
@@ -322,7 +330,7 @@ function DatasBox() {
               >
                 {cur.nome}
               </div>
-              <div style={{ fontSize: 9, color: MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>
+              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>
                 {isToday ? "Comemora-se hoje" : `${cur.tag} · ${format(cur.date, "EEE", { locale: ptBR }).replace(".", "")}`}
               </div>
             </div>
@@ -331,14 +339,14 @@ function DatasBox() {
             {items.slice(0, 8).map((_, i) => (
               <span key={i} style={{
                 width: 4, height: 4, borderRadius: 999,
-                background: i === idx % 8 ? ACCENT : "rgba(255,255,255,0.2)",
+                background: i === idx % 8 ? PROMO_ACCENT_B : `color-mix(in srgb, ${PROMO_BORDER} 20%, transparent)`,
                 transition: "background 300ms ease",
               }} />
             ))}
           </div>
         </>
       ) : (
-        <div style={{ fontSize: 11, color: MUTED }}>Sem datas.</div>
+        <div style={{ fontSize: 11, color: PROMO_MUTED }}>Sem datas.</div>
       )}
       <style>{`
         @keyframes promo-datas-pulse {
