@@ -9,7 +9,13 @@ export function usePageTitle(pageName: string) {
   const { user } = useAuth();
   const [empresaNome, setEmpresaNome] = useState(cachedEmpresaNome);
 
+  // Public/anonymous pages pass an empty pageName. In that case we must NOT
+  // reuse a cached authenticated user's name or favicon — the calling page
+  // is responsible for setting title/favicon based on the URL slug.
+  const isPublic = !pageName;
+
   useEffect(() => {
+    if (isPublic) return;
     if (cachedEmpresaNome) {
       setEmpresaNome(cachedEmpresaNome);
       if (cachedEmpresaLogo) setFavicon(cachedEmpresaLogo);
@@ -32,15 +38,16 @@ export function usePageTitle(pageName: string) {
           setFavicon(logo);
         }
       });
-  }, [user]);
+  }, [user, isPublic]);
 
   useEffect(() => {
+    if (isPublic) return;
     const prefix = empresaNome || "NexoHub";
     document.title = `${prefix} - ${pageName}`;
-  }, [empresaNome, pageName]);
+  }, [empresaNome, pageName, isPublic]);
 }
 
-function setFavicon(url: string) {
+export function setFavicon(url: string) {
   let link = document.querySelector<HTMLLinkElement>("link[rel~='icon']");
   if (!link) {
     link = document.createElement("link");

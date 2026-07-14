@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, setFavicon } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
@@ -220,7 +220,10 @@ export default function PromocoesKiosk() {
       .replace(/\s+/g, " ")
       .trim();
     document.title = nome ? `${nome} - Promoções` : "Promoções";
-  }, [isPublicMode, config?.nome]);
+    // Favicon deve refletir SEMPRE o usuário da rota (slug), nunca o cache
+    // de um usuário autenticado anteriormente no mesmo navegador.
+    setFavicon(config?.logo || "/favicon.ico");
+  }, [isPublicMode, config?.nome, config?.logo]);
 
 
 
