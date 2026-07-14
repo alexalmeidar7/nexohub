@@ -1455,10 +1455,8 @@ export default function AgendaPage() {
                     variant="outline"
                     className="h-9 w-9 p-0 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
                     onClick={() => { 
-                      if (confirm("Tem certeza que deseja excluir este evento?")) {
-                        setViewEventDialogOpen(false); 
-                        handleDelete(viewingEvent.id); 
-                      }
+                      setViewEventDialogOpen(false); 
+                      requestDelete(viewingEvent, viewingOccurrenceDate || viewingEvent.data);
                     }}
                   >
                     <Trash2 size={14} />
