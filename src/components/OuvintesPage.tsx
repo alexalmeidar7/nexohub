@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Users } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 
@@ -19,6 +19,7 @@ interface Ouvinte {
   renda: string | null;
   pontuacao: number | null;
   sexo: string | null;
+  origem_cadastro: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
@@ -580,7 +581,7 @@ export default function OuvintesPage() {
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                  {["Data", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
+                  {["Data", "Origem", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
                     <th
                       key={h}
                       style={{
@@ -609,6 +610,23 @@ export default function OuvintesPage() {
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      {(() => {
+                        const isBot = o.origem_cadastro === "chatbot";
+                        return (
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 5,
+                            padding: "4px 10px", borderRadius: 999,
+                            background: isBot ? "#25D36622" : CARD_BG,
+                            color: isBot ? "#128C7E" : DARK,
+                            fontSize: 10, fontWeight: 800, letterSpacing: 0.6, textTransform: "uppercase",
+                          }}>
+                            {isBot ? <MessageCircle size={11} /> : <UserIcon size={11} />}
+                            {isBot ? "Chatbot" : "Manual"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: "12px 14px", fontWeight: 700 }}>{o.nome}</td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
