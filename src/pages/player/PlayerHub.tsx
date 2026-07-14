@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useSearchParams } from "react-router-dom";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
