@@ -219,6 +219,11 @@ export default function PromocoesKiosk() {
         });
       }
       if (data.userId) setAudienceUserId(data.userId);
+      setWeatherInfo({
+        city: data.weather_city || null,
+        lat: data.weather_lat != null ? Number(data.weather_lat) : null,
+        lon: data.weather_lon != null ? Number(data.weather_lon) : null,
+      });
 
       const today = new Date().toISOString().split("T")[0];
       const activePromos = (data.promocoes || []).filter((p: any) => 
