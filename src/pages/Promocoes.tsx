@@ -196,6 +196,16 @@ export default function PromocoesKiosk() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Public-mode title: always reflect the slug user's empresa name, never the
+  // authenticated user's cached name from usePageTitle.
+  useEffect(() => {
+    if (!isPublicMode) return;
+    const nome = (config?.nome || "").trim();
+    document.title = nome ? `${nome} - Promoções` : "Promoções";
+  }, [isPublicMode, config?.nome]);
+
+
+
   useEffect(() => {
     const loadPublic = async () => {
       if (!validSlug) return;
