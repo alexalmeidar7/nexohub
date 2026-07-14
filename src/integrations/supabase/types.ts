@@ -55,6 +55,7 @@ export type Database = {
           descricao: string | null
           edicao_concluida: boolean
           edicao_notas: string
+          excecoes: Json
           horario_gravacao: string | null
           horario_gravacao_fim: string | null
           id: string
@@ -76,6 +77,7 @@ export type Database = {
           descricao?: string | null
           edicao_concluida?: boolean
           edicao_notas?: string
+          excecoes?: Json
           horario_gravacao?: string | null
           horario_gravacao_fim?: string | null
           id?: string
@@ -97,6 +99,7 @@ export type Database = {
           descricao?: string | null
           edicao_concluida?: boolean
           edicao_notas?: string
+          excecoes?: Json
           horario_gravacao?: string | null
           horario_gravacao_fim?: string | null
           id?: string
