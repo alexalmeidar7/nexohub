@@ -214,7 +214,10 @@ export default function PromocoesKiosk() {
   // authenticated user's cached name from usePageTitle.
   useEffect(() => {
     if (!isPublicMode) return;
-    const nome = (config?.nome || "").trim();
+    const nome = (config?.nome || "")
+      .replace(/\s*[-–—]\s*promoç(ões|ao|ão)\s*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
     document.title = nome ? `${nome} - Promoções` : "Promoções";
   }, [isPublicMode, config?.nome]);
 
