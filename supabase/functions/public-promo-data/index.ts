@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
     // Check if this is a sub-user and if so, use the parent's data
     const { data: subUserData } = await supabase
       .from("sub_users")
-      .select("parent_user_id, ativo")
+      .select("parent_user_id, ativo, nome, email")
       .eq("auth_user_id", userId)
       .maybeSingle();
 
@@ -82,23 +82,40 @@ Deno.serve(async (req) => {
 
     const today = new Date().toISOString().split("T")[0];
 
-    const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes, ownSettingsRes] = await Promise.all([
+    const [empresaRes, promoRes, progsRes, testRes, aprsRes, settingsRes, ownSettingsRes, ownEmpresaRes] = await Promise.all([
       supabase.from("empresa_config").select("*").eq("user_id", finalUserId).maybeSingle(),
       supabase.from("promocoes").select("*").eq("user_id", finalUserId).order("data_inicio"),
       supabase.from("programas").select("*").eq("user_id", finalUserId).eq("ativo", true).ilike("estudio", "%fm%"),
       supabase.from("testemunhais").select("*").eq("user_id", finalUserId),
       supabase.from("apresentadores").select("*").eq("user_id", finalUserId).eq("ativo", true),
       supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").eq("user_id", finalUserId).maybeSingle(),
-      // Sub-user's own tela_promo config takes precedence over parent's, so each
-      // sub-user (e.g. Jornal FM under Positiva FM) can style their own promo screen.
+      // Sub-user's own tela_promo config and empresa name take precedence over
+      // parent's, so each sub-user (e.g. Jornal FM under Positiva FM) can brand
+      // its own promo screen and window title.
       userId !== finalUserId
         ? supabase.from("user_settings").select("cenario_config").eq("user_id", userId).maybeSingle()
+        : Promise.resolve({ data: null } as any),
+      userId !== finalUserId
+        ? supabase.from("empresa_config").select("nome, logo").eq("user_id", userId).maybeSingle()
         : Promise.resolve({ data: null } as any),
     ]);
 
     const ownTelaPromo = (ownSettingsRes as any)?.data?.cenario_config?.tela_promo_bg || null;
     const parentTelaPromo = settingsRes.data?.cenario_config?.tela_promo_bg || null;
     const telaPromoConfig = ownTelaPromo || parentTelaPromo;
+
+    // Merge empresa: keep parent's contact/streaming data, but override nome/logo
+    // with sub-user's own branding when available.
+    const ownEmpresa = (ownEmpresaRes as any)?.data || null;
+    const subUserNome = (subUserData as any)?.nome as string | undefined;
+    const empresa = empresaRes.data
+      ? {
+          ...empresaRes.data,
+          nome: ownEmpresa?.nome || subUserNome || empresaRes.data.nome,
+          logo: ownEmpresa?.logo || empresaRes.data.logo,
+        }
+      : (ownEmpresa || (subUserNome ? { nome: subUserNome } : null));
+
 
     return new Response(
       JSON.stringify({
