@@ -76,7 +76,7 @@ serve(async (req) => {
     const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
     const fields =
       "{incidents{type,geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,startTime,endTime,from,to,length,delay,roadNumbers,events{description,code,iconCategory}}}}";
-    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-BR&t=1111&timeValidityFilter=present&key=${TOMTOM_KEY}`;
+    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${TOMTOM_KEY}`;
 
     const r = await fetch(url);
     if (!r.ok) {
