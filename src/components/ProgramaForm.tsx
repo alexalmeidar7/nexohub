@@ -380,6 +380,8 @@ function GradeBody({ gradeSlots, diasSemana, diaAtual, currentTimeStr, getProgra
 export default function ProgramaForm() {
   const { user } = useAuth();
   const [nome, setNome] = useState("");
+  const nomeInputRef = useRef<HTMLInputElement>(null);
+  const nomeDraftRef = useRef("");
   const [apresentadorId, setApresentadorId] = useState("");
   const [apresentadoresIds, setApresentadoresIds] = useState<string[]>([]);
   const [selo, setSelo] = useState("");
@@ -486,6 +488,14 @@ export default function ProgramaForm() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    nomeDraftRef.current = nome;
+    const input = nomeInputRef.current;
+    if (input && document.activeElement !== input && input.value !== nome) {
+      input.value = nome;
+    }
+  }, [nome]);
+
   // Auto-scroll disabled per user request
 
   // Position the time needle using proportional tbody height
@@ -587,6 +597,8 @@ export default function ProgramaForm() {
   };
 
   const resetForm = () => {
+    nomeDraftRef.current = "";
+    if (nomeInputRef.current) nomeInputRef.current.value = "";
     setNome(""); setApresentadorId(""); setApresentadoresIds([]); setSelo(""); setCapa(""); setThumb(""); setDiasSemana([]); setHorarioInicio(""); setHorarioFim(""); setEstudio(""); setAtivo(true); setVariavel(false); setDataVariavel(undefined); setDescricao(""); setConflictMsg(""); setEditingId(null); setTipoPrograma(""); setClassificacaoEtaria("");
   };
 
@@ -604,7 +616,8 @@ export default function ProgramaForm() {
   };
 
   const handleAdd = async () => {
-    if (!nome.trim() || !user) return;
+    const nomeAtual = (nomeInputRef.current?.value ?? nomeDraftRef.current ?? nome).trim();
+    if (!nomeAtual || !user) return;
     if (!horarioInicio || !horarioFim) { setConflictMsg("Preencha o horário de início e fim."); return; }
     if (horarioInicio >= horarioFim) { setConflictMsg("O horário de início deve ser antes do fim."); return; }
     if (!estudio.trim()) { setConflictMsg("Informe o estúdio."); return; }
@@ -619,14 +632,14 @@ export default function ProgramaForm() {
       let targetId = editingId;
       if (editingId) {
         await supabase.from("programas").update({
-          nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
           apresentadores_ids: apresentadoresIds,
         } as any).eq("id", editingId);
       } else {
         const { data: inserted } = await supabase.from("programas").insert({
-          user_id: user.id, nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
+          user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: [dayOfWeek],
           horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
           variavel: true, data_variavel: dataStr, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
           apresentadores_ids: apresentadoresIds,
@@ -653,14 +666,14 @@ export default function ProgramaForm() {
 
     if (editingId) {
       await supabase.from("programas").update({
-        nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
+        nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         apresentadores_ids: apresentadoresIds,
       } as any).eq("id", editingId);
     } else {
       const { data: inserted } = await supabase.from("programas").insert({
-        user_id: user.id, nome: nome.trim(), apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
+        user_id: user.id, nome: nomeAtual, apresentador_id: apresentadoresIds[0] || apresentadorId || null, selo, dias_semana: diasSemana,
         horario_inicio: horarioInicio, horario_fim: horarioFim, estudio: estudio.trim(), ativo, descricao: descricao.trim(),
         variavel: false, data_variavel: null, classificacao_etaria: classificacaoEtaria || null, tipo_programa: tipoPrograma || null,
         apresentadores_ids: apresentadoresIds,
@@ -676,6 +689,8 @@ export default function ProgramaForm() {
   };
 
   const startEdit = (p: Programa) => {
+    nomeDraftRef.current = p.nome;
+    if (nomeInputRef.current) nomeInputRef.current.value = p.nome;
     setEditingId(p.id); setNome(p.nome); setApresentadorId(p.apresentadorId);
     setApresentadoresIds(p.apresentadoresIds?.length > 0 ? p.apresentadoresIds : (p.apresentadorId ? [p.apresentadorId] : []));
     setSelo(p.selo); setCapa(p.capa); setThumb(p.thumb);
@@ -961,7 +976,14 @@ export default function ProgramaForm() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <Field label="Nome do Programa" span="lg:col-span-2">
-            <input style={pillInput} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Digite o nome do programa" />
+            <input
+              ref={nomeInputRef}
+              style={pillInput}
+              defaultValue={nome}
+              onChange={(e) => { nomeDraftRef.current = e.target.value; }}
+              onBlur={(e) => setNome(e.target.value)}
+              placeholder="Digite o nome do programa"
+            />
           </Field>
 
           <Field label="Tipo do Programa">
