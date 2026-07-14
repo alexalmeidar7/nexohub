@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
+import { X, Map as MapIcon, Navigation } from "lucide-react";
 import {
   Cloud, CloudRain, Sun, CloudSnow, CloudLightning, Wind,
   ChevronLeft, ChevronRight, Star, MapPin, Settings, Car,
