@@ -289,7 +289,11 @@ function DatasBox() {
       </div>
       {cur ? (
         <>
-          <div className="flex items-center gap-3">
+          <div
+            key={idx}
+            className="flex items-center gap-3"
+            style={{ animation: "promo-datas-swap 480ms ease-out both" }}
+          >
             <div
               className="rounded-md flex flex-col items-center justify-center shrink-0"
               style={{
@@ -328,6 +332,7 @@ function DatasBox() {
               <span key={i} style={{
                 width: 4, height: 4, borderRadius: 999,
                 background: i === idx % 8 ? ACCENT : "rgba(255,255,255,0.2)",
+                transition: "background 300ms ease",
               }} />
             ))}
           </div>
@@ -339,6 +344,11 @@ function DatasBox() {
         @keyframes promo-datas-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,211,77,0.7); }
           50% { transform: scale(1.06); box-shadow: 0 0 18px rgba(255,211,77,1); }
+        }
+        @keyframes promo-datas-swap {
+          0%   { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+          60%  { opacity: 1; filter: blur(0); }
+          100% { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
       `}</style>
     </div>
