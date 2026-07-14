@@ -221,58 +221,55 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
         )}
         {items.map((item, idx) => {
           const isCidade = item.categoria === "cidade";
-          const accent = isCidade ? NEXO_CYAN : NEXO_LIME;
-          const accentText = isCidade ? "#FFFFFF" : NEXO_DARK;
+          const isFeriado = item.categoria === "feriado";
+          const RED = "#EF4444";
+          const accent = isFeriado ? RED : isCidade ? NEXO_CYAN : NEXO_LIME;
+          const accentText = isFeriado || isCidade ? "#FFFFFF" : NEXO_DARK;
+          const bg = isFeriado
+            ? `color-mix(in srgb, ${RED} 6%, #FFFFFF)`
+            : isCidade
+              ? `color-mix(in srgb, ${NEXO_CYAN} 5%, #FFFFFF)`
+              : `color-mix(in srgb, ${NEXO_LIME} 12%, #FFFFFF)`;
+          const border = isFeriado ? `${RED}40` : isCidade ? `${NEXO_CYAN}30` : `${NEXO_LIME}55`;
+          const tagColor = isFeriado ? RED : isCidade ? NEXO_CYAN : "#7A8B18";
+          const weekday = format(item.date, "EEEE", { locale: ptBR }).split("-")[0];
           return (
             <div
               key={idx}
-              className="p-2 rounded-lg flex items-center justify-between group transition-colors"
-              style={{
-                backgroundColor: isCidade
-                  ? `color-mix(in srgb, ${NEXO_CYAN} 5%, #FFFFFF)`
-                  : `color-mix(in srgb, ${NEXO_LIME} 12%, #FFFFFF)`,
-                border: `1px solid ${isCidade ? `${NEXO_CYAN}30` : `${NEXO_LIME}55`}`,
-              }}
+              className="p-2 rounded-lg flex items-center gap-3 group transition-colors"
+              style={{ backgroundColor: bg, border: `1px solid ${border}` }}
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className="w-10 h-10 rounded-md flex flex-col items-center justify-center shrink-0"
-                  style={{
-                    backgroundColor: accent,
-                    color: accentText,
-                  }}
+              <div
+                className="w-10 h-10 rounded-md flex flex-col items-center justify-center shrink-0"
+                style={{ backgroundColor: accent, color: accentText }}
+              >
+                <span className="text-[11px] font-black leading-none">{format(item.date, "dd")}</span>
+                <span className="text-[7px] font-bold uppercase tracking-tighter opacity-90">
+                  {format(item.date, "MMM", { locale: ptBR }).replace(".", "")}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className="text-[11px] font-bold truncate leading-tight"
+                  style={{ color: NEXO_DARK }}
+                  title={item.nome}
                 >
-                  <span className="text-[11px] font-black leading-none">{format(item.date, "dd")}</span>
-                  <span className="text-[7px] font-bold uppercase tracking-tighter opacity-90">
-                    {format(item.date, "MMM", { locale: ptBR }).replace(".", "")}
-                  </span>
-                </div>
-                <div className="min-w-0">
-                  <p
-                    className="text-[11px] font-bold truncate leading-tight"
-                    style={{ color: NEXO_DARK }}
-                    title={item.nome}
-                  >
-                    {item.nome}
-                  </p>
-                  <p
-                    className="text-[9px] font-semibold uppercase tracking-wider opacity-70"
-                    style={{ color: isCidade ? NEXO_CYAN : "#7A8B18" }}
+                  {item.nome}
+                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span
+                    className="text-[9px] font-semibold uppercase tracking-wider opacity-80"
+                    style={{ color: tagColor }}
                   >
                     {isCidade ? `Cidade · ${item.tag}` : item.tag}
-                  </p>
+                  </span>
+                  <span
+                    className="text-[9px] font-medium capitalize"
+                    style={{ color: "rgba(10, 37, 64, 0.55)" }}
+                  >
+                    · {weekday}
+                  </span>
                 </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span
-                  className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase"
-                  style={{
-                    backgroundColor: "rgba(10, 37, 64, 0.06)",
-                    color: "rgba(10, 37, 64, 0.55)",
-                  }}
-                >
-                  {format(item.date, "EEEE", { locale: ptBR }).split("-")[0]}
-                </span>
               </div>
             </div>
           );
