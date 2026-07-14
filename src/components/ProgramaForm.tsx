@@ -868,12 +868,8 @@ export default function ProgramaForm() {
     whiteSpace: "nowrap",
   };
 
-  const Field = ({ label, children, span = "" }: { label: React.ReactNode; children: React.ReactNode; span?: string }) => (
-    <div className={span}>
-      <label style={labelStyle}>{label}</label>
-      {children}
-    </div>
-  );
+  const Field = FieldStatic;
+
 
   const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number) => (
     <label
