@@ -19,6 +19,7 @@ interface Ouvinte {
   renda: string | null;
   pontuacao: number | null;
   sexo: string | null;
+  origem_cadastro: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
