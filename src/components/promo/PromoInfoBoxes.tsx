@@ -517,7 +517,7 @@ function CotacoesBox() {
 
   useEffect(() => {
     fetchIt();
-    const iv = setInterval(fetchIt, 2 * 60 * 1000);
+    const iv = setInterval(fetchIt, 10 * 60 * 1000);
     return () => clearInterval(iv);
   }, [fetchIt]);
 
