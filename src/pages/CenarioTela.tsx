@@ -1200,17 +1200,18 @@ export default function CenarioTela() {
         musicPollBusy = false;
       }, 4000);
     }
-    // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
+    // ─── 5. Same-tab polling — SCOPED to effectiveUserId ───
+    // Same rationale as (1): never read the legacy unscoped key.
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
-    if (isAuthenticated) {
+    if (isAuthenticated && SCOPED_DATA_KEY) {
       localPollInterval = setInterval(() => {
         try {
-          const raw = localStorage.getItem("masterview_music_data");
+          const raw = localStorage.getItem(SCOPED_DATA_KEY);
           if (!raw) return;
           const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
           const key = `${d.titulo || ""}|${d.artista || ""}`;
           if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-            const startRaw = localStorage.getItem("masterview_music_start");
+            const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
             const startTime = startRaw ? parseInt(startRaw, 10) : null;
             setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
           }
@@ -1221,6 +1222,7 @@ export default function CenarioTela() {
     return () => {
       destroyed = true;
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onSameTabMusic);
       if (realtimeCh) supabase.removeChannel(realtimeCh);
       if (fallbackInterval) clearInterval(fallbackInterval);
       if (localPollInterval) clearInterval(localPollInterval);
