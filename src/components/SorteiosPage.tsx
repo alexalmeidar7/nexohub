@@ -112,7 +112,9 @@ interface Ouvinte {
   nome: string;
   telefone: string | null;
   cidade: string | null;
+  pontuacao: number | null;
 }
+
 
 type Tab = "premios" | "sorteio" | "entrega";
 
