@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams, useSearchParams } from "react-router-dom";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
@@ -18,6 +18,7 @@ export default function PlayerHub() {
   useLayoutColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams] = useSearchParams();
   const skipToHome = searchParams.get("step") === "home";
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");

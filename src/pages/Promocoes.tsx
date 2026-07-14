@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import { usePageTitle, setFavicon } from "@/hooks/usePageTitle";
+import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
@@ -77,6 +77,7 @@ export default function PromocoesKiosk() {
   // In public mode we don't want the auth user's empresa name leaking into
   // the title, so pass empty and override via effect below using config.nome.
   usePageTitle(isPublicMode ? "" : "Promoções");
+  usePublicHead(isPublicMode ? validSlug : null, "Promoções");
   useLayoutColors();
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
@@ -211,18 +212,15 @@ export default function PromocoesKiosk() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // Public-mode title: always reflect the slug user's empresa name, never the
-  // authenticated user's cached name from usePageTitle.
+  // Public-mode title + favicon: refine using the empresa data fully loaded
+  // for this page (usePublicHead already ran a slug-based pass on mount).
   useEffect(() => {
     if (!isPublicMode) return;
     const nome = (config?.nome || "")
       .replace(/\s*[-–—]\s*promoç(ões|ao|ão)\s*$/i, "")
       .replace(/\s+/g, " ")
       .trim();
-    document.title = nome ? `${nome} - Promoções` : "Promoções";
-    // Favicon deve refletir SEMPRE o usuário da rota (slug), nunca o cache
-    // de um usuário autenticado anteriormente no mesmo navegador.
-    setFavicon(config?.logo || "/favicon.ico");
+    applyPublicHead(nome || null, config?.logo || null, "Promoções");
   }, [isPublicMode, config?.nome, config?.logo]);
 
 

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
+import { usePublicHead } from "@/hooks/usePageTitle";
 
 interface Channel {
   id: string;
@@ -28,6 +29,7 @@ export default function PlayerCatalog() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { userSlug } = useParams();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Catálogo");
   const [searchParams] = useSearchParams();
   const catalogName = searchParams.get("catalog") || "";
   const activeVideoId = searchParams.get("vid") || "";
