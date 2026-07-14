@@ -101,9 +101,10 @@ export default function PromocoesKiosk() {
   const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
   const [audioCount, setAudioCount] = useState<number | null>(null);
   const [videoCount, setVideoCount] = useState<number | null>(null);
+  const peakStorageKey = `promo-peak-audience:${userSlug || "self"}`;
   const [peakAudience, setPeakAudience] = useState<{ total: number; programa: string; locutor: string; timestamp: string; date: string } | null>(() => {
     try {
-      const raw = localStorage.getItem("promo-peak-audience");
+      const raw = localStorage.getItem(peakStorageKey);
       if (!raw) return null;
       const p = JSON.parse(raw);
       const today = new Date().toISOString().split("T")[0];
@@ -460,7 +461,7 @@ export default function PromocoesKiosk() {
         timestamp: new Date().toISOString(),
         date: today,
       };
-      try { localStorage.setItem("promo-peak-audience", JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(peakStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
   }, [audioCount, videoCount, onAirProgram, apresentadores]);
