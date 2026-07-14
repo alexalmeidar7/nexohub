@@ -160,7 +160,8 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
+      <Sonner toastOptions={{ style: { background: "#a5d121", color: "#0c0d0d", border: "none", borderRadius: 9999, fontWeight: 700 } }} />
+      <InlineNotification mode="fixed" />
       <LayoutVersionGuard />
       <AuthProvider>
         <BrowserRouter>
