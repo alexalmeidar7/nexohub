@@ -33,7 +33,7 @@ const cardStyle: React.CSSProperties = {
   borderRadius: 14,
   padding: "10px 14px",
   color: TEXT,
-  minHeight: 92,
+  height: 148,
   display: "flex",
   flexDirection: "column",
   gap: 6,
