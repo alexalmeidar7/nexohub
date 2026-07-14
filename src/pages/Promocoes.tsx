@@ -220,7 +220,10 @@ export default function PromocoesKiosk() {
       .replace(/\s+/g, " ")
       .trim();
     document.title = nome ? `${nome} - Promoções` : "Promoções";
-  }, [isPublicMode, config?.nome]);
+    // Favicon deve refletir SEMPRE o usuário da rota (slug), nunca o cache
+    // de um usuário autenticado anteriormente no mesmo navegador.
+    setFavicon(config?.logo || "/favicon.ico");
+  }, [isPublicMode, config?.nome, config?.logo]);
 
 
 
