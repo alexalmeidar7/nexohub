@@ -1353,6 +1353,126 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
+
+      {/* Diálogo: escolha ao excluir evento recorrente */}
+      <Dialog open={!!deleteChoice} onOpenChange={(o) => { if (!o) setDeleteChoice(null); }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
+          {deleteChoice && (
+            <div className="flex flex-col">
+              <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)", color: "#fff" }}>
+                <DialogTitle className="text-base font-bold m-0">Excluir evento recorrente</DialogTitle>
+                <p className="text-[11px] mt-1 opacity-90">
+                  {deleteChoice.evt.programa?.nome || "Evento"} • {format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy")}
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Este é um evento <strong>{recorrenciaLabels[deleteChoice.evt.recorrencia] || deleteChoice.evt.recorrencia}</strong>. O que deseja fazer?
+                </p>
+                <Button
+                  className="w-full justify-start h-11 rounded-xl"
+                  style={{ backgroundColor: NEXO_CYAN, color: "#fff" }}
+                  onClick={async () => {
+                    const ok = await upsertExcecao(deleteChoice.evt, { data: deleteChoice.dateStr, acao: "skip" });
+                    if (ok) toast({ title: "Ocorrência removida", description: format(new Date(deleteChoice.dateStr + "T12:00:00"), "dd/MM/yyyy") });
+                    setDeleteChoice(null);
+                  }}
+                >
+                  Excluir somente este dia
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start h-11 rounded-xl border-destructive text-destructive hover:bg-destructive/10"
+                  onClick={async () => {
+                    await handleDelete(deleteChoice.evt.id);
+                    toast({ title: "Recorrência excluída", description: "Todos os dias futuros foram removidos." });
+                    setDeleteChoice(null);
+                  }}
+                >
+                  Excluir todos os próximos dias
+                </Button>
+                <Button variant="ghost" className="w-full h-9" onClick={() => setDeleteChoice(null)}>
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo: resolver feriado nacional em evento recorrente */}
+      <Dialog open={!!holidayResolve} onOpenChange={(o) => { if (!o) { setHolidayResolve(null); setHolidayReplaceProg(""); } }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
+          {holidayResolve && (
+            <div className="flex flex-col">
+              <div className="px-6 py-4" style={{ background: "linear-gradient(135deg, #f59e0b 0%, #b45309 100%)", color: "#fff" }}>
+                <DialogTitle className="text-base font-bold m-0 flex items-center gap-2">
+                  <AlertTriangle size={18} /> Feriado nacional
+                </DialogTitle>
+                <p className="text-[11px] mt-1 opacity-90">
+                  {holidayResolve.feriadoNome} • {format(new Date(holidayResolve.dateStr + "T12:00:00"), "EEEE, dd/MM/yyyy", { locale: ptBR })}
+                </p>
+              </div>
+              <div className="p-5 space-y-3">
+                <p className="text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  O programa <strong>{holidayResolve.evt.programa?.nome || "recorrente"}</strong> cai neste feriado. O que fazer?
+                </p>
+
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Substituir por outro programa</Label>
+                  <div className="flex gap-2">
+                    <Select value={holidayReplaceProg} onValueChange={setHolidayReplaceProg}>
+                      <SelectTrigger className="flex-1 h-10 rounded-xl">
+                        <SelectValue placeholder="Escolha um programa" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {programas
+                          .filter(p => p.id !== holidayResolve.evt.programa_id)
+                          .map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.nome}{p.estudio ? ` • ${p.estudio}` : ""}</SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      disabled={!holidayReplaceProg}
+                      style={{ backgroundColor: NEXO_CYAN, color: "#fff" }}
+                      onClick={async () => {
+                        const ok = await upsertExcecao(holidayResolve.evt, { data: holidayResolve.dateStr, acao: "substituir", programa_id: holidayReplaceProg });
+                        if (ok) toast({ title: "Substituição salva" });
+                        setHolidayResolve(null);
+                        setHolidayReplaceProg("");
+                      }}
+                    >
+                      Substituir
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="border-t pt-3" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                  <Button
+                    variant="outline"
+                    className="w-full h-10 rounded-xl"
+                    onClick={async () => {
+                      const ok = await upsertExcecao(holidayResolve.evt, { data: holidayResolve.dateStr, acao: "automatico" });
+                      if (ok) toast({ title: "Definido como Programa Automático" });
+                      setHolidayResolve(null);
+                      setHolidayReplaceProg("");
+                    }}
+                  >
+                    Colocar como programa automático
+                  </Button>
+                </div>
+
+                <Button variant="ghost" className="w-full h-9" onClick={() => { setHolidayResolve(null); setHolidayReplaceProg(""); }}>
+                  Decidir depois
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+
       
       <Dialog open={viewEventDialogOpen} onOpenChange={setViewEventDialogOpen}>
         <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
