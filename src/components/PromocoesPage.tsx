@@ -640,38 +640,13 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
                           borderTop: idx === 0 ? "none" : `1px solid ${CARD_BG}`,
                         }}
                       >
-                        {/* PROMOÇÃO: nome + banner embaixo */}
+                        {/* PROMOÇÃO: apenas título */}
                         <td style={{ padding: "14px 16px", verticalAlign: "top", minWidth: 220 }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.25 }}>
-                              {tituloPromocao(item.texto)}
-                            </span>
-                            {bannerImg ? (
-                              <img
-                                src={bannerImg}
-                                alt=""
-                                style={{
-                                  width: 160,
-                                  height: 60,
-                                  borderRadius: 10,
-                                  objectFit: "cover",
-                                  border: `1px solid ${CARD_BG}`,
-                                  background: CARD_BG,
-                                }}
-                              />
-                            ) : (
-                              <div
-                                style={{
-                                  width: 160, height: 60, borderRadius: 10,
-                                  background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center",
-                                  color: "#94A3B8", fontSize: 10, fontWeight: 700, letterSpacing: 1,
-                                }}
-                              >
-                                SEM BANNER
-                              </div>
-                            )}
-                          </div>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: DARK, lineHeight: 1.25 }}>
+                            {item.botao_url || tituloPromocao(item.texto)}
+                          </span>
                         </td>
+
 
                         {/* VALIDADE */}
                         <td style={{ padding: "14px 16px", verticalAlign: "top", whiteSpace: "nowrap" }}>
