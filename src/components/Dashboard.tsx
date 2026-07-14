@@ -96,6 +96,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
+  { icon: Gift, label: "sorteio", page: "sorteios" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
