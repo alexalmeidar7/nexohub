@@ -3,7 +3,7 @@ import { Film, Globe, MessageCircle, type LucideIcon } from "lucide-react";
 import PreRollPage from "./PreRollPage";
 import AdsSitePage from "./AdsSitePage";
 import AdsChatbotPage from "./AdsChatbotPage";
-import adsBanner from "@/assets/ads-banner.png.asset.json";
+import adsBanner from "@/assets/ads-banner.png";
 
 type Tab = "video" | "site" | "chatbot";
 
@@ -22,7 +22,7 @@ export default function AdsPage() {
       <div
         className="relative rounded-2xl overflow-hidden mb-5"
         style={{
-          backgroundImage: `url(${adsBanner.url})`,
+          backgroundImage: `url(${adsBanner})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           aspectRatio: "1000 / 340",
@@ -30,13 +30,7 @@ export default function AdsPage() {
           boxShadow: "0 8px 32px rgba(0,0,0,0.10)",
         }}
       >
-        <div
-          className="absolute left-0 right-0 bottom-0 flex items-center justify-center gap-3 px-5 py-5"
-          style={{
-            background:
-              "linear-gradient(to top, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0) 100%)",
-          }}
-        >
+        <div className="absolute left-0 right-0 bottom-0 flex items-center justify-center gap-3 px-5 py-5">
           {TABS.map((t) => {
             const active = tab === t.id;
             const Icon = t.icon;
