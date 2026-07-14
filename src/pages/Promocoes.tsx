@@ -67,13 +67,13 @@ function renderBoldMarkdown(text: string) {
 }
 
 export default function PromocoesKiosk() {
-  usePageTitle("Promoções");
-  useLayoutColors();
   const { userSlug } = useParams<{ userSlug?: string }>();
-  // Guard against the literal ":userSlug" segment (happens when something
-  // navigates to the route template without interpolating the param).
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
   const isPublicMode = !!validSlug;
+  // In public mode we don't want the auth user's empresa name leaking into
+  // the title, so pass empty and override via effect below using config.nome.
+  usePageTitle(isPublicMode ? "" : "Promoções");
+  useLayoutColors();
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
   }
@@ -195,6 +195,16 @@ export default function PromocoesKiosk() {
     document.addEventListener("fullscreenchange", handler);
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
+
+  // Public-mode title: always reflect the slug user's empresa name, never the
+  // authenticated user's cached name from usePageTitle.
+  useEffect(() => {
+    if (!isPublicMode) return;
+    const nome = (config?.nome || "").trim();
+    document.title = nome ? `${nome} - Promoções` : "Promoções";
+  }, [isPublicMode, config?.nome]);
+
+
 
   useEffect(() => {
     const loadPublic = async () => {
