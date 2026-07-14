@@ -181,8 +181,12 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const uploadLogo = async (file: File): Promise<string> => {
     // Keep original PNG format — do NOT compress to webp for sponsor logos
+    // Storage RLS requires the first folder segment to equal auth.uid()
+    const { data: authData } = await supabase.auth.getUser();
+    const uid = authData?.user?.id;
+    if (!uid) throw new Error("Não autenticado");
     const ext = file.name.split(".").pop() || "png";
-    const path = `logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = `${uid}/logos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { error } = await supabase.storage.from("comercial").upload(path, file, { upsert: true, contentType: file.type });
     if (error) throw error;
     const { data } = supabase.storage.from("comercial").getPublicUrl(path);
