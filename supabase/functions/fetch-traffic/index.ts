@@ -135,7 +135,7 @@ serve(async (req) => {
         if (b.level !== a.level) return b.level - a.level;
         return b.lengthM - a.lengthM;
       })
-      .slice(0, 5);
+      .slice(0, 10);
 
     return new Response(
       JSON.stringify({ ok: true, source: "tomtom", city: city || null, center: { lat, lon }, jams, updatedAt: new Date().toISOString() }),
