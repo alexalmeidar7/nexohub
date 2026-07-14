@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       supabase.from("programas").select("*").eq("user_id", finalUserId).eq("ativo", true).ilike("estudio", "%fm%"),
       supabase.from("testemunhais").select("*").eq("user_id", finalUserId),
       supabase.from("apresentadores").select("*").eq("user_id", finalUserId).eq("ativo", true),
-      supabase.from("user_settings").select("cenario_config").eq("user_id", finalUserId).maybeSingle(),
+      supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").eq("user_id", finalUserId).maybeSingle(),
     ]);
 
     return new Response(
@@ -100,6 +100,9 @@ Deno.serve(async (req) => {
         testemunhais: testRes.data || [],
         apresentadores: aprsRes.data || [],
         tela_promo_config: settingsRes.data?.cenario_config?.tela_promo_bg || null,
+        weather_city: settingsRes.data?.weather_city || null,
+        weather_lat: settingsRes.data?.weather_lat ?? null,
+        weather_lon: settingsRes.data?.weather_lon ?? null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
