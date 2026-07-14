@@ -1129,6 +1129,29 @@ export default function AgendaPage() {
     return days;
   }, [eventos, filterLocal, now]);
 
+  // Conflitos com feriados nos próximos 14 dias (só programa_semanal / semanal, sem exceção definida)
+  const holidayConflicts = useMemo(() => {
+    const results: { evt: Evento; dateStr: string; date: Date; feriadoNome: string }[] = [];
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const feriadoNome = getFeriadoNome(d);
+      if (!feriadoNome) continue;
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      for (const evt of eventos) {
+        if (evt.recorrencia !== "programa_semanal" && evt.recorrencia !== "semanal") continue;
+        if (evt.status === "cancelado" || evt.status === "concluido") continue;
+        if (!eventMatchesDate(evt, ds)) continue;
+        if (getExcecao(evt, ds)) continue; // já resolvido
+        results.push({ evt, dateStr: ds, date: new Date(d), feriadoNome });
+      }
+    }
+    return results;
+  }, [eventos, now]);
+
+
   // Past events from the last 6 months
   const pastEvents = useMemo(() => {
     const today = new Date(now);
