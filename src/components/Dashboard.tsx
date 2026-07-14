@@ -1022,6 +1022,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </div>
                 )}
 
+                {isDashboard && <InlineNotification mode="inline" />}
               </div>
             </div>
           </div>
