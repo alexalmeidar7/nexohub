@@ -598,16 +598,22 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
     <div style={cardStyle}>
       <div style={titleStyle} className="justify-between">
         <span className="flex items-center gap-1.5"><Car size={11} /> Trânsito</span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setMapOpen(true)}
             disabled={!city}
-            className="w-5 h-5 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(255,255,255,0.08)", color: TEXT, opacity: city ? 1 : 0.4 }}
+            className="rounded-full flex items-center justify-center"
+            style={{
+              width: 22, height: 22,
+              background: city ? ACCENT : "rgba(255,255,255,0.08)",
+              color: "#fff",
+              boxShadow: city ? "0 0 8px rgba(215,13,14,0.55)" : "none",
+              opacity: city ? 1 : 0.4,
+            }}
             title="Abrir mapa do trânsito"
           >
-            <MapIcon size={10} />
+            <MapIcon size={12} />
           </button>
           <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
             <PopoverTrigger asChild>
