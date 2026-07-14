@@ -46,7 +46,7 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
       dia: number,
       mes: number,
       nome: string,
-      categoria: "comemorativa" | "cidade",
+      categoria: "comemorativa" | "cidade" | "feriado",
       tag: string,
     ): Item[] => {
       const thisYear = new Date(year, mes - 1, dia);
@@ -56,16 +56,20 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
     };
 
     const comemorativas = DATAS_COMEMORATIVAS.flatMap((d) =>
-      toItems(d.dia, d.mes, d.nome, "comemorativa", "Comemorativa"),
+      toItems(d.dia, d.mes, d.nome, "comemorativa", "Nacional"),
     );
     const cidades = (ANIVERSARIOS_CIDADES[uf] || []).flatMap((c) =>
       toItems(c.dia, c.mes, `Aniversário de ${c.cidade}${c.capital ? " (capital)" : ""}`, "cidade", uf),
     );
+    const feriadosItems: Item[] = feriados
+      .filter((f) => f.date >= today)
+      .map((f) => ({ date: f.date, nome: f.nome, categoria: "feriado", tag: "Feriado Nacional" }));
 
-    return [...comemorativas, ...cidades]
+    return [...comemorativas, ...cidades, ...feriadosItems]
+      .filter((it) => it.date >= today)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
-      .slice(0, 12);
-  }, [uf]);
+      .slice(0, 16);
+  }, [uf, feriados]);
 
   const ufNome = UF_LIST.find((u) => u.sigla === uf)?.nome || uf;
 
