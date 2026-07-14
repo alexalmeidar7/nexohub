@@ -22,15 +22,16 @@ export default function AdsPage() {
       <div
         className="relative rounded-2xl overflow-hidden mb-5"
         style={{
-          backgroundImage: `url(${adsBanner})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          aspectRatio: "1000 / 340",
-          maxHeight: 260,
+          background: "#D6F4FB",
           boxShadow: "0 8px 32px rgba(0,0,0,0.10)",
         }}
       >
-        <div className="absolute left-0 right-0 bottom-0 flex items-center justify-center gap-3 px-5 py-5">
+        <img
+          src={adsBanner}
+          alt="Como você quer anunciar?"
+          style={{ width: "100%", height: "auto", display: "block" }}
+        />
+        <div className="absolute left-0 right-0 bottom-0 flex items-center justify-center gap-3 px-5 pb-4 pt-3">
           {TABS.map((t) => {
             const active = tab === t.id;
             const Icon = t.icon;
@@ -42,7 +43,7 @@ export default function AdsPage() {
                 className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
                 style={{
                   background: active ? "#C6F03C" : "rgba(255,255,255,0.95)",
-                  color: active ? "#002132" : "#002132",
+                  color: "#002132",
                   boxShadow: active
                     ? "0 6px 20px rgba(198,240,60,0.45)"
                     : "0 4px 12px rgba(0,0,0,0.15)",
