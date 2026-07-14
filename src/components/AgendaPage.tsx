@@ -1252,7 +1252,7 @@ export default function AgendaPage() {
             <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => startEdit(evt)}>
               <Pencil size={14} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => handleDelete(evt.id)}>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => requestDelete(evt, evt.data)}>
               <Trash2 size={14} className="text-destructive" />
             </Button>
           </div>
