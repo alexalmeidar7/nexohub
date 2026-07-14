@@ -67,13 +67,13 @@ function renderBoldMarkdown(text: string) {
 }
 
 export default function PromocoesKiosk() {
-  usePageTitle("Promoções");
-  useLayoutColors();
   const { userSlug } = useParams<{ userSlug?: string }>();
-  // Guard against the literal ":userSlug" segment (happens when something
-  // navigates to the route template without interpolating the param).
   const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
   const isPublicMode = !!validSlug;
+  // Only use auth-based title in authenticated mode; public mode sets its own
+  // title from the fetched empresa data (see effect below).
+  if (!isPublicMode) usePageTitle("Promoções");
+  useLayoutColors();
   if (userSlug === ":userSlug") {
     return <Navigate to="/telapromo" replace />;
   }
