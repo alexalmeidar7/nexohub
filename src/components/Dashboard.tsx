@@ -45,7 +45,7 @@ const VideoPlayer = lazy(() => import("./VideoPlayer"));
 const TopLikedSongs = lazy(() => import("./TopLikedSongs"));
 const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
-const PreRollPage = lazy(() => import("./PreRollPage"));
+const PreRollPage = lazy(() => import("./AdsPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
