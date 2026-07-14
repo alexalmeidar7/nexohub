@@ -212,18 +212,15 @@ export default function PromocoesKiosk() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
-  // Public-mode title: always reflect the slug user's empresa name, never the
-  // authenticated user's cached name from usePageTitle.
+  // Public-mode title + favicon: refine using the empresa data fully loaded
+  // for this page (usePublicHead already ran a slug-based pass on mount).
   useEffect(() => {
     if (!isPublicMode) return;
     const nome = (config?.nome || "")
       .replace(/\s*[-–—]\s*promoç(ões|ao|ão)\s*$/i, "")
       .replace(/\s+/g, " ")
       .trim();
-    document.title = nome ? `${nome} - Promoções` : "Promoções";
-    // Favicon deve refletir SEMPRE o usuário da rota (slug), nunca o cache
-    // de um usuário autenticado anteriormente no mesmo navegador.
-    setFavicon(config?.logo || "/favicon.ico");
+    applyPublicHead(nome || null, config?.logo || null, "Promoções");
   }, [isPublicMode, config?.nome, config?.logo]);
 
 
