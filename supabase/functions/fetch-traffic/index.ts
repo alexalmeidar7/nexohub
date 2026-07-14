@@ -9,25 +9,6 @@ const corsHeaders = {
 const TOMTOM_KEY = Deno.env.get("TOMTOM_API_KEY") || "";
 
 async function geocode(city: string): Promise<{ lat: number; lon: number; name: string } | null> {
-  // Prefer TomTom geocoding when available (more accurate for BR cities)
-  if (TOMTOM_KEY) {
-    try {
-      const u = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(city)}.json?limit=1&countrySet=BR&key=${TOMTOM_KEY}`;
-      const r = await fetch(u);
-      if (r.ok) {
-        const d = await r.json();
-        const first = d?.results?.[0];
-        if (first?.position) {
-          return {
-            lat: first.position.lat,
-            lon: first.position.lon,
-            name: first.address?.municipality || first.address?.freeformAddress?.split(",")[0] || city,
-          };
-        }
-      }
-    } catch { /* fallthrough */ }
-  }
-  // Fallback: Nominatim
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=1&accept-language=pt-BR`;
     const r = await fetch(url, { headers: { "User-Agent": "LovableVMIX/1.0" } });
@@ -95,7 +76,7 @@ serve(async (req) => {
     const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
     const fields =
       "{incidents{type,geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,startTime,endTime,from,to,length,delay,roadNumbers,events{description,code,iconCategory}}}}";
-    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-BR&t=1111&timeValidityFilter=present&key=${TOMTOM_KEY}`;
+    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${TOMTOM_KEY}`;
 
     const r = await fetch(url);
     if (!r.ok) {
