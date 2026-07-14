@@ -14,6 +14,7 @@ import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
+import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
 
 interface Promocao {
   id: string;
