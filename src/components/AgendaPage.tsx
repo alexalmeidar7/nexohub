@@ -741,6 +741,35 @@ export default function AgendaPage() {
     fetchEventos();
   };
 
+  // Adiciona uma exceção (skip/substituir/automatico/manter) numa ocorrência específica
+  const upsertExcecao = async (evt: Evento, exc: EventoExcecao) => {
+    const current: EventoExcecao[] = Array.isArray(evt.excecoes) ? [...evt.excecoes] : [];
+    const idx = current.findIndex(x => x && x.data === exc.data);
+    if (idx >= 0) current[idx] = exc; else current.push(exc);
+    const { error } = await supabase
+      .from("agenda_eventos")
+      .update({ excecoes: current as any })
+      .eq("id", evt.id);
+    if (error) {
+      toast({ title: "Erro ao salvar exceção", description: error.message, variant: "destructive" });
+      return false;
+    }
+    await fetchEventos();
+    return true;
+  };
+
+  // Solicita a exclusão — se recorrente, abre diálogo de escolha
+  const requestDelete = (evt: Evento, occurrenceDateStr?: string) => {
+    const isRecorrente = evt.recorrencia && evt.recorrencia !== "unico";
+    if (!isRecorrente) {
+      if (confirm("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
+      return;
+    }
+    const dateStr = occurrenceDateStr || evt.data;
+    setDeleteChoice({ evt, dateStr });
+  };
+
+
   const handleCreateRoteiroFromEvento = async () => {
     if (!user || !formProgramaId || !formData) {
       toast({ title: "Selecione programa e data", variant: "destructive" });
