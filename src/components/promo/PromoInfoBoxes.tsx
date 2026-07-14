@@ -399,48 +399,69 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
     <div style={cardStyle}>
       <div style={titleStyle} className="justify-between">
         <span className="flex items-center gap-1.5"><Car size={11} /> Trânsito</span>
-        <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-              title="Definir cidade do trânsito"
-            >
-              <Settings size={10} />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
-            <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
-              Cidade do trânsito
-            </div>
-            <input
-              value={tmpCity}
-              onChange={(e) => setTmpCity(e.target.value)}
-              placeholder="Ex: Goiânia, GO"
-              className="w-full px-2 py-1.5 rounded"
-              style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
-            />
-            <div className="flex justify-end gap-2 mt-2">
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setMapOpen(true)}
+            disabled={!city}
+            className="w-5 h-5 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(255,255,255,0.08)", color: TEXT, opacity: city ? 1 : 0.4 }}
+            title="Abrir mapa do trânsito"
+          >
+            <MapIcon size={10} />
+          </button>
+          <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
+            <PopoverTrigger asChild>
               <button
-                onClick={() => setOpen(false)}
-                className="px-2 py-1 rounded"
-                style={{ fontSize: 10, color: MUTED }}
-              >Cancelar</button>
-              <button
-                onClick={() => {
-                  const v = tmpCity.trim();
-                  setCity(v);
-                  try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
-                  setOpen(false);
-                }}
-                className="px-2 py-1 rounded"
-                style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
-              >Salvar</button>
-            </div>
-          </PopoverContent>
-        </Popover>
+                type="button"
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                title="Definir cidade do trânsito"
+              >
+                <Settings size={10} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
+              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
+                Cidade do trânsito
+              </div>
+              <input
+                value={tmpCity}
+                onChange={(e) => setTmpCity(e.target.value)}
+                placeholder="Ex: Goiânia, GO"
+                className="w-full px-2 py-1.5 rounded"
+                style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
+              />
+              <div className="flex justify-end gap-2 mt-2">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="px-2 py-1 rounded"
+                  style={{ fontSize: 10, color: MUTED }}
+                >Cancelar</button>
+                <button
+                  onClick={() => {
+                    const v = tmpCity.trim();
+                    setCity(v);
+                    try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
+                    setOpen(false);
+                  }}
+                  className="px-2 py-1 rounded"
+                  style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
+                >Salvar</button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
+
+      {mapOpen && (
+        <TrafficMapModal
+          city={city}
+          center={center}
+          jams={jams}
+          onClose={() => setMapOpen(false)}
+        />
+      )}
 
       {!city ? (
         <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Defina uma cidade.</div>
