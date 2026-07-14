@@ -244,6 +244,7 @@ export default function OnAirWidget() {
 
   return (
     <div className="h-full relative overflow-hidden">
+      <span ref={anchorRef} className="hidden" aria-hidden="true" />
       {/* Next program click overlay */}
       {firstNext && (
         <div
