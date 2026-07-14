@@ -27,7 +27,7 @@ function matches(evt: Evt, date: Date) {
   const check = new Date(format(date, "yyyy-MM-dd") + "T12:00:00");
   if (evt.recorrencia === "unico" || !evt.recorrencia) return isSameDay(evtDate, check);
   if (check < evtDate) return false;
-  if (evt.recorrencia === "semanal") return evtDate.getDay() === check.getDay();
+  if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") return evtDate.getDay() === check.getDay();
   if (evt.recorrencia === "mensal") return evtDate.getDate() === check.getDate();
   return false;
 }
