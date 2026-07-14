@@ -256,58 +256,65 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     let cancelled = false;
 
     const fetchAll = async () => {
-      // Try direct config read first (works for owner/sub-user/admin) so we can
-      // populate the rotation labels immediately.
-      const { data } = await supabase
-        .from("empresa_config")
-        .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath")
-        .eq("user_id", dataUserId as any)
-        .maybeSingle();
-      if (!cancelled && data) {
-        socialUrlsRef.current = {
-          youtube: (data as any).youtube || undefined,
-          instagram: (data as any).instagram || undefined,
-          facebook: (data as any).facebook || undefined,
-        };
-        videoApiUrlRef.current = (data as any).video_stream_api_url || null;
-        const s: SourcesConfig = {
-          instagram: (data as any).instagram || "",
-          facebook: (data as any).facebook || "",
-          youtube: (data as any).youtube || "",
-          audio_stream_api_url: (data as any).audio_stream_api_url || "",
-          audio_stream_xpath: (data as any).audio_stream_xpath || "",
-          video_stream_api_url: (data as any).video_stream_api_url || "",
-          video_stream_xpath: (data as any).video_stream_xpath || "",
-        };
-
-
-        setSources(s);
-      }
-      if (!cancelled) setLoadingConfig(false);
-
-      const { data: resp } = await supabase.functions.invoke("fetch-social-followers", {
-        body: { userId: dataUserId },
-      });
-      if (cancelled) return;
-      if (resp && (resp as any).ok) {
-        const r = resp as any;
-        // Edge function returns URLs it looked up (helpful when RLS blocked us).
-        if (r.urls) {
+      try {
+        // Try direct config read first (works for owner/sub-user/admin) so we can
+        // populate the rotation labels immediately.
+        const { data } = await supabase
+          .from("empresa_config")
+          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath")
+          .eq("user_id", dataUserId as any)
+          .maybeSingle();
+        if (!cancelled && data) {
           socialUrlsRef.current = {
-            youtube: r.urls.youtube || socialUrlsRef.current.youtube,
-            instagram: r.urls.instagram || socialUrlsRef.current.instagram,
-            facebook: r.urls.facebook || socialUrlsRef.current.facebook,
+            youtube: (data as any).youtube || undefined,
+            instagram: (data as any).instagram || undefined,
+            facebook: (data as any).facebook || undefined,
           };
+          videoApiUrlRef.current = (data as any).video_stream_api_url || null;
+          const s: SourcesConfig = {
+            instagram: (data as any).instagram || "",
+            facebook: (data as any).facebook || "",
+            youtube: (data as any).youtube || "",
+            audio_stream_api_url: (data as any).audio_stream_api_url || "",
+            audio_stream_xpath: (data as any).audio_stream_xpath || "",
+            video_stream_api_url: (data as any).video_stream_api_url || "",
+            video_stream_xpath: (data as any).video_stream_xpath || "",
+          };
+          setSources(s);
         }
-        setSocial({
-          youtube: r.youtube ?? null,
-          instagram: r.instagram ?? null,
-          facebook: r.facebook ?? null,
-        });
+
+        try {
+          const { data: resp } = await supabase.functions.invoke("fetch-social-followers", {
+            body: { userId: dataUserId },
+          });
+          if (cancelled) return;
+          if (resp && (resp as any).ok) {
+            const r = resp as any;
+            // Edge function returns URLs it looked up (helpful when RLS blocked us).
+            if (r.urls) {
+              socialUrlsRef.current = {
+                youtube: r.urls.youtube || socialUrlsRef.current.youtube,
+                instagram: r.urls.instagram || socialUrlsRef.current.instagram,
+                facebook: r.urls.facebook || socialUrlsRef.current.facebook,
+              };
+            }
+            setSocial({
+              youtube: r.youtube ?? null,
+              instagram: r.instagram ?? null,
+              facebook: r.facebook ?? null,
+            });
+          }
+        } catch (e) {
+          console.warn("fetch-social-followers failed", e);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingSocial(false);
+          setLoadingConfig(false);
+        }
       }
-      setLoadingSocial(false);
-      setLoadingConfig(false);
     };
+
 
     fetchAll();
     const iv = setInterval(fetchAll, REFETCH_MS);
