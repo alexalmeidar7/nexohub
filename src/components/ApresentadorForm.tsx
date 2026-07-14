@@ -27,6 +27,27 @@ export interface Apresentador {
 
 const CATEGORIA_OPTIONS = ["Apresentador", "Jornalista", "Convidado"];
 
+// IMPORTANT: keep Field defined OUTSIDE the component. Declaring components
+// inside another component recreates them on every render, which unmounts
+// their children and causes inputs/combos to lose focus mid-interaction.
+const FIELD_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: "#0A2540",
+  marginBottom: 8,
+  display: "block",
+};
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <label style={FIELD_LABEL_STYLE}>{label}</label>
+    {children}
+  </div>
+);
+
 export async function getApresentadores(): Promise<Apresentador[]> {
   const { data } = await supabase.from("apresentadores").select("*");
   if (!data) return [];
