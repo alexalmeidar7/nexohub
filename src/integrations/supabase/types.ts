@@ -1035,6 +1035,7 @@ export type Database = {
           escolaridade: string | null
           id: string
           nome: string
+          origem_cadastro: string
           pontuacao: number | null
           renda: string | null
           setor: string | null
@@ -1052,6 +1053,7 @@ export type Database = {
           escolaridade?: string | null
           id?: string
           nome: string
+          origem_cadastro?: string
           pontuacao?: number | null
           renda?: string | null
           setor?: string | null
@@ -1069,6 +1071,7 @@ export type Database = {
           escolaridade?: string | null
           id?: string
           nome?: string
+          origem_cadastro?: string
           pontuacao?: number | null
           renda?: string | null
           setor?: string | null
