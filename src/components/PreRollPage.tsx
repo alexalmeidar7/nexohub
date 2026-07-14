@@ -380,60 +380,129 @@ export default function PreRollPage() {
                   <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Anúncio</span>
                 </div>
 
-                <div className="mb-4">
-                  <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Proporção do Vídeo</label>
-                  <div className="flex gap-3">
-                    {(["16:9", "9:16", "full"] as const).map((ratio) => (
-                      <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
-                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all"
-                        style={{
-                          border: aspectRatio === ratio ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                          backgroundColor: aspectRatio === ratio ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
-                        }}>
-                        <div className="rounded" style={{ width: ratio === "16:9" ? 48 : ratio === "9:16" ? 24 : 48, height: ratio === "16:9" ? 27 : ratio === "9:16" ? 42 : 32, backgroundColor: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)", transition: "background-color 0.2s" }} />
-                        <span className="text-[10px] font-bold" style={{ color: aspectRatio === ratio ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{ratio === "full" ? "Full" : ratio}</span>
-                      </button>
-                    ))}
+                {/* Proporção */}
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Proporção do Vídeo</label>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>{aspectRatio === "full" ? "FULL" : aspectRatio}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["16:9", "9:16", "full"] as const).map((ratio) => {
+                      const sel = aspectRatio === ratio;
+                      const w = ratio === "16:9" ? 44 : ratio === "9:16" ? 22 : 46;
+                      const h = ratio === "16:9" ? 25 : ratio === "9:16" ? 38 : 30;
+                      return (
+                        <button key={ratio} type="button" onClick={() => setAspectRatio(ratio)}
+                          className="group relative flex flex-col items-center justify-end gap-2 pt-4 pb-2.5 rounded-2xl transition-all overflow-hidden"
+                          style={{
+                            border: sel ? "2px solid var(--layout-accent-color, #2563eb)" : "1.5px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                            background: sel
+                              ? "linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent) 0%, color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent) 100%)"
+                              : "linear-gradient(180deg, color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent) 0%, transparent 100%)",
+                            boxShadow: sel ? "0 6px 18px color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)" : "none",
+                            minHeight: 78,
+                          }}>
+                          <div className="flex items-center justify-center" style={{ height: 44 }}>
+                            <div style={{
+                              width: w, height: h,
+                              borderRadius: 5,
+                              background: sel
+                                ? "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, #000))"
+                                : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)",
+                              boxShadow: sel ? "0 3px 10px color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)" : "none",
+                              transition: "all .2s",
+                            }} />
+                          </div>
+                          <span className="text-[10px] font-extrabold tracking-wider" style={{ color: sel ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{ratio === "full" ? "FULL" : ratio}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div className="mb-4">
-                  <label className="text-xs font-semibold block mb-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do Vídeo</label>
-                  <div className="flex gap-3">
-                    {([{ value: "left", label: "Esquerda", align: "flex-start" }, { value: "center", label: "Centro", align: "center" }, { value: "right", label: "Direita", align: "flex-end" }] as const).map((pos) => (
-                      <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
-                        className="flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all flex-1"
-                        style={{
-                          border: videoPosition === pos.value ? "2px solid var(--layout-accent-color, #2563eb)" : "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
-                          backgroundColor: videoPosition === pos.value ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)" : "transparent",
-                        }}>
-                        <div className="w-12 h-8 rounded overflow-hidden flex" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", justifyContent: pos.align, alignItems: "center", padding: "2px" }}>
-                          <div className="rounded-sm" style={{ width: aspectRatio === "16:9" ? 20 : 10, height: aspectRatio === "16:9" ? 12 : 22, backgroundColor: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)", transition: "background-color 0.2s", flexShrink: 0 }} />
-                        </div>
-                        <span className="text-[10px] font-bold" style={{ color: videoPosition === pos.value ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{pos.label}</span>
-                      </button>
-                    ))}
+                {/* Posição */}
+                <div className="mb-5">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <label className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do Vídeo</label>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>
+                      {videoPosition === "left" ? "Esquerda" : videoPosition === "right" ? "Direita" : "Centro"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: "left", label: "Esquerda", align: "flex-start" },
+                      { value: "center", label: "Centro", align: "center" },
+                      { value: "right", label: "Direita", align: "flex-end" },
+                    ] as const).map((pos) => {
+                      const sel = videoPosition === pos.value;
+                      return (
+                        <button key={pos.value} type="button" onClick={() => setVideoPosition(pos.value)}
+                          className="flex flex-col items-center gap-2 pt-3 pb-2.5 rounded-2xl transition-all"
+                          style={{
+                            border: sel ? "2px solid var(--layout-accent-color, #2563eb)" : "1.5px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                            background: sel
+                              ? "linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent) 0%, color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent) 100%)"
+                              : "linear-gradient(180deg, color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent) 0%, transparent 100%)",
+                            boxShadow: sel ? "0 6px 18px color-mix(in srgb, var(--layout-accent-color, #2563eb) 22%, transparent)" : "none",
+                          }}>
+                          <div className="flex overflow-hidden" style={{
+                            width: 52, height: 32, borderRadius: 6,
+                            backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
+                            justifyContent: pos.align, alignItems: "center", padding: 3,
+                            border: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                          }}>
+                            <div style={{
+                              width: aspectRatio === "9:16" ? 8 : aspectRatio === "full" ? 44 : 20,
+                              height: aspectRatio === "9:16" ? 22 : aspectRatio === "full" ? 24 : 12,
+                              borderRadius: 3,
+                              background: sel
+                                ? "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, #000))"
+                                : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent)",
+                              boxShadow: sel ? "0 2px 6px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)" : "none",
+                              transition: "all .2s",
+                              flexShrink: 0,
+                            }} />
+                          </div>
+                          <span className="text-[10px] font-extrabold tracking-wider uppercase" style={{ color: sel ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{pos.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-semibold flex items-center gap-1.5 mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Image size={13} style={{ color: "var(--layout-icon-color, #888888)" }} /> Background (opcional)
-                  </label>
-                  <p className="text-[10px] mb-2.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Imagem de fundo exibida atrás do vídeo.</p>
+                {/* Background */}
+                <div className="rounded-2xl p-3" style={{
+                  border: "1.5px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 18%, transparent)",
+                  backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)",
+                }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <Image size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} /> Background
+                    </label>
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Opcional</span>
+                  </div>
+                  <p className="text-[10px] mb-2.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>Imagem de fundo exibida atrás do vídeo.</p>
                   <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setBackgroundFile(f); setBackgroundPreview(URL.createObjectURL(f)); } }} />
-                  <div className="flex items-center gap-3">
-                    <button type="button" onClick={() => bgInputRef.current?.click()}
-                      className="px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1.5 hover:shadow-md"
-                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
-                      <Image size={12} style={{ color: "var(--layout-icon-color, #888888)" }} /> Escolher
-                    </button>
-                    {backgroundPreview && (
-                      <div className="flex items-center gap-2">
-                        <img src={backgroundPreview} alt="Background" className="w-14 h-9 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
-                        <button type="button" onClick={() => { setBackgroundFile(null); setBackgroundPreview(""); }} className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: "#dc2626", backgroundColor: "rgba(220,38,38,0.08)" }}>✕</button>
+                  <div className="flex items-center gap-2.5">
+                    {backgroundPreview ? (
+                      <div className="relative rounded-lg overflow-hidden group" style={{ width: 64, height: 40, border: "1.5px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)", boxShadow: "0 3px 10px rgba(0,0,0,0.08)" }}>
+                        <img src={backgroundPreview} alt="Background" className="w-full h-full object-cover" />
+                        <button type="button" onClick={() => { setBackgroundFile(null); setBackgroundPreview(""); }} className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ color: "#fff", backgroundColor: "rgba(220,38,38,0.9)" }}>✕</button>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg flex items-center justify-center" style={{ width: 64, height: 40, border: "1.5px dashed color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)" }}>
+                        <Image size={16} style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
                       </div>
                     )}
+                    <button type="button" onClick={() => bgInputRef.current?.click()}
+                      className="flex-1 px-3 py-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 hover:shadow-md"
+                      style={{
+                        background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 75%, #000))",
+                        color: "#fff",
+                        boxShadow: "0 3px 10px color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)",
+                      }}>
+                      <Image size={12} /> {backgroundPreview ? "Trocar Imagem" : "Escolher Imagem"}
+                    </button>
                   </div>
                 </div>
               </div>
