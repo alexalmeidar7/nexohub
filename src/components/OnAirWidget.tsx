@@ -87,6 +87,35 @@ export default function OnAirWidget() {
   const [gradeOpen, setGradeOpen] = useState(false);
   const [isStereo, setIsStereo] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const anchorRef = useRef<HTMLSpanElement>(null);
+
+  // Publish this widget's card bottom as a CSS var so all Dialog popups
+  // on the Home align "logo abaixo do box No Ar".
+  useEffect(() => {
+    const anchor = anchorRef.current;
+    const target = anchor?.parentElement as HTMLElement | null;
+    if (!target) return;
+    const update = () => {
+      const r = target.getBoundingClientRect();
+      const bottom = Math.max(0, Math.round(r.bottom));
+      document.documentElement.style.setProperty("--onair-bottom", `${bottom}px`);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(target);
+    const onWin = () => update();
+    window.addEventListener("resize", onWin);
+    window.addEventListener("scroll", onWin, true);
+    const interval = setInterval(update, 1000);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", onWin);
+      window.removeEventListener("scroll", onWin, true);
+      clearInterval(interval);
+      document.documentElement.style.removeProperty("--onair-bottom");
+    };
+  }, [loading, onAir, isHovered]);
+
 
   // Fetch user avatar
   useEffect(() => {
