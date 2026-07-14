@@ -18,6 +18,7 @@ export default function PlayerHub() {
   useLayoutColors();
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams] = useSearchParams();
   const skipToHome = searchParams.get("step") === "home";
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
