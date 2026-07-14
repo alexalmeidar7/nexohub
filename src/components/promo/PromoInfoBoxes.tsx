@@ -380,7 +380,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
 
   useEffect(() => {
     if (jams.length <= 1) return;
-    const iv = setInterval(() => setIdx((v) => (v + 1) % jams.length), 3500);
+    const iv = setInterval(() => setIdx((v) => (v + 1) % jams.length), 5000);
     return () => clearInterval(iv);
   }, [jams.length]);
 
