@@ -198,61 +198,66 @@ export default function PreRollPage() {
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
+  /* Nexo form palette */
+  const CYAN = "#00BFF0";
+  const LIME = "#C6F03C";
+  const BG = "#D6F4FB";
+  const INK = "#002132";
+
   const inputStyle: React.CSSProperties = {
-    backgroundColor: "var(--layout-page-bg, #ffffff)",
-    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)",
-    color: "var(--layout-page-text, #1a1a1a)",
-    borderRadius: "12px",
+    backgroundColor: "#ffffff",
+    border: `2px solid ${CYAN}4D`,
+    color: INK,
+    borderRadius: "9999px",
+    height: "44px",
+    padding: "0 16px",
   };
 
   const focusHandler = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)";
-    e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)";
+    e.currentTarget.style.borderColor = CYAN;
+    e.currentTarget.style.boxShadow = `0 0 0 4px ${CYAN}26`;
   };
   const blurHandler = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)";
+    e.currentTarget.style.borderColor = `${CYAN}4D`;
     e.currentTarget.style.boxShadow = "none";
   };
 
   const sectionHeader = (icon: React.ReactNode, title: string) => (
     <div className="flex items-center gap-2.5 mb-4 mt-2">
-      <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" }}>
+      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${CYAN}1F`, color: CYAN }}>
         {icon}
       </div>
-      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{title}</span>
-      <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }} />
+      <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: INK }}>{title}</span>
+      <div className="flex-1 h-px" style={{ backgroundColor: `${INK}14` }} />
     </div>
   );
 
   return (
-    <div className="nexo-scope animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
+    <div className="nexo-scope animate-fade-in" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
+      <div className="rounded-3xl p-6" style={{ background: BG }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Film size={20} style={{ color: "var(--layout-icon-color, #888888)" }} />
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{ background: "#fff", boxShadow: `0 6px 18px ${CYAN}33` }}>
+            <Film size={20} style={{ color: CYAN }} />
           </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Anúncio</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie anúncios exibidos antes do conteúdo ao vivo</p>
+          <div className="flex-1">
+            <div className="text-[11px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>Comercial · Vídeo</div>
+            <h3 className="text-2xl font-black leading-tight" style={{ color: INK }}>
+              {editId ? "Editar anúncio" : "Novo anúncio"}
+            </h3>
           </div>
+          {editId && (
+            <button type="button" onClick={resetForm}
+              className="h-9 px-4 rounded-full text-xs font-bold bg-white/70 hover:bg-white transition"
+              style={{ color: INK, border: `2px solid ${INK}20` }}>
+              Cancelar edição
+            </button>
+          )}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-            <h3 className="text-sm font-bold">
-              {editId ? "✏️ Editar Anúncio" : "➕ Novo Anúncio"}
-            </h3>
-            {editId && (
-              <button type="button" onClick={resetForm}
-                className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
-                style={{ backgroundColor: "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.3)" }}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
+        <form onSubmit={handleSubmit} className="rounded-2xl overflow-hidden mb-6 bg-white" style={{ boxShadow: "0 4px 20px rgba(0,33,50,0.06)" }}>
+
 
           <div className="p-5 space-y-6">
             {/* ──── SEÇÃO 1: IDENTIFICAÇÃO ──── */}
@@ -599,22 +604,27 @@ export default function PreRollPage() {
               </div>
 
             {/* Submit */}
-            <Button variant="save" type="submit" disabled={saving}
-            >
-              {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
-              {editId ? "Salvar Alterações" : "Cadastrar Anúncio"}
-            </Button>
+            <div className="flex justify-end pt-2">
+              <button type="submit" disabled={saving}
+                className="h-12 px-7 rounded-full text-sm font-black flex items-center gap-2 disabled:opacity-50 transition hover:brightness-95"
+                style={{ background: LIME, color: INK, boxShadow: `0 8px 24px ${LIME}66` }}>
+                {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
+                {editId ? "Salvar alterações" : "Cadastrar anúncio"}
+              </button>
+            </div>
           </div>
         </form>
 
         {/* List */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-5 py-3 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-            <h3 className="text-sm font-bold">📋 Anúncios Cadastrados</h3>
-            <span className="text-[9px] font-normal px-2.5 py-0.5 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-              {prerolls.length} item{prerolls.length !== 1 ? "s" : ""}
+        <div className="rounded-2xl overflow-hidden bg-white" style={{ boxShadow: "0 4px 20px rgba(0,33,50,0.06)" }}>
+          <div className="px-5 py-3.5 flex items-center gap-2 border-b" style={{ borderColor: `${INK}12` }}>
+            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${CYAN}1F`, color: CYAN }}><Film size={14}/></div>
+            <h3 className="text-sm font-black" style={{ color: INK }}>Anúncios cadastrados</h3>
+            <span className="ml-auto text-[11px] font-bold px-2.5 py-1 rounded-full" style={{ background: `${CYAN}1F`, color: CYAN }}>
+              {prerolls.length}
             </span>
           </div>
+
 
           {prerolls.length === 0 ? (
             <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Nenhum pré-roll cadastrado.</p>
