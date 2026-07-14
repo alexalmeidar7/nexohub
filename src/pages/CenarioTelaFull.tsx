@@ -7,6 +7,7 @@ import { usePageTitle } from "@/hooks/usePageTitle";
 import TrafficMap from "@/components/TrafficMap";
 import SatelliteMap from "@/components/SatelliteMap";
 import CenarioQuotesPanel from "@/components/cenario/CenarioQuotesPanel";
+import { musicDataKey, musicStartKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
@@ -1033,27 +1034,40 @@ export default function CenarioTelaFull() {
     };
     setMusicWithCoverFallbackRef.current = setMusicWithCoverFallback;
 
-    // ─── 1. localStorage listener (same-tab, updated by useGlobalMusicSync) ───
+    // ─── 1. localStorage listener — SCOPED to effectiveUserId (see CenarioTela) ───
+    const SCOPED_DATA_KEY = musicDataKey(effectiveUserId);
+    const SCOPED_START_KEY = musicStartKey(effectiveUserId);
     const onStorage = (e: StorageEvent) => {
-      if (e.key !== "masterview_music_data" || !e.newValue) return;
+      if (!SCOPED_DATA_KEY || e.key !== SCOPED_DATA_KEY || !e.newValue) return;
       try {
         const d = JSON.parse(e.newValue) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         if (d.titulo && d.titulo !== "Sem título") {
-          const startRaw = localStorage.getItem("masterview_music_start");
+          const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
           const startTime = startRaw ? parseInt(startRaw, 10) : null;
           setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
       } catch { /* silent */ }
     };
     window.addEventListener("storage", onStorage);
+    const onSameTabMusic = (evt: Event) => {
+      const ce = evt as CustomEvent<{ userId?: string; data?: { titulo?: string; artista?: string; capa?: string; duracao?: number } }>;
+      if (!ce.detail || ce.detail.userId !== effectiveUserId) return;
+      const d = ce.detail.data;
+      if (d?.titulo && d.titulo !== "Sem título") {
+        const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
+        const startTime = startRaw ? parseInt(startRaw, 10) : null;
+        setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
+      }
+    };
+    window.addEventListener(MUSIC_DATA_EVENT, onSameTabMusic);
 
-    // Also read initial value from localStorage
+    // Initial value from the SCOPED key
     try {
-      const raw = localStorage.getItem("masterview_music_data");
+      const raw = SCOPED_DATA_KEY ? localStorage.getItem(SCOPED_DATA_KEY) : null;
       if (raw) {
         const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         if (d.titulo && d.titulo !== "Sem título") {
-          const startRaw = localStorage.getItem("masterview_music_start");
+          const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
           const startTime = startRaw ? parseInt(startRaw, 10) : null;
           setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
@@ -1180,17 +1194,17 @@ export default function CenarioTelaFull() {
         musicPollBusy = false;
       }, 4000);
     }
-    // ─── 5. Same-tab polling for localStorage changes (useGlobalMusicSync writes here) ───
+    // ─── 5. Same-tab polling — SCOPED to effectiveUserId ───
     let localPollInterval: ReturnType<typeof setInterval> | null = null;
-    if (isAuthenticated) {
+    if (isAuthenticated && SCOPED_DATA_KEY) {
       localPollInterval = setInterval(() => {
         try {
-          const raw = localStorage.getItem("masterview_music_data");
+          const raw = localStorage.getItem(SCOPED_DATA_KEY);
           if (!raw) return;
           const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
           const key = `${d.titulo || ""}|${d.artista || ""}`;
           if (key !== prevMusicRef.current && d.titulo && d.titulo !== "Sem título") {
-            const startRaw = localStorage.getItem("masterview_music_start");
+            const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
             const startTime = startRaw ? parseInt(startRaw, 10) : null;
             setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
           }
@@ -1201,6 +1215,7 @@ export default function CenarioTelaFull() {
     return () => {
       destroyed = true;
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onSameTabMusic);
       if (realtimeCh) supabase.removeChannel(realtimeCh);
       if (fallbackInterval) clearInterval(fallbackInterval);
       if (localPollInterval) clearInterval(localPollInterval);
