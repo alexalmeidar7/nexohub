@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Film, Globe, MessageCircle } from "lucide-react";
+import { Film, Globe, MessageCircle, type LucideIcon } from "lucide-react";
 import PreRollPage from "./PreRollPage";
 import AdsSitePage from "./AdsSitePage";
 import AdsChatbotPage from "./AdsChatbotPage";
 
 type Tab = "video" | "site" | "chatbot";
 
-const TABS: { id: Tab; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: "video", label: "Vídeo", icon: Film },
   { id: "site", label: "Site", icon: Globe },
   { id: "chatbot", label: "Chatbot", icon: MessageCircle },
