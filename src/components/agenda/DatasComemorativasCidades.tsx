@@ -14,11 +14,15 @@ const LS_UF_KEY = "nexo:agenda:uf-cidades";
 type Item = {
   date: Date;
   nome: string;
-  categoria: "comemorativa" | "cidade";
+  categoria: "comemorativa" | "cidade" | "feriado";
   tag: string;
 };
 
-export default function DatasComemorativasCidades() {
+interface Props {
+  feriados?: { date: Date; nome: string }[];
+}
+
+export default function DatasComemorativasCidades({ feriados = [] }: Props) {
   const [uf, setUf] = useState<string>(() => {
     if (typeof window === "undefined") return "GO";
     return window.localStorage.getItem(LS_UF_KEY) || "GO";
