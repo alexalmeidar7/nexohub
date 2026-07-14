@@ -72,6 +72,27 @@ function ClassificacaoBadge({ value, size = 20 }: { value: string; size?: number
   );
 }
 
+const FIELD_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: "#0A2540",
+  marginBottom: 8,
+  display: "block",
+};
+
+function Field({ label, children, span = "" }: { label: React.ReactNode; children: React.ReactNode; span?: string }) {
+  return (
+    <div className={span}>
+      <label style={FIELD_LABEL_STYLE}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
+
 interface Programa {
   id: string;
   nome: string;
@@ -868,12 +889,10 @@ export default function ProgramaForm() {
     whiteSpace: "nowrap",
   };
 
-  const Field = ({ label, children, span = "" }: { label: React.ReactNode; children: React.ReactNode; span?: string }) => (
-    <div className={span}>
-      <label style={labelStyle}>{label}</label>
-      {children}
-    </div>
-  );
+
+
+
+
 
   const uploadBox = (img: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void, w: number, h: number) => (
     <label
