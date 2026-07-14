@@ -29,6 +29,7 @@ export default function PlayerCatalog() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { userSlug } = useParams();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Catálogo");
   const [searchParams] = useSearchParams();
   const catalogName = searchParams.get("catalog") || "";
   const activeVideoId = searchParams.get("vid") || "";
