@@ -181,6 +181,7 @@ const pageTitle: Record<Page, string> = {
   enquete: "vMix — Enquete",
   quiz: "vMix — Quiz",
   site: "Site",
+  sorteios: "Sorteios",
 };
 
 interface DashboardProps {
