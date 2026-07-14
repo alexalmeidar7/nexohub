@@ -699,9 +699,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           }}
         >
 
-
-        <div className="flex flex-col items-center gap-1 px-1 overflow-visible">
-          {sidebarMenu.filter(item => {
+        {(() => {
+          const isChatbotMode = displayedPill === "Chatbot";
+          const chatbotAllowedTop = new Set(["home", "cadastros", "sorteio"]);
+          const chatbotCadastroChildren = new Set(["ouvintes"]);
+          const effectiveMenu: MenuItem[] = isChatbotMode
+            ? sidebarMenu
+                .filter(i => chatbotAllowedTop.has(i.label))
+                .map(i => i.label === "cadastros" && i.children
+                  ? { ...i, children: i.children.filter(c => chatbotCadastroChildren.has(c.label)) }
+                  : i)
+            : sidebarMenu;
+          return (
+        <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
+          {effectiveMenu.filter(item => {
             // Sub-user: only show menus for allowed modules
             if (subUserModules !== null) {
               if (item.label === "home") return true;
