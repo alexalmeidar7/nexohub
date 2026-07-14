@@ -3,7 +3,7 @@ import { Film, Globe, MessageCircle, type LucideIcon } from "lucide-react";
 import PreRollPage from "./PreRollPage";
 import AdsSitePage from "./AdsSitePage";
 import AdsChatbotPage from "./AdsChatbotPage";
-import adsBanner from "@/assets/ads-banner.png.asset.json";
+import adsBanner from "@/assets/ads-banner.png";
 
 type Tab = "video" | "site" | "chatbot";
 
