@@ -74,12 +74,20 @@ interface Canal {
   estudio: string;
 }
 
-/* ── Styled input helper ── */
+/* ── Nexo Form Design System (same as Cadastro de Participante) ── */
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+const NEXO_FONT = "'Montserrat', sans-serif";
+
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)",
-  border: "1px solid var(--layout-border-color, #333333)",
-  color: "var(--layout-page-text, #1a1a1a)",
-  borderRadius: "20px",
+  backgroundColor: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+  color: NEXO_DARK,
+  borderRadius: 999,
+  fontFamily: NEXO_FONT,
+  height: 44,
 };
 
 function StyledInput({ value, onChange, placeholder, type = "text", readOnly = false, className = "" }: {
@@ -92,10 +100,8 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       onChange={onChange}
       placeholder={placeholder}
       readOnly={readOnly}
-      className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
-      style={inputStyle}
-      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+      className={`w-full outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
+      style={{ ...inputStyle, padding: "0 20px" }}
     />
   );
 }
@@ -103,22 +109,62 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
 function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+    <section
+      style={{
+        background: NEXO_CARD_BG,
+        borderRadius: 28,
+        boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        overflow: "hidden",
+        fontFamily: NEXO_FONT,
+      }}
+    >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-6 py-4 transition-colors"
-        style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}
+        className="w-full flex items-center justify-between transition-colors"
+        style={{
+          padding: "18px 28px",
+          background: "transparent",
+          borderBottom: open ? `2px solid ${NEXO_CYAN}` : "none",
+        }}
       >
-        <div className="flex items-center gap-3" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-          {icon}
-          <h3 className="text-sm font-bold">{title}</h3>
+        <div className="flex items-center gap-3" style={{ color: NEXO_DARK }}>
+          <span
+            className="inline-flex items-center justify-center"
+            style={{ width: 34, height: 34, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+          >
+            {icon}
+          </span>
+          <h3
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: 1.5,
+              color: NEXO_DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            {title}
+          </h3>
         </div>
-        {open ? <ChevronUp size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} /> : <ChevronDown size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} />}
+        <span
+          className="inline-flex items-center justify-center"
+          style={{
+            width: 28, height: 28, borderRadius: 999,
+            background: open ? NEXO_LIME : "#FFFFFF",
+            border: `2px solid ${NEXO_CYAN}`,
+            color: NEXO_DARK,
+            transition: "background 0.2s",
+          }}
+        >
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </span>
       </button>
-      {open && <div className="p-6 space-y-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>{children}</div>}
-    </div>
+      {open && <div className="p-7 space-y-5" style={{ background: NEXO_CARD_BG }}>{children}</div>}
+    </section>
   );
 }
+
 
 export default function ConfiguracoesPage({ section = "all" }: { section?: "all" | "empresa" | "player" }) {
   const { user } = useAuth();
