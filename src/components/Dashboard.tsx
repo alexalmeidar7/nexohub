@@ -169,7 +169,7 @@ const pageTitle: Record<Page, string> = {
   promocoes: "Comercial — Promoções",
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
-  preroll: "Player — Anúncios",
+  preroll: "ADS",
   propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   tp: "Ferramentas — TP",
