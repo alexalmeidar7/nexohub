@@ -1670,6 +1670,48 @@ export type Database = {
           },
         ]
       }
+      site_banners: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_final: string | null
+          data_inicial: string | null
+          id: string
+          image_url: string
+          link_url: string | null
+          nome: string
+          posicao: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
+          id?: string
+          image_url: string
+          link_url?: string | null
+          nome: string
+          posicao?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
+          id?: string
+          image_url?: string
+          link_url?: string | null
+          nome?: string
+          posicao?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       site_categorias: {
         Row: {
           cor: string | null
@@ -2223,6 +2265,7 @@ export type Database = {
           fail_count: number
           finished_at: string | null
           id: string
+          image_url: string | null
           message: string
           name: string
           scheduled_at: string | null
@@ -2239,6 +2282,7 @@ export type Database = {
           fail_count?: number
           finished_at?: string | null
           id?: string
+          image_url?: string | null
           message: string
           name: string
           scheduled_at?: string | null
@@ -2255,6 +2299,7 @@ export type Database = {
           fail_count?: number
           finished_at?: string | null
           id?: string
+          image_url?: string | null
           message?: string
           name?: string
           scheduled_at?: string | null
