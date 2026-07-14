@@ -1034,27 +1034,40 @@ export default function CenarioTelaFull() {
     };
     setMusicWithCoverFallbackRef.current = setMusicWithCoverFallback;
 
-    // ─── 1. localStorage listener (same-tab, updated by useGlobalMusicSync) ───
+    // ─── 1. localStorage listener — SCOPED to effectiveUserId (see CenarioTela) ───
+    const SCOPED_DATA_KEY = musicDataKey(effectiveUserId);
+    const SCOPED_START_KEY = musicStartKey(effectiveUserId);
     const onStorage = (e: StorageEvent) => {
-      if (e.key !== "masterview_music_data" || !e.newValue) return;
+      if (!SCOPED_DATA_KEY || e.key !== SCOPED_DATA_KEY || !e.newValue) return;
       try {
         const d = JSON.parse(e.newValue) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         if (d.titulo && d.titulo !== "Sem título") {
-          const startRaw = localStorage.getItem("masterview_music_start");
+          const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
           const startTime = startRaw ? parseInt(startRaw, 10) : null;
           setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
       } catch { /* silent */ }
     };
     window.addEventListener("storage", onStorage);
+    const onSameTabMusic = (evt: Event) => {
+      const ce = evt as CustomEvent<{ userId?: string; data?: { titulo?: string; artista?: string; capa?: string; duracao?: number } }>;
+      if (!ce.detail || ce.detail.userId !== effectiveUserId) return;
+      const d = ce.detail.data;
+      if (d?.titulo && d.titulo !== "Sem título") {
+        const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
+        const startTime = startRaw ? parseInt(startRaw, 10) : null;
+        setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
+      }
+    };
+    window.addEventListener(MUSIC_DATA_EVENT, onSameTabMusic);
 
-    // Also read initial value from localStorage
+    // Initial value from the SCOPED key
     try {
-      const raw = localStorage.getItem("masterview_music_data");
+      const raw = SCOPED_DATA_KEY ? localStorage.getItem(SCOPED_DATA_KEY) : null;
       if (raw) {
         const d = JSON.parse(raw) as { titulo?: string; artista?: string; capa?: string; duracao?: number };
         if (d.titulo && d.titulo !== "Sem título") {
-          const startRaw = localStorage.getItem("masterview_music_start");
+          const startRaw = SCOPED_START_KEY ? localStorage.getItem(SCOPED_START_KEY) : null;
           const startTime = startRaw ? parseInt(startRaw, 10) : null;
           setMusicWithCoverFallback(d.titulo || "", d.artista || "", d.capa || "", d.duracao, startTime);
         }
