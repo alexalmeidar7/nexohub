@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
+import { findCurrentProgram } from "./OnAirWidget";
+
 
 // Palette (nexo-form-design-system)
 const CYAN = "#00BFF0";
@@ -110,7 +112,9 @@ interface Ouvinte {
   nome: string;
   telefone: string | null;
   cidade: string | null;
+  pontuacao: number | null;
 }
+
 
 type Tab = "premios" | "sorteio" | "entrega";
 
@@ -128,7 +132,7 @@ export default function SorteiosPage() {
     const [p, s, o] = await Promise.all([
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
-      supabase.from("ouvintes").select("id, nome, telefone, cidade").order("nome"),
+      supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
@@ -179,7 +183,7 @@ export default function SorteiosPage() {
       </div>
 
       {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
-      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} userId={user?.id} onReload={load} onGoTo={setTab} />}
+      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} userId={user?.id} onReload={load} onGoTo={setTab} />}
       {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
     </div>
   );
@@ -329,8 +333,8 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 }
 
 /* ═════════════════════ SORTEIO ═════════════════════ */
-function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
-  premios: Premio[]; ouvintes: Ouvinte[]; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
+function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
+  premios: Premio[]; ouvintes: Ouvinte[]; sorteios: Sorteio[]; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
 }) {
   const { toast } = useToast();
   const [premioId, setPremioId] = useState<string>("");
@@ -339,13 +343,49 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
   const [manual, setManual] = useState({ nome: "", telefone: "" });
   const [saving, setSaving] = useState(false);
   const [obs, setObs] = useState("");
+  const [now, setNow] = useState<Date>(new Date());
+  const [programaNoAr, setProgramaNoAr] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
 
   const premioSelecionado = premios.find(p => p.id === premioId);
+  const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
   const disponivel = premios.filter(p => p.ativo && p.quantidade_estoque > 0);
+
+  // Relógio ao vivo
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Programa no ar (Estúdio FM)
+  useEffect(() => {
+    let cancelled = false;
+    const fetchNoAr = async () => {
+      const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
+      if (!data || cancelled) return;
+      const programas = data.map((p: any) => ({
+        id: p.id,
+        nome: p.nome,
+        apresentadorId: p.apresentador_id || "",
+        selo: p.selo || "",
+        diasSemana: p.dias_semana || [],
+        horarioInicio: p.horario_inicio,
+        horarioFim: p.horario_fim,
+        estudio: p.estudio || "",
+        classificacaoEtaria: p.classificacao_etaria || "",
+      }));
+      const cur = findCurrentProgram(programas);
+      setProgramaNoAr(cur ? { nome: cur.programa.nome, horarioInicio: cur.programa.horarioInicio, horarioFim: cur.programa.horarioFim } : null);
+    };
+    fetchNoAr();
+    const i = setInterval(fetchNoAr, 60000);
+    return () => { cancelled = true; clearInterval(i); };
+  }, []);
 
   const pool = useMemo(() => {
     const cidadeQ = filtroCidade.trim().toLowerCase();
-    return ouvintes.filter(o => !cidadeQ || (o.cidade || "").toLowerCase().includes(cidadeQ));
+    return ouvintes
+      .filter(o => !cidadeQ || (o.cidade || "").toLowerCase().includes(cidadeQ))
+      .sort((a, b) => (b.pontuacao ?? 0) - (a.pontuacao ?? 0));
   }, [ouvintes, filtroCidade]);
 
   const sortear = () => {
@@ -356,19 +396,33 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
     setManual({ nome: "", telefone: "" });
   };
 
+  // Histórico do ganhador
+  const historicoGanhador = useMemo(() => {
+    if (!ganhador) return [];
+    return sorteios.filter(s =>
+      s.ouvinte_id === ganhador.id ||
+      (s.nome_ganhador || "").trim().toLowerCase() === ganhador.nome.trim().toLowerCase()
+    );
+  }, [ganhador, sorteios]);
+  const jaGanhouEstePremio = historicoGanhador.some(s => s.premio_id === premioId);
+
   const registrar = async () => {
     if (!userId || !premioId) return;
     const nome = ganhador?.nome || manual.nome.trim();
     const tel = ganhador?.telefone || manual.telefone.trim() || null;
     if (!nome) { toast({ title: "Informe o ganhador", variant: "destructive" }); return; }
     setSaving(true);
+    const ctxParts: string[] = [];
+    ctxParts.push(`Sorteio em ${now.toLocaleString("pt-BR")}`);
+    if (programaNoAr) ctxParts.push(`Programa no ar: ${programaNoAr.nome} (${programaNoAr.horarioInicio}—${programaNoAr.horarioFim})`);
+    const obsFinal = [obs.trim(), ctxParts.join(" · ")].filter(Boolean).join("\n");
     const { error } = await supabase.from("sorteio_sorteios").insert({
       user_id: userId,
       premio_id: premioId,
       ouvinte_id: ganhador?.id || null,
       nome_ganhador: nome,
       telefone_ganhador: tel,
-      observacoes: obs.trim() || null,
+      observacoes: obsFinal || null,
     });
     setSaving(false);
     if (error) { toast({ title: "Erro ao registrar", description: error.message, variant: "destructive" }); return; }
@@ -384,6 +438,26 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
         <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
           Configurar Sorteio
         </h2>
+
+        {/* Contexto: data/hora + programa no ar */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33`, marginBottom: 16 }}>
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={14} color={CYAN} />
+            <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>Momento do sorteio</span>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: DARK }}>{now.toLocaleString("pt-BR")}</div>
+          <div className="flex items-center gap-2 mt-3">
+            <Radio size={14} color={CYAN} />
+            {programaNoAr ? (
+              <div style={{ fontSize: 12, color: DARK }}>
+                <b>{programaNoAr.nome}</b> <span style={{ color: "#64748B" }}>· {programaNoAr.horarioInicio}—{programaNoAr.horarioFim}</span>
+              </div>
+            ) : (
+              <span style={{ fontSize: 12, color: "#64748B" }}>Nenhum programa no ar</span>
+            )}
+          </div>
+        </div>
+
         <div className="grid gap-4">
           <Field label="Prêmio (com estoque)">
             <select style={pillSelect} value={premioId} onChange={e => setPremioId(e.target.value)}>
@@ -396,10 +470,41 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
           <Field label="Filtrar ouvintes por cidade (opcional)">
             <input style={pillInput} value={filtroCidade} onChange={e => setFiltroCidade(e.target.value)} placeholder="Ex: São Paulo" />
           </Field>
-          <div style={{ background: "#fff", borderRadius: 16, padding: 12, textAlign: "center", border: `1px solid ${CYAN}33` }}>
-            <div style={{ fontSize: 11, color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Pool de participantes</div>
-            <div style={{ fontSize: 28, fontWeight: 800, color: DARK }}>{pool.length}</div>
+
+          {/* Pool com tabela */}
+          <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
+            <div className="flex items-center justify-between mb-2">
+              <div style={{ fontSize: 11, color: "#64748B", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>Pool de participantes</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>{pool.length}</div>
+            </div>
+            {pool.length === 0 ? (
+              <p style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", padding: 12 }}>Sem participantes</p>
+            ) : (
+              <div style={{ maxHeight: 260, overflowY: "auto", borderRadius: 12 }}>
+                <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                  <thead style={{ position: "sticky", top: 0, background: CARD_BG }}>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>#</th>
+                      <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Nome</th>
+                      <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Cidade</th>
+                      <th style={{ textAlign: "right", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Pontos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pool.map((o, idx) => (
+                      <tr key={o.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
+                        <td style={{ padding: "6px 10px", color: "#64748B" }}>{idx + 1}</td>
+                        <td style={{ padding: "6px 10px", color: DARK, fontWeight: 600 }}>{o.nome}</td>
+                        <td style={{ padding: "6px 10px", color: "#64748B" }}>{o.cidade || "—"}</td>
+                        <td style={{ padding: "6px 10px", color: DARK, fontWeight: 800, textAlign: "right" }}>{o.pontuacao ?? 0}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
+
           <button style={limeBtn} onClick={sortear} disabled={!premioId || pool.length === 0}>
             <Shuffle size={16} /> Sortear Ganhador
           </button>
@@ -417,12 +522,61 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
               <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>{ganhador.nome}</div>
               {ganhador.telefone && <div style={{ fontSize: 13, color: DARK }}>{ganhador.telefone}</div>}
               {ganhador.cidade && <div style={{ fontSize: 12, color: DARK, opacity: 0.7 }}>{ganhador.cidade}</div>}
+              <div style={{ fontSize: 12, color: DARK, marginTop: 6 }}><b>Pontos:</b> {ganhador.pontuacao ?? 0}</div>
             </div>
             {premioSelecionado && (
               <div style={{ background: "#fff", borderRadius: 16, padding: 12, fontSize: 13, color: DARK }}>
                 <b>Prêmio:</b> {premioSelecionado.nome}
               </div>
             )}
+
+            {/* Alerta se já ganhou este prêmio */}
+            {jaGanhouEstePremio && (
+              <div style={{ background: "#FEF3C7", border: "2px solid #F59E0B", borderRadius: 16, padding: 12, color: "#92400E", fontSize: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                <AlertTriangle size={16} />
+                <span><b>Atenção:</b> este ouvinte já ganhou o prêmio <b>{premioSelecionado?.nome}</b> anteriormente.</span>
+              </div>
+            )}
+
+            {/* Histórico do ouvinte */}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <History size={14} color={CYAN} />
+                <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>
+                  Histórico de prêmios ({historicoGanhador.length})
+                </span>
+              </div>
+              {historicoGanhador.length === 0 ? (
+                <p style={{ fontSize: 12, color: "#94a3b8" }}>Nenhum prêmio anterior.</p>
+              ) : (
+                <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                  <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Prêmio</th>
+                        <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Data</th>
+                        <th style={{ textAlign: "center", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {historicoGanhador.map(h => (
+                        <tr key={h.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
+                          <td style={{ padding: "6px 8px", color: DARK, fontWeight: 600 }}>{premioMap[h.premio_id]?.nome || "—"}</td>
+                          <td style={{ padding: "6px 8px", color: "#64748B" }}>{new Date(h.data_sorteio).toLocaleDateString("pt-BR")}</td>
+                          <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                            {h.entregue ? (
+                              <span style={{ background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Retirado</span>
+                            ) : (
+                              <span style={{ background: "#FEF3C7", color: "#92400E", borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Pendente</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="grid gap-3">
@@ -451,6 +605,7 @@ function SorteioTab({ premios, ouvintes, userId, onReload, onGoTo }: {
     </div>
   );
 }
+
 
 /* ═════════════════════ ENTREGA ═════════════════════ */
 function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; premios: Premio[]; onReload: () => void }) {
