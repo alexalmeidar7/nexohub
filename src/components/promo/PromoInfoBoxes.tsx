@@ -251,11 +251,39 @@ function DatasBox() {
   }, [items.length]);
 
   const cur = items[idx];
+  const isToday = cur ? (() => {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    return cur.date.getTime() === t.getTime();
+  })() : false;
 
   return (
-    <div style={cardStyle}>
-      <div style={titleStyle}>
-        <Star size={11} style={{ color: "#FFD34D" }} /> Datas Comemorativas
+    <div
+      style={{
+        ...cardStyle,
+        ...(isToday ? {
+          background: "linear-gradient(160deg, rgba(215,13,14,0.35) 0%, rgba(0,0,0,0.85) 100%)",
+          border: "1px solid rgba(255,211,77,0.55)",
+          boxShadow: "0 0 24px rgba(255,211,77,0.25), 0 4px 20px rgba(0,0,0,0.4)",
+        } : {}),
+      }}
+    >
+      <div style={titleStyle} className="justify-between">
+        <span className="flex items-center gap-1.5">
+          <Star size={11} style={{ color: "#FFD34D" }} /> Datas Comemorativas
+        </span>
+        {isToday && (
+          <span
+            style={{
+              fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
+              padding: "2px 7px", borderRadius: 999,
+              background: "#FFD34D", color: "#000",
+              boxShadow: "0 0 10px rgba(255,211,77,0.7)",
+              animation: "promo-datas-pulse 1.4s ease-in-out infinite",
+            }}
+          >
+            ★ Hoje
+          </span>
+        )}
       </div>
       {cur ? (
         <>
@@ -264,8 +292,11 @@ function DatasBox() {
               className="rounded-md flex flex-col items-center justify-center shrink-0"
               style={{
                 width: 42, height: 42,
-                background: "linear-gradient(135deg, #d70d0e, #7a0505)",
-                color: TEXT,
+                background: isToday
+                  ? "linear-gradient(135deg, #FFD34D, #E08900)"
+                  : "linear-gradient(135deg, #d70d0e, #7a0505)",
+                color: isToday ? "#000" : TEXT,
+                boxShadow: isToday ? "0 0 12px rgba(255,211,77,0.6)" : "none",
               }}
             >
               <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
@@ -274,9 +305,17 @@ function DatasBox() {
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate" style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.15 }}>{cur.nome}</div>
+              <div
+                className="truncate"
+                style={{
+                  fontSize: 12, fontWeight: 800, lineHeight: 1.15,
+                  color: isToday ? "#FFD34D" : TEXT,
+                }}
+              >
+                {cur.nome}
+              </div>
               <div style={{ fontSize: 9, color: MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>
-                {cur.tag} · {format(cur.date, "EEE", { locale: ptBR }).replace(".", "")}
+                {isToday ? "Comemora-se hoje" : `${cur.tag} · ${format(cur.date, "EEE", { locale: ptBR }).replace(".", "")}`}
               </div>
             </div>
           </div>
@@ -292,6 +331,12 @@ function DatasBox() {
       ) : (
         <div style={{ fontSize: 11, color: MUTED }}>Sem datas.</div>
       )}
+      <style>{`
+        @keyframes promo-datas-pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,211,77,0.7); }
+          50% { transform: scale(1.06); box-shadow: 0 0 18px rgba(255,211,77,1); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -472,7 +517,7 @@ function CotacoesBox() {
 
   useEffect(() => {
     fetchIt();
-    const iv = setInterval(fetchIt, 2 * 60 * 1000);
+    const iv = setInterval(fetchIt, 10 * 60 * 1000);
     return () => clearInterval(iv);
   }, [fetchIt]);
 
