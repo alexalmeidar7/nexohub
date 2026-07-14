@@ -6,18 +6,78 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const TOMTOM_KEY = Deno.env.get("TOMTOM_API_KEY") || "";
+
 async function geocode(city: string): Promise<{ lat: number; lon: number; name: string } | null> {
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=1&accept-language=pt-BR`;
-  const r = await fetch(url, { headers: { "User-Agent": "LovableVMIX/1.0" } });
-  const data = await r.json();
-  const first = data?.[0];
-  if (!first) return null;
-  return { lat: parseFloat(first.lat), lon: parseFloat(first.lon), name: first.display_name.split(",")[0] };
+  // Prefer TomTom geocoding when available (more accurate for BR cities)
+  if (TOMTOM_KEY) {
+    try {
+      const u = `https://api.tomtom.com/search/2/geocode/${encodeURIComponent(city)}.json?limit=1&countrySet=BR&key=${TOMTOM_KEY}`;
+      const r = await fetch(u);
+      if (r.ok) {
+        const d = await r.json();
+        const first = d?.results?.[0];
+        if (first?.position) {
+          return {
+            lat: first.position.lat,
+            lon: first.position.lon,
+            name: first.address?.municipality || first.address?.freeformAddress?.split(",")[0] || city,
+          };
+        }
+      }
+    } catch { /* fallthrough */ }
+  }
+  // Fallback: Nominatim
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&addressdetails=1&accept-language=pt-BR`;
+    const r = await fetch(url, { headers: { "User-Agent": "LovableVMIX/1.0" } });
+    const data = await r.json();
+    const first = data?.[0];
+    if (!first) return null;
+    return { lat: parseFloat(first.lat), lon: parseFloat(first.lon), name: first.display_name.split(",")[0] };
+  } catch {
+    return null;
+  }
+}
+
+function magToLevel(magnitude: number): number {
+  // TomTom magnitudeOfDelay: 0 unknown, 1 minor, 2 moderate, 3 major, 4 undefined/severe
+  if (magnitude >= 4) return 5;
+  if (magnitude === 3) return 4;
+  if (magnitude === 2) return 3;
+  if (magnitude === 1) return 2;
+  return 1;
+}
+
+function iconCategoryLabel(cat: number): string {
+  // TomTom iconCategory -> pt-BR
+  const map: Record<number, string> = {
+    0: "Desconhecido",
+    1: "Acidente",
+    2: "Nevoeiro",
+    3: "Condições perigosas",
+    4: "Chuva",
+    5: "Gelo",
+    6: "Congestionamento",
+    7: "Faixa fechada",
+    8: "Estrada fechada",
+    9: "Obras",
+    10: "Vento",
+    11: "Alagamento",
+    14: "Veículo quebrado",
+  };
+  return map[cat] || "Incidente";
 }
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    if (!TOMTOM_KEY) {
+      return new Response(JSON.stringify({ ok: false, error: "TOMTOM_API_KEY not configured", jams: [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const body = await req.json().catch(() => ({}));
     let { city, lat, lon } = body || {};
     if ((lat == null || lon == null) && city) {
@@ -29,34 +89,62 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const d = 0.18; // ~20km bounding box
-    const url = `https://www.waze.com/live-map/api/georss?top=${lat + d}&bottom=${lat - d}&left=${lon - d}&right=${lon + d}&env=row&types=alerts,traffic`;
-    const r = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        "Referer": "https://www.waze.com/live-map",
-        "Accept": "application/json",
-      },
-    });
-    const data = await r.json().catch(() => ({}));
-    const jams = Array.isArray(data?.jams) ? data.jams : [];
-    const top = jams
-      .filter((j: any) => j && (j.street || j.city))
-      .sort((a: any, b: any) => (b.delay || 0) - (a.delay || 0))
-      .slice(0, 5)
-      .map((j: any) => ({
-        street: j.street || "Sem nome",
-        city: j.city || "",
-        delaySec: j.delay || 0,
-        lengthM: j.length || 0,
-        speedKmh: j.speed ? Math.round(j.speed * 3.6) : null,
-        level: j.level || 0,
-      }));
-    return new Response(JSON.stringify({ ok: true, city: city || null, jams: top, updatedAt: new Date().toISOString() }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+
+    // TomTom Traffic Incident Details v5. bbox = minLon,minLat,maxLon,maxLat
+    const d = 0.22; // ~24km
+    const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
+    const fields =
+      "{incidents{type,geometry{type,coordinates},properties{iconCategory,magnitudeOfDelay,startTime,endTime,from,to,length,delay,roadNumbers,events{description,code,iconCategory}}}}";
+    const url = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-BR&t=1111&timeValidityFilter=present&key=${TOMTOM_KEY}`;
+
+    const r = await fetch(url);
+    if (!r.ok) {
+      const txt = await r.text();
+      return new Response(JSON.stringify({ ok: false, error: `TomTom ${r.status}: ${txt.slice(0, 200)}`, jams: [] }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const data = await r.json();
+    const incidents: any[] = Array.isArray(data?.incidents) ? data.incidents : [];
+
+    const jams = incidents
+      .map((it) => {
+        const p = it?.properties || {};
+        const streetFrom = p.from || "";
+        const streetTo = p.to || "";
+        const road = Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : "";
+        const eventDesc = Array.isArray(p.events) && p.events[0]?.description ? p.events[0].description : "";
+        const iconCat = typeof p.iconCategory === "number" ? p.iconCategory : 0;
+        let street = road || streetFrom || streetTo || eventDesc || "Via";
+        if (streetFrom && streetTo && !road) street = `${streetFrom} → ${streetTo}`;
+        return {
+          street,
+          city: city || "",
+          delaySec: typeof p.delay === "number" ? p.delay : 0,
+          lengthM: typeof p.length === "number" ? p.length : 0,
+          speedKmh: null as number | null,
+          level: magToLevel(typeof p.magnitudeOfDelay === "number" ? p.magnitudeOfDelay : 0),
+          type: iconCategoryLabel(iconCat),
+          description: eventDesc,
+        };
+      })
+      .filter((j) => j.street && j.street !== "Via")
+      .sort((a, b) => {
+        // priority: delay desc, then level desc, then length desc
+        if (b.delaySec !== a.delaySec) return b.delaySec - a.delaySec;
+        if (b.level !== a.level) return b.level - a.level;
+        return b.lengthM - a.lengthM;
+      })
+      .slice(0, 5);
+
+    return new Response(
+      JSON.stringify({ ok: true, source: "tomtom", city: city || null, jams, updatedAt: new Date().toISOString() }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     return new Response(JSON.stringify({ ok: false, error: String(e), jams: [] }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
