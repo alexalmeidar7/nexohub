@@ -692,7 +692,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
             <div className="min-w-0 flex-1">
               <div
                 style={{
-                  fontSize: 13.5, fontWeight: 900, lineHeight: 1.2,
+                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
                   color: "#ffffff",
                   textShadow: "0 1px 2px rgba(0,0,0,0.85)",
                   display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
