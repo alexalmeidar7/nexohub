@@ -461,7 +461,7 @@ export default function PromocoesKiosk() {
         timestamp: new Date().toISOString(),
         date: today,
       };
-      try { localStorage.setItem("promo-peak-audience", JSON.stringify(next)); } catch { /* ignore */ }
+      try { localStorage.setItem(peakStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
       return next;
     });
   }, [audioCount, videoCount, onAirProgram, apresentadores]);
