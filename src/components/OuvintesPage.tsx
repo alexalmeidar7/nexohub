@@ -105,7 +105,16 @@ const labelStyle: React.CSSProperties = {
   display: "block",
 };
 
+function formatPhone(v: string | null | undefined): string {
+  if (!v) return "";
+  const d = String(v).replace(/\D/g, "");
+  if (d.length === 11) return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+  return v;
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+
   return (
     <div>
       <label style={labelStyle}>{label}</label>
@@ -581,7 +590,7 @@ export default function OuvintesPage() {
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                  {["Data", "Origem", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
+                  {["Data", "Nome", "CPF", "Telefone", "E-mail", "Sexo", "Setor", "Cidade", "Nascimento", "Idade", "Escolaridade", "Renda", "Pontos", "Ações"].map((h, i) => (
                     <th
                       key={h}
                       style={{
@@ -611,26 +620,31 @@ export default function OuvintesPage() {
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
-                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                    <td style={{ padding: "12px 14px", minWidth: 200 }}>
                       {(() => {
                         const isBot = o.origem_cadastro === "chatbot";
                         return (
-                          <span style={{
-                            display: "inline-flex", alignItems: "center", gap: 5,
-                            padding: "4px 10px", borderRadius: 999,
-                            background: isBot ? "#25D36622" : CARD_BG,
-                            color: isBot ? "#128C7E" : DARK,
-                            fontSize: 10, fontWeight: 800, letterSpacing: 0.6, textTransform: "uppercase",
-                          }}>
-                            {isBot ? <MessageCircle size={11} /> : <UserIcon size={11} />}
-                            {isBot ? "Chatbot" : "Manual"}
-                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <span
+                              title={isBot ? "Origem: Chatbot" : "Origem: Manual"}
+                              style={{
+                                flexShrink: 0,
+                                width: 26, height: 26, borderRadius: "50%",
+                                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                                background: isBot ? "#25D36622" : CARD_BG,
+                                color: isBot ? "#128C7E" : DARK,
+                              }}
+                            >
+                              {isBot ? <MessageCircle size={13} /> : <UserIcon size={13} />}
+                            </span>
+                            <span style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>{o.nome}</span>
+                          </div>
                         );
                       })()}
                     </td>
-                    <td style={{ padding: "12px 14px", fontWeight: 700 }}>{o.nome}</td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
-                    <td style={{ padding: "12px 14px" }}>{o.telefone || "—"}</td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{formatPhone(o.telefone) || "—"}</td>
+
                     <td style={{ padding: "12px 14px" }}>{o.email || "—"}</td>
                     <td style={{ padding: "12px 14px" }}>{o.sexo || "—"}</td>
                     <td style={{ padding: "12px 14px" }}>{o.setor || "—"}</td>
