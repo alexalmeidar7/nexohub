@@ -183,7 +183,7 @@ export default function SorteiosPage() {
       </div>
 
       {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
-      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} userId={user?.id} onReload={load} onGoTo={setTab} />}
+      {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} userId={user?.id} onReload={load} onGoTo={setTab} />}
       {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
     </div>
   );
