@@ -699,9 +699,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           }}
         >
 
-
-        <div className="flex flex-col items-center gap-1 px-1 overflow-visible">
-          {sidebarMenu.filter(item => {
+        {(() => {
+          const isChatbotMode = displayedPill === "Chatbot";
+          const chatbotAllowedTop = new Set(["home", "cadastros", "sorteio"]);
+          const chatbotCadastroChildren = new Set(["ouvintes"]);
+          const effectiveMenu: MenuItem[] = isChatbotMode
+            ? sidebarMenu
+                .filter(i => chatbotAllowedTop.has(i.label))
+                .map(i => i.label === "cadastros" && i.children
+                  ? { ...i, children: i.children.filter(c => chatbotCadastroChildren.has(c.label)) }
+                  : i)
+            : sidebarMenu;
+          return (
+        <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
+          {effectiveMenu.filter(item => {
             // Sub-user: only show menus for allowed modules
             if (subUserModules !== null) {
               if (item.label === "home") return true;
@@ -827,6 +838,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             );
           })}
         </div>
+          );
+        })()}
 
         
 
@@ -861,8 +874,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <X size={16} className="text-white" />
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
-                {sidebarMenu.filter(item => {
+              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2 animate-fade-in">
+                {(displayedPill === "Chatbot"
+                  ? sidebarMenu
+                      .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
+                      .map(i => i.label === "cadastros" && i.children
+                        ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
+                        : i)
+                  : sidebarMenu
+                ).filter(item => {
                   if (subUserModules !== null) {
                     if (item.label === "home") return true;
                     if (item.children) {
