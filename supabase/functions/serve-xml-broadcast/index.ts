@@ -391,6 +391,7 @@ serve(async (req) => {
 
     let programaNome = "";
     let programaLogo = "";
+    let programaThumb = "";
     let locutorNome = "";
     let locutorInstagram = "";
     let locutorFoto = "";
@@ -401,6 +402,9 @@ serve(async (req) => {
       programaId = prog.id || "";
       programaLogo = prog.selo
         ? await ensurePngImageUrl(supabase, prog.selo, `broadcast/${dataOwnerId}/${prog.id}-logo.png`, 512)
+        : "";
+      programaThumb = (prog as any).thumb
+        ? await ensurePngImageUrl(supabase, (prog as any).thumb, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 512)
         : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
@@ -420,7 +424,9 @@ serve(async (req) => {
         if (ap) {
           locutorNome = ap.nome || "";
           locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
-          locutorFoto = normalizeImageUrl(ap.foto, 1080);
+          locutorFoto = ap.foto
+            ? await ensurePngImageUrl(supabase, ap.foto, `broadcast/${dataOwnerId}/${ap.id}-locutor.png`, 1080)
+            : "";
         }
       }
     }
