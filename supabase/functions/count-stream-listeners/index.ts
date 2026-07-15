@@ -239,18 +239,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch each URL. Priority order:
-    //   1) explicit XPath, 2) generic listener tag auto-detect on the same URL,
-    //   3) Icecast/Shoutcast URL-shape auto-detect.
+    // For each URL, race all strategies in parallel — fastest non-null wins.
+    // XPath override still takes priority when set (checked first synchronously).
     const counts = await Promise.all(
       urls.map(async (u) => {
-        if (xpath) {
-          const v = await fetchWithXPath(u, xpath);
-          if (v !== null) return v;
-        }
-        const g = await fetchGenericListeners(u);
-        if (g !== null) return g;
-        return fetchListenersForUrl(u);
+        const strategies: Array<Promise<number | null>> = [];
+        if (xpath) strategies.push(fetchWithXPath(u, xpath));
+        strategies.push(fetchGenericListeners(u));
+        strategies.push(fetchListenersForUrl(u));
+        try {
+          return await Promise.any(
+            strategies.map(async (p) => {
+              const v = await p; if (v === null) throw new Error("null"); return v;
+            }),
+          );
+        } catch { return null; }
       }),
     );
 
