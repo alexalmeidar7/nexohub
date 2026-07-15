@@ -1687,7 +1687,24 @@ export default function AgendaPage() {
 
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-          <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
+          <DialogContent
+            className="max-w-md p-0 flex flex-col"
+            style={{
+              // Escopo local da paleta Nexo Form (padrão do sistema)
+              ["--layout-page-bg" as any]: "#D6F4FB",
+              ["--layout-page-text" as any]: "#0A2540",
+              ["--layout-accent-color" as any]: "#00BFF0",
+              ["--layout-header-bg" as any]: "#00BFF0",
+              ["--layout-header-text" as any]: "#ffffff",
+              ["--layout-icon-color" as any]: "#0A2540",
+              backgroundColor: "#D6F4FB",
+              borderRadius: "24px",
+              border: "none",
+              boxShadow: "0 24px 80px rgba(10,37,64,0.25)",
+              fontFamily: "Montserrat, sans-serif",
+              overflow: "hidden",
+            }}
+          >
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
@@ -1709,15 +1726,29 @@ export default function AgendaPage() {
               .agenda-form-calendar button[name="next-month"] { color: var(--layout-page-text, #1a1a1a) !important; }
             `}</style>
 
-            {/* Header */}
-            <div className="px-6 pt-5 pb-4" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)", borderRadius: "20px 20px 0 0", color: "var(--layout-header-text, #ffffff)" }}>
+            {/* Header — Nexo Form (cyan sólido, cantos superiores arredondados) */}
+            <div
+              className="px-6 pt-5 pb-5"
+              style={{
+                background: "linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%)",
+                borderRadius: "24px 24px 0 0",
+                color: "#ffffff",
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                  <CalendarIcon size={20} />
+                <div
+                  className="w-11 h-11 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(255,255,255,0.22)", backdropFilter: "blur(4px)" }}
+                >
+                  <CalendarIcon size={22} strokeWidth={2.5} />
                 </div>
                 <div>
-                  <DialogTitle className="text-sm font-bold m-0">{editingId ? "Editar Evento" : "Novo Evento"}</DialogTitle>
-                  <p className="text-[10px] mt-0.5" style={{ opacity: 0.6 }}>Preencha os dados abaixo</p>
+                  <DialogTitle className="text-base font-black uppercase tracking-wider m-0" style={{ letterSpacing: "0.08em" }}>
+                    {editingId ? "Editar Evento" : "Novo Evento"}
+                  </DialogTitle>
+                  <p className="text-[11px] mt-0.5 font-medium" style={{ opacity: 0.9 }}>
+                    Preencha os dados abaixo
+                  </p>
                 </div>
               </div>
             </div>
@@ -2322,16 +2353,12 @@ export default function AgendaPage() {
                 </button>
               )}
 
-              <Button variant="save"
+              <Button
+                variant="save"
                 type="button"
                 onClick={handleSave}
                 disabled={!formProgramaId || !formData}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 88%, black 12%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #2563eb)";
-                }}
+                className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider"
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
               </Button>
