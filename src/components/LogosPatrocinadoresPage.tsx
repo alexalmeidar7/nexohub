@@ -584,6 +584,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             </span>
                           </div>
                           <div className="max-h-72 overflow-auto">
+                            {"sem programa".includes(programaSearch.toLowerCase()) && (
+                              <label className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5 border-b" style={{ color: "var(--layout-page-text, #1a1a1a)", borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={programaIds.includes("__none__")}
+                                  onChange={(e) =>
+                                    setProgramaIds((prev) => (e.target.checked ? [...prev, "__none__"] : prev.filter((x) => x !== "__none__")))
+                                  }
+                                />
+                                <span className="text-sm flex-1 truncate font-bold uppercase" style={{ opacity: 0.85 }}>— Sem Programa —</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: "#64748B22", color: "#64748B" }}>Geral</span>
+                              </label>
+                            )}
                             {programas
                               .filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase()))
                               .map((p) => {
