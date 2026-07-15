@@ -1771,8 +1771,8 @@ export default function AgendaPage() {
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-5">
                 {/* LEFT — form fields */}
                 <div className="space-y-4 min-w-0">
-                  {/* Estúdio + Programa */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.4fr] gap-3">
+                  {/* Estúdio + Programa + Status */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[0.9fr_1.4fr_1.3fr] gap-3">
                     <div>
                       <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
                       <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
@@ -1804,7 +1804,50 @@ export default function AgendaPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div>
+                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status</Label>
+                      <div className="grid grid-cols-2 gap-1.5" role="radiogroup" aria-label="Status do evento">
+                        {statusOptions.map((s) => {
+                          const active = formStatus === s.value;
+                          return (
+                            <button
+                              key={s.value}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => setFormStatus(s.value)}
+                              className="relative flex items-center gap-1.5 h-[18px] px-2 py-0 rounded-lg text-[9.5px] font-bold uppercase tracking-wider transition-all overflow-hidden"
+                              style={{
+                                minHeight: "18px",
+                                height: "19px",
+                                border: `1.5px solid ${active ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"}`,
+                                background: active
+                                  ? `linear-gradient(135deg, ${s.color} 0%, color-mix(in srgb, ${s.color} 82%, black) 100%)`
+                                  : "#f8faff",
+                                color: active ? "#ffffff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)",
+                                boxShadow: active
+                                  ? `0 3px 10px color-mix(in srgb, ${s.color} 35%, transparent)`
+                                  : "0 1px 2px rgba(10,37,64,0.04)",
+                                letterSpacing: "0.06em",
+                              }}
+                            >
+                              <span
+                                className="inline-block rounded-full shrink-0"
+                                style={{
+                                  width: 7,
+                                  height: 7,
+                                  backgroundColor: active ? "#ffffff" : s.color,
+                                  boxShadow: active ? "0 0 0 2px rgba(255,255,255,0.35)" : "none",
+                                }}
+                              />
+                              <span className="truncate">{s.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
+
                   {selectedPrograma && (
                     <p className="text-[10px] -mt-2 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
                       ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
@@ -1976,29 +2019,8 @@ export default function AgendaPage() {
                 </div>
               )}
 
-              <div className="space-y-5">
-                {/* Status do Evento */}
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status do Evento</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {statusOptions.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => setFormStatus(s.value)}
-                        className="flex-1 min-w-[80px] py-2 rounded-lg text-[10px] font-bold transition-all"
-                        style={{
-                          backgroundColor: formStatus === s.value ? s.color : "rgba(13,4,70,0.04)",
-                          color: formStatus === s.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                          border: `1.5px solid ${formStatus === s.value ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
-                        }}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+
+
 
               {/* Descrição */}
               <div>
