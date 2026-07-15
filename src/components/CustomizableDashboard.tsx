@@ -494,20 +494,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                 </div>
               );
             })}
-            {/* Add button */}
-            <div
-              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1"
-              style={{
-                background: "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)",
-                border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 10%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 35%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)"; }}
-            >
-              <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
-            </div>
+            {/* Add button removido */}
           </div>
         </div>
       )}
@@ -610,14 +597,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         <div className="mb-2">
           <div className="flex items-center gap-2 mb-3 animate-fade-in">
             <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
-            <button
-              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-5 h-5 rounded-full flex items-center justify-center transition-all hover:scale-110"
-              style={{ background: "#002132", color: "#fff" }}
-              title="Adicionar widget"
-            >
-              <Plus size={12} strokeWidth={2.5} />
-            </button>
+            {/* Botão de adicionar widget removido */}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
@@ -672,17 +652,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
                   )}
-                  {item.widgetType === "player" && (
-                    <div
-                      className="absolute top-2 left-2 z-20 w-6 h-6 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
-                      draggable
-                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
-                      title="Arrastar"
-                    >
-                      <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
-                    </div>
-                  )}
+                  {/* Handle de arrastar do player removido */}
                   {item.widgetType !== "player" && (
                     <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
                       <button
@@ -728,12 +698,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
           </div>
           <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
-          <button
-            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="btn-skyglass px-6 py-2.5 text-xs"
-          >
-            <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
-          </button>
         </div>
       )}
 
@@ -2408,6 +2372,27 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.75) 100%)",
           }}
         />
+        {/* Botão de tela cheia — aparece quando o vídeo está ativo */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            const el = videoRef.current as any;
+            if (!el) return;
+            const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+            try { req?.call(el); } catch { /* noop */ }
+          }}
+          className="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-opacity hover:scale-105"
+          style={{
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.15)",
+            opacity: hoverVideo ? 1 : 0.35,
+          }}
+          title="Tela cheia"
+        >
+          <Maximize2 size={14} style={{ color: "#fff" }} />
+        </button>
       </div>
 
       {channels.length === 0 ? (

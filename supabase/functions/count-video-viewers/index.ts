@@ -162,6 +162,29 @@ async function raceStrategies(url: string, xpath: string | null): Promise<number
   } catch { return null; }
 }
 
+// ---- Cache layer ---------------------------------------------------------
+// TTL cache + in-flight dedupe. Keyed by URL+xpath. Shared across warm invocations.
+const CACHE_TTL_MS = 20_000;
+const cache = new Map<string, { value: number | null; expires: number }>();
+const inflight = new Map<string, Promise<number | null>>();
+
+async function resolveCached(url: string, xpath: string | null): Promise<number | null> {
+  const key = `${url}\u0000${xpath ?? ""}`;
+  const now = Date.now();
+  const hit = cache.get(key);
+  if (hit && hit.expires > now) return hit.value;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  const p = (async () => {
+    const value = await raceStrategies(url, xpath);
+    cache.set(key, { value, expires: Date.now() + (value == null ? 5_000 : CACHE_TTL_MS) });
+    inflight.delete(key);
+    return value;
+  })();
+  inflight.set(key, p);
+  return p;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -191,7 +214,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const counts = await Promise.all(urls.map((u) => raceStrategies(u, xpath)));
+    const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
     const total = counts.reduce((a, n) => a + (n ?? 0), 0);

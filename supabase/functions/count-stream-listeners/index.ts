@@ -210,6 +210,41 @@ async function fetchListenersForUrl(streamUrl: string): Promise<number | null> {
   }
 }
 
+// ---- Cache layer ---------------------------------------------------------
+// TTL cache + in-flight dedupe. Keyed by URL+xpath.
+const CACHE_TTL_MS = 15_000;
+const cache = new Map<string, { value: number | null; expires: number }>();
+const inflight = new Map<string, Promise<number | null>>();
+
+async function resolveCached(url: string, xpath: string | null): Promise<number | null> {
+  const key = `${url}\u0000${xpath ?? ""}`;
+  const now = Date.now();
+  const hit = cache.get(key);
+  if (hit && hit.expires > now) return hit.value;
+  const pending = inflight.get(key);
+  if (pending) return pending;
+  const p = (async () => {
+    const strategies: Array<Promise<number | null>> = [];
+    if (xpath) strategies.push(fetchWithXPath(url, xpath));
+    strategies.push(fetchGenericListeners(url));
+    strategies.push(fetchListenersForUrl(url));
+    let value: number | null = null;
+    try {
+      value = await Promise.any(
+        strategies.map(async (pr) => {
+          const v = await pr; if (v === null) throw new Error("null"); return v;
+        }),
+      );
+    } catch { value = null; }
+    // Cache successes for full TTL; cache misses only briefly to avoid hammering.
+    cache.set(key, { value, expires: Date.now() + (value == null ? 5_000 : CACHE_TTL_MS) });
+    inflight.delete(key);
+    return value;
+  })();
+  inflight.set(key, p);
+  return p;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
@@ -239,23 +274,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // For each URL, race all strategies in parallel — fastest non-null wins.
-    // XPath override still takes priority when set (checked first synchronously).
-    const counts = await Promise.all(
-      urls.map(async (u) => {
-        const strategies: Array<Promise<number | null>> = [];
-        if (xpath) strategies.push(fetchWithXPath(u, xpath));
-        strategies.push(fetchGenericListeners(u));
-        strategies.push(fetchListenersForUrl(u));
-        try {
-          return await Promise.any(
-            strategies.map(async (p) => {
-              const v = await p; if (v === null) throw new Error("null"); return v;
-            }),
-          );
-        } catch { return null; }
-      }),
-    );
+    // In-memory cache per URL+xpath (survives across warm invocations).
+    // Dramatically reduces upstream requests when multiple tabs/users share a URL.
+    const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
 
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
     const total = counts.reduce((a, n) => a + (n ?? 0), 0);

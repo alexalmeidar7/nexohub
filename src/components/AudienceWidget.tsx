@@ -36,6 +36,23 @@ const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
 const VIDEO_MS = 30 * 1000; // 30s for video viewers
 
+// Client-side cache of audience counts keyed by URL(+xpath). Serves stale value
+// instantly on remount / route change so the widget never shows a spinner when
+// a recent count is already known. TTL matches the poll interval.
+type AudCache = { value: number | null; expires: number };
+const audCache = new Map<string, AudCache>();
+const audKey = (kind: "a" | "v", url: string, xpath?: string | null) =>
+  `${kind}\u0000${url}\u0000${xpath ?? ""}`;
+function getAudCache(key: string): number | null | undefined {
+  const hit = audCache.get(key);
+  if (!hit) return undefined;
+  if (hit.expires < Date.now()) { audCache.delete(key); return undefined; }
+  return hit.value;
+}
+function setAudCache(key: string, value: number | null, ttlMs: number) {
+  audCache.set(key, { value, expires: Date.now() + ttlMs });
+}
+
 // Extract a numeric value from XML or JSON text using a simple slash-separated
 // path (leading //, /, or bare "a/b/c"). Returns null if not found or not numeric.
 function extractByPath(text: string, rawPath: string): number | null {
@@ -338,17 +355,25 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       setLoadingStreaming(false);
       return;
     }
+    // Hydrate instantly from client cache when a fresh value exists.
+    const ck = audKey("a", overrideUrl, xpath);
+    const cached = getAudCache(ck);
+    if (cached !== undefined) {
+      setStreamingCount(cached);
+      setLoadingStreaming(false);
+    }
     const tick = async () => {
       const body: Record<string, unknown> = { userId: dataUserId, urls: [overrideUrl] };
       if (xpath) body.xpath = xpath;
       const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
       if (cancelled) return;
+      let n: number | null = null;
       if (data && (data as any).ok) {
-        const n = (data as any).listeners;
-        setStreamingCount(typeof n === "number" ? n : null);
-      } else {
-        setStreamingCount(null);
+        const raw = (data as any).listeners;
+        n = typeof raw === "number" ? raw : null;
       }
+      setStreamingCount(n);
+      setAudCache(ck, n, LISTENERS_MS);
       setLoadingStreaming(false);
     };
     tick();
@@ -393,6 +418,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     let cancelled = false;
     const overrideUrl = sources.video_stream_api_url?.trim();
     const xpath = sources.video_stream_xpath?.trim();
+    const ck = audKey("v", overrideUrl || `user:${dataUserId}`, xpath);
+    const cached = getAudCache(ck);
+    if (cached !== undefined) {
+      setVideoCount(cached);
+      setLoadingVideo(false);
+    }
     const tick = async () => {
       try {
         const body: Record<string, unknown> = { userId: dataUserId };
@@ -400,12 +431,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         if (xpath) body.xpath = xpath;
         const { data } = await supabase.functions.invoke("count-video-viewers", { body });
         if (cancelled) return;
+        let n: number | null = null;
         if ((data as any)?.ok) {
-          const n = (data as any).viewers;
-          setVideoCount(typeof n === "number" ? n : null);
-        } else {
-          setVideoCount(null);
+          const raw = (data as any).viewers;
+          n = typeof raw === "number" ? raw : null;
         }
+        setVideoCount(n);
+        setAudCache(ck, n, VIDEO_MS);
       } catch {
         if (!cancelled) setVideoCount(null);
       }
