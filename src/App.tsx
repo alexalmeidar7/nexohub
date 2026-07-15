@@ -161,7 +161,7 @@ const App = () => (
     <TooltipProvider>
       <InlineNotification mode="fixed" />
       <LayoutVersionGuard />
-      <AutoViewportScaler />
+      
       <AuthProvider>
         <BrowserRouter>
           <ChunkErrorBoundary>
