@@ -213,6 +213,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>(() => {
     try { return localStorage.getItem("nexohub_home_pill") || "nexohub"; } catch { return "nexohub"; }
   });
+  const [hoveredHeaderPill, setHoveredHeaderPill] = useState<string | null>(null);
   useEffect(() => {
     try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
   }, [selectedHeaderPill]);
@@ -986,24 +987,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       { Icon: SocialDesignIcon, name: "Social Design", label: "Social Design" },
                     ].map(({ Icon, name, label }) => {
                       const isSelected = selectedHeaderPill === name;
+                      const isOpen = isSelected || hoveredHeaderPill === name;
                       return (
                         <button
                           key={name}
                           type="button"
                           onClick={() => setSelectedHeaderPill(name)}
-                          className="header-pill inline-flex items-center justify-center gap-1.5 rounded-full overflow-hidden"
+                          onMouseEnter={() => setHoveredHeaderPill(name)}
+                          onMouseLeave={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
+                          onFocus={() => setHoveredHeaderPill(name)}
+                          onBlur={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
+                          className="header-pill inline-flex items-center justify-start rounded-full overflow-hidden"
                           style={{
                             backgroundColor: "#00dbff",
                             color: "#002132",
                             height: 34,
-                            paddingLeft: isSelected ? 6 : 0,
-                            paddingRight: isSelected ? 12 : 0,
-                            maxWidth: isSelected ? 220 : 34,
+                            paddingLeft: 0,
+                            paddingRight: isOpen ? 12 : 0,
+                            maxWidth: isOpen ? 220 : 34,
                             minWidth: 34,
                             transition:
                               "max-width 260ms cubic-bezier(0.34, 1.3, 0.5, 1), padding 220ms cubic-bezier(0.34, 1.3, 0.5, 1), transform 180ms cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 220ms ease",
-                            transform: isSelected ? "scale(1.04)" : "scale(1)",
-                            boxShadow: isSelected
+                            transform: isOpen ? "scale(1.04)" : "scale(1)",
+                            boxShadow: isOpen
                               ? "0 6px 18px rgba(0, 219, 255, 0.45)"
                               : "0 1px 3px rgba(0, 33, 50, 0.08)",
                             willChange: "max-width, padding, transform",
@@ -1015,12 +1021,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             <Icon size={22} />
                           </span>
                           <span
-                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap"
+                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap overflow-hidden"
                             style={{
-                              opacity: isSelected ? 1 : 0,
-                              transform: isSelected ? "translateX(0)" : "translateX(-6px)",
+                              maxWidth: isOpen ? 160 : 0,
+                              marginLeft: isOpen ? 6 : 0,
+                              opacity: isOpen ? 1 : 0,
+                              transform: isOpen ? "translateX(0)" : "translateX(-6px)",
                               transition:
-                                "opacity 180ms ease-out 80ms, transform 220ms cubic-bezier(0.34, 1.3, 0.5, 1) 60ms",
+                                "max-width 240ms cubic-bezier(0.34, 1.3, 0.5, 1), margin 220ms cubic-bezier(0.34, 1.3, 0.5, 1), opacity 160ms ease-out 70ms, transform 220ms cubic-bezier(0.34, 1.3, 0.5, 1) 50ms",
                             }}
                           >
                             {label}
