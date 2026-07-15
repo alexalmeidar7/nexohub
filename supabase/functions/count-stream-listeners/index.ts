@@ -239,23 +239,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // For each URL, race all strategies in parallel — fastest non-null wins.
-    // XPath override still takes priority when set (checked first synchronously).
-    const counts = await Promise.all(
-      urls.map(async (u) => {
-        const strategies: Array<Promise<number | null>> = [];
-        if (xpath) strategies.push(fetchWithXPath(u, xpath));
-        strategies.push(fetchGenericListeners(u));
-        strategies.push(fetchListenersForUrl(u));
-        try {
-          return await Promise.any(
-            strategies.map(async (p) => {
-              const v = await p; if (v === null) throw new Error("null"); return v;
-            }),
-          );
-        } catch { return null; }
-      }),
-    );
+    // In-memory cache per URL+xpath (survives across warm invocations).
+    // Dramatically reduces upstream requests when multiple tabs/users share a URL.
+    const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
 
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
     const total = counts.reduce((a, n) => a + (n ?? 0), 0);
