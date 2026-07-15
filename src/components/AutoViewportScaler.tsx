@@ -12,9 +12,9 @@ import { useEffect } from "react";
  */
 export default function AutoViewportScaler() {
   useEffect(() => {
-    const DESIGN_W = 1440;
-    const DESIGN_H = 820;
-    const MIN_ZOOM = 0.82;
+    const DESIGN_W = 1500;
+    const DESIGN_H = 950;
+    const MIN_ZOOM = 0.7;
 
     const apply = () => {
       try {
