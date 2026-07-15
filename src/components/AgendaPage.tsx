@@ -1763,127 +1763,184 @@ export default function AgendaPage() {
                 .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
               `}</style>
 
-              {/* Estúdio (linha inteira) */}
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
-                <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
-                  <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <SelectValue placeholder="Todos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos os estúdios</SelectItem>
-                    {estudios.map((e) => (
-                      <SelectItem key={e} value={e}>{e}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Top area: form on the left, calendar on the right */}
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-5">
+                {/* LEFT — form fields */}
+                <div className="space-y-4 min-w-0">
+                  {/* Estúdio + Programa */}
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_1.4fr] gap-3">
+                    <div>
+                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
+                      <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
+                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <SelectValue placeholder="Todos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todos">Todos os estúdios</SelectItem>
+                          {estudios.map((e) => (
+                            <SelectItem key={e} value={e}>{e}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
+                      <Select value={formProgramaId} onValueChange={setFormProgramaId}>
+                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <SelectValue placeholder="Selecione o programa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {programas
+                            .filter((p) => formEstudioFilter === "todos" || p.estudio === formEstudioFilter)
+                            .map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.nome} ({p.horario_inicio} - {p.horario_fim})
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {selectedPrograma && (
+                    <p className="text-[10px] -mt-2 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                      ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                      {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
+                    </p>
+                  )}
 
-              {/* Programa + Tipo (checkboxes) + Recorrência */}
-              <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr] gap-3">
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
-                  <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                      <SelectValue placeholder="Selecione o programa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {programas
-                        .filter((p) => formEstudioFilter === "todos" || p.estudio === formEstudioFilter)
-                        .map((p) => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.nome} ({p.horario_inicio} - {p.horario_fim})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo</Label>
-                  <div
-                    className="flex items-stretch gap-1.5 h-10 p-1 rounded-xl"
-                    style={{
-                      border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)",
-                      backgroundColor: "#f8faff",
-                    }}
-                    role="radiogroup"
-                    aria-label="Tipo do evento"
-                  >
-                    {[
-                      { value: "live", label: "AO VIVO", dot: "#ef4444" },
-                      { value: "gravacao", label: "GRAVAÇÃO", dot: "#8b5cf6" },
-                    ].map((opt) => {
-                      const active = formTipoEvento === opt.value;
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={active}
-                          onClick={() => setFormTipoEvento(opt.value)}
-                          className="flex-1 flex items-center justify-center gap-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
-                          style={{
-                            backgroundColor: active ? "var(--layout-accent-color, #2563eb)" : "transparent",
-                            color: active ? "#ffffff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)",
-                            boxShadow: active ? "0 2px 6px color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)" : "none",
-                          }}
-                        >
-                          <span
-                            className="inline-block rounded-full"
+                  {/* Tipo (cards visuais AO VIVO / GRAVAÇÃO) */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Tipo do evento</Label>
+                    <div className="grid grid-cols-2 gap-2.5" role="radiogroup" aria-label="Tipo do evento">
+                      {[
+                        { value: "live", label: "AO VIVO", desc: "Transmissão em tempo real", accent: "#ef4444", icon: "🔴", pulse: true },
+                        { value: "gravacao", label: "GRAVAÇÃO", desc: "Conteúdo pré-produzido", accent: "#8b5cf6", icon: "🎬", pulse: false },
+                      ].map((opt) => {
+                        const active = formTipoEvento === opt.value;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            onClick={() => setFormTipoEvento(opt.value)}
+                            className="relative flex items-center gap-3 px-3.5 py-3 rounded-xl text-left transition-all overflow-hidden group"
                             style={{
-                              width: 8,
-                              height: 8,
-                              backgroundColor: opt.dot,
-                              boxShadow: active ? `0 0 0 2px rgba(255,255,255,0.4)` : "none",
+                              border: `2px solid ${active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"}`,
+                              backgroundColor: active
+                                ? `color-mix(in srgb, ${opt.accent} 12%, #ffffff)`
+                                : "#f8faff",
+                              boxShadow: active
+                                ? `0 6px 18px color-mix(in srgb, ${opt.accent} 25%, transparent)`
+                                : "0 1px 2px rgba(10,37,64,0.04)",
+                              transform: active ? "translateY(-1px)" : "translateY(0)",
                             }}
-                          />
-                          {opt.label}
-                        </button>
-                      );
-                    })}
+                          >
+                            {/* Radio dot */}
+                            <span
+                              className="relative flex items-center justify-center rounded-full shrink-0"
+                              style={{
+                                width: 20,
+                                height: 20,
+                                border: `2px solid ${active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)"}`,
+                                backgroundColor: active ? opt.accent : "transparent",
+                              }}
+                            >
+                              {active && (
+                                <span className="rounded-full" style={{ width: 8, height: 8, backgroundColor: "#ffffff" }} />
+                              )}
+                              {opt.pulse && active && (
+                                <span
+                                  className="absolute inset-0 rounded-full animate-ping"
+                                  style={{ backgroundColor: opt.accent, opacity: 0.4 }}
+                                />
+                              )}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div
+                                className="text-[12px] font-black uppercase tracking-wider leading-none"
+                                style={{
+                                  color: active ? opt.accent : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)",
+                                  letterSpacing: "0.08em",
+                                }}
+                              >
+                                {opt.label}
+                              </div>
+                              <div
+                                className="text-[10px] mt-0.5 font-medium truncate"
+                                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
+                              >
+                                {opt.desc}
+                              </div>
+                            </div>
+                            <span className="text-lg leading-none opacity-80 shrink-0" aria-hidden>{opt.icon}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Recorrência (linha inteira do form) */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
+                    <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                      <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unico">Somente este dia</SelectItem>
+                        <SelectItem value="semanal">Toda semana</SelectItem>
+                        <SelectItem value="mensal">Todo mês</SelectItem>
+                        <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
-                  <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
-                    <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unico">Somente este dia</SelectItem>
-                      <SelectItem value="semanal">Toda semana</SelectItem>
-                      <SelectItem value="mensal">Todo mês</SelectItem>
-                      <SelectItem value="programa_semanal">Programa semanal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              {selectedPrograma && (
-                <p className="text-[10px] -mt-1 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                  ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                  {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
-                </p>
-              )}
 
-              {/* Calendário */}
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
-                <div className="agenda-form-calendar rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", backgroundColor: "#f8faff" }}>
-                  <Calendar
-                    mode="single"
-                    selected={formData}
-                    onSelect={setFormData}
-                    className={cn("p-3 pointer-events-auto")}
-                    style={{ backgroundColor: "transparent" }}
-                    locale={ptBR}
-                  />
+                {/* RIGHT — calendar card */}
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
+                  <div
+                    className="agenda-form-calendar rounded-2xl overflow-hidden"
+                    style={{
+                      border: "1px solid color-mix(in srgb, var(--layout-accent-color, #00BFF0) 25%, transparent)",
+                      backgroundColor: "#ffffff",
+                      boxShadow: "0 8px 24px rgba(10,37,64,0.08), inset 0 1px 0 rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    {/* Selected-date banner */}
+                    <div
+                      className="px-4 py-3"
+                      style={{
+                        background: "linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%)",
+                        color: "#ffffff",
+                      }}
+                    >
+                      <div className="text-[9px] font-bold uppercase tracking-[0.14em] opacity-80">Selecionado</div>
+                      <div className="text-sm font-black mt-0.5 capitalize leading-tight">
+                        {formData
+                          ? format(formData, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                          : "Escolha uma data"}
+                      </div>
+                      {formData && (
+                        <div className="text-[10px] font-semibold opacity-85 mt-0.5">
+                          {format(formData, "yyyy", { locale: ptBR })}
+                        </div>
+                      )}
+                    </div>
+                    <Calendar
+                      mode="single"
+                      selected={formData}
+                      onSelect={setFormData}
+                      className={cn("p-3 pointer-events-auto w-full")}
+                      style={{ backgroundColor: "transparent" }}
+                      locale={ptBR}
+                    />
+                  </div>
                 </div>
-                {formData && (
-                  <p className="text-[10px] mt-1.5 px-1 font-medium capitalize" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                    📅 {format(formData, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                )}
               </div>
+
+
 
 
               {/* Horário da Gravação (apenas quando tipo = gravação) */}
