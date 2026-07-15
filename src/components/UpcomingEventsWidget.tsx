@@ -113,12 +113,24 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     const nowD = new Date();
     if (d < nowD && !isSameDay(d, nowD)) return false;
     const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
-    return eventos.some(e => {
+    const hasExplicit = eventos.some(e => {
       if (!matches(e, d)) return false;
       if (e.status === "cancelado" || e.status === "concluido") return false;
       if (isSameDay(d, nowD)) {
         const refT = e.horario_gravacao_fim || e.programa?.horario_fim || e.horario_gravacao || e.programa?.horario_inicio;
         if (refT && refT.slice(0, 5) < nowHM) return false;
+      }
+      return true;
+    });
+    if (hasExplicit) return true;
+    const dow = d.getDay();
+    return programasAll.some(p => {
+      if (p.ativo === false) return false;
+      if (!p.dias_semana || p.dias_semana.length === 0) return false;
+      if (!p.dias_semana.some(name => normalizeDayName(name) === dow)) return false;
+      if (isSameDay(d, nowD)) {
+        const refT = (p.horario_fim || p.horario_inicio || "").slice(0, 5);
+        if (refT && refT < nowHM) return false;
       }
       return true;
     });
