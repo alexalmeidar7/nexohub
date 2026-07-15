@@ -397,11 +397,25 @@ export default function BroadcastPage() {
     if (data.tickerQuotes && quotesText) {
       parts.push(quotesText);
     }
+    if (data.tickerSocials && empresaSocials.length > 0) {
+      const labels: Record<string, string> = {
+        instagram: "Instagram",
+        facebook: "Facebook",
+        youtube: "YouTube",
+        site: "Site",
+        whatsapp: "WhatsApp",
+      };
+      parts.push(
+        empresaSocials
+          .map(s => `${labels[s.tipo] || s.tipo}: ${s.valor}`)
+          .join("  •  ")
+      );
+    }
     if (data.ticker) {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.ticker, newsTitles, weatherText, quotesText]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, empresaSocials]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
