@@ -432,7 +432,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   }, [items]);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
+    <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
 
 
       {/* Section: Atalhos */}
