@@ -2412,12 +2412,12 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
 
           {/* Status label — only in standard mode */}
           {!compactMode && (
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate min-w-0" style={{ color: "#c8ff00" }}>
+            <div className="flex flex-col min-w-0">
+              <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
                 {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
               </span>
               {isPlaying && !isLoading && (
-                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 flex-shrink-0">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 leading-none mt-0.5">
                   {isVideo ? "vídeo" : "áudio"}
                 </span>
               )}
