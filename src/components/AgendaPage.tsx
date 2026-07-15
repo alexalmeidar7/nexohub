@@ -1800,10 +1800,22 @@ export default function AgendaPage() {
             }}
           >
             <style>{`
-              .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
+              .agenda-form-input {
+                background-color: #ffffff !important;
+                border: 1.5px solid color-mix(in srgb, var(--layout-accent-color, #00BFF0) 22%, transparent) !important;
+                border-radius: 12px !important;
+                color: var(--layout-page-text, #1a1a1a) !important;
+                transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease !important;
+              }
+              .agenda-form-input::placeholder { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 35%, transparent) !important; }
+              .agenda-form-input:hover:not(:focus):not(:focus-visible) {
+                border-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 45%, transparent) !important;
+              }
+              .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active, .agenda-form-input[data-state="open"] {
                 outline: none !important;
-                box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent) !important;
-                border-color: var(--layout-accent-color, #2563eb) !important;
+                border-color: var(--layout-accent-color, #00BFF0) !important;
+                box-shadow: 0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #00BFF0) 22%, transparent) !important;
+                background-color: #ffffff !important;
               }
               .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; --rdp-cell-size: 40px; margin: 0 !important; }
               .agenda-form-calendar .rdp-months { justify-content: center; }
