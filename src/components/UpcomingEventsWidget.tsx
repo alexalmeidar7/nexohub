@@ -519,8 +519,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   onClick={() => openAgenda(evt.id)}
                   className="relative w-full text-left rounded-lg p-1.5 transition-transform duration-300 ease-out will-change-transform group-hover:-translate-x-[112px] active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
                   style={{
-                    background: "transparent",
-                    borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                    background: cardBg,
+                    borderColor: isWeekly
+                      ? "rgba(10,37,64,0.18)"
+                      : "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
                   }}
                 >
                 {/* Date badge */}
@@ -528,8 +530,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   className="flex flex-col items-center justify-center rounded-md px-1.5 shrink-0"
                   style={{
                     minWidth: 34,
-                    background: isToday ? accent : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 40%, transparent)",
-                    color: isToday ? "var(--layout-header-text, #ffffff)" : textColor,
+                    background: isToday ? accent : isWeekly ? "rgba(10,37,64,0.12)" : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 40%, transparent)",
+                    color: isToday ? "var(--layout-header-text, #ffffff)" : cardText,
                   }}
                 >
                 <span className="text-[8px] uppercase font-bold leading-none" style={{ opacity: 0.85 }}>
