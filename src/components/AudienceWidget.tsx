@@ -1040,7 +1040,7 @@ function AudienceReportDialog({
   const BG = "#D6F4FB";
   const AUDIO_COLOR = "#00BFF0";
   const VIDEO_COLOR = "#0A2540";
-  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const todayStr = () => todayInBrasilia();
   const [date, setDate] = useState<string>(todayStr());
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);
