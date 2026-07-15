@@ -272,7 +272,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const startFullEdit = (logo: Logo) => {
     setEditingFullId(logo.id);
     setNomeLogo(logo.nome || "");
-    setProgramaId(logo.programa_id);
+    setProgramaId(logo.programa_id || "__none__");
     setDataFinal(logo.data_final);
     setExistingLogoUrl(logo.logo_url);
     setPendingFiles([]);
