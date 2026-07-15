@@ -1966,7 +1966,7 @@ export default function AgendaPage() {
                   {/* Recorrência (linha inteira do form) */}
                   <div>
                     <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
-                    <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                    <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
                       <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                         <SelectValue />
                       </SelectTrigger>
@@ -1974,11 +1974,22 @@ export default function AgendaPage() {
                         <SelectItem value="unico">Somente este dia</SelectItem>
                         <SelectItem value="semanal">Toda semana</SelectItem>
                         <SelectItem value="mensal">Todo mês</SelectItem>
-                        <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                        <SelectItem value="programa_semanal">Programa semanal (seg a sex)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formRecorrencia !== "unico" && (formPeriodoInicio || formPeriodoFim) && (
+                      <button
+                        type="button"
+                        onClick={() => { setPendingRecorrencia(formRecorrencia); setPeriodoDialogOpen(true); }}
+                        className="mt-1.5 text-[10px] font-semibold underline decoration-dotted"
+                        style={{ color: NEXO_CYAN }}
+                      >
+                        Período: {formPeriodoInicio ? format(new Date(formPeriodoInicio + "T12:00:00"), "dd/MM/yy") : "?"} → {formPeriodoFim ? format(new Date(formPeriodoFim + "T12:00:00"), "dd/MM/yy") : "?"} (editar)
+                      </button>
+                    )}
                   </div>
                 </div>
+
 
                 {/* LEFT — calendar card */}
                 <div className="lg:order-1">
