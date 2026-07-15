@@ -578,29 +578,34 @@ export default function BroadcastPage() {
             </div>
           </div>
 
-          {/* 16:9 canvas */}
-          <div className="w-full">
-            <MockupPreview
-              empresaLogo={empresaLogo}
-              programaNome={programaNome}
-              programaLogo={programaLogo}
-              displayLocutor={displayLocutor}
-              locutorInstagram={locutorInstagram}
-              locutorFoto={locutorFoto}
-              accentColor={accentColor}
-              assunto={data.assunto}
-              showQrCode={data.showQrCode}
-              whatsappNumber={whatsappNumber}
-              empresaSocials={empresaSocials}
-              composedTicker={composedTicker}
-              sponsorLogos={sponsorLogos}
-              assuntoBgUrl={effectiveAssuntoBgUrl}
-              insertLiveArt={insertLiveArt}
-            />
+          {/* 16:9 canvas — responsivo, ocupa espaço disponível sem cortar */}
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center p-3">
+            <div
+              className="relative"
+              style={{ height: "100%", aspectRatio: "16/9", maxWidth: "100%" }}
+            >
+              <MockupPreview
+                empresaLogo={empresaLogo}
+                programaNome={programaNome}
+                programaLogo={programaLogo}
+                displayLocutor={displayLocutor}
+                locutorInstagram={locutorInstagram}
+                locutorFoto={locutorFoto}
+                accentColor={accentColor}
+                assunto={data.assunto}
+                showQrCode={data.showQrCode}
+                whatsappNumber={whatsappNumber}
+                empresaSocials={empresaSocials}
+                composedTicker={composedTicker}
+                sponsorLogos={sponsorLogos}
+                assuntoBgUrl={effectiveAssuntoBgUrl}
+                insertLiveArt={insertLiveArt}
+              />
+            </div>
           </div>
 
           {/* Tactical status grid (real telemetry, no fake controls) */}
-          <div className="flex-1 p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
+          <div className="flex-none p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
             <div className="col-span-4 flex justify-between items-center mb-1">
               <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Status do Broadcast</h3>
               <span className="text-[9px] font-mono uppercase" style={{ color: "#ffffff40" }}>Live · XML sync</span>
@@ -1054,11 +1059,9 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden"
+      className="relative w-full h-full rounded-2xl overflow-hidden"
       style={{
-        aspectRatio: "16/9",
         backgroundColor: "#000000",
-
         boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
