@@ -394,6 +394,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             const isToday = isSameDay(date, new Date());
             const isDismissing = dismissing.has(evt.id);
             const isConfirming = confirming.has(evt.id);
+            const isWeekly = evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal";
+            const cardBg = isWeekly ? WEEKLY_BG : "transparent";
+            const cardText = isWeekly ? "#0A2540" : textColor;
             return (
               <div
                 key={`${evt.id}-${date.toISOString()}`}
