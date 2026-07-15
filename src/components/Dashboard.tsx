@@ -676,7 +676,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isDashboard = currentPage === "dashboard";
  
   return (
-    <div className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
+    <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
       <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
 
       {/* Background layers (full page, behind sidebar) */}
