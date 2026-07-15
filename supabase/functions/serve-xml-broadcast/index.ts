@@ -757,6 +757,7 @@ serve(async (req) => {
     lines.push(`    <empresa_logo>${esc(empresaLogo)}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
+    lines.push(`    <programa_thumb>${esc(programaThumb)}</programa_thumb>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
