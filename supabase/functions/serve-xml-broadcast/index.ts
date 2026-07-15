@@ -406,7 +406,7 @@ serve(async (req) => {
         : "";
       const thumbSource = ((prog as any).thumb || (prog as any).capa || prog.selo || "").toString().trim();
       programaThumb = thumbSource
-        ? await ensurePngImageUrl(supabase, thumbSource, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 1920)
+        ? await ensurePngImageUrl(supabase, thumbSource, `broadcast/${dataOwnerId}/${prog.id}-thumb-hd.png`, 1920)
         : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
