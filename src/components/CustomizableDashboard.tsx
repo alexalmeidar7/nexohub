@@ -698,12 +698,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
           </div>
           <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
-          <button
-            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="btn-skyglass px-6 py-2.5 text-xs"
-          >
-            <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
-          </button>
         </div>
       )}
 
