@@ -1687,7 +1687,24 @@ export default function AgendaPage() {
 
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
-          <DialogContent className="max-w-md max-h-[70vh] overflow-hidden p-0 flex flex-col" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: "20px", border: "none", boxShadow: "0 20px 60px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)" }}>
+          <DialogContent
+            className="max-w-md p-0 flex flex-col"
+            style={{
+              // Escopo local da paleta Nexo Form (padrão do sistema)
+              ["--layout-page-bg" as any]: "#D6F4FB",
+              ["--layout-page-text" as any]: "#0A2540",
+              ["--layout-accent-color" as any]: "#00BFF0",
+              ["--layout-header-bg" as any]: "#00BFF0",
+              ["--layout-header-text" as any]: "#ffffff",
+              ["--layout-icon-color" as any]: "#0A2540",
+              backgroundColor: "#D6F4FB",
+              borderRadius: "24px",
+              border: "none",
+              boxShadow: "0 24px 80px rgba(10,37,64,0.25)",
+              fontFamily: "Montserrat, sans-serif",
+              overflow: "hidden",
+            }}
+          >
             <style>{`
               .agenda-form-input:focus, .agenda-form-input:focus-visible, .agenda-form-input:active {
                 outline: none !important;
