@@ -1,0 +1,1 @@
+ALTER TABLE public.logos_patrocinadores ALTER COLUMN programa_id DROP NOT NULL;
