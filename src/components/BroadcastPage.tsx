@@ -36,6 +36,7 @@ interface BroadcastData {
   tickerNews: boolean;
   tickerWeather: boolean;
   tickerQuotes: boolean;
+  tickerSocials: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -49,6 +50,7 @@ const defaultBroadcast: BroadcastData = {
   tickerNews: false,
   tickerWeather: false,
   tickerQuotes: false,
+  tickerSocials: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
