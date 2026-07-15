@@ -244,6 +244,8 @@ async function resolveCached(url: string, xpath: string | null): Promise<number 
   inflight.set(key, p);
   return p;
 }
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
