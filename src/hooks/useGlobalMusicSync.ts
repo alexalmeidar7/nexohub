@@ -318,31 +318,45 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const useOnline = mode === "online" || mode === "both";
       const useLocal = mode === "pasta" || mode === "both";
 
-      const syncLocalFromStorage = async (): Promise<boolean> => {
+      const syncLocalFromStorage = async (): Promise<boolean | "stopped"> => {
         if (!useLocal || !localFileName) return false;
-        try {
-          const filePath = `local-xml-${user.id}.xml`;
-          const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-          if (!urlData?.publicUrl) return false;
-          const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
-            signal: AbortSignal.timeout(4000),
-            cache: "no-store",
-          });
-          if (!res.ok) return false;
-          const text = await res.text();
-          if (!text) return false;
-          const data = parseXml(text);
-          if (!data || data === "stopped") return false;
-          if (isPlaceholderTrack(data)) return false;
-          lastLocalSyncAtRef.current = Date.now();
-          fetchCoverAndArtistImg(data);
-          applyMusicData(data);
-          localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
-          return true;
-        } catch {
-          return false;
+        // Try the new auth-prefixed path first (written by MusicaNoAr.syncToStorage);
+        // fall back to the legacy flat path for older tenants.
+        const candidates = [
+          `${user.id}/local-xml-${user.id}.xml`,
+          `local-xml-${user.id}.xml`,
+        ];
+        for (const filePath of candidates) {
+          try {
+            const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+            if (!urlData?.publicUrl) continue;
+            const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
+              signal: AbortSignal.timeout(4000),
+              cache: "no-store",
+            });
+            if (!res.ok) continue;
+            const text = await res.text();
+            if (!text) continue;
+            const data = parseXml(text);
+            if (data === "stopped") {
+              // Automação sem música — não confia em paths legados stale.
+              // Retorna "stopped" para que o caller decida limpar.
+              return "stopped";
+            }
+            if (!data) continue;
+            if (isPlaceholderTrack(data)) return "stopped";
+            lastLocalSyncAtRef.current = Date.now();
+            fetchCoverAndArtistImg(data);
+            applyMusicData(data);
+            localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+            return true;
+          } catch {
+            // try next candidate
+          }
         }
+        return false;
       };
+
 
       const syncOnline = async (): Promise<"ok" | "stopped" | "skip"> => {
         if (!useOnline || !url) return "skip";
