@@ -295,6 +295,8 @@ interface Evento {
   edicao_concluida?: boolean;
   horario_gravacao?: string;
   horario_gravacao_fim?: string;
+  periodo_inicio?: string | null;
+  periodo_fim?: string | null;
   excecoes?: EventoExcecao[];
   programa?: Programa;
   participantes?: Participante[];
@@ -405,6 +407,10 @@ export default function AgendaPage() {
   const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [formHorarioGravacao, setFormHorarioGravacao] = useState("");
   const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
+  const [formPeriodoInicio, setFormPeriodoInicio] = useState<string>("");
+  const [formPeriodoFim, setFormPeriodoFim] = useState<string>("");
+  const [periodoDialogOpen, setPeriodoDialogOpen] = useState(false);
+  const [pendingRecorrencia, setPendingRecorrencia] = useState<string>("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
@@ -636,7 +642,27 @@ export default function AgendaPage() {
     setFormEdicaoConcluida(false);
     setFormHorarioGravacao("");
     setFormHorarioGravacaoFim("");
+    setFormPeriodoInicio("");
+    setFormPeriodoFim("");
     setEditingId(null);
+  };
+
+  const handleRecorrenciaChange = (value: string) => {
+    setFormRecorrencia(value);
+    if (value !== "unico") {
+      const base = formData ?? selectedDate ?? new Date();
+      const start = format(base, "yyyy-MM-dd");
+      // padrão: 3 meses à frente
+      const end = new Date(base);
+      end.setMonth(end.getMonth() + 3);
+      setFormPeriodoInicio(formPeriodoInicio || start);
+      setFormPeriodoFim(formPeriodoFim || format(end, "yyyy-MM-dd"));
+      setPendingRecorrencia(value);
+      setPeriodoDialogOpen(true);
+    } else {
+      setFormPeriodoInicio("");
+      setFormPeriodoFim("");
+    }
   };
 
   const openNewDialog = () => {
@@ -667,6 +693,8 @@ export default function AgendaPage() {
     setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormHorarioGravacao(evt.horario_gravacao || "");
     setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "");
+    setFormPeriodoInicio(((evt as any).periodo_inicio as string) || "");
+    setFormPeriodoFim(((evt as any).periodo_fim as string) || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
@@ -696,6 +724,8 @@ export default function AgendaPage() {
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
       horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
       horario_gravacao_fim: formTipoEvento === "gravacao" ? formHorarioGravacaoFim : null,
+      periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
+      periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
     } as any;
 
     if (editingId) {
@@ -947,6 +977,11 @@ export default function AgendaPage() {
       }
     }
     if (!matches) return false;
+    // Limita ocorrências ao período definido para eventos recorrentes
+    if (evt.recorrencia !== "unico") {
+      if (evt.periodo_inicio && dateStr < evt.periodo_inicio) return false;
+      if (evt.periodo_fim && dateStr > evt.periodo_fim) return false;
+    }
     const exc = getExcecao(evt, dateStr);
     if (exc && exc.acao === "skip") return false;
     return true;
@@ -1353,6 +1388,64 @@ export default function AgendaPage() {
 
   return (
     <div className="animate-fade-in">
+
+      {/* Diálogo: Período da recorrência */}
+      <Dialog open={periodoDialogOpen} onOpenChange={setPeriodoDialogOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "#ffffff", borderRadius: 20, border: "none" }}>
+          <div className="flex flex-col">
+            <div className="px-6 py-4" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, #0AA9D8 100%)`, color: "#fff" }}>
+              <DialogTitle className="text-base font-bold m-0">Período da recorrência</DialogTitle>
+              <p className="text-[11px] mt-1 opacity-90">
+                {pendingRecorrencia === "semanal" && "Repete no mesmo dia da semana"}
+                {pendingRecorrencia === "mensal" && "Repete no mesmo dia de cada mês"}
+                {pendingRecorrencia === "programa_semanal" && "Repete de segunda a sexta-feira"}
+              </p>
+            </div>
+            <div className="px-6 py-5 space-y-4" style={{ backgroundColor: NEXO_CARD_BG }}>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data inicial</Label>
+                <input
+                  type="date"
+                  value={formPeriodoInicio}
+                  onChange={(e) => setFormPeriodoInicio(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
+                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
+                />
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data final</Label>
+                <input
+                  type="date"
+                  value={formPeriodoFim}
+                  min={formPeriodoInicio || undefined}
+                  onChange={(e) => setFormPeriodoFim(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
+                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setPeriodoDialogOpen(false); setFormRecorrencia("unico"); setFormPeriodoInicio(""); setFormPeriodoFim(""); }}
+                  className="flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-wider"
+                  style={{ backgroundColor: "#ffffff", color: NEXO_DARK, border: `1px solid color-mix(in srgb, ${NEXO_DARK} 20%, transparent)` }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!formPeriodoInicio || !formPeriodoFim || formPeriodoFim < formPeriodoInicio}
+                  onClick={() => setPeriodoDialogOpen(false)}
+                  className="flex-1 h-10 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50"
+                  style={{ background: `linear-gradient(135deg, ${NEXO_LIME} 0%, #A8D82C 100%)`, color: NEXO_DARK }}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Diálogo: escolha ao excluir evento recorrente */}
       <Dialog open={!!deleteChoice} onOpenChange={(o) => { if (!o) setDeleteChoice(null); }}>
@@ -1931,7 +2024,7 @@ export default function AgendaPage() {
                   {/* Recorrência (linha inteira do form) */}
                   <div>
                     <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
-                    <Select value={formRecorrencia} onValueChange={setFormRecorrencia}>
+                    <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
                       <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
                         <SelectValue />
                       </SelectTrigger>
@@ -1939,11 +2032,22 @@ export default function AgendaPage() {
                         <SelectItem value="unico">Somente este dia</SelectItem>
                         <SelectItem value="semanal">Toda semana</SelectItem>
                         <SelectItem value="mensal">Todo mês</SelectItem>
-                        <SelectItem value="programa_semanal">Programa semanal</SelectItem>
+                        <SelectItem value="programa_semanal">Programa semanal (seg a sex)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formRecorrencia !== "unico" && (formPeriodoInicio || formPeriodoFim) && (
+                      <button
+                        type="button"
+                        onClick={() => { setPendingRecorrencia(formRecorrencia); setPeriodoDialogOpen(true); }}
+                        className="mt-1.5 text-[10px] font-semibold underline decoration-dotted"
+                        style={{ color: NEXO_CYAN }}
+                      >
+                        Período: {formPeriodoInicio ? format(new Date(formPeriodoInicio + "T12:00:00"), "dd/MM/yy") : "?"} → {formPeriodoFim ? format(new Date(formPeriodoFim + "T12:00:00"), "dd/MM/yy") : "?"} (editar)
+                      </button>
+                    )}
                   </div>
                 </div>
+
 
                 {/* LEFT — calendar card */}
                 <div className="lg:order-1">

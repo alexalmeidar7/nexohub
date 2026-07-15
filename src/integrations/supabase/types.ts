@@ -60,6 +60,8 @@ export type Database = {
           horario_gravacao_fim: string | null
           id: string
           local: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
           prioridade: string
           programa_id: string | null
           recorrencia: string
@@ -82,6 +84,8 @@ export type Database = {
           horario_gravacao_fim?: string | null
           id?: string
           local?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
@@ -104,6 +108,8 @@ export type Database = {
           horario_gravacao_fim?: string | null
           id?: string
           local?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
