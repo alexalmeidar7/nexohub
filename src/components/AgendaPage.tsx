@@ -640,7 +640,27 @@ export default function AgendaPage() {
     setFormEdicaoConcluida(false);
     setFormHorarioGravacao("");
     setFormHorarioGravacaoFim("");
+    setFormPeriodoInicio("");
+    setFormPeriodoFim("");
     setEditingId(null);
+  };
+
+  const handleRecorrenciaChange = (value: string) => {
+    setFormRecorrencia(value);
+    if (value !== "unico") {
+      const base = formData ?? selectedDate ?? new Date();
+      const start = format(base, "yyyy-MM-dd");
+      // padrão: 3 meses à frente
+      const end = new Date(base);
+      end.setMonth(end.getMonth() + 3);
+      setFormPeriodoInicio(formPeriodoInicio || start);
+      setFormPeriodoFim(formPeriodoFim || format(end, "yyyy-MM-dd"));
+      setPendingRecorrencia(value);
+      setPeriodoDialogOpen(true);
+    } else {
+      setFormPeriodoInicio("");
+      setFormPeriodoFim("");
+    }
   };
 
   const openNewDialog = () => {
