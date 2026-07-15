@@ -214,7 +214,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const counts = await Promise.all(urls.map((u) => raceStrategies(u, xpath)));
+    const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
     const total = counts.reduce((a, n) => a + (n ?? 0), 0);
