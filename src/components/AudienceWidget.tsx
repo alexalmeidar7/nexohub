@@ -174,7 +174,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     try { localStorage.setItem("audience:peakAlerts:enabled", v ? "1" : "0"); } catch { /* ignore */ }
   };
   const peaksInitializedRef = useRef(false);
-  const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${new Date().toISOString().slice(0, 10)}` : null;
+  const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${todayInBrasilia()}` : null;
 
   // Marca inicialização de picos após primeira carga do DB
   useEffect(() => {
