@@ -699,6 +699,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
   processMusicRef.current = processMusic;
+  const clearMusicRef = useRef(clearMusic);
+  clearMusicRef.current = clearMusic;
   const dataUserIdRef = useRef<string | null>(dataUserId);
   dataUserIdRef.current = dataUserId;
   const deviceNameRef = useRef(currentDeviceName);
