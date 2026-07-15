@@ -2046,7 +2046,21 @@ export default function AgendaPage() {
                       </button>
                     )}
                   </div>
+
+                  {/* Descrição — abaixo da Recorrência */}
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Descrição</Label>
+                    <textarea
+                      value={formDescricao}
+                      onChange={(e) => setFormDescricao(e.target.value)}
+                      placeholder="Breve descrição do evento..."
+                      rows={3}
+                      className="agenda-form-input w-full resize-none text-xs px-3 py-2.5"
+                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                    />
+                  </div>
                 </div>
+
 
 
                 {/* LEFT — calendar card */}
