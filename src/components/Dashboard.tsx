@@ -991,7 +991,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={name}
                           type="button"
                           onClick={() => setSelectedHeaderPill(name)}
-                          className="header-pill inline-flex items-center justify-center gap-1.5 rounded-full overflow-hidden transition-all duration-300"
+                          className="header-pill inline-flex items-center justify-center gap-1.5 rounded-full overflow-hidden"
                           style={{
                             backgroundColor: "#00dbff",
                             color: "#002132",
@@ -1000,6 +1000,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             paddingRight: isSelected ? 12 : 0,
                             maxWidth: isSelected ? 220 : 34,
                             minWidth: 34,
+                            transition:
+                              "max-width 260ms cubic-bezier(0.34, 1.3, 0.5, 1), padding 220ms cubic-bezier(0.34, 1.3, 0.5, 1), transform 180ms cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 220ms ease",
+                            transform: isSelected ? "scale(1.04)" : "scale(1)",
+                            boxShadow: isSelected
+                              ? "0 6px 18px rgba(0, 219, 255, 0.45)"
+                              : "0 1px 3px rgba(0, 33, 50, 0.08)",
+                            willChange: "max-width, padding, transform",
                           }}
                           data-selected={isSelected ? "true" : "false"}
                           aria-label={name}
@@ -1008,23 +1015,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             <Icon size={22} />
                           </span>
                           <span
-                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap transition-opacity duration-200"
-                            style={{ opacity: isSelected ? 1 : 0 }}
+                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap"
+                            style={{
+                              opacity: isSelected ? 1 : 0,
+                              transform: isSelected ? "translateX(0)" : "translateX(-6px)",
+                              transition:
+                                "opacity 180ms ease-out 80ms, transform 220ms cubic-bezier(0.34, 1.3, 0.5, 1) 60ms",
+                            }}
                           >
                             {label}
                           </span>
                         </button>
-                      );
-                    })}
-                    <style>{`
-                      .header-pill:hover {
-                        padding-right: 12px !important;
-                        max-width: 220px !important;
-                      }
-                      .header-pill:hover .header-pill-label {
-                        opacity: 1 !important;
-                      }
-                    `}</style>
                   </div>
                 )}
 
