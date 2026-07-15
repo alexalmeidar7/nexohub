@@ -655,7 +655,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic]);
+  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic, clearMusic]);
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
