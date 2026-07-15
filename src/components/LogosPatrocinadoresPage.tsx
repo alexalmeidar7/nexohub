@@ -201,11 +201,13 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       return;
     }
 
+    const toDbPid = (v: string) => (v === "__none__" ? null : v);
+
     // Edit mode: update existing logo
     if (editingFullId) {
       setSaving(true);
       try {
-        const updateData: any = { programa_id: targets[0], data_final: dataFinal, nome: nomeLogo };
+        const updateData: any = { programa_id: toDbPid(targets[0]), data_final: dataFinal, nome: nomeLogo };
         if (pendingFiles.length > 0) {
           updateData.logo_url = await uploadLogo(pendingFiles[0].file);
         }
@@ -237,17 +239,17 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         for (const pid of targets) {
           const { error } = await supabase.from("logos_patrocinadores").insert({
             user_id: dataUserId!,
-            programa_id: pid,
+            programa_id: toDbPid(pid),
             logo_url,
             data_final: dataFinal,
             nome: nomeFinal,
-          });
+          } as any);
           if (error) throw error;
           count++;
         }
       }
 
-      toast({ title: `${count} logo(s) salva(s) em ${targets.length} programa(s)!` });
+      toast({ title: `${count} logo(s) salva(s) em ${targets.length} destino(s)!` });
       resetForm();
       await loadData();
     } catch (err: any) {
@@ -270,7 +272,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const startFullEdit = (logo: Logo) => {
     setEditingFullId(logo.id);
     setNomeLogo(logo.nome || "");
-    setProgramaId(logo.programa_id);
+    setProgramaId(logo.programa_id || "__none__");
     setDataFinal(logo.data_final);
     setExistingLogoUrl(logo.logo_url);
     setPendingFiles([]);
@@ -418,9 +420,15 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push({ programa: p, logos: gLogos });
     });
+    // Grupo especial: logos sem programa vinculado
+    const semProgLogos = logos.filter((l) => !l.programa_id && l.ativo);
+    if (semProgLogos.length) {
+      const placeholder = { id: "__none__", nome: "SEM PROGRAMA", estudio: "Geral", horario_inicio: "" } as unknown as Programa;
+      map.set("Geral", [{ programa: placeholder, logos: semProgLogos }]);
+    }
     // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
     const order = (label: string) =>
-      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : 3;
+      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : /geral/i.test(label) ? 9 : 3;
     return Array.from(map.entries())
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
       .map(([label, items]) => ({ label, items }));
@@ -517,6 +525,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       style={inputStyle}
                     >
                       <option value="">Selecione um programa</option>
+                      <option value="__none__">— SEM PROGRAMA —</option>
                       {programas.map((p) => (
                         <option key={p.id} value={p.id}>{p.nome}</option>
                       ))}
@@ -534,7 +543,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           {programaIds.length === 0
                             ? "Selecione um ou mais programas"
                             : programaIds
-                                .map((id) => programas.find((p) => p.id === id)?.nome)
+                                .map((id) => id === "__none__" ? "SEM PROGRAMA" : programas.find((p) => p.id === id)?.nome)
                                 .filter(Boolean)
                                 .join(", ")}
                         </span>
@@ -581,6 +590,19 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                             </span>
                           </div>
                           <div className="max-h-72 overflow-auto">
+                            {"sem programa".includes(programaSearch.toLowerCase()) && (
+                              <label className="flex items-center gap-2 px-3 py-1.5 cursor-pointer hover:bg-black/5 border-b" style={{ color: "var(--layout-page-text, #1a1a1a)", borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
+                                <input
+                                  type="checkbox"
+                                  checked={programaIds.includes("__none__")}
+                                  onChange={(e) =>
+                                    setProgramaIds((prev) => (e.target.checked ? [...prev, "__none__"] : prev.filter((x) => x !== "__none__")))
+                                  }
+                                />
+                                <span className="text-sm flex-1 truncate font-bold uppercase" style={{ opacity: 0.85 }}>— Sem Programa —</span>
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap" style={{ background: "#64748B22", color: "#64748B" }}>Geral</span>
+                              </label>
+                            )}
                             {programas
                               .filter((p) => p.nome.toLowerCase().includes(programaSearch.toLowerCase()))
                               .map((p) => {
