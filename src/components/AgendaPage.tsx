@@ -295,6 +295,8 @@ interface Evento {
   edicao_concluida?: boolean;
   horario_gravacao?: string;
   horario_gravacao_fim?: string;
+  periodo_inicio?: string | null;
+  periodo_fim?: string | null;
   excecoes?: EventoExcecao[];
   programa?: Programa;
   participantes?: Participante[];
