@@ -328,7 +328,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("programas")
-        .select("id, nome, selo, thumb, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
+        .select("id, nome, selo, thumb, capa, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
         .eq("user_id", dataOwnerId)
         .eq("ativo", true)
         .or("estudio.ilike.%estúdio fm%,estudio.ilike.%estudio fm%"),
