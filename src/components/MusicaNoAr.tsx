@@ -634,11 +634,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
-        // XML is valid but empty (STOPPED) — mark online as stopped
-        // so local source gets priority even if localStorage has old data
-        const xmlLower = (data.content as string).toLowerCase();
-        if (xmlLower.includes("stopped") || (xmlLower.includes("<interprete>") && !xmlLower.includes("<interprete>") === false)) {
+        // XML is valid but reports no song — mark as stopped and clear
+        // the on-air track so the UI doesn't stay stuck on the previous one.
+        if (isStoppedXmlPayload(data.content as string)) {
           onlineStoppedRef.current = true;
+          if (!isLocalSourceHealthy()) {
+            await clearMusic("online");
+          }
         }
         return;
       }
