@@ -405,6 +405,10 @@ export default function AgendaPage() {
   const [formEdicaoConcluida, setFormEdicaoConcluida] = useState(false);
   const [formHorarioGravacao, setFormHorarioGravacao] = useState("");
   const [formHorarioGravacaoFim, setFormHorarioGravacaoFim] = useState("");
+  const [formPeriodoInicio, setFormPeriodoInicio] = useState<string>("");
+  const [formPeriodoFim, setFormPeriodoFim] = useState<string>("");
+  const [periodoDialogOpen, setPeriodoDialogOpen] = useState(false);
+  const [pendingRecorrencia, setPendingRecorrencia] = useState<string>("");
   const [uploadingArte, setUploadingArte] = useState(false);
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
