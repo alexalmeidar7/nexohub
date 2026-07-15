@@ -1026,6 +1026,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             {label}
                           </span>
                         </button>
+                      );
+                    })}
                   </div>
                 )}
 
