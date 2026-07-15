@@ -605,7 +605,7 @@ export default function BroadcastPage() {
           </div>
 
           {/* Tactical status grid (real telemetry, no fake controls) */}
-          <div className="flex-1 p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
+          <div className="flex-none p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
             <div className="col-span-4 flex justify-between items-center mb-1">
               <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Status do Broadcast</h3>
               <span className="text-[9px] font-mono uppercase" style={{ color: "#ffffff40" }}>Live · XML sync</span>
