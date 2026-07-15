@@ -908,6 +908,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           setLocalError(null);
           const parsed = parseXmlString(text);
           if (parsed) processMusicRef.current(parsed, "pasta");
+          else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
           return;
         }
       } catch {}
