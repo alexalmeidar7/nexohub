@@ -11,6 +11,8 @@ export async function uploadProgramImage(
   kind: "thumb" | "capa"
 ): Promise<string> {
   if (!dataUrl) return "";
-  const path = `programas/${userId}/${programId}_${kind}.webp`;
+  // Path MUST start with the authenticated user's id — Storage RLS on
+  // "empresa-assets" requires (storage.foldername(name))[1] = auth.uid().
+  const path = `${userId}/programas/${programId}_${kind}.webp`;
   return uploadImageToStorage(dataUrl, "empresa-assets", path);
 }
