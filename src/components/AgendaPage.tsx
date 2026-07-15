@@ -1358,82 +1358,82 @@ export default function AgendaPage() {
           .agenda-skel-tile { background: ${shimmer}; background-size: 800px 100%; animation: agendaSkelShimmer 1.4s linear infinite; border-radius: 10px; }
         `}</style>
 
-        <div className="space-y-5" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+        <div className="space-y-5 w-full min-w-0 overflow-x-hidden" style={{ fontFamily: "'Montserrat', sans-serif" }}>
           {/* Header hero */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, #0AA9D8 100%)`, padding: 20 }}>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.18)" }}>
-                  <CalendarIcon size={22} style={{ color: "#fff" }} />
+          <div className="rounded-2xl overflow-hidden" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, #0AA9D8 100%)`, padding: "16px 18px" }}>
+            <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.18)" }}>
+                  <CalendarIcon size={20} style={{ color: "#fff" }} />
                 </div>
-                <div className="space-y-2">
-                  <div className="h-4 w-52 rounded" style={{ background: "rgba(255,255,255,0.35)" }} />
-                  <div className="h-3 w-72 rounded" style={{ background: "rgba(255,255,255,0.22)" }} />
+                <div className="space-y-2 min-w-0 flex-1">
+                  <div className="h-4 w-40 max-w-full rounded" style={{ background: "rgba(255,255,255,0.35)" }} />
+                  <div className="h-3 w-56 max-w-full rounded" style={{ background: "rgba(255,255,255,0.22)" }} />
                 </div>
               </div>
-              <div className="h-10 w-36 rounded-xl" style={{ background: "rgba(255,255,255,0.28)" }} />
+              <div className="h-9 w-28 sm:h-10 sm:w-36 rounded-xl shrink-0" style={{ background: "rgba(255,255,255,0.28)" }} />
             </div>
           </div>
 
           {/* Calendar + Weekly Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Calendar */}
-            <div className="lg:col-span-1 rounded-2xl overflow-hidden" style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}>
+            <div className="lg:col-span-1 min-w-0 rounded-2xl overflow-hidden" style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}>
               <div style={{ padding: "12px 18px", background: NEXO_CYAN }}>
-                <div className="h-3 w-24 rounded" style={{ background: "rgba(255,255,255,0.4)" }} />
+                <div className="h-3 w-24 max-w-full rounded" style={{ background: "rgba(255,255,255,0.4)" }} />
               </div>
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-7 h-7 rounded-lg agenda-skel-tile" />
-                  <div className="h-4 w-28 agenda-skel-bar" />
-                  <div className="w-7 h-7 rounded-lg agenda-skel-tile" />
+              <div className="p-3 sm:p-4">
+                <div className="flex items-center justify-between mb-3 gap-2">
+                  <div className="w-7 h-7 rounded-lg agenda-skel-tile shrink-0" />
+                  <div className="h-4 w-28 max-w-full agenda-skel-bar" />
+                  <div className="w-7 h-7 rounded-lg agenda-skel-tile shrink-0" />
                 </div>
-                <div className="grid grid-cols-7 gap-1.5 mb-2">
+                <div className="grid grid-cols-7 gap-1 sm:gap-1.5 mb-2">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={`dow-${i}`} className="h-3 rounded agenda-skel-bar" />
+                    <div key={`dow-${i}`} className="h-3 rounded agenda-skel-bar min-w-0" />
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1.5">
+                <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
                   {Array.from({ length: 42 }).map((_, i) => (
-                    <div key={i} className="aspect-square agenda-skel-tile" style={{ opacity: 0.65 + ((i * 37) % 35) / 100 }} />
+                    <div key={i} className="aspect-square agenda-skel-tile min-w-0" style={{ opacity: 0.65 + ((i * 37) % 35) / 100 }} />
                   ))}
                 </div>
               </div>
             </div>
 
             {/* Weekly Programming */}
-            <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}>
-              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_DARK }}>
-                <div className="h-3 w-40 rounded" style={{ background: "rgba(255,255,255,0.28)" }} />
-                <div className="flex gap-2">
+            <div className="lg:col-span-2 min-w-0 rounded-2xl overflow-hidden" style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}>
+              <div className="flex items-center justify-between gap-2" style={{ padding: "12px 18px", background: NEXO_DARK }}>
+                <div className="h-3 w-32 sm:w-40 max-w-full rounded min-w-0" style={{ background: "rgba(255,255,255,0.28)" }} />
+                <div className="flex gap-2 shrink-0">
                   <div className="w-6 h-6 rounded-lg" style={{ background: "rgba(255,255,255,0.2)" }} />
                   <div className="w-6 h-6 rounded-lg" style={{ background: "rgba(255,255,255,0.2)" }} />
-                  <div className="h-6 w-20 rounded-lg" style={{ background: "rgba(198,240,60,0.5)" }} />
+                  <div className="h-6 w-16 sm:w-20 rounded-lg" style={{ background: "rgba(198,240,60,0.5)" }} />
                 </div>
               </div>
-              <div className="p-4">
+              <div className="p-3 sm:p-4">
                 {/* Weekday header pills */}
-                <div className="grid grid-cols-7 gap-2 mb-3">
+                <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-3">
                   {["DOM","SEG","TER","QUA","QUI","SEX","SÁB"].map((d, i) => (
-                    <div key={d} className="rounded-xl p-2 text-center" style={{ background: i === 3 ? NEXO_CYAN + "22" : "#F1F9FC", border: i === 3 ? `1px solid ${NEXO_CYAN}` : "1px solid #E5F5FB" }}>
-                      <div className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: NEXO_DARK, opacity: 0.55 }}>{d}</div>
-                      <div className="h-4 w-6 mx-auto agenda-skel-bar" />
+                    <div key={d} className="rounded-xl p-1.5 sm:p-2 text-center min-w-0" style={{ background: i === 3 ? NEXO_CYAN + "22" : "#F1F9FC", border: i === 3 ? `1px solid ${NEXO_CYAN}` : "1px solid #E5F5FB" }}>
+                      <div className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider mb-1 truncate" style={{ color: NEXO_DARK, opacity: 0.55 }}>{d}</div>
+                      <div className="h-3.5 sm:h-4 w-5 sm:w-6 mx-auto agenda-skel-bar" />
                     </div>
                   ))}
                 </div>
                 {/* Event rows */}
                 <div className="space-y-2.5">
                   {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="rounded-xl p-3 flex items-center gap-3" style={{ border: "1px solid #EEF6FA", background: "#FAFDFE" }}>
+                    <div key={i} className="rounded-xl p-3 flex items-center gap-3 min-w-0" style={{ border: "1px solid #EEF6FA", background: "#FAFDFE" }}>
                       <div className="w-10 h-10 rounded-lg agenda-skel-tile shrink-0" />
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3.5 w-40 agenda-skel-bar" />
-                          <div className="h-4 w-14 agenda-skel-pill" style={{ opacity: 0.7 }} />
+                      <div className="flex-1 space-y-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="h-3.5 flex-1 max-w-[160px] agenda-skel-bar min-w-0" />
+                          <div className="h-4 w-12 sm:w-14 agenda-skel-pill shrink-0" style={{ opacity: 0.7 }} />
                         </div>
-                        <div className="h-2.5 w-64 agenda-skel-bar" style={{ opacity: 0.7 }} />
+                        <div className="h-2.5 w-full max-w-[260px] agenda-skel-bar" style={{ opacity: 0.7 }} />
                       </div>
-                      <div className="h-7 w-16 rounded-lg agenda-skel-tile" />
+                      <div className="hidden sm:block h-7 w-16 rounded-lg agenda-skel-tile shrink-0" />
                     </div>
                   ))}
                 </div>
@@ -1443,20 +1443,20 @@ export default function AgendaPage() {
 
           {/* Datas Especiais */}
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: cardBg, border: cardBorder, boxShadow: cardShadow }}>
-            <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: "#F1F9FC", borderBottom: "1px solid #E5F5FB" }}>
-              <div className="h-3 w-44 agenda-skel-bar" />
-              <div className="h-6 w-24 agenda-skel-pill" />
+            <div className="flex items-center justify-between gap-2" style={{ padding: "12px 18px", background: "#F1F9FC", borderBottom: "1px solid #E5F5FB" }}>
+              <div className="h-3 w-32 sm:w-44 max-w-full agenda-skel-bar min-w-0" />
+              <div className="h-6 w-20 sm:w-24 agenda-skel-pill shrink-0" />
             </div>
-            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5">
+            <div className="p-3 sm:p-4 grid grid-cols-1 md:grid-cols-2 gap-2.5">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded-xl p-3 flex items-center gap-3" style={{ border: "1px solid #EEF6FA" }}>
+                <div key={i} className="rounded-xl p-3 flex items-center gap-3 min-w-0" style={{ border: "1px solid #EEF6FA" }}>
                   <div className="w-12 h-12 rounded-lg flex flex-col items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN}22, ${NEXO_CYAN}10)`, border: `1px solid ${NEXO_CYAN}33` }}>
                     <div className="h-2 w-5 rounded mb-1" style={{ background: NEXO_CYAN, opacity: 0.55 }} />
                     <div className="h-2 w-6 rounded" style={{ background: NEXO_CYAN, opacity: 0.35 }} />
                   </div>
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3 w-48 agenda-skel-bar" />
-                    <div className="h-2.5 w-32 agenda-skel-bar" style={{ opacity: 0.6 }} />
+                  <div className="flex-1 space-y-1.5 min-w-0">
+                    <div className="h-3 w-full max-w-[200px] agenda-skel-bar" />
+                    <div className="h-2.5 w-full max-w-[140px] agenda-skel-bar" style={{ opacity: 0.6 }} />
                   </div>
                 </div>
               ))}
