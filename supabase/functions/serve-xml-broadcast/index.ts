@@ -729,12 +729,16 @@ serve(async (req) => {
     }
 
     // Convert INSERT LIVE banner to PNG (vMix/CEF requires .png; source is uploaded as .webp).
+    // Use a version derived from the source URL so that swapping the arte busts vMix/CDN cache
+    // even though the destination path (insert-live.png) is upserted in place.
     if (insertLiveUrl && insertLiveUrl !== IMG_BLANK_URL) {
+      const sourceVersion = String(insertLiveUrl).replace(/[^a-z0-9]/gi, "").slice(-16) || String(Date.now());
       const converted = await ensurePngImageUrl(
         supabase,
         insertLiveUrl,
         `broadcast/${dataOwnerId}/insert-live.png`,
         1920,
+        sourceVersion,
       );
       if (converted) insertLiveUrl = converted;
     }
