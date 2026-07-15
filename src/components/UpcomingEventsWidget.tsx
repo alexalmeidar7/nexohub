@@ -125,29 +125,64 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   };
 
 
-  // Upcoming events from selected day forward, next 30 days, sorted chronologically
+  // Upcoming events from selected day forward, next 30 days, sorted chronologically.
+  // Includes synthetic recurring events derived from programas.dias_semana so a newly
+  // created weekly program appears immediately even without an explicit agenda_eventos row.
   const upcoming = useMemo(() => {
     const out: { date: Date; evt: Evt }[] = [];
     const nowD = new Date();
     const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
+    // Build set of (programa_id + date) that already have an explicit event to avoid duplicating synthetics.
     for (let i = 0; i < 30; i++) {
       const d = addDays(selected, i);
       const isTodayD = isSameDay(d, nowD);
       const isPastD = d < nowD && !isTodayD;
       if (isPastD) continue;
+
+      const explicitProgIdsToday = new Set<string>();
       for (const evt of eventos) {
         if (!matches(evt, d)) continue;
         if (evt.status === "cancelado" || evt.status === "concluido") continue;
-        // Skip events whose end time has already passed today
         if (isTodayD) {
           const endT = evt.horario_gravacao_fim || evt.programa?.horario_fim;
           const startT = evt.horario_gravacao || evt.programa?.horario_inicio;
           const refT = endT || startT;
           if (refT && refT.slice(0, 5) < nowHM) continue;
         }
+        if (evt.programa_id) explicitProgIdsToday.add(evt.programa_id);
         out.push({ date: d, evt });
       }
-      if (out.length >= 12) break;
+
+      // Add synthetic weekly events from programas with dias_semana matching this day.
+      const dow = d.getDay();
+      for (const p of programasAll) {
+        if (p.ativo === false) continue;
+        if (!p.dias_semana || p.dias_semana.length === 0) continue;
+        if (explicitProgIdsToday.has(p.id)) continue;
+        const dayMatches = p.dias_semana.some((name) => normalizeDayName(name) === dow);
+        if (!dayMatches) continue;
+        if (isTodayD) {
+          const refT = (p.horario_fim || p.horario_inicio || "").slice(0, 5);
+          if (refT && refT < nowHM) continue;
+        }
+        out.push({
+          date: d,
+          evt: {
+            id: `synthetic-${p.id}-${format(d, "yyyy-MM-dd")}`,
+            data: format(d, "yyyy-MM-dd"),
+            recorrencia: "programa_semanal",
+            prioridade: "normal",
+            tipo_evento: "live",
+            horario_gravacao: p.horario_inicio || null,
+            horario_gravacao_fim: p.horario_fim || null,
+            programa_id: p.id,
+            programa: { id: p.id, nome: p.nome, horario_inicio: p.horario_inicio || undefined, horario_fim: p.horario_fim || undefined },
+            synthetic: true,
+          },
+        });
+      }
+
+      if (out.length >= 20) break;
     }
     out.sort((a, b) => {
       const dc = a.date.getTime() - b.date.getTime();
@@ -157,7 +192,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       return at.localeCompare(bt);
     });
     return out.slice(0, 12);
-  }, [eventos, selected]);
+  }, [eventos, programasAll, selected]);
+
 
 
   const goToday = () => {
