@@ -593,7 +593,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: textColor, opacity: 0.85 }}>
+                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: cardText, opacity: 0.85 }}>
                         <Clock size={9} />
                         {hora.slice(0, 5)}{horaFim ? `–${horaFim.slice(0, 5)}` : ""}
                       </span>
