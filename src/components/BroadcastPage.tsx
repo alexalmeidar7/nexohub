@@ -1059,11 +1059,9 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden"
+      className="relative w-full h-full rounded-2xl overflow-hidden"
       style={{
-        aspectRatio: "16/9",
         backgroundColor: "#000000",
-
         boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
