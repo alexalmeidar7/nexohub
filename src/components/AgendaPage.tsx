@@ -1767,10 +1767,11 @@ export default function AgendaPage() {
                 .agenda-dialog-scroll::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 80%, black 20%), var(--layout-accent-color, #2563eb)); }
               `}</style>
 
-              {/* Top area: form on the left, calendar on the right */}
-              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-5">
-                {/* LEFT — form fields */}
-                <div className="space-y-4 min-w-0">
+              {/* Top area: calendar on the left, form on the right */}
+              <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] gap-5">
+                {/* RIGHT column (form) — rendered second on lg via order */}
+                <div className="space-y-4 min-w-0 lg:order-2">
+
                   {/* Estúdio + Programa + Status */}
                   <div className="grid grid-cols-1 sm:grid-cols-[0.9fr_1.4fr_1.3fr] gap-3">
                     <div>
@@ -1944,8 +1945,9 @@ export default function AgendaPage() {
                   </div>
                 </div>
 
-                {/* RIGHT — calendar card */}
-                <div>
+                {/* LEFT — calendar card */}
+                <div className="lg:order-1">
+
                   <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Data do Evento</Label>
                   <div
                     className="agenda-form-calendar rounded-2xl overflow-hidden"
