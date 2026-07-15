@@ -418,6 +418,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     let cancelled = false;
     const overrideUrl = sources.video_stream_api_url?.trim();
     const xpath = sources.video_stream_xpath?.trim();
+    const ck = audKey("v", overrideUrl || `user:${dataUserId}`, xpath);
+    const cached = getAudCache(ck);
+    if (cached !== undefined) {
+      setVideoCount(cached);
+      setLoadingVideo(false);
+    }
     const tick = async () => {
       try {
         const body: Record<string, unknown> = { userId: dataUserId };
@@ -425,12 +431,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         if (xpath) body.xpath = xpath;
         const { data } = await supabase.functions.invoke("count-video-viewers", { body });
         if (cancelled) return;
+        let n: number | null = null;
         if ((data as any)?.ok) {
-          const n = (data as any).viewers;
-          setVideoCount(typeof n === "number" ? n : null);
-        } else {
-          setVideoCount(null);
+          const raw = (data as any).viewers;
+          n = typeof raw === "number" ? raw : null;
         }
+        setVideoCount(n);
+        setAudCache(ck, n, VIDEO_MS);
       } catch {
         if (!cancelled) setVideoCount(null);
       }
