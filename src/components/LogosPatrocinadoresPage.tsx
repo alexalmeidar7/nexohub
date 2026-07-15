@@ -420,9 +420,15 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push({ programa: p, logos: gLogos });
     });
+    // Grupo especial: logos sem programa vinculado
+    const semProgLogos = logos.filter((l) => !l.programa_id && l.ativo);
+    if (semProgLogos.length) {
+      const placeholder = { id: "__none__", nome: "SEM PROGRAMA", estudio: "Geral", horario_inicio: "" } as unknown as Programa;
+      map.set("Geral", [{ programa: placeholder, logos: semProgLogos }]);
+    }
     // Ordem preferida: FM primeiro, depois Podcast, depois demais alfabético
     const order = (label: string) =>
-      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : 3;
+      /fm/i.test(label) ? 0 : /podcast/i.test(label) ? 1 : /news|redação|redacao/i.test(label) ? 2 : /geral/i.test(label) ? 9 : 3;
     return Array.from(map.entries())
       .sort(([a], [b]) => order(a) - order(b) || a.localeCompare(b))
       .map(([label, items]) => ({ label, items }));
