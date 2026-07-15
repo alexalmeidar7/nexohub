@@ -1513,22 +1513,13 @@ img, video, canvas, svg { max-width: 100%; }
    max-height em conteúdo interno.
    ============================================================ */
 @media (max-height: 820px) {
-  /* Shell principal do app deixa de travar em 100vh e passa a rolar */
-  [data-app-shell] {
-    height: auto !important;
-    min-height: 100vh;
-    overflow: visible !important;
-  }
-  /* Container da Home libera o overflow interno para permitir rolagem natural */
+  /* Mantém a shell em 100vh (necessária para os cálculos internos de altura
+     do player e para o layout flex funcionar), mas permite scroll interno
+     no container da Home quando o conteúdo não couber. */
   [data-home-scroll] {
-    height: auto !important;
-    min-height: calc(100vh - 60px);
-    overflow: visible !important;
-  }
-  /* Garante que a página inteira role */
-  html, body, #root {
     overflow-y: auto !important;
-    min-height: 100vh;
+    overflow-x: hidden !important;
+    scrollbar-width: thin;
   }
   /* Modais nunca ultrapassam a viewport */
   [role="dialog"] > * {
@@ -1537,13 +1528,5 @@ img, video, canvas, svg { max-width: 100%; }
   }
 }
 
-/* Ajustes adicionais só para 1366x768 e similares (largura desktop compacta) */
-@media (min-width: 1280px) and (max-width: 1440px) and (max-height: 800px) {
-  /* Reduz levemente paddings verticais do conteúdo principal */
-  main, [data-main-content] {
-    padding-top: 0.4rem !important;
-    padding-bottom: 0.4rem !important;
-  }
-}
 
 
