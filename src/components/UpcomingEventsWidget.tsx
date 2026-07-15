@@ -81,16 +81,27 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   // Upcoming events from selected day forward, next 30 days, sorted chronologically
   const upcoming = useMemo(() => {
     const out: { date: Date; evt: Evt }[] = [];
+    const nowD = new Date();
+    const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
     for (let i = 0; i < 30; i++) {
       const d = addDays(selected, i);
+      const isTodayD = isSameDay(d, nowD);
+      const isPastD = d < nowD && !isTodayD;
+      if (isPastD) continue;
       for (const evt of eventos) {
         if (!matches(evt, d)) continue;
         if (evt.status === "cancelado" || evt.status === "concluido") continue;
+        // Skip events whose end time has already passed today
+        if (isTodayD) {
+          const endT = evt.horario_gravacao_fim || evt.programa?.horario_fim;
+          const startT = evt.horario_gravacao || evt.programa?.horario_inicio;
+          const refT = endT || startT;
+          if (refT && refT.slice(0, 5) < nowHM) continue;
+        }
         out.push({ date: d, evt });
       }
       if (out.length >= 12) break;
     }
-    // sort by date + time
     out.sort((a, b) => {
       const dc = a.date.getTime() - b.date.getTime();
       if (dc !== 0) return dc;
@@ -100,6 +111,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     });
     return out.slice(0, 12);
   }, [eventos, selected]);
+
 
   const goToday = () => {
     const t = new Date();
