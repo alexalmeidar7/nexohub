@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
 import { toast } from "sonner";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface QuizItem {
   pergunta: string;
