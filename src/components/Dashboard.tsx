@@ -1006,7 +1006,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                             className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap transition-opacity duration-200"
                             style={{ opacity: isSelected ? 1 : 0 }}
                           >
-                            {name}
+                            {label}
                           </span>
                         </button>
                       );
