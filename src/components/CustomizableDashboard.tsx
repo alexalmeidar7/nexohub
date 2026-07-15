@@ -652,17 +652,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                       <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
                     </div>
                   )}
-                  {item.widgetType === "player" && (
-                    <div
-                      className="absolute top-2 left-2 z-20 w-6 h-6 rounded-lg flex items-center justify-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ background: "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)" }}
-                      draggable
-                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
-                      title="Arrastar"
-                    >
-                      <GripVertical size={10} style={{ color: "rgba(255,255,255,0.7)" }} />
-                    </div>
-                  )}
+                  {/* Handle de arrastar do player removido */}
                   {item.widgetType !== "player" && (
                     <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
                       <button
