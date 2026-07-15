@@ -2333,7 +2333,11 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Tv size={40} className="text-white/10" />
+            {isPlaying && !isVideo && audioRef.current ? (
+              <AudioSpectrum audioElement={audioRef.current} style="bars" barColor="#c8ff00" />
+            ) : (
+              <Tv size={40} className="text-white/10" />
+            )}
           </div>
         )}
         {/* Vignette to guarantee text contrast */}
