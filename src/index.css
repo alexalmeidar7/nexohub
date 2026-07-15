@@ -1493,3 +1493,14 @@ select:not([data-nx-skip]) option:checked {
   );
   background-size: 800px 100%;
 }
+
+/* Global responsive safeguards — prevent horizontal scroll on mobile */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+img, video, canvas, svg { max-width: 100%; height: auto; }
+@media (max-width: 640px) {
+  /* Reduce oversized fixed widths that break narrow phones */
+  .min-w-\[900px\], .min-w-\[1000px\], .min-w-\[1200px\] { min-width: 100% !important; }
+}
