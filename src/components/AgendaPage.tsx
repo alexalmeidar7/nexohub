@@ -722,6 +722,8 @@ export default function AgendaPage() {
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
       horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
       horario_gravacao_fim: formTipoEvento === "gravacao" ? formHorarioGravacaoFim : null,
+      periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
+      periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
     } as any;
 
     if (editingId) {
