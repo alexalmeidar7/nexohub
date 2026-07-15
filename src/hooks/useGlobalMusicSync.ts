@@ -387,9 +387,32 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       };
 
       const onlineResult = await syncOnline();
-      const localSynced = await syncLocalFromStorage();
+      const localResult = await syncLocalFromStorage();
+      const localSynced = localResult === true;
+      const localStopped = localResult === "stopped";
 
-      if (onlineResult === "stopped" && !localSynced) {
+      // When both sources agree there's no song playing (or the only active
+      // source reports stopped), clear the on-air track and the mirrored DB
+      // fields so downstream widgets don't keep the previous song frozen.
+      const onlineStopped = onlineResult === "stopped" || (!useOnline);
+      const localStoppedOrIdle = localStopped || (!useLocal || !localFileName);
+      if (!localSynced && (onlineResult === "stopped" || localStopped) && onlineStopped && localStoppedOrIdle) {
+        const hadTrack = !!localStorage.getItem(MUSIC_DATA_KEY);
+        localStorage.removeItem(MUSIC_DATA_KEY);
+        localStorage.removeItem(MUSIC_START_KEY);
+        if (hadTrack) {
+          try {
+            await mergeUserDashboardItems(user.id, {
+              music_start_time: null,
+              music_current_title: "",
+              music_current_artist: "",
+              music_current_cover: "",
+              music_current_curiosity: "",
+            });
+          } catch {}
+        }
+      } else if (onlineResult === "stopped" && !localSynced) {
+        // Legacy safety net: eventually expire very old cached tracks
         const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
         const prevStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
         if (prevRaw && prevStart > 0) {
@@ -403,6 +426,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         }
       }
     };
+
 
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 2000);
