@@ -509,6 +509,18 @@ export default function AgendaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadingData, eventos]);
 
+  // Auto-open "Novo Evento" dialog when triggered from dashboard widget
+  useEffect(() => {
+    if (loadingData) return;
+    try {
+      if (sessionStorage.getItem("agenda_open_new") === "1") {
+        sessionStorage.removeItem("agenda_open_new");
+        openNewDialog();
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadingData]);
+
   // Auto-include program presenters as mandatory participants for live events
   useEffect(() => {
     if (formTipoEvento !== "live" || !formProgramaId) return;
