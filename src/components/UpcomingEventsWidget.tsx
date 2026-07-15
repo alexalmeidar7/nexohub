@@ -605,7 +605,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     )}
                   </div>
                   {evt.descricao && evt.programa?.nome && (
-                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: textColor, opacity: 0.8 }}>
+                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: cardText, opacity: 0.8 }}>
                       {evt.descricao}
                     </p>
                   )}
