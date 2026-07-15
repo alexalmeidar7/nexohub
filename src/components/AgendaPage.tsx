@@ -1712,19 +1712,23 @@ export default function AgendaPage() {
                 box-shadow: 0 0 0 2px color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent) !important;
                 border-color: var(--layout-accent-color, #2563eb) !important;
               }
-              .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; }
-              .agenda-form-calendar .rdp-caption_label { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 700; }
-              .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent) !important; }
-              .agenda-form-calendar .rdp-day { color: var(--layout-page-text, #1a1a1a) !important; }
-              .agenda-form-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
-              .agenda-form-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
-              .agenda-form-calendar .rdp-day_selected:hover { background-color: #1a7ae0 !important; color: #fff !important; }
-              .agenda-form-calendar .rdp-day_today { background-color: var(--layout-page-text, #1a1a1a) !important; color: #fff !important; font-weight: 700; }
-              .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent) !important; }
-              .agenda-form-calendar .rdp-nav_button { color: var(--layout-page-text, #1a1a1a) !important; }
-              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent) !important; }
+              .agenda-form-calendar .rdp { color: var(--layout-page-text, #1a1a1a) !important; --rdp-cell-size: 40px; margin: 0 !important; }
+              .agenda-form-calendar .rdp-months { justify-content: center; }
+              .agenda-form-calendar .rdp-month { width: 100%; }
+              .agenda-form-calendar .rdp-caption { padding: 4px 4px 10px; }
+              .agenda-form-calendar .rdp-caption_label { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 800; font-size: 13px; text-transform: capitalize; letter-spacing: 0.02em; }
+              .agenda-form-calendar .rdp-head_cell { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent) !important; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; }
+              .agenda-form-calendar .rdp-day { color: var(--layout-page-text, #1a1a1a) !important; font-weight: 600; font-size: 12.5px; border-radius: 10px !important; transition: all 0.15s ease; }
+              .agenda-form-calendar .rdp-day:hover:not(.rdp-day_selected) { background-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 14%, transparent) !important; color: var(--layout-accent-color, #00BFF0) !important; transform: scale(1.05); }
+              .agenda-form-calendar .rdp-day_selected { background: linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%) !important; color: #ffffff !important; font-weight: 800 !important; box-shadow: 0 4px 12px color-mix(in srgb, #00BFF0 45%, transparent) !important; }
+              .agenda-form-calendar .rdp-day_selected:hover { background: linear-gradient(135deg, #00BFF0 0%, #0AA9D8 100%) !important; color: #ffffff !important; }
+              .agenda-form-calendar .rdp-day_today:not(.rdp-day_selected) { background-color: transparent !important; color: var(--layout-accent-color, #00BFF0) !important; font-weight: 800 !important; box-shadow: inset 0 0 0 2px var(--layout-accent-color, #00BFF0) !important; }
+              .agenda-form-calendar .rdp-day_outside { color: color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent) !important; font-weight: 500; }
+              .agenda-form-calendar .rdp-nav_button { color: var(--layout-page-text, #1a1a1a) !important; border-radius: 10px !important; width: 32px !important; height: 32px !important; }
+              .agenda-form-calendar .rdp-nav_button:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #00BFF0) 15%, transparent) !important; color: var(--layout-accent-color, #00BFF0) !important; }
               .agenda-form-calendar button[name="previous-month"],
               .agenda-form-calendar button[name="next-month"] { color: var(--layout-page-text, #1a1a1a) !important; }
+
             `}</style>
 
             {/* Header — Nexo Form (cyan sólido, cantos superiores arredondados) */}
