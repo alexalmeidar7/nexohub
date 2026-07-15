@@ -19,6 +19,26 @@ interface Evt {
   status?: string | null;
   programa_id?: string | null;
   programa?: { id: string; nome: string; horario_inicio?: string; horario_fim?: string } | null;
+  synthetic?: boolean;
+}
+
+interface Programa {
+  id: string;
+  nome: string;
+  horario_inicio?: string | null;
+  horario_fim?: string | null;
+  dias_semana?: string[] | null;
+  ativo?: boolean | null;
+}
+
+const DAY_NAME_TO_INDEX: Record<string, number> = {
+  domingo: 0, segunda: 1, terca: 2, "terça": 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, "sábado": 6,
+};
+
+function normalizeDayName(s: string): number | null {
+  const k = s.trim().toLowerCase();
+  if (k in DAY_NAME_TO_INDEX) return DAY_NAME_TO_INDEX[k];
+  return null;
 }
 
 function matches(evt: Evt, date: Date) {
@@ -40,9 +60,13 @@ const typeColors: Record<string, { bg: string; text: string; label: string }> = 
   outro: { bg: "#64748b", text: "#ffffff", label: "OUTRO" },
 };
 
+// Background color used by the Audience widget — reused for weekly-recurring event cards.
+const WEEKLY_BG = "#d9ff65";
+
 export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: Page) => void }) {
   const { user } = useAuth();
   const [eventos, setEventos] = useState<Evt[]>([]);
+  const [programasAll, setProgramasAll] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selected, setSelected] = useState<Date>(new Date());
@@ -50,29 +74,38 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    (async () => {
-      const { data: evts } = await supabase
-        .from("agenda_eventos")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("data");
+    const load = async () => {
+      const [evtsRes, progsRes] = await Promise.all([
+        supabase.from("agenda_eventos").select("*").eq("user_id", user.id).order("data"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", user.id),
+      ]);
       if (cancelled) return;
-      if (!evts) { setEventos([]); setLoading(false); return; }
-      const ids = Array.from(new Set(evts.map((e: any) => e.programa_id).filter(Boolean)));
-      const { data: progs } = ids.length
-        ? await supabase.from("programas").select("id, nome, horario_inicio, horario_fim").in("id", ids as string[])
-        : { data: [] as any[] };
-      if (cancelled) return;
+      const evts = evtsRes.data || [];
+      const progs = (progsRes.data || []) as Programa[];
+      setProgramasAll(progs);
+      const progMap = new Map(progs.map(p => [p.id, p]));
       setEventos(
         evts.map((e: any) => ({
           ...e,
-          programa: (progs || []).find((p: any) => p.id === e.programa_id) || null,
+          programa: progMap.get(e.programa_id) ? {
+            id: e.programa_id,
+            nome: progMap.get(e.programa_id)!.nome,
+            horario_inicio: progMap.get(e.programa_id)!.horario_inicio || undefined,
+            horario_fim: progMap.get(e.programa_id)!.horario_fim || undefined,
+          } : null,
         })) as Evt[]
       );
       setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    };
+    load();
+    const ch = supabase
+      .channel(`upcoming-events-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [user]);
+
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
 
@@ -80,7 +113,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     const nowD = new Date();
     if (d < nowD && !isSameDay(d, nowD)) return false;
     const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
-    return eventos.some(e => {
+    const hasExplicit = eventos.some(e => {
       if (!matches(e, d)) return false;
       if (e.status === "cancelado" || e.status === "concluido") return false;
       if (isSameDay(d, nowD)) {
@@ -89,32 +122,79 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       }
       return true;
     });
+    if (hasExplicit) return true;
+    const dow = d.getDay();
+    return programasAll.some(p => {
+      if (p.ativo === false) return false;
+      if (!p.dias_semana || p.dias_semana.length === 0) return false;
+      if (!p.dias_semana.some(name => normalizeDayName(name) === dow)) return false;
+      if (isSameDay(d, nowD)) {
+        const refT = (p.horario_fim || p.horario_inicio || "").slice(0, 5);
+        if (refT && refT < nowHM) return false;
+      }
+      return true;
+    });
   };
 
 
-  // Upcoming events from selected day forward, next 30 days, sorted chronologically
+  // Upcoming events from selected day forward, next 30 days, sorted chronologically.
+  // Includes synthetic recurring events derived from programas.dias_semana so a newly
+  // created weekly program appears immediately even without an explicit agenda_eventos row.
   const upcoming = useMemo(() => {
     const out: { date: Date; evt: Evt }[] = [];
     const nowD = new Date();
     const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
+    // Build set of (programa_id + date) that already have an explicit event to avoid duplicating synthetics.
     for (let i = 0; i < 30; i++) {
       const d = addDays(selected, i);
       const isTodayD = isSameDay(d, nowD);
       const isPastD = d < nowD && !isTodayD;
       if (isPastD) continue;
+
+      const explicitProgIdsToday = new Set<string>();
       for (const evt of eventos) {
         if (!matches(evt, d)) continue;
         if (evt.status === "cancelado" || evt.status === "concluido") continue;
-        // Skip events whose end time has already passed today
         if (isTodayD) {
           const endT = evt.horario_gravacao_fim || evt.programa?.horario_fim;
           const startT = evt.horario_gravacao || evt.programa?.horario_inicio;
           const refT = endT || startT;
           if (refT && refT.slice(0, 5) < nowHM) continue;
         }
+        if (evt.programa_id) explicitProgIdsToday.add(evt.programa_id);
         out.push({ date: d, evt });
       }
-      if (out.length >= 12) break;
+
+      // Add synthetic weekly events from programas with dias_semana matching this day.
+      const dow = d.getDay();
+      for (const p of programasAll) {
+        if (p.ativo === false) continue;
+        if (!p.dias_semana || p.dias_semana.length === 0) continue;
+        if (explicitProgIdsToday.has(p.id)) continue;
+        const dayMatches = p.dias_semana.some((name) => normalizeDayName(name) === dow);
+        if (!dayMatches) continue;
+        if (isTodayD) {
+          const refT = (p.horario_fim || p.horario_inicio || "").slice(0, 5);
+          if (refT && refT < nowHM) continue;
+        }
+        out.push({
+          date: d,
+          evt: {
+            id: `synthetic-${p.id}-${format(d, "yyyy-MM-dd")}`,
+            data: format(d, "yyyy-MM-dd"),
+            recorrencia: "programa_semanal",
+            prioridade: "normal",
+            tipo_evento: "live",
+            horario_gravacao: p.horario_inicio || null,
+            horario_gravacao_fim: p.horario_fim || null,
+            programa_id: p.id,
+            programa: { id: p.id, nome: p.nome, horario_inicio: p.horario_inicio || undefined, horario_fim: p.horario_fim || undefined },
+            synthetic: true,
+          },
+        });
+      }
+
+      if (out.length >= 20) break;
     }
     out.sort((a, b) => {
       const dc = a.date.getTime() - b.date.getTime();
@@ -124,7 +204,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       return at.localeCompare(bt);
     });
     return out.slice(0, 12);
-  }, [eventos, selected]);
+  }, [eventos, programasAll, selected]);
+
 
 
   const goToday = () => {
@@ -313,6 +394,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
             const isToday = isSameDay(date, new Date());
             const isDismissing = dismissing.has(evt.id);
             const isConfirming = confirming.has(evt.id);
+            const isWeekly = evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal";
+            const cardBg = isWeekly ? WEEKLY_BG : "transparent";
+            const cardText = isWeekly ? "#0A2540" : textColor;
             return (
               <div
                 key={`${evt.id}-${date.toISOString()}`}
@@ -435,8 +519,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   onClick={() => openAgenda(evt.id)}
                   className="relative w-full text-left rounded-lg p-1.5 transition-transform duration-300 ease-out will-change-transform group-hover:-translate-x-[112px] active:scale-[0.99] border flex gap-2 items-stretch cursor-pointer"
                   style={{
-                    background: "transparent",
-                    borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
+                    background: cardBg,
+                    borderColor: isWeekly
+                      ? "rgba(10,37,64,0.18)"
+                      : "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
                   }}
                 >
                 {/* Date badge */}
@@ -444,8 +530,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   className="flex flex-col items-center justify-center rounded-md px-1.5 shrink-0"
                   style={{
                     minWidth: 34,
-                    background: isToday ? accent : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 40%, transparent)",
-                    color: isToday ? "var(--layout-header-text, #ffffff)" : textColor,
+                    background: isToday ? accent : isWeekly ? "rgba(10,37,64,0.12)" : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 40%, transparent)",
+                    color: isToday ? "var(--layout-header-text, #ffffff)" : cardText,
                   }}
                 >
                 <span className="text-[8px] uppercase font-bold leading-none" style={{ opacity: 0.85 }}>
@@ -462,7 +548,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
+                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: cardText }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
                     {evt.tipo_evento === "live" || !evt.tipo_evento ? (
@@ -507,19 +593,19 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     {hora && (
-                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: textColor, opacity: 0.85 }}>
+                      <span className="flex items-center gap-0.5 text-[10px] font-semibold tabular-nums" style={{ color: cardText, opacity: 0.85 }}>
                         <Clock size={9} />
                         {hora.slice(0, 5)}{horaFim ? `–${horaFim.slice(0, 5)}` : ""}
                       </span>
                     )}
                     {evt.recorrencia && evt.recorrencia !== "unico" && (
-                      <span className="text-[9px] uppercase font-bold" style={{ color: accent, opacity: 1 }}>
+                      <span className="text-[9px] uppercase font-bold" style={{ color: isWeekly ? "#0A2540" : accent, opacity: 1 }}>
                         {evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal" ? "Semanal" : evt.recorrencia === "mensal" ? "Mensal" : evt.recorrencia}
                       </span>
                     )}
                   </div>
                   {evt.descricao && evt.programa?.nome && (
-                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: textColor, opacity: 0.8 }}>
+                    <p className="text-[10px] mt-0.5 leading-tight truncate font-medium" style={{ color: cardText, opacity: 0.8 }}>
                       {evt.descricao}
                     </p>
                   )}
