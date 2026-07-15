@@ -494,20 +494,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
                 </div>
               );
             })}
-            {/* Add button */}
-            <div
-              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-center justify-center cursor-pointer transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1"
-              style={{
-                background: "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)",
-                border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 10%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 35%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 4%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 15%, transparent)"; }}
-            >
-              <Plus size={20} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }}>Adicionar</span>
-            </div>
+            {/* Add button removido */}
           </div>
         </div>
       )}
