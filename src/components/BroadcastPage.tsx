@@ -36,6 +36,7 @@ interface BroadcastData {
   tickerNews: boolean;
   tickerWeather: boolean;
   tickerQuotes: boolean;
+  tickerSocials: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -49,6 +50,7 @@ const defaultBroadcast: BroadcastData = {
   tickerNews: false,
   tickerWeather: false,
   tickerQuotes: false,
+  tickerSocials: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
@@ -373,19 +375,8 @@ export default function BroadcastPage() {
             }
           }
         } catch { /* silent */ }
-        // Stocks via edge fn
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
-          if (res.ok) {
-            const d = await res.json();
-            const wanted = ["^BVSP", "^GSPC", "^DJI", "^IXIC"];
-            for (const sym of wanted) {
-              const s = (d.stocks || []).find((x: any) => x.symbol === sym);
-              if (s) parts.push(`${s.name} ${s.value} (${s.change})`);
-            }
-          }
-        } catch { /* silent */ }
+        // Stocks removed – only USD and EUR per config
+
         if (!cancelled) setQuotesText(parts.join(" | "));
       } catch { /* silent */ }
     };
@@ -406,11 +397,25 @@ export default function BroadcastPage() {
     if (data.tickerQuotes && quotesText) {
       parts.push(quotesText);
     }
+    if (data.tickerSocials && empresaSocials.length > 0) {
+      const labels: Record<string, string> = {
+        instagram: "Instagram",
+        facebook: "Facebook",
+        youtube: "YouTube",
+        site: "Site",
+        whatsapp: "WhatsApp",
+      };
+      parts.push(
+        empresaSocials
+          .map(s => `${labels[s.tipo] || s.tipo}: ${s.valor}`)
+          .join("  •  ")
+      );
+    }
     if (data.ticker) {
       parts.push(data.ticker);
     }
     return parts.join("  •  ");
-  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.ticker, newsTitles, weatherText, quotesText]);
+  }, [data.tickerNews, data.tickerWeather, data.tickerQuotes, data.tickerSocials, data.ticker, newsTitles, weatherText, quotesText, empresaSocials]);
 
   const displayLocutor = data.locutor_override || locutorNome || "Locutor";
 
@@ -948,7 +953,8 @@ export default function BroadcastPage() {
               {([
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
                 { key: "tickerWeather", icon: <CloudSun size={12} />, label: "Previsão do Tempo", desc: "Tempo atual e amanhã" },
-                { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar, Euro e bolsas" },
+                { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar e Euro (BRL)" },
+                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Instagram, Facebook, YouTube, Site, WhatsApp" },
               ] as const).map(({ key, icon, label, desc }) => {
                 const active = data[key];
                 return (
