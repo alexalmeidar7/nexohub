@@ -123,102 +123,91 @@ async function fetchGenericListeners(url: string): Promise<number | null> {
 }
 
 
+// Runs all provider probes in parallel and returns the first non-null count.
+// Much faster than the previous sequential await chain (avoids paying 6-8s
+// timeouts when the first provider is unreachable).
 async function fetchListenersForUrl(streamUrl: string): Promise<number | null> {
+  let u: URL;
+  try { u = new URL(streamUrl); } catch { return null; }
+  const base = `${u.protocol}//${u.host}`;
+  const mount = u.pathname;
+  const hdr = { "User-Agent": "Mozilla/5.0" };
+  const T = 6000;
+
+  const probes: Array<Promise<number | null>> = [
+    // Icecast JSON stats
+    (async () => {
+      const r = await fetch(`${base}/status-json.xsl`, { headers: hdr, signal: AbortSignal.timeout(T) });
+      if (!r.ok) return null;
+      const j = await r.json();
+      const src = j?.icestats?.source;
+      if (Array.isArray(src)) {
+        const match = src.find((s: any) => { try { return s?.listenurl && new URL(s.listenurl).pathname === mount; } catch { return false; } });
+        if (match?.listeners != null) return Number(match.listeners) || 0;
+        return src.reduce((a: number, s: any) => a + (Number(s?.listeners) || 0), 0);
+      }
+      if (src?.listeners != null) return Number(src.listeners) || 0;
+      return null;
+    })(),
+    // Shoutcast v2 JSON
+    (async () => {
+      const r = await fetch(`${base}/stats?json=1`, { headers: hdr, signal: AbortSignal.timeout(T) });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j?.currentlisteners != null ? (Number(j.currentlisteners) || 0) : null;
+    })(),
+    // Shoutcast v1 /7.html
+    (async () => {
+      const r = await fetch(`${base}/7.html`, { headers: hdr, signal: AbortSignal.timeout(T) });
+      if (!r.ok) return null;
+      const t = await r.text();
+      const m = t.replace(/<[^>]+>/g, "").match(/(\d+)\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+/);
+      return m ? (Number(m[1]) || 0) : null;
+    })(),
+    // Icecast status2.xsl (CSV)
+    (async () => {
+      const r = await fetch(`${base}/status2.xsl`, { headers: hdr, signal: AbortSignal.timeout(T) });
+      if (!r.ok) return null;
+      const t = await r.text();
+      const lines = t.split(/\r?\n/).filter((ln) => ln.startsWith("/"));
+      for (const ln of lines) {
+        const cols = ln.split(",");
+        if (cols[0]?.trim() === mount) {
+          const n = parseInt(cols[3]?.trim() ?? "", 10);
+          if (Number.isFinite(n)) return n;
+        }
+      }
+      let total = 0; let found = false;
+      for (const ln of lines) {
+        const n = parseInt(ln.split(",")[3]?.trim() ?? "", 10);
+        if (Number.isFinite(n)) { total += n; found = true; }
+      }
+      return found ? total : null;
+    })(),
+    // Icecast status.xsl (HTML)
+    (async () => {
+      const r = await fetch(`${base}/status.xsl`, { headers: hdr, signal: AbortSignal.timeout(T) });
+      if (!r.ok) return null;
+      const t = await r.text();
+      const mountIdx = t.indexOf(`Mount Point ${mount}`);
+      const scope = mountIdx >= 0 ? t.slice(mountIdx) : t;
+      const m = scope.match(/Current Listeners:\s*<\/td>\s*<td[^>]*>\s*(\d+)/i);
+      return m ? parseInt(m[1], 10) : null;
+    })(),
+  ].map((p) => p.catch(() => null));
+
+  // Return first non-null result (fastest wins); fall back to null if all fail.
   try {
-    const u = new URL(streamUrl);
-    const base = `${u.protocol}//${u.host}`;
-    const mount = u.pathname;
-
-    // 1) Icecast JSON stats
-    try {
-      const r = await fetch(`${base}/status-json.xsl`, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (r.ok) {
-        const j = await r.json();
-        const src = j?.icestats?.source;
-        if (Array.isArray(src)) {
-          const match = src.find((s: any) => {
-            try { return s?.listenurl && new URL(s.listenurl).pathname === mount; }
-            catch { return false; }
-          });
-          if (match?.listeners != null) return Number(match.listeners) || 0;
-          return src.reduce((a: number, s: any) => a + (Number(s?.listeners) || 0), 0);
-        }
-        if (src?.listeners != null) return Number(src.listeners) || 0;
-      }
-    } catch { /* try next */ }
-
-    // 2) Shoutcast v2 JSON
-    try {
-      const r = await fetch(`${base}/stats?json=1`, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (r.ok) {
-        const j = await r.json();
-        if (j?.currentlisteners != null) return Number(j.currentlisteners) || 0;
-      }
-    } catch { /* try next */ }
-
-    // 3) Shoutcast v1 /7.html
-    try {
-      const r = await fetch(`${base}/7.html`, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (r.ok) {
-        const t = await r.text();
-        const m = t.replace(/<[^>]+>/g, "").match(/(\d+)\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*\d+/);
-        if (m) return Number(m[1]) || 0;
-      }
-    } catch { /* fall through */ }
-
-    // 4) Icecast status2.xsl (CSV) — used when status-json.xsl is broken (e.g. maxcast)
-    try {
-      const r = await fetch(`${base}/status2.xsl`, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (r.ok) {
-        const t = await r.text();
-        const lines = t.split(/\r?\n/).filter(Boolean);
-        for (const ln of lines) {
-          if (!ln.startsWith("/")) continue;
-          const cols = ln.split(",");
-          if (cols[0]?.trim() === mount) {
-            const n = parseInt(cols[3]?.trim() ?? "", 10);
-            if (Number.isFinite(n)) return n;
-          }
-        }
-        let total = 0; let found = false;
-        for (const ln of lines) {
-          if (!ln.startsWith("/")) continue;
-          const n = parseInt(ln.split(",")[3]?.trim() ?? "", 10);
-          if (Number.isFinite(n)) { total += n; found = true; }
-        }
-        if (found) return total;
-      }
-    } catch { /* fall through */ }
-
-    // 5) Icecast status.xsl (HTML) — parse "Current Listeners:</td><td...>N"
-    try {
-      const r = await fetch(`${base}/status.xsl`, {
-        headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (r.ok) {
-        const t = await r.text();
-        const mountIdx = t.indexOf(`Mount Point ${mount}`);
-        const scope = mountIdx >= 0 ? t.slice(mountIdx) : t;
-        const m = scope.match(/Current Listeners:\s*<\/td>\s*<td[^>]*>\s*(\d+)/i);
-        if (m) return parseInt(m[1], 10);
-      }
-    } catch { /* fall through */ }
-
+    return await Promise.any(
+      probes.map(async (p) => {
+        const v = await p;
+        if (v === null) throw new Error("null");
+        return v;
+      }),
+    );
+  } catch {
     return null;
-  } catch { return null; }
+  }
 }
 
 Deno.serve(async (req) => {
