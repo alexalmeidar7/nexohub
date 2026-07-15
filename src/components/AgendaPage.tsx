@@ -2339,16 +2339,12 @@ export default function AgendaPage() {
                 </button>
               )}
 
-              <Button variant="save"
+              <Button
+                variant="save"
                 type="button"
                 onClick={handleSave}
                 disabled={!formProgramaId || !formData}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "color-mix(in srgb, var(--layout-accent-color, #2563eb) 88%, black 12%)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--layout-accent-color, #2563eb)";
-                }}
+                className="w-full h-11 rounded-full text-sm font-black uppercase tracking-wider"
               >
                 {editingId ? "✓ Atualizar Evento" : "✓ Salvar Evento"}
               </Button>
