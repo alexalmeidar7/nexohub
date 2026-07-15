@@ -1457,3 +1457,39 @@ select:not([data-nx-skip]) option:checked {
   height: auto;
 }
 
+
+/* =========================================================
+   Nexo Skeleton Loading — shimmer cyan (padrão global admin)
+   ========================================================= */
+@keyframes nexoSkelShimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.nexo-skel-bar,
+.nexo-skel-pill,
+.nexo-skel-tile {
+  background: linear-gradient(
+    90deg,
+    rgba(0,191,240,0.08) 0%,
+    rgba(0,191,240,0.18) 50%,
+    rgba(0,191,240,0.08) 100%
+  );
+  background-size: 800px 100%;
+  animation: nexoSkelShimmer 1.4s linear infinite;
+}
+.nexo-skel-bar  { border-radius: 6px; }
+.nexo-skel-pill { border-radius: 999px; }
+.nexo-skel-tile { border-radius: 10px; }
+
+/* Variante para superfícies escuras (Dashboard/Admin dark sidebar) */
+.nexo-skel-bar.on-dark,
+.nexo-skel-pill.on-dark,
+.nexo-skel-tile.on-dark {
+  background: linear-gradient(
+    90deg,
+    rgba(0,191,240,0.10) 0%,
+    rgba(0,191,240,0.28) 50%,
+    rgba(0,191,240,0.10) 100%
+  );
+  background-size: 800px 100%;
+}
