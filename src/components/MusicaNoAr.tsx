@@ -776,6 +776,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
         processMusicRef.current(parsed, "pasta");
+      } else if (isStoppedXmlPayload(text)) {
+        // Automação sem música tocando — limpa o card em vez de manter
+        // a última música travada.
+        clearMusicRef.current("pasta");
       }
 
       // Background sync (non-blocking)
