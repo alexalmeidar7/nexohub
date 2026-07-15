@@ -403,8 +403,9 @@ serve(async (req) => {
       programaLogo = prog.selo
         ? await ensurePngImageUrl(supabase, prog.selo, `broadcast/${dataOwnerId}/${prog.id}-logo.png`, 512)
         : "";
-      programaThumb = (prog as any).thumb
-        ? await ensurePngImageUrl(supabase, (prog as any).thumb, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 512)
+      const thumbSource = ((prog as any).thumb || (prog as any).capa || prog.selo || "").toString().trim();
+      programaThumb = thumbSource
+        ? await ensurePngImageUrl(supabase, thumbSource, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 512)
         : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
