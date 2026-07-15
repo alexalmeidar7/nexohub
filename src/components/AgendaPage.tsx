@@ -1412,17 +1412,36 @@ export default function AgendaPage() {
                   style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
                 />
               </div>
-              <div>
-                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data final</Label>
-                <input
-                  type="date"
-                  value={formPeriodoFim}
-                  min={formPeriodoInicio || undefined}
-                  onChange={(e) => setFormPeriodoFim(e.target.value)}
-                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
-                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
-                />
-              </div>
+              {(() => {
+                const hasInvalidRange = !!formPeriodoInicio && !!formPeriodoFim && formPeriodoFim < formPeriodoInicio;
+                return (
+                  <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data final</Label>
+                    <input
+                      type="date"
+                      value={formPeriodoFim}
+                      min={formPeriodoInicio || undefined}
+                      onChange={(e) => setFormPeriodoFim(e.target.value)}
+                      aria-invalid={hasInvalidRange}
+                      aria-describedby={hasInvalidRange ? "periodo-fim-error" : undefined}
+                      className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none transition-colors"
+                      style={{
+                        borderColor: hasInvalidRange ? "#ef4444" : `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`,
+                        backgroundColor: hasInvalidRange ? "rgba(239,68,68,0.05)" : "#ffffff",
+                        color: NEXO_DARK,
+                        boxShadow: hasInvalidRange ? "0 0 0 3px rgba(239,68,68,0.15)" : "none",
+                      }}
+                    />
+                    {hasInvalidRange && (
+                      <p id="periodo-fim-error" role="alert" className="mt-1.5 text-[11px] font-semibold flex items-center gap-1" style={{ color: "#ef4444" }}>
+                        <span aria-hidden="true">⚠</span>
+                        A data final deve ser igual ou posterior à data inicial.
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+
               <div className="flex gap-2 pt-2">
                 <button
                   type="button"
