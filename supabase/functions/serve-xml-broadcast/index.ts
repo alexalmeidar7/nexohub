@@ -727,6 +727,17 @@ serve(async (req) => {
         }
       }
     }
+
+    // Convert INSERT LIVE banner to PNG (vMix/CEF requires .png; source is uploaded as .webp).
+    if (insertLiveUrl && insertLiveUrl !== IMG_BLANK_URL) {
+      const converted = await ensurePngImageUrl(
+        supabase,
+        insertLiveUrl,
+        `broadcast/${dataOwnerId}/insert-live.png`,
+        1920,
+      );
+      if (converted) insertLiveUrl = converted;
+    }
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
