@@ -1870,7 +1870,7 @@ export default function AgendaPage() {
                     <div>
                       <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Estúdio</Label>
                       <Select value={formEstudioFilter} onValueChange={(v) => { setFormEstudioFilter(v); setFormProgramaId(""); }}>
-                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
                           <SelectValue placeholder="Todos" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1884,7 +1884,7 @@ export default function AgendaPage() {
                     <div>
                       <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Programa</Label>
                       <Select value={formProgramaId} onValueChange={setFormProgramaId}>
-                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                        <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
                           <SelectValue placeholder="Selecione o programa" />
                         </SelectTrigger>
                         <SelectContent>
@@ -2025,7 +2025,7 @@ export default function AgendaPage() {
                   <div>
                     <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Recorrência</Label>
                     <Select value={formRecorrencia} onValueChange={handleRecorrenciaChange}>
-                      <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}>
+                      <SelectTrigger className="agenda-form-input h-10" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -2122,7 +2122,7 @@ export default function AgendaPage() {
                         value={formHorarioGravacao}
                         onChange={(e) => setFormHorarioGravacao(e.target.value)}
                         className="agenda-form-input h-10 w-full px-3 text-sm"
-                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
                       />
                     </div>
                     <div>
@@ -2132,7 +2132,7 @@ export default function AgendaPage() {
                         value={formHorarioGravacaoFim}
                         onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
                         className="agenda-form-input h-10 w-full px-3 text-sm"
-                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                        style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
                       />
                     </div>
                   </div>
@@ -2161,7 +2161,7 @@ export default function AgendaPage() {
                       onChange={(e) => setFormYoutubeUrl(e.target.value)}
                       placeholder="https://youtube.com/watch?v=..."
                       className="agenda-form-input h-10 text-xs"
-                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
                     />
                   </div>
 
@@ -2247,14 +2247,14 @@ export default function AgendaPage() {
                               placeholder="Nome"
                               disabled={p.obrigatorio}
                               className="agenda-form-input h-9 text-xs"
-                              style={{ borderColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 30%, transparent)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 6%, transparent)" : "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                              style={{ borderColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 30%, transparent)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 6%, transparent)" : "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
                             />
                             <Input
                               value={p.instagram}
                               onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
                               placeholder="@instagram"
                               className="agenda-form-input h-9 text-xs"
-                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: "#f8faff", color: "var(--layout-page-text, #1a1a1a)" }}
+                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
                             />
                           </div>
                           {p.obrigatorio ? (
