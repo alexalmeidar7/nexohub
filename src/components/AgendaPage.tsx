@@ -1389,6 +1389,64 @@ export default function AgendaPage() {
   return (
     <div className="animate-fade-in">
 
+      {/* Diálogo: Período da recorrência */}
+      <Dialog open={periodoDialogOpen} onOpenChange={setPeriodoDialogOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "#ffffff", borderRadius: 20, border: "none" }}>
+          <div className="flex flex-col">
+            <div className="px-6 py-4" style={{ background: `linear-gradient(135deg, ${NEXO_CYAN} 0%, #0AA9D8 100%)`, color: "#fff" }}>
+              <DialogTitle className="text-base font-bold m-0">Período da recorrência</DialogTitle>
+              <p className="text-[11px] mt-1 opacity-90">
+                {pendingRecorrencia === "semanal" && "Repete no mesmo dia da semana"}
+                {pendingRecorrencia === "mensal" && "Repete no mesmo dia de cada mês"}
+                {pendingRecorrencia === "programa_semanal" && "Repete de segunda a sexta-feira"}
+              </p>
+            </div>
+            <div className="px-6 py-5 space-y-4" style={{ backgroundColor: NEXO_CARD_BG }}>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data inicial</Label>
+                <input
+                  type="date"
+                  value={formPeriodoInicio}
+                  onChange={(e) => setFormPeriodoInicio(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
+                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
+                />
+              </div>
+              <div>
+                <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: NEXO_DARK }}>Data final</Label>
+                <input
+                  type="date"
+                  value={formPeriodoFim}
+                  min={formPeriodoInicio || undefined}
+                  onChange={(e) => setFormPeriodoFim(e.target.value)}
+                  className="w-full h-10 px-3 rounded-xl border text-sm font-medium outline-none"
+                  style={{ borderColor: `color-mix(in srgb, ${NEXO_CYAN} 40%, transparent)`, backgroundColor: "#ffffff", color: NEXO_DARK }}
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setPeriodoDialogOpen(false); setFormRecorrencia("unico"); setFormPeriodoInicio(""); setFormPeriodoFim(""); }}
+                  className="flex-1 h-10 rounded-xl text-xs font-bold uppercase tracking-wider"
+                  style={{ backgroundColor: "#ffffff", color: NEXO_DARK, border: `1px solid color-mix(in srgb, ${NEXO_DARK} 20%, transparent)` }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={!formPeriodoInicio || !formPeriodoFim || formPeriodoFim < formPeriodoInicio}
+                  onClick={() => setPeriodoDialogOpen(false)}
+                  className="flex-1 h-10 rounded-xl text-xs font-black uppercase tracking-wider disabled:opacity-50"
+                  style={{ background: `linear-gradient(135deg, ${NEXO_LIME} 0%, #A8D82C 100%)`, color: NEXO_DARK }}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Diálogo: escolha ao excluir evento recorrente */}
       <Dialog open={!!deleteChoice} onOpenChange={(o) => { if (!o) setDeleteChoice(null); }}>
         <DialogContent className="max-w-md p-0 overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", borderRadius: 20, border: "none", color: "var(--layout-page-text, #1a1a1a)" }}>
