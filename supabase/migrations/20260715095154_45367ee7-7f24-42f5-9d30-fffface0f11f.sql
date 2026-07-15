@@ -1,0 +1,1 @@
+ALTER TABLE public.agenda_eventos ADD COLUMN IF NOT EXISTS periodo_inicio date, ADD COLUMN IF NOT EXISTS periodo_fim date;
