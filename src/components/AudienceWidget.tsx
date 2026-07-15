@@ -36,6 +36,23 @@ const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
 const VIDEO_MS = 30 * 1000; // 30s for video viewers
 
+// Client-side cache of audience counts keyed by URL(+xpath). Serves stale value
+// instantly on remount / route change so the widget never shows a spinner when
+// a recent count is already known. TTL matches the poll interval.
+type AudCache = { value: number | null; expires: number };
+const audCache = new Map<string, AudCache>();
+const audKey = (kind: "a" | "v", url: string, xpath?: string | null) =>
+  `${kind}\u0000${url}\u0000${xpath ?? ""}`;
+function getAudCache(key: string): number | null | undefined {
+  const hit = audCache.get(key);
+  if (!hit) return undefined;
+  if (hit.expires < Date.now()) { audCache.delete(key); return undefined; }
+  return hit.value;
+}
+function setAudCache(key: string, value: number | null, ttlMs: number) {
+  audCache.set(key, { value, expires: Date.now() + ttlMs });
+}
+
 // Extract a numeric value from XML or JSON text using a simple slash-separated
 // path (leading //, /, or bare "a/b/c"). Returns null if not found or not numeric.
 function extractByPath(text: string, rawPath: string): number | null {
