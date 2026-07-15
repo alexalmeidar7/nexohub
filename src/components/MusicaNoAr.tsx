@@ -125,6 +125,46 @@ function parseXmlString(xmlStr: string): MusicData | null {
   }
 }
 
+/**
+ * Detects a "no track playing" XML — either explicit STOPPED category,
+ * or empty <interprete>/<titulo> (common between songs on Pulsar/RadioBoss).
+ * Returning true means we should CLEAR the current on-air track instead of
+ * leaving the previous song stuck on screen.
+ */
+function isStoppedXmlPayload(xmlStr: string): boolean {
+  try {
+    const cleaned = xmlStr.replace(/<\?xml[^?]*\?>\s*/i, "");
+    const parser = new DOMParser();
+    let doc = parser.parseFromString(cleaned, "application/xml");
+    if (doc.querySelector("parsererror")) {
+      doc = parser.parseFromString(cleaned, "text/xml");
+      if (doc.querySelector("parsererror")) return false;
+    }
+    const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
+    if (categoria === "STOPPED") return true;
+    const rawTitulo = (
+      doc.querySelector("nome_musica")?.textContent
+      || doc.querySelector("titulo")?.textContent
+      || doc.querySelector("title")?.textContent
+      || ""
+    ).trim();
+    const rawArtista = (
+      doc.querySelector("interprete")?.textContent
+      || doc.querySelector("nome_interprete")?.textContent
+      || doc.querySelector("artista")?.textContent
+      || doc.querySelector("artist")?.textContent
+      || ""
+    ).trim();
+    // Only treat as "stopped" when the <musica> block exists but is empty
+    // (avoids clearing on unrelated XMLs).
+    const hasMusicaNode = !!doc.querySelector("musica, music, track, song");
+    return hasMusicaNode && !rawTitulo && !rawArtista;
+  } catch {
+    return false;
+  }
+}
+
+
 function extractMusicFromDoc(doc: Document): MusicData | null {
   const rawTitulo =
     doc.querySelector("nome_musica")?.textContent ||
@@ -434,6 +474,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }, { onConflict: "user_id" });
   };
 
+  /**
+   * Clear the current on-air track (used when the XML explicitly reports
+   * "no song playing"). Wipes local state, per-user localStorage keys and
+   * the mirrored fields in user_settings.dashboard_items so downstream
+   * widgets (Home, Player, Cenário) don't keep showing the stale track.
+   */
+  const clearMusic = useCallback(async (source?: "online" | "pasta") => {
+    const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
+    if (!prevRaw && !music) return; // already cleared
+    localStorage.removeItem(MUSIC_DATA_KEY);
+    localStorage.removeItem(MUSIC_START_KEY);
+    setMusic(null);
+    setStartTime(null);
+    setElapsed(0);
+    if (source) {
+      setLastSource(source);
+      lastSourceRef.current = source;
+    }
+    if (dataUserId) {
+      try {
+        await mergeUserDashboardItems(dataUserId, {
+          music_start_time: null,
+          music_current_title: "",
+          music_current_artist: "",
+          music_current_cover: "",
+          music_current_curiosity: "",
+        });
+      } catch (e) {
+        console.warn("[MusicaNoAr] clearMusic merge failed:", e);
+      }
+    }
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music]);
+
   const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
@@ -561,11 +634,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
-        // XML is valid but empty (STOPPED) — mark online as stopped
-        // so local source gets priority even if localStorage has old data
-        const xmlLower = (data.content as string).toLowerCase();
-        if (xmlLower.includes("stopped") || (xmlLower.includes("<interprete>") && !xmlLower.includes("<interprete>") === false)) {
+        // XML is valid but reports no song — mark as stopped and clear
+        // the on-air track so the UI doesn't stay stuck on the previous one.
+        if (isStoppedXmlPayload(data.content as string)) {
           onlineStoppedRef.current = true;
+          if (!isLocalSourceHealthy()) {
+            await clearMusic("online");
+          }
         }
         return;
       }
@@ -580,7 +655,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         setOnlineError(`Erro de rede: ${err?.message || "conexão recusada"}`);
       }
     }
-  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic]);
+  }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic, clearMusic]);
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
@@ -624,6 +699,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
   processMusicRef.current = processMusic;
+  const clearMusicRef = useRef(clearMusic);
+  clearMusicRef.current = clearMusic;
   const dataUserIdRef = useRef<string | null>(dataUserId);
   dataUserIdRef.current = dataUserId;
   const deviceNameRef = useRef(currentDeviceName);
@@ -701,6 +778,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
         processMusicRef.current(parsed, "pasta");
+      } else if (isStoppedXmlPayload(text)) {
+        // Automação sem música tocando — limpa o card em vez de manter
+        // a última música travada.
+        clearMusicRef.current("pasta");
       }
 
       // Background sync (non-blocking)
@@ -827,6 +908,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           setLocalError(null);
           const parsed = parseXmlString(text);
           if (parsed) processMusicRef.current(parsed, "pasta");
+          else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
           return;
         }
       } catch {}

@@ -318,31 +318,45 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const useOnline = mode === "online" || mode === "both";
       const useLocal = mode === "pasta" || mode === "both";
 
-      const syncLocalFromStorage = async (): Promise<boolean> => {
+      const syncLocalFromStorage = async (): Promise<boolean | "stopped"> => {
         if (!useLocal || !localFileName) return false;
-        try {
-          const filePath = `local-xml-${user.id}.xml`;
-          const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
-          if (!urlData?.publicUrl) return false;
-          const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
-            signal: AbortSignal.timeout(4000),
-            cache: "no-store",
-          });
-          if (!res.ok) return false;
-          const text = await res.text();
-          if (!text) return false;
-          const data = parseXml(text);
-          if (!data || data === "stopped") return false;
-          if (isPlaceholderTrack(data)) return false;
-          lastLocalSyncAtRef.current = Date.now();
-          fetchCoverAndArtistImg(data);
-          applyMusicData(data);
-          localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
-          return true;
-        } catch {
-          return false;
+        // Try the new auth-prefixed path first (written by MusicaNoAr.syncToStorage);
+        // fall back to the legacy flat path for older tenants.
+        const candidates = [
+          `${user.id}/local-xml-${user.id}.xml`,
+          `local-xml-${user.id}.xml`,
+        ];
+        for (const filePath of candidates) {
+          try {
+            const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
+            if (!urlData?.publicUrl) continue;
+            const res = await fetch(`${urlData.publicUrl}?t=${Date.now()}`, {
+              signal: AbortSignal.timeout(4000),
+              cache: "no-store",
+            });
+            if (!res.ok) continue;
+            const text = await res.text();
+            if (!text) continue;
+            const data = parseXml(text);
+            if (data === "stopped") {
+              // Automação sem música — não confia em paths legados stale.
+              // Retorna "stopped" para que o caller decida limpar.
+              return "stopped";
+            }
+            if (!data) continue;
+            if (isPlaceholderTrack(data)) return "stopped";
+            lastLocalSyncAtRef.current = Date.now();
+            fetchCoverAndArtistImg(data);
+            applyMusicData(data);
+            localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
+            return true;
+          } catch {
+            // try next candidate
+          }
         }
+        return false;
       };
+
 
       const syncOnline = async (): Promise<"ok" | "stopped" | "skip"> => {
         if (!useOnline || !url) return "skip";
@@ -373,9 +387,32 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       };
 
       const onlineResult = await syncOnline();
-      const localSynced = await syncLocalFromStorage();
+      const localResult = await syncLocalFromStorage();
+      const localSynced = localResult === true;
+      const localStopped = localResult === "stopped";
 
-      if (onlineResult === "stopped" && !localSynced) {
+      // When both sources agree there's no song playing (or the only active
+      // source reports stopped), clear the on-air track and the mirrored DB
+      // fields so downstream widgets don't keep the previous song frozen.
+      const onlineStopped = onlineResult === "stopped" || (!useOnline);
+      const localStoppedOrIdle = localStopped || (!useLocal || !localFileName);
+      if (!localSynced && (onlineResult === "stopped" || localStopped) && onlineStopped && localStoppedOrIdle) {
+        const hadTrack = !!localStorage.getItem(MUSIC_DATA_KEY);
+        localStorage.removeItem(MUSIC_DATA_KEY);
+        localStorage.removeItem(MUSIC_START_KEY);
+        if (hadTrack) {
+          try {
+            await mergeUserDashboardItems(user.id, {
+              music_start_time: null,
+              music_current_title: "",
+              music_current_artist: "",
+              music_current_cover: "",
+              music_current_curiosity: "",
+            });
+          } catch {}
+        }
+      } else if (onlineResult === "stopped" && !localSynced) {
+        // Legacy safety net: eventually expire very old cached tracks
         const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
         const prevStart = parseInt(localStorage.getItem(MUSIC_START_KEY) || "0", 10);
         if (prevRaw && prevStart > 0) {
@@ -389,6 +426,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         }
       }
     };
+
 
     fetchAndSync();
     const interval = setInterval(fetchAndSync, 2000);
