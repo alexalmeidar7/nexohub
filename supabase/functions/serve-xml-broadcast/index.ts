@@ -219,7 +219,8 @@ const ensurePngImageUrl = async (
     }
     const source = trimmed.replace(/^https?:\/\//i, "");
     const height = size === 1920 ? 1080 : size;
-    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${height}&fit=cover&a=center`;
+    const fitMode = size === 1920 ? "inside" : "cover";
+    const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${height}&fit=${fitMode}&we&a=center`;
     const response = await fetch(fetchUrl);
     if (!response.ok) return "";
     const bytes = new Uint8Array(await response.arrayBuffer());
@@ -405,7 +406,7 @@ serve(async (req) => {
         : "";
       const thumbSource = ((prog as any).thumb || (prog as any).capa || prog.selo || "").toString().trim();
       programaThumb = thumbSource
-        ? await ensurePngImageUrl(supabase, thumbSource, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 512)
+        ? await ensurePngImageUrl(supabase, thumbSource, `broadcast/${dataOwnerId}/${prog.id}-thumb-hd.png`, 1920)
         : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
