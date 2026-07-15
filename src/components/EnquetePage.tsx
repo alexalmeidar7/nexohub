@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
 import { toast } from "sonner";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 /* ── pre-built enquete bank (rotate daily by dayOfYear) ── */
 interface QuizItem {
