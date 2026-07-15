@@ -8,6 +8,7 @@ import XmlLinkRow from "./XmlLinkRow";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Artista {
   nome: string;
