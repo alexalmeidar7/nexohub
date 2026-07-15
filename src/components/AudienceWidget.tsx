@@ -385,23 +385,27 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll video streaming stats using ONLY the URL + XPath configured in the popup.
+  // Poll video streaming stats via edge function.
+  // Runs URL+XPath, generic viewer-tag auto-detect and provider probes
+  // (YouTube Live "watching now") in parallel — fastest wins.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const url = sources.video_stream_api_url?.trim();
+    const overrideUrl = sources.video_stream_api_url?.trim();
     const xpath = sources.video_stream_xpath?.trim();
-    if (!url || !xpath) {
-      setVideoCount(null);
-      setLoadingVideo(false);
-      return;
-    }
     const tick = async () => {
       try {
-        const r = await fetch(url, { cache: "no-store" });
-        const text = (await r.text()).trim();
-        const count = extractByPath(text, xpath);
-        if (!cancelled) setVideoCount(typeof count === "number" ? count : null);
+        const body: Record<string, unknown> = { userId: dataUserId };
+        if (overrideUrl) body.urls = [overrideUrl];
+        if (xpath) body.xpath = xpath;
+        const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+        if (cancelled) return;
+        if ((data as any)?.ok) {
+          const n = (data as any).viewers;
+          setVideoCount(typeof n === "number" ? n : null);
+        } else {
+          setVideoCount(null);
+        }
       } catch {
         if (!cancelled) setVideoCount(null);
       }
