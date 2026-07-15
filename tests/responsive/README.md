@@ -3,6 +3,12 @@
 Suite Playwright que valida se as páginas principais cabem inteiras em
 uma tela **1366x768** — resolução comum em notebooks e vMix.
 
+## Setup (uma vez)
+
+```bash
+npx playwright install chromium
+```
+
 ## Rodar
 
 ```bash
@@ -12,6 +18,7 @@ npm run dev
 # 2. Rode os testes
 npm run test:responsive
 ```
+
 
 ## O que é validado
 
