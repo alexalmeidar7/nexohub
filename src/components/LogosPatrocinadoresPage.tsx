@@ -519,6 +519,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                       style={inputStyle}
                     >
                       <option value="">Selecione um programa</option>
+                      <option value="__none__">— SEM PROGRAMA —</option>
                       {programas.map((p) => (
                         <option key={p.id} value={p.id}>{p.nome}</option>
                       ))}
