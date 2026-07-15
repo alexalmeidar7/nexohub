@@ -537,7 +537,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           {programaIds.length === 0
                             ? "Selecione um ou mais programas"
                             : programaIds
-                                .map((id) => programas.find((p) => p.id === id)?.nome)
+                                .map((id) => id === "__none__" ? "SEM PROGRAMA" : programas.find((p) => p.id === id)?.nome)
                                 .filter(Boolean)
                                 .join(", ")}
                         </span>
