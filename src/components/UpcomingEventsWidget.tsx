@@ -599,7 +599,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                       </span>
                     )}
                     {evt.recorrencia && evt.recorrencia !== "unico" && (
-                      <span className="text-[9px] uppercase font-bold" style={{ color: accent, opacity: 1 }}>
+                      <span className="text-[9px] uppercase font-bold" style={{ color: isWeekly ? "#0A2540" : accent, opacity: 1 }}>
                         {evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal" ? "Semanal" : evt.recorrencia === "mensal" ? "Mensal" : evt.recorrencia}
                       </span>
                     )}
