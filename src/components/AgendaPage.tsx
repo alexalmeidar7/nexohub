@@ -691,6 +691,8 @@ export default function AgendaPage() {
     setFormEdicaoConcluida(!!evt.edicao_concluida);
     setFormHorarioGravacao(evt.horario_gravacao || "");
     setFormHorarioGravacaoFim(evt.horario_gravacao_fim || "");
+    setFormPeriodoInicio(((evt as any).periodo_inicio as string) || "");
+    setFormPeriodoFim(((evt as any).periodo_fim as string) || "");
     setFormParticipantes(
       evt.participantes && evt.participantes.length > 0
         ? evt.participantes.map(p => ({ id: p.id, nome: p.nome, instagram: p.instagram }))
