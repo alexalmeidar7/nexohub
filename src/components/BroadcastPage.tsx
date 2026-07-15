@@ -578,25 +578,30 @@ export default function BroadcastPage() {
             </div>
           </div>
 
-          {/* 16:9 canvas */}
-          <div className="w-full">
-            <MockupPreview
-              empresaLogo={empresaLogo}
-              programaNome={programaNome}
-              programaLogo={programaLogo}
-              displayLocutor={displayLocutor}
-              locutorInstagram={locutorInstagram}
-              locutorFoto={locutorFoto}
-              accentColor={accentColor}
-              assunto={data.assunto}
-              showQrCode={data.showQrCode}
-              whatsappNumber={whatsappNumber}
-              empresaSocials={empresaSocials}
-              composedTicker={composedTicker}
-              sponsorLogos={sponsorLogos}
-              assuntoBgUrl={effectiveAssuntoBgUrl}
-              insertLiveArt={insertLiveArt}
-            />
+          {/* 16:9 canvas — responsivo, ocupa espaço disponível sem cortar */}
+          <div className="flex-1 min-h-0 w-full flex items-center justify-center p-3">
+            <div
+              className="relative"
+              style={{ height: "100%", aspectRatio: "16/9", maxWidth: "100%" }}
+            >
+              <MockupPreview
+                empresaLogo={empresaLogo}
+                programaNome={programaNome}
+                programaLogo={programaLogo}
+                displayLocutor={displayLocutor}
+                locutorInstagram={locutorInstagram}
+                locutorFoto={locutorFoto}
+                accentColor={accentColor}
+                assunto={data.assunto}
+                showQrCode={data.showQrCode}
+                whatsappNumber={whatsappNumber}
+                empresaSocials={empresaSocials}
+                composedTicker={composedTicker}
+                sponsorLogos={sponsorLogos}
+                assuntoBgUrl={effectiveAssuntoBgUrl}
+                insertLiveArt={insertLiveArt}
+              />
+            </div>
           </div>
 
           {/* Tactical status grid (real telemetry, no fake controls) */}
