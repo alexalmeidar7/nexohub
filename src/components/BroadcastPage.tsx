@@ -375,19 +375,8 @@ export default function BroadcastPage() {
             }
           }
         } catch { /* silent */ }
-        // Stocks via edge fn
-        try {
-          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-          const res = await fetch(`${supabaseUrl}/functions/v1/fetch-stocks`, { headers: { "Content-Type": "application/json" } });
-          if (res.ok) {
-            const d = await res.json();
-            const wanted = ["^BVSP", "^GSPC", "^DJI", "^IXIC"];
-            for (const sym of wanted) {
-              const s = (d.stocks || []).find((x: any) => x.symbol === sym);
-              if (s) parts.push(`${s.name} ${s.value} (${s.change})`);
-            }
-          }
-        } catch { /* silent */ }
+        // Stocks removed – only USD and EUR per config
+
         if (!cancelled) setQuotesText(parts.join(" | "));
       } catch { /* silent */ }
     };
