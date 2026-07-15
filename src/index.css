@@ -1504,3 +1504,76 @@ img, video, canvas, svg { max-width: 100%; }
   /* Reduce oversized fixed widths that break narrow phones */
   .min-w-\[900px\], .min-w-\[1000px\], .min-w-\[1200px\] { min-width: 100% !important; }
 }
+
+/* ============================================================
+   Modo responsivo para telas 1366x768 (Full HD reduzido / TVs / notebooks)
+   Alvo: largura entre 1280 e 1440 e altura <= 800px.
+   Objetivo: compactar espaçamentos, reduzir tipografia levemente
+   e garantir scroll interno onde há alturas fixas.
+   ============================================================ */
+@media (min-width: 1280px) and (max-width: 1440px) and (max-height: 820px) {
+  html { font-size: 14.5px; }
+
+  /* Garantir que a página possa rolar verticalmente */
+  html, body, #root {
+    overflow-y: auto !important;
+    min-height: 100vh;
+  }
+
+  /* Barra lateral e header do app mais compactos */
+  header, .app-header, [data-app-header] {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  /* Grid do dashboard — reduzir gaps e paddings */
+  .dashboard-grid,
+  [data-dashboard-grid],
+  main .grid {
+    gap: 0.5rem !important;
+  }
+  main, [data-main-content] {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Widgets com altura fixa passam a permitir scroll interno */
+  [data-widget], .widget-card, .dashboard-widget {
+    max-height: calc(100vh - 120px);
+    overflow: auto;
+  }
+
+  /* Alturas fixas comuns em h-[Npx] acima de 600px viram scrolláveis */
+  [class*="h-[6"][class*="px]"],
+  [class*="h-[7"][class*="px]"],
+  [class*="h-[8"][class*="px]"],
+  [class*="h-[9"][class*="px]"],
+  [class*="min-h-[6"][class*="px]"],
+  [class*="min-h-[7"][class*="px]"],
+  [class*="min-h-[8"][class*="px]"] {
+    max-height: calc(100vh - 100px);
+    overflow: auto;
+  }
+
+  /* Tipografia — cabeçalhos ligeiramente menores */
+  h1 { font-size: clamp(1.25rem, 2.2vw, 1.75rem) !important; }
+  h2 { font-size: clamp(1.05rem, 1.8vw, 1.4rem) !important; }
+
+  /* Paddings de cards genéricos */
+  .card, [data-card], .rounded-2xl, .rounded-3xl {
+    padding-block: clamp(0.5rem, 1vw, 0.9rem);
+  }
+
+  /* Modais / dialog — nunca ultrapassar a viewport */
+  [role="dialog"] > * {
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+  }
+}
+
+/* Fallback só para altura curta (<= 720px) em qualquer largura desktop */
+@media (min-width: 1024px) and (max-height: 720px) {
+  html, body, #root { overflow-y: auto !important; }
+  [role="dialog"] > * { max-height: 92vh !important; overflow-y: auto !important; }
+}
+
