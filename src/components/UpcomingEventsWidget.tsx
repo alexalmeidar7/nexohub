@@ -535,20 +535,38 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         )}
       </div>
 
-      {/* Footer: Ver agenda completa */}
-      <button
-        onClick={() => openAgenda()}
-        className="mt-2 shrink-0 w-full flex items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold uppercase tracking-wider transition-all hover:opacity-90 active:scale-[0.98]"
-
-        style={{
-          background: accent,
-          color: "var(--layout-header-text, #ffffff)",
-        }}
-      >
-        <CalendarDays size={12} />
-        Ver agenda completa
-        <ExternalLink size={11} className="opacity-80" />
-      </button>
+      {/* Footer: Ver agenda completa + Novo evento */}
+      <div className="mt-2 shrink-0 flex items-center gap-1.5">
+        <button
+          onClick={() => openAgenda()}
+          className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold uppercase tracking-wider transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{
+            background: accent,
+            color: "var(--layout-header-text, #ffffff)",
+          }}
+        >
+          <CalendarDays size={12} />
+          Ver agenda completa
+          <ExternalLink size={11} className="opacity-80" />
+        </button>
+        <button
+          onClick={() => {
+            try { sessionStorage.setItem("agenda_open_new", "1"); } catch {}
+            onNavigate?.("agenda" as Page);
+          }}
+          title="Cadastrar novo evento"
+          aria-label="Cadastrar novo evento"
+          className="shrink-0 flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-[11px] font-bold uppercase tracking-wider transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{
+            background: "#C6F03C",
+            color: "#0a0a0a",
+            boxShadow: "0 2px 8px rgba(198,240,60,0.35)",
+          }}
+        >
+          <Plus size={13} strokeWidth={2.5} />
+          Novo
+        </button>
+      </div>
 
       <style>{`
         @keyframes evtSmokeOut {
