@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Cloud, TrendingUp, TrendingDown, Radio, Tag, Calendar, Newspaper } from "lucide-react";
 import type { SiteConfig } from "@/hooks/useSiteConfig";
 import { subscribeSiteSync } from "@/lib/siteSync";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Props {
   config: SiteConfig;
