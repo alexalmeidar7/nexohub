@@ -979,12 +979,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {isDashboard && (
                   <div className="flex items-center gap-1.5 rounded-full px-1 py-1" style={{ backgroundColor: "#D6F4FB" }}>
                     {[
-                      { Icon: HouseMixIcon, name: "nexohub", label: "nexohub" },
-                      { Icon: BusinessIcon, name: "Business" },
-                      { Icon: ChatbotIcon, name: "Chatbot" },
-                      { Icon: SocialDesignIcon, name: "Social Design" },
-                      { Icon: TvAppIcon, name: "TV App" },
-                    ].map(({ Icon, name }) => {
+                      { Icon: HouseMixIcon, name: "nexohub", label: "HouseMix" },
+                      { Icon: ChatbotIcon, name: "Chatbot", label: "Chatbot" },
+                      { Icon: BusinessIcon, name: "Business", label: "Business" },
+                      { Icon: TvAppIcon, name: "TV App", label: "App" },
+                      { Icon: SocialDesignIcon, name: "Social Design", label: "Social Design" },
+                    ].map(({ Icon, name, label }) => {
                       const isSelected = selectedHeaderPill === name;
                       return (
                         <button
