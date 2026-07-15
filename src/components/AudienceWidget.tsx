@@ -355,17 +355,25 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       setLoadingStreaming(false);
       return;
     }
+    // Hydrate instantly from client cache when a fresh value exists.
+    const ck = audKey("a", overrideUrl, xpath);
+    const cached = getAudCache(ck);
+    if (cached !== undefined) {
+      setStreamingCount(cached);
+      setLoadingStreaming(false);
+    }
     const tick = async () => {
       const body: Record<string, unknown> = { userId: dataUserId, urls: [overrideUrl] };
       if (xpath) body.xpath = xpath;
       const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
       if (cancelled) return;
+      let n: number | null = null;
       if (data && (data as any).ok) {
-        const n = (data as any).listeners;
-        setStreamingCount(typeof n === "number" ? n : null);
-      } else {
-        setStreamingCount(null);
+        const raw = (data as any).listeners;
+        n = typeof raw === "number" ? raw : null;
       }
+      setStreamingCount(n);
+      setAudCache(ck, n, LISTENERS_MS);
       setLoadingStreaming(false);
     };
     tick();
