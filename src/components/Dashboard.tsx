@@ -731,7 +731,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             if (planModules) return planModules.has(modKey);
             if (enabledModules) return enabledModules.has(modKey);
             return true;
-          }).map((item) => {
+          }).map((item, itemIdx, arr) => {
             const active = isItemActive(item);
             const Icon = item.icon;
             const isOpen = hoveredMenu === item.label;
@@ -779,19 +779,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                 </Tooltip>
 
-                {/* Sidebar flyout submenu */}
-                {item.children && isOpen && (
+                {/* Sidebar flyout submenu — flip para cima quando o item está na metade inferior do menu, para não cortar em 1366x768 */}
+                {item.children && isOpen && (() => {
+                  const flipUp = itemIdx >= Math.ceil(arr.length / 2);
+                  return (
                   <div
-                    className="absolute left-full top-0 ml-2 z-[70] animate-in fade-in slide-in-from-left-2 duration-200"
+                    className="absolute left-full ml-2 z-[70] animate-in fade-in slide-in-from-left-2 duration-200"
+                    style={flipUp ? { bottom: 0 } : { top: 0 }}
                     onMouseEnter={clearMenuLeaveTimer}
                     onMouseLeave={scheduleCloseMenu}
                   >
                     <div
-                      className="rounded-2xl py-2 min-w-[190px]"
+                      className="rounded-2xl py-2 min-w-[190px] overflow-y-auto"
                       style={{
                         backgroundColor: layoutColors.navBg,
                         border: `1px solid ${layoutColors.borderColor}33`,
                         boxShadow: "0 16px 48px rgba(0,0,0,0.3)",
+                        maxHeight: "calc(100vh - 24px)",
                       }}
                     >
                       <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
