@@ -991,17 +991,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           key={name}
                           type="button"
                           onClick={() => setSelectedHeaderPill(name)}
-                          className="header-pill inline-flex items-center gap-1.5 rounded-full pl-0.5 py-0.5 overflow-hidden transition-all duration-300"
+                          className="header-pill inline-flex items-center justify-center gap-1.5 rounded-full overflow-hidden transition-all duration-300"
                           style={{
                             backgroundColor: "#00dbff",
                             color: "#002132",
-                            paddingRight: isSelected ? 12 : 2,
+                            height: 34,
+                            paddingLeft: isSelected ? 6 : 0,
+                            paddingRight: isSelected ? 12 : 0,
                             maxWidth: isSelected ? 220 : 34,
+                            minWidth: 34,
                           }}
                           data-selected={isSelected ? "true" : "false"}
                           aria-label={name}
                         >
-                          <Icon size={28} />
+                          <span className="inline-flex items-center justify-center shrink-0" style={{ width: 34, height: 34 }}>
+                            <Icon size={22} />
+                          </span>
                           <span
                             className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap transition-opacity duration-200"
                             style={{ opacity: isSelected ? 1 : 0 }}
