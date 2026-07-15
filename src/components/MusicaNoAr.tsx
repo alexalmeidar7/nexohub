@@ -125,6 +125,46 @@ function parseXmlString(xmlStr: string): MusicData | null {
   }
 }
 
+/**
+ * Detects a "no track playing" XML — either explicit STOPPED category,
+ * or empty <interprete>/<titulo> (common between songs on Pulsar/RadioBoss).
+ * Returning true means we should CLEAR the current on-air track instead of
+ * leaving the previous song stuck on screen.
+ */
+function isStoppedXmlPayload(xmlStr: string): boolean {
+  try {
+    const cleaned = xmlStr.replace(/<\?xml[^?]*\?>\s*/i, "");
+    const parser = new DOMParser();
+    let doc = parser.parseFromString(cleaned, "application/xml");
+    if (doc.querySelector("parsererror")) {
+      doc = parser.parseFromString(cleaned, "text/xml");
+      if (doc.querySelector("parsererror")) return false;
+    }
+    const categoria = (doc.querySelector("categoria")?.textContent || "").trim().toUpperCase();
+    if (categoria === "STOPPED") return true;
+    const rawTitulo = (
+      doc.querySelector("nome_musica")?.textContent
+      || doc.querySelector("titulo")?.textContent
+      || doc.querySelector("title")?.textContent
+      || ""
+    ).trim();
+    const rawArtista = (
+      doc.querySelector("interprete")?.textContent
+      || doc.querySelector("nome_interprete")?.textContent
+      || doc.querySelector("artista")?.textContent
+      || doc.querySelector("artist")?.textContent
+      || ""
+    ).trim();
+    // Only treat as "stopped" when the <musica> block exists but is empty
+    // (avoids clearing on unrelated XMLs).
+    const hasMusicaNode = !!doc.querySelector("musica, music, track, song");
+    return hasMusicaNode && !rawTitulo && !rawArtista;
+  } catch {
+    return false;
+  }
+}
+
+
 function extractMusicFromDoc(doc: Document): MusicData | null {
   const rawTitulo =
     doc.querySelector("nome_musica")?.textContent ||
