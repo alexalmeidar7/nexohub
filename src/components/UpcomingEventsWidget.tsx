@@ -548,7 +548,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 {/* Details */}
                 <div className="flex-1 min-w-0 flex flex-col justify-center">
                   <div className="flex items-center gap-1.5">
-                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: textColor }}>
+                    <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: cardText }}>
                       {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                     </p>
                     {evt.tipo_evento === "live" || !evt.tipo_evento ? (
