@@ -478,13 +478,15 @@ serve(async (req) => {
       locutorNome = locutorOverride;
       const { data: apMatches } = await supabase
         .from("apresentadores")
-        .select("nome, instagram, foto")
+        .select("id, nome, instagram, foto")
         .eq("user_id", dataOwnerId)
         .ilike("nome", locutorOverride);
       const ap = (apMatches || [])[0];
       if (ap) {
         locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
-        locutorFoto = normalizeImageUrl(ap.foto, 1080);
+        locutorFoto = ap.foto
+          ? await ensurePngImageUrl(supabase, ap.foto, `broadcast/${dataOwnerId}/${ap.id}-locutor.png`, 1080)
+          : "";
       } else {
         // No matching presenter — clear instagram/foto so XML doesn't show stale data
         locutorInstagram = "";
