@@ -953,7 +953,8 @@ export default function BroadcastPage() {
               {([
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
                 { key: "tickerWeather", icon: <CloudSun size={12} />, label: "Previsão do Tempo", desc: "Tempo atual e amanhã" },
-                { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar, Euro e bolsas" },
+                { key: "tickerQuotes", icon: <TrendingUp size={12} />, label: "Cotações", desc: "Dólar e Euro (BRL)" },
+                { key: "tickerSocials", icon: <Instagram size={12} />, label: "Redes Sociais", desc: "Instagram, Facebook, YouTube, Site, WhatsApp" },
               ] as const).map(({ key, icon, label, desc }) => {
                 const active = data[key];
                 return (
