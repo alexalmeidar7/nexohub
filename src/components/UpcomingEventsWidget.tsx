@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock, Radio, Circle, CheckCircle2, Pencil, ArrowUpRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, Clock, Radio, Circle, CheckCircle2, Pencil, ArrowUpRight, Plus } from "lucide-react";
 import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
