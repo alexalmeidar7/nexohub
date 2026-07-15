@@ -977,6 +977,11 @@ export default function AgendaPage() {
       }
     }
     if (!matches) return false;
+    // Limita ocorrências ao período definido para eventos recorrentes
+    if (evt.recorrencia !== "unico") {
+      if (evt.periodo_inicio && dateStr < evt.periodo_inicio) return false;
+      if (evt.periodo_fim && dateStr > evt.periodo_fim) return false;
+    }
     const exc = getExcecao(evt, dateStr);
     if (exc && exc.acao === "skip") return false;
     return true;
