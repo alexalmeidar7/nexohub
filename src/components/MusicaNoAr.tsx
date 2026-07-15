@@ -474,6 +474,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }, { onConflict: "user_id" });
   };
 
+  /**
+   * Clear the current on-air track (used when the XML explicitly reports
+   * "no song playing"). Wipes local state, per-user localStorage keys and
+   * the mirrored fields in user_settings.dashboard_items so downstream
+   * widgets (Home, Player, Cenário) don't keep showing the stale track.
+   */
+  const clearMusic = useCallback(async (source?: "online" | "pasta") => {
+    const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
+    if (!prevRaw && !music) return; // already cleared
+    localStorage.removeItem(MUSIC_DATA_KEY);
+    localStorage.removeItem(MUSIC_START_KEY);
+    setMusic(null);
+    setStartTime(null);
+    setElapsed(0);
+    if (source) {
+      setLastSource(source);
+      lastSourceRef.current = source;
+    }
+    if (dataUserId) {
+      try {
+        await mergeUserDashboardItems(dataUserId, {
+          music_start_time: null,
+          music_current_title: "",
+          music_current_artist: "",
+          music_current_cover: "",
+          music_current_curiosity: "",
+        });
+      } catch (e) {
+        console.warn("[MusicaNoAr] clearMusic merge failed:", e);
+      }
+    }
+  }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music]);
+
   const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
