@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
 import backArrowImg from "@/assets/back-arrow.png";
 import { Skeleton } from "@/components/ui/skeleton";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Channel {
   id: string;
@@ -253,7 +254,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
         }
       }
       // Filter out future-dated and sort (compare date-only, ignoring time)
-      const todayStr = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+      const todayStr = todayInBrasilia(); // "YYYY-MM-DD"
       // Deduplicate by videoId to show all videos individually (no grouping)
       const seenIds = new Set<string>();
       const uniqueVideos: PlaylistVideo[] = [];

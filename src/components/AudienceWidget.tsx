@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Props {
   dataUserId?: string;
@@ -173,7 +174,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     try { localStorage.setItem("audience:peakAlerts:enabled", v ? "1" : "0"); } catch { /* ignore */ }
   };
   const peaksInitializedRef = useRef(false);
-  const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${new Date().toISOString().slice(0, 10)}` : null;
+  const alertsStorageKey = dataUserId ? `audience:peakAlerts:${dataUserId}:${todayInBrasilia()}` : null;
 
   // Marca inicialização de picos após primeira carga do DB
   useEffect(() => {
@@ -1039,7 +1040,7 @@ function AudienceReportDialog({
   const BG = "#D6F4FB";
   const AUDIO_COLOR = "#00BFF0";
   const VIDEO_COLOR = "#0A2540";
-  const todayStr = () => new Date().toISOString().slice(0, 10);
+  const todayStr = () => todayInBrasilia();
   const [date, setDate] = useState<string>(todayStr());
   const [rows, setRows] = useState<HistRow[]>([]);
   const [loading, setLoading] = useState(false);

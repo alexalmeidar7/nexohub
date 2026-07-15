@@ -8,6 +8,7 @@ import XmlLinkRow from "./XmlLinkRow";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Artista {
   nome: string;
@@ -315,7 +316,7 @@ export default function BatalhaMusicalPage() {
 
   const loadBatalhas = async () => {
     if (!user) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInBrasilia();
     const now = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false });
     const { data } = await supabase
       .from("batalhas_agendadas")

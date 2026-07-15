@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Cloud, TrendingUp, TrendingDown, Radio, Tag, Calendar, Newspaper } from "lucide-react";
 import type { SiteConfig } from "@/hooks/useSiteConfig";
 import { subscribeSiteSync } from "@/lib/siteSync";
+import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Props {
   config: SiteConfig;
@@ -113,7 +114,7 @@ export default function SiteMockup({ config, effectiveUserId }: Props) {
   useEffect(() => {
     if (!effectiveUserId || !config.show_promocoes) return;
     (async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayInBrasilia();
       const { data } = await supabase
         .from("promocoes")
         .select("id, titulo, data_fim")
