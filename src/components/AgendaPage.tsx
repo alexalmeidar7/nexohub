@@ -2019,29 +2019,8 @@ export default function AgendaPage() {
                 </div>
               )}
 
-              <div className="space-y-5">
-                {/* Status do Evento */}
-                <div>
-                  <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Status do Evento</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {statusOptions.map((s) => (
-                      <button
-                        key={s.value}
-                        type="button"
-                        onClick={() => setFormStatus(s.value)}
-                        className="flex-1 min-w-[80px] py-2 rounded-lg text-[10px] font-bold transition-all"
-                        style={{
-                          backgroundColor: formStatus === s.value ? s.color : "rgba(13,4,70,0.04)",
-                          color: formStatus === s.value ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
-                          border: `1.5px solid ${formStatus === s.value ? s.color : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)"}`,
-                        }}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+
+
 
               {/* Descrição */}
               <div>
