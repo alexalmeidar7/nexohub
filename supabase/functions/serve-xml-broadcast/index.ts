@@ -328,7 +328,7 @@ serve(async (req) => {
         .maybeSingle(),
       supabase
         .from("programas")
-        .select("id, nome, selo, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
+        .select("id, nome, selo, thumb, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
         .eq("user_id", dataOwnerId)
         .eq("ativo", true)
         .or("estudio.ilike.%estúdio fm%,estudio.ilike.%estudio fm%"),
@@ -391,6 +391,7 @@ serve(async (req) => {
 
     let programaNome = "";
     let programaLogo = "";
+    let programaThumb = "";
     let locutorNome = "";
     let locutorInstagram = "";
     let locutorFoto = "";
@@ -401,6 +402,9 @@ serve(async (req) => {
       programaId = prog.id || "";
       programaLogo = prog.selo
         ? await ensurePngImageUrl(supabase, prog.selo, `broadcast/${dataOwnerId}/${prog.id}-logo.png`, 512)
+        : "";
+      programaThumb = (prog as any).thumb
+        ? await ensurePngImageUrl(supabase, (prog as any).thumb, `broadcast/${dataOwnerId}/${prog.id}-thumb.png`, 512)
         : "";
 
       const apIds = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
@@ -420,7 +424,9 @@ serve(async (req) => {
         if (ap) {
           locutorNome = ap.nome || "";
           locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
-          locutorFoto = normalizeImageUrl(ap.foto, 1080);
+          locutorFoto = ap.foto
+            ? await ensurePngImageUrl(supabase, ap.foto, `broadcast/${dataOwnerId}/${ap.id}-locutor.png`, 1080)
+            : "";
         }
       }
     }
@@ -472,13 +478,15 @@ serve(async (req) => {
       locutorNome = locutorOverride;
       const { data: apMatches } = await supabase
         .from("apresentadores")
-        .select("nome, instagram, foto")
+        .select("id, nome, instagram, foto")
         .eq("user_id", dataOwnerId)
         .ilike("nome", locutorOverride);
       const ap = (apMatches || [])[0];
       if (ap) {
         locutorInstagram = ap.instagram ? extractHandle(ap.instagram) : "";
-        locutorFoto = normalizeImageUrl(ap.foto, 1080);
+        locutorFoto = ap.foto
+          ? await ensurePngImageUrl(supabase, ap.foto, `broadcast/${dataOwnerId}/${ap.id}-locutor.png`, 1080)
+          : "";
       } else {
         // No matching presenter — clear instagram/foto so XML doesn't show stale data
         locutorInstagram = "";
@@ -749,6 +757,7 @@ serve(async (req) => {
     lines.push(`    <empresa_logo>${esc(empresaLogo)}</empresa_logo>`);
     lines.push(`    <programa_nome>${esc(programaNome)}</programa_nome>`);
     lines.push(`    <programa_logo>${esc(programaLogo)}</programa_logo>`);
+    lines.push(`    <programa_thumb>${esc(programaThumb)}</programa_thumb>`);
     lines.push(`    <locutor_nome>${esc(locutorNome)}</locutor_nome>`);
     lines.push(`    <locutor_foto>${esc(locutorFoto)}</locutor_foto>`);
     lines.push(`    <locutor_social>${esc(locutorInstagram)}</locutor_social>`);
