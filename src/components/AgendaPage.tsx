@@ -1688,7 +1688,8 @@ export default function AgendaPage() {
 
         <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) resetForm(); setDialogOpen(open); }}>
           <DialogContent
-            className="max-w-md p-0 flex flex-col"
+            className="max-w-4xl p-0 flex flex-col"
+
             style={{
               // Escopo local da paleta Nexo Form (padrão do sistema)
               ["--layout-page-bg" as any]: "#D6F4FB",
