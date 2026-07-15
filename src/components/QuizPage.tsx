@@ -194,7 +194,7 @@ export default function QuizPage() {
 
   const loadCustomCategories = async () => {
     if (!user) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInBrasilia();
     const { data } = await supabase
       .from("custom_quiz_categories")
       .select("*")
@@ -230,7 +230,7 @@ export default function QuizPage() {
 
   const loadQuizzes = async () => {
     if (!user) return;
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInBrasilia();
     const { data } = await supabase
       .from("quiz_agendados")
       .select("*")
@@ -661,7 +661,7 @@ export default function QuizPage() {
                   );
                   const generatedQuizzes = await res.json();
                   if (Array.isArray(generatedQuizzes) && generatedQuizzes.length > 0) {
-                    const today = new Date().toISOString().slice(0, 10);
+                    const today = todayInBrasilia();
                     if (user) {
                       await supabase.from("custom_quiz_categories").insert({
                         user_id: user.id,

@@ -820,7 +820,7 @@ export default function EnquetePage() {
                   const quizzes = Array.isArray(json) ? json : json?.quizzes;
                   if (json?.ok === false) { toast.error(json.error || "Erro ao gerar enquetes."); return; }
                   if (Array.isArray(quizzes) && quizzes.length > 0) {
-                    const today = new Date().toISOString().slice(0, 10);
+                    const today = todayInBrasilia();
                     if (user) {
                       await supabase.from("custom_enquete_categories").insert({
                         user_id: user.id,
