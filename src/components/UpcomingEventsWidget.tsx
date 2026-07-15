@@ -19,6 +19,26 @@ interface Evt {
   status?: string | null;
   programa_id?: string | null;
   programa?: { id: string; nome: string; horario_inicio?: string; horario_fim?: string } | null;
+  synthetic?: boolean;
+}
+
+interface Programa {
+  id: string;
+  nome: string;
+  horario_inicio?: string | null;
+  horario_fim?: string | null;
+  dias_semana?: string[] | null;
+  ativo?: boolean | null;
+}
+
+const DAY_NAME_TO_INDEX: Record<string, number> = {
+  domingo: 0, segunda: 1, terca: 2, "terça": 2, quarta: 3, quinta: 4, sexta: 5, sabado: 6, "sábado": 6,
+};
+
+function normalizeDayName(s: string): number | null {
+  const k = s.trim().toLowerCase();
+  if (k in DAY_NAME_TO_INDEX) return DAY_NAME_TO_INDEX[k];
+  return null;
 }
 
 function matches(evt: Evt, date: Date) {
@@ -40,9 +60,13 @@ const typeColors: Record<string, { bg: string; text: string; label: string }> = 
   outro: { bg: "#64748b", text: "#ffffff", label: "OUTRO" },
 };
 
+// Background color used by the Audience widget — reused for weekly-recurring event cards.
+const WEEKLY_BG = "#d9ff65";
+
 export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: Page) => void }) {
   const { user } = useAuth();
   const [eventos, setEventos] = useState<Evt[]>([]);
+  const [programasAll, setProgramasAll] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [weekAnchor, setWeekAnchor] = useState<Date>(() => startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [selected, setSelected] = useState<Date>(new Date());
@@ -50,29 +74,38 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    (async () => {
-      const { data: evts } = await supabase
-        .from("agenda_eventos")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("data");
+    const load = async () => {
+      const [evtsRes, progsRes] = await Promise.all([
+        supabase.from("agenda_eventos").select("*").eq("user_id", user.id).order("data"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", user.id),
+      ]);
       if (cancelled) return;
-      if (!evts) { setEventos([]); setLoading(false); return; }
-      const ids = Array.from(new Set(evts.map((e: any) => e.programa_id).filter(Boolean)));
-      const { data: progs } = ids.length
-        ? await supabase.from("programas").select("id, nome, horario_inicio, horario_fim").in("id", ids as string[])
-        : { data: [] as any[] };
-      if (cancelled) return;
+      const evts = evtsRes.data || [];
+      const progs = (progsRes.data || []) as Programa[];
+      setProgramasAll(progs);
+      const progMap = new Map(progs.map(p => [p.id, p]));
       setEventos(
         evts.map((e: any) => ({
           ...e,
-          programa: (progs || []).find((p: any) => p.id === e.programa_id) || null,
+          programa: progMap.get(e.programa_id) ? {
+            id: e.programa_id,
+            nome: progMap.get(e.programa_id)!.nome,
+            horario_inicio: progMap.get(e.programa_id)!.horario_inicio || undefined,
+            horario_fim: progMap.get(e.programa_id)!.horario_fim || undefined,
+          } : null,
         })) as Evt[]
       );
       setLoading(false);
-    })();
-    return () => { cancelled = true; };
+    };
+    load();
+    const ch = supabase
+      .channel(`upcoming-events-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [user]);
+
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekAnchor, i)), [weekAnchor]);
 
