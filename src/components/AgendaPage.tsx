@@ -2157,417 +2157,446 @@ export default function AgendaPage() {
 
               {/* Live event extras: YouTube, Participants, Artwork uploads */}
               {formTipoEvento === "live" && (
-                <div className="space-y-4 rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, #ef4444 4%, transparent)", border: "1px solid color-mix(in srgb, #ef4444 20%, transparent)" }}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse" />
-                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#ef4444" }}>Configurações do Evento Ao Vivo</span>
-                  </div>
-
-                  {/* YouTube link */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      <Youtube size={12} /> Link do YouTube
-                    </Label>
-                    <Input
-                      value={formYoutubeUrl}
-                      onChange={(e) => setFormYoutubeUrl(e.target.value)}
-                      placeholder="https://youtube.com/watch?v=..."
-                      className="agenda-form-input h-10 text-xs"
-                      style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "12px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
-                    />
-                  </div>
-
-                  {/* Participantes */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                        <Users size={12} /> Participantes
-                      </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-7 text-[10px] gap-1 px-3 font-semibold"
-                            style={{ backgroundColor: "#ef4444", color: "#ffffff", borderRadius: "8px" }}
-                          >
-                            <Plus size={12} /> Adicionar
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          className="w-72 p-2 border z-[60]"
-                          align="end"
-                          style={{
-                            background: "var(--layout-widget-bg, hsl(var(--card)))",
-                            color: "var(--layout-widget-text, hsl(var(--card-foreground)))",
-                            borderColor: "var(--layout-border-color, hsl(var(--border)))",
-                          }}
-                        >
-                          <ParticipanteSearchPicker
-                            apresentadores={apresentadores}
-                            existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
-                            onSelect={(a) => {
-                              setFormParticipantes(prev => {
-                                const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
-                                const newItem = { nome: a.nome, instagram: a.instagram || "" };
-                                if (empty >= 0) {
-                                  const next = [...prev];
-                                  next[empty] = newItem;
-                                  return next;
-                                }
-                                return [...prev, newItem];
-                              });
-                            }}
-                            onAddBlank={addParticipante}
-                            onRegisterGuest={async (nome, instagram, whatsapp) => {
-                              if (!user) return;
-                              const cleanInsta = instagram.replace(/^@/, "").trim();
-                              const cleanWhats = whatsapp && whatsapp !== "+55" ? whatsapp : "";
-                              const { data, error } = await supabase
-                                .from("apresentadores")
-                                .insert({ user_id: user.id, nome, instagram: cleanInsta, whatsapp: cleanWhats, cargo: "Convidado", ativo: true })
-                                .select("id, nome, instagram, cargo, whatsapp")
-                                .single();
-                              if (error || !data) {
-                                toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
-                                return;
-                              }
-                              setApresentadores(prev => [...prev, data as Apresentador]);
-                              setFormParticipantes(prev => {
-                                const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
-                                const newItem = { nome: data.nome, instagram: data.instagram || "" };
-                                if (empty >= 0) {
-                                  const next = [...prev];
-                                  next[empty] = newItem;
-                                  return next;
-                                }
-                                return [...prev, newItem];
-                              });
-                              toast({ title: "Convidado cadastrado!" });
-                            }}
-                          />
-                        </PopoverContent>
-                      </Popover>
+                <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid #E2E8F0", boxShadow: "0 8px 24px -12px rgba(10, 37, 64, 0.12)" }}>
+                  {/* Header dark bar */}
+                  <div className="flex items-center justify-between gap-3 px-5 py-3.5" style={{ background: "linear-gradient(135deg, #0A2540 0%, #12365b 100%)" }}>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ backgroundColor: "rgba(239,68,68,0.14)", border: "1px solid rgba(239,68,68,0.35)" }}>
+                        <span className="relative flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                        </span>
+                        <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-red-400">Ao Vivo</span>
+                      </div>
+                      <h3 className="text-white font-bold text-[13px] uppercase tracking-wide" style={{ fontFamily: "'Montserrat', sans-serif" }}>Configurações do Evento</h3>
                     </div>
-                    <div className="space-y-2">
-                      {formParticipantes.map((p, idx) => (
-                        <div key={idx} className="flex gap-2 items-center">
-                          <div className="flex-1 grid grid-cols-2 gap-2">
+                  </div>
+
+                  <div className="p-5 grid grid-cols-1 lg:grid-cols-12 gap-5 bg-white">
+                    {/* LEFT column: YouTube + Participantes + WhatsApp */}
+                    <div className="lg:col-span-7 space-y-5">
+                      {/* YouTube section card */}
+                      <section className="rounded-xl p-4" style={{ backgroundColor: "rgba(214, 244, 251, 0.35)", border: "1px solid rgba(0, 191, 240, 0.2)" }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1.5 rounded-md" style={{ backgroundColor: "#ffffff" }}>
+                            <Youtube size={14} style={{ color: "#00BFF0" }} />
+                          </div>
+                          <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Transmissão YouTube</h4>
+                        </div>
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-wider mb-1 ml-0.5" style={{ color: "#64748B" }}>Link do YouTube</label>
                             <Input
-                              value={p.nome}
-                              onChange={(e) => updateParticipante(idx, "nome", e.target.value)}
-                              placeholder="Nome"
-                              disabled={p.obrigatorio}
-                              className="agenda-form-input h-9 text-xs"
-                              style={{ borderColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 30%, transparent)" : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: p.obrigatorio ? "color-mix(in srgb, #ef4444 6%, transparent)" : "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
-                            />
-                            <Input
-                              value={p.instagram}
-                              onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
-                              placeholder="@instagram"
-                              className="agenda-form-input h-9 text-xs"
-                              style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "10px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)" }}
+                              value={formYoutubeUrl}
+                              onChange={(e) => setFormYoutubeUrl(e.target.value)}
+                              placeholder="https://youtube.com/watch?v=..."
+                              className="agenda-form-input h-10 text-xs"
+                              style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
                             />
                           </div>
-                          {p.obrigatorio ? (
-                            <span className="text-[9px] font-bold px-2 py-1 rounded-md" style={{ backgroundColor: "color-mix(in srgb, #ef4444 12%, transparent)", color: "#ef4444" }} title="Apresentador do programa (obrigatório)">FIXO</span>
+                          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
+                            <div>
+                              <div className="flex items-center justify-between mb-1 ml-0.5">
+                                <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#64748B" }}>Título da Live</label>
+                                <span className="text-[9px] font-mono" style={{ color: formYoutubeTitulo.length >= 100 ? "#ef4444" : "#94A3B8" }}>
+                                  {formYoutubeTitulo.length}/100
+                                </span>
+                              </div>
+                              <Input
+                                value={formYoutubeTitulo}
+                                onChange={(e) => setFormYoutubeTitulo(e.target.value.slice(0, 100))}
+                                maxLength={100}
+                                placeholder="Ex: Programa ao vivo desta semana"
+                                className="agenda-form-input h-10 text-xs"
+                                style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[9px] font-bold uppercase tracking-wider mb-1 ml-0.5" style={{ color: "#64748B" }}>Descrição do Vídeo</label>
+                            <Textarea
+                              value={formYoutubeDescricao}
+                              onChange={(e) => setFormYoutubeDescricao(e.target.value)}
+                              placeholder="Descrição que aparecerá no YouTube..."
+                              className="agenda-form-input min-h-[80px] text-xs"
+                              style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
+                            />
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Participantes card */}
+                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(0, 191, 240, 0.12)" }}>
+                              <Users size={14} style={{ color: "#00BFF0" }} />
+                            </div>
+                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Participantes</h4>
+                          </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 text-[10px] gap-1 px-3 font-bold uppercase tracking-wider hover:opacity-90"
+                                style={{ backgroundColor: "#00BFF0", color: "#ffffff", borderRadius: "8px" }}
+                              >
+                                <Plus size={12} /> Adicionar
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              className="w-72 p-2 border z-[60]"
+                              align="end"
+                              style={{
+                                background: "var(--layout-widget-bg, hsl(var(--card)))",
+                                color: "var(--layout-widget-text, hsl(var(--card-foreground)))",
+                                borderColor: "var(--layout-border-color, hsl(var(--border)))",
+                              }}
+                            >
+                              <ParticipanteSearchPicker
+                                apresentadores={apresentadores}
+                                existingNames={formParticipantes.map(p => p.nome.trim().toLowerCase()).filter(Boolean)}
+                                onSelect={(a) => {
+                                  setFormParticipantes(prev => {
+                                    const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
+                                    const newItem = { nome: a.nome, instagram: a.instagram || "" };
+                                    if (empty >= 0) {
+                                      const next = [...prev];
+                                      next[empty] = newItem;
+                                      return next;
+                                    }
+                                    return [...prev, newItem];
+                                  });
+                                }}
+                                onAddBlank={addParticipante}
+                                onRegisterGuest={async (nome, instagram, whatsapp) => {
+                                  if (!user) return;
+                                  const cleanInsta = instagram.replace(/^@/, "").trim();
+                                  const cleanWhats = whatsapp && whatsapp !== "+55" ? whatsapp : "";
+                                  const { data, error } = await supabase
+                                    .from("apresentadores")
+                                    .insert({ user_id: user.id, nome, instagram: cleanInsta, whatsapp: cleanWhats, cargo: "Convidado", ativo: true })
+                                    .select("id, nome, instagram, cargo, whatsapp")
+                                    .single();
+                                  if (error || !data) {
+                                    toast({ title: "Erro ao cadastrar convidado", description: error?.message, variant: "destructive" });
+                                    return;
+                                  }
+                                  setApresentadores(prev => [...prev, data as Apresentador]);
+                                  setFormParticipantes(prev => {
+                                    const empty = prev.findIndex(p => !p.nome.trim() && !p.obrigatorio);
+                                    const newItem = { nome: data.nome, instagram: data.instagram || "" };
+                                    if (empty >= 0) {
+                                      const next = [...prev];
+                                      next[empty] = newItem;
+                                      return next;
+                                    }
+                                    return [...prev, newItem];
+                                  });
+                                  toast({ title: "Convidado cadastrado!" });
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                        <div className="space-y-2">
+                          {formParticipantes.map((p, idx) => (
+                            <div key={idx} className="flex gap-2 items-center">
+                              <div className="flex-1 grid grid-cols-2 gap-2">
+                                <Input
+                                  value={p.nome}
+                                  onChange={(e) => updateParticipante(idx, "nome", e.target.value)}
+                                  placeholder="Nome"
+                                  disabled={p.obrigatorio}
+                                  className="agenda-form-input h-9 text-xs"
+                                  style={{ borderColor: p.obrigatorio ? "rgba(239,68,68,0.3)" : "#E2E8F0", borderRadius: "10px", backgroundColor: p.obrigatorio ? "rgba(239,68,68,0.06)" : "#ffffff", color: "#0A2540" }}
+                                />
+                                <Input
+                                  value={p.instagram}
+                                  onChange={(e) => updateParticipante(idx, "instagram", e.target.value)}
+                                  placeholder="@instagram"
+                                  className="agenda-form-input h-9 text-xs"
+                                  style={{ borderColor: "#E2E8F0", borderRadius: "10px", backgroundColor: "#ffffff", color: "#0A2540" }}
+                                />
+                              </div>
+                              {p.obrigatorio ? (
+                                <span className="text-[9px] font-bold px-2 py-1 rounded-md" style={{ backgroundColor: "rgba(239,68,68,0.12)", color: "#ef4444" }} title="Apresentador do programa (obrigatório)">FIXO</span>
+                              ) : (
+                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeParticipante(idx)}>
+                                  <Trash2 size={14} className="text-destructive" />
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[9px] mt-2 px-0.5" style={{ color: "#94A3B8" }}>
+                          Apresentadores marcados com <b style={{ color: "#ef4444" }}>FIXO</b> são obrigatórios e adicionados automaticamente do cadastro do programa.
+                        </p>
+                      </section>
+
+                      {/* WhatsApp invite card */}
+                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(37, 211, 102, 0.12)" }}>
+                            <MessageCircle size={14} style={{ color: "#25D366" }} />
+                          </div>
+                          <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Convite via WhatsApp</h4>
+                        </div>
+                        <p className="text-[10px] leading-relaxed mb-2" style={{ color: "#64748B" }}>
+                          Envia para cada participante a <b style={{ color: "#0A2540" }}>imagem do FEED</b> + mensagem com link do YouTube.
+                        </p>
+                        <div className="space-y-1.5">
+                          {formParticipantes.filter(p => p.nome.trim()).length === 0 ? (
+                            <p className="text-[10px] italic" style={{ color: "#94A3B8" }}>Adicione participantes acima.</p>
                           ) : (
-                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => removeParticipante(idx)}>
-                              <Trash2 size={14} className="text-destructive" />
-                            </Button>
+                            formParticipantes.filter(p => p.nome.trim()).map((p, idx) => {
+                              const apre = apresentadores.find(a => a.nome.trim().toLowerCase() === p.nome.trim().toLowerCase());
+                              const whatsRaw = (apre?.whatsapp || "").replace(/\D/g, "");
+                              const normalizedPhone = whatsRaw ? (whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`) : "";
+                              const hasWhats = normalizedPhone.length >= 12;
+                              const linkYt = formYoutubeUrl.trim();
+                              const feedUrl = formArtesUrls[1] || "";
+                              const participantKey = `${idx}-${normalizedPhone || p.nome}`;
+                              const isSending = sendingWhatsAppFor === participantKey;
+                              const sendWhats = async () => {
+                                if (!linkYt) {
+                                  toast({ title: "Link do YouTube vazio", description: "Preencha o link do YouTube acima.", variant: "destructive" });
+                                  return;
+                                }
+                                if (!feedUrl) {
+                                  toast({ title: "Imagem do FEED ausente", description: "Faça upload da arte do FEED para enviar a foto no WhatsApp.", variant: "destructive" });
+                                  return;
+                                }
+                                if (!hasWhats) {
+                                  toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome} para enviar a imagem com a mensagem.`, variant: "destructive" });
+                                  return;
+                                }
+
+                                const horarioLive = (selectedPrograma?.horario_inicio || "").slice(0, 5);
+                                const linhaHoje = horarioLive ? `\n\nHoje ${horarioLive}` : "";
+                                const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}${linhaHoje}`;
+
+                                setSendingWhatsAppFor(participantKey);
+                                try {
+                                  const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+                                    body: {
+                                      contatos: [{ nome: p.nome, whatsapp: normalizedPhone }],
+                                      mensagem: text,
+                                      mediaUrl: feedUrl,
+                                    },
+                                  });
+
+                                  if (error) throw error;
+                                  if (!data?.ok) {
+                                    throw new Error(data?.detalhes?.[0]?.error || data?.error || "Falha ao enviar a mensagem.");
+                                  }
+
+                                  toast({ title: "Convite enviado", description: `A arte do FEED foi enviada para ${p.nome} com a mensagem.` });
+                                } catch (err) {
+                                  console.error("Erro ao enviar convite via WhatsApp:", err);
+                                  toast({
+                                    title: "Erro ao enviar WhatsApp",
+                                    description: err instanceof Error ? err.message : "Não foi possível enviar a imagem com a mensagem.",
+                                    variant: "destructive",
+                                  });
+                                } finally {
+                                  setSendingWhatsAppFor(null);
+                                }
+                              };
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                                  style={{ backgroundColor: "#F8FAFC", border: "1px solid #EEF2F6" }}
+                                >
+                                  {feedUrl ? (
+                                    <img src={feedUrl} alt="feed" className="w-8 h-8 rounded object-cover shrink-0" />
+                                  ) : (
+                                    <div className="w-8 h-8 rounded shrink-0 flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: "#00BFF0" }}>FEED</div>
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-semibold truncate" style={{ color: "#0A2540" }}>{p.nome}</div>
+                                    <div className="text-[10px] truncate" style={{ color: hasWhats ? "#64748B" : "#ef4444" }}>
+                                      {hasWhats ? `+${normalizedPhone}` : "Cadastre o WhatsApp do participante"}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={() => {
+                                      if (!hasWhats) {
+                                        toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome}.`, variant: "destructive" });
+                                        return;
+                                      }
+                                      const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
+                                      window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(text)}`, "_blank");
+                                    }}
+                                    className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
+                                    style={{ backgroundColor: "#25D366", color: "#fff" }}
+                                    title="Abrir no WhatsApp"
+                                  >
+                                    <MessageCircle size={11} />
+                                    WhatsApp
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={sendWhats}
+                                    disabled={isSending}
+                                    className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
+                                    style={{ backgroundColor: "#00BFF0", color: "#ffffff" }}
+                                    title="Enviar via API (com imagem)"
+                                  >
+                                    {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
+                                    {isSending ? "Enviando" : "API"}
+                                  </Button>
+                                </div>
+                              );
+                            })
                           )}
                         </div>
-                      ))}
+                        {!formArtesUrls[1] && (
+                          <p className="text-[9px] italic mt-2" style={{ color: "#f59e0b" }}>
+                            ⚠ Faça upload da imagem do FEED abaixo para incluí-la na mensagem.
+                          </p>
+                        )}
+                      </section>
                     </div>
-                    <p className="text-[9px] mt-1.5 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                      Apresentadores marcados com FIXO são obrigatórios e adicionados automaticamente do cadastro do programa.
-                    </p>
-                  </div>
 
-                  {/* Envio WhatsApp - Convite da Live */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      <MessageCircle size={12} /> Convite via WhatsApp
-                    </Label>
-                    <div
-                      className="rounded-xl p-3 space-y-2"
-                      style={{
-                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)",
-                        backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
-                      }}
-                    >
-                      <p className="text-[10px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-                        Envia para cada participante a <b>imagem do FEED</b> + mensagem com link do YouTube.
-                      </p>
-                      <div className="space-y-1.5">
-                        {formParticipantes.filter(p => p.nome.trim()).length === 0 ? (
-                          <p className="text-[10px] italic" style={{ color: "var(--layout-icon-color, #888)" }}>Adicione participantes acima.</p>
-                        ) : (
-                          formParticipantes.filter(p => p.nome.trim()).map((p, idx) => {
-                            const apre = apresentadores.find(a => a.nome.trim().toLowerCase() === p.nome.trim().toLowerCase());
-                            const whatsRaw = (apre?.whatsapp || "").replace(/\D/g, "");
-                            const normalizedPhone = whatsRaw ? (whatsRaw.startsWith("55") ? whatsRaw : `55${whatsRaw}`) : "";
-                            const hasWhats = normalizedPhone.length >= 12;
-                            const linkYt = formYoutubeUrl.trim();
-                            const feedUrl = formArtesUrls[1] || "";
-                            const participantKey = `${idx}-${normalizedPhone || p.nome}`;
-                            const isSending = sendingWhatsAppFor === participantKey;
-                            const sendWhats = async () => {
-                              if (!linkYt) {
-                                toast({ title: "Link do YouTube vazio", description: "Preencha o link do YouTube acima.", variant: "destructive" });
-                                return;
-                              }
-                              if (!feedUrl) {
-                                toast({ title: "Imagem do FEED ausente", description: "Faça upload da arte do FEED para enviar a foto no WhatsApp.", variant: "destructive" });
-                                return;
-                              }
-                              if (!hasWhats) {
-                                toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome} para enviar a imagem com a mensagem.`, variant: "destructive" });
-                                return;
-                              }
-
-                              const horarioLive = (selectedPrograma?.horario_inicio || "").slice(0, 5);
-                              const linhaHoje = horarioLive ? `\n\nHoje ${horarioLive}` : "";
-                              const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}${linhaHoje}`;
-
-                              setSendingWhatsAppFor(participantKey);
-                              try {
-                                const { data, error } = await supabase.functions.invoke("send-whatsapp", {
-                                  body: {
-                                    contatos: [{ nome: p.nome, whatsapp: normalizedPhone }],
-                                    mensagem: text,
-                                    mediaUrl: feedUrl,
-                                  },
-                                });
-
-                                if (error) throw error;
-                                if (!data?.ok) {
-                                  throw new Error(data?.detalhes?.[0]?.error || data?.error || "Falha ao enviar a mensagem.");
-                                }
-
-                                toast({ title: "Convite enviado", description: `A arte do FEED foi enviada para ${p.nome} com a mensagem.` });
-                              } catch (err) {
-                                console.error("Erro ao enviar convite via WhatsApp:", err);
-                                toast({
-                                  title: "Erro ao enviar WhatsApp",
-                                  description: err instanceof Error ? err.message : "Não foi possível enviar a imagem com a mensagem.",
-                                  variant: "destructive",
-                                });
-                              } finally {
-                                setSendingWhatsAppFor(null);
-                              }
-                            };
+                    {/* RIGHT column: Artes + Anotações */}
+                    <div className="lg:col-span-5 space-y-5">
+                      {/* Artes do Evento */}
+                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(0, 191, 240, 0.12)" }}>
+                              <ImageIcon size={14} style={{ color: "#00BFF0" }} />
+                            </div>
+                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Artes do Evento</h4>
+                          </div>
+                          <span className="text-[9px] font-semibold" style={{ color: "#94A3B8" }}>PNG / JPG</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {["THUMB", "FEED", "STORIE", "CAPA AUDIO", "INSERT LIVE"].map((slotLabel, slotIdx) => {
+                            const url = formArtesUrls[slotIdx] || "";
                             return (
-                              <div
-                                key={idx}
-                                className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
-                                style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" }}
-                              >
-                                {feedUrl ? (
-                                  <img src={feedUrl} alt="feed" className="w-8 h-8 rounded object-cover shrink-0" />
-                                ) : (
-                                  <div className="w-8 h-8 rounded shrink-0 flex items-center justify-center text-[8px] font-bold" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-accent-color, #2563eb)" }}>FEED</div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <div className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.nome}</div>
-                                  <div className="text-[10px] truncate" style={{ color: hasWhats ? "var(--layout-icon-color, hsl(var(--muted-foreground)))" : "hsl(var(--destructive))" }}>
-                                    {hasWhats ? `+${normalizedPhone}` : "Cadastre o WhatsApp do participante"}
+                              <div key={slotIdx} className="flex flex-col items-center gap-1">
+                                {url ? (
+                                  <div className="relative w-full aspect-square rounded-lg overflow-hidden group" style={{ border: "1px solid rgba(0, 191, 240, 0.25)" }}>
+                                    <img src={url} alt={slotLabel} className="w-full h-full object-cover" />
+                                    <button
+                                      type="button"
+                                      onClick={async () => {
+                                        try {
+                                          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+                                            const i = new Image();
+                                            i.crossOrigin = "anonymous";
+                                            i.onload = () => resolve(i);
+                                            i.onerror = reject;
+                                            i.src = url;
+                                          });
+                                          const canvas = document.createElement("canvas");
+                                          canvas.width = img.naturalWidth;
+                                          canvas.height = img.naturalHeight;
+                                          canvas.getContext("2d")?.drawImage(img, 0, 0);
+                                          const pngBlob: Blob = await new Promise((resolve) =>
+                                            canvas.toBlob((b) => resolve(b!), "image/png")
+                                          );
+                                          const blobUrl = URL.createObjectURL(pngBlob);
+                                          const a = document.createElement("a");
+                                          a.href = blobUrl;
+                                          a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.png`;
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          document.body.removeChild(a);
+                                          setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+                                        } catch {
+                                          window.open(url, "_blank");
+                                        }
+                                      }}
+                                      title="Download original"
+                                      className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                      style={{ backgroundColor: "#00BFF0", color: "#fff" }}
+                                    >
+                                      <Download size={12} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeArte(slotIdx)}
+                                      className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                      style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
+                                    >
+                                      <X size={12} />
+                                    </button>
                                   </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (!hasWhats) {
-                                      toast({ title: "WhatsApp não cadastrado", description: `Cadastre o WhatsApp de ${p.nome}.`, variant: "destructive" });
-                                      return;
-                                    }
-                                    const text = `Olá ${p.nome}, chegou o dia da nossa live ir ao ar :)\n\nSegue o link da transmissão para você acompanhar:\n${linkYt}`;
-                                    window.open(`https://wa.me/${normalizedPhone}?text=${encodeURIComponent(text)}`, "_blank");
-                                  }}
-                                  className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
-                                  style={{ backgroundColor: "#25D366", color: "#fff" }}
-                                  title="Abrir no WhatsApp"
-                                >
-                                  <MessageCircle size={11} />
-                                  WhatsApp
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  onClick={sendWhats}
-                                  disabled={isSending}
-                                  className="h-7 px-2.5 text-[10px] font-bold gap-1 shrink-0 hover:opacity-90"
-                                  style={{ backgroundColor: "var(--layout-accent-color, hsl(var(--primary)))", color: "var(--layout-accent-text, hsl(var(--primary-foreground)))" }}
-                                  title="Enviar via API (com imagem)"
-                                >
-                                  {isSending ? <Loader2 size={11} className="animate-spin" /> : <Send size={11} />}
-                                  {isSending ? "Enviando" : "API"}
-                                </Button>
+                                ) : (
+                                  <label
+                                    className="w-full aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all hover:border-[#00BFF0] hover:bg-[rgba(0,191,240,0.06)]"
+                                    style={{
+                                      border: "1.5px dashed #CBD5E1",
+                                      backgroundColor: "#F8FAFC",
+                                      color: "#00BFF0",
+                                      opacity: uploadingArte ? 0.5 : 1,
+                                    }}
+                                  >
+                                    <Upload size={14} />
+                                    <span className="text-[8px] font-bold uppercase tracking-wider">{uploadingArte ? "..." : "Upload"}</span>
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      disabled={uploadingArte}
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) handleUploadArte(file, slotIdx);
+                                        e.target.value = "";
+                                      }}
+                                    />
+                                  </label>
+                                )}
+                                <span className="text-[8px] font-bold uppercase tracking-wider text-center leading-tight" style={{ color: "#64748B" }}>
+                                  {slotLabel}
+                                </span>
                               </div>
                             );
-                          })
-                        )}
-                      </div>
-                      {!formArtesUrls[1] && (
-                        <p className="text-[9px] italic mt-1" style={{ color: "#f59e0b" }}>
-                          ⚠ Faça upload da imagem do FEED abaixo para incluí-la na mensagem.
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                          })}
+                        </div>
+                      </section>
 
-                  {/* Artes do evento - slots tipados */}
-                  <div>
-                    <Label className="text-[11px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      <ImageIcon size={12} /> Artes do Evento
-                    </Label>
-                    <div className="grid grid-cols-5 gap-2 mb-2">
-                      {["THUMB", "FEED", "STORIE", "CAPA AUDIO", "INSERT LIVE"].map((slotLabel, slotIdx) => {
-                        const url = formArtesUrls[slotIdx] || "";
-                        return (
-                          <div key={slotIdx} className="flex flex-col items-center gap-1">
-                            {url ? (
-                              <div className="relative w-full aspect-square rounded-lg overflow-hidden group" style={{ border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
-                                <img src={url} alt={slotLabel} className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={async () => {
-                                    try {
-                                      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
-                                        const i = new Image();
-                                        i.crossOrigin = "anonymous";
-                                        i.onload = () => resolve(i);
-                                        i.onerror = reject;
-                                        i.src = url;
-                                      });
-                                      const canvas = document.createElement("canvas");
-                                      canvas.width = img.naturalWidth;
-                                      canvas.height = img.naturalHeight;
-                                      canvas.getContext("2d")?.drawImage(img, 0, 0);
-                                      const pngBlob: Blob = await new Promise((resolve) =>
-                                        canvas.toBlob((b) => resolve(b!), "image/png")
-                                      );
-                                      const blobUrl = URL.createObjectURL(pngBlob);
-                                      const a = document.createElement("a");
-                                      a.href = blobUrl;
-                                      a.download = `${slotLabel.toLowerCase().replace(/\s+/g, "-")}.png`;
-                                      document.body.appendChild(a);
-                                      a.click();
-                                      document.body.removeChild(a);
-                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-                                    } catch {
-                                      window.open(url, "_blank");
-                                    }
-                                  }}
-                                  title="Download original"
-                                  className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                  style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                                >
-                                  <Download size={12} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeArte(slotIdx)}
-                                  className="absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                  style={{ backgroundColor: "rgba(239,68,68,0.9)", color: "#fff" }}
-                                >
-                                  <X size={12} />
-                                </button>
-                              </div>
-                            ) : (
-                              <label
-                                className="w-full aspect-square rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
-                                style={{
-                                  border: "1.5px dashed color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
-                                  backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)",
-                                  color: "var(--layout-accent-color, #2563eb)",
-                                  opacity: uploadingArte ? 0.5 : 1,
-                                }}
-                              >
-                                <Upload size={14} />
-                                <span className="text-[8px] font-semibold">{uploadingArte ? "..." : "Upload"}</span>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  disabled={uploadingArte}
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleUploadArte(file, slotIdx);
-                                    e.target.value = "";
-                                  }}
-                                />
-                              </label>
-                            )}
-                            <span className="text-[8px] font-bold uppercase tracking-wider text-center leading-tight" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-                              {slotLabel}
-                            </span>
+                      {/* Anotações de Edição */}
+                      <section className="rounded-xl p-4" style={{ backgroundColor: "#ffffff", border: "1px solid #E2E8F0" }}>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="p-1.5 rounded-md" style={{ backgroundColor: "rgba(250, 204, 21, 0.18)" }}>
+                              <span className="text-[13px] leading-none">✂️</span>
+                            </div>
+                            <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#0A2540" }}>Anotações da Edição</h4>
                           </div>
-                        );
-                      })}
+                          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={formEdicaoConcluida}
+                              onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded cursor-pointer"
+                              style={{ accentColor: "#10b981" }}
+                            />
+                            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: formEdicaoConcluida ? "#10b981" : "#94A3B8" }}>
+                              {formEdicaoConcluida ? "✓ Concluída" : "Pendente"}
+                            </span>
+                          </label>
+                        </div>
+                        <div className="rounded-lg p-3" style={{ backgroundColor: "#FEFCE8", borderLeft: "4px solid #FACC15" }}>
+                          <Textarea
+                            value={formEdicaoNotas}
+                            onChange={(e) => setFormEdicaoNotas(e.target.value)}
+                            placeholder="Instruções para o editor, cortes, destaques, observações internas..."
+                            className="min-h-[180px] text-xs bg-transparent border-0 shadow-none focus-visible:ring-0 resize-none p-0"
+                            style={{ color: "#713F12" }}
+                          />
+                        </div>
+                      </section>
                     </div>
-                  </div>
-
-                  {/* Dados do YouTube */}
-                  <div className="space-y-2">
-                    <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      <Youtube size={12} /> Dados do YouTube
-                    </Label>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] font-semibold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Título</span>
-                        <span className="text-[10px] font-mono" style={{ color: formYoutubeTitulo.length >= 100 ? "#ef4444" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                          {formYoutubeTitulo.length}/100
-                        </span>
-                      </div>
-                      <Input
-                        value={formYoutubeTitulo}
-                        onChange={(e) => setFormYoutubeTitulo(e.target.value.slice(0, 100))}
-                        maxLength={100}
-                        placeholder="Título do vídeo no YouTube"
-                        className="h-9 text-xs"
-                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                      />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-semibold block mb-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>Descrição</span>
-                      <Textarea
-                        value={formYoutubeDescricao}
-                        onChange={(e) => setFormYoutubeDescricao(e.target.value)}
-                        placeholder="Descrição do vídeo no YouTube"
-                        className="min-h-[80px] text-xs"
-                        style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Anotações de Edição */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                        ✂️ Anotações da Edição
-                      </Label>
-                      <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={formEdicaoConcluida}
-                          onChange={(e) => setFormEdicaoConcluida(e.target.checked)}
-                          className="w-4 h-4 rounded cursor-pointer"
-                          style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
-                        />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: formEdicaoConcluida ? "#10b981" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-                          {formEdicaoConcluida ? "✓ Edição concluída" : "Edição pendente"}
-                        </span>
-                      </label>
-                    </div>
-                    <Textarea
-                      value={formEdicaoNotas}
-                      onChange={(e) => setFormEdicaoNotas(e.target.value)}
-                      placeholder="Anotações sobre a edição do programa (cortes, destaques, observações...)"
-                       className="min-h-[180px] text-xs"
-                      style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-                    />
                   </div>
                 </div>
               )}
