@@ -1174,7 +1174,7 @@ function AudienceReportDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-w-6xl w-[96vw] p-0 overflow-hidden"
-        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", height: "92vh", maxHeight: "92vh", display: "flex", flexDirection: "column" }}
+        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column" }}
       >
         <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "20px 24px" }}>
           <DialogHeader>
