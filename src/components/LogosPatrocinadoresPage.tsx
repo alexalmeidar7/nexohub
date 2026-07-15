@@ -201,11 +201,13 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       return;
     }
 
+    const toDbPid = (v: string) => (v === "__none__" ? null : v);
+
     // Edit mode: update existing logo
     if (editingFullId) {
       setSaving(true);
       try {
-        const updateData: any = { programa_id: targets[0], data_final: dataFinal, nome: nomeLogo };
+        const updateData: any = { programa_id: toDbPid(targets[0]), data_final: dataFinal, nome: nomeLogo };
         if (pendingFiles.length > 0) {
           updateData.logo_url = await uploadLogo(pendingFiles[0].file);
         }
@@ -237,17 +239,17 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         for (const pid of targets) {
           const { error } = await supabase.from("logos_patrocinadores").insert({
             user_id: dataUserId!,
-            programa_id: pid,
+            programa_id: toDbPid(pid),
             logo_url,
             data_final: dataFinal,
             nome: nomeFinal,
-          });
+          } as any);
           if (error) throw error;
           count++;
         }
       }
 
-      toast({ title: `${count} logo(s) salva(s) em ${targets.length} programa(s)!` });
+      toast({ title: `${count} logo(s) salva(s) em ${targets.length} destino(s)!` });
       resetForm();
       await loadData();
     } catch (err: any) {
