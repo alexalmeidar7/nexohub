@@ -164,6 +164,44 @@ function isStoppedXmlPayload(xmlStr: string): boolean {
   }
 }
 
+// ─── Jornal FM: origem local em TXT no formato "ARTISTA - MUSICA" ───
+// Tenant-specific parsing rule requested pelo cliente Jornal FM.
+const JORNAL_FM_USER_ID = "48423cc6-f3b1-4bea-8729-dd0ae76a89c3";
+
+function isJornalFmTxt(userId: string | null | undefined, text: string): boolean {
+  if (userId !== JORNAL_FM_USER_ID) return false;
+  const trimmed = (text || "").trim();
+  if (!trimmed) return false;
+  // Se começar com XML declaration ou tag, mantém fluxo XML.
+  if (trimmed.startsWith("<")) return false;
+  return trimmed.includes("-");
+}
+
+function parseJornalFmTxt(text: string): { artista: string; titulo: string } | null {
+  // Pega a primeira linha não-vazia; formato: "ARTISTA - MUSICA"
+  const line = (text || "")
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .find(Boolean);
+  if (!line) return null;
+  const idx = line.indexOf("-");
+  if (idx < 0) return null;
+  const artista = normalizeMusicText(line.slice(0, idx).trim());
+  const titulo = normalizeMusicText(line.slice(idx + 1).trim());
+  if (!artista && !titulo) return null;
+  return { artista, titulo };
+}
+
+function txtToPseudoXml(text: string): string | null {
+  const parsed = parseJornalFmTxt(text);
+  if (!parsed) return null;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<musica><interprete>${esc(parsed.artista || "Desconhecido")}</interprete><nome_musica>${esc(parsed.titulo || "Sem titulo")}</nome_musica><duracao>0</duracao></musica>`;
+}
+
+
+
 
 function extractMusicFromDoc(doc: Document): MusicData | null {
   const rawTitulo =
