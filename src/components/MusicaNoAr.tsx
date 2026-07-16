@@ -800,8 +800,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
       if (!file) { readingRef.current = false; return; }
 
-      const text = await readFileWithEncoding(file);
-      
+      const rawText = await readFileWithEncoding(file);
+      // Jornal FM lê um TXT "ARTISTA - MUSICA"; convertemos em XML sintético
+      // para reaproveitar todo o pipeline downstream (parser, storage sync).
+      const text = isJornalFmTxt(dataUserIdRef.current, rawText)
+        ? (txtToPseudoXml(rawText) ?? rawText)
+        : rawText;
+
       // Success — reset health trackers
       localFailCountRef.current = 0;
       lastLocalSuccessRef.current = Date.now();
@@ -824,6 +829,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       // Background sync (non-blocking)
       syncToStorage(text);
+
     } catch { }
     readingRef.current = false;
   }, [syncToStorage]); // stable deps
