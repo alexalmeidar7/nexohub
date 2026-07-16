@@ -5,6 +5,8 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
+import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
+
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
@@ -335,9 +337,15 @@ export function useGlobalMusicSync(enabled: boolean = true) {
               cache: "no-store",
             });
             if (!res.ok) continue;
-            const text = await res.text();
-            if (!text) continue;
+            const rawText = await res.text();
+            if (!rawText) continue;
+            // Jornal FM: se o arquivo local é TXT ("ARTISTA - MUSICA"),
+            // convertemos on-the-fly para o pseudo-XML antes de parsear.
+            const text = isJornalFmTxtPayload(user.id, rawText)
+              ? (jornalFmTxtToPseudoXml(rawText) ?? rawText)
+              : rawText;
             const data = parseXml(text);
+
             if (data === "stopped") {
               // Automação sem música — não confia em paths legados stale.
               // Retorna "stopped" para que o caller decida limpar.
