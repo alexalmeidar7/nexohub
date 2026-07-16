@@ -1006,6 +1006,46 @@ function leituraDoDia(signoIdx: number) {
   return s.leituras[idx];
 }
 
+// Elementos para composição da leitura longa (usada no popup)
+const ELEMENTO_POR_SIGNO: Record<string, "fogo" | "terra" | "ar" | "agua"> = {
+  "Áries": "fogo", "Leão": "fogo", "Sagitário": "fogo",
+  "Touro": "terra", "Virgem": "terra", "Capricórnio": "terra",
+  "Gêmeos": "ar", "Libra": "ar", "Aquário": "ar",
+  "Câncer": "agua", "Escorpião": "agua", "Peixes": "agua",
+};
+
+const COMPLEMENTOS: Record<"fogo" | "terra" | "ar" | "agua", string[]> = {
+  fogo: [
+    "Vênus favorece encontros inspiradores e traz motivação extra para colocar planos antigos em prática.",
+    "A Lua ilumina sua vitalidade e pede que você use a coragem sem atropelar os detalhes ao longo do dia.",
+    "Marte impulsiona sua ação e amplia o carisma em reuniões, apresentações e conversas decisivas.",
+  ],
+  terra: [
+    "A Lua reforça a paciência e favorece decisões práticas ligadas ao dinheiro, ao trabalho e à rotina.",
+    "Mercúrio traz clareza para negociações e ajuda a organizar acordos que estavam parados há dias.",
+    "Saturno pede consistência: o que for construído hoje com calma tende a se sustentar por muito tempo.",
+  ],
+  ar: [
+    "Mercúrio deixa sua mente rápida e favorece trocas, mensagens e reuniões que abrem novas portas.",
+    "Vênus estimula acordos leves e traz um ar diplomático perfeito para resolver mal-entendidos recentes.",
+    "A Lua desperta curiosidade e pede que você compartilhe ideias sem medo de mostrar seu ponto de vista.",
+  ],
+  agua: [
+    "A Lua conecta você às emoções e favorece conversas honestas que fortalecem laços afetivos importantes.",
+    "Netuno amplia a intuição e pede atenção aos sinais sutis que aparecem em sonhos, encontros e escolhas.",
+    "Vênus acolhe seu coração e traz momentos de aconchego ao lado de quem realmente merece sua confiança.",
+  ],
+};
+
+function leituraLongaDoDia(signoIdx: number): string {
+  const s = SIGNOS[signoIdx];
+  const base = leituraDoDia(signoIdx);
+  const el = ELEMENTO_POR_SIGNO[s.nome] || "ar";
+  const pool = COMPLEMENTOS[el];
+  const extra = pool[(dayOfYear(new Date()) + signoIdx) % pool.length];
+  return `${base} ${extra}`;
+}
+
 function HoroscopoBox() {
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
@@ -1108,11 +1148,7 @@ function HoroscopoBox() {
             className="w-full rounded-3xl overflow-hidden relative"
             style={{
               maxWidth: 780,
-              background: `
-                radial-gradient(circle at 15% 0%, color-mix(in srgb, ${PROMO_ACCENT_A} 60%, transparent) 0%, transparent 55%),
-                radial-gradient(circle at 100% 100%, color-mix(in srgb, ${PROMO_ACCENT_B} 45%, transparent) 0%, transparent 55%),
-                linear-gradient(160deg, #0a0a0a 0%, #000 100%)
-              `,
+              background: PROMO_CARD_BG,
               border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 28%, transparent)`,
               boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, ${PROMO_BORDER} 8%, transparent)`,
               color: PROMO_TEXT,
@@ -1265,14 +1301,18 @@ function HoroscopoBox() {
                 >
                   <div
                     style={{
-                      fontSize: 17,
-                      lineHeight: 1.65,
+                      fontSize: 16,
+                      lineHeight: 1.6,
                       color: PROMO_TEXT,
                       fontWeight: 400,
                       letterSpacing: 0.2,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
-                    {leituraDoDia(chosen)}
+                    {leituraLongaDoDia(chosen)}
                   </div>
                   <div
                     className="mt-4 flex items-center gap-2 pt-4"
