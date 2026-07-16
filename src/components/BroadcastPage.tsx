@@ -1249,7 +1249,14 @@ function MockupPreview({
               }}
             >
               <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#fff" }}>
-                {composedTicker}
+                {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
+                  const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
+                  if (m) {
+                    const color = m[1] === "▲" ? "#22c55e" : "#ef4444";
+                    return <span key={i} style={{ color }}>{seg}</span>;
+                  }
+                  return <span key={i}>{seg}</span>;
+                })}
               </span>
             </div>
             <style>{`
