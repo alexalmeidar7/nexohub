@@ -63,7 +63,59 @@ const titleStyle: React.CSSProperties = {
   gap: 6,
 };
 
+
+// ------- Collapsed state persistence -------
+const LS_COLLAPSED = "promo-info-collapsed-v1";
+function useCollapsed(key: string) {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(LS_COLLAPSED);
+      const obj = raw ? JSON.parse(raw) : {};
+      return !!obj[key];
+    } catch { return false; }
+  });
+  const toggle = useCallback(() => {
+    setCollapsed((v) => {
+      const nv = !v;
+      try {
+        const raw = localStorage.getItem(LS_COLLAPSED);
+        const obj = raw ? JSON.parse(raw) : {};
+        obj[key] = nv;
+        localStorage.setItem(LS_COLLAPSED, JSON.stringify(obj));
+      } catch { /* ignore */ }
+      return nv;
+    });
+  }, [key]);
+  return [collapsed, toggle] as const;
+}
+
+function CollapseBtn({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+      style={{ background: "rgba(255,255,255,0.08)", color: PROMO_TEXT }}
+      title={collapsed ? "Maximizar" : "Minimizar"}
+    >
+      {collapsed ? <Maximize2 size={9} /> : <Minimize2 size={9} />}
+    </button>
+  );
+}
+
+function collapsedCardStyle(base: React.CSSProperties): React.CSSProperties {
+  return {
+    ...base,
+    height: "auto",
+    minHeight: 40,
+    padding: "8px 12px",
+    gap: 0,
+    alignSelf: "start",
+  };
+}
+
 // ================= WEATHER =================
+
 function weatherIcon(code: number, size = 26) {
   const c = code;
   const cls = { color: PROMO_TEXT } as React.CSSProperties;
