@@ -365,14 +365,15 @@ export default function BroadcastPage() {
             const d = await res.json();
             const usd = d.USDBRL;
             const eur = d.EURBRL;
-            if (usd) {
-              const pct = parseFloat(usd.pctChange);
-              parts.push(`Dólar R$ ${parseFloat(usd.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
-            }
-            if (eur) {
-              const pct = parseFloat(eur.pctChange);
-              parts.push(`Euro R$ ${parseFloat(eur.bid).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)`);
-            }
+            const fmtQuote = (label: string, bid: string, pctChange: string) => {
+              const val = parseFloat(bid).toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+              const pctNum = parseFloat(pctChange);
+              const sign = pctNum >= 0 ? "▲" : "▼";
+              const pct = `${pctNum >= 0 ? "+" : "−"}${Math.abs(pctNum).toFixed(2)}%`;
+              return `${label} R$ ${val} ${sign} ${pct}`;
+            };
+            if (usd) parts.push(fmtQuote("Dólar", usd.bid, usd.pctChange));
+            if (eur) parts.push(fmtQuote("Euro",  eur.bid, eur.pctChange));
           }
         } catch { /* silent */ }
         // Stocks removed – only USD and EUR per config
