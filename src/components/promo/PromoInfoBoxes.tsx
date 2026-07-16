@@ -1411,8 +1411,10 @@ export default function PromoInfoBoxes(props: Props) {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+        alignItems: "start",
         gap: 10,
         marginBottom: 8,
+
       }}
     >
       <WeatherBox {...props} />
