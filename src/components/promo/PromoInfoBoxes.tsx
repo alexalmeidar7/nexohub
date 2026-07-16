@@ -1062,66 +1062,219 @@ function HoroscopoBox() {
 
       {open && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-6"
+          style={{
+            background: "radial-gradient(circle at 50% 40%, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.88) 100%)",
+            backdropFilter: "blur(10px)",
+          }}
           onClick={() => setOpen(false)}
         >
+          <style>{`
+            @keyframes horoGlowPulse {
+              0%, 100% {
+                box-shadow: 0 0 0 1px ${PROMO_BORDER},
+                            0 0 18px 2px color-mix(in srgb, ${PROMO_ACCENT_B} 55%, transparent),
+                            inset 0 0 12px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent);
+              }
+              50% {
+                box-shadow: 0 0 0 1px ${PROMO_BORDER},
+                            0 0 34px 6px color-mix(in srgb, ${PROMO_ACCENT_B} 85%, transparent),
+                            inset 0 0 22px color-mix(in srgb, ${PROMO_BORDER} 55%, transparent);
+              }
+            }
+            @keyframes horoGlyphShine {
+              0%, 100% { filter: drop-shadow(0 0 4px color-mix(in srgb, ${PROMO_BORDER} 60%, transparent)); }
+              50% { filter: drop-shadow(0 0 14px ${PROMO_BORDER}); }
+            }
+            @keyframes horoFadeIn {
+              from { opacity: 0; transform: translateY(6px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+          `}</style>
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg rounded-2xl overflow-hidden"
+            className="w-full rounded-3xl overflow-hidden relative"
             style={{
-              background: "linear-gradient(160deg, #111 0%, #000 100%)",
-              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 22%, transparent)`,
-              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+              maxWidth: 780,
+              background: `
+                radial-gradient(circle at 15% 0%, color-mix(in srgb, ${PROMO_ACCENT_A} 60%, transparent) 0%, transparent 55%),
+                radial-gradient(circle at 100% 100%, color-mix(in srgb, ${PROMO_ACCENT_B} 45%, transparent) 0%, transparent 55%),
+                linear-gradient(160deg, #0a0a0a 0%, #000 100%)
+              `,
+              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 28%, transparent)`,
+              boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, ${PROMO_BORDER} 8%, transparent)`,
               color: PROMO_TEXT,
             }}
           >
-            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <div className="flex items-center gap-2">
-                <Sparkles size={14} />
-                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>HORÓSCOPO DO DIA</span>
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-8 py-5"
+              style={{
+                borderBottom: `1px solid color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`,
+                background: `linear-gradient(90deg, color-mix(in srgb, ${PROMO_ACCENT_A} 35%, transparent), transparent)`,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{
+                    background: PROMO_ACCENT_GRADIENT,
+                    boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_ACCENT_B} 60%, transparent)`,
+                  }}
+                >
+                  <Sparkles size={18} style={{ color: PROMO_TEXT }} />
+                </div>
+                <div className="flex flex-col">
+                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: 2, fontFamily: "'Montserrat', sans-serif" }}>
+                    HORÓSCOPO DO DIA
+                  </span>
+                  <span style={{ fontSize: 10, color: PROMO_MUTED, letterSpacing: 1, textTransform: "uppercase" }}>
+                    {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+                  </span>
+                </div>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                style={{
+                  background: "rgba(255,255,255,0.08)",
+                  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 20%, transparent)`,
+                  color: PROMO_TEXT,
+                }}
               >
-                <X size={14} />
+                <X size={16} />
               </button>
             </div>
 
-            <div className="grid grid-cols-6 gap-1.5 p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              {SIGNOS.map((sg, i) => (
-                <button
-                  key={sg.nome}
-                  onClick={() => setChosen(i)}
-                  className="flex flex-col items-center gap-0.5 rounded-lg py-2 transition-all"
-                  style={{
-                    background: chosen === i ? PROMO_ACCENT_GRADIENT : "rgba(255,255,255,0.05)",
-                    border: chosen === i ? `1px solid ${PROMO_BORDER}` : "1px solid transparent",
-                  }}
-                  title={sg.nome}
-                >
-                  <span style={{ fontSize: 18, lineHeight: 1 }}>{sg.emoji}</span>
-                  <span style={{ fontSize: 8, fontWeight: 700 }}>{sg.nome}</span>
-                </button>
-              ))}
+            {/* Signs grid */}
+            <div
+              className="grid grid-cols-6 gap-3 px-8 py-6"
+              style={{ borderBottom: `1px solid color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)` }}
+            >
+              {SIGNOS.map((sg, i) => {
+                const isChosen = chosen === i;
+                return (
+                  <button
+                    key={sg.nome}
+                    onClick={() => setChosen(i)}
+                    className="flex flex-col items-center gap-1.5 rounded-2xl py-3 px-2 transition-all hover:scale-[1.04]"
+                    style={{
+                      background: isChosen
+                        ? PROMO_ACCENT_GRADIENT
+                        : `linear-gradient(160deg, color-mix(in srgb, ${PROMO_ACCENT_A} 35%, black) 0%, rgba(0,0,0,0.5) 100%)`,
+                      border: isChosen
+                        ? `1px solid ${PROMO_BORDER}`
+                        : `1px solid color-mix(in srgb, ${PROMO_BORDER} 10%, transparent)`,
+                      animation: isChosen ? "horoGlowPulse 1.6s ease-in-out infinite" : undefined,
+                    }}
+                    title={sg.nome}
+                  >
+                    <span
+                      style={{
+                        fontSize: 26,
+                        lineHeight: 1,
+                        color: PROMO_TEXT,
+                        animation: isChosen ? "horoGlyphShine 1.6s ease-in-out infinite" : undefined,
+                        textShadow: isChosen
+                          ? `0 0 14px ${PROMO_BORDER}`
+                          : `0 0 6px color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
+                      }}
+                    >
+                      {sg.emoji}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 800,
+                        letterSpacing: 0.6,
+                        textTransform: "uppercase",
+                        color: isChosen ? PROMO_TEXT : `color-mix(in srgb, ${PROMO_HEADER} 75%, transparent)`,
+                      }}
+                    >
+                      {sg.nome}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
+            {/* Chosen description */}
             {chosen !== null && (
-              <div className="p-5">
-                <div className="flex items-center gap-3 mb-3">
-                  <span style={{ fontSize: 38, lineHeight: 1 }}>{SIGNOS[chosen].emoji}</span>
-                  <div>
-                    <div style={{ fontSize: 18, fontWeight: 900 }}>{SIGNOS[chosen].nome}</div>
-                    <div style={{ fontSize: 10, color: MUTED, letterSpacing: 0.4 }}>{SIGNOS[chosen].periodo}</div>
+              <div
+                key={`desc-${chosen}`}
+                className="px-8 py-7"
+                style={{ animation: "horoFadeIn 0.4s ease-out" }}
+              >
+                <div className="flex items-center gap-4 mb-5">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    style={{
+                      background: PROMO_ACCENT_GRADIENT,
+                      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 35%, transparent)`,
+                      boxShadow: `0 0 30px color-mix(in srgb, ${PROMO_ACCENT_B} 55%, transparent)`,
+                    }}
+                  >
+                    <span style={{ fontSize: 38, lineHeight: 1, color: PROMO_TEXT, textShadow: `0 0 12px ${PROMO_BORDER}` }}>
+                      {SIGNOS[chosen].emoji}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span
+                      style={{
+                        fontSize: 26,
+                        fontWeight: 900,
+                        letterSpacing: 1,
+                        fontFamily: "'Montserrat', sans-serif",
+                        color: PROMO_TEXT,
+                      }}
+                    >
+                      {SIGNOS[chosen].nome}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        color: PROMO_MUTED,
+                        letterSpacing: 1,
+                        textTransform: "uppercase",
+                        fontWeight: 600,
+                      }}
+                    >
+                      {SIGNOS[chosen].periodo}
+                    </span>
                   </div>
                 </div>
-                <div style={{ fontSize: 13, lineHeight: 1.55, color: `color-mix(in srgb, ${PROMO_TEXT} 92%, transparent)` }}>
-                  {leituraDoDia(chosen)}
-                </div>
-                <div className="mt-3 flex items-center gap-1" style={{ fontSize: 9, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-                  <Star size={9} /> Leitura rápida do dia
+
+                <div
+                  className="rounded-2xl p-5"
+                  style={{
+                    background: `linear-gradient(160deg, color-mix(in srgb, ${PROMO_ACCENT_A} 40%, black) 0%, rgba(0,0,0,0.6) 100%)`,
+                    border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 14%, transparent)`,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 17,
+                      lineHeight: 1.65,
+                      color: PROMO_TEXT,
+                      fontWeight: 400,
+                      letterSpacing: 0.2,
+                    }}
+                  >
+                    {leituraDoDia(chosen)}
+                  </div>
+                  <div
+                    className="mt-4 flex items-center gap-2 pt-4"
+                    style={{
+                      borderTop: `1px solid color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`,
+                      fontSize: 10,
+                      color: PROMO_MUTED,
+                      letterSpacing: 1.5,
+                      textTransform: "uppercase",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Star size={11} style={{ color: PROMO_BORDER }} /> Leitura do dia
+                  </div>
                 </div>
               </div>
             )}
