@@ -1148,11 +1148,7 @@ function HoroscopoBox() {
             className="w-full rounded-3xl overflow-hidden relative"
             style={{
               maxWidth: 780,
-              background: `
-                radial-gradient(circle at 15% 0%, color-mix(in srgb, ${PROMO_ACCENT_A} 60%, transparent) 0%, transparent 55%),
-                radial-gradient(circle at 100% 100%, color-mix(in srgb, ${PROMO_ACCENT_B} 45%, transparent) 0%, transparent 55%),
-                linear-gradient(160deg, #0a0a0a 0%, #000 100%)
-              `,
+              background: PROMO_CARD_BG,
               border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 28%, transparent)`,
               boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, ${PROMO_BORDER} 8%, transparent)`,
               color: PROMO_TEXT,
