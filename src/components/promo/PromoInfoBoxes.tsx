@@ -1301,14 +1301,18 @@ function HoroscopoBox() {
                 >
                   <div
                     style={{
-                      fontSize: 17,
-                      lineHeight: 1.65,
+                      fontSize: 16,
+                      lineHeight: 1.6,
                       color: PROMO_TEXT,
                       fontWeight: 400,
                       letterSpacing: 0.2,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 5,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
-                    {leituraDoDia(chosen)}
+                    {leituraLongaDoDia(chosen)}
                   </div>
                   <div
                     className="mt-4 flex items-center gap-2 pt-4"
