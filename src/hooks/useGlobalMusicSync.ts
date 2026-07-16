@@ -5,6 +5,8 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
+import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
+
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
 
