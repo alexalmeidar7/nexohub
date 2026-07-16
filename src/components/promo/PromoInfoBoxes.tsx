@@ -931,6 +931,208 @@ function CotacoesBox() {
   );
 }
 
+// ================= HORÓSCOPO =================
+const SIGNOS: { nome: string; emoji: string; periodo: string; leituras: string[] }[] = [
+  { nome: "Áries", emoji: "♈", periodo: "21/03 - 19/04", leituras: [
+    "Energia em alta para iniciar projetos. Confie no seu instinto e aja com coragem.",
+    "Dia de ação: aproveite para resolver pendências. Cuidado com a impaciência.",
+    "Novas oportunidades surgem no trabalho. Mantenha o foco e evite conflitos.",
+  ]},
+  { nome: "Touro", emoji: "♉", periodo: "20/04 - 20/05", leituras: [
+    "Estabilidade financeira em foco. Boa fase para investir em conforto e prazeres.",
+    "Paciência trará recompensas. Priorize a família e relações próximas.",
+    "Momento de organizar as finanças e valorizar o que já conquistou.",
+  ]},
+  { nome: "Gêmeos", emoji: "♊", periodo: "21/05 - 20/06", leituras: [
+    "Comunicação fluída favorece negócios. Um contato antigo pode te surpreender.",
+    "Dia versátil: aposte em ideias novas e conversas produtivas.",
+    "Curiosidade em alta. Bom momento para aprender algo diferente.",
+  ]},
+  { nome: "Câncer", emoji: "♋", periodo: "21/06 - 22/07", leituras: [
+    "Emoções à flor da pele. Cuide de si e valorize o lar.",
+    "Intuição aguçada guia decisões importantes. Confie no coração.",
+    "Momento de acolher quem ama. Boas notícias familiares chegam.",
+  ]},
+  { nome: "Leão", emoji: "♌", periodo: "23/07 - 22/08", leituras: [
+    "Brilho pessoal em destaque. Aproveite para se posicionar e liderar.",
+    "Reconhecimento profissional se aproxima. Mantenha a generosidade.",
+    "Dia criativo: use seu carisma para conquistar apoio.",
+  ]},
+  { nome: "Virgem", emoji: "♍", periodo: "23/08 - 22/09", leituras: [
+    "Organização será sua aliada. Detalhes farão a diferença hoje.",
+    "Foco na saúde e rotina. Pequenas mudanças trazem grandes resultados.",
+    "Bom momento para planejar e otimizar o tempo. Evite autocobrança.",
+  ]},
+  { nome: "Libra", emoji: "♎", periodo: "23/09 - 22/10", leituras: [
+    "Harmonia nos relacionamentos. Bom dia para acordos e parcerias.",
+    "Equilíbrio é a chave. Beleza e arte inspiram sua rotina.",
+    "Dia diplomático: evite tomar partido em conflitos alheios.",
+  ]},
+  { nome: "Escorpião", emoji: "♏", periodo: "23/10 - 21/11", leituras: [
+    "Intensidade guia suas escolhas. Transformações positivas se aproximam.",
+    "Percepção afiada revela verdades ocultas. Use com sabedoria.",
+    "Momento de renovação. Deixe o passado ir e abrace o novo.",
+  ]},
+  { nome: "Sagitário", emoji: "♐", periodo: "22/11 - 21/12", leituras: [
+    "Otimismo abre portas. Aventuras e estudos favorecidos.",
+    "Expanda horizontes: uma viagem ou curso pode transformar sua semana.",
+    "Liberdade em foco. Confie no futuro e siga em frente.",
+  ]},
+  { nome: "Capricórnio", emoji: "♑", periodo: "22/12 - 19/01", leituras: [
+    "Determinação em alta. Metas de carreira ganham impulso.",
+    "Disciplina traz resultados sólidos. Reconhecimento a caminho.",
+    "Dia produtivo para planejar o longo prazo. Não abra mão dos seus valores.",
+  ]},
+  { nome: "Aquário", emoji: "♒", periodo: "20/01 - 18/02", leituras: [
+    "Ideias inovadoras se destacam. Amizades trazem boas surpresas.",
+    "Liberdade e originalidade guiam seu dia. Ouse ser diferente.",
+    "Bom momento para causas coletivas e novas conexões.",
+  ]},
+  { nome: "Peixes", emoji: "♓", periodo: "19/02 - 20/03", leituras: [
+    "Sensibilidade elevada inspira criações. Ouça sua intuição.",
+    "Dia contemplativo: arte, música e espiritualidade te acolhem.",
+    "Empatia abre portas. Cuide do descanso e das emoções.",
+  ]},
+];
+
+function dayOfYear(d: Date) {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start.getTime()) / 86400000);
+}
+
+function leituraDoDia(signoIdx: number) {
+  const s = SIGNOS[signoIdx];
+  const idx = (dayOfYear(new Date()) + signoIdx) % s.leituras.length;
+  return s.leituras[idx];
+}
+
+function HoroscopoBox() {
+  const [idx, setIdx] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [chosen, setChosen] = useState<number | null>(null);
+
+  useEffect(() => {
+    const iv = setInterval(() => setIdx((v) => (v + 1) % SIGNOS.length), 6000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const s = SIGNOS[idx];
+  const leitura = leituraDoDia(idx);
+
+  return (
+    <>
+      <div style={cardStyle}>
+        <div style={titleStyle} className="justify-between">
+          <span className="flex items-center gap-1.5"><Sparkles size={11} /> Horóscopo</span>
+          <button
+            onClick={() => { setChosen(idx); setOpen(true); }}
+            className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+            style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+            title="Escolher signo"
+          >
+            <Star size={9} />
+          </button>
+        </div>
+        <div key={idx} className="flex items-center gap-2" style={{ animation: "fadeIn 0.4s" }}>
+          <span style={{ fontSize: 26, lineHeight: 1 }}>{s.emoji}</span>
+          <div className="flex flex-col min-w-0">
+            <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 0.5 }}>{s.nome}</span>
+            <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.4 }}>{s.periodo}</span>
+          </div>
+        </div>
+        <div
+          key={`t-${idx}`}
+          style={{
+            fontSize: 10,
+            lineHeight: 1.35,
+            color: `color-mix(in srgb, ${PROMO_TEXT} 88%, transparent)`,
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {leitura}
+        </div>
+        <div className="mt-auto flex items-center justify-between" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
+          <span>{idx + 1}/{SIGNOS.length}</span>
+          <span>Signo do dia</span>
+        </div>
+      </div>
+
+      {open && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(6px)" }}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl overflow-hidden"
+            style={{
+              background: "linear-gradient(160deg, #111 0%, #000 100%)",
+              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 22%, transparent)`,
+              boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+              color: PROMO_TEXT,
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              <div className="flex items-center gap-2">
+                <Sparkles size={14} />
+                <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1 }}>HORÓSCOPO DO DIA</span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-6 gap-1.5 p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+              {SIGNOS.map((sg, i) => (
+                <button
+                  key={sg.nome}
+                  onClick={() => setChosen(i)}
+                  className="flex flex-col items-center gap-0.5 rounded-lg py-2 transition-all"
+                  style={{
+                    background: chosen === i ? PROMO_ACCENT_GRADIENT : "rgba(255,255,255,0.05)",
+                    border: chosen === i ? `1px solid ${PROMO_BORDER}` : "1px solid transparent",
+                  }}
+                  title={sg.nome}
+                >
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{sg.emoji}</span>
+                  <span style={{ fontSize: 8, fontWeight: 700 }}>{sg.nome}</span>
+                </button>
+              ))}
+            </div>
+
+            {chosen !== null && (
+              <div className="p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <span style={{ fontSize: 38, lineHeight: 1 }}>{SIGNOS[chosen].emoji}</span>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 900 }}>{SIGNOS[chosen].nome}</div>
+                    <div style={{ fontSize: 10, color: MUTED, letterSpacing: 0.4 }}>{SIGNOS[chosen].periodo}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 13, lineHeight: 1.55, color: `color-mix(in srgb, ${PROMO_TEXT} 92%, transparent)` }}>
+                  {leituraDoDia(chosen)}
+                </div>
+                <div className="mt-3 flex items-center gap-1" style={{ fontSize: 9, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
+                  <Star size={9} /> Leitura rápida do dia
+                </div>
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
 // ================= MAIN =================
 export default function PromoInfoBoxes(props: Props) {
   return (
@@ -938,7 +1140,7 @@ export default function PromoInfoBoxes(props: Props) {
       className="w-full px-2"
       style={{
         display: "grid",
-        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
         gap: 10,
         marginBottom: 8,
       }}
@@ -947,6 +1149,7 @@ export default function PromoInfoBoxes(props: Props) {
       <DatasBox />
       <TrafficBox fallbackCity={props.weatherCity} />
       <CotacoesBox />
+      <HoroscopoBox />
     </div>
   );
 }
