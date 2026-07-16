@@ -740,68 +740,83 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
   const delayMin = j ? Math.round((j.delaySec || 0) / 60) : 0;
   const levelColor = j ? (j.level >= 4 ? "#ff2d2d" : j.level >= 3 ? "#ff8a1f" : "#ffd23d") : MUTED;
 
+  const [collapsed, toggleCollapsed] = useCollapsed("transito");
+
   return (
-    <div style={cardStyle}>
+    <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5"><Car size={11} /> Trânsito</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setMapOpen(true)}
-            disabled={!city}
-            className="rounded-full flex items-center justify-center"
-            style={{
-              width: 22, height: 22,
-              background: city ? ACCENT : "rgba(255,255,255,0.08)",
-              color: "#fff",
-              boxShadow: city ? "0 0 8px rgba(215,13,14,0.55)" : "none",
-              opacity: city ? 1 : 0.4,
-            }}
-            title="Abrir mapa do trânsito"
-          >
-            <MapIcon size={12} />
-          </button>
-          <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
-            <PopoverTrigger asChild>
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Car size={11} style={{ flexShrink: 0 }} />
+          <span className="truncate">Trânsito</span>
+          {collapsed && j && (
+            <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+              · {delayMin}min {j.street}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!collapsed && (
+            <>
               <button
                 type="button"
-                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Definir cidade do trânsito"
+                onClick={() => setMapOpen(true)}
+                disabled={!city}
+                className="rounded-full flex items-center justify-center"
+                style={{
+                  width: 22, height: 22,
+                  background: city ? ACCENT : "rgba(255,255,255,0.08)",
+                  color: "#fff",
+                  boxShadow: city ? "0 0 8px rgba(215,13,14,0.55)" : "none",
+                  opacity: city ? 1 : 0.4,
+                }}
+                title="Abrir mapa do trânsito"
               >
-                <Settings size={10} />
+                <MapIcon size={12} />
               </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
-                Cidade do trânsito
-              </div>
-              <input
-                value={tmpCity}
-                onChange={(e) => setTmpCity(e.target.value)}
-                placeholder="Ex: Goiânia, GO"
-                className="w-full px-2 py-1.5 rounded"
-                style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
-              />
-              <div className="flex justify-end gap-2 mt-2">
-                <button
-                  onClick={() => setOpen(false)}
-                  className="px-2 py-1 rounded"
-                  style={{ fontSize: 10, color: MUTED }}
-                >Cancelar</button>
-                <button
-                  onClick={() => {
-                    const v = tmpCity.trim();
-                    setCity(v);
-                    try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
-                    setOpen(false);
-                  }}
-                  className="px-2 py-1 rounded"
-                  style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
-                >Salvar</button>
-              </div>
-            </PopoverContent>
-          </Popover>
+              <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                    title="Definir cidade do trânsito"
+                  >
+                    <Settings size={10} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
+                    Cidade do trânsito
+                  </div>
+                  <input
+                    value={tmpCity}
+                    onChange={(e) => setTmpCity(e.target.value)}
+                    placeholder="Ex: Goiânia, GO"
+                    className="w-full px-2 py-1.5 rounded"
+                    style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="px-2 py-1 rounded"
+                      style={{ fontSize: 10, color: MUTED }}
+                    >Cancelar</button>
+                    <button
+                      onClick={() => {
+                        const v = tmpCity.trim();
+                        setCity(v);
+                        try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
+                        setOpen(false);
+                      }}
+                      className="px-2 py-1 rounded"
+                      style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
+                    >Salvar</button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </div>
       </div>
 
@@ -814,100 +829,96 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
         />
       )}
 
-      {!city ? (
-        <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Defina uma cidade.</div>
-      ) : loading && !jams.length ? (
-        <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
-          <Loader2 size={12} className="animate-spin" /> Buscando…
-        </div>
-      ) : !jams.length ? (
-        <div style={{ fontSize: 11, color: MUTED }}>
-          Sem congestionamentos em <b style={{ color: TEXT }}>{city}</b>.
-        </div>
-      ) : j ? (
-        <>
-          <div className="flex items-center gap-2">
-            <div
-              className="rounded-md flex flex-col items-center justify-center shrink-0"
-              style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
-              title={`Nível ${j.level || 1} de 5`}
-            >
-              <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
-              <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000" }}>min</span>
-            </div>
-            <div className="min-w-0 flex-1">
+      {!collapsed && (
+        !city ? (
+          <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Defina uma cidade.</div>
+        ) : loading && !jams.length ? (
+          <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
+            <Loader2 size={12} className="animate-spin" /> Buscando…
+          </div>
+        ) : !jams.length ? (
+          <div style={{ fontSize: 11, color: MUTED }}>
+            Sem congestionamentos em <b style={{ color: TEXT }}>{city}</b>.
+          </div>
+        ) : j ? (
+          <>
+            <div className="flex items-center gap-3">
               <div
-                style={{
-                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
-                  color: "#ffffff",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.85)",
-                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  letterSpacing: 0.2,
-                }}
-                title={j.street}
+                className="rounded-md flex flex-col items-center justify-center shrink-0"
+                style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
+                title={`Nível ${j.level || 1} de 5`}
               >
-                {j.street}
+                <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
+                <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000", letterSpacing: 0.5 }}>min</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span
+              <div className="min-w-0 flex-1">
+                <div
                   style={{
-                    fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
-                    padding: "1px 6px", borderRadius: 999,
-                    background: levelColor, color: "#000",
+                    fontSize: 12, fontWeight: 800, lineHeight: 1.25,
+                    color: "#ffffff",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.85)",
+                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    letterSpacing: 0.2,
+                    wordBreak: "break-word",
                   }}
+                  title={j.street}
                 >
-                  {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
-                </span>
-                <span style={{ fontSize: 9, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>
-                  {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
-                  {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
-                </span>
+                  {j.street}
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <span
+                    style={{
+                      fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
+                      padding: "2px 7px", borderRadius: 999,
+                      background: levelColor, color: "#000",
+                    }}
+                  >
+                    {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
+                  </span>
+                  <span style={{ fontSize: 9, color: PROMO_MUTED, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 700 }}>
+                    {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
+                    {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Legenda de criticidade */}
-          <div className="flex items-center justify-between gap-1" style={{ fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Leve</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Mod.</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff8a1f" }} />Intenso</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff2d2d" }} />Crítico</span>
-          </div>
-
-          <div className="flex items-center justify-between mt-auto gap-2">
-            <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-              {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Anterior"
-              >
-                <ChevronLeft size={11} />
-              </button>
-              <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
-                {idx + 1}/{jams.length}
+            <div className="flex items-center justify-between mt-auto gap-2">
+              <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+                {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
               </span>
-              <button
-                type="button"
-                onClick={() => setIdx((v) => (v + 1) % jams.length)}
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Próximo"
-              >
-                <ChevronRight size={11} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                  title="Anterior"
+                >
+                  <ChevronLeft size={11} />
+                </button>
+                <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
+                  {idx + 1}/{jams.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIdx((v) => (v + 1) % jams.length)}
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                  title="Próximo"
+                >
+                  <ChevronRight size={11} />
+                </button>
+              </div>
             </div>
-          </div>
-        </>
-      ) : null}
+          </>
+        ) : null
+      )}
     </div>
   );
 }
+
 
 // ================= COTAÇÕES =================
 function CotacoesBox() {
