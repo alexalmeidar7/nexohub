@@ -1033,30 +1033,42 @@ function HoroscopoBox() {
             <Star size={9} />
           </button>
         </div>
-        <div key={idx} className="flex items-center gap-2" style={{ animation: "fadeIn 0.4s" }}>
-          <span style={{ fontSize: 26, lineHeight: 1 }}>{s.emoji}</span>
-          <div className="flex flex-col min-w-0">
-            <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 0.5 }}>{s.nome}</span>
-            <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.4 }}>{s.periodo}</span>
+        <div key={idx} className="flex items-center" style={{ animation: "fadeIn 0.4s", gap: "clamp(6px, 1vw, 10px)" }}>
+          <span style={{ fontSize: "clamp(20px, 2.4vw, 28px)", lineHeight: 1, flexShrink: 0 }}>{s.emoji}</span>
+          <div className="flex flex-col min-w-0" style={{ flex: 1 }}>
+            <span
+              className="truncate"
+              style={{ fontSize: "clamp(10px, 1.05vw, 13px)", fontWeight: 900, letterSpacing: 0.5, lineHeight: 1.1 }}
+            >
+              {s.nome}
+            </span>
+            <span
+              className="truncate"
+              style={{ fontSize: "clamp(7px, 0.75vw, 9px)", color: MUTED, letterSpacing: 0.3, lineHeight: 1.2 }}
+            >
+              {s.periodo}
+            </span>
           </div>
         </div>
         <div
           key={`t-${idx}`}
           style={{
-            fontSize: 10,
+            fontSize: "clamp(9px, 0.85vw, 11px)",
             lineHeight: 1.35,
             color: `color-mix(in srgb, ${PROMO_TEXT} 88%, transparent)`,
             display: "-webkit-box",
             WebkitLineClamp: 3,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
+            wordBreak: "break-word",
+            hyphens: "auto",
           }}
         >
           {leitura}
         </div>
-        <div className="mt-auto flex items-center justify-between" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-          <span>{idx + 1}/{SIGNOS.length}</span>
-          <span>Signo do dia</span>
+        <div className="mt-auto flex items-center justify-between gap-1" style={{ fontSize: "clamp(7px, 0.65vw, 9px)", color: MUTED, letterSpacing: 0.4, textTransform: "uppercase" }}>
+          <span className="tabular-nums">{idx + 1}/{SIGNOS.length}</span>
+          <span className="truncate">Signo do dia</span>
         </div>
       </div>
 
