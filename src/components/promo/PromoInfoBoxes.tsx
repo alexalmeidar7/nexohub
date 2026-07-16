@@ -962,51 +962,79 @@ function CotacoesBox() {
     return () => clearInterval(iv);
   }, [fetchIt]);
 
+  const [collapsed, toggleCollapsed] = useCollapsed("cotacoes");
+
   return (
-    <div style={cardStyle}>
+    <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5"><DollarSign size={11} /> Cotações</span>
-        <button
-          onClick={fetchIt}
-          className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-          style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-          title="Atualizar"
-        >
-          <RefreshCcw size={9} className={loading ? "animate-spin" : ""} />
-        </button>
-      </div>
-      {loading && !quotes.length ? (
-        <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
-          <Loader2 size={12} className="animate-spin" /> Carregando…
+        <span className="flex items-center gap-1.5 min-w-0">
+          <DollarSign size={11} style={{ flexShrink: 0 }} />
+          <span className="truncate">Cotações</span>
+          {collapsed && quotes.length > 0 && (
+            <span className="truncate tabular-nums" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.4, marginLeft: 4 }}>
+              · US$ {quotes[0]?.value} · € {quotes[1]?.value}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!collapsed && (
+            <button
+              onClick={fetchIt}
+              className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+              title="Atualizar"
+            >
+              <RefreshCcw size={9} className={loading ? "animate-spin" : ""} />
+            </button>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </div>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {quotes.map((q) => (
-            <div key={q.name} className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <span style={{ fontSize: 16 }}>{q.flag}</span>
-                <span style={{ fontSize: 11, fontWeight: 800 }}>{q.name}</span>
+      </div>
+      {!collapsed && (
+        loading && !quotes.length ? (
+          <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
+            <Loader2 size={12} className="animate-spin" /> Carregando…
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 mt-1">
+            {quotes.map((q) => (
+              <div
+                key={q.name}
+                className="flex items-center justify-between rounded-lg"
+                style={{
+                  padding: "6px 8px",
+                  background: `color-mix(in srgb, ${PROMO_ACCENT_A} 22%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 10%, transparent)`,
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{q.flag}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.3 }}>{q.name}</span>
+                </div>
+                <div className="flex flex-col items-end leading-tight">
+                  <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 900, letterSpacing: 0.2 }}>R$ {q.value}</span>
+                  <span
+                    className="flex items-center gap-0.5 tabular-nums"
+                    style={{ fontSize: 9, fontWeight: 800, color: q.up ? "#4ade80" : "#ff6b6b", letterSpacing: 0.3 }}
+                  >
+                    {q.up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+                    {q.pct >= 0 ? "+" : ""}{q.pct.toFixed(2)}%
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 900 }}>R$ {q.value}</span>
-                <span
-                  className="flex items-center gap-0.5"
-                  style={{ fontSize: 9, fontWeight: 800, color: q.up ? "#4ade80" : "#ff6b6b" }}
-                >
-                  {q.up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
-                  {q.pct >= 0 ? "+" : ""}{q.pct.toFixed(2)}%
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )
+      )}
+      {!collapsed && (
+        <div className="mt-auto" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+          Atualizado: {updatedAt ? format(updatedAt, "dd/MM HH:mm", { locale: ptBR }) : "—"}
         </div>
       )}
-      <div className="mt-auto" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-        Atualizado: {updatedAt ? format(updatedAt, "dd/MM HH:mm", { locale: ptBR }) : "—"}
-      </div>
     </div>
   );
 }
+
 
 // ================= HORÓSCOPO =================
 const SIGNOS: { nome: string; emoji: string; periodo: string; leituras: string[] }[] = [
