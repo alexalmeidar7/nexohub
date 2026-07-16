@@ -5,7 +5,9 @@ import {
   Cloud, CloudRain, Sun, CloudSnow, CloudLightning, Wind,
   ChevronLeft, ChevronRight, Star, MapPin, Settings, Car,
   TrendingUp, TrendingDown, RefreshCcw, Loader2, DollarSign, Sparkles,
+  Minimize2, Maximize2,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
