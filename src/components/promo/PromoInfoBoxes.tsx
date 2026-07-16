@@ -1155,6 +1155,7 @@ function HoroscopoBox() {
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
+  const [collapsed, toggleCollapsed] = useCollapsed("horoscopo");
 
   useEffect(() => {
     const iv = setInterval(() => setIdx((v) => (v + 1) % SIGNOS.length), 6000);
@@ -1166,56 +1167,84 @@ function HoroscopoBox() {
 
   return (
     <>
-      <div style={cardStyle}>
+      <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
         <div style={titleStyle} className="justify-between">
-          <span className="flex items-center gap-1.5"><Sparkles size={11} /> Horóscopo</span>
-          <button
-            onClick={() => { setChosen(idx); setOpen(true); }}
-            className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-            style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-            title="Escolher signo"
-          >
-            <Star size={9} />
-          </button>
-        </div>
-        <div key={idx} className="flex items-center" style={{ animation: "fadeIn 0.4s", gap: "clamp(6px, 1vw, 10px)" }}>
-          <span style={{ fontSize: "clamp(20px, 2.4vw, 28px)", lineHeight: 1, flexShrink: 0 }}>{s.emoji}</span>
-          <div className="flex flex-col min-w-0" style={{ flex: 1 }}>
-            <span
-              className="truncate"
-              style={{ fontSize: "clamp(10px, 1.05vw, 13px)", fontWeight: 900, letterSpacing: 0.5, lineHeight: 1.1 }}
-            >
-              {s.nome}
-            </span>
-            <span
-              className="truncate"
-              style={{ fontSize: "clamp(7px, 0.75vw, 9px)", color: MUTED, letterSpacing: 0.3, lineHeight: 1.2 }}
-            >
-              {s.periodo}
-            </span>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Sparkles size={11} style={{ flexShrink: 0 }} />
+            <span className="truncate">Horóscopo</span>
+            {collapsed && (
+              <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+                · {s.emoji} {s.nome}
+              </span>
+            )}
+          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {!collapsed && (
+              <button
+                onClick={() => { setChosen(idx); setOpen(true); }}
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                title="Escolher signo"
+              >
+                <Star size={9} />
+              </button>
+            )}
+            <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
           </div>
         </div>
-        <div
-          key={`t-${idx}`}
-          style={{
-            fontSize: "clamp(9px, 0.85vw, 11px)",
-            lineHeight: 1.35,
-            color: `color-mix(in srgb, ${PROMO_TEXT} 88%, transparent)`,
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            wordBreak: "break-word",
-            hyphens: "auto",
-          }}
-        >
-          {leitura}
-        </div>
-        <div className="mt-auto flex items-center justify-between gap-1" style={{ fontSize: "clamp(7px, 0.65vw, 9px)", color: MUTED, letterSpacing: 0.4, textTransform: "uppercase" }}>
-          <span className="tabular-nums">{idx + 1}/{SIGNOS.length}</span>
-          <span className="truncate">Signo do dia</span>
-        </div>
+        {!collapsed && (
+          <>
+            <div key={idx} className="flex items-center mt-1" style={{ animation: "fadeIn 0.4s", gap: "clamp(6px, 1vw, 10px)" }}>
+              <span
+                className="flex items-center justify-center rounded-lg flex-shrink-0"
+                style={{
+                  width: 38, height: 38,
+                  background: PROMO_ACCENT_GRADIENT,
+                  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 25%, transparent)`,
+                  fontSize: 20, lineHeight: 1,
+                }}
+              >
+                {s.emoji}
+              </span>
+              <div className="flex flex-col min-w-0" style={{ flex: 1 }}>
+                <span
+                  className="truncate"
+                  style={{ fontSize: "clamp(11px, 1.05vw, 13px)", fontWeight: 900, letterSpacing: 0.5, lineHeight: 1.15 }}
+                >
+                  {s.nome}
+                </span>
+                <span
+                  className="truncate"
+                  style={{ fontSize: "clamp(8px, 0.75vw, 9px)", color: PROMO_MUTED, letterSpacing: 0.5, lineHeight: 1.2, textTransform: "uppercase", fontWeight: 700 }}
+                >
+                  {s.periodo}
+                </span>
+              </div>
+            </div>
+            <div
+              key={`t-${idx}`}
+              style={{
+                fontSize: "clamp(9px, 0.85vw, 11px)",
+                lineHeight: 1.4,
+                color: `color-mix(in srgb, ${PROMO_TEXT} 90%, transparent)`,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+                hyphens: "auto",
+              }}
+            >
+              {leitura}
+            </div>
+            <div className="mt-auto flex items-center justify-between gap-1" style={{ fontSize: "clamp(7px, 0.65vw, 9px)", color: MUTED, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 700 }}>
+              <span className="tabular-nums">{idx + 1}/{SIGNOS.length}</span>
+              <span className="truncate">Signo do dia</span>
+            </div>
+          </>
+        )}
       </div>
+
 
       {open && createPortal(
         <div
