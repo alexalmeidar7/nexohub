@@ -5,7 +5,9 @@ import {
   Cloud, CloudRain, Sun, CloudSnow, CloudLightning, Wind,
   ChevronLeft, ChevronRight, Star, MapPin, Settings, Car,
   TrendingUp, TrendingDown, RefreshCcw, Loader2, DollarSign, Sparkles,
+  Minimize2, Maximize2,
 } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -61,7 +63,59 @@ const titleStyle: React.CSSProperties = {
   gap: 6,
 };
 
+
+// ------- Collapsed state persistence -------
+const LS_COLLAPSED = "promo-info-collapsed-v1";
+function useCollapsed(key: string) {
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem(LS_COLLAPSED);
+      const obj = raw ? JSON.parse(raw) : {};
+      return !!obj[key];
+    } catch { return false; }
+  });
+  const toggle = useCallback(() => {
+    setCollapsed((v) => {
+      const nv = !v;
+      try {
+        const raw = localStorage.getItem(LS_COLLAPSED);
+        const obj = raw ? JSON.parse(raw) : {};
+        obj[key] = nv;
+        localStorage.setItem(LS_COLLAPSED, JSON.stringify(obj));
+      } catch { /* ignore */ }
+      return nv;
+    });
+  }, [key]);
+  return [collapsed, toggle] as const;
+}
+
+function CollapseBtn({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+      style={{ background: "rgba(255,255,255,0.08)", color: PROMO_TEXT }}
+      title={collapsed ? "Maximizar" : "Minimizar"}
+    >
+      {collapsed ? <Maximize2 size={9} /> : <Minimize2 size={9} />}
+    </button>
+  );
+}
+
+function collapsedCardStyle(base: React.CSSProperties): React.CSSProperties {
+  return {
+    ...base,
+    height: "auto",
+    minHeight: 40,
+    padding: "8px 12px",
+    gap: 0,
+    alignSelf: "start",
+  };
+}
+
 // ================= WEATHER =================
+
 function weatherIcon(code: number, size = 26) {
   const c = code;
   const cls = { color: PROMO_TEXT } as React.CSSProperties;
@@ -266,36 +320,46 @@ function DatasBox() {
     return cur.date.getTime() === t.getTime();
   })() : false;
 
+  const [collapsed, toggleCollapsed] = useCollapsed("datas");
+  const baseStyle: React.CSSProperties = {
+    ...cardStyle,
+    ...(isToday && !collapsed ? {
+      background: PROMO_ACCENT_GRADIENT,
+      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)`,
+      boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent), 0 4px 20px rgba(0,0,0,0.4)`,
+    } : {}),
+  };
+
   return (
-    <div
-      style={{
-        ...cardStyle,
-        ...(isToday ? {
-          background: PROMO_ACCENT_GRADIENT,
-          border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)`,
-          boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent), 0 4px 20px rgba(0,0,0,0.4)`,
-        } : {}),
-      }}
-    >
+    <div style={collapsed ? collapsedCardStyle(baseStyle) : baseStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5">
-          <Star size={11} style={{ color: PROMO_BORDER }} /> Datas Comemorativas
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Star size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
+          <span className="truncate">Datas Comemorativas</span>
+          {collapsed && cur && (
+            <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+              · {format(cur.date, "dd/MM")} {cur.nome}
+            </span>
+          )}
         </span>
-        {isToday && (
-          <span
-            style={{
-              fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
-              padding: "2px 7px", borderRadius: 999,
-              background: PROMO_BORDER, color: PROMO_ACCENT_A,
-              boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
-              animation: "promo-datas-pulse 1.4s ease-in-out infinite",
-            }}
-          >
-            ★ Hoje
-          </span>
-        )}
+        <span className="flex items-center gap-1.5 flex-shrink-0">
+          {isToday && !collapsed && (
+            <span
+              style={{
+                fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
+                padding: "2px 7px", borderRadius: 999,
+                background: PROMO_BORDER, color: PROMO_ACCENT_A,
+                boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
+                animation: "promo-datas-pulse 1.4s ease-in-out infinite",
+              }}
+            >
+              ★ Hoje
+            </span>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+        </span>
       </div>
-      {cur ? (
+      {!collapsed && (cur ? (
         <>
           <div
             key={idx}
@@ -305,7 +369,7 @@ function DatasBox() {
             <div
               className="rounded-md flex flex-col items-center justify-center shrink-0"
               style={{
-                width: 42, height: 42,
+                width: 44, height: 44,
                 background: isToday
                   ? `linear-gradient(135deg, ${PROMO_BORDER}, ${PROMO_ACCENT_B})`
                   : PROMO_ACCENT_GRADIENT,
@@ -313,24 +377,25 @@ function DatasBox() {
                 boxShadow: isToday ? `0 0 12px color-mix(in srgb, ${PROMO_BORDER} 60%, transparent)` : "none",
               }}
             >
-              <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
-              <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", opacity: 0.9 }}>
+              <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
+              <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", opacity: 0.9, letterSpacing: 0.5 }}>
                 {format(cur.date, "MMM", { locale: ptBR }).replace(".", "")}
               </span>
             </div>
             <div className="min-w-0 flex-1">
               <div
                 style={{
-                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
+                  fontSize: 12, fontWeight: 800, lineHeight: 1.25,
                   color: isToday ? PROMO_BORDER : PROMO_TEXT,
                   display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                   overflow: "hidden",
+                  wordBreak: "break-word",
                 }}
                 title={cur.nome}
               >
                 {cur.nome}
               </div>
-              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>
+              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 4, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>
                 {isToday ? "Comemora-se hoje" : `${cur.tag} · ${format(cur.date, "EEE", { locale: ptBR }).replace(".", "")}`}
               </div>
             </div>
@@ -347,7 +412,7 @@ function DatasBox() {
         </>
       ) : (
         <div style={{ fontSize: 11, color: PROMO_MUTED }}>Sem datas.</div>
-      )}
+      ))}
       <style>{`
         @keyframes promo-datas-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,211,77,0.7); }
@@ -362,6 +427,7 @@ function DatasBox() {
     </div>
   );
 }
+
 
 // ================= TRÂNSITO =================
 const LS_TRAFFIC_CITY = "promo-traffic-city";
@@ -674,68 +740,83 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
   const delayMin = j ? Math.round((j.delaySec || 0) / 60) : 0;
   const levelColor = j ? (j.level >= 4 ? "#ff2d2d" : j.level >= 3 ? "#ff8a1f" : "#ffd23d") : MUTED;
 
+  const [collapsed, toggleCollapsed] = useCollapsed("transito");
+
   return (
-    <div style={cardStyle}>
+    <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5"><Car size={11} /> Trânsito</span>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => setMapOpen(true)}
-            disabled={!city}
-            className="rounded-full flex items-center justify-center"
-            style={{
-              width: 22, height: 22,
-              background: city ? ACCENT : "rgba(255,255,255,0.08)",
-              color: "#fff",
-              boxShadow: city ? "0 0 8px rgba(215,13,14,0.55)" : "none",
-              opacity: city ? 1 : 0.4,
-            }}
-            title="Abrir mapa do trânsito"
-          >
-            <MapIcon size={12} />
-          </button>
-          <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
-            <PopoverTrigger asChild>
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Car size={11} style={{ flexShrink: 0 }} />
+          <span className="truncate">Trânsito</span>
+          {collapsed && j && (
+            <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+              · {delayMin}min {j.street}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!collapsed && (
+            <>
               <button
                 type="button"
-                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Definir cidade do trânsito"
+                onClick={() => setMapOpen(true)}
+                disabled={!city}
+                className="rounded-full flex items-center justify-center"
+                style={{
+                  width: 22, height: 22,
+                  background: city ? ACCENT : "rgba(255,255,255,0.08)",
+                  color: "#fff",
+                  boxShadow: city ? "0 0 8px rgba(215,13,14,0.55)" : "none",
+                  opacity: city ? 1 : 0.4,
+                }}
+                title="Abrir mapa do trânsito"
               >
-                <Settings size={10} />
+                <MapIcon size={12} />
               </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
-              <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
-                Cidade do trânsito
-              </div>
-              <input
-                value={tmpCity}
-                onChange={(e) => setTmpCity(e.target.value)}
-                placeholder="Ex: Goiânia, GO"
-                className="w-full px-2 py-1.5 rounded"
-                style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
-              />
-              <div className="flex justify-end gap-2 mt-2">
-                <button
-                  onClick={() => setOpen(false)}
-                  className="px-2 py-1 rounded"
-                  style={{ fontSize: 10, color: MUTED }}
-                >Cancelar</button>
-                <button
-                  onClick={() => {
-                    const v = tmpCity.trim();
-                    setCity(v);
-                    try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
-                    setOpen(false);
-                  }}
-                  className="px-2 py-1 rounded"
-                  style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
-                >Salvar</button>
-              </div>
-            </PopoverContent>
-          </Popover>
+              <Popover open={open} onOpenChange={(o) => { setOpen(o); if (o) setTmpCity(city); }}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                    title="Definir cidade do trânsito"
+                  >
+                    <Settings size={10} />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="p-3 w-56" style={{ background: "#111", border: "1px solid rgba(255,255,255,0.12)", color: TEXT }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: MUTED, marginBottom: 6 }}>
+                    Cidade do trânsito
+                  </div>
+                  <input
+                    value={tmpCity}
+                    onChange={(e) => setTmpCity(e.target.value)}
+                    placeholder="Ex: Goiânia, GO"
+                    className="w-full px-2 py-1.5 rounded"
+                    style={{ background: "#000", border: "1px solid rgba(255,255,255,0.15)", color: TEXT, fontSize: 12 }}
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="px-2 py-1 rounded"
+                      style={{ fontSize: 10, color: MUTED }}
+                    >Cancelar</button>
+                    <button
+                      onClick={() => {
+                        const v = tmpCity.trim();
+                        setCity(v);
+                        try { localStorage.setItem(LS_TRAFFIC_CITY, v); } catch { /* ignore */ }
+                        setOpen(false);
+                      }}
+                      className="px-2 py-1 rounded"
+                      style={{ fontSize: 10, background: ACCENT, color: TEXT, fontWeight: 800 }}
+                    >Salvar</button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </div>
       </div>
 
@@ -748,100 +829,96 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
         />
       )}
 
-      {!city ? (
-        <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Defina uma cidade.</div>
-      ) : loading && !jams.length ? (
-        <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
-          <Loader2 size={12} className="animate-spin" /> Buscando…
-        </div>
-      ) : !jams.length ? (
-        <div style={{ fontSize: 11, color: MUTED }}>
-          Sem congestionamentos em <b style={{ color: TEXT }}>{city}</b>.
-        </div>
-      ) : j ? (
-        <>
-          <div className="flex items-center gap-2">
-            <div
-              className="rounded-md flex flex-col items-center justify-center shrink-0"
-              style={{ width: 42, height: 42, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
-              title={`Nível ${j.level || 1} de 5`}
-            >
-              <span style={{ fontSize: 14, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
-              <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000" }}>min</span>
-            </div>
-            <div className="min-w-0 flex-1">
+      {!collapsed && (
+        !city ? (
+          <div style={{ fontSize: 11, color: MUTED, marginTop: 6 }}>Defina uma cidade.</div>
+        ) : loading && !jams.length ? (
+          <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
+            <Loader2 size={12} className="animate-spin" /> Buscando…
+          </div>
+        ) : !jams.length ? (
+          <div style={{ fontSize: 11, color: MUTED }}>
+            Sem congestionamentos em <b style={{ color: TEXT }}>{city}</b>.
+          </div>
+        ) : j ? (
+          <>
+            <div className="flex items-center gap-3">
               <div
-                style={{
-                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
-                  color: "#ffffff",
-                  textShadow: "0 1px 2px rgba(0,0,0,0.85)",
-                  display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  letterSpacing: 0.2,
-                }}
-                title={j.street}
+                className="rounded-md flex flex-col items-center justify-center shrink-0"
+                style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
+                title={`Nível ${j.level || 1} de 5`}
               >
-                {j.street}
+                <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
+                <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000", letterSpacing: 0.5 }}>min</span>
               </div>
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                <span
+              <div className="min-w-0 flex-1">
+                <div
                   style={{
-                    fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
-                    padding: "1px 6px", borderRadius: 999,
-                    background: levelColor, color: "#000",
+                    fontSize: 12, fontWeight: 800, lineHeight: 1.25,
+                    color: "#ffffff",
+                    textShadow: "0 1px 2px rgba(0,0,0,0.85)",
+                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    letterSpacing: 0.2,
+                    wordBreak: "break-word",
                   }}
+                  title={j.street}
                 >
-                  {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
-                </span>
-                <span style={{ fontSize: 9, color: MUTED, textTransform: "uppercase", letterSpacing: 1 }}>
-                  {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
-                  {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
-                </span>
+                  {j.street}
+                </div>
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  <span
+                    style={{
+                      fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
+                      padding: "2px 7px", borderRadius: 999,
+                      background: levelColor, color: "#000",
+                    }}
+                  >
+                    {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
+                  </span>
+                  <span style={{ fontSize: 9, color: PROMO_MUTED, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 700 }}>
+                    {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
+                    {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Legenda de criticidade */}
-          <div className="flex items-center justify-between gap-1" style={{ fontSize: 8, color: MUTED, textTransform: "uppercase", letterSpacing: 0.5 }}>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Leve</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ffd23d" }} />Mod.</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff8a1f" }} />Intenso</span>
-            <span className="flex items-center gap-1"><span style={{ width: 6, height: 6, borderRadius: 999, background: "#ff2d2d" }} />Crítico</span>
-          </div>
-
-          <div className="flex items-center justify-between mt-auto gap-2">
-            <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-              {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Anterior"
-              >
-                <ChevronLeft size={11} />
-              </button>
-              <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
-                {idx + 1}/{jams.length}
+            <div className="flex items-center justify-between mt-auto gap-2">
+              <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+                {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
               </span>
-              <button
-                type="button"
-                onClick={() => setIdx((v) => (v + 1) % jams.length)}
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                title="Próximo"
-              >
-                <ChevronRight size={11} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                  title="Anterior"
+                >
+                  <ChevronLeft size={11} />
+                </button>
+                <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
+                  {idx + 1}/{jams.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIdx((v) => (v + 1) % jams.length)}
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                  title="Próximo"
+                >
+                  <ChevronRight size={11} />
+                </button>
+              </div>
             </div>
-          </div>
-        </>
-      ) : null}
+          </>
+        ) : null
+      )}
     </div>
   );
 }
+
 
 // ================= COTAÇÕES =================
 function CotacoesBox() {
@@ -885,51 +962,79 @@ function CotacoesBox() {
     return () => clearInterval(iv);
   }, [fetchIt]);
 
+  const [collapsed, toggleCollapsed] = useCollapsed("cotacoes");
+
   return (
-    <div style={cardStyle}>
+    <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5"><DollarSign size={11} /> Cotações</span>
-        <button
-          onClick={fetchIt}
-          className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-          style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-          title="Atualizar"
-        >
-          <RefreshCcw size={9} className={loading ? "animate-spin" : ""} />
-        </button>
-      </div>
-      {loading && !quotes.length ? (
-        <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
-          <Loader2 size={12} className="animate-spin" /> Carregando…
+        <span className="flex items-center gap-1.5 min-w-0">
+          <DollarSign size={11} style={{ flexShrink: 0 }} />
+          <span className="truncate">Cotações</span>
+          {collapsed && quotes.length > 0 && (
+            <span className="truncate tabular-nums" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.4, marginLeft: 4 }}>
+              · US$ {quotes[0]?.value} · € {quotes[1]?.value}
+            </span>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {!collapsed && (
+            <button
+              onClick={fetchIt}
+              className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+              title="Atualizar"
+            >
+              <RefreshCcw size={9} className={loading ? "animate-spin" : ""} />
+            </button>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </div>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          {quotes.map((q) => (
-            <div key={q.name} className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <span style={{ fontSize: 16 }}>{q.flag}</span>
-                <span style={{ fontSize: 11, fontWeight: 800 }}>{q.name}</span>
+      </div>
+      {!collapsed && (
+        loading && !quotes.length ? (
+          <div className="flex items-center gap-1" style={{ fontSize: 11, color: MUTED }}>
+            <Loader2 size={12} className="animate-spin" /> Carregando…
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2 mt-1">
+            {quotes.map((q) => (
+              <div
+                key={q.name}
+                className="flex items-center justify-between rounded-lg"
+                style={{
+                  padding: "6px 8px",
+                  background: `color-mix(in srgb, ${PROMO_ACCENT_A} 22%, transparent)`,
+                  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 10%, transparent)`,
+                }}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{q.flag}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 0.3 }}>{q.name}</span>
+                </div>
+                <div className="flex flex-col items-end leading-tight">
+                  <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 900, letterSpacing: 0.2 }}>R$ {q.value}</span>
+                  <span
+                    className="flex items-center gap-0.5 tabular-nums"
+                    style={{ fontSize: 9, fontWeight: 800, color: q.up ? "#4ade80" : "#ff6b6b", letterSpacing: 0.3 }}
+                  >
+                    {q.up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
+                    {q.pct >= 0 ? "+" : ""}{q.pct.toFixed(2)}%
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="tabular-nums" style={{ fontSize: 13, fontWeight: 900 }}>R$ {q.value}</span>
-                <span
-                  className="flex items-center gap-0.5"
-                  style={{ fontSize: 9, fontWeight: 800, color: q.up ? "#4ade80" : "#ff6b6b" }}
-                >
-                  {q.up ? <TrendingUp size={9} /> : <TrendingDown size={9} />}
-                  {q.pct >= 0 ? "+" : ""}{q.pct.toFixed(2)}%
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+        )
+      )}
+      {!collapsed && (
+        <div className="mt-auto" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+          Atualizado: {updatedAt ? format(updatedAt, "dd/MM HH:mm", { locale: ptBR }) : "—"}
         </div>
       )}
-      <div className="mt-auto" style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase" }}>
-        Atualizado: {updatedAt ? format(updatedAt, "dd/MM HH:mm", { locale: ptBR }) : "—"}
-      </div>
     </div>
   );
 }
+
 
 // ================= HORÓSCOPO =================
 const SIGNOS: { nome: string; emoji: string; periodo: string; leituras: string[] }[] = [
@@ -1050,6 +1155,7 @@ function HoroscopoBox() {
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
+  const [collapsed, toggleCollapsed] = useCollapsed("horoscopo");
 
   useEffect(() => {
     const iv = setInterval(() => setIdx((v) => (v + 1) % SIGNOS.length), 6000);
@@ -1061,56 +1167,84 @@ function HoroscopoBox() {
 
   return (
     <>
-      <div style={cardStyle}>
+      <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
         <div style={titleStyle} className="justify-between">
-          <span className="flex items-center gap-1.5"><Sparkles size={11} /> Horóscopo</span>
-          <button
-            onClick={() => { setChosen(idx); setOpen(true); }}
-            className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-            style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-            title="Escolher signo"
-          >
-            <Star size={9} />
-          </button>
-        </div>
-        <div key={idx} className="flex items-center" style={{ animation: "fadeIn 0.4s", gap: "clamp(6px, 1vw, 10px)" }}>
-          <span style={{ fontSize: "clamp(20px, 2.4vw, 28px)", lineHeight: 1, flexShrink: 0 }}>{s.emoji}</span>
-          <div className="flex flex-col min-w-0" style={{ flex: 1 }}>
-            <span
-              className="truncate"
-              style={{ fontSize: "clamp(10px, 1.05vw, 13px)", fontWeight: 900, letterSpacing: 0.5, lineHeight: 1.1 }}
-            >
-              {s.nome}
-            </span>
-            <span
-              className="truncate"
-              style={{ fontSize: "clamp(7px, 0.75vw, 9px)", color: MUTED, letterSpacing: 0.3, lineHeight: 1.2 }}
-            >
-              {s.periodo}
-            </span>
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Sparkles size={11} style={{ flexShrink: 0 }} />
+            <span className="truncate">Horóscopo</span>
+            {collapsed && (
+              <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+                · {s.emoji} {s.nome}
+              </span>
+            )}
+          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {!collapsed && (
+              <button
+                onClick={() => { setChosen(idx); setOpen(true); }}
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
+                style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
+                title="Escolher signo"
+              >
+                <Star size={9} />
+              </button>
+            )}
+            <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
           </div>
         </div>
-        <div
-          key={`t-${idx}`}
-          style={{
-            fontSize: "clamp(9px, 0.85vw, 11px)",
-            lineHeight: 1.35,
-            color: `color-mix(in srgb, ${PROMO_TEXT} 88%, transparent)`,
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            wordBreak: "break-word",
-            hyphens: "auto",
-          }}
-        >
-          {leitura}
-        </div>
-        <div className="mt-auto flex items-center justify-between gap-1" style={{ fontSize: "clamp(7px, 0.65vw, 9px)", color: MUTED, letterSpacing: 0.4, textTransform: "uppercase" }}>
-          <span className="tabular-nums">{idx + 1}/{SIGNOS.length}</span>
-          <span className="truncate">Signo do dia</span>
-        </div>
+        {!collapsed && (
+          <>
+            <div key={idx} className="flex items-center mt-1" style={{ animation: "fadeIn 0.4s", gap: "clamp(6px, 1vw, 10px)" }}>
+              <span
+                className="flex items-center justify-center rounded-lg flex-shrink-0"
+                style={{
+                  width: 38, height: 38,
+                  background: PROMO_ACCENT_GRADIENT,
+                  border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 25%, transparent)`,
+                  fontSize: 20, lineHeight: 1,
+                }}
+              >
+                {s.emoji}
+              </span>
+              <div className="flex flex-col min-w-0" style={{ flex: 1 }}>
+                <span
+                  className="truncate"
+                  style={{ fontSize: "clamp(11px, 1.05vw, 13px)", fontWeight: 900, letterSpacing: 0.5, lineHeight: 1.15 }}
+                >
+                  {s.nome}
+                </span>
+                <span
+                  className="truncate"
+                  style={{ fontSize: "clamp(8px, 0.75vw, 9px)", color: PROMO_MUTED, letterSpacing: 0.5, lineHeight: 1.2, textTransform: "uppercase", fontWeight: 700 }}
+                >
+                  {s.periodo}
+                </span>
+              </div>
+            </div>
+            <div
+              key={`t-${idx}`}
+              style={{
+                fontSize: "clamp(9px, 0.85vw, 11px)",
+                lineHeight: 1.4,
+                color: `color-mix(in srgb, ${PROMO_TEXT} 90%, transparent)`,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                wordBreak: "break-word",
+                hyphens: "auto",
+              }}
+            >
+              {leitura}
+            </div>
+            <div className="mt-auto flex items-center justify-between gap-1" style={{ fontSize: "clamp(7px, 0.65vw, 9px)", color: MUTED, letterSpacing: 0.6, textTransform: "uppercase", fontWeight: 700 }}>
+              <span className="tabular-nums">{idx + 1}/{SIGNOS.length}</span>
+              <span className="truncate">Signo do dia</span>
+            </div>
+          </>
+        )}
       </div>
+
 
       {open && createPortal(
         <div
@@ -1357,8 +1491,10 @@ export default function PromoInfoBoxes(props: Props) {
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+        alignItems: "start",
         gap: 10,
         marginBottom: 8,
+
       }}
     >
       <WeatherBox {...props} />
