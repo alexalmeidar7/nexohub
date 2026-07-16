@@ -4,7 +4,7 @@ import { X, Map as MapIcon, Navigation } from "lucide-react";
 import {
   Cloud, CloudRain, Sun, CloudSnow, CloudLightning, Wind,
   ChevronLeft, ChevronRight, Star, MapPin, Settings, Car,
-  TrendingUp, TrendingDown, RefreshCcw, Loader2, DollarSign,
+  TrendingUp, TrendingDown, RefreshCcw, Loader2, DollarSign, Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
