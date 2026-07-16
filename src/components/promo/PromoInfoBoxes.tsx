@@ -320,36 +320,46 @@ function DatasBox() {
     return cur.date.getTime() === t.getTime();
   })() : false;
 
+  const [collapsed, toggleCollapsed] = useCollapsed("datas");
+  const baseStyle: React.CSSProperties = {
+    ...cardStyle,
+    ...(isToday && !collapsed ? {
+      background: PROMO_ACCENT_GRADIENT,
+      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)`,
+      boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent), 0 4px 20px rgba(0,0,0,0.4)`,
+    } : {}),
+  };
+
   return (
-    <div
-      style={{
-        ...cardStyle,
-        ...(isToday ? {
-          background: PROMO_ACCENT_GRADIENT,
-          border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)`,
-          boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent), 0 4px 20px rgba(0,0,0,0.4)`,
-        } : {}),
-      }}
-    >
+    <div style={collapsed ? collapsedCardStyle(baseStyle) : baseStyle}>
       <div style={titleStyle} className="justify-between">
-        <span className="flex items-center gap-1.5">
-          <Star size={11} style={{ color: PROMO_BORDER }} /> Datas Comemorativas
+        <span className="flex items-center gap-1.5 min-w-0">
+          <Star size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
+          <span className="truncate">Datas Comemorativas</span>
+          {collapsed && cur && (
+            <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+              · {format(cur.date, "dd/MM")} {cur.nome}
+            </span>
+          )}
         </span>
-        {isToday && (
-          <span
-            style={{
-              fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
-              padding: "2px 7px", borderRadius: 999,
-              background: PROMO_BORDER, color: PROMO_ACCENT_A,
-              boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
-              animation: "promo-datas-pulse 1.4s ease-in-out infinite",
-            }}
-          >
-            ★ Hoje
-          </span>
-        )}
+        <span className="flex items-center gap-1.5 flex-shrink-0">
+          {isToday && !collapsed && (
+            <span
+              style={{
+                fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
+                padding: "2px 7px", borderRadius: 999,
+                background: PROMO_BORDER, color: PROMO_ACCENT_A,
+                boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
+                animation: "promo-datas-pulse 1.4s ease-in-out infinite",
+              }}
+            >
+              ★ Hoje
+            </span>
+          )}
+          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+        </span>
       </div>
-      {cur ? (
+      {!collapsed && (cur ? (
         <>
           <div
             key={idx}
@@ -359,7 +369,7 @@ function DatasBox() {
             <div
               className="rounded-md flex flex-col items-center justify-center shrink-0"
               style={{
-                width: 42, height: 42,
+                width: 44, height: 44,
                 background: isToday
                   ? `linear-gradient(135deg, ${PROMO_BORDER}, ${PROMO_ACCENT_B})`
                   : PROMO_ACCENT_GRADIENT,
@@ -367,24 +377,25 @@ function DatasBox() {
                 boxShadow: isToday ? `0 0 12px color-mix(in srgb, ${PROMO_BORDER} 60%, transparent)` : "none",
               }}
             >
-              <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
-              <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", opacity: 0.9 }}>
+              <span style={{ fontSize: 16, fontWeight: 900, lineHeight: 1 }}>{format(cur.date, "dd")}</span>
+              <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase", opacity: 0.9, letterSpacing: 0.5 }}>
                 {format(cur.date, "MMM", { locale: ptBR }).replace(".", "")}
               </span>
             </div>
             <div className="min-w-0 flex-1">
               <div
                 style={{
-                  fontSize: 12, fontWeight: 800, lineHeight: 1.2,
+                  fontSize: 12, fontWeight: 800, lineHeight: 1.25,
                   color: isToday ? PROMO_BORDER : PROMO_TEXT,
                   display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
                   overflow: "hidden",
+                  wordBreak: "break-word",
                 }}
                 title={cur.nome}
               >
                 {cur.nome}
               </div>
-              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 3, textTransform: "uppercase", letterSpacing: 1 }}>
+              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 4, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>
                 {isToday ? "Comemora-se hoje" : `${cur.tag} · ${format(cur.date, "EEE", { locale: ptBR }).replace(".", "")}`}
               </div>
             </div>
@@ -401,7 +412,7 @@ function DatasBox() {
         </>
       ) : (
         <div style={{ fontSize: 11, color: PROMO_MUTED }}>Sem datas.</div>
-      )}
+      ))}
       <style>{`
         @keyframes promo-datas-pulse {
           0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255,211,77,0.7); }
@@ -416,6 +427,7 @@ function DatasBox() {
     </div>
   );
 }
+
 
 // ================= TRÂNSITO =================
 const LS_TRAFFIC_CITY = "promo-traffic-city";
