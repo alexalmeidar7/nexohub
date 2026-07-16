@@ -1006,6 +1006,46 @@ function leituraDoDia(signoIdx: number) {
   return s.leituras[idx];
 }
 
+// Elementos para composição da leitura longa (usada no popup)
+const ELEMENTO_POR_SIGNO: Record<string, "fogo" | "terra" | "ar" | "agua"> = {
+  "Áries": "fogo", "Leão": "fogo", "Sagitário": "fogo",
+  "Touro": "terra", "Virgem": "terra", "Capricórnio": "terra",
+  "Gêmeos": "ar", "Libra": "ar", "Aquário": "ar",
+  "Câncer": "agua", "Escorpião": "agua", "Peixes": "agua",
+};
+
+const COMPLEMENTOS: Record<"fogo" | "terra" | "ar" | "agua", string[]> = {
+  fogo: [
+    "Vênus favorece encontros inspiradores e traz motivação extra para colocar planos antigos em prática.",
+    "A Lua ilumina sua vitalidade e pede que você use a coragem sem atropelar os detalhes ao longo do dia.",
+    "Marte impulsiona sua ação e amplia o carisma em reuniões, apresentações e conversas decisivas.",
+  ],
+  terra: [
+    "A Lua reforça a paciência e favorece decisões práticas ligadas ao dinheiro, ao trabalho e à rotina.",
+    "Mercúrio traz clareza para negociações e ajuda a organizar acordos que estavam parados há dias.",
+    "Saturno pede consistência: o que for construído hoje com calma tende a se sustentar por muito tempo.",
+  ],
+  ar: [
+    "Mercúrio deixa sua mente rápida e favorece trocas, mensagens e reuniões que abrem novas portas.",
+    "Vênus estimula acordos leves e traz um ar diplomático perfeito para resolver mal-entendidos recentes.",
+    "A Lua desperta curiosidade e pede que você compartilhe ideias sem medo de mostrar seu ponto de vista.",
+  ],
+  agua: [
+    "A Lua conecta você às emoções e favorece conversas honestas que fortalecem laços afetivos importantes.",
+    "Netuno amplia a intuição e pede atenção aos sinais sutis que aparecem em sonhos, encontros e escolhas.",
+    "Vênus acolhe seu coração e traz momentos de aconchego ao lado de quem realmente merece sua confiança.",
+  ],
+};
+
+function leituraLongaDoDia(signoIdx: number): string {
+  const s = SIGNOS[signoIdx];
+  const base = leituraDoDia(signoIdx);
+  const el = ELEMENTO_POR_SIGNO[s.nome] || "ar";
+  const pool = COMPLEMENTOS[el];
+  const extra = pool[(dayOfYear(new Date()) + signoIdx) % pool.length];
+  return `${base} ${extra}`;
+}
+
 function HoroscopoBox() {
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
