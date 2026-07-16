@@ -839,10 +839,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
 
+    const isJornalFm = dataUserId === JORNAL_FM_USER_ID;
     if ('showOpenFilePicker' in window && !e) {
       try {
+        const pickerTypes = isJornalFm
+          ? [{ description: 'TXT ou XML', accept: { 'text/plain': ['.txt'], 'application/xml': ['.xml'] } }]
+          : [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }];
         const [h] = await (window as any).showOpenFilePicker({
-          types: [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }],
+          types: pickerTypes,
           multiple: false,
         });
         handle = h;
@@ -865,7 +869,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       });
     }
 
-    const text = await readFileWithEncoding(file);
+    const rawText = await readFileWithEncoding(file);
+    const text = isJornalFmTxt(dataUserId, rawText)
+      ? (txtToPseudoXml(rawText) ?? rawText)
+      : rawText;
     localFileContentRef.current = text;
     setLocalFileContent(text);
 
@@ -875,6 +882,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     syncToStorage(text);
     setLocalMonitoring(true);
   };
+
 
   // Local polling — active only when local source is selected
   // --- Background-safe polling using Web Worker timer ---
