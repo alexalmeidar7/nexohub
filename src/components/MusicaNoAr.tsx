@@ -164,6 +164,44 @@ function isStoppedXmlPayload(xmlStr: string): boolean {
   }
 }
 
+// ─── Jornal FM: origem local em TXT no formato "ARTISTA - MUSICA" ───
+// Tenant-specific parsing rule requested pelo cliente Jornal FM.
+const JORNAL_FM_USER_ID = "48423cc6-f3b1-4bea-8729-dd0ae76a89c3";
+
+function isJornalFmTxt(userId: string | null | undefined, text: string): boolean {
+  if (userId !== JORNAL_FM_USER_ID) return false;
+  const trimmed = (text || "").trim();
+  if (!trimmed) return false;
+  // Se começar com XML declaration ou tag, mantém fluxo XML.
+  if (trimmed.startsWith("<")) return false;
+  return trimmed.includes("-");
+}
+
+function parseJornalFmTxt(text: string): { artista: string; titulo: string } | null {
+  // Pega a primeira linha não-vazia; formato: "ARTISTA - MUSICA"
+  const line = (text || "")
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .find(Boolean);
+  if (!line) return null;
+  const idx = line.indexOf("-");
+  if (idx < 0) return null;
+  const artista = normalizeMusicText(line.slice(0, idx).trim());
+  const titulo = normalizeMusicText(line.slice(idx + 1).trim());
+  if (!artista && !titulo) return null;
+  return { artista, titulo };
+}
+
+function txtToPseudoXml(text: string): string | null {
+  const parsed = parseJornalFmTxt(text);
+  if (!parsed) return null;
+  const esc = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<musica><interprete>${esc(parsed.artista || "Desconhecido")}</interprete><nome_musica>${esc(parsed.titulo || "Sem titulo")}</nome_musica><duracao>0</duracao></musica>`;
+}
+
+
+
 
 function extractMusicFromDoc(doc: Document): MusicData | null {
   const rawTitulo =
@@ -762,8 +800,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
       if (!file) { readingRef.current = false; return; }
 
-      const text = await readFileWithEncoding(file);
-      
+      const rawText = await readFileWithEncoding(file);
+      // Jornal FM lê um TXT "ARTISTA - MUSICA"; convertemos em XML sintético
+      // para reaproveitar todo o pipeline downstream (parser, storage sync).
+      const text = isJornalFmTxt(dataUserIdRef.current, rawText)
+        ? (txtToPseudoXml(rawText) ?? rawText)
+        : rawText;
+
       // Success — reset health trackers
       localFailCountRef.current = 0;
       lastLocalSuccessRef.current = Date.now();
@@ -786,6 +829,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       // Background sync (non-blocking)
       syncToStorage(text);
+
     } catch { }
     readingRef.current = false;
   }, [syncToStorage]); // stable deps
@@ -795,10 +839,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     let file: File | null = null;
     let handle: FileSystemFileHandle | null = null;
 
+    const isJornalFm = dataUserId === JORNAL_FM_USER_ID;
     if ('showOpenFilePicker' in window && !e) {
       try {
+        const pickerTypes = isJornalFm
+          ? [{ description: 'TXT ou XML', accept: { 'text/plain': ['.txt'], 'application/xml': ['.xml'] } }]
+          : [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }];
         const [h] = await (window as any).showOpenFilePicker({
-          types: [{ description: 'XML', accept: { 'application/xml': ['.xml'] } }],
+          types: pickerTypes,
           multiple: false,
         });
         handle = h;
@@ -821,7 +869,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       });
     }
 
-    const text = await readFileWithEncoding(file);
+    const rawText = await readFileWithEncoding(file);
+    const text = isJornalFmTxt(dataUserId, rawText)
+      ? (txtToPseudoXml(rawText) ?? rawText)
+      : rawText;
     localFileContentRef.current = text;
     setLocalFileContent(text);
 
@@ -831,6 +882,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     syncToStorage(text);
     setLocalMonitoring(true);
   };
+
 
   // Local polling — active only when local source is selected
   // --- Background-safe polling using Web Worker timer ---
@@ -1432,7 +1484,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </label>
                 </div>
 
-                <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
                 {/* Device name — editable */}
                 {localMonitoring && (
