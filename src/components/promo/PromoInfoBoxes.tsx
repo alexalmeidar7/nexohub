@@ -1124,19 +1124,19 @@ function HoroscopoBox() {
           <style>{`
             @keyframes horoGlowPulse {
               0%, 100% {
-                box-shadow: 0 0 0 1px ${PROMO_BORDER},
-                            0 0 18px 2px color-mix(in srgb, ${PROMO_ACCENT_B} 55%, transparent),
-                            inset 0 0 12px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent);
+                box-shadow: 0 0 0 1px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent),
+                            0 0 16px 1px color-mix(in srgb, ${PROMO_BORDER} 35%, transparent),
+                            inset 0 0 10px color-mix(in srgb, ${PROMO_BORDER} 18%, transparent);
               }
               50% {
                 box-shadow: 0 0 0 1px ${PROMO_BORDER},
-                            0 0 34px 6px color-mix(in srgb, ${PROMO_ACCENT_B} 85%, transparent),
-                            inset 0 0 22px color-mix(in srgb, ${PROMO_BORDER} 55%, transparent);
+                            0 0 28px 4px color-mix(in srgb, ${PROMO_BORDER} 55%, transparent),
+                            inset 0 0 18px color-mix(in srgb, ${PROMO_BORDER} 35%, transparent);
               }
             }
             @keyframes horoGlyphShine {
-              0%, 100% { filter: drop-shadow(0 0 4px color-mix(in srgb, ${PROMO_BORDER} 60%, transparent)); }
-              50% { filter: drop-shadow(0 0 14px ${PROMO_BORDER}); }
+              0%, 100% { filter: drop-shadow(0 0 4px color-mix(in srgb, ${PROMO_BORDER} 55%, transparent)); }
+              50% { filter: drop-shadow(0 0 12px ${PROMO_BORDER}); }
             }
             @keyframes horoFadeIn {
               from { opacity: 0; transform: translateY(6px); }
@@ -1149,7 +1149,7 @@ function HoroscopoBox() {
             style={{
               maxWidth: 780,
               background: PROMO_CARD_BG,
-              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 28%, transparent)`,
+              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 22%, transparent)`,
               boxShadow: `0 30px 90px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, ${PROMO_BORDER} 8%, transparent)`,
               color: PROMO_TEXT,
             }}
@@ -1159,21 +1159,22 @@ function HoroscopoBox() {
               className="flex items-center justify-between px-8 py-5"
               style={{
                 borderBottom: `1px solid color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`,
-                background: `linear-gradient(90deg, color-mix(in srgb, ${PROMO_ACCENT_A} 35%, transparent), transparent)`,
+                background: `linear-gradient(90deg, color-mix(in srgb, ${PROMO_ACCENT_A} 45%, transparent), transparent)`,
               }}
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center"
                   style={{
-                    background: PROMO_ACCENT_GRADIENT,
-                    boxShadow: `0 0 24px color-mix(in srgb, ${PROMO_ACCENT_B} 60%, transparent)`,
+                    background: PROMO_CARD_BG,
+                    border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
+                    boxShadow: `0 0 22px color-mix(in srgb, ${PROMO_BORDER} 35%, transparent)`,
                   }}
                 >
-                  <Sparkles size={18} style={{ color: PROMO_TEXT }} />
+                  <Sparkles size={18} style={{ color: PROMO_BORDER }} />
                 </div>
                 <div className="flex flex-col">
-                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: 2, fontFamily: "'Montserrat', sans-serif" }}>
+                  <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: 2, fontFamily: "'Montserrat', sans-serif", color: PROMO_HEADER }}>
                     HORÓSCOPO DO DIA
                   </span>
                   <span style={{ fontSize: 10, color: PROMO_MUTED, letterSpacing: 1, textTransform: "uppercase" }}>
@@ -1205,30 +1206,39 @@ function HoroscopoBox() {
                   <button
                     key={sg.nome}
                     onClick={() => setChosen(i)}
-                    className="flex flex-col items-center gap-1.5 rounded-2xl py-3 px-2 transition-all hover:scale-[1.04]"
+                    className="flex flex-col items-center gap-2 rounded-2xl py-3 px-2 transition-all hover:scale-[1.04]"
                     style={{
-                      background: isChosen
-                        ? PROMO_ACCENT_GRADIENT
-                        : `linear-gradient(160deg, color-mix(in srgb, ${PROMO_ACCENT_A} 35%, black) 0%, rgba(0,0,0,0.5) 100%)`,
+                      background: PROMO_CARD_BG,
                       border: isChosen
                         ? `1px solid ${PROMO_BORDER}`
-                        : `1px solid color-mix(in srgb, ${PROMO_BORDER} 10%, transparent)`,
+                        : `1px solid color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`,
                       animation: isChosen ? "horoGlowPulse 1.6s ease-in-out infinite" : undefined,
                     }}
                     title={sg.nome}
                   >
                     <span
+                      className="flex items-center justify-center rounded-full"
                       style={{
-                        fontSize: 26,
-                        lineHeight: 1,
-                        color: PROMO_TEXT,
-                        animation: isChosen ? "horoGlyphShine 1.6s ease-in-out infinite" : undefined,
-                        textShadow: isChosen
-                          ? `0 0 14px ${PROMO_BORDER}`
-                          : `0 0 6px color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
+                        width: 40,
+                        height: 40,
+                        background: isChosen
+                          ? `radial-gradient(circle at 50% 40%, color-mix(in srgb, ${PROMO_BORDER} 28%, transparent) 0%, transparent 70%)`
+                          : `radial-gradient(circle at 50% 40%, color-mix(in srgb, ${PROMO_BORDER} 12%, transparent) 0%, transparent 70%)`,
                       }}
                     >
-                      {sg.emoji}
+                      <span
+                        style={{
+                          fontSize: 24,
+                          lineHeight: 1,
+                          color: PROMO_TEXT,
+                          animation: isChosen ? "horoGlyphShine 1.6s ease-in-out infinite" : undefined,
+                          textShadow: isChosen
+                            ? `0 0 12px ${PROMO_BORDER}`
+                            : `0 0 5px color-mix(in srgb, ${PROMO_BORDER} 25%, transparent)`,
+                        }}
+                      >
+                        {sg.emoji}
+                      </span>
                     </span>
                     <span
                       style={{
@@ -1236,7 +1246,7 @@ function HoroscopoBox() {
                         fontWeight: 800,
                         letterSpacing: 0.6,
                         textTransform: "uppercase",
-                        color: isChosen ? PROMO_TEXT : `color-mix(in srgb, ${PROMO_HEADER} 75%, transparent)`,
+                        color: isChosen ? PROMO_HEADER : `color-mix(in srgb, ${PROMO_HEADER} 70%, transparent)`,
                       }}
                     >
                       {sg.nome}
@@ -1257,12 +1267,12 @@ function HoroscopoBox() {
                   <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center"
                     style={{
-                      background: PROMO_ACCENT_GRADIENT,
+                      background: PROMO_CARD_BG,
                       border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 35%, transparent)`,
-                      boxShadow: `0 0 30px color-mix(in srgb, ${PROMO_ACCENT_B} 55%, transparent)`,
+                      boxShadow: `0 0 26px color-mix(in srgb, ${PROMO_BORDER} 35%, transparent)`,
                     }}
                   >
-                    <span style={{ fontSize: 38, lineHeight: 1, color: PROMO_TEXT, textShadow: `0 0 12px ${PROMO_BORDER}` }}>
+                    <span style={{ fontSize: 36, lineHeight: 1, color: PROMO_TEXT, textShadow: `0 0 12px ${PROMO_BORDER}` }}>
                       {SIGNOS[chosen].emoji}
                     </span>
                   </div>
@@ -1273,7 +1283,7 @@ function HoroscopoBox() {
                         fontWeight: 900,
                         letterSpacing: 1,
                         fontFamily: "'Montserrat', sans-serif",
-                        color: PROMO_TEXT,
+                        color: PROMO_HEADER,
                       }}
                     >
                       {SIGNOS[chosen].nome}
@@ -1295,7 +1305,7 @@ function HoroscopoBox() {
                 <div
                   className="rounded-2xl p-5"
                   style={{
-                    background: `linear-gradient(160deg, color-mix(in srgb, ${PROMO_ACCENT_A} 40%, black) 0%, rgba(0,0,0,0.6) 100%)`,
+                    background: PROMO_CARD_BG,
                     border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 14%, transparent)`,
                   }}
                 >
@@ -1330,6 +1340,7 @@ function HoroscopoBox() {
                 </div>
               </div>
             )}
+
           </div>
         </div>,
         document.body
