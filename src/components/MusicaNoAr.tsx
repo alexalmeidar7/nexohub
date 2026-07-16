@@ -1484,7 +1484,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </label>
                 </div>
 
-                <input ref={fileInputRef} type="file" accept=".xml,application/xml,text/xml" onChange={handleFileSelect} className="hidden" />
+                <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
                 {/* Device name — editable */}
                 {localMonitoring && (
