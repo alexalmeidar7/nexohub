@@ -825,6 +825,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setLocalDelay(false);
       setLocalError(null);
       setLocalActivating(false);
+      setLocalLastReadAt(Date.now());
 
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
