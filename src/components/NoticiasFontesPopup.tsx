@@ -285,6 +285,7 @@ function NewsHorizontalScroller({
   const draggedItemRef = useRef<NewsItem | null>(null);
   const [hoverBloco, setHoverBloco] = useState<number | null>(null);
   const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(true);
   const hoveringRef = useRef(false);
   const touchActiveRef = useRef(false);
   const touchStartXRef = useRef(0);
