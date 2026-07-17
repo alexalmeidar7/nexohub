@@ -17,6 +17,8 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
   const [fadeOut, setFadeOut] = useState(false);
   const finishedRef = useRef(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const videoSrc = useSplashVideoCache(splashVideoAsset.url);
+
 
   // Detect prefers-reduced-motion
   useEffect(() => {
