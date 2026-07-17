@@ -779,6 +779,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const addBloco = () => { setBlocos(prev => [...prev, { noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]); };
   const removeBloco = (bi: number) => { setBlocos(prev => prev.filter((_, i) => i !== bi)); setCollapsedBlocos(prev => { const n = new Set(prev); n.delete(bi); return n; }); };
   const toggleCollapse = (bi: number) => { setCollapsedBlocos(prev => { const n = new Set(prev); if (n.has(bi)) n.delete(bi); else n.add(bi); return n; }); };
+  const moveNoticia = (bi: number, ni: number, dir: -1 | 1) => {
+    setBlocos(prev => prev.map((b, i) => {
+      if (i !== bi) return b;
+      const target = ni + dir;
+      if (target < 0 || target >= b.noticias.length) return b;
+      const noticias = [...b.noticias];
+      [noticias[ni], noticias[target]] = [noticias[target], noticias[ni]];
+      return { ...b, noticias };
+    }));
+  };
 
   const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
     if (!url || !url.startsWith("http")) return;
@@ -1750,7 +1760,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                   {!collapsedBlocos.has(bi) && (
                     <div className="space-y-3">
                       {bloco.noticias.map((noticia, ni) => (
-                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} isOpen={openNoticia[bi] === ni} onToggleOpen={(open) => setOpenNoticia(prev => ({ ...prev, [bi]: open ? ni : null }))} onAddToEscalada={() => addToEscalada(noticia.titulo, noticia.imagemUrl)} alreadyInEscalada={escaladaList.some(e => e.titulo === noticia.titulo && !!noticia.titulo)} />
+                        <NoticiaItem key={ni} noticia={noticia} bi={bi} ni={ni} inputStyle={inputStyle} fetchingLink={fetchingLink} onUpdate={updateNoticia} onRemove={removeNoticia} onFetchLink={fetchFromLink} canRemove={bloco.noticias.length > 1} editedFields={editingId ? editedFields : undefined} onRegenerateWeather={addWeatherInfo} onRegenerateFinance={addFinanceInfo} addingWeather={addingWeather} addingFinance={addingFinance} isOpen={openNoticia[bi] === ni} onToggleOpen={(open) => setOpenNoticia(prev => ({ ...prev, [bi]: open ? ni : null }))} onAddToEscalada={() => addToEscalada(noticia.titulo, noticia.imagemUrl)} alreadyInEscalada={escaladaList.some(e => e.titulo === noticia.titulo && !!noticia.titulo)} onMove={moveNoticia} canMoveUp={ni > 0} canMoveDown={ni < bloco.noticias.length - 1} />
                       ))}
                       <div className="flex flex-wrap gap-2">
                         <button onClick={() => addNoticia(bi)} className="hover:opacity-80" style={nexoPillGhost}>
@@ -1821,7 +1831,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, isOpen, onToggleOpen, onAddToEscalada, alreadyInEscalada }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, isOpen, onToggleOpen, onAddToEscalada, alreadyInEscalada, onMove, canMoveUp, canMoveDown }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1837,6 +1847,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onToggleOpen: (open: boolean) => void;
   onAddToEscalada: () => void;
   alreadyInEscalada: boolean;
+  onMove: (bi: number, ni: number, dir: -1 | 1) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
   const collapsed = !isOpen;
@@ -1844,6 +1857,17 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
+  const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const el = e.target as HTMLElement;
+    const tag = el.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable) return;
+    const mod = e.altKey || e.ctrlKey || e.metaKey;
+    if (mod && e.key === "ArrowUp") { e.preventDefault(); if (canMoveUp) onMove(bi, ni, -1); }
+    else if (mod && e.key === "ArrowDown") { e.preventDefault(); if (canMoveDown) onMove(bi, ni, 1); }
+    else if ((e.key === "Delete" || (mod && e.key === "Backspace")) && canRemove) { e.preventDefault(); onRemove(bi, ni); }
+    else if (e.key === "Enter" && collapsed) { e.preventDefault(); setCollapsed(false); }
+    else if (e.key === "Escape" && !collapsed && noticia.titulo) { e.preventDefault(); setCollapsed(true); }
+  };
   const prevTituloRef = useRef(noticia.titulo);
 
   useEffect(() => {
@@ -1856,13 +1880,22 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
 
   if (collapsed && noticia.titulo) {
     return (
-      <div className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }} onClick={() => setCollapsed(false)}>
+      <div
+        tabIndex={0}
+        onKeyDown={handleKey}
+        title="Alt+↑/↓ mover · Delete remover · Enter abrir"
+        className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden focus:outline-none focus:ring-2"
+        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
+        onClick={() => setCollapsed(false)}
+      >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <p className="text-[10px] font-bold uppercase shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
           <p className="text-[12px] truncate font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{noticia.titulo}</p>
           {noticia.escalada && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>ESCALADA</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
+          <button onClick={(e) => { e.stopPropagation(); onMove(bi, ni, -1); }} disabled={!canMoveUp} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para cima (Alt+↑)"><ArrowUp size={12} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMove(bi, ni, 1); }} disabled={!canMoveDown} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para baixo (Alt+↓)"><ArrowDown size={12} /></button>
           <Pencil size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
           <button
             onClick={(e) => { e.stopPropagation(); onAddToEscalada(); }}
@@ -1873,19 +1906,21 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           >
             <Megaphone size={12} />
           </button>
-          {canRemove && <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>}
+          {canRemove && <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }} title="Remover (Delete)"><Trash2 size={12} /></button>}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg p-2.5 space-y-2 w-full min-w-0 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
+    <div tabIndex={0} onKeyDown={handleKey} className="rounded-lg p-2.5 space-y-2 w-full min-w-0 overflow-hidden focus:outline-none focus:ring-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
       <div className="flex items-center justify-between min-w-0">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
         <div className="flex items-center gap-1 shrink-0">
-          {noticia.titulo && <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }}><ChevronUp size={12} /></button>}
-          {canRemove && <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>}
+          <button onClick={() => onMove(bi, ni, -1)} disabled={!canMoveUp} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para cima (Alt+↑)"><ArrowUp size={12} /></button>
+          <button onClick={() => onMove(bi, ni, 1)} disabled={!canMoveDown} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para baixo (Alt+↓)"><ArrowDown size={12} /></button>
+          {noticia.titulo && <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }} title="Recolher (Esc)"><ChevronUp size={12} /></button>}
+          {canRemove && <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }} title="Remover (Delete)"><Trash2 size={12} /></button>}
         </div>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 items-center w-full min-w-0 max-w-full overflow-hidden">
