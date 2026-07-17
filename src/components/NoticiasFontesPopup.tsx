@@ -299,6 +299,22 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
     if (open) loadSites(true);
   }, [open, user?.id]);
 
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(updateScrollButtons, 30);
+    const onResize = () => updateScrollButtons();
+    window.addEventListener("resize", onResize);
+    return () => { clearTimeout(t); window.removeEventListener("resize", onResize); };
+  }, [open, sites.length]);
+
+  useEffect(() => {
+    if (!activeTab) return;
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const btn = el.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement | null;
+    if (btn) btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeTab]);
+
   const addSite = async () => {
     if (!newUrl.trim() || !user) return;
     setAdding(true);
