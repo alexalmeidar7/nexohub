@@ -416,6 +416,39 @@ function NewsHorizontalScroller({
     el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
   };
 
+  // Navegação por teclado: ← → para rolar, Espaço para play/pause auto-scroll, Home/End para extremos
+  useEffect(() => {
+    const isTypingTarget = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      const el = scrollerRef.current;
+      if (!el) return;
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        nudge(1);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        nudge(-1);
+      } else if (e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        setAutoScroll((v) => !v);
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        el.scrollTo({ left: 0, behavior: "smooth" });
+      } else if (e.key === "End") {
+        e.preventDefault();
+        el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // Touch / swipe navigation
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     const el = scrollerRef.current;
