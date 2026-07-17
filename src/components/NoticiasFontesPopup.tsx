@@ -512,6 +512,32 @@ function NewsHorizontalScroller({
           <span>Auto</span>
         </button>
 
+        {/* Indicador de progresso da rolagem */}
+        <div className="absolute left-0 right-0 bottom-1 z-20 px-8 pointer-events-none">
+          <div className="flex items-center gap-3">
+            <div
+              ref={progressBarRef}
+              onClick={(e) => seekToProgress(e.clientX)}
+              className="relative flex-1 h-1.5 rounded-full overflow-hidden cursor-pointer pointer-events-auto group"
+              style={{ background: `${NEXO_DARK}22` }}
+              title="Clique para navegar"
+            >
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-150 ease-out"
+                style={{ width: `${Math.round(scrollProgress * 100)}%`, background: `linear-gradient(90deg, ${NEXO_CYAN}, ${NEXO_LIME || NEXO_CYAN})` }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ left: `${Math.round(scrollProgress * 100)}%`, background: "#fff", border: `2px solid ${NEXO_CYAN}` }}
+              />
+            </div>
+            <span className="text-[10px] font-bold tabular-nums px-2 py-0.5 rounded-full pointer-events-none" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}>
+              {visibleIndex}/{items.length}
+            </span>
+          </div>
+        </div>
+
+
         <div
           ref={scrollerRef}
           onTouchStart={onTouchStart}
