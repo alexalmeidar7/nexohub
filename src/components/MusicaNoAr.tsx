@@ -1413,8 +1413,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   <label
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "var(--layout-header-bg, #0d0446)",
-                      color: "var(--layout-header-text, #ffffff)",
+                      backgroundColor: "#C6F03C",
+                      color: "#0d0446",
+                      border: "1px solid #a8d128",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
                       cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
                     }}
@@ -1424,20 +1425,21 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       checked={isOnlineSelected}
                       onChange={toggleOnlineSource}
                       disabled={!hasValidOnlineUrl}
-                      className="w-3.5 h-3.5 accent-white"
+                      className="w-3.5 h-3.5"
+                      style={{ accentColor: "#0d0446" }}
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
+                    <span className="text-[10px] font-black whitespace-nowrap" style={{ color: "#0d0446" }}>LER ESSA</span>
                   </label>
                 </div>
 
                 {/* Status bar — hide AGUARDANDO when URL is empty */}
                 {isOnlineSelected && (music || lastSource === "online") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
                     </span>
-                    <span className="text-xs font-bold">LENDO AQUI</span>
+                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
                   </div>
                 ) : hasValidOnlineUrl ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -1454,20 +1456,24 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
 
               {/* ── CENTER DIVIDER ── */}
-                <div className="flex flex-col items-center justify-center px-3" style={{ minWidth: 90 }}>
+                <div className="flex flex-col items-center justify-center px-2" style={{ minWidth: 110 }}>
                   <div
-                    className={`rounded-xl px-3 py-4 flex flex-col items-center gap-2 ${bothActive ? "music-dual-monitor-blink" : ""}`}
+                    className={`rounded-2xl px-3 py-4 flex flex-col items-center gap-2 w-full ${bothActive ? "music-dual-monitor-blink" : ""}`}
                     style={{
                       background: bothActive
-                        ? "linear-gradient(135deg, hsl(142 72% 26%) 0%, hsl(142 72% 42%) 100%)"
-                        : "var(--layout-header-bg, #0d0446)",
-                      color: "var(--layout-header-text, #ffffff)",
+                        ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
+                        : "linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%)",
+                      color: bothActive ? "#ffffff" : "#0d0446",
+                      border: bothActive ? "1px solid #00BFF0" : "1px dashed color-mix(in srgb, #0d0446 25%, transparent)",
+                      boxShadow: bothActive ? "0 4px 12px rgba(0,191,240,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.6)",
                     }}
                   >
-                  <span className="text-[8px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: "var(--layout-header-text, #ffffff)" }}>Monitorar<br/>os dois<br/>Sources</span>
-                  <span className="text-lg" style={{ color: "var(--layout-header-text, #ffffff)" }}>↔</span>
+                    <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
+                      Lendo as<br/>duas origens
+                    </span>
+                  </div>
                 </div>
-              </div>
 
               {/* ── LOCAL SOURCE ── */}
               <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
@@ -1499,8 +1505,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   <label
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "var(--layout-header-bg, #0d0446)",
-                      color: "var(--layout-header-text, #ffffff)",
+                      backgroundColor: "#C6F03C",
+                      color: "#0d0446",
+                      border: "1px solid #a8d128",
                       opacity: hasValidLocalSource ? 1 : 0.45,
                       cursor: hasValidLocalSource ? "pointer" : "not-allowed",
                     }}
@@ -1510,9 +1517,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       checked={isLocalSelected}
                       onChange={toggleLocalSource}
                       disabled={!hasValidLocalSource}
-                      className="w-3.5 h-3.5 accent-white"
+                      className="w-3.5 h-3.5"
+                      style={{ accentColor: "#0d0446" }}
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
+                    <span className="text-[10px] font-black whitespace-nowrap" style={{ color: "#0d0446" }}>LER ESSA</span>
                   </label>
                 </div>
 
@@ -1556,12 +1564,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
                 {/* Status bar — hide AGUARDANDO when no file */}
                 {isLocalSelected && localMonitoring && (music || lastSource === "pasta") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
                     </span>
-                    <span className="text-xs font-bold">LENDO AQUI</span>
+                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
                   </div>
                 ) : localFileName ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
