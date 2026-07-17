@@ -1196,10 +1196,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                           <ChevronDown size={11} className={`transition ${isOpen ? "rotate-180" : ""}`} />
                         )}
                       </button>
-                      {children.length > 0 && isOpen && (
+                      {children.length > 0 && isOpen && menuPos && createPortal(
                         <div
-                          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[220px] rounded-xl overflow-hidden py-1"
-                          style={{ background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
+                          className="fixed z-[10002] min-w-[220px] rounded-xl overflow-hidden py-1"
+                          style={{ top: menuPos.top, left: menuPos.left, background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
                           onMouseLeave={() => setOpenMenuFor(null)}
                         >
                           <button
@@ -1229,7 +1229,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                               </button>
                             );
                           })}
-                        </div>
+                        </div>,
+                        document.body
                       )}
                     </div>
                   );
