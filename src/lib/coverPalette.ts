@@ -11,6 +11,44 @@ export interface CoverPalette {
 }
 
 const cache = new Map<string, CoverPalette | null>();
+const inflight = new Map<string, Promise<CoverPalette | null>>();
+
+const LS_PREFIX = "nexo:coverPalette:v1:";
+const LS_MAX_ENTRIES = 200;
+
+function cacheKey(url: string): string {
+  // Normaliza query strings de cache-busting (?v=...&t=...) para o mesmo asset
+  try {
+    const u = new URL(url, typeof window !== "undefined" ? window.location.href : "http://x");
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
+function lsGet(key: string): CoverPalette | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(LS_PREFIX + key);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    if (parsed === null) return null;
+    if (parsed && typeof parsed.primary === "string" && typeof parsed.secondary === "string") return parsed;
+    return undefined;
+  } catch { return undefined; }
+}
+
+function lsSet(key: string, value: CoverPalette | null) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LS_PREFIX + key, JSON.stringify(value));
+    // Poda simples: se passar do limite, remove ~25% dos mais antigos
+    const keys = Object.keys(window.localStorage).filter((k) => k.startsWith(LS_PREFIX));
+    if (keys.length > LS_MAX_ENTRIES) {
+      keys.slice(0, Math.floor(LS_MAX_ENTRIES * 0.25)).forEach((k) => window.localStorage.removeItem(k));
+    }
+  } catch { /* quota / privado */ }
+}
 
 function rgbToHex(r: number, g: number, b: number): string {
   const h = (n: number) => n.toString(16).padStart(2, "0");
