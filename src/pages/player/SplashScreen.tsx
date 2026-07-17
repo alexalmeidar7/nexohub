@@ -30,10 +30,11 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     return () => mq.removeEventListener?.("change", update);
   }, []);
 
-  // Force preload + try to play with audio; fallback to muted autoplay if blocked
+  // Force preload + try to play with audio; fallback to muted autoplay if blocked.
+  // Only starts once the src is resolved from cache so the element never reloads mid-play.
   useEffect(() => {
     const v = videoRef.current;
-    if (!v) return;
+    if (!v || !videoSrc) return;
     try {
       v.load();
       v.muted = reducedMotion ? true : false;
@@ -48,8 +49,9 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         });
       }
     } catch {}
-  }, [reducedMotion]);
+  }, [reducedMotion, videoSrc]);
 
+  // Only transition once BOTH the video finished playing AND the backend is ready
   useEffect(() => {
     if (videoEnded && ready && !finishedRef.current) {
       finishedRef.current = true;
@@ -57,6 +59,14 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
       return () => clearTimeout(t);
     }
   }, [videoEnded, ready, reducedMotion]);
+
+  // Fire onFinish only after the fade-out completes, so the parent swaps content
+  // after the splash is fully gone (avoids any perceived desync).
+  useEffect(() => {
+    if (!fadeOut) return;
+    const t = setTimeout(() => onFinish(), reducedMotion ? 200 : 900);
+    return () => clearTimeout(t);
+  }, [fadeOut, reducedMotion, onFinish]);
 
   const handleEnded = () => {
     const v = videoRef.current;
@@ -67,7 +77,6 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
       } catch {}
     }
     setVideoEnded(true);
-    onFinish();
   };
 
   const fadeDuration = reducedMotion ? 200 : 900;
@@ -86,13 +95,15 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        className="absolute inset-0 w-full h-full object-cover"
-        autoPlay
-        playsInline
-        preload="auto"
+      {videoSrc && (
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          playsInline
+          preload="auto"
+
         disablePictureInPicture
         onEnded={handleEnded}
         style={{
