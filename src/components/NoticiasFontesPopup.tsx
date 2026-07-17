@@ -302,7 +302,18 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
     setSites(list);
     setInitialLoading(false);
     if (list.length && !activeTab) setActiveTab(list[0].id);
-    if (forceFetch) list.forEach((s) => loadSiteNews(s));
+    if (forceFetch) {
+      // Load in small parallel batches to avoid overwhelming the edge function
+      const CONCURRENCY = 3;
+      let i = 0;
+      const runNext = async (): Promise<void> => {
+        const idx = i++;
+        if (idx >= list.length) return;
+        await loadSiteNews(list[idx]);
+        return runNext();
+      };
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, runNext));
+    }
   };
 
   const loadSiteNews = async (s: Site) => {
