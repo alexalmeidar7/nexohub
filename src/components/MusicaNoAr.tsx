@@ -1533,8 +1533,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    {isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
                   </button>
                 </div>
 
