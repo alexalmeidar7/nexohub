@@ -825,12 +825,43 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     {/* ponte invisível para não perder hover no gap */}
                     <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
                     <div
+                      data-submenu={item.label}
+                      role="menu"
+                      aria-label={`Submenu ${item.label}`}
+                      onKeyDown={(e) => {
+                        const items = Array.from(
+                          (e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("[data-submenu-item]")
+                        ).filter(el => !el.hasAttribute("disabled"));
+                        const currentIndex = items.findIndex(el => el === document.activeElement);
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          const next = items[(currentIndex + 1 + items.length) % items.length];
+                          next?.focus();
+                        } else if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          const prev = items[(currentIndex - 1 + items.length) % items.length];
+                          prev?.focus();
+                        } else if (e.key === "Home") {
+                          e.preventDefault();
+                          items[0]?.focus();
+                        } else if (e.key === "End") {
+                          e.preventDefault();
+                          items[items.length - 1]?.focus();
+                        } else if (e.key === "Escape" || e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setHoveredMenu(null);
+                          // devolve o foco ao botão-pai
+                          const parentBtn = (e.currentTarget.closest("[data-menu-item-root]") as HTMLElement | null)?.querySelector<HTMLButtonElement>("button");
+                          parentBtn?.focus();
+                        }
+                      }}
                       className="rounded-2xl py-3 min-w-[210px] overflow-y-auto backdrop-blur-xl"
                       style={{
                         background: `linear-gradient(180deg, ${layoutColors.navBg}f2 0%, ${layoutColors.navBg}e6 100%)`,
                         border: `1px solid ${layoutColors.navText}1f`,
                         boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px ${layoutColors.accentColor}14, inset 0 1px 0 ${layoutColors.navText}0f`,
                         maxHeight: "calc(100vh - 24px)",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
                       }}
                     >
                       <div className="flex items-center gap-2 px-4 pb-2">
@@ -847,8 +878,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                 <div className="mx-2 my-1.5" style={{ borderTop: `1px solid ${layoutColors.navText}12` }} />
                               )}
                               <button
+                                data-submenu-item
+                                role="menuitem"
                                 onClick={() => handleChildClick(child, item.label)}
-                                className="w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
+                                className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
                                 style={{
                                   color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
                                   backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
@@ -868,8 +901,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                 return (
                                   <button
                                     key={grand.label}
+                                    data-submenu-item
+                                    role="menuitem"
                                     onClick={() => handleChildClick(grand, child.label)}
-                                    className="w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
+                                    className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
                                     style={{
                                       color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
                                       backgroundColor: grandActive ? `${layoutColors.accentColor}10` : "transparent",
@@ -887,6 +922,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         })}
                       </div>
                     </div>
+
                   </AnimatedFlyout>
 
                   );
