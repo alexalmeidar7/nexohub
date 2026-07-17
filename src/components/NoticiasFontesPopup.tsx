@@ -260,6 +260,22 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const tabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollButtons = () => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  const scrollTabs = (dir: "left" | "right") => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
+  };
 
   const loadSites = async (forceFetch = true) => {
     if (!user) return;
