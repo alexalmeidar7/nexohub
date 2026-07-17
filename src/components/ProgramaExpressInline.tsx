@@ -1285,6 +1285,30 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }}
       />
 
+      <AlertDialog open={showLimparConfirm} onOpenChange={setShowLimparConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar limpeza do roteiro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso removerá todas as notícias dos blocos e também as manchetes cadastradas na escalada. Esta ação não pode ser desfeita. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
+                setEscaladaList([]);
+                toast.success("Notícias e manchetes removidas");
+              }}
+              style={{ background: "#dc2626", color: "#fff" }}
+            >
+              OK, limpar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
 
 
