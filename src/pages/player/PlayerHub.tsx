@@ -80,7 +80,7 @@ export default function PlayerHub() {
       setStep(target);
       setFadeOut(false);
       setPendingStep(null);
-    }, 500);
+    }, 700);
   }, []);
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function PlayerHub() {
     transitionTo("home");
   }, [transitionTo]);
 
-  const wrapperClass = `transition-opacity duration-500 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`;
+  const wrapperClass = `transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0 scale-[0.98]" : "opacity-100 scale-100"}`;
 
   if (step === "splash") {
     return (
