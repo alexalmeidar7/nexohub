@@ -52,6 +52,7 @@ const defaultBroadcast: BroadcastData = {
   tickerWeather: false,
   tickerQuotes: false,
   tickerSocials: false,
+  tickerUnitario: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
