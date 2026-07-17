@@ -400,13 +400,51 @@ function NewsHorizontalScroller({
     }
   };
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => setSpeedFromPointer(e.clientX);
-  const onMouseLeave = () => { targetSpeedRef.current = 0; };
+  const autoScrollRef = useRef(autoScroll);
+  useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
+
+  const onMouseEnter = () => { hoveringRef.current = true; };
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => { hoveringRef.current = true; setSpeedFromPointer(e.clientX); };
+  const onMouseLeave = () => { hoveringRef.current = false; targetSpeedRef.current = 0; };
 
   const nudge = (dir: -1 | 1) => {
     const el = scrollerRef.current;
     if (!el) return;
     el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
+  };
+
+  // Touch / swipe navigation
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const t = e.touches[0];
+    touchActiveRef.current = true;
+    touchStartXRef.current = t.clientX;
+    touchStartScrollRef.current = el.scrollLeft;
+    touchLastXRef.current = t.clientX;
+    touchLastTsRef.current = performance.now();
+    touchVelocityRef.current = 0;
+    targetSpeedRef.current = 0;
+    currentSpeedRef.current = 0;
+    momentumRef.current = 0;
+  };
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el || !touchActiveRef.current) return;
+    const t = e.touches[0];
+    const dx = touchStartXRef.current - t.clientX;
+    el.scrollLeft = touchStartScrollRef.current + dx;
+    const now = performance.now();
+    const dt = Math.max(0.001, (now - touchLastTsRef.current) / 1000);
+    touchVelocityRef.current = (touchLastXRef.current - t.clientX) / dt;
+    touchLastXRef.current = t.clientX;
+    touchLastTsRef.current = now;
+  };
+  const onTouchEnd = () => {
+    touchActiveRef.current = false;
+    // Momentum: velocidade final vira alvo com decaimento
+    const v = touchVelocityRef.current;
+    momentumRef.current = Math.max(-1600, Math.min(1600, v));
   };
 
   const toggleEye = (idx: number) => setExpanded((prev) => ({ ...prev, [idx]: !prev[idx] }));
