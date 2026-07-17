@@ -719,17 +719,90 @@ function NewsHorizontalScroller({
                     <div className="flex flex-col gap-1 px-2 pb-2">
                       {added.map((n, idx) => (
                         <div
-                          key={`${bi}-${idx}`}
-                          className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-tight"
+                          key={`${bi}-${idx}-${n.link}`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.stopPropagation();
+                            e.dataTransfer.effectAllowed = "move";
+                            e.dataTransfer.setData(
+                              "application/x-noticia-reorder",
+                              JSON.stringify({ bi, idx }),
+                            );
+                          }}
+                          onDragOver={(e) => {
+                            if (e.dataTransfer.types.includes("application/x-noticia-reorder")) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              e.dataTransfer.dropEffect = "move";
+                            }
+                          }}
+                          onDrop={(e) => {
+                            const raw = e.dataTransfer.getData("application/x-noticia-reorder");
+                            if (!raw) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              const { bi: fromBi, idx: fromIdx } = JSON.parse(raw);
+                              if (fromBi !== bi || fromIdx === idx) return;
+                              setBlocoItems((prev) => {
+                                const cur = [...(prev[bi] || [])];
+                                const [moved] = cur.splice(fromIdx, 1);
+                                cur.splice(idx, 0, moved);
+                                return { ...prev, [bi]: cur };
+                              });
+                            } catch {}
+                          }}
+                          className="flex items-start gap-1 rounded-md px-2 py-1.5 text-[11px] leading-tight cursor-move"
                           style={{
                             background: isHover ? "rgba(255,255,255,0.18)" : "rgba(0,191,240,0.08)",
                             color: isHover ? "#fff" : NEXO_DARK,
                           }}
                         >
+                          <GripVertical size={12} className="shrink-0 mt-0.5 opacity-50" />
                           <span className="font-black shrink-0 opacity-60">{idx + 1}.</span>
                           <span className="flex-1 font-semibold line-clamp-2" title={sanitizeTitle(n.title)}>
                             {sanitizeTitle(n.title)}
                           </span>
+                          <div className="flex flex-col shrink-0 -my-0.5">
+                            <button
+                              type="button"
+                              disabled={idx === 0}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBlocoItems((prev) => {
+                                  const cur = [...(prev[bi] || [])];
+                                  if (idx <= 0) return prev;
+                                  [cur[idx - 1], cur[idx]] = [cur[idx], cur[idx - 1]];
+                                  return { ...prev, [bi]: cur };
+                                });
+                              }}
+                              className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 transition"
+                              aria-label="Mover para cima"
+                              title="Mover para cima"
+                              style={{ color: "inherit" }}
+                            >
+                              <ChevronUp size={11} />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={idx === added.length - 1}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setBlocoItems((prev) => {
+                                  const cur = [...(prev[bi] || [])];
+                                  if (idx >= cur.length - 1) return prev;
+                                  [cur[idx], cur[idx + 1]] = [cur[idx + 1], cur[idx]];
+                                  return { ...prev, [bi]: cur };
+                                });
+                              }}
+                              className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 transition"
+                              aria-label="Mover para baixo"
+                              title="Mover para baixo"
+                              style={{ color: "inherit" }}
+                            >
+                              <ChevronDown size={11} />
+                            </button>
+                          </div>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -739,7 +812,7 @@ function NewsHorizontalScroller({
                                 return { ...prev, [bi]: cur.filter((_, i) => i !== idx) };
                               });
                             }}
-                            className="shrink-0 opacity-60 hover:opacity-100 transition"
+                            className="shrink-0 opacity-60 hover:opacity-100 transition mt-0.5"
                             aria-label="Remover"
                             title="Remover do bloco"
                             style={{ color: "inherit" }}
