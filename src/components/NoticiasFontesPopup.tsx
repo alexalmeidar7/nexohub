@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check } from "lucide-react";
+import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight } from "lucide-react";
 
 const NEXO_CYAN = "#00BFF0";
 const NEXO_CARD_BG = "#D6F4FB";
@@ -20,10 +20,68 @@ function decodeHtmlEntities(text: string): string {
   return el.value;
 }
 
+function pickTag(block: string, tag: string): string {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+  const m = block.match(re);
+  if (!m) return "";
+  let v = m[1].trim();
+  const cd = v.match(/<!\[CDATA\[([\s\S]*?)\]\]>/);
+  if (cd) v = cd[1].trim();
+  return v;
+}
+
+function parseRssRegex(xml: string): NewsItem[] {
+  const results: NewsItem[] = [];
+  const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
+  for (const block of blocks) {
+    let rawTitle = decodeHtmlEntities(pickTag(block, "title"));
+    let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+    if (title.includes(" - ")) title = title.split(" - ")[0].trim();
+    if (!title) continue;
+
+    // Link: <link>URL</link> or <link href="URL"/>
+    let link = pickTag(block, "link");
+    if (!link) {
+      const h = block.match(/<link[^>]*href=["']([^"']+)["']/i);
+      if (h) link = h[1];
+    }
+    link = link.trim();
+
+    const pubDate =
+      pickTag(block, "pubDate") ||
+      pickTag(block, "published") ||
+      pickTag(block, "updated") ||
+      pickTag(block, "dc:date") ||
+      pickTag(block, "date") ||
+      "";
+
+    let thumbnail = "";
+    const media = block.match(/<(?:media:content|media:thumbnail|thumbnail|content)[^>]*url=["']([^"']+)["']/i);
+    if (media) thumbnail = media[1];
+    if (!thumbnail) {
+      const enc = block.match(/<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']image[^"']*["']/i)
+        || block.match(/<enclosure[^>]*type=["']image[^"']*["'][^>]*url=["']([^"']+)["']/i);
+      if (enc) thumbnail = enc[1];
+    }
+    if (!thumbnail) {
+      const desc = pickTag(block, "description") || pickTag(block, "content:encoded") || pickTag(block, "summary");
+      const im = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (im) thumbnail = im[1];
+    }
+
+    results.push({ title, link, thumbnail, pubDate });
+  }
+  return results;
+}
+
 function parseRss(xml: string): NewsItem[] {
   const results: NewsItem[] = [];
   try {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
+    // Detect XML parse error (Chrome/Firefox both surface a parsererror element)
+    const hasParseError = !!doc.querySelector("parsererror");
+    if (hasParseError) return parseRssRegex(xml);
+
     const items = doc.querySelectorAll("item, entry");
     items.forEach((item) => {
       let rawTitle = decodeHtmlEntities(item.querySelector("title")?.textContent?.trim() || "");
@@ -52,6 +110,10 @@ function parseRss(xml: string): NewsItem[] {
       if (title) results.push({ title, link, thumbnail, pubDate });
     });
   } catch {}
+  // If DOM parsing produced nothing but the payload clearly has <item>, retry with regex
+  if (results.length === 0 && /<(item|entry)[\s>]/i.test(xml)) {
+    return parseRssRegex(xml);
+  }
   return results;
 }
 
@@ -198,6 +260,22 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const tabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollButtons = () => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  const scrollTabs = (dir: "left" | "right") => {
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "left" ? -220 : 220, behavior: "smooth" });
+  };
 
   const loadSites = async (forceFetch = true) => {
     if (!user) return;
@@ -220,6 +298,22 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   useEffect(() => {
     if (open) loadSites(true);
   }, [open, user?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(updateScrollButtons, 30);
+    const onResize = () => updateScrollButtons();
+    window.addEventListener("resize", onResize);
+    return () => { clearTimeout(t); window.removeEventListener("resize", onResize); };
+  }, [open, sites.length]);
+
+  useEffect(() => {
+    if (!activeTab) return;
+    const el = tabsScrollRef.current;
+    if (!el) return;
+    const btn = el.querySelector(`[data-tab-id="${activeTab}"]`) as HTMLElement | null;
+    if (btn) btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  }, [activeTab]);
 
   const addSite = async () => {
     if (!newUrl.trim() || !user) return;
@@ -320,37 +414,65 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
 
         {/* Tabs */}
         {sites.length > 0 && (
-          <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto border-b" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
-            {sites.map((s) => {
-              const active = s.id === activeTab;
-              const count = (newsBySite[s.id] || []).length;
-              const loading = loadingSite[s.id];
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveTab(s.id)}
-                  className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
-                  style={{
-                    background: active ? NEXO_CYAN : "#fff",
-                    color: active ? "#fff" : NEXO_DARK,
-                    border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
-                  }}
-                >
-                  <Globe size={11} />
-                  <span className="truncate max-w-[140px]">{s.name}</span>
-                  {loading ? (
-                    <Loader2 size={10} className="animate-spin" />
-                  ) : (
-                    <span className="text-[9px] opacity-80">{count}</span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex items-stretch border-b" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
+            <button
+              onClick={() => scrollTabs("left")}
+              disabled={!canScrollLeft}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70"
+              style={{ color: NEXO_DARK }}
+              aria-label="Rolar abas para esquerda"
+              title="Anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div
+              ref={tabsScrollRef}
+              onScroll={updateScrollButtons}
+              className="flex-1 flex items-center gap-1 py-2 overflow-x-auto scroll-smooth"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {sites.map((s) => {
+                const active = s.id === activeTab;
+                const count = (newsBySite[s.id] || []).length;
+                const loading = loadingSite[s.id];
+                return (
+                  <button
+                    key={s.id}
+                    data-tab-id={s.id}
+                    onClick={() => setActiveTab(s.id)}
+                    className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                    style={{
+                      background: active ? NEXO_CYAN : "#fff",
+                      color: active ? "#fff" : NEXO_DARK,
+                      border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
+                    }}
+                  >
+                    <Globe size={11} />
+                    <span className="truncate max-w-[140px]">{s.name}</span>
+                    {loading ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <span className="text-[9px] opacity-80">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => scrollTabs("right")}
+              disabled={!canScrollRight}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70 border-l"
+              style={{ color: NEXO_DARK, borderColor: "rgba(10,37,64,0.06)" }}
+              aria-label="Rolar abas para direita"
+              title="Próxima"
+            >
+              <ChevronRight size={18} />
+            </button>
             {activeSite && (
               <button
                 onClick={() => loadSiteNews(activeSite)}
                 disabled={activeLoading}
-                className="shrink-0 ml-auto h-8 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50"
+                className="shrink-0 h-8 my-2 mr-3 ml-2 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50 self-center"
                 style={{ background: "#fff", color: NEXO_DARK, border: `2px solid ${NEXO_CYAN}44` }}
                 title="Buscar notícias mais recentes"
               >
