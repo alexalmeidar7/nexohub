@@ -779,6 +779,16 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const addBloco = () => { setBlocos(prev => [...prev, { noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]); };
   const removeBloco = (bi: number) => { setBlocos(prev => prev.filter((_, i) => i !== bi)); setCollapsedBlocos(prev => { const n = new Set(prev); n.delete(bi); return n; }); };
   const toggleCollapse = (bi: number) => { setCollapsedBlocos(prev => { const n = new Set(prev); if (n.has(bi)) n.delete(bi); else n.add(bi); return n; }); };
+  const moveNoticia = (bi: number, ni: number, dir: -1 | 1) => {
+    setBlocos(prev => prev.map((b, i) => {
+      if (i !== bi) return b;
+      const target = ni + dir;
+      if (target < 0 || target >= b.noticias.length) return b;
+      const noticias = [...b.noticias];
+      [noticias[ni], noticias[target]] = [noticias[target], noticias[ni]];
+      return { ...b, noticias };
+    }));
+  };
 
   const fetchFromLink = async (bi: number, ni: number, url: string, forceReprocess = false) => {
     if (!url || !url.startsWith("http")) return;
