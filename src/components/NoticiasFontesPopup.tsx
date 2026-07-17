@@ -662,9 +662,10 @@ function NewsHorizontalScroller({
               Arraste a notícia para o bloco
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-stretch">
             {Array.from({ length: blocosCount }).map((_, bi) => {
               const isHover = hoverBloco === bi;
+              const added = blocoItems[bi] || [];
               return (
                 <div
                   key={bi}
@@ -678,22 +679,79 @@ function NewsHorizontalScroller({
                       const raw = e.dataTransfer.getData("application/x-noticia");
                       if (raw) item = JSON.parse(raw);
                     } catch {}
-                    if (item) onDropToBloco(bi, item);
+                    if (item) {
+                      const it = item;
+                      setBlocoItems((prev) => {
+                        const cur = prev[bi] || [];
+                        if (cur.some((x) => x.link === it.link && x.title === it.title)) return prev;
+                        return { ...prev, [bi]: [...cur, it] };
+                      });
+                      onDropToBloco(bi, it);
+                    }
                   }}
-                  className="flex-1 min-w-[110px] h-12 rounded-xl flex items-center justify-center text-[12px] font-black uppercase tracking-wider transition"
+                  className="flex-1 min-w-[180px] rounded-xl flex flex-col transition overflow-hidden"
                   style={{
                     background: isHover ? NEXO_CYAN : "#fff",
                     color: isHover ? "#fff" : NEXO_DARK,
                     border: `2px ${dragging || isHover ? "solid" : "dashed"} ${NEXO_CYAN}`,
                     boxShadow: isHover ? "0 6px 18px rgba(0,191,240,0.35)" : "none",
                     fontFamily: "'Montserrat', sans-serif",
+                    minHeight: "48px",
                   }}
                 >
-                  Bloco {bi + 1}
+                  <div className="flex items-center justify-between gap-2 px-3 py-2">
+                    <span className="text-[12px] font-black uppercase tracking-wider">
+                      Bloco {bi + 1}
+                    </span>
+                    {added.length > 0 && (
+                      <span
+                        className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: isHover ? "#fff" : NEXO_CYAN, color: isHover ? NEXO_CYAN : "#fff" }}
+                      >
+                        {added.length}
+                      </span>
+                    )}
+                  </div>
+                  {added.length > 0 && (
+                    <div className="flex flex-col gap-1 px-2 pb-2">
+                      {added.map((n, idx) => (
+                        <div
+                          key={`${bi}-${idx}`}
+                          className="flex items-start gap-1.5 rounded-md px-2 py-1.5 text-[11px] leading-tight"
+                          style={{
+                            background: isHover ? "rgba(255,255,255,0.18)" : "rgba(0,191,240,0.08)",
+                            color: isHover ? "#fff" : NEXO_DARK,
+                          }}
+                        >
+                          <span className="font-black shrink-0 opacity-60">{idx + 1}.</span>
+                          <span className="flex-1 font-semibold line-clamp-2" title={sanitizeTitle(n.title)}>
+                            {sanitizeTitle(n.title)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBlocoItems((prev) => {
+                                const cur = prev[bi] || [];
+                                return { ...prev, [bi]: cur.filter((_, i) => i !== idx) };
+                              });
+                            }}
+                            className="shrink-0 opacity-60 hover:opacity-100 transition"
+                            aria-label="Remover"
+                            title="Remover do bloco"
+                            style={{ color: "inherit" }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
+
         </div>
       )}
     </div>
