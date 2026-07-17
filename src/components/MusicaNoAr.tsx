@@ -1622,12 +1622,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       {uploadHistory.map((entry, i) => (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
                           <td className="px-3 py-2 font-semibold">
-                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold" style={{
-                              backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
-                              color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
-                            }}>
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold cursor-help"
+                              title={entry.source === "pasta" ? (entry.deviceName ? `Computador: ${entry.deviceName}` : "Computador: desconhecido") : "Leitura online"}
+                              style={{
+                                backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
+                                color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
+                              }}
+                            >
                               {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
-                              {entry.source === "pasta" ? "Pasta" : "Online"}
+                              {entry.source === "pasta" ? "Leitura local" : "Online"}
                             </span>
                           </td>
                           <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
