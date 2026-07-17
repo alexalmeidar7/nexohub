@@ -1571,11 +1571,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     aria-pressed={isLocalSelected}
                     className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
                     style={{
-                      backgroundColor: isLocalSelected ? "#0d0446" : "#C6F03C",
-                      color: isLocalSelected ? "#C6F03C" : "#0d0446",
-                      border: isLocalSelected ? "1px solid #0d0446" : "1px solid #a8d128",
+                      backgroundColor: isLocalSelected ? "#C6F03C" : "#ffffff",
+                      color: "#0d0446",
+                      border: isLocalSelected ? "2px solid #0d0446" : "1px solid #0d0446",
                       opacity: hasValidLocalSource ? 1 : 0.45,
-                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
                     {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
