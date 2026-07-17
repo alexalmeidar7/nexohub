@@ -20,6 +20,8 @@ interface UploadLogEntry {
   date: string;
   time: string;
   deviceName?: string;
+  artista?: string;
+  musica?: string;
 }
 
 type SourceMode = "online" | "pasta" | "both" | "none";
