@@ -327,7 +327,7 @@ function NewsHorizontalScroller({
             effectiveTarget = momentumRef.current;
           } else {
             momentumRef.current = 0;
-            if (autoScroll && !hoveringRef.current) {
+            if (autoScrollRef.current && !hoveringRef.current) {
               // Loop: se chegou ao fim, volta ao início suavemente
               if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
                 el.scrollTo({ left: 0, behavior: "smooth" });
