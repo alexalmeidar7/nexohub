@@ -81,7 +81,7 @@ function parseRss(xml: string): NewsItem[] {
   return results;
 }
 
-async function fetchXml(url: string): Promise<string> {
+async function fetchXml(url: string): Promise<{ text: string; status: number }> {
   const timeouts = [8000, 12000];
   let lastErr: unknown = null;
   for (const t of timeouts) {
@@ -91,16 +91,16 @@ async function fetchXml(url: string): Promise<string> {
       const res = await fetch(fresh.toString(), {
         headers: {
           "User-Agent": "Mozilla/5.0 (compatible; NexoHubRSSBot/1.0)",
-          "Accept": "application/rss+xml, application/xml, text/xml, */*",
+          "Accept": "application/rss+xml, application/xml, text/xml, text/html, */*",
         },
         signal: AbortSignal.timeout(t),
       });
       if (!res.ok) {
         lastErr = new Error(`HTTP ${res.status}`);
-        if (res.status >= 400 && res.status < 500) break;
+        if (res.status >= 400 && res.status < 500) return { text: "", status: res.status };
         continue;
       }
-      return await res.text();
+      return { text: await res.text(), status: res.status };
     } catch (e) {
       lastErr = e;
     }
@@ -108,18 +108,114 @@ async function fetchXml(url: string): Promise<string> {
   throw lastErr ?? new Error("fetch failed");
 }
 
+function parseHtmlNews(html: string, baseUrl: string): NewsItem[] {
+  const results: NewsItem[] = [];
+  const seen = new Set<string>();
+  let baseOrigin = "";
+  try { baseOrigin = new URL(baseUrl).origin; } catch {}
+
+  // Encontra <a href=...>...</a> com heading interno ou aria-label
+  const anchorRe = /<a\b([^>]*?)href=["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = anchorRe.exec(html)) !== null) {
+    const attrsBefore = m[1] || "";
+    const href = m[2] || "";
+    const attrsAfter = m[3] || "";
+    const inner = m[4] || "";
+    if (!href || href.startsWith("#") || href.startsWith("javascript:") || href.startsWith("mailto:")) continue;
+
+    let link = href;
+    try { link = new URL(href, baseUrl).toString(); } catch { continue; }
+    if (baseOrigin && !link.startsWith(baseOrigin)) continue;
+    try {
+      const u = new URL(link);
+      if (u.pathname === "/" || u.pathname.length < 8) continue;
+    } catch {}
+    if (seen.has(link)) continue;
+
+    // Extrai título: heading interno, aria-label ou texto puro
+    let title = "";
+    const hMatch = inner.match(/<h[1-5][^>]*>([\s\S]*?)<\/h[1-5]>/i);
+    if (hMatch) title = hMatch[1];
+    if (!title) {
+      const attrs = attrsBefore + " " + attrsAfter;
+      const al = attrs.match(/aria-label=["']([^"']+)["']/i) || attrs.match(/\btitle=["']([^"']+)["']/i);
+      if (al) title = al[1];
+    }
+    if (!title) title = inner;
+    title = decodeHtmlEntities(title.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || title.length < 20 || title.length > 220) continue;
+    if (title.includes("|")) title = title.split("|")[0].trim();
+
+    // Imagem interna, se houver
+    let thumbnail = "";
+    const imgMatch = inner.match(/<img[^>]+(?:src|data-src|data-lazy-src)=["']([^"']+)["']/i);
+    if (imgMatch) {
+      try { thumbnail = new URL(imgMatch[1], baseUrl).toString(); } catch {}
+    }
+
+    seen.add(link);
+    results.push({ title, link, thumbnail, pubDate: "" });
+    if (results.length >= 15) break;
+  }
+  return results;
+}
+
+const CANDIDATE_PATHS = ["/feed/", "/feed", "/rss/", "/rss", "/rss.xml", "/index.xml", "/dynamo/rss2.xml", "/feed/rss/", "/atom.xml"];
+
+async function discoverAndParse(rssUrl: string): Promise<{ items: NewsItem[]; note?: string }> {
+  // 1) URL original
+  try {
+    const { text, status } = await fetchXml(rssUrl);
+    if (text) {
+      const items = parseRss(text);
+      if (items.length) return { items };
+      // Sem items de RSS → tenta HTML scrape na mesma resposta
+      const html = parseHtmlNews(text, rssUrl);
+      if (html.length) return { items: html, note: "html-scrape" };
+    } else if (status && status >= 400 && status < 500) {
+      // 404/410 → cai direto para auto-discovery
+    }
+  } catch (_e) { /* segue para auto-discovery */ }
+
+  // 2) Auto-discovery de feeds
+  try {
+    const base = new URL(rssUrl);
+    const current = base.pathname.replace(/\/$/, "");
+    for (const path of CANDIDATE_PATHS) {
+      if (current === path.replace(/\/$/, "")) continue;
+      const tryUrl = `${base.origin}${path}`;
+      try {
+        const { text } = await fetchXml(tryUrl);
+        if (!text) continue;
+        const items = parseRss(text);
+        if (items.length) return { items, note: `discovered:${path}` };
+      } catch {}
+    }
+    // 3) Última tentativa: raiz do domínio como HTML
+    try {
+      const { text } = await fetchXml(base.origin + "/");
+      if (text) {
+        const html = parseHtmlNews(text, base.origin + "/");
+        if (html.length) return { items: html, note: "root-html-scrape" };
+      }
+    } catch {}
+  } catch {}
+
+  return { items: [] };
+}
+
 async function refreshSite(admin: any, site: { id: string; user_id: string; rss_url: string }) {
   try {
-    const xml = await fetchXml(site.rss_url);
-    const items = parseRss(xml);
+    const { items, note } = await discoverAndParse(site.rss_url);
     await admin.from("news_cache").upsert({
       site_id: site.id,
       user_id: site.user_id,
       items,
       updated_at: new Date().toISOString(),
-      last_error: null,
+      last_error: items.length ? null : "sem-items",
     });
-    return { site_id: site.id, ok: true, count: items.length };
+    return { site_id: site.id, ok: items.length > 0, count: items.length, note };
   } catch (e: any) {
     await admin.from("news_cache").upsert({
       site_id: site.id,
@@ -131,6 +227,7 @@ async function refreshSite(admin: any, site: { id: string; user_id: string; rss_
     return { site_id: site.id, ok: false, error: e?.message };
   }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
