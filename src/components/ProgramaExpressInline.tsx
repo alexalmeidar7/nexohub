@@ -1880,13 +1880,22 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
 
   if (collapsed && noticia.titulo) {
     return (
-      <div className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }} onClick={() => setCollapsed(false)}>
+      <div
+        tabIndex={0}
+        onKeyDown={handleKey}
+        title="Alt+↑/↓ mover · Delete remover · Enter abrir"
+        className="rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer hover:opacity-90 transition-all overflow-hidden focus:outline-none focus:ring-2"
+        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)" }}
+        onClick={() => setCollapsed(false)}
+      >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <p className="text-[10px] font-bold uppercase shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
           <p className="text-[12px] truncate font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{noticia.titulo}</p>
           {noticia.escalada && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2ec1f7) 15%, transparent)", color: "var(--layout-accent-color, #2ec1f7)" }}>ESCALADA</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0 ml-2">
+          <button onClick={(e) => { e.stopPropagation(); onMove(bi, ni, -1); }} disabled={!canMoveUp} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para cima (Alt+↑)"><ArrowUp size={12} /></button>
+          <button onClick={(e) => { e.stopPropagation(); onMove(bi, ni, 1); }} disabled={!canMoveDown} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para baixo (Alt+↓)"><ArrowDown size={12} /></button>
           <Pencil size={12} style={{ color: "var(--layout-icon-color, #888)" }} />
           <button
             onClick={(e) => { e.stopPropagation(); onAddToEscalada(); }}
@@ -1897,19 +1906,21 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
           >
             <Megaphone size={12} />
           </button>
-          {canRemove && <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>}
+          {canRemove && <button onClick={(e) => { e.stopPropagation(); onRemove(bi, ni); }} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }} title="Remover (Delete)"><Trash2 size={12} /></button>}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg p-2.5 space-y-2 w-full min-w-0 overflow-hidden" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
+    <div tabIndex={0} onKeyDown={handleKey} className="rounded-lg p-2.5 space-y-2 w-full min-w-0 overflow-hidden focus:outline-none focus:ring-2" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 80%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)", maxWidth: "100%", boxSizing: "border-box" }}>
       <div className="flex items-center justify-between min-w-0">
         <p className="text-[10px] font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Notícia {ni + 1}</p>
         <div className="flex items-center gap-1 shrink-0">
-          {noticia.titulo && <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }}><ChevronUp size={12} /></button>}
-          {canRemove && <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }}><Trash2 size={12} /></button>}
+          <button onClick={() => onMove(bi, ni, -1)} disabled={!canMoveUp} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para cima (Alt+↑)"><ArrowUp size={12} /></button>
+          <button onClick={() => onMove(bi, ni, 1)} disabled={!canMoveDown} className="p-0.5 rounded hover:opacity-70 disabled:opacity-20" style={{ color: NEXO_CYAN }} title="Mover para baixo (Alt+↓)"><ArrowDown size={12} /></button>
+          {noticia.titulo && <button onClick={() => setCollapsed(true)} className="p-0.5 rounded hover:opacity-70" style={{ color: "var(--layout-icon-color, #888)" }} title="Recolher (Esc)"><ChevronUp size={12} /></button>}
+          {canRemove && <button onClick={() => onRemove(bi, ni)} className="p-0.5 rounded hover:opacity-70" style={{ color: "#ef4444" }} title="Remover (Delete)"><Trash2 size={12} /></button>}
         </div>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-1.5 items-center w-full min-w-0 max-w-full overflow-hidden">
