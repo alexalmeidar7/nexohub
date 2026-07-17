@@ -452,6 +452,41 @@ function NewsHorizontalScroller({
 
   const toggleEye = (idx: number) => setExpanded((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
+  const updateProgress = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const max = Math.max(1, el.scrollWidth - el.clientWidth);
+    const p = Math.max(0, Math.min(1, el.scrollLeft / max));
+    setScrollProgress(p);
+    // Estimar item central visível
+    const total = items.length || 1;
+    const center = el.scrollLeft + el.clientWidth / 2;
+    const approxItemW = el.scrollWidth / total;
+    const idx = Math.max(1, Math.min(total, Math.round(center / approxItemW)));
+    setVisibleIndex(idx);
+  };
+
+  useEffect(() => { updateProgress(); }, [items, siteId]);
+
+  // Atualiza progresso a cada frame de scroll (o loop tick move scrollLeft direto, sem disparar onScroll de forma confiável)
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => { updateProgress(); raf = requestAnimationFrame(loop); };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
+
+  const seekToProgress = (clientX: number) => {
+    const el = scrollerRef.current;
+    const bar = progressBarRef.current;
+    if (!el || !bar) return;
+    const rect = bar.getBoundingClientRect();
+    const t = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const max = Math.max(0, el.scrollWidth - el.clientWidth);
+    el.scrollTo({ left: t * max, behavior: "smooth" });
+  };
+
   return (
     <div className="relative h-full w-full flex flex-col">
       {/* Área rolável */}
