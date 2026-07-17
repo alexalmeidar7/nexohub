@@ -1197,18 +1197,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         </div>
         <button
-          onClick={() => {
-            if (editingId && !showPastePopup) {
-              setPasteText(generatePlainText());
-            }
-            setShowPastePopup(true);
-          }}
+          onClick={() => setShowNoticiasFontes(true)}
           className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
           style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? NEXO_DARK : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid ${NEXO_CYAN}` : "none", borderRadius: renderAsModal ? 999 : 8, marginRight: renderAsModal ? 44 : 0 }}
         >
-          <ClipboardPaste size={13} /> Colar Roteiro
+          <Newspaper size={13} /> Notícias de Fontes
         </button>
       </div>
+
+      <NoticiasFontesPopup open={showNoticiasFontes} onOpenChange={setShowNoticiasFontes} />
+
+
 
 
       {afterHeader}
