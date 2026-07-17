@@ -512,9 +512,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5" style={{ background: "#FAFCFD" }}>
+        <div className="flex-1 min-h-0 relative" style={{ background: "#FAFCFD" }}>
           {initialLoading && (
-            <div className="flex items-center justify-center py-10" style={{ color: NEXO_DARK }}>
+            <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
               <Loader2 size={20} className="animate-spin" />
             </div>
           )}
@@ -538,53 +538,19 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
           {!initialLoading && activeSite && (
             <>
               {activeLoading && activeNews.length === 0 ? (
-                <div className="flex items-center justify-center py-10" style={{ color: NEXO_DARK }}>
+                <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
                   <Loader2 size={20} className="animate-spin" />
                 </div>
               ) : activeNews.length === 0 ? (
                 <p className="text-xs text-center py-10" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhuma notícia encontrada nesta fonte.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {activeNews.map((n, i) => {
-                    const dateLabel = formatPubDate(n.pubDate);
-                    return (
-                      <a
-                        key={`${activeSite.id}-${i}`}
-                        href={n.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group rounded-xl overflow-hidden flex flex-col hover:-translate-y-0.5 transition"
-                        style={{ background: "#fff", border: `1px solid ${NEXO_CYAN}22`, boxShadow: "0 1px 3px rgba(10,37,64,0.06)" }}
-                      >
-                        <div className="aspect-video w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A` }}>
-                          {n.thumbnail ? (
-                            <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
-                              <Newspaper size={22} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-3 flex-1 flex flex-col gap-1.5">
-                          <p className="text-[11px] font-semibold leading-snug line-clamp-3" style={{ color: NEXO_DARK }}>{n.title}</p>
-                          <div className="mt-auto flex items-center justify-between gap-2">
-                            {dateLabel ? (
-                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ background: `${NEXO_CYAN}18`, color: NEXO_DARK }}>{dateLabel}</span>
-                            ) : <span />}
-                            <span className="text-[10px] inline-flex items-center gap-1 opacity-70 group-hover:opacity-100" style={{ color: NEXO_CYAN }}>
-                              Abrir <ExternalLink size={10} />
-                            </span>
-                          </div>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
+                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} />
               )}
             </>
           )}
         </div>
       </div>
+
 
       {/* Settings sub-popup */}
       {showSettings && (
