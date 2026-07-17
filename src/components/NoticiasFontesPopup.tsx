@@ -452,7 +452,7 @@ function NewsHorizontalScroller({
   return (
     <div className="relative h-full w-full flex flex-col">
       {/* Área rolável */}
-      <div className="relative flex-1 min-h-0" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <div className="relative flex-1 min-h-0" onMouseEnter={onMouseEnter} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
         <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
 
@@ -463,10 +463,25 @@ function NewsHorizontalScroller({
           <ChevronRight size={18} />
         </button>
 
+        <button
+          onClick={() => setAutoScroll((v) => !v)}
+          className="absolute right-2 top-2 z-20 h-8 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold shadow-md hover:scale-105 transition"
+          style={{ background: autoScroll ? NEXO_CYAN : "#fff", color: autoScroll ? "#fff" : NEXO_DARK, border: `1px solid ${NEXO_CYAN}66` }}
+          aria-label={autoScroll ? "Pausar rolagem automática" : "Ativar rolagem automática"}
+          title={autoScroll ? "Pausar auto-rolagem" : "Ativar auto-rolagem"}
+        >
+          {autoScroll ? <Pause size={14} /> : <Play size={14} />}
+          <span>Auto</span>
+        </button>
+
         <div
           ref={scrollerRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={onTouchEnd}
           className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6"
-          style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position" }}
+          style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position", touchAction: "pan-y" }}
         >
           {items.map((n, i) => {
             const dateLabel = formatPubDate(n.pubDate);
