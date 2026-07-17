@@ -1671,18 +1671,26 @@ export default function CenarioInterativoPage() {
 
   return (
     <div className="animate-fade-in space-y-5">
-      <div className="rounded-2xl overflow-hidden" style={pageStyle}>
-        <div className="px-6 py-4 flex items-center gap-3" style={headerStyle}>
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(255,255,255,0.15)" }}>
-            <MonitorPlay size={18} />
+      {/* Header — Condensed broadcast dashboard */}
+      <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#00BFF0] flex items-center justify-center text-white">
+            <MonitorPlay className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold drop-shadow-sm" style={{ color: "inherit" }}>Cenário Interativo</h3>
-            <p className="text-xs drop-shadow-sm" style={{ opacity: 0.8, color: "inherit" }}>Configure os elementos do cenário para suas transmissões</p>
+            <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest leading-none">Cenário Interativo</h1>
+            <p className="text-[11px] text-[#64748B] mt-1">Configure os elementos do cenário para suas transmissões</p>
           </div>
         </div>
+        <div className="flex items-center gap-2">
+          {saving && <span className="text-[10px] text-[#64748B] animate-pulse uppercase tracking-wider font-bold">Salvando…</span>}
+          {!saving && savedFlash && <span className="text-[10px] text-[#0A2540] uppercase tracking-wider font-bold">✓ Salvo</span>}
+        </div>
+      </div>
 
+      <div className="rounded-2xl overflow-hidden bg-[#D6F4FB] border border-[#00BFF0]/30">
         <div className="p-5 flex flex-col lg:flex-row gap-6" style={{ color: textColor }}>
+
 
           {/* ── LEFT: Configuration ── */}
           <div className="flex-1 min-w-0">
