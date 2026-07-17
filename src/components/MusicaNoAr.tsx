@@ -769,7 +769,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       if (upErr) throw upErr;
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
-      setUploadHistory(await addUploadLogToDb(uid, "pasta", deviceNameRef.current));
+      const parsedForLog = parseXmlString(text);
+      setUploadHistory(await addUploadLogToDb(
+        uid,
+        "pasta",
+        deviceNameRef.current,
+        parsedForLog?.artista,
+        parsedForLog?.titulo,
+      ));
     } catch (err) {
       console.warn("[MusicaNoAr] syncToStorage failed:", err);
     }
