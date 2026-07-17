@@ -1208,27 +1208,56 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               </button>
             </div>
 
-            <div className="px-5 py-4 flex items-center gap-2 border-b" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
-                <Globe size={16} />
+            <div className="px-5 py-4 border-b space-y-2" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
+                  <Globe size={16} />
+                </div>
+                <input
+                  type="text"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder="URL do feed RSS (ex.: https://g1.globo.com/rss/g1/)"
+                  className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
+                  style={{ background: "#F5FAFC", border: `2px solid ${NEXO_CYAN}33`, color: NEXO_DARK }}
+                />
+                <button
+                  onClick={addSite}
+                  disabled={adding || !newUrl.trim() || (!!newParentId && !newCategory.trim())}
+                  className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90"
+                  style={{ background: NEXO_CYAN, color: "#fff" }}
+                >
+                  {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
+                </button>
               </div>
-              <input
-                type="text"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
-                placeholder="URL do feed RSS (ex.: https://g1.globo.com/rss/g1/)"
-                className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
-                style={{ background: "#F5FAFC", border: `2px solid ${NEXO_CYAN}33`, color: NEXO_DARK }}
-              />
-              <button
-                onClick={addSite}
-                disabled={adding || !newUrl.trim()}
-                className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90"
-                style={{ background: NEXO_CYAN, color: "#fff" }}
-              >
-                {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
-              </button>
+              <div className="flex items-center gap-2 pl-11">
+                <select
+                  value={newParentId}
+                  onChange={(e) => setNewParentId(e.target.value)}
+                  className="h-9 px-2 rounded-lg text-[11px] outline-none font-semibold"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK, minWidth: 160 }}
+                  title="Vincular como subfonte de uma fonte principal"
+                >
+                  <option value="">— Fonte principal —</option>
+                  {sites.filter((x) => !x.parent_id).map((p) => (
+                    <option key={p.id} value={p.id}>Subfonte de: {p.name}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder={newParentId ? "Nome da subcategoria (ex.: Política)" : "Categoria (opcional, só p/ subfontes)"}
+                  disabled={!newParentId}
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none disabled:opacity-50"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                />
+              </div>
+              <p className="text-[10px] pl-11" style={{ color: "rgba(10,37,64,0.55)" }}>
+                Dica: para adicionar só a editoria de Política do G1, escolha "Subfonte de: g1.globo.com" e nomeie a categoria "Política".
+              </p>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2" style={{ background: "#FAFCFD" }}>
