@@ -275,9 +275,11 @@ function NewsHorizontalScroller({
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
-  const targetSpeedRef = useRef(0);
-  const currentSpeedRef = useRef(0);
-  const accRef = useRef(0);
+  const lastTsRef = useRef<number>(0);
+  const lastFrameRef = useRef<number>(0);
+  const targetSpeedRef = useRef(0);   // px/segundo desejado (sinal + magnitude)
+  const currentSpeedRef = useRef(0);  // px/segundo suavizado
+  const accRef = useRef(0);           // acumulador subpixel
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [dragging, setDragging] = useState(false);
   const draggedItemRef = useRef<NewsItem | null>(null);
@@ -289,21 +291,37 @@ function NewsHorizontalScroller({
     targetSpeedRef.current = 0;
     currentSpeedRef.current = 0;
     accRef.current = 0;
+    lastTsRef.current = 0;
+    lastFrameRef.current = 0;
     setExpanded({});
   }, [siteId]);
 
-  const tick = () => {
+  // Loop time-based com cap ~60 FPS e lerp exponencial (independente de FPS)
+  const tick = (ts: number) => {
     const el = scrollerRef.current;
     if (el) {
-      currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * 0.18;
-      const v = currentSpeedRef.current;
-      if (Math.abs(v) > 0.05) {
-        accRef.current += v;
-        const step = Math.trunc(accRef.current);
-        if (step !== 0) { el.scrollLeft += step; accRef.current -= step; }
-      } else {
-        currentSpeedRef.current = 0;
-        accRef.current = 0;
+      // Cap de FPS ≈60 → mínimo ~15.5ms entre atualizações
+      const sinceFrame = ts - lastFrameRef.current;
+      if (sinceFrame >= 15.5) {
+        const prev = lastTsRef.current || ts;
+        // dt em segundos, com clamp para evitar saltos após aba oculta
+        const dt = Math.min(0.05, Math.max(0.001, (ts - prev) / 1000));
+        lastTsRef.current = ts;
+        lastFrameRef.current = ts;
+
+        // Suavização exponencial: converge ~85% em 200ms, independente do FPS
+        const smoothing = 1 - Math.exp(-dt / 0.09);
+        currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * smoothing;
+
+        const v = currentSpeedRef.current; // px/s
+        if (Math.abs(v) > 2) {
+          accRef.current += v * dt;
+          const step = Math.trunc(accRef.current);
+          if (step !== 0) { el.scrollLeft += step; accRef.current -= step; }
+        } else {
+          currentSpeedRef.current = 0;
+          accRef.current = 0;
+        }
       }
     }
     rafRef.current = requestAnimationFrame(tick);
@@ -315,22 +333,45 @@ function NewsHorizontalScroller({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Pausa quando aba oculta (evita “salto” ao voltar)
+  useEffect(() => {
+    const onVis = () => {
+      if (document.hidden) {
+        targetSpeedRef.current = 0;
+        currentSpeedRef.current = 0;
+        accRef.current = 0;
+        lastTsRef.current = 0;
+      }
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  // Velocidade máxima em px/s (antes era ~11 px/frame ≈ 660 px/s a 60fps)
+  const MAX_SPEED = 900;
+  const BASE_SPEED = 90;
+
+  const setSpeedFromPointer = (clientX: number) => {
     const el = scrollerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const zone = Math.min(160, rect.width * 0.16);
+    const x = clientX - rect.left;
+    const zone = Math.min(180, rect.width * 0.18);
     if (x < zone) {
-      const intensity = 1 - x / zone;
-      targetSpeedRef.current = -(1.2 + intensity * intensity * 10);
+      const t = Math.max(0, Math.min(1, 1 - x / zone));
+      // easeInOutCubic para arranque/parada extra suaves nas bordas
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      targetSpeedRef.current = -(BASE_SPEED + eased * (MAX_SPEED - BASE_SPEED));
     } else if (x > rect.width - zone) {
-      const intensity = 1 - (rect.width - x) / zone;
-      targetSpeedRef.current = 1.2 + intensity * intensity * 10;
+      const t = Math.max(0, Math.min(1, 1 - (rect.width - x) / zone));
+      const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      targetSpeedRef.current = BASE_SPEED + eased * (MAX_SPEED - BASE_SPEED);
     } else {
       targetSpeedRef.current = 0;
     }
   };
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => setSpeedFromPointer(e.clientX);
   const onMouseLeave = () => { targetSpeedRef.current = 0; };
 
   const nudge = (dir: -1 | 1) => {
