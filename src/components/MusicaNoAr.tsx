@@ -679,6 +679,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       lastOnlineSuccessRef.current = Date.now();
       setOnlineDelay(false);
       setOnlineError(null);
+      setOnlineActivating(false);
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
@@ -822,6 +823,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       lastLocalSuccessRef.current = Date.now();
       setLocalDelay(false);
       setLocalError(null);
+      setLocalActivating(false);
 
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
@@ -968,6 +970,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           lastLocalSuccessRef.current = Date.now();
           setLocalDelay(false);
           setLocalError(null);
+          setLocalActivating(false);
           const parsed = parseXmlString(text);
           if (parsed) processMusicRef.current(parsed, "pasta");
           else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
@@ -1082,15 +1085,33 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const progress = sliderResetting ? 0 : rawProgress;
 
+  const [onlineActivating, setOnlineActivating] = useState(false);
+  const [localActivating, setLocalActivating] = useState(false);
+
   const toggleOnlineSource = () => {
     if (!hasValidOnlineUrl) return;
-    const nextMode = buildSourceMode(!isOnlineSelected, isLocalSelected);
+    const willActivate = !isOnlineSelected;
+    const nextMode = buildSourceMode(willActivate, isLocalSelected);
+    if (willActivate) {
+      setOnlineActivating(true);
+      // Safety timeout — clear after 12s even if no read arrives
+      window.setTimeout(() => setOnlineActivating(false), 12000);
+    } else {
+      setOnlineActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
   const toggleLocalSource = () => {
     if (!hasValidLocalSource) return;
+    const willActivate = !isLocalSelected;
     const nextMode = buildSourceMode(isOnlineSelected, !isLocalSelected);
+    if (willActivate) {
+      setLocalActivating(true);
+      window.setTimeout(() => setLocalActivating(false), 12000);
+    } else {
+      setLocalActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
@@ -1423,8 +1444,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    {isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                    {onlineActivating ? <Loader2 size={12} className="animate-spin" /> : isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{onlineActivating ? "LENDO..." : "LER ESSA"}</span>
                   </button>
                 </div>
 
@@ -1512,8 +1533,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    {isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
                   </button>
                 </div>
 
