@@ -1410,13 +1410,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <Check size={16} />
                   </button>
                   <label
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
+                    className="h-10 w-[104px] flex items-center justify-center gap-1.5 px-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
                       backgroundColor: "#C6F03C",
                       color: "#0d0446",
                       border: "1px solid #a8d128",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
                       cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
+                      boxShadow: isOnlineSelected ? "inset 0 0 0 2px #0d0446" : undefined,
                     }}
                   >
                     <input
@@ -1427,7 +1428,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       className="w-3.5 h-3.5"
                       style={{ accentColor: "#0d0446" }}
                     />
-                    <span className="text-[10px] font-black whitespace-nowrap" style={{ color: "#0d0446" }}>LER ESSA</span>
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wide" style={{ color: "#0d0446" }}>LER ESSA</span>
                   </label>
                 </div>
 
