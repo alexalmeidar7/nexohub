@@ -687,7 +687,12 @@ function NewsHorizontalScroller({
                       const it = item;
                       setBlocoItems((prev) => {
                         const cur = prev[bi] || [];
-                        if (cur.some((x) => x.link === it.link && x.title === it.title)) return prev;
+                        if (cur.some((x) => x.link === it.link && x.title === it.title)) {
+                          toast.warning("Notícia já adicionada neste bloco", {
+                            description: it.title.slice(0, 80),
+                          });
+                          return prev;
+                        }
                         return { ...prev, [bi]: [...cur, it] };
                       });
                       onDropToBloco(bi, it);
