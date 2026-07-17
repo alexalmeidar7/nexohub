@@ -460,6 +460,9 @@ export default function InfoMusicSection() {
           </Button>
         </div>
       </div>
+      </div>
+
+
 
 
       {nowPlaying && (
