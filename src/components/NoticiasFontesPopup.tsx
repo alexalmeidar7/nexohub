@@ -268,11 +268,15 @@ function NewsHorizontalScroller({
   siteId,
   blocosCount,
   onDropToBloco,
+  initialBlocoItems,
+  onBlocoItemsChange,
 }: {
   items: NewsItem[];
   siteId: string;
   blocosCount: number;
   onDropToBloco: (bi: number, item: NewsItem) => void;
+  initialBlocoItems?: Record<number, NewsItem[]>;
+  onBlocoItemsChange?: (bi: number, items: NewsItem[]) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -285,7 +289,7 @@ function NewsHorizontalScroller({
   const [dragging, setDragging] = useState(false);
   const draggedItemRef = useRef<NewsItem | null>(null);
   const [hoverBloco, setHoverBloco] = useState<number | null>(null);
-  const [blocoItems, setBlocoItems] = useState<Record<number, NewsItem[]>>({});
+  const [blocoItems, setBlocoItems] = useState<Record<number, NewsItem[]>>(() => initialBlocoItems || {});
   const [autoScroll, setAutoScroll] = useState(true);
   const autoScrollRef = useRef(true);
   const [scrollProgress, setScrollProgress] = useState(0); // 0..1
@@ -301,7 +305,23 @@ function NewsHorizontalScroller({
   const momentumRef = useRef(0);
   const AUTO_SPEED = 55; // px/s do modo auto
 
-  // Reset scroll + estado ao trocar de site
+  // Hidrata blocos a partir das notícias já existentes quando a prop mudar
+  useEffect(() => {
+    if (initialBlocoItems) setBlocoItems(initialBlocoItems);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBlocoItems]);
+
+  // Wrapper: atualiza estado interno e notifica o pai
+  const mutateBloco = (bi: number, updater: (cur: NewsItem[]) => NewsItem[]) => {
+    setBlocoItems((prev) => {
+      const cur = prev[bi] || [];
+      const next = updater(cur);
+      onBlocoItemsChange?.(bi, next);
+      return { ...prev, [bi]: next };
+    });
+  };
+
+  // Reset scroll ao trocar de site
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
     targetSpeedRef.current = 0;
