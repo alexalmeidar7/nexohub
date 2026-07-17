@@ -806,7 +806,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               ) : activeNews.length === 0 ? (
                 <p className="text-xs text-center py-10" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhuma notícia encontrada nesta fonte.</p>
               ) : (
-                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} />
+                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} blocosCount={blocosCount} onDropToBloco={(bi, item) => onAddNoticiaToBloco?.(bi, item)} />
               )}
             </>
           )}
