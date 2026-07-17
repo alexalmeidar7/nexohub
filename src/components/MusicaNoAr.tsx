@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1409,27 +1409,23 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
                     <Check size={16} />
                   </button>
-                  <label
-                    className="h-10 w-[104px] flex items-center justify-center gap-1.5 px-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
+                  <button
+                    type="button"
+                    onClick={toggleOnlineSource}
+                    disabled={!hasValidOnlineUrl}
+                    aria-pressed={isOnlineSelected}
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: "#C6F03C",
-                      color: "#0d0446",
-                      border: "1px solid #a8d128",
+                      backgroundColor: isOnlineSelected ? "#0d0446" : "#C6F03C",
+                      color: isOnlineSelected ? "#C6F03C" : "#0d0446",
+                      border: isOnlineSelected ? "1px solid #0d0446" : "1px solid #a8d128",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
-                      cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
-                      boxShadow: isOnlineSelected ? "inset 0 0 0 2px #0d0446" : undefined,
+                      boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isOnlineSelected}
-                      onChange={toggleOnlineSource}
-                      disabled={!hasValidOnlineUrl}
-                      className="w-3.5 h-3.5"
-                      style={{ accentColor: "#0d0446" }}
-                    />
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wide" style={{ color: "#0d0446" }}>LER ESSA</span>
-                  </label>
+                    {isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                  </button>
                 </div>
 
                 {/* Status bar — hide AGUARDANDO when URL is empty */}
@@ -1502,27 +1498,23 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   >
                     <Upload size={14} />
                   </button>
-                  <label
-                    className="h-10 w-[104px] flex items-center justify-center gap-1.5 px-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
+                  <button
+                    type="button"
+                    onClick={toggleLocalSource}
+                    disabled={!hasValidLocalSource}
+                    aria-pressed={isLocalSelected}
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: "#C6F03C",
-                      color: "#0d0446",
-                      border: "1px solid #a8d128",
+                      backgroundColor: isLocalSelected ? "#0d0446" : "#C6F03C",
+                      color: isLocalSelected ? "#C6F03C" : "#0d0446",
+                      border: isLocalSelected ? "1px solid #0d0446" : "1px solid #a8d128",
                       opacity: hasValidLocalSource ? 1 : 0.45,
-                      cursor: hasValidLocalSource ? "pointer" : "not-allowed",
-                      boxShadow: isLocalSelected ? "inset 0 0 0 2px #0d0446" : undefined,
+                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={isLocalSelected}
-                      onChange={toggleLocalSource}
-                      disabled={!hasValidLocalSource}
-                      className="w-3.5 h-3.5"
-                      style={{ accentColor: "#0d0446" }}
-                    />
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wide" style={{ color: "#0d0446" }}>LER ESSA</span>
-                  </label>
+                    {isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                  </button>
                 </div>
 
                 <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
