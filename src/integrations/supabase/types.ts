@@ -2551,20 +2551,26 @@ export type Database = {
       }
       xml_upload_history: {
         Row: {
+          artista: string | null
           created_at: string
           id: string
+          musica: string | null
           source: string
           user_id: string
         }
         Insert: {
+          artista?: string | null
           created_at?: string
           id?: string
+          musica?: string | null
           source?: string
           user_id: string
         }
         Update: {
+          artista?: string | null
           created_at?: string
           id?: string
+          musica?: string | null
           source?: string
           user_id?: string
         }

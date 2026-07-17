@@ -20,6 +20,8 @@ interface UploadLogEntry {
   date: string;
   time: string;
   deviceName?: string;
+  artista?: string;
+  musica?: string;
 }
 
 type SourceMode = "online" | "pasta" | "both" | "none";
@@ -251,28 +253,57 @@ async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]
   try {
     const { data } = await supabase
       .from("xml_upload_history")
-      .select("source, created_at")
+      .select("id, source, created_at, artista, musica")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(3);
     if (!data) return [];
     return data.map((row: any) => {
       const d = new Date(row.created_at);
-      // source may contain device name: "pasta|DeviceName" or just "pasta"
       const [rawSource, deviceName] = (row.source as string).split("|");
       return {
         source: (rawSource === "pasta" ? "pasta" : "online") as "pasta" | "online",
         date: d.toLocaleDateString("pt-BR"),
         time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         deviceName: deviceName || undefined,
+        artista: row.artista || undefined,
+        musica: row.musica || undefined,
       };
     });
   } catch { return []; }
 }
 
-async function addUploadLogToDb(userId: string, source: "pasta" | "online", deviceName?: string): Promise<UploadLogEntry[]> {
+async function addUploadLogToDb(
+  userId: string,
+  source: "pasta" | "online",
+  deviceName?: string,
+  artista?: string,
+  musica?: string,
+): Promise<UploadLogEntry[]> {
   const sourceValue = source === "pasta" && deviceName ? `pasta|${deviceName}` : source;
-  await supabase.from("xml_upload_history").insert({ user_id: userId, source: sourceValue });
+  await supabase.from("xml_upload_history").insert({
+    user_id: userId,
+    source: sourceValue,
+    artista: artista || null,
+    musica: musica || null,
+  } as any);
+  // Mantém apenas os 3 registros mais recentes por usuário
+  try {
+    const { data: keep } = await supabase
+      .from("xml_upload_history")
+      .select("id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3);
+    const keepIds = (keep || []).map((r: any) => r.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("xml_upload_history")
+        .delete()
+        .eq("user_id", userId)
+        .not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
+    }
+  } catch {}
   return loadUploadHistoryFromDb(userId);
 }
 
@@ -738,7 +769,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       if (upErr) throw upErr;
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
-      setUploadHistory(await addUploadLogToDb(uid, "pasta", deviceNameRef.current));
+      const parsedForLog = parseXmlString(text);
+      setUploadHistory(await addUploadLogToDb(
+        uid,
+        "pasta",
+        deviceNameRef.current,
+        parsedForLog?.artista,
+        parsedForLog?.titulo,
+      ));
     } catch (err) {
       console.warn("[MusicaNoAr] syncToStorage failed:", err);
     }
@@ -1328,9 +1366,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             {/* Two columns with center divider */}
             <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 6%, var(--layout-page-bg, #ffffff))", border: "2px solid color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
-                  <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)" }}>
+                    <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  </span>
                   Origem Online
                 </h4>
                 <div className="flex gap-1.5">
@@ -1413,9 +1454,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 6%, var(--layout-page-bg, #ffffff))", border: "2px solid color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 15%, var(--layout-page-bg, #ffffff))" }}>
-                <h4 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>
-                  <FolderOpen size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
+                    <FolderOpen size={12} style={{ color: "#16a34a" }} />
+                  </span>
                   Origem Local
                 </h4>
                 <div className="flex gap-1.5">
@@ -1534,32 +1578,48 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
             </div>
 
-            {/* Upload History */}
+            {/* Upload History — últimas 3 atualizações */}
             {uploadHistory.length > 0 && (
               <div>
-                <p className="text-[9px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>
-                  <Clock size={9} /> Histórico de atualizações
+                <p className="text-[10px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                  <Clock size={10} /> Histórico de atualizações
+                  <span className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-black" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, transparent)", color: "var(--layout-page-text, #0d0446)" }}>últimas 3</span>
                 </p>
-                <div className="rounded-lg overflow-auto max-h-[120px]" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 8%, transparent)" }}>
-                  <table className="w-full text-[9px]">
-                    <thead className="sticky top-0">
-                      <tr style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 5%, var(--layout-page-bg, #ffffff))" }}>
-                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Origem</th>
-                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Data</th>
-                        <th className="text-left px-2.5 py-1.5 font-bold uppercase" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>Hora</th>
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                  <table className="w-full text-[10px]">
+                    <thead>
+                      <tr style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), color-mix(in srgb, var(--layout-header-bg, #0d0446) 4%, transparent))" }}>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Origem</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Data</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Hora</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista — Música</th>
                       </tr>
                     </thead>
                     <tbody>
                       {uploadHistory.map((entry, i) => (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
-                          <td className="px-2.5 py-1.5 font-semibold" style={{ color: entry.source === "pasta" ? "#22c55e" : "var(--layout-icon-color, #268ffa)" }}>
-                            <span className="inline-flex items-center gap-1">
-                              {entry.source === "pasta" ? <FolderOpen size={9} /> : <Globe size={9} />}
+                          <td className="px-3 py-2 font-semibold">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold" style={{
+                              backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
+                              color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
+                            }}>
+                              {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
                               {entry.source === "pasta" ? "Pasta" : "Online"}
                             </span>
                           </td>
-                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.date}</td>
-                          <td className="px-2.5 py-1.5 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{entry.time}</td>
+                          <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
+                          <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
+                          <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                            {entry.artista || entry.musica ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="font-bold truncate max-w-[140px]" title={entry.artista || ""}>{entry.artista || "—"}</span>
+                                <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                                <span className="truncate max-w-[180px]" title={entry.musica || ""} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{entry.musica || "—"}</span>
+                              </span>
+                            ) : (
+                              <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
