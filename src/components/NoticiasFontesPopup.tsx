@@ -311,20 +311,38 @@ function NewsHorizontalScroller({
   const tick = (ts: number) => {
     const el = scrollerRef.current;
     if (el) {
-      // Cap de FPS ≈60 → mínimo ~15.5ms entre atualizações
       const sinceFrame = ts - lastFrameRef.current;
       if (sinceFrame >= 15.5) {
         const prev = lastTsRef.current || ts;
-        // dt em segundos, com clamp para evitar saltos após aba oculta
         const dt = Math.min(0.05, Math.max(0.001, (ts - prev) / 1000));
         lastTsRef.current = ts;
         lastFrameRef.current = ts;
 
-        // Suavização exponencial: converge ~85% em 200ms, independente do FPS
-        const smoothing = 1 - Math.exp(-dt / 0.09);
-        currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * smoothing;
+        // Alvo efetivo: pointer > touch momentum > auto-scroll (se não hover/touch)
+        let effectiveTarget = targetSpeedRef.current;
+        if (effectiveTarget === 0 && !touchActiveRef.current) {
+          if (Math.abs(momentumRef.current) > 5) {
+            // Momentum decai exponencialmente
+            momentumRef.current *= Math.exp(-dt / 0.5);
+            effectiveTarget = momentumRef.current;
+          } else {
+            momentumRef.current = 0;
+            if (autoScroll && !hoveringRef.current) {
+              // Loop: se chegou ao fim, volta ao início suavemente
+              if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
+                el.scrollTo({ left: 0, behavior: "smooth" });
+                effectiveTarget = 0;
+              } else {
+                effectiveTarget = AUTO_SPEED;
+              }
+            }
+          }
+        }
 
-        const v = currentSpeedRef.current; // px/s
+        const smoothing = 1 - Math.exp(-dt / 0.09);
+        currentSpeedRef.current += (effectiveTarget - currentSpeedRef.current) * smoothing;
+
+        const v = currentSpeedRef.current;
         if (Math.abs(v) > 2) {
           accRef.current += v * dt;
           const step = Math.trunc(accRef.current);
