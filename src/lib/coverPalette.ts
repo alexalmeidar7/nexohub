@@ -126,16 +126,38 @@ async function extractFromUrl(url: string): Promise<CoverPalette | null> {
 }
 
 export function useCoverPalette(url: string | null | undefined): CoverPalette | null {
-  const [palette, setPalette] = useState<CoverPalette | null>(url ? cache.get(url) ?? null : null);
+  const initial = (() => {
+    if (!url) return null;
+    const k = cacheKey(url);
+    if (cache.has(k)) return cache.get(k) ?? null;
+    const ls = lsGet(k);
+    if (ls !== undefined) { cache.set(k, ls); return ls; }
+    return null;
+  })();
+  const [palette, setPalette] = useState<CoverPalette | null>(initial);
   const activeRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeRef.current = url ?? null;
     if (!url) { setPalette(null); return; }
-    if (cache.has(url)) { setPalette(cache.get(url) ?? null); return; }
+    const k = cacheKey(url);
+
+    if (cache.has(k)) { setPalette(cache.get(k) ?? null); return; }
+    const ls = lsGet(k);
+    if (ls !== undefined) { cache.set(k, ls); setPalette(ls); return; }
+
     let cancelled = false;
-    void extractFromUrl(url).then((p) => {
-      cache.set(url, p);
+    let promise = inflight.get(k);
+    if (!promise) {
+      promise = extractFromUrl(url).then((p) => {
+        cache.set(k, p);
+        lsSet(k, p);
+        inflight.delete(k);
+        return p;
+      });
+      inflight.set(k, promise);
+    }
+    void promise.then((p) => {
       if (!cancelled && activeRef.current === url) setPalette(p);
     });
     return () => { cancelled = true; };
