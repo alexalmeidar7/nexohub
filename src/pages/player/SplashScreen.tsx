@@ -133,18 +133,17 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         />
       )}
       <div
-        className="absolute inset-0 flex items-center justify-center"
+        className="absolute inset-x-0 bottom-0 flex items-end justify-center"
         style={{
-          transform: reducedMotion
-            ? "translateY(50px)"
-            : `translateY(50px) ${fadeOut ? "scale(0.9)" : "scale(1)"}`,
+          paddingBottom: "12vh",
+          transform: reducedMotion ? "none" : fadeOut ? "scale(0.9)" : "scale(1)",
           opacity: fadeOut ? 0 : 1,
           transition: reducedMotion
             ? `opacity ${fadeDuration}ms linear`
             : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
-        <LoadingSpinner size={48} />
+        <ElegantLoader />
       </div>
     </div>
   );
