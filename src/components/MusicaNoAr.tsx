@@ -1307,9 +1307,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               }} />
             </div>
 
-            {/* Scrim para legibilidade do texto branco sobre cores claras da capa */}
-            {coverPalette && (
-              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.45) 100%)", zIndex: 2 }} />
+            {/* Scrim adaptativo por luminância do gradiente */}
+            {paletteContrast && (
+              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: paletteContrast.scrimBackground, zIndex: 2 }} />
             )}
 
             <div className="relative z-10 p-4 flex gap-4 items-center">
