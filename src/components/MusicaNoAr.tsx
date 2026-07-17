@@ -1207,9 +1207,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   // Paleta extraída da capa para gradiente elegante do box de música
   const coverPalette = useCoverPalette(displayCover || null);
+  const paletteContrast = getPaletteContrast(coverPalette);
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
     : "var(--layout-slider-bg, #0d0d0d)";
+  const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
+  const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
+  const musicTextShadow = paletteContrast?.textShadow ?? "none";
 
   return (
     <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
