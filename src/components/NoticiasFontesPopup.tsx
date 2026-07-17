@@ -12,7 +12,7 @@ const NEXO_DARK = "#0A2540";
 const PROXY = "https://api.allorigins.win/raw?url=";
 
 type NewsItem = { title: string; link: string; thumbnail: string; pubDate: string; summary?: string };
-type Site = { id: string; name: string; rss_url: string };
+type Site = { id: string; name: string; rss_url: string; parent_id?: string | null; category?: string | null };
 
 function sanitizeTitle(t: string): string {
   return (t || "").replace(/\uFFFD/g, "").replace(/\s+/g, " ").trim();
@@ -855,6 +855,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
   const [loadingSite, setLoadingSite] = useState<Record<string, boolean>>({});
   const [newUrl, setNewUrl] = useState("");
+  const [newParentId, setNewParentId] = useState<string>("");
+  const [newCategory, setNewCategory] = useState("");
   const [adding, setAdding] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -862,6 +864,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
+  const [editParentId, setEditParentId] = useState<string>("");
   const [savingEdit, setSavingEdit] = useState(false);
   const tabsScrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -883,7 +886,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const loadSites = async (forceFetch = true) => {
     if (!user) return;
     setInitialLoading(true);
-    const { data } = await supabase.from("custom_news_sites").select("id,name,rss_url").eq("user_id", user.id).order("created_at", { ascending: true });
+    const { data } = await supabase.from("custom_news_sites").select("id,name,rss_url,parent_id,category").eq("user_id", user.id).order("created_at", { ascending: true });
     const list = (data as Site[]) || [];
     setSites(list);
 
@@ -971,12 +974,21 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setAdding(true);
     let url = newUrl.trim();
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-    let displayName = url;
-    try { displayName = new URL(url).hostname.replace(/^www\./, ""); } catch {}
-    const { data, error } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url }).select("id,name,rss_url").single();
+    const parentId = newParentId || null;
+    const category = newCategory.trim() || null;
+    let displayName = "";
+    if (parentId) {
+      const parent = sites.find((x) => x.id === parentId);
+      displayName = category || (parent ? parent.name : url);
+    } else {
+      try { displayName = new URL(url).hostname.replace(/^www\./, ""); } catch { displayName = url; }
+    }
+    const { data, error } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url, parent_id: parentId, category }).select("id,name,rss_url,parent_id,category").single();
     setAdding(false);
-    if (error || !data) return;
+    if (error || !data) { toast.error("Não foi possível adicionar a fonte"); return; }
     setNewUrl("");
+    setNewParentId("");
+    setNewCategory("");
     const s = data as Site;
     setSites((prev) => [...prev, s]);
     if (!activeTab) setActiveTab(s.id);
@@ -996,12 +1008,14 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setEditingId(s.id);
     setEditName(s.name);
     setEditUrl(s.rss_url);
+    setEditParentId(s.parent_id || "");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditUrl("");
+    setEditParentId("");
   };
 
   const saveEdit = async (id: string) => {
@@ -1010,10 +1024,23 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     let url = editUrl.trim();
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     const name = editName.trim();
-    const { error } = await supabase.from("custom_news_sites").update({ name, rss_url: url }).eq("id", id);
+    const parentId = editParentId || null;
+    // Prevent making a parent its own child, or nesting under one of its own children
+    const isDescendant = (candidateId: string): boolean => {
+      if (candidateId === id) return true;
+      const child = sites.find((x) => x.id === candidateId);
+      if (!child || !child.parent_id) return false;
+      return isDescendant(child.parent_id);
+    };
+    if (parentId && isDescendant(parentId)) {
+      setSavingEdit(false);
+      return;
+    }
+    const category = parentId ? name : null;
+    const { error } = await supabase.from("custom_news_sites").update({ name, rss_url: url, parent_id: parentId, category }).eq("id", id);
     setSavingEdit(false);
     if (error) return;
-    const updated: Site = { id, name, rss_url: url };
+    const updated: Site = { id, name, rss_url: url, parent_id: parentId, category };
     setSites((prev) => prev.map((s) => (s.id === id ? updated : s)));
     setNewsBySite((prev) => { const c = { ...prev }; delete c[id]; return c; });
     cancelEdit();
@@ -1099,7 +1126,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                     }}
                   >
                     <Globe size={11} />
-                    <span className="truncate max-w-[140px]">{s.name}</span>
+                    <span className="truncate max-w-[180px]">
+                      {s.parent_id ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}` : s.name}
+                    </span>
                     {loading ? (
                       <Loader2 size={10} className="animate-spin" />
                     ) : (
@@ -1195,86 +1224,141 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               </button>
             </div>
 
-            <div className="px-5 py-4 flex items-center gap-2 border-b" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
-                <Globe size={16} />
+            <div className="px-5 py-4 border-b space-y-2" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${NEXO_CYAN}1A`, color: NEXO_CYAN }}>
+                  <Globe size={16} />
+                </div>
+                <input
+                  type="text"
+                  value={newUrl}
+                  onChange={(e) => setNewUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder="URL do feed RSS (ex.: https://g1.globo.com/rss/g1/)"
+                  className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
+                  style={{ background: "#F5FAFC", border: `2px solid ${NEXO_CYAN}33`, color: NEXO_DARK }}
+                />
+                <button
+                  onClick={addSite}
+                  disabled={adding || !newUrl.trim() || (!!newParentId && !newCategory.trim())}
+                  className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90"
+                  style={{ background: NEXO_CYAN, color: "#fff" }}
+                >
+                  {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
+                </button>
               </div>
-              <input
-                type="text"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
-                placeholder="URL do feed RSS (ex.: https://g1.globo.com/rss/g1/)"
-                className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
-                style={{ background: "#F5FAFC", border: `2px solid ${NEXO_CYAN}33`, color: NEXO_DARK }}
-              />
-              <button
-                onClick={addSite}
-                disabled={adding || !newUrl.trim()}
-                className="h-10 px-4 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 disabled:opacity-40 transition hover:opacity-90"
-                style={{ background: NEXO_CYAN, color: "#fff" }}
-              >
-                {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Adicionar
-              </button>
+              <div className="flex items-center gap-2 pl-11">
+                <select
+                  value={newParentId}
+                  onChange={(e) => setNewParentId(e.target.value)}
+                  className="h-9 px-2 rounded-lg text-[11px] outline-none font-semibold"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK, minWidth: 160 }}
+                  title="Vincular como subfonte de uma fonte principal"
+                >
+                  <option value="">— Fonte principal —</option>
+                  {sites.filter((x) => !x.parent_id).map((p) => (
+                    <option key={p.id} value={p.id}>Subfonte de: {p.name}</option>
+                  ))}
+                </select>
+                <input
+                  type="text"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder={newParentId ? "Nome da subcategoria (ex.: Política)" : "Categoria (opcional, só p/ subfontes)"}
+                  disabled={!newParentId}
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none disabled:opacity-50"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                />
+              </div>
+              <p className="text-[10px] pl-11" style={{ color: "rgba(10,37,64,0.55)" }}>
+                Dica: para adicionar só a editoria de Política do G1, escolha "Subfonte de: g1.globo.com" e nomeie a categoria "Política".
+              </p>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2" style={{ background: "#FAFCFD" }}>
               {sites.length === 0 && (
                 <p className="text-xs text-center py-6" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhum site cadastrado ainda.</p>
               )}
-              {sites.map((s) => {
-                const isEditing = editingId === s.id;
-                return (
-                  <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}` }}>
-                    <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
-                    {isEditing ? (
-                      <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          placeholder="Nome"
-                          className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
-                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
-                        />
-                        <input
-                          type="text"
-                          value={editUrl}
-                          onChange={(e) => setEditUrl(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
-                          placeholder="URL do feed RSS"
-                          className="w-full h-7 px-2 rounded text-[10px] outline-none"
-                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>{s.name}</p>
-                        <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
-                      </div>
-                    )}
-                    {isEditing ? (
-                      <>
-                        <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
-                          {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                        </button>
-                        <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
-                          <XIcon size={13} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
-                          <Pencil size={13} />
-                        </button>
-                        <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              {(() => {
+                const parents = sites.filter((x) => !x.parent_id);
+                const orphans = sites.filter((x) => x.parent_id && !parents.some((p) => p.id === x.parent_id));
+                const ordered: { site: Site; depth: number }[] = [];
+                for (const p of parents) {
+                  ordered.push({ site: p, depth: 0 });
+                  sites.filter((c) => c.parent_id === p.id).forEach((c) => ordered.push({ site: c, depth: 1 }));
+                }
+                orphans.forEach((o) => ordered.push({ site: o, depth: 1 }));
+                return ordered.map(({ site: s, depth }) => {
+                  const isEditing = editingId === s.id;
+                  return (
+                    <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}`, marginLeft: depth * 20 }}>
+                      {depth > 0 && <span className="text-[10px] font-bold" style={{ color: NEXO_CYAN }}>↳</span>}
+                      <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
+                      {isEditing ? (
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder={depth > 0 ? "Categoria (ex.: Política)" : "Nome"}
+                            className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                          />
+                          <input
+                            type="text"
+                            value={editUrl}
+                            onChange={(e) => setEditUrl(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
+                            placeholder="URL do feed RSS"
+                            className="w-full h-7 px-2 rounded text-[10px] outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                          />
+                          <select
+                            value={editParentId}
+                            onChange={(e) => setEditParentId(e.target.value)}
+                            className="w-full h-7 px-2 rounded text-[10px] font-semibold outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                            title="Hierarquia: fonte principal ou subfonte de outra"
+                          >
+                            <option value="">— Fonte principal —</option>
+                            {sites.filter((x) => !x.parent_id && x.id !== s.id).map((p) => (
+                              <option key={p.id} value={p.id}>Subfonte de: {p.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>
+                            {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: `${NEXO_CYAN}22`, color: NEXO_CYAN }}>SUB</span>}
+                            {s.name}
+                          </p>
+                          <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+                        </div>
+                      )}
+                      {isEditing ? (
+                        <>
+                          <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
+                            {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                          </button>
+                          <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
+                            <XIcon size={13} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
 
             <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: "rgba(10,37,64,0.08)" }}>

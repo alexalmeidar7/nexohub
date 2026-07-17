@@ -593,27 +593,41 @@ export type Database = {
       }
       custom_news_sites: {
         Row: {
+          category: string | null
           created_at: string
           id: string
           name: string
+          parent_id: string | null
           rss_url: string
           user_id: string
         }
         Insert: {
+          category?: string | null
           created_at?: string
           id?: string
           name: string
+          parent_id?: string | null
           rss_url: string
           user_id: string
         }
         Update: {
+          category?: string | null
           created_at?: string
           id?: string
           name?: string
+          parent_id?: string | null
           rss_url?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "custom_news_sites_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "custom_news_sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_quiz_categories: {
         Row: {
