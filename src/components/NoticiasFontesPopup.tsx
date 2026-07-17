@@ -284,6 +284,16 @@ function NewsHorizontalScroller({
   const [dragging, setDragging] = useState(false);
   const draggedItemRef = useRef<NewsItem | null>(null);
   const [hoverBloco, setHoverBloco] = useState<number | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const hoveringRef = useRef(false);
+  const touchActiveRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartScrollRef = useRef(0);
+  const touchLastXRef = useRef(0);
+  const touchLastTsRef = useRef(0);
+  const touchVelocityRef = useRef(0);
+  const momentumRef = useRef(0);
+  const AUTO_SPEED = 55; // px/s do modo auto
 
   // Reset scroll + estado ao trocar de site
   useEffect(() => {
@@ -293,6 +303,7 @@ function NewsHorizontalScroller({
     accRef.current = 0;
     lastTsRef.current = 0;
     lastFrameRef.current = 0;
+    momentumRef.current = 0;
     setExpanded({});
   }, [siteId]);
 
