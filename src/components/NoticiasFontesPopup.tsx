@@ -885,7 +885,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const loadSites = async (forceFetch = true) => {
     if (!user) return;
     setInitialLoading(true);
-    const { data } = await supabase.from("custom_news_sites").select("id,name,rss_url").eq("user_id", user.id).order("created_at", { ascending: true });
+    const { data } = await supabase.from("custom_news_sites").select("id,name,rss_url,parent_id,category").eq("user_id", user.id).order("created_at", { ascending: true });
     const list = (data as Site[]) || [];
     setSites(list);
 
