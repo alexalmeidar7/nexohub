@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List, RefreshCw, Megaphone } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List, RefreshCw, Megaphone, Newspaper } from "lucide-react";
+import NoticiasFontesPopup from "./NoticiasFontesPopup";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -252,6 +253,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
+  const [showNoticiasFontes, setShowNoticiasFontes] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
   const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>(() => {
     const savedHab = localStorage.getItem("producao_ai_habilitada");
@@ -1195,18 +1197,17 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </div>
         </div>
         <button
-          onClick={() => {
-            if (editingId && !showPastePopup) {
-              setPasteText(generatePlainText());
-            }
-            setShowPastePopup(true);
-          }}
+          onClick={() => setShowNoticiasFontes(true)}
           className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
           style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? NEXO_DARK : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid ${NEXO_CYAN}` : "none", borderRadius: renderAsModal ? 999 : 8, marginRight: renderAsModal ? 44 : 0 }}
         >
-          <ClipboardPaste size={13} /> Colar Roteiro
+          <Newspaper size={13} /> Notícias de Fontes
         </button>
       </div>
+
+      <NoticiasFontesPopup open={showNoticiasFontes} onOpenChange={setShowNoticiasFontes} />
+
+
 
 
       {afterHeader}
