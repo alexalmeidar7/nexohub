@@ -374,6 +374,7 @@ export default function InfoMusicSection() {
         </p>
       </div>
 
+      <div className="grid md:grid-cols-2 gap-4">
       <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{
         backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
         border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
@@ -459,6 +460,9 @@ export default function InfoMusicSection() {
           </Button>
         </div>
       </div>
+      </div>
+
+
 
 
       {nowPlaying && (

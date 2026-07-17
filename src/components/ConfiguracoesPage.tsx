@@ -996,13 +996,6 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         )}
       </div></div>}
 
-      {/* Box 3: Layout */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} style={{ opacity: 0.8 }} />}>
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
-          <LayoutCustomizer />
-        </Suspense>
-      </CollapsibleBox>}
-
       {/* Box 4: Player Layout */}
       {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
@@ -1022,16 +1015,6 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <PermissoesSection />
         </Suspense>
-      </CollapsibleBox>}
-
-      {/* Box 6: Tipos de Eventos */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Personalizar Tipos de Eventos" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
-        <EventTypesConfigSection />
-      </CollapsibleBox>}
-      
-      {/* Box 7: Prompt Jornalístico */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Diretrizes de Produção de Texto Jornalístico (AI)" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
-        <JournalisticPromptSection />
       </CollapsibleBox>}
         </div>
       </div>
