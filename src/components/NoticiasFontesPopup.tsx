@@ -771,11 +771,11 @@ function NewsHorizontalScroller({
                             try {
                               const { bi: fromBi, idx: fromIdx } = JSON.parse(raw);
                               if (fromBi !== bi || fromIdx === idx) return;
-                              setBlocoItems((prev) => {
-                                const cur = [...(prev[bi] || [])];
-                                const [moved] = cur.splice(fromIdx, 1);
-                                cur.splice(idx, 0, moved);
-                                return { ...prev, [bi]: cur };
+                              mutateBloco(bi, (cur) => {
+                                const arr = [...cur];
+                                const [moved] = arr.splice(fromIdx, 1);
+                                arr.splice(idx, 0, moved);
+                                return arr;
                               });
                             } catch {}
                           }}
