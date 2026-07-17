@@ -88,7 +88,7 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     >
       <video
         ref={videoRef}
-        src={splashVideoAsset.url}
+        src={videoSrc}
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         playsInline
