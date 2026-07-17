@@ -679,6 +679,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       lastOnlineSuccessRef.current = Date.now();
       setOnlineDelay(false);
       setOnlineError(null);
+      setOnlineActivating(false);
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
@@ -822,6 +823,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       lastLocalSuccessRef.current = Date.now();
       setLocalDelay(false);
       setLocalError(null);
+      setLocalActivating(false);
 
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
@@ -968,6 +970,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           lastLocalSuccessRef.current = Date.now();
           setLocalDelay(false);
           setLocalError(null);
+          setLocalActivating(false);
           const parsed = parseXmlString(text);
           if (parsed) processMusicRef.current(parsed, "pasta");
           else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
@@ -1082,15 +1085,33 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const progress = sliderResetting ? 0 : rawProgress;
 
+  const [onlineActivating, setOnlineActivating] = useState(false);
+  const [localActivating, setLocalActivating] = useState(false);
+
   const toggleOnlineSource = () => {
     if (!hasValidOnlineUrl) return;
-    const nextMode = buildSourceMode(!isOnlineSelected, isLocalSelected);
+    const willActivate = !isOnlineSelected;
+    const nextMode = buildSourceMode(willActivate, isLocalSelected);
+    if (willActivate) {
+      setOnlineActivating(true);
+      // Safety timeout — clear after 12s even if no read arrives
+      window.setTimeout(() => setOnlineActivating(false), 12000);
+    } else {
+      setOnlineActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
   const toggleLocalSource = () => {
     if (!hasValidLocalSource) return;
+    const willActivate = !isLocalSelected;
     const nextMode = buildSourceMode(isOnlineSelected, !isLocalSelected);
+    if (willActivate) {
+      setLocalActivating(true);
+      window.setTimeout(() => setLocalActivating(false), 12000);
+    } else {
+      setLocalActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
@@ -1379,7 +1400,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         {showConfig && (
           <div className="p-5 space-y-5">
             {/* Two columns with center divider */}
-            <div className="grid grid-cols-[1fr_auto_1fr] gap-0 items-stretch">
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 lg:gap-0 items-stretch">
               {/* ── ONLINE SOURCE ── */}
               <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
                 <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
@@ -1389,8 +1410,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </span>
                   Origem Online
                 </h4>
-                <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
                     <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
                     <input
                       value={xmlUrl}
@@ -1406,7 +1427,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       placeholder="Cole ou digite uma URL .xml"
                     />
                   </div>
-                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
+                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
                     <Check size={16} />
                   </button>
                   <button
@@ -1414,7 +1435,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
                     aria-pressed={isOnlineSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed"
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
                     style={{
                       backgroundColor: isOnlineSelected ? "#0d0446" : "#C6F03C",
                       color: isOnlineSelected ? "#C6F03C" : "#0d0446",
@@ -1423,8 +1444,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    {isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                    {onlineActivating ? <Loader2 size={12} className="animate-spin" /> : isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{onlineActivating ? "LENDO..." : "LER ESSA"}</span>
                   </button>
                 </div>
 
@@ -1451,10 +1472,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-              {/* ── CENTER DIVIDER ── */}
-                <div className="flex flex-col items-center justify-center px-2" style={{ minWidth: 110 }}>
+                <div className="flex flex-col items-center justify-center lg:px-2 w-full lg:w-auto" style={{ minWidth: 0 }}>
                   <div
-                    className={`rounded-2xl px-3 py-4 flex flex-col items-center gap-2 w-full ${bothActive ? "music-dual-monitor-blink" : ""}`}
+                    className={`rounded-2xl px-3 py-3 lg:py-4 flex lg:flex-col items-center justify-center gap-2 w-full lg:w-[110px] ${bothActive ? "music-dual-monitor-blink" : ""}`}
                     style={{
                       background: bothActive
                         ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
@@ -1466,7 +1486,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   >
                     <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
                     <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
-                      Lendo as<br/>duas origens
+                      Lendo as duas origens
                     </span>
                   </div>
                 </div>
@@ -1480,10 +1500,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </span>
                   Origem Local
                 </h4>
-                <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
                     <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
-                    <span className="flex-1 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
+                    <span className="flex-1 min-w-0 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
                   </div>
                   <button
                     onClick={() => {
@@ -1493,7 +1513,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                         fileInputRef.current?.click();
                       }
                     }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2"
                     style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
                   >
                     <Upload size={14} />
@@ -1503,7 +1523,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed"
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
                     style={{
                       backgroundColor: isLocalSelected ? "#0d0446" : "#C6F03C",
                       color: isLocalSelected ? "#C6F03C" : "#0d0446",
@@ -1512,8 +1532,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.25)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
                     }}
                   >
-                    {isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">LER ESSA</span>
+                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
                   </button>
                 </div>
 
