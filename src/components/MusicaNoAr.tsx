@@ -1205,6 +1205,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const NEXO_CARD_BG = "#D6F4FB";
   const NEXO_DARK = "#0A2540";
 
+  // Paleta extraída da capa para gradiente elegante do box de música
+  const coverPalette = useCoverPalette(displayCover || null);
+  const musicBoxBg = coverPalette
+    ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
+    : "var(--layout-slider-bg, #0d0d0d)";
+
   return (
     <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
