@@ -72,10 +72,15 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         src={splashVideoAsset.url}
         className="absolute inset-0 w-full h-full object-cover"
         autoPlay
-        muted
         playsInline
         preload="auto"
+        disablePictureInPicture
         onEnded={handleEnded}
+        style={{
+          willChange: "transform, opacity",
+          transform: "translateZ(0)",
+          backfaceVisibility: "hidden",
+        }}
       />
       <div
         className="absolute inset-0 flex items-center justify-center"
