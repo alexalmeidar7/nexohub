@@ -232,7 +232,7 @@ export default function OnAirWidget() {
         <span ref={anchorRef} className="hidden" aria-hidden="true" />
         <div className="flex items-center gap-2 mb-2">
           <Radio size={16} className="text-white/70" />
-          <span className="font-semibold text-white text-sm">NO AR</span>
+          <span className="font-semibold text-white text-sm" translate="no">NO AR</span>
         </div>
         <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
         <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
@@ -339,7 +339,7 @@ export default function OnAirWidget() {
 
         <div className="flex items-center gap-2 mb-1">
           <Radio size={14} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-          <span className="font-bold text-xs animate-pulse" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
+          <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center z-10">
