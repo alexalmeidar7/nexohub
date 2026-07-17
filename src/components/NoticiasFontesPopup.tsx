@@ -106,6 +106,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   const [initialLoading, setInitialLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<string>("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editUrl, setEditUrl] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadSites = async (forceFetch = true) => {
     if (!user) return;
