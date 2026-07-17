@@ -1167,7 +1167,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   const loading = loadingSite[activeChildId || s.id];
                   const isOpen = openMenuFor === s.id;
                   return (
-                    <div key={s.id} className="relative shrink-0" data-tab-id={s.id}>
+                    <div key={s.id} ref={(el) => { tabRefs.current[s.id] = el; }} className="relative shrink-0" data-tab-id={s.id}>
                       <button
                         onClick={() => {
                           if (children.length) {
