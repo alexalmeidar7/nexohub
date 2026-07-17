@@ -1110,7 +1110,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                     }}
                   >
                     <Globe size={11} />
-                    <span className="truncate max-w-[140px]">{s.name}</span>
+                    <span className="truncate max-w-[180px]">
+                      {s.parent_id ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}` : s.name}
+                    </span>
                     {loading ? (
                       <Loader2 size={10} className="animate-spin" />
                     ) : (
