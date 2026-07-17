@@ -572,8 +572,27 @@ serve(async (req) => {
       } catch { /* silent */ }
       if (qParts.length) tickerParts.push(qParts.join(" | "));
     }
+    if (broadcastConfig.tickerSocials && socialItems.length > 0) {
+      const labels: Record<string, string> = {
+        [SOCIAL_ICONS.instagram]: "Instagram",
+        [SOCIAL_ICONS.facebook]: "Facebook",
+        [SOCIAL_ICONS.youtube]: "YouTube",
+        [SOCIAL_ICONS.site]: "Site",
+        [SOCIAL_ICONS.whatsapp]: "WhatsApp",
+      };
+      for (const s of socialItems) {
+        const label = labels[s.icon] || "";
+        tickerParts.push(`${label ? label + ": " : ""}${s.handle}`);
+      }
+    }
     if (broadcastConfig.ticker) tickerParts.push(broadcastConfig.ticker);
-    const ticker = tickerParts.join("  •  ");
+    let ticker: string;
+    if (broadcastConfig.tickerUnitario && tickerParts.length > 0) {
+      const slot = Math.floor(Date.now() / 4000) % tickerParts.length;
+      ticker = tickerParts[slot];
+    } else {
+      ticker = tickerParts.join("  •  ");
+    }
 
     // ── Active Promotions / Banners Rotation ──
     // Every 5 seconds, switch between active promotions that have a banner_l_url
