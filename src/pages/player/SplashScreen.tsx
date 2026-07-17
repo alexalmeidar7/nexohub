@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
+import { useSplashVideoCache } from "./useSplashVideoCache";
+
 
 interface SplashScreenProps {
   logoUrl?: string | null;
