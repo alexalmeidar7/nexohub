@@ -339,7 +339,7 @@ export default function OnAirWidget() {
 
         <div className="flex items-center gap-2 mb-1">
           <Radio size={14} style={{ color: "var(--layout-accent-color)" }} className="animate-pulse" />
-          <span className="font-bold text-xs animate-pulse" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
+          <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
         <div className="flex-1 flex flex-col justify-center z-10">
