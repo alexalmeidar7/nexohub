@@ -1196,13 +1196,29 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setShowNoticiasFontes(true)}
-          className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
-          style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? NEXO_DARK : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid ${NEXO_CYAN}` : "none", borderRadius: renderAsModal ? 999 : 8, marginRight: renderAsModal ? 44 : 0 }}
-        >
-          <Newspaper size={13} /> Notícias de Fontes
-        </button>
+        <div className="flex items-center gap-2" style={{ marginRight: renderAsModal ? 44 : 0 }}>
+          <button
+            onClick={() => {
+              const total = blocos.reduce((acc, b) => acc + b.noticias.filter(n => n.titulo || n.imagemUrl || n.texto_materia || (n as any).resumo).length, 0);
+              if (total === 0) { toast.info("Nenhuma notícia para limpar"); return; }
+              if (!window.confirm(`Remover todas as ${total} notícia(s) dos blocos?`)) return;
+              setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
+              toast.success("Notícias removidas de todos os blocos");
+            }}
+            className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
+            style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? "#dc2626" : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid #dc2626` : "none", borderRadius: renderAsModal ? 999 : 8 }}
+            title="Remove todas as notícias de todos os blocos"
+          >
+            <Trash2 size={13} /> Limpar Notícias
+          </button>
+          <button
+            onClick={() => setShowNoticiasFontes(true)}
+            className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
+            style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? NEXO_DARK : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid ${NEXO_CYAN}` : "none", borderRadius: renderAsModal ? 999 : 8 }}
+          >
+            <Newspaper size={13} /> Notícias de Fontes
+          </button>
+        </div>
       </div>
 
       <NoticiasFontesPopup
