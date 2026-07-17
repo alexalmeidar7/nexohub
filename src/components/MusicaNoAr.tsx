@@ -1301,9 +1301,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 Música no Ar
               </h3>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
-                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", color: NEXO_DARK, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, padding: "3px 10px", borderRadius: 999 }}>
-                  Modo Unificado
-                </span>
                 {bothActive && (
                   <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
                     <span className="relative flex h-1.5 w-1.5">
