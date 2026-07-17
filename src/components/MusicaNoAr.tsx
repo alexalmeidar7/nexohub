@@ -1303,6 +1303,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               }} />
             </div>
 
+            {/* Scrim para legibilidade do texto branco sobre cores claras da capa */}
+            {coverPalette && (
+              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.45) 100%)", zIndex: 2 }} />
+            )}
+
             <div className="relative z-10 p-4 flex gap-4 items-center">
               {/* Cover image */}
               <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden rounded-xl group" style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }}>
