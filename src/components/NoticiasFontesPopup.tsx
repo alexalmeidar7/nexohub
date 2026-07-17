@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight, Eye } from "lucide-react";
 
 const NEXO_CYAN = "#00BFF0";
 const NEXO_CARD_BG = "#D6F4FB";
@@ -258,10 +258,151 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   return [];
 }
 
+function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: string }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const dirRef = useRef<0 | 1 | -1>(0);
+  const speedRef = useRef(0);
+
+  // Reset scroll when switching site
+  useEffect(() => {
+    if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
+  }, [siteId]);
+
+  const tick = () => {
+    const el = scrollerRef.current;
+    if (el && dirRef.current !== 0) {
+      el.scrollLeft += dirRef.current * speedRef.current;
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  };
+
+  useEffect(() => {
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const zone = Math.min(180, rect.width * 0.18);
+    if (x < zone) {
+      const intensity = 1 - x / zone; // 0..1
+      dirRef.current = -1;
+      speedRef.current = 3 + intensity * 18;
+    } else if (x > rect.width - zone) {
+      const intensity = 1 - (rect.width - x) / zone;
+      dirRef.current = 1;
+      speedRef.current = 3 + intensity * 18;
+    } else {
+      dirRef.current = 0;
+      speedRef.current = 0;
+    }
+  };
+
+  const onMouseLeave = () => {
+    dirRef.current = 0;
+    speedRef.current = 0;
+  };
+
+  const nudge = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative h-full w-full" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      {/* Edge hint gradients */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
+
+      {/* Nudge arrows */}
+      <button
+        onClick={() => nudge(-1)}
+        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
+        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
+        aria-label="Anterior"
+      >
+        <ChevronLeft size={18} />
+      </button>
+      <button
+        onClick={() => nudge(1)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
+        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
+        aria-label="Próximo"
+      >
+        <ChevronRight size={18} />
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6 scroll-smooth"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        {items.map((n, i) => {
+          const dateLabel = formatPubDate(n.pubDate);
+          return (
+            <a
+              key={`${siteId}-${i}`}
+              href={n.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group shrink-0 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition"
+              style={{
+                width: 280,
+                background: NEXO_CARD_BG,
+                boxShadow: "0 6px 18px rgba(10,37,64,0.10)",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              <div className="w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A`, aspectRatio: "4/3" }}>
+                {n.thumbnail ? (
+                  <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
+                    <Newspaper size={38} />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 flex flex-col p-5 gap-4">
+                <h3
+                  className="text-[17px] leading-[1.15] font-black line-clamp-5"
+                  style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}
+                >
+                  {n.title}
+                </h3>
+                <div className="mt-auto flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold" style={{ color: NEXO_DARK, opacity: 0.75 }}>
+                    {dateLabel || " "}
+                  </span>
+                  <span
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition group-hover:scale-110"
+                    style={{ background: NEXO_CYAN, color: "#fff" }}
+                    aria-label="Abrir notícia"
+                  >
+                    <Eye size={16} />
+                  </span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
+
 
 export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   const { user } = useAuth();
@@ -512,9 +653,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
         )}
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5" style={{ background: "#FAFCFD" }}>
+        <div className="flex-1 min-h-0 relative" style={{ background: "#FAFCFD" }}>
           {initialLoading && (
-            <div className="flex items-center justify-center py-10" style={{ color: NEXO_DARK }}>
+            <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
               <Loader2 size={20} className="animate-spin" />
             </div>
           )}
@@ -538,53 +679,19 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
           {!initialLoading && activeSite && (
             <>
               {activeLoading && activeNews.length === 0 ? (
-                <div className="flex items-center justify-center py-10" style={{ color: NEXO_DARK }}>
+                <div className="flex items-center justify-center py-10 h-full" style={{ color: NEXO_DARK }}>
                   <Loader2 size={20} className="animate-spin" />
                 </div>
               ) : activeNews.length === 0 ? (
                 <p className="text-xs text-center py-10" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhuma notícia encontrada nesta fonte.</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {activeNews.map((n, i) => {
-                    const dateLabel = formatPubDate(n.pubDate);
-                    return (
-                      <a
-                        key={`${activeSite.id}-${i}`}
-                        href={n.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group rounded-xl overflow-hidden flex flex-col hover:-translate-y-0.5 transition"
-                        style={{ background: "#fff", border: `1px solid ${NEXO_CYAN}22`, boxShadow: "0 1px 3px rgba(10,37,64,0.06)" }}
-                      >
-                        <div className="aspect-video w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A` }}>
-                          {n.thumbnail ? (
-                            <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
-                              <Newspaper size={22} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-3 flex-1 flex flex-col gap-1.5">
-                          <p className="text-[11px] font-semibold leading-snug line-clamp-3" style={{ color: NEXO_DARK }}>{n.title}</p>
-                          <div className="mt-auto flex items-center justify-between gap-2">
-                            {dateLabel ? (
-                              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ background: `${NEXO_CYAN}18`, color: NEXO_DARK }}>{dateLabel}</span>
-                            ) : <span />}
-                            <span className="text-[10px] inline-flex items-center gap-1 opacity-70 group-hover:opacity-100" style={{ color: NEXO_CYAN }}>
-                              Abrir <ExternalLink size={10} />
-                            </span>
-                          </div>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
+                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} />
               )}
             </>
           )}
         </div>
       </div>
+
 
       {/* Settings sub-popup */}
       {showSettings && (
