@@ -191,6 +191,8 @@ const App = () => (
 
             {/* Slug routes for dynamic access */}
             <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/:userSlug/locutor" element={<PromocoesKiosk />} />
+            <Route path="/locutor" element={<PromocoesKiosk />} />
             <Route path="/:userSlug/player" element={<PlayerHub />} />
             <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
             <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
@@ -212,6 +214,8 @@ const App = () => (
             <Route path="/user/nexohub/home" element={<Navigate to="/home" replace />} />
             <Route path="/user/nexohub/telapromo" element={<Navigate to="/telapromo" replace />} />
             <Route path="/user/:userSlug/nexohub/telapromo" element={<SlugRedirect template="/:userSlug/telapromo" />} />
+            <Route path="/user/nexohub/locutor" element={<Navigate to="/locutor" replace />} />
+            <Route path="/user/:userSlug/nexohub/locutor" element={<SlugRedirect template="/:userSlug/locutor" />} />
             <Route path="/user/nexohub/player" element={<Navigate to="/player" replace />} />
             <Route path="/user/:userSlug/nexohub/player" element={<SlugRedirect template="/:userSlug/player" />} />
             <Route path="/user/nexohub/player/watch" element={<Navigate to="/player/watch" replace />} />

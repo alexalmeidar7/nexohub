@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight, Eye, Play, Pause } from "lucide-react";
 
 const NEXO_CYAN = "#00BFF0";
 const NEXO_CARD_BG = "#D6F4FB";
@@ -284,6 +284,17 @@ function NewsHorizontalScroller({
   const [dragging, setDragging] = useState(false);
   const draggedItemRef = useRef<NewsItem | null>(null);
   const [hoverBloco, setHoverBloco] = useState<number | null>(null);
+  const [autoScroll, setAutoScroll] = useState(true);
+  const autoScrollRef = useRef(true);
+  const hoveringRef = useRef(false);
+  const touchActiveRef = useRef(false);
+  const touchStartXRef = useRef(0);
+  const touchStartScrollRef = useRef(0);
+  const touchLastXRef = useRef(0);
+  const touchLastTsRef = useRef(0);
+  const touchVelocityRef = useRef(0);
+  const momentumRef = useRef(0);
+  const AUTO_SPEED = 55; // px/s do modo auto
 
   // Reset scroll + estado ao trocar de site
   useEffect(() => {
@@ -293,6 +304,7 @@ function NewsHorizontalScroller({
     accRef.current = 0;
     lastTsRef.current = 0;
     lastFrameRef.current = 0;
+    momentumRef.current = 0;
     setExpanded({});
   }, [siteId]);
 
@@ -300,20 +312,38 @@ function NewsHorizontalScroller({
   const tick = (ts: number) => {
     const el = scrollerRef.current;
     if (el) {
-      // Cap de FPS ≈60 → mínimo ~15.5ms entre atualizações
       const sinceFrame = ts - lastFrameRef.current;
       if (sinceFrame >= 15.5) {
         const prev = lastTsRef.current || ts;
-        // dt em segundos, com clamp para evitar saltos após aba oculta
         const dt = Math.min(0.05, Math.max(0.001, (ts - prev) / 1000));
         lastTsRef.current = ts;
         lastFrameRef.current = ts;
 
-        // Suavização exponencial: converge ~85% em 200ms, independente do FPS
-        const smoothing = 1 - Math.exp(-dt / 0.09);
-        currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * smoothing;
+        // Alvo efetivo: pointer > touch momentum > auto-scroll (se não hover/touch)
+        let effectiveTarget = targetSpeedRef.current;
+        if (effectiveTarget === 0 && !touchActiveRef.current) {
+          if (Math.abs(momentumRef.current) > 5) {
+            // Momentum decai exponencialmente
+            momentumRef.current *= Math.exp(-dt / 0.5);
+            effectiveTarget = momentumRef.current;
+          } else {
+            momentumRef.current = 0;
+            if (autoScrollRef.current && !hoveringRef.current) {
+              // Loop: se chegou ao fim, volta ao início suavemente
+              if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
+                el.scrollTo({ left: 0, behavior: "smooth" });
+                effectiveTarget = 0;
+              } else {
+                effectiveTarget = AUTO_SPEED;
+              }
+            }
+          }
+        }
 
-        const v = currentSpeedRef.current; // px/s
+        const smoothing = 1 - Math.exp(-dt / 0.09);
+        currentSpeedRef.current += (effectiveTarget - currentSpeedRef.current) * smoothing;
+
+        const v = currentSpeedRef.current;
         if (Math.abs(v) > 2) {
           accRef.current += v * dt;
           const step = Math.trunc(accRef.current);
@@ -371,8 +401,11 @@ function NewsHorizontalScroller({
     }
   };
 
-  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => setSpeedFromPointer(e.clientX);
-  const onMouseLeave = () => { targetSpeedRef.current = 0; };
+  useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
+
+  const onMouseEnter = () => { hoveringRef.current = true; };
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => { hoveringRef.current = true; setSpeedFromPointer(e.clientX); };
+  const onMouseLeave = () => { hoveringRef.current = false; targetSpeedRef.current = 0; };
 
   const nudge = (dir: -1 | 1) => {
     const el = scrollerRef.current;
@@ -380,12 +413,46 @@ function NewsHorizontalScroller({
     el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
   };
 
+  // Touch / swipe navigation
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const t = e.touches[0];
+    touchActiveRef.current = true;
+    touchStartXRef.current = t.clientX;
+    touchStartScrollRef.current = el.scrollLeft;
+    touchLastXRef.current = t.clientX;
+    touchLastTsRef.current = performance.now();
+    touchVelocityRef.current = 0;
+    targetSpeedRef.current = 0;
+    currentSpeedRef.current = 0;
+    momentumRef.current = 0;
+  };
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el || !touchActiveRef.current) return;
+    const t = e.touches[0];
+    const dx = touchStartXRef.current - t.clientX;
+    el.scrollLeft = touchStartScrollRef.current + dx;
+    const now = performance.now();
+    const dt = Math.max(0.001, (now - touchLastTsRef.current) / 1000);
+    touchVelocityRef.current = (touchLastXRef.current - t.clientX) / dt;
+    touchLastXRef.current = t.clientX;
+    touchLastTsRef.current = now;
+  };
+  const onTouchEnd = () => {
+    touchActiveRef.current = false;
+    // Momentum: velocidade final vira alvo com decaimento
+    const v = touchVelocityRef.current;
+    momentumRef.current = Math.max(-1600, Math.min(1600, v));
+  };
+
   const toggleEye = (idx: number) => setExpanded((prev) => ({ ...prev, [idx]: !prev[idx] }));
 
   return (
     <div className="relative h-full w-full flex flex-col">
       {/* Área rolável */}
-      <div className="relative flex-1 min-h-0" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <div className="relative flex-1 min-h-0" onMouseEnter={onMouseEnter} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
         <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
         <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
 
@@ -396,10 +463,25 @@ function NewsHorizontalScroller({
           <ChevronRight size={18} />
         </button>
 
+        <button
+          onClick={() => setAutoScroll((v) => !v)}
+          className="absolute right-2 top-2 z-20 h-8 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold shadow-md hover:scale-105 transition"
+          style={{ background: autoScroll ? NEXO_CYAN : "#fff", color: autoScroll ? "#fff" : NEXO_DARK, border: `1px solid ${NEXO_CYAN}66` }}
+          aria-label={autoScroll ? "Pausar rolagem automática" : "Ativar rolagem automática"}
+          title={autoScroll ? "Pausar auto-rolagem" : "Ativar auto-rolagem"}
+        >
+          {autoScroll ? <Pause size={14} /> : <Play size={14} />}
+          <span>Auto</span>
+        </button>
+
         <div
           ref={scrollerRef}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onTouchCancel={onTouchEnd}
           className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6"
-          style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position" }}
+          style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position", touchAction: "pan-y" }}
         >
           {items.map((n, i) => {
             const dateLabel = formatPubDate(n.pubDate);

@@ -629,9 +629,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if ((parentLabel === "ferramentas" || parentLabel === "comercial") && (child.label === "tela promo" || child.label === "módulo locutor")) {
-      // Go directly to the slug-prefixed route to avoid the legacy /user/<slug>/nexohub/... redirect,
-      // which can land on an empty page if the slug can't be resolved.
-      const url = masterSlug ? `/${masterSlug}/telapromo` : "/telapromo";
+      // URL padronizada do módulo locutor
+      const path = child.label === "módulo locutor" ? "locutor" : "telapromo";
+      const url = masterSlug ? `/${masterSlug}/${path}` : `/${path}`;
       window.open(url, "_blank");
       setHoveredMenu(null);
       return;
