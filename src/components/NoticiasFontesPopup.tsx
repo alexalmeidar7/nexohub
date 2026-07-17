@@ -741,7 +741,7 @@ function NewsHorizontalScroller({
                             title="Remover do bloco"
                             style={{ color: "inherit" }}
                           >
-                            <X size={12} />
+                            <XIcon size={12} />
                           </button>
                         </div>
                       ))}
