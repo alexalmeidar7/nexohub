@@ -1264,59 +1264,73 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               {sites.length === 0 && (
                 <p className="text-xs text-center py-6" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhum site cadastrado ainda.</p>
               )}
-              {sites.map((s) => {
-                const isEditing = editingId === s.id;
-                return (
-                  <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}` }}>
-                    <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
-                    {isEditing ? (
-                      <div className="flex-1 min-w-0 flex flex-col gap-1">
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          placeholder="Nome"
-                          className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
-                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
-                        />
-                        <input
-                          type="text"
-                          value={editUrl}
-                          onChange={(e) => setEditUrl(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
-                          placeholder="URL do feed RSS"
-                          className="w-full h-7 px-2 rounded text-[10px] outline-none"
-                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>{s.name}</p>
-                        <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
-                      </div>
-                    )}
-                    {isEditing ? (
-                      <>
-                        <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
-                          {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                        </button>
-                        <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
-                          <XIcon size={13} />
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
-                          <Pencil size={13} />
-                        </button>
-                        <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
-                          <Trash2 size={13} />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+              {(() => {
+                const parents = sites.filter((x) => !x.parent_id);
+                const orphans = sites.filter((x) => x.parent_id && !parents.some((p) => p.id === x.parent_id));
+                const ordered: { site: Site; depth: number }[] = [];
+                for (const p of parents) {
+                  ordered.push({ site: p, depth: 0 });
+                  sites.filter((c) => c.parent_id === p.id).forEach((c) => ordered.push({ site: c, depth: 1 }));
+                }
+                orphans.forEach((o) => ordered.push({ site: o, depth: 1 }));
+                return ordered.map(({ site: s, depth }) => {
+                  const isEditing = editingId === s.id;
+                  return (
+                    <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}`, marginLeft: depth * 20 }}>
+                      {depth > 0 && <span className="text-[10px] font-bold" style={{ color: NEXO_CYAN }}>↳</span>}
+                      <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
+                      {isEditing ? (
+                        <div className="flex-1 min-w-0 flex flex-col gap-1">
+                          <input
+                            type="text"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder={depth > 0 ? "Categoria (ex.: Política)" : "Nome"}
+                            className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                          />
+                          <input
+                            type="text"
+                            value={editUrl}
+                            onChange={(e) => setEditUrl(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
+                            placeholder="URL do feed RSS"
+                            className="w-full h-7 px-2 rounded text-[10px] outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>
+                            {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: `${NEXO_CYAN}22`, color: NEXO_CYAN }}>SUB</span>}
+                            {s.name}
+                          </p>
+                          <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+                        </div>
+                      )}
+                      {isEditing ? (
+                        <>
+                          <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
+                            {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                          </button>
+                          <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
+                            <XIcon size={13} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
+                            <Pencil size={13} />
+                          </button>
+                          <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
+                            <Trash2 size={13} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
 
             <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
