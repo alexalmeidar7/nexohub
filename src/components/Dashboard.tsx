@@ -281,6 +281,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
+  // Trava scroll do body enquanto o menu mobile estiver aberto
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [mobileMenuOpen]);
+
+
   // Fetch on-air presenter photo
   useEffect(() => {
     const uid = effectiveUserId || user?.id;
@@ -741,7 +750,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             return (
               <div
                 key={item.label}
+                data-menu-item-root
                 className="relative"
+
                 onMouseEnter={() => {
                   clearMenuLeaveTimer();
                   if (item.children) setHoveredMenu(item.label);
@@ -758,9 +769,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setCurrentPage(item.page);
                         }
                       }}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                      onFocus={() => { if (item.children) { clearMenuLeaveTimer(); setHoveredMenu(item.label); } }}
+                      onKeyDown={(e) => {
+                        if (!item.children) return;
+                        if (e.key === "ArrowRight" || (e.key === "ArrowDown" && isOpen)) {
+                          e.preventDefault();
+                          clearMenuLeaveTimer();
+                          setHoveredMenu(item.label);
+                          requestAnimationFrame(() => {
+                            const first = document.querySelector<HTMLButtonElement>(`[data-submenu="${item.label}"] [data-submenu-item]`);
+                            first?.focus();
+                          });
+                        } else if (e.key === "Escape" && isOpen) {
+                          setHoveredMenu(null);
+                        }
+                      }}
+                      aria-haspopup={item.children ? "menu" : undefined}
+                      aria-expanded={item.children ? isOpen : undefined}
+                      aria-label={item.label === "home" ? "Home nexohub" : item.label}
+                      className="nexo-focus w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
                       style={{
                         backgroundColor: active && item.label !== "home" ? layoutColors.accentColor : "transparent",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
                       }}
                       onMouseEnter={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
                       onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
@@ -772,6 +802,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       )}
 
                     </button>
+
                   </TooltipTrigger>
                   <TooltipContent side="right">
                     <p className="text-xs capitalize">
@@ -796,12 +827,43 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     {/* ponte invisível para não perder hover no gap */}
                     <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
                     <div
+                      data-submenu={item.label}
+                      role="menu"
+                      aria-label={`Submenu ${item.label}`}
+                      onKeyDown={(e) => {
+                        const items = Array.from(
+                          (e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("[data-submenu-item]")
+                        ).filter(el => !el.hasAttribute("disabled"));
+                        const currentIndex = items.findIndex(el => el === document.activeElement);
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          const next = items[(currentIndex + 1 + items.length) % items.length];
+                          next?.focus();
+                        } else if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          const prev = items[(currentIndex - 1 + items.length) % items.length];
+                          prev?.focus();
+                        } else if (e.key === "Home") {
+                          e.preventDefault();
+                          items[0]?.focus();
+                        } else if (e.key === "End") {
+                          e.preventDefault();
+                          items[items.length - 1]?.focus();
+                        } else if (e.key === "Escape" || e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setHoveredMenu(null);
+                          // devolve o foco ao botão-pai
+                          const parentBtn = (e.currentTarget.closest("[data-menu-item-root]") as HTMLElement | null)?.querySelector<HTMLButtonElement>("button");
+                          parentBtn?.focus();
+                        }
+                      }}
                       className="rounded-2xl py-3 min-w-[210px] overflow-y-auto backdrop-blur-xl"
                       style={{
                         background: `linear-gradient(180deg, ${layoutColors.navBg}f2 0%, ${layoutColors.navBg}e6 100%)`,
                         border: `1px solid ${layoutColors.navText}1f`,
                         boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px ${layoutColors.accentColor}14, inset 0 1px 0 ${layoutColors.navText}0f`,
                         maxHeight: "calc(100vh - 24px)",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
                       }}
                     >
                       <div className="flex items-center gap-2 px-4 pb-2">
@@ -818,8 +880,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                 <div className="mx-2 my-1.5" style={{ borderTop: `1px solid ${layoutColors.navText}12` }} />
                               )}
                               <button
+                                data-submenu-item
+                                role="menuitem"
                                 onClick={() => handleChildClick(child, item.label)}
-                                className="w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
+                                className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
                                 style={{
                                   color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
                                   backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
@@ -839,8 +903,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                 return (
                                   <button
                                     key={grand.label}
+                                    data-submenu-item
+                                    role="menuitem"
                                     onClick={() => handleChildClick(grand, child.label)}
-                                    className="w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
+                                    className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
                                     style={{
                                       color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
                                       backgroundColor: grandActive ? `${layoutColors.accentColor}10` : "transparent",
@@ -858,6 +924,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         })}
                       </div>
                     </div>
+
                   </AnimatedFlyout>
 
                   );
@@ -895,14 +962,33 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* Mobile menu overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            {/* Backdrop escurecido com fade */}
+            <div
+              className="absolute inset-0 animate-in fade-in duration-200"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div
+              className="relative w-[85vw] max-w-[320px] flex flex-col h-full overflow-y-auto shadow-2xl animate-in slide-in-from-left duration-300"
+              style={{
+                backgroundColor: layoutColors.navBg,
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: "env(safe-area-inset-bottom)",
+                paddingTop: "env(safe-area-inset-top)",
+              }}
+            >
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 sticky top-0 z-10" style={{ backgroundColor: layoutColors.navBg }}>
                 <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
-                  <X size={16} className="text-white" />
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 rounded-full active:scale-95 transition-transform"
+                  style={{ backgroundColor: layoutColors.buttonBg, minWidth: 40, minHeight: 40 }}
+                  aria-label="Fechar menu"
+                >
+                  <X size={18} className="text-white" />
                 </button>
               </div>
-              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2 animate-fade-in">
+              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-1 py-2 animate-fade-in">
                 {(displayedPill === "Chatbot"
                   ? sidebarMenu
                       .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
@@ -931,50 +1017,79 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   return (
                     <div key={item.label}>
                       <button onClick={() => handleMenuClick(item)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all"
-                        style={{ color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`, backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent" }}
+                        className="w-full flex items-center gap-3 px-3 rounded-xl text-sm transition-all active:scale-[0.98]"
+                        style={{
+                          minHeight: 44,
+                          color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`,
+                          backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent",
+                        }}
                       >
-                        <Icon size={16} />
+                        <Icon size={18} />
                         <span className="flex-1 text-left capitalize">{item.label}</span>
-                        {item.children && (expanded ? <ChevronUp size={12} style={{ color: `${layoutColors.navText}40` }} /> : <ChevronDown size={12} style={{ color: `${layoutColors.navText}40` }} />)}
+                        {item.children && (
+                          <ChevronDown
+                            size={14}
+                            style={{
+                              color: `${layoutColors.navText}66`,
+                              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 220ms cubic-bezier(0.22,1,0.36,1)",
+                            }}
+                          />
+                        )}
                       </button>
-                      {item.children && expanded && (
-                        <div className="ml-6 space-y-0.5 mt-0.5">
-                          {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
-                            const ChildIcon = child.icon;
-                            const childActive = currentPage === child.page;
-                            return (
-                              <div key={child.label}>
-                                <button onClick={() => handleChildClick(child, item.label)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
-                                  style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                                >
-                                  <ChildIcon size={12} />
-                                  <span>{child.label}</span>
-                                </button>
-                                {child.children && child.children.map(grand => {
-                                  const GrandIcon = grand.icon;
-                                  const grandActive = currentPage === grand.page;
-                                  return (
-                                    <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
-                                      className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[10px] transition-all"
-                                      style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80` }}
-                                    >
-                                      <GrandIcon size={11} />
-                                      <span>{grand.label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
+                      {item.children && (
+                        <div
+                          className="overflow-hidden"
+                          style={{
+                            maxHeight: expanded ? 800 : 0,
+                            opacity: expanded ? 1 : 0,
+                            transition: "max-height 280ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease",
+                          }}
+                        >
+                          <div className="ml-6 space-y-0.5 mt-1 mb-1">
+                            {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
+                              const ChildIcon = child.icon;
+                              const childActive = currentPage === child.page;
+                              return (
+                                <div key={child.label}>
+                                  <button onClick={() => handleChildClick(child, item.label)}
+                                    className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
+                                    style={{
+                                      minHeight: 40,
+                                      color: childActive ? layoutColors.accentColor : `${layoutColors.navText}b3`,
+                                      backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
+                                    }}
+                                  >
+                                    <ChildIcon size={14} />
+                                    <span>{child.label}</span>
+                                  </button>
+                                  {child.children && child.children.map(grand => {
+                                    const GrandIcon = grand.icon;
+                                    const grandActive = currentPage === grand.page;
+                                    return (
+                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
+                                        className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
+                                        style={{
+                                          minHeight: 36,
+                                          color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80`,
+                                        }}
+                                      >
+                                        <GrandIcon size={12} />
+                                        <span>{grand.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </nav>
-              <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
+              <div className="px-4 py-4 sticky bottom-0" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a`, backgroundColor: layoutColors.navBg }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
                     {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
@@ -986,8 +1101,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
-            <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
           </div>
+
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
