@@ -52,7 +52,10 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         preload="auto"
         onEnded={handleEnded}
       />
-      <div className="absolute inset-0 flex items-center justify-center">
+      <div
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ transform: "translateY(50px)" }}
+      >
         <LoadingSpinner size={48} />
       </div>
     </div>
