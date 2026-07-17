@@ -258,10 +258,151 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   return [];
 }
 
+function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: string }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const dirRef = useRef<0 | 1 | -1>(0);
+  const speedRef = useRef(0);
+
+  // Reset scroll when switching site
+  useEffect(() => {
+    if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
+  }, [siteId]);
+
+  const tick = () => {
+    const el = scrollerRef.current;
+    if (el && dirRef.current !== 0) {
+      el.scrollLeft += dirRef.current * speedRef.current;
+    }
+    rafRef.current = requestAnimationFrame(tick);
+  };
+
+  useEffect(() => {
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const zone = Math.min(180, rect.width * 0.18);
+    if (x < zone) {
+      const intensity = 1 - x / zone; // 0..1
+      dirRef.current = -1;
+      speedRef.current = 3 + intensity * 18;
+    } else if (x > rect.width - zone) {
+      const intensity = 1 - (rect.width - x) / zone;
+      dirRef.current = 1;
+      speedRef.current = 3 + intensity * 18;
+    } else {
+      dirRef.current = 0;
+      speedRef.current = 0;
+    }
+  };
+
+  const onMouseLeave = () => {
+    dirRef.current = 0;
+    speedRef.current = 0;
+  };
+
+  const nudge = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative h-full w-full" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      {/* Edge hint gradients */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
+
+      {/* Nudge arrows */}
+      <button
+        onClick={() => nudge(-1)}
+        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
+        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
+        aria-label="Anterior"
+      >
+        <ChevronLeft size={18} />
+      </button>
+      <button
+        onClick={() => nudge(1)}
+        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
+        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
+        aria-label="Próximo"
+      >
+        <ChevronRight size={18} />
+      </button>
+
+      <div
+        ref={scrollerRef}
+        className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6 scroll-smooth"
+        style={{ scrollbarWidth: "thin" }}
+      >
+        {items.map((n, i) => {
+          const dateLabel = formatPubDate(n.pubDate);
+          return (
+            <a
+              key={`${siteId}-${i}`}
+              href={n.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group shrink-0 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition"
+              style={{
+                width: 280,
+                background: NEXO_CARD_BG,
+                boxShadow: "0 6px 18px rgba(10,37,64,0.10)",
+                fontFamily: "'Montserrat', sans-serif",
+              }}
+            >
+              <div className="w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A`, aspectRatio: "4/3" }}>
+                {n.thumbnail ? (
+                  <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
+                    <Newspaper size={38} />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 flex flex-col p-5 gap-4">
+                <h3
+                  className="text-[17px] leading-[1.15] font-black line-clamp-5"
+                  style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}
+                >
+                  {n.title}
+                </h3>
+                <div className="mt-auto flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold" style={{ color: NEXO_DARK, opacity: 0.75 }}>
+                    {dateLabel || " "}
+                  </span>
+                  <span
+                    className="w-9 h-9 rounded-full flex items-center justify-center transition group-hover:scale-110"
+                    style={{ background: NEXO_CYAN, color: "#fff" }}
+                    aria-label="Abrir notícia"
+                  >
+                    <Eye size={16} />
+                  </span>
+                </div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }
+
 
 export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
   const { user } = useAuth();
