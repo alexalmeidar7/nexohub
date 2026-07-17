@@ -129,26 +129,33 @@ export default function SitePage({ effectiveUserId }: Props) {
   return (
     <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: subtleBg, border: subtleBorder }}>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-2xl" style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: accent, color: "#fff" }}>
-            <Globe size={18} />
+          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: "#00BFF0", color: "#fff" }}>
+            <Globe size={20} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-bold truncate" style={{ color: textColor }}>{config.site_nome || "Meu Site"}</h1>
-            <p className="text-[11px] opacity-60 truncate">
+            <h1 className="text-sm font-extrabold uppercase tracking-wider truncate" style={{ color: "#0A2540" }}>
+              {config.site_nome || "Meu Site"}
+            </h1>
+            <p className="text-[11px] font-semibold truncate" style={{ color: "#64748B" }}>
               Painel administrativo · {visibleCount} seções ativas
               {config.site_dominio ? ` · ${config.site_dominio}` : ""}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={openPreview} className="gap-1.5">
-            <ExternalLink size={14} /> Preview
-          </Button>
-          <Button size="sm" onClick={() => setModule("servidor")} className="gap-1.5" style={{ background: accent, color: "#fff" }}>
-            <UploadIcon size={14} /> Publicar
-          </Button>
+          <button onClick={openPreview}
+            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition"
+            style={{ background: "#ffffff", color: "#0A2540", border: "2px solid #00BFF0" }}>
+            <ExternalLink size={13} /> Preview
+          </button>
+          <button onClick={() => setModule("servidor")}
+            data-nexo="primary"
+            className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition"
+            style={{ background: "#C6F03C", color: "#0A2540", boxShadow: "0 4px 14px rgba(198,240,60,0.35)" }}>
+            <UploadIcon size={13} /> Publicar
+          </button>
         </div>
       </div>
 
