@@ -864,6 +864,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editUrl, setEditUrl] = useState("");
+  const [editParentId, setEditParentId] = useState<string>("");
   const [savingEdit, setSavingEdit] = useState(false);
   const tabsScrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
