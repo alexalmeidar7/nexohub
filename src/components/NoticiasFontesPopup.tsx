@@ -889,6 +889,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const tabsScrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
 
   const updateScrollButtons = () => {
     const el = tabsScrollRef.current;
