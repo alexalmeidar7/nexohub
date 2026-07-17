@@ -24,6 +24,7 @@ export default function BotsStatusBox() {
     { name: "BotXMLMusica", label: "XML Música", ok: false, detail: "Aguardando...", lastRun: 0 },
     { name: "BotMusicaEmTudo", label: "Sync Telas", ok: false, detail: "Aguardando...", lastRun: 0 },
     { name: "BotLogosPats", label: "Logos/Pats", ok: false, detail: "Aguardando...", lastRun: 0 },
+    { name: "BotNoticiasFontes", label: "Notícias Fontes", ok: false, detail: "Aguardando...", lastRun: 0 },
   ]);
 
   const toggleMinimize = useCallback(() => {
