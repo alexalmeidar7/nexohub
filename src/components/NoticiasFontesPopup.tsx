@@ -177,28 +177,47 @@ function parseHtmlNews(html: string, baseUrl: string): NewsItem[] {
   return results.slice(0, 15);
 }
 
+async function callFetchRss(url: string, timeoutMs = 20000): Promise<string> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return "";
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey, "Cache-Control": "no-cache" },
+      body: JSON.stringify({ url }),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      console.warn("[NoticiasFontes] fetch-rss HTTP", res.status, url);
+      return "";
+    }
+    const data = await res.json();
+    if (data?.error) console.warn("[NoticiasFontes] fetch-rss error:", data.error, "url:", url);
+    return typeof data?.content === "string" ? data.content : "";
+  } catch (e: any) {
+    console.warn("[NoticiasFontes] fetch-rss failed:", e?.message || e, "url:", url);
+    return "";
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   // Bust cache with timestamp so we always get fresh
   const cacheBust = `${rssUrl}${rssUrl.includes("?") ? "&" : "?"}_ts=${Date.now()}`;
-  let rawContent = "";
-  try {
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    if (supabaseUrl && supabaseKey) {
-      const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}`, "Cache-Control": "no-cache" },
-        body: JSON.stringify({ url: cacheBust }),
-        signal: AbortSignal.timeout(18000),
-      });
-      const data = await res.json();
-      if (data?.content) {
-        rawContent = data.content;
-        const r = parseRss(rawContent);
-        if (r.length) return r.slice(0, 15);
-      }
+  let rawContent = await callFetchRss(cacheBust);
+
+  if (rawContent) {
+    const r = parseRss(rawContent);
+    if (r.length) {
+      console.log("[NoticiasFontes] RSS OK:", r.length, "items ←", rssUrl);
+      return r.slice(0, 15);
     }
-  } catch {}
+  }
+
   if (!rawContent) {
     try {
       const res = await fetch(`${PROXY}${encodeURIComponent(cacheBust)}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
@@ -211,33 +230,31 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   // Fallback: not a valid RSS/Atom feed → treat as HTML page and scrape
   if (rawContent) {
     const html = parseHtmlNews(rawContent, rssUrl);
-    if (html.length) return html;
+    if (html.length) {
+      console.log("[NoticiasFontes] HTML scrape:", html.length, "items ←", rssUrl);
+      return html;
+    }
   }
 
   // Last resort: try common feed paths
   try {
     const base = new URL(rssUrl);
-    const candidates = ["/feed", "/rss", "/feed/", "/rss.xml", "/index.xml"];
+    const candidates = ["/feed", "/rss", "/feed/", "/rss.xml", "/index.xml", "/dynamo/rss2.xml"];
     for (const path of candidates) {
       if (base.pathname.replace(/\/$/, "") === path.replace(/\/$/, "")) continue;
-      const tryUrl = `${base.origin}${path}`;
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
-          body: JSON.stringify({ url: `${tryUrl}?_ts=${Date.now()}` }),
-          signal: AbortSignal.timeout(12000),
-        });
-        const data = await res.json();
-        if (data?.content) {
-          const r = parseRss(data.content);
-          if (r.length) return r.slice(0, 15);
+      const tryUrl = `${base.origin}${path}?_ts=${Date.now()}`;
+      const content = await callFetchRss(tryUrl, 12000);
+      if (content) {
+        const r = parseRss(content);
+        if (r.length) {
+          console.log("[NoticiasFontes] Auto-discovery feed:", tryUrl);
+          return r.slice(0, 15);
         }
-      } catch {}
+      }
     }
   } catch {}
+
+  console.warn("[NoticiasFontes] Nenhuma notícia extraída para:", rssUrl);
   return [];
 }
 
