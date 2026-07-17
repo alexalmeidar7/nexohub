@@ -1235,10 +1235,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <button
             onClick={() => {
               const total = blocos.reduce((acc, b) => acc + b.noticias.filter(n => n.titulo || n.imagemUrl || n.texto_materia || (n as any).resumo).length, 0);
-              if (total === 0) { toast.info("Nenhuma notícia para limpar"); return; }
-              if (!window.confirm(`Remover todas as ${total} notícia(s) dos blocos?`)) return;
-              setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
-              toast.success("Notícias removidas de todos os blocos");
+              if (total === 0 && escaladaList.length === 0) { toast.info("Nenhuma notícia para limpar"); return; }
+              setShowLimparConfirm(true);
             }}
             className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
             style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? "#dc2626" : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid #dc2626` : "none", borderRadius: renderAsModal ? 999 : 8 }}
