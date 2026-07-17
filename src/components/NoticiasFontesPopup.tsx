@@ -401,7 +401,6 @@ function NewsHorizontalScroller({
     }
   };
 
-  const autoScrollRef = useRef(autoScroll);
   useEffect(() => { autoScrollRef.current = autoScroll; }, [autoScroll]);
 
   const onMouseEnter = () => { hoveringRef.current = true; };
