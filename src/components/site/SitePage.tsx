@@ -160,23 +160,25 @@ export default function SitePage({ effectiveUserId }: Props) {
       </div>
 
       {/* Layout: sidebar modules + content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 flex-1 min-h-0">
         {/* Sidebar */}
-        <nav className="rounded-xl p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style={{ background: subtleBg, border: subtleBorder }}>
+        <nav className="rounded-2xl p-2 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible"
+          style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
           {MODULES.map((m) => {
             const active = module === m.id;
             const Icon = m.icon;
             return (
               <button key={m.id} onClick={() => setModule(m.id)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition shrink-0 lg:w-full"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-full text-left transition shrink-0 lg:w-full"
                 style={{
-                  background: active ? accent : "transparent",
-                  color: active ? "#fff" : "inherit",
+                  background: active ? "#00BFF0" : "transparent",
+                  color: active ? "#ffffff" : "#0A2540",
+                  fontFamily: "Montserrat, system-ui, sans-serif",
                 }}>
                 <Icon size={15} className="shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold truncate">{m.label}</div>
-                  <div className="text-[10px] opacity-70 truncate hidden lg:block">{m.desc}</div>
+                  <div className="text-[11px] font-extrabold uppercase tracking-wider truncate">{m.label}</div>
+                  <div className="text-[10px] font-medium opacity-80 truncate hidden lg:block" style={{ color: active ? "#F1FAFD" : "#64748B" }}>{m.desc}</div>
                 </div>
               </button>
             );
@@ -184,8 +186,9 @@ export default function SitePage({ effectiveUserId }: Props) {
         </nav>
 
         {/* Content */}
-        <div className="rounded-xl overflow-hidden flex flex-col min-h-0" style={{ background: subtleBg, border: subtleBorder }}>
-          <div className="flex-1 overflow-y-auto p-4">
+        <div className="rounded-2xl overflow-hidden flex flex-col min-h-0"
+          style={{ background: "#D6F4FB", border: "2px solid #00BFF0" }} data-nexo-skip>
+          <div className="flex-1 overflow-y-auto p-5">
 
             {module === "overview" && (
               <div className="space-y-4">
