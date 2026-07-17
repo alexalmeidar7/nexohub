@@ -1258,6 +1258,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         open={showNoticiasFontes}
         onOpenChange={setShowNoticiasFontes}
         blocosCount={blocos.length}
+        initialBlocoItems={Object.fromEntries(
+          blocos.map((b, i) => [
+            i,
+            (b.noticias || [])
+              .filter(n => (n.titulo || "").trim())
+              .map(n => ({ title: n.titulo, link: "", thumbnail: n.imagemUrl || "", pubDate: "", summary: (n as any).resumo || "" })),
+          ])
+        )}
+        onBlocoItemsChange={(bi, items) => {
+          setBlocos(prev => prev.map((b, i) => {
+            if (i !== bi) return b;
+            if (!items.length) return { ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] };
+            const next = items.map(it => {
+              const existing = (b.noticias || []).find(n => (n.titulo || "").trim() === (it.title || "").trim());
+              return existing || {
+                titulo: (it.title || "").replace(/\uFFFD/g, "").trim(),
+                imagemUrl: it.thumbnail || "",
+                escalada: false,
+                resumo: it.summary || "",
+                texto_materia: "",
+              } as any;
+            });
+            return { ...b, noticias: next };
+          }));
+        }}
         onAddNoticiaToBloco={(bi, item) => {
           const titulo = (item.title || "").replace(/\uFFFD/g, "").trim();
           if (!titulo) return;
