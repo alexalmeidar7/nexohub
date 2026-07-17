@@ -1034,6 +1034,38 @@ export type Database = {
         }
         Relationships: []
       }
+      news_cache: {
+        Row: {
+          items: Json
+          last_error: string | null
+          site_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          items?: Json
+          last_error?: string | null
+          site_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          items?: Json
+          last_error?: string | null
+          site_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_cache_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "custom_news_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ouvintes: {
         Row: {
           cidade: string | null
