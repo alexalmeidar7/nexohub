@@ -7,7 +7,7 @@ import { findCurrentProgram } from "./OnAirWidget";
 import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { useCoverPalette } from "@/lib/coverPalette";
+import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 
 interface MusicData {
   titulo: string;
