@@ -1413,8 +1413,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   <label
                     className="flex items-center gap-1.5 px-3 py-2 rounded-lg select-none shrink-0 transition-all hover:opacity-90"
                     style={{
-                      backgroundColor: "var(--layout-header-bg, #0d0446)",
-                      color: "var(--layout-header-text, #ffffff)",
+                      backgroundColor: "#C6F03C",
+                      color: "#0d0446",
+                      border: "1px solid #a8d128",
                       opacity: hasValidOnlineUrl ? 1 : 0.45,
                       cursor: hasValidOnlineUrl ? "pointer" : "not-allowed",
                     }}
@@ -1424,9 +1425,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       checked={isOnlineSelected}
                       onChange={toggleOnlineSource}
                       disabled={!hasValidOnlineUrl}
-                      className="w-3.5 h-3.5 accent-white"
+                      className="w-3.5 h-3.5"
+                      style={{ accentColor: "#0d0446" }}
                     />
-                    <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "var(--layout-header-text, #ffffff)" }}>LER ESSA</span>
+                    <span className="text-[10px] font-black whitespace-nowrap" style={{ color: "#0d0446" }}>LER ESSA</span>
                   </label>
                 </div>
 
