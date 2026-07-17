@@ -2472,6 +2472,23 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               toggleMute={toggleMute}
               handleVolume={handleVolume}
             />
+            {isVideo && !compactMode && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const el = videoRef.current as any;
+                  if (!el) return;
+                  const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+                  try { req?.call(el); } catch { /* noop */ }
+                }}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                style={{ background: "#001e2d" }}
+                title="Tela cheia"
+              >
+                <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+              </button>
+            )}
 
           </div>
         </div>
