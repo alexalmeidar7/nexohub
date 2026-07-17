@@ -602,9 +602,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
-      // Log to history with real artist/music
+      // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
-        addUploadLogToDb(dataUserId, source, deviceNameRef.current, data.artista, data.titulo)
+        const logArtist = (data.artista && data.artista.trim()) || "Desconhecido";
+        const logTitle = (data.titulo && data.titulo.trim()) || "Sem título";
+        addUploadLogToDb(dataUserId, source, deviceNameRef.current, logArtist, logTitle)
           .then(setUploadHistory)
           .catch((e) => console.warn("[MusicaNoAr] history log failed:", e));
       }
@@ -1686,7 +1688,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       </tr>
                     </thead>
                     <tbody>
-                      {uploadHistory.map((entry, i) => (
+                      {uploadHistory.map((entry, i) => {
+                        // Fallback: if legacy row has no artist/music, use the live playing track
+                        // for the most recent entry so the column always reflects "o que estava tocando".
+                        const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
+                        const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
+                        const showArtist = entry.artista || fallbackArtist;
+                        const showMusic = entry.musica || fallbackMusic;
+                        return (
                         <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
                           <td className="px-3 py-2 font-semibold">
                             <span
@@ -1704,18 +1713,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                           <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
                           <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
                           <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                            {entry.artista || entry.musica ? (
+                            {showArtist || showMusic ? (
                               <span className="inline-flex items-center gap-1.5">
-                                <span className="font-bold truncate max-w-[140px]" title={entry.artista || ""}>{entry.artista || "—"}</span>
+                                <span className="font-bold truncate max-w-[140px]" title={showArtist}>{showArtist || "—"}</span>
                                 <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
-                                <span className="truncate max-w-[180px]" title={entry.musica || ""} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{entry.musica || "—"}</span>
+                                <span className="truncate max-w-[180px]" title={showMusic} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{showMusic || "—"}</span>
                               </span>
                             ) : (
                               <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
                             )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
