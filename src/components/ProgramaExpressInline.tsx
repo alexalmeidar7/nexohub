@@ -1857,6 +1857,17 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   const isFetching = fetchingLink === `${bi}-${ni}`;
 
   const handlePasteLink = (url: string) => { setLinkInput(url); if (url.startsWith("http")) onFetchLink(bi, ni, url); };
+  const handleKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const el = e.target as HTMLElement;
+    const tag = el.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable) return;
+    const mod = e.altKey || e.ctrlKey || e.metaKey;
+    if (mod && e.key === "ArrowUp") { e.preventDefault(); if (canMoveUp) onMove(bi, ni, -1); }
+    else if (mod && e.key === "ArrowDown") { e.preventDefault(); if (canMoveDown) onMove(bi, ni, 1); }
+    else if ((e.key === "Delete" || (mod && e.key === "Backspace")) && canRemove) { e.preventDefault(); onRemove(bi, ni); }
+    else if (e.key === "Enter" && collapsed) { e.preventDefault(); setCollapsed(false); }
+    else if (e.key === "Escape" && !collapsed && noticia.titulo) { e.preventDefault(); setCollapsed(true); }
+  };
   const prevTituloRef = useRef(noticia.titulo);
 
   useEffect(() => {
