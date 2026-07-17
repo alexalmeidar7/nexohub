@@ -268,11 +268,15 @@ function NewsHorizontalScroller({
   siteId,
   blocosCount,
   onDropToBloco,
+  initialBlocoItems,
+  onBlocoItemsChange,
 }: {
   items: NewsItem[];
   siteId: string;
   blocosCount: number;
   onDropToBloco: (bi: number, item: NewsItem) => void;
+  initialBlocoItems?: Record<number, NewsItem[]>;
+  onBlocoItemsChange?: (bi: number, items: NewsItem[]) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
@@ -285,7 +289,7 @@ function NewsHorizontalScroller({
   const [dragging, setDragging] = useState(false);
   const draggedItemRef = useRef<NewsItem | null>(null);
   const [hoverBloco, setHoverBloco] = useState<number | null>(null);
-  const [blocoItems, setBlocoItems] = useState<Record<number, NewsItem[]>>({});
+  const [blocoItems, setBlocoItems] = useState<Record<number, NewsItem[]>>(() => initialBlocoItems || {});
   const [autoScroll, setAutoScroll] = useState(true);
   const autoScrollRef = useRef(true);
   const [scrollProgress, setScrollProgress] = useState(0); // 0..1
@@ -301,7 +305,23 @@ function NewsHorizontalScroller({
   const momentumRef = useRef(0);
   const AUTO_SPEED = 55; // px/s do modo auto
 
-  // Reset scroll + estado ao trocar de site
+  // Hidrata blocos a partir das notícias já existentes quando a prop mudar
+  useEffect(() => {
+    if (initialBlocoItems) setBlocoItems(initialBlocoItems);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBlocoItems]);
+
+  // Wrapper: atualiza estado interno e notifica o pai
+  const mutateBloco = (bi: number, updater: (cur: NewsItem[]) => NewsItem[]) => {
+    setBlocoItems((prev) => {
+      const cur = prev[bi] || [];
+      const next = updater(cur);
+      onBlocoItemsChange?.(bi, next);
+      return { ...prev, [bi]: next };
+    });
+  };
+
+  // Reset scroll ao trocar de site
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
     targetSpeedRef.current = 0;
@@ -685,17 +705,18 @@ function NewsHorizontalScroller({
                     } catch {}
                     if (item) {
                       const it = item;
-                      setBlocoItems((prev) => {
-                        const cur = prev[bi] || [];
+                      let added = false;
+                      mutateBloco(bi, (cur) => {
                         if (cur.some((x) => x.link === it.link && x.title === it.title)) {
                           toast.warning("Notícia já adicionada neste bloco", {
                             description: it.title.slice(0, 80),
                           });
-                          return prev;
+                          return cur;
                         }
-                        return { ...prev, [bi]: [...cur, it] };
+                        added = true;
+                        return [...cur, it];
                       });
-                      onDropToBloco(bi, it);
+                      if (added) onDropToBloco(bi, it);
                     }
                   }}
                   className="flex-1 min-w-[180px] rounded-xl flex flex-col transition overflow-hidden"
@@ -750,11 +771,11 @@ function NewsHorizontalScroller({
                             try {
                               const { bi: fromBi, idx: fromIdx } = JSON.parse(raw);
                               if (fromBi !== bi || fromIdx === idx) return;
-                              setBlocoItems((prev) => {
-                                const cur = [...(prev[bi] || [])];
-                                const [moved] = cur.splice(fromIdx, 1);
-                                cur.splice(idx, 0, moved);
-                                return { ...prev, [bi]: cur };
+                              mutateBloco(bi, (cur) => {
+                                const arr = [...cur];
+                                const [moved] = arr.splice(fromIdx, 1);
+                                arr.splice(idx, 0, moved);
+                                return arr;
                               });
                             } catch {}
                           }}
@@ -775,11 +796,11 @@ function NewsHorizontalScroller({
                               disabled={idx === 0}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setBlocoItems((prev) => {
-                                  const cur = [...(prev[bi] || [])];
-                                  if (idx <= 0) return prev;
-                                  [cur[idx - 1], cur[idx]] = [cur[idx], cur[idx - 1]];
-                                  return { ...prev, [bi]: cur };
+                                mutateBloco(bi, (cur) => {
+                                  if (idx <= 0) return cur;
+                                  const arr = [...cur];
+                                  [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                  return arr;
                                 });
                               }}
                               className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 transition"
@@ -794,11 +815,11 @@ function NewsHorizontalScroller({
                               disabled={idx === added.length - 1}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setBlocoItems((prev) => {
-                                  const cur = [...(prev[bi] || [])];
-                                  if (idx >= cur.length - 1) return prev;
-                                  [cur[idx], cur[idx + 1]] = [cur[idx + 1], cur[idx]];
-                                  return { ...prev, [bi]: cur };
+                                mutateBloco(bi, (cur) => {
+                                  if (idx >= cur.length - 1) return cur;
+                                  const arr = [...cur];
+                                  [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+                                  return arr;
                                 });
                               }}
                               className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 transition"
@@ -813,10 +834,7 @@ function NewsHorizontalScroller({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setBlocoItems((prev) => {
-                                const cur = prev[bi] || [];
-                                return { ...prev, [bi]: cur.filter((_, i) => i !== idx) };
-                              });
+                              mutateBloco(bi, (cur) => cur.filter((_, i) => i !== idx));
                             }}
                             className="shrink-0 opacity-60 hover:opacity-100 transition mt-0.5"
                             aria-label="Remover"
@@ -846,10 +864,12 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   blocosCount?: number;
   onAddNoticiaToBloco?: (blocoIndex: number, item: NewsItem) => void;
+  initialBlocoItems?: Record<number, NewsItem[]>;
+  onBlocoItemsChange?: (blocoIndex: number, items: NewsItem[]) => void;
 }
 
 
-export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 0, onAddNoticiaToBloco }: Props) {
+export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 0, onAddNoticiaToBloco, initialBlocoItems, onBlocoItemsChange }: Props) {
   const { user } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
@@ -869,6 +889,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const tabsScrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
 
   const updateScrollButtons = () => {
     const el = tabsScrollRef.current;
@@ -1109,34 +1130,92 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               className="flex-1 flex items-center gap-1 py-2 overflow-x-auto scroll-smooth"
               style={{ scrollbarWidth: "none" }}
             >
-              {sites.map((s) => {
-                const active = s.id === activeTab;
-                const count = (newsBySite[s.id] || []).length;
-                const loading = loadingSite[s.id];
-                return (
-                  <button
-                    key={s.id}
-                    data-tab-id={s.id}
-                    onClick={() => setActiveTab(s.id)}
-                    className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
-                    style={{
-                      background: active ? NEXO_CYAN : "#fff",
-                      color: active ? "#fff" : NEXO_DARK,
-                      border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
-                    }}
-                  >
-                    <Globe size={11} />
-                    <span className="truncate max-w-[180px]">
-                      {s.parent_id ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}` : s.name}
-                    </span>
-                    {loading ? (
-                      <Loader2 size={10} className="animate-spin" />
-                    ) : (
-                      <span className="text-[9px] opacity-80">{count}</span>
-                    )}
-                  </button>
-                );
-              })}
+              {(() => {
+                const parents = sites.filter((x) => !x.parent_id);
+                const orphans = sites.filter((x) => x.parent_id && !parents.some((p) => p.id === x.parent_id));
+                const topLevel = [...parents, ...orphans];
+                return topLevel.map((s) => {
+                  const children = sites.filter((c) => c.parent_id === s.id);
+                  const activeChildId = children.find((c) => c.id === activeTab)?.id;
+                  const isSelfActive = s.id === activeTab;
+                  const active = isSelfActive || !!activeChildId;
+                  const displayLabel = activeChildId
+                    ? `${s.name} › ${sites.find((c) => c.id === activeChildId)?.category || sites.find((c) => c.id === activeChildId)?.name}`
+                    : s.parent_id
+                      ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}`
+                      : s.name;
+                  const count = ((newsBySite[activeChildId || s.id]) || []).length;
+                  const loading = loadingSite[activeChildId || s.id];
+                  const isOpen = openMenuFor === s.id;
+                  return (
+                    <div key={s.id} className="relative shrink-0" data-tab-id={s.id}>
+                      <button
+                        onClick={() => {
+                          if (children.length) {
+                            setOpenMenuFor((v) => (v === s.id ? null : s.id));
+                          } else {
+                            setActiveTab(s.id);
+                            setOpenMenuFor(null);
+                          }
+                        }}
+                        className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                        style={{
+                          background: active ? NEXO_CYAN : "#fff",
+                          color: active ? "#fff" : NEXO_DARK,
+                          border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
+                        }}
+                        title={children.length ? "Ver subfontes" : displayLabel}
+                      >
+                        <Globe size={11} />
+                        <span className="truncate max-w-[200px]">{displayLabel}</span>
+                        {loading ? (
+                          <Loader2 size={10} className="animate-spin" />
+                        ) : (
+                          <span className="text-[9px] opacity-80">{count}</span>
+                        )}
+                        {children.length > 0 && (
+                          <ChevronDown size={11} className={`transition ${isOpen ? "rotate-180" : ""}`} />
+                        )}
+                      </button>
+                      {children.length > 0 && isOpen && (
+                        <div
+                          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[220px] rounded-xl overflow-hidden py-1"
+                          style={{ background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
+                          onMouseLeave={() => setOpenMenuFor(null)}
+                        >
+                          <button
+                            onClick={() => { setActiveTab(s.id); setOpenMenuFor(null); }}
+                            className="w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-50 transition"
+                            style={{ color: isSelfActive ? NEXO_CYAN : NEXO_DARK, background: isSelfActive ? `${NEXO_CYAN}12` : "transparent" }}
+                          >
+                            <Globe size={11} />
+                            <span className="flex-1 truncate">Todas · {s.name}</span>
+                            <span className="text-[9px] opacity-70">{(newsBySite[s.id] || []).length}</span>
+                          </button>
+                          <div className="h-px my-1" style={{ background: `${NEXO_CYAN}22` }} />
+                          {children.map((c) => {
+                            const cActive = c.id === activeTab;
+                            const cCount = (newsBySite[c.id] || []).length;
+                            const cLoading = loadingSite[c.id];
+                            return (
+                              <button
+                                key={c.id}
+                                onClick={() => { setActiveTab(c.id); setOpenMenuFor(null); }}
+                                className="w-full text-left px-3 py-2 text-[11px] font-semibold flex items-center gap-2 hover:bg-cyan-50 transition"
+                                style={{ color: cActive ? NEXO_CYAN : NEXO_DARK, background: cActive ? `${NEXO_CYAN}12` : "transparent" }}
+                              >
+                                <span className="text-[10px] font-black opacity-60">↳</span>
+                                <span className="flex-1 truncate">{c.category || c.name}</span>
+                                {cLoading ? <Loader2 size={10} className="animate-spin" /> : <span className="text-[9px] opacity-70">{cCount}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
             <button
               onClick={() => scrollTabs("right")}
@@ -1196,7 +1275,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               ) : activeNews.length === 0 ? (
                 <p className="text-xs text-center py-10" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhuma notícia encontrada nesta fonte.</p>
               ) : (
-                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} blocosCount={blocosCount} onDropToBloco={(bi, item) => onAddNoticiaToBloco?.(bi, item)} />
+                <NewsHorizontalScroller items={activeNews} siteId={activeSite.id} blocosCount={blocosCount} onDropToBloco={(bi, item) => onAddNoticiaToBloco?.(bi, item)} initialBlocoItems={initialBlocoItems} onBlocoItemsChange={onBlocoItemsChange} />
               )}
             </>
           )}
