@@ -7,7 +7,7 @@ import { findCurrentProgram } from "./OnAirWidget";
 import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { useCoverPalette } from "@/lib/coverPalette";
+import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 
 interface MusicData {
   titulo: string;
@@ -1207,9 +1207,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   // Paleta extraída da capa para gradiente elegante do box de música
   const coverPalette = useCoverPalette(displayCover || null);
+  const paletteContrast = getPaletteContrast(coverPalette);
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
     : "var(--layout-slider-bg, #0d0d0d)";
+  const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
+  const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
+  const musicTextShadow = paletteContrast?.textShadow ?? "none";
 
   return (
     <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
@@ -1303,9 +1307,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               }} />
             </div>
 
-            {/* Scrim para legibilidade do texto branco sobre cores claras da capa */}
-            {coverPalette && (
-              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: "linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.45) 100%)", zIndex: 2 }} />
+            {/* Scrim adaptativo por luminância do gradiente */}
+            {paletteContrast && (
+              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: paletteContrast.scrimBackground, zIndex: 2 }} />
             )}
 
             <div className="relative z-10 p-4 flex gap-4 items-center">
@@ -1332,19 +1336,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-2">
-                <h2 className="text-lg lg:text-xl font-black tracking-tight truncate" style={{ color: "#ffffff" }}>
+                <h2 className="text-lg lg:text-xl font-black tracking-tight truncate" style={{ color: musicTextColor, textShadow: musicTextShadow }}>
                   {displayTitulo}
                 </h2>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: "rgba(255,255,255,0.65)" }}>
+                <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: musicTextMuted, textShadow: musicTextShadow }}>
                   <User size={14} />
                   {displayArtista}
                 </span>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: "rgba(255,255,255,0.85)" }}>{formatTimeMs(elapsed)}</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.3)" }}>/</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>{formatTime(music.duracao)}</span>
+                  <div className="mt-2 flex items-center gap-1.5" style={{ textShadow: musicTextShadow }}>
+                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: musicTextColor }}>{formatTimeMs(elapsed)}</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted, opacity: 0.6 }}>/</span>
+                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted }}>{formatTime(music.duracao)}</span>
                   </div>
                 )}
               </div>

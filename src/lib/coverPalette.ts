@@ -10,7 +10,110 @@ export interface CoverPalette {
   secondary: string; // segunda cor mais distinta
 }
 
+/** Contraste automático derivado da paleta para garantir legibilidade. */
+export interface PaletteContrast {
+  /** Luminância média perceptual do gradiente (0..1). */
+  luminance: number;
+  /** Cor de texto ideal (#fff ou #0a0a0a). */
+  textColor: string;
+  /** Cor de texto secundário/muted com opacidade adequada. */
+  textMutedColor: string;
+  /** CSS background para scrim sobre o gradiente, calibrado por luminância. */
+  scrimBackground: string;
+  /** Text-shadow sutil para reforçar leitura em qualquer fundo. */
+  textShadow: string;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = hex.replace("#", "");
+  const n = m.length === 3
+    ? m.split("").map((c) => parseInt(c + c, 16))
+    : [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+  return [n[0] || 0, n[1] || 0, n[2] || 0];
+}
+
+function relLuminance([r, g, b]: [number, number, number]): number {
+  // sRGB -> luminância relativa (WCAG)
+  const f = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+export function getPaletteContrast(palette: CoverPalette | null): PaletteContrast | null {
+  if (!palette) return null;
+  const l1 = relLuminance(hexToRgb(palette.primary));
+  const l2 = relLuminance(hexToRgb(palette.secondary));
+  const luminance = (l1 + l2) / 2;
+
+  // Fundo claro -> texto escuro; fundo escuro -> texto branco.
+  const isLight = luminance > 0.55;
+  const textColor = isLight ? "#0a0a0a" : "#ffffff";
+  const textMutedColor = isLight ? "rgba(10,10,10,0.72)" : "rgba(255,255,255,0.78)";
+
+  if (isLight) {
+    // Scrim claro sutil para escurecer levemente e realçar texto escuro
+    const a = Math.min(0.35, 0.15 + (luminance - 0.55) * 0.6);
+    return {
+      luminance,
+      textColor,
+      textMutedColor,
+      scrimBackground: `linear-gradient(90deg, rgba(255,255,255,${(a * 0.4).toFixed(3)}) 0%, rgba(255,255,255,${a.toFixed(3)}) 100%)`,
+      textShadow: "0 1px 2px rgba(255,255,255,0.35)",
+    };
+  }
+  // Fundo escuro: escurece mais quanto mais claro estiver (0.2 baseline até ~0.55 max)
+  const a = Math.min(0.55, 0.2 + (0.55 - luminance) * 0.25 + luminance * 0.4);
+  return {
+    luminance,
+    textColor,
+    textMutedColor,
+    scrimBackground: `linear-gradient(90deg, rgba(0,0,0,${(a * 0.35).toFixed(3)}) 0%, rgba(0,0,0,${(a * 0.7).toFixed(3)}) 55%, rgba(0,0,0,${a.toFixed(3)}) 100%)`,
+    textShadow: "0 1px 2px rgba(0,0,0,0.45)",
+  };
+}
+
+
 const cache = new Map<string, CoverPalette | null>();
+const inflight = new Map<string, Promise<CoverPalette | null>>();
+
+const LS_PREFIX = "nexo:coverPalette:v1:";
+const LS_MAX_ENTRIES = 200;
+
+function cacheKey(url: string): string {
+  // Normaliza query strings de cache-busting (?v=...&t=...) para o mesmo asset
+  try {
+    const u = new URL(url, typeof window !== "undefined" ? window.location.href : "http://x");
+    return `${u.origin}${u.pathname}`;
+  } catch {
+    return url;
+  }
+}
+
+function lsGet(key: string): CoverPalette | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(LS_PREFIX + key);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    if (parsed === null) return null;
+    if (parsed && typeof parsed.primary === "string" && typeof parsed.secondary === "string") return parsed;
+    return undefined;
+  } catch { return undefined; }
+}
+
+function lsSet(key: string, value: CoverPalette | null) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(LS_PREFIX + key, JSON.stringify(value));
+    // Poda simples: se passar do limite, remove ~25% dos mais antigos
+    const keys = Object.keys(window.localStorage).filter((k) => k.startsWith(LS_PREFIX));
+    if (keys.length > LS_MAX_ENTRIES) {
+      keys.slice(0, Math.floor(LS_MAX_ENTRIES * 0.25)).forEach((k) => window.localStorage.removeItem(k));
+    }
+  } catch { /* quota / privado */ }
+}
 
 function rgbToHex(r: number, g: number, b: number): string {
   const h = (n: number) => n.toString(16).padStart(2, "0");
@@ -88,16 +191,38 @@ async function extractFromUrl(url: string): Promise<CoverPalette | null> {
 }
 
 export function useCoverPalette(url: string | null | undefined): CoverPalette | null {
-  const [palette, setPalette] = useState<CoverPalette | null>(url ? cache.get(url) ?? null : null);
+  const initial = (() => {
+    if (!url) return null;
+    const k = cacheKey(url);
+    if (cache.has(k)) return cache.get(k) ?? null;
+    const ls = lsGet(k);
+    if (ls !== undefined) { cache.set(k, ls); return ls; }
+    return null;
+  })();
+  const [palette, setPalette] = useState<CoverPalette | null>(initial);
   const activeRef = useRef<string | null>(null);
 
   useEffect(() => {
     activeRef.current = url ?? null;
     if (!url) { setPalette(null); return; }
-    if (cache.has(url)) { setPalette(cache.get(url) ?? null); return; }
+    const k = cacheKey(url);
+
+    if (cache.has(k)) { setPalette(cache.get(k) ?? null); return; }
+    const ls = lsGet(k);
+    if (ls !== undefined) { cache.set(k, ls); setPalette(ls); return; }
+
     let cancelled = false;
-    void extractFromUrl(url).then((p) => {
-      cache.set(url, p);
+    let promise = inflight.get(k);
+    if (!promise) {
+      promise = extractFromUrl(url).then((p) => {
+        cache.set(k, p);
+        lsSet(k, p);
+        inflight.delete(k);
+        return p;
+      });
+      inflight.set(k, promise);
+    }
+    void promise.then((p) => {
       if (!cancelled && activeRef.current === url) setPalette(p);
     });
     return () => { cancelled = true; };
