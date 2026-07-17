@@ -890,6 +890,25 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useLayoutEffect(() => {
+    if (!openMenuFor) { setMenuPos(null); return; }
+    const el = tabRefs.current[openMenuFor];
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      setMenuPos({ top: r.bottom + 6, left: r.left });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [openMenuFor]);
 
   const updateScrollButtons = () => {
     const el = tabsScrollRef.current;
