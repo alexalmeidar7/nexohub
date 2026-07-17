@@ -750,7 +750,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             return (
               <div
                 key={item.label}
+                data-menu-item-root
                 className="relative"
+
                 onMouseEnter={() => {
                   clearMenuLeaveTimer();
                   if (item.children) setHoveredMenu(item.label);
