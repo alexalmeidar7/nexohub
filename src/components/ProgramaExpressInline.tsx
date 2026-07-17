@@ -299,6 +299,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
+  const [showLimparConfirm, setShowLimparConfirm] = useState(false);
   const [openNoticia, setOpenNoticia] = useState<Record<number, number | null>>({});
   const addToEscalada = useCallback((titulo: string, imagemUrl: string) => {
     if (!titulo.trim()) { toast.warning("Notícia sem título"); return; }
