@@ -973,12 +973,21 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setAdding(true);
     let url = newUrl.trim();
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
-    let displayName = url;
-    try { displayName = new URL(url).hostname.replace(/^www\./, ""); } catch {}
-    const { data, error } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url }).select("id,name,rss_url").single();
+    const parentId = newParentId || null;
+    const category = newCategory.trim() || null;
+    let displayName = "";
+    if (parentId) {
+      const parent = sites.find((x) => x.id === parentId);
+      displayName = category || (parent ? parent.name : url);
+    } else {
+      try { displayName = new URL(url).hostname.replace(/^www\./, ""); } catch { displayName = url; }
+    }
+    const { data, error } = await supabase.from("custom_news_sites").insert({ user_id: user.id, name: displayName, rss_url: url, parent_id: parentId, category }).select("id,name,rss_url,parent_id,category").single();
     setAdding(false);
-    if (error || !data) return;
+    if (error || !data) { toast.error("Não foi possível adicionar a fonte"); return; }
     setNewUrl("");
+    setNewParentId("");
+    setNewCategory("");
     const s = data as Site;
     setSites((prev) => [...prev, s]);
     if (!activeTab) setActiveTab(s.id);
