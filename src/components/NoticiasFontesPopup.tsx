@@ -159,6 +159,34 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
     await supabase.from("custom_news_sites").delete().eq("id", id);
   };
 
+  const startEdit = (s: Site) => {
+    setEditingId(s.id);
+    setEditName(s.name);
+    setEditUrl(s.rss_url);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditUrl("");
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editName.trim() || !editUrl.trim()) return;
+    setSavingEdit(true);
+    let url = editUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+    const name = editName.trim();
+    const { error } = await supabase.from("custom_news_sites").update({ name, rss_url: url }).eq("id", id);
+    setSavingEdit(false);
+    if (error) return;
+    const updated: Site = { id, name, rss_url: url };
+    setSites((prev) => prev.map((s) => (s.id === id ? updated : s)));
+    setNewsBySite((prev) => { const c = { ...prev }; delete c[id]; return c; });
+    cancelEdit();
+    loadSiteNews(updated);
+  };
+
   const closeSettings = () => {
     setShowSettings(false);
     // Refresh news for any newly-added sites without cache
