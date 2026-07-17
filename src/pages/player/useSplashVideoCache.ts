@@ -4,14 +4,20 @@ const CACHE_NAME = "nexo-splash-v1";
 
 /**
  * Persistently caches the splash video via the Cache Storage API.
- * On first load: fetches from network, stores in cache, returns the original URL.
- * On subsequent loads: reads from cache and returns a blob: URL for instant playback.
+ * Returns null until the cache lookup resolves, so the <video> element
+ * mounts with a stable src (either blob: from cache, or the network URL)
+ * and never has to reload mid-playback (which caused audio/video desync).
  */
-export function useSplashVideoCache(url: string): string {
-  const [src, setSrc] = useState<string>(url);
+export function useSplashVideoCache(url: string): string | null {
+  const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!url || typeof caches === "undefined") return;
+    if (!url) return;
+    if (typeof caches === "undefined") {
+      setSrc(url);
+      return;
+    }
+
     let cancelled = false;
     let objectUrl: string | null = null;
 
@@ -25,15 +31,14 @@ export function useSplashVideoCache(url: string): string {
           if (!cancelled) setSrc(objectUrl);
           return;
         }
-        // Miss: fetch + store in background; keep original URL for immediate playback
-        const res = await fetch(url, { cache: "force-cache" });
-        if (res.ok) {
-          try {
-            await cache.put(url, res.clone());
-          } catch {}
-        }
+        if (!cancelled) setSrc(url);
+        // Populate cache in the background for next load
+        try {
+          const res = await fetch(url, { cache: "force-cache" });
+          if (res.ok) await cache.put(url, res.clone());
+        } catch {}
       } catch {
-        // Ignore cache errors; fall back to network URL already set
+        if (!cancelled) setSrc(url);
       }
     })();
 
