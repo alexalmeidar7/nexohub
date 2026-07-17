@@ -62,9 +62,63 @@ function formatPubDate(pubDate: string): string {
   return d.toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+function parseHtmlNews(html: string, baseUrl: string): NewsItem[] {
+  const results: NewsItem[] = [];
+  const seen = new Set<string>();
+  try {
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    let base: URL | null = null;
+    try { base = new URL(baseUrl); } catch {}
+
+    // Prefer <article> blocks, then generic anchors with headings inside
+    const articles = Array.from(doc.querySelectorAll("article, .post, .noticia, .card, .news-item, li.post"));
+    const scan = (root: Element | Document) => {
+      const anchors = Array.from(root.querySelectorAll("a[href]"));
+      for (const a of anchors) {
+        const href = a.getAttribute("href") || "";
+        if (!href || href.startsWith("#") || href.startsWith("javascript:")) continue;
+        let link = href;
+        try { link = new URL(href, base || undefined).toString(); } catch { continue; }
+        if (base && !link.startsWith(base.origin)) continue;
+        // Skip navigation-ish links (category pages, home)
+        try {
+          const u = new URL(link);
+          if (u.pathname === "/" || u.pathname.length < 8) continue;
+        } catch {}
+
+        // Find a title: heading inside, aria-label, title, or text
+        const heading = a.querySelector("h1,h2,h3,h4,h5") as HTMLElement | null;
+        let title = (heading?.textContent || a.getAttribute("aria-label") || a.getAttribute("title") || a.textContent || "").trim();
+        title = decodeHtmlEntities(title).replace(/\s+/g, " ").trim();
+        if (!title || title.length < 20 || title.length > 220) continue;
+        if (title.includes("|")) title = title.split("|")[0].trim();
+
+        if (seen.has(link)) continue;
+        seen.add(link);
+
+        // Try to find an image nearby
+        let thumbnail = "";
+        const img = a.querySelector("img") as HTMLImageElement | null;
+        if (img) {
+          thumbnail = img.getAttribute("src") || img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || "";
+          const srcset = img.getAttribute("srcset") || "";
+          if (!thumbnail && srcset) thumbnail = srcset.split(",")[0].trim().split(" ")[0];
+          if (thumbnail) { try { thumbnail = new URL(thumbnail, base || undefined).toString(); } catch {} }
+        }
+        results.push({ title, link, thumbnail, pubDate: "" });
+        if (results.length >= 30) return;
+      }
+    };
+    if (articles.length) articles.forEach((el) => scan(el));
+    if (results.length < 8) scan(doc);
+  } catch {}
+  return results.slice(0, 15);
+}
+
 async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   // Bust cache with timestamp so we always get fresh
   const cacheBust = `${rssUrl}${rssUrl.includes("?") ? "&" : "?"}_ts=${Date.now()}`;
+  let rawContent = "";
   try {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -77,16 +131,50 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       });
       const data = await res.json();
       if (data?.content) {
-        const r = parseRss(data.content);
+        rawContent = data.content;
+        const r = parseRss(rawContent);
         if (r.length) return r.slice(0, 15);
       }
     }
   } catch {}
+  if (!rawContent) {
+    try {
+      const res = await fetch(`${PROXY}${encodeURIComponent(cacheBust)}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
+      rawContent = await res.text();
+      const r = parseRss(rawContent);
+      if (r.length) return r.slice(0, 15);
+    } catch {}
+  }
+
+  // Fallback: not a valid RSS/Atom feed → treat as HTML page and scrape
+  if (rawContent) {
+    const html = parseHtmlNews(rawContent, rssUrl);
+    if (html.length) return html;
+  }
+
+  // Last resort: try common feed paths
   try {
-    const res = await fetch(`${PROXY}${encodeURIComponent(cacheBust)}`, { cache: "no-store", signal: AbortSignal.timeout(12000) });
-    const text = await res.text();
-    const r = parseRss(text);
-    if (r.length) return r.slice(0, 15);
+    const base = new URL(rssUrl);
+    const candidates = ["/feed", "/rss", "/feed/", "/rss.xml", "/index.xml"];
+    for (const path of candidates) {
+      if (base.pathname.replace(/\/$/, "") === path.replace(/\/$/, "")) continue;
+      const tryUrl = `${base.origin}${path}`;
+      try {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+        const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}` },
+          body: JSON.stringify({ url: `${tryUrl}?_ts=${Date.now()}` }),
+          signal: AbortSignal.timeout(12000),
+        });
+        const data = await res.json();
+        if (data?.content) {
+          const r = parseRss(data.content);
+          if (r.length) return r.slice(0, 15);
+        }
+      } catch {}
+    }
   } catch {}
   return [];
 }
