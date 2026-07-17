@@ -674,6 +674,9 @@ function NewsHorizontalScroller({
                   onDrop={(e) => {
                     e.preventDefault();
                     setHoverBloco(null);
+                    // Ignora se for uma reordenação interna
+                    const reorderRaw = e.dataTransfer.getData("application/x-noticia-reorder");
+                    if (reorderRaw) return;
                     let item: NewsItem | null = draggedItemRef.current;
                     try {
                       const raw = e.dataTransfer.getData("application/x-noticia");
