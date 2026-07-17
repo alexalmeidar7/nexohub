@@ -395,18 +395,59 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
               {sites.length === 0 && (
                 <p className="text-xs text-center py-6" style={{ color: "rgba(10,37,64,0.55)" }}>Nenhum site cadastrado ainda.</p>
               )}
-              {sites.map((s) => (
-                <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${NEXO_CYAN}22` }}>
-                  <Globe size={14} style={{ color: NEXO_CYAN }} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>{s.name}</p>
-                    <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+              {sites.map((s) => {
+                const isEditing = editingId === s.id;
+                return (
+                  <div key={s.id} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#fff", border: `1px solid ${isEditing ? NEXO_CYAN : `${NEXO_CYAN}22`}` }}>
+                    <Globe size={14} style={{ color: NEXO_CYAN }} className="shrink-0" />
+                    {isEditing ? (
+                      <div className="flex-1 min-w-0 flex flex-col gap-1">
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          placeholder="Nome"
+                          className="w-full h-7 px-2 rounded text-xs font-bold outline-none"
+                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                        />
+                        <input
+                          type="text"
+                          value={editUrl}
+                          onChange={(e) => setEditUrl(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") saveEdit(s.id); if (e.key === "Escape") cancelEdit(); }}
+                          placeholder="URL do feed RSS"
+                          className="w-full h-7 px-2 rounded text-[10px] outline-none"
+                          style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold truncate" style={{ color: NEXO_DARK }}>{s.name}</p>
+                        <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+                      </div>
+                    )}
+                    {isEditing ? (
+                      <>
+                        <button onClick={() => saveEdit(s.id)} disabled={savingEdit} className="p-1.5 rounded-md hover:bg-cyan-50 transition disabled:opacity-50" style={{ color: NEXO_CYAN }} title="Salvar">
+                          {savingEdit ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                        </button>
+                        <button onClick={cancelEdit} className="p-1.5 rounded-md hover:bg-gray-100 transition" style={{ color: NEXO_DARK }} title="Cancelar">
+                          <XIcon size={13} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => startEdit(s)} className="p-1.5 rounded-md hover:bg-cyan-50 transition" style={{ color: NEXO_DARK }} title="Editar">
+                          <Pencil size={13} />
+                        </button>
+                        <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
+                          <Trash2 size={13} />
+                        </button>
+                      </>
+                    )}
                   </div>
-                  <button onClick={() => removeSite(s.id)} className="p-1.5 rounded-md hover:bg-red-50 transition" style={{ color: "#dc2626" }} title="Remover">
-                    <Trash2 size={13} />
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="px-5 py-3 border-t flex justify-end" style={{ borderColor: "rgba(10,37,64,0.08)" }}>
