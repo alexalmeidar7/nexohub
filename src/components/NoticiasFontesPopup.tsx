@@ -1129,34 +1129,92 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
               className="flex-1 flex items-center gap-1 py-2 overflow-x-auto scroll-smooth"
               style={{ scrollbarWidth: "none" }}
             >
-              {sites.map((s) => {
-                const active = s.id === activeTab;
-                const count = (newsBySite[s.id] || []).length;
-                const loading = loadingSite[s.id];
-                return (
-                  <button
-                    key={s.id}
-                    data-tab-id={s.id}
-                    onClick={() => setActiveTab(s.id)}
-                    className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
-                    style={{
-                      background: active ? NEXO_CYAN : "#fff",
-                      color: active ? "#fff" : NEXO_DARK,
-                      border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
-                    }}
-                  >
-                    <Globe size={11} />
-                    <span className="truncate max-w-[180px]">
-                      {s.parent_id ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}` : s.name}
-                    </span>
-                    {loading ? (
-                      <Loader2 size={10} className="animate-spin" />
-                    ) : (
-                      <span className="text-[9px] opacity-80">{count}</span>
-                    )}
-                  </button>
-                );
-              })}
+              {(() => {
+                const parents = sites.filter((x) => !x.parent_id);
+                const orphans = sites.filter((x) => x.parent_id && !parents.some((p) => p.id === x.parent_id));
+                const topLevel = [...parents, ...orphans];
+                return topLevel.map((s) => {
+                  const children = sites.filter((c) => c.parent_id === s.id);
+                  const activeChildId = children.find((c) => c.id === activeTab)?.id;
+                  const isSelfActive = s.id === activeTab;
+                  const active = isSelfActive || !!activeChildId;
+                  const displayLabel = activeChildId
+                    ? `${s.name} › ${sites.find((c) => c.id === activeChildId)?.category || sites.find((c) => c.id === activeChildId)?.name}`
+                    : s.parent_id
+                      ? `${sites.find((p) => p.id === s.parent_id)?.name || "Fonte"} › ${s.category || s.name}`
+                      : s.name;
+                  const count = ((newsBySite[activeChildId || s.id]) || []).length;
+                  const loading = loadingSite[activeChildId || s.id];
+                  const isOpen = openMenuFor === s.id;
+                  return (
+                    <div key={s.id} className="relative shrink-0" data-tab-id={s.id}>
+                      <button
+                        onClick={() => {
+                          if (children.length) {
+                            setOpenMenuFor((v) => (v === s.id ? null : s.id));
+                          } else {
+                            setActiveTab(s.id);
+                            setOpenMenuFor(null);
+                          }
+                        }}
+                        className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                        style={{
+                          background: active ? NEXO_CYAN : "#fff",
+                          color: active ? "#fff" : NEXO_DARK,
+                          border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
+                        }}
+                        title={children.length ? "Ver subfontes" : displayLabel}
+                      >
+                        <Globe size={11} />
+                        <span className="truncate max-w-[200px]">{displayLabel}</span>
+                        {loading ? (
+                          <Loader2 size={10} className="animate-spin" />
+                        ) : (
+                          <span className="text-[9px] opacity-80">{count}</span>
+                        )}
+                        {children.length > 0 && (
+                          <ChevronDown size={11} className={`transition ${isOpen ? "rotate-180" : ""}`} />
+                        )}
+                      </button>
+                      {children.length > 0 && isOpen && (
+                        <div
+                          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[220px] rounded-xl overflow-hidden py-1"
+                          style={{ background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
+                          onMouseLeave={() => setOpenMenuFor(null)}
+                        >
+                          <button
+                            onClick={() => { setActiveTab(s.id); setOpenMenuFor(null); }}
+                            className="w-full text-left px-3 py-2 text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-cyan-50 transition"
+                            style={{ color: isSelfActive ? NEXO_CYAN : NEXO_DARK, background: isSelfActive ? `${NEXO_CYAN}12` : "transparent" }}
+                          >
+                            <Globe size={11} />
+                            <span className="flex-1 truncate">Todas · {s.name}</span>
+                            <span className="text-[9px] opacity-70">{(newsBySite[s.id] || []).length}</span>
+                          </button>
+                          <div className="h-px my-1" style={{ background: `${NEXO_CYAN}22` }} />
+                          {children.map((c) => {
+                            const cActive = c.id === activeTab;
+                            const cCount = (newsBySite[c.id] || []).length;
+                            const cLoading = loadingSite[c.id];
+                            return (
+                              <button
+                                key={c.id}
+                                onClick={() => { setActiveTab(c.id); setOpenMenuFor(null); }}
+                                className="w-full text-left px-3 py-2 text-[11px] font-semibold flex items-center gap-2 hover:bg-cyan-50 transition"
+                                style={{ color: cActive ? NEXO_CYAN : NEXO_DARK, background: cActive ? `${NEXO_CYAN}12` : "transparent" }}
+                              >
+                                <span className="text-[10px] font-black opacity-60">↳</span>
+                                <span className="flex-1 truncate">{c.category || c.name}</span>
+                                {cLoading ? <Loader2 size={10} className="animate-spin" /> : <span className="text-[9px] opacity-70">{cCount}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
             </div>
             <button
               onClick={() => scrollTabs("right")}
