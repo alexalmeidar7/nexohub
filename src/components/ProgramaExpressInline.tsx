@@ -8,6 +8,7 @@ import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, Chev
 import NoticiasFontesPopup from "./NoticiasFontesPopup";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 /* ── Podcast-specific types ── */
 interface PodcastData {
