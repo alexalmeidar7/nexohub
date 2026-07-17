@@ -680,6 +680,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setOnlineDelay(false);
       setOnlineError(null);
       setOnlineActivating(false);
+      setOnlineLastReadAt(Date.now());
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
@@ -824,6 +825,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setLocalDelay(false);
       setLocalError(null);
       setLocalActivating(false);
+      setLocalLastReadAt(Date.now());
 
       if (text === localFileContentRef.current) { readingRef.current = false; return; }
       localFileContentRef.current = text;
@@ -1087,6 +1089,43 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const [onlineActivating, setOnlineActivating] = useState(false);
   const [localActivating, setLocalActivating] = useState(false);
+  const [onlineLastReadAt, setOnlineLastReadAt] = useState<number | null>(null);
+  const [localLastReadAt, setLocalLastReadAt] = useState<number | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const formatAgo = (ts: number | null) => {
+    if (!ts) return null;
+    const s = Math.max(0, Math.floor((nowTick - ts) / 1000));
+    if (s < 5) return "agora";
+    if (s < 60) return `há ${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `há ${m}min`;
+    const h = Math.floor(m / 60);
+    return `há ${h}h`;
+  };
+
+  type SourceStatus = { key: "inativa" | "ativando" | "lendo" | "ok" | "atrasado" | "erro"; label: string; bg: string; fg: string; border: string; pulse?: boolean };
+  const buildStatus = (opts: {
+    selected: boolean;
+    activating: boolean;
+    error: string | null;
+    lastReadAt: number | null;
+    hasSource: boolean;
+    delayed: boolean;
+  }): SourceStatus => {
+    if (opts.error) return { key: "erro", label: "ERRO", bg: "#fee2e2", fg: "#b91c1c", border: "#fecaca" };
+    if (!opts.selected) return { key: "inativa", label: opts.hasSource ? "INATIVA" : "SEM ORIGEM", bg: "#f1f5f9", fg: "#64748b", border: "#e2e8f0" };
+    if (opts.activating) return { key: "ativando", label: "ATIVANDO…", bg: "#dbeafe", fg: "#1d4ed8", border: "#bfdbfe", pulse: true };
+    if (!opts.lastReadAt) return { key: "ativando", label: "AGUARDANDO 1ª LEITURA", bg: "#dbeafe", fg: "#1d4ed8", border: "#bfdbfe", pulse: true };
+    if (opts.delayed) return { key: "atrasado", label: "ATRASADO", bg: "#fef3c7", fg: "#b45309", border: "#fde68a", pulse: true };
+    const ageSec = (nowTick - opts.lastReadAt) / 1000;
+    if (ageSec < 10) return { key: "lendo", label: "LENDO", bg: "#0d0446", fg: "#C6F03C", border: "#C6F03C", pulse: true };
+    return { key: "ok", label: "OK", bg: "#dcfce7", fg: "#166534", border: "#bbf7d0" };
+  };
 
   const toggleOnlineSource = () => {
     if (!hasValidOnlineUrl) return;
@@ -1449,25 +1488,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </button>
                 </div>
 
-                {/* Status bar — hide AGUARDANDO when URL is empty */}
-                {isOnlineSelected && (music || lastSource === "online") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
-                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
-                    </span>
-                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
-                  </div>
-                ) : hasValidOnlineUrl ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Loader2 size={12} className="animate-spin" />
-                    <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
-                  </div>
-                ) : null}
+                {(() => {
+                  const st = buildStatus({ selected: isOnlineSelected, activating: onlineActivating, error: onlineError, lastReadAt: onlineLastReadAt, hasSource: hasValidOnlineUrl, delayed: !!onlineDelay });
+                  const ago = formatAgo(onlineLastReadAt);
+                  return (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {st.key === "ativando" || st.key === "atrasado" ? (
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                        ) : (
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
+                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                      </div>
+                      {ago && st.key !== "inativa" && st.key !== "erro" && (
+                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {onlineError && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
-                    <span>⚠ {onlineError}</span>
+                    <span>{onlineError}</span>
                   </div>
                 )}
               </div>
@@ -1575,25 +1621,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </div>
                 )}
 
-                {/* Status bar — hide AGUARDANDO when no file */}
-                {isLocalSelected && localMonitoring && (music || lastSource === "pasta") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
-                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
-                    </span>
-                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
-                  </div>
-                ) : localFileName ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Loader2 size={12} className="animate-spin" />
-                    <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
-                  </div>
-                ) : null}
+                {(() => {
+                  const st = buildStatus({ selected: isLocalSelected && localMonitoring, activating: localActivating, error: localError, lastReadAt: localLastReadAt, hasSource: !!localFileName, delayed: !!localDelay });
+                  const ago = formatAgo(localLastReadAt);
+                  return (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {st.key === "ativando" || st.key === "atrasado" ? (
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                        ) : (
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
+                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                      </div>
+                      {ago && st.key !== "inativa" && st.key !== "erro" && (
+                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {localError && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
-                    <span>⚠ {localError}</span>
+                    <span>{localError}</span>
                   </div>
                 )}
 
