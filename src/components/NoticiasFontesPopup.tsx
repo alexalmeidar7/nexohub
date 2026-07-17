@@ -483,10 +483,12 @@ function NewsHorizontalScroller({
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  blocosCount?: number;
+  onAddNoticiaToBloco?: (blocoIndex: number, item: NewsItem) => void;
 }
 
 
-export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
+export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 0, onAddNoticiaToBloco }: Props) {
   const { user } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
