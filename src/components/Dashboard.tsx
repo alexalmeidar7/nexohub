@@ -281,6 +281,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
+  // Trava scroll do body enquanto o menu mobile estiver aberto
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [mobileMenuOpen]);
+
+
   // Fetch on-air presenter photo
   useEffect(() => {
     const uid = effectiveUserId || user?.id;
