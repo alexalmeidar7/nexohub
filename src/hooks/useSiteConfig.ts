@@ -17,6 +17,12 @@ export interface SiteConfig {
   cidade_clima: string;
   cidade_lat: number | null;
   cidade_lon: number | null;
+  logo_url?: string;
+  favicon_url?: string;
+  meta_description?: string;
+  meta_keywords?: string;
+  og_image_url?: string;
+  site_dominio?: string;
 }
 
 const defaults = (userId: string): SiteConfig => ({
@@ -34,7 +40,14 @@ const defaults = (userId: string): SiteConfig => ({
   cidade_clima: "",
   cidade_lat: null,
   cidade_lon: null,
+  logo_url: "",
+  favicon_url: "",
+  meta_description: "",
+  meta_keywords: "",
+  og_image_url: "",
+  site_dominio: "",
 });
+
 
 export function useSiteConfig(userId: string | null | undefined) {
   const [config, setConfig] = useState<SiteConfig | null>(null);
