@@ -10,6 +10,71 @@ export interface CoverPalette {
   secondary: string; // segunda cor mais distinta
 }
 
+/** Contraste automático derivado da paleta para garantir legibilidade. */
+export interface PaletteContrast {
+  /** Luminância média perceptual do gradiente (0..1). */
+  luminance: number;
+  /** Cor de texto ideal (#fff ou #0a0a0a). */
+  textColor: string;
+  /** Cor de texto secundário/muted com opacidade adequada. */
+  textMutedColor: string;
+  /** CSS background para scrim sobre o gradiente, calibrado por luminância. */
+  scrimBackground: string;
+  /** Text-shadow sutil para reforçar leitura em qualquer fundo. */
+  textShadow: string;
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  const m = hex.replace("#", "");
+  const n = m.length === 3
+    ? m.split("").map((c) => parseInt(c + c, 16))
+    : [parseInt(m.slice(0, 2), 16), parseInt(m.slice(2, 4), 16), parseInt(m.slice(4, 6), 16)];
+  return [n[0] || 0, n[1] || 0, n[2] || 0];
+}
+
+function relLuminance([r, g, b]: [number, number, number]): number {
+  // sRGB -> luminância relativa (WCAG)
+  const f = (v: number) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+
+export function getPaletteContrast(palette: CoverPalette | null): PaletteContrast | null {
+  if (!palette) return null;
+  const l1 = relLuminance(hexToRgb(palette.primary));
+  const l2 = relLuminance(hexToRgb(palette.secondary));
+  const luminance = (l1 + l2) / 2;
+
+  // Fundo claro -> texto escuro; fundo escuro -> texto branco.
+  const isLight = luminance > 0.55;
+  const textColor = isLight ? "#0a0a0a" : "#ffffff";
+  const textMutedColor = isLight ? "rgba(10,10,10,0.72)" : "rgba(255,255,255,0.78)";
+
+  if (isLight) {
+    // Scrim claro sutil para escurecer levemente e realçar texto escuro
+    const a = Math.min(0.35, 0.15 + (luminance - 0.55) * 0.6);
+    return {
+      luminance,
+      textColor,
+      textMutedColor,
+      scrimBackground: `linear-gradient(90deg, rgba(255,255,255,${(a * 0.4).toFixed(3)}) 0%, rgba(255,255,255,${a.toFixed(3)}) 100%)`,
+      textShadow: "0 1px 2px rgba(255,255,255,0.35)",
+    };
+  }
+  // Fundo escuro: escurece mais quanto mais claro estiver (0.2 baseline até ~0.55 max)
+  const a = Math.min(0.55, 0.2 + (0.55 - luminance) * 0.25 + luminance * 0.4);
+  return {
+    luminance,
+    textColor,
+    textMutedColor,
+    scrimBackground: `linear-gradient(90deg, rgba(0,0,0,${(a * 0.35).toFixed(3)}) 0%, rgba(0,0,0,${(a * 0.7).toFixed(3)}) 55%, rgba(0,0,0,${a.toFixed(3)}) 100%)`,
+    textShadow: "0 1px 2px rgba(0,0,0,0.45)",
+  };
+}
+
+
 const cache = new Map<string, CoverPalette | null>();
 const inflight = new Map<string, Promise<CoverPalette | null>>();
 
