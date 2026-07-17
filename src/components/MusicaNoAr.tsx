@@ -1325,11 +1325,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <AlertTriangle size={10} className="shrink-0" /> Local: erro
                   </span>
                 )}
-                {!localError && localDelay && (
-                  <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #eab308", color: "#a16207" }}>
-                    <AlertTriangle size={10} className="shrink-0" /> Local: sem resposta +15s
-                  </span>
-                )}
               </div>
             </div>
           </div>
