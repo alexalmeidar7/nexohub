@@ -796,11 +796,11 @@ function NewsHorizontalScroller({
                               disabled={idx === 0}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setBlocoItems((prev) => {
-                                  const cur = [...(prev[bi] || [])];
-                                  if (idx <= 0) return prev;
-                                  [cur[idx - 1], cur[idx]] = [cur[idx], cur[idx - 1]];
-                                  return { ...prev, [bi]: cur };
+                                mutateBloco(bi, (cur) => {
+                                  if (idx <= 0) return cur;
+                                  const arr = [...cur];
+                                  [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+                                  return arr;
                                 });
                               }}
                               className="p-0.5 opacity-60 hover:opacity-100 disabled:opacity-20 transition"
