@@ -767,9 +767,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setCurrentPage(item.page);
                         }
                       }}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                      onFocus={() => { if (item.children) { clearMenuLeaveTimer(); setHoveredMenu(item.label); } }}
+                      onKeyDown={(e) => {
+                        if (!item.children) return;
+                        if (e.key === "ArrowRight" || (e.key === "ArrowDown" && isOpen)) {
+                          e.preventDefault();
+                          clearMenuLeaveTimer();
+                          setHoveredMenu(item.label);
+                          requestAnimationFrame(() => {
+                            const first = document.querySelector<HTMLButtonElement>(`[data-submenu="${item.label}"] [data-submenu-item]`);
+                            first?.focus();
+                          });
+                        } else if (e.key === "Escape" && isOpen) {
+                          setHoveredMenu(null);
+                        }
+                      }}
+                      aria-haspopup={item.children ? "menu" : undefined}
+                      aria-expanded={item.children ? isOpen : undefined}
+                      aria-label={item.label === "home" ? "Home nexohub" : item.label}
+                      className="nexo-focus w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
                       style={{
                         backgroundColor: active && item.label !== "home" ? layoutColors.accentColor : "transparent",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
                       }}
                       onMouseEnter={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
                       onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
@@ -781,6 +800,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       )}
 
                     </button>
+
                   </TooltipTrigger>
                   <TooltipContent side="right">
                     <p className="text-xs capitalize">
