@@ -186,7 +186,7 @@ async function callFetchRss(url: string, timeoutMs = 20000): Promise<string> {
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey, "Cache-Control": "no-cache" },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${supabaseKey}`, apikey: supabaseKey },
       body: JSON.stringify({ url }),
       signal: ctrl.signal,
     });
