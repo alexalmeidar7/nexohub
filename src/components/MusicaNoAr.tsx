@@ -1087,6 +1087,43 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const [onlineActivating, setOnlineActivating] = useState(false);
   const [localActivating, setLocalActivating] = useState(false);
+  const [onlineLastReadAt, setOnlineLastReadAt] = useState<number | null>(null);
+  const [localLastReadAt, setLocalLastReadAt] = useState<number | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const formatAgo = (ts: number | null) => {
+    if (!ts) return null;
+    const s = Math.max(0, Math.floor((nowTick - ts) / 1000));
+    if (s < 5) return "agora";
+    if (s < 60) return `há ${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `há ${m}min`;
+    const h = Math.floor(m / 60);
+    return `há ${h}h`;
+  };
+
+  type SourceStatus = { key: "inativa" | "ativando" | "lendo" | "ok" | "atrasado" | "erro"; label: string; bg: string; fg: string; border: string; pulse?: boolean };
+  const buildStatus = (opts: {
+    selected: boolean;
+    activating: boolean;
+    error: string | null;
+    lastReadAt: number | null;
+    hasSource: boolean;
+    delayed: boolean;
+  }): SourceStatus => {
+    if (opts.error) return { key: "erro", label: "ERRO", bg: "#fee2e2", fg: "#b91c1c", border: "#fecaca" };
+    if (!opts.selected) return { key: "inativa", label: opts.hasSource ? "INATIVA" : "SEM ORIGEM", bg: "#f1f5f9", fg: "#64748b", border: "#e2e8f0" };
+    if (opts.activating) return { key: "ativando", label: "ATIVANDO…", bg: "#dbeafe", fg: "#1d4ed8", border: "#bfdbfe", pulse: true };
+    if (!opts.lastReadAt) return { key: "ativando", label: "AGUARDANDO 1ª LEITURA", bg: "#dbeafe", fg: "#1d4ed8", border: "#bfdbfe", pulse: true };
+    if (opts.delayed) return { key: "atrasado", label: "ATRASADO", bg: "#fef3c7", fg: "#b45309", border: "#fde68a", pulse: true };
+    const ageSec = (nowTick - opts.lastReadAt) / 1000;
+    if (ageSec < 10) return { key: "lendo", label: "LENDO", bg: "#0d0446", fg: "#C6F03C", border: "#C6F03C", pulse: true };
+    return { key: "ok", label: "OK", bg: "#dcfce7", fg: "#166534", border: "#bbf7d0" };
+  };
 
   const toggleOnlineSource = () => {
     if (!hasValidOnlineUrl) return;
