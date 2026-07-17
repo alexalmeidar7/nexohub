@@ -1803,7 +1803,12 @@ export type Database = {
           cidade_lat: number | null
           cidade_lon: number | null
           cor_primaria: string | null
+          favicon_url: string | null
           fonte_noticias: string
+          logo_url: string | null
+          meta_description: string | null
+          meta_keywords: string | null
+          og_image_url: string | null
           show_clima: boolean
           show_economia: boolean
           show_grade: boolean
@@ -1811,6 +1816,7 @@ export type Database = {
           show_noticias: boolean
           show_promocoes: boolean
           site_descricao: string | null
+          site_dominio: string | null
           site_nome: string
           updated_at: string
           user_id: string
@@ -1820,7 +1826,12 @@ export type Database = {
           cidade_lat?: number | null
           cidade_lon?: number | null
           cor_primaria?: string | null
+          favicon_url?: string | null
           fonte_noticias?: string
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          og_image_url?: string | null
           show_clima?: boolean
           show_economia?: boolean
           show_grade?: boolean
@@ -1828,6 +1839,7 @@ export type Database = {
           show_noticias?: boolean
           show_promocoes?: boolean
           site_descricao?: string | null
+          site_dominio?: string | null
           site_nome?: string
           updated_at?: string
           user_id: string
@@ -1837,7 +1849,12 @@ export type Database = {
           cidade_lat?: number | null
           cidade_lon?: number | null
           cor_primaria?: string | null
+          favicon_url?: string | null
           fonte_noticias?: string
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          og_image_url?: string | null
           show_clima?: boolean
           show_economia?: boolean
           show_grade?: boolean
@@ -1845,8 +1862,78 @@ export type Database = {
           show_noticias?: boolean
           show_promocoes?: boolean
           site_descricao?: string | null
+          site_dominio?: string | null
           site_nome?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_deploy_config: {
+        Row: {
+          auto_publish: boolean
+          host: string
+          password: string
+          port: number
+          protocol: string
+          remote_path: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          auto_publish?: boolean
+          host?: string
+          password?: string
+          port?: number
+          protocol?: string
+          remote_path?: string
+          updated_at?: string
+          user_id: string
+          username?: string
+        }
+        Update: {
+          auto_publish?: boolean
+          host?: string
+          password?: string
+          port?: number
+          protocol?: string
+          remote_path?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      site_deploy_history: {
+        Row: {
+          bytes_sent: number | null
+          created_at: string
+          duration_ms: number | null
+          files_count: number | null
+          id: string
+          message: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bytes_sent?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          files_count?: number | null
+          id?: string
+          message?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          bytes_sent?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          files_count?: number | null
+          id?: string
+          message?: string | null
+          status?: string
           user_id?: string
         }
         Relationships: []
