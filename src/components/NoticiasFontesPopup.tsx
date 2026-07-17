@@ -705,17 +705,18 @@ function NewsHorizontalScroller({
                     } catch {}
                     if (item) {
                       const it = item;
-                      setBlocoItems((prev) => {
-                        const cur = prev[bi] || [];
+                      let added = false;
+                      mutateBloco(bi, (cur) => {
                         if (cur.some((x) => x.link === it.link && x.title === it.title)) {
                           toast.warning("Notícia já adicionada neste bloco", {
                             description: it.title.slice(0, 80),
                           });
-                          return prev;
+                          return cur;
                         }
-                        return { ...prev, [bi]: [...cur, it] };
+                        added = true;
+                        return [...cur, it];
                       });
-                      onDropToBloco(bi, it);
+                      if (added) onDropToBloco(bi, it);
                     }
                   }}
                   className="flex-1 min-w-[180px] rounded-xl flex flex-col transition overflow-hidden"
