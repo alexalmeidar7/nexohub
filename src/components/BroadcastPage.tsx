@@ -37,6 +37,7 @@ interface BroadcastData {
   tickerWeather: boolean;
   tickerQuotes: boolean;
   tickerSocials: boolean;
+  tickerUnitario: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -51,6 +52,7 @@ const defaultBroadcast: BroadcastData = {
   tickerWeather: false,
   tickerQuotes: false,
   tickerSocials: false,
+  tickerUnitario: false,
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
@@ -996,6 +998,30 @@ export default function BroadcastPage() {
               className="w-full px-3 py-2 rounded-lg text-[11px] resize-none mt-3"
               style={inputStyle}
             />
+
+            <label
+              className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-3"
+              style={{
+                backgroundColor: data.tickerUnitario ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                border: `1px solid ${data.tickerUnitario ? CYAN : NAVY_BORDER}`,
+              }}
+              title="Quando ativo, o XML entrega apenas um item do ticker por vez, rotacionando a cada 4 segundos."
+            >
+              <input
+                type="checkbox"
+                checked={data.tickerUnitario}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, tickerUnitario: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
+                style={{ accentColor: CYAN }}
+              />
+              <div className="min-w-0">
+                <span className="text-[11px] font-semibold text-white block">Envio Unitário</span>
+                <p className="text-[9px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
+              </div>
+            </label>
 
             <div className="mt-4 space-y-2">
               <div className="p-3 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
