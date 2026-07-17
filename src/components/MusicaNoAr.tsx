@@ -253,28 +253,57 @@ async function loadUploadHistoryFromDb(userId: string): Promise<UploadLogEntry[]
   try {
     const { data } = await supabase
       .from("xml_upload_history")
-      .select("source, created_at")
+      .select("id, source, created_at, artista, musica")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-      .limit(10);
+      .limit(3);
     if (!data) return [];
     return data.map((row: any) => {
       const d = new Date(row.created_at);
-      // source may contain device name: "pasta|DeviceName" or just "pasta"
       const [rawSource, deviceName] = (row.source as string).split("|");
       return {
         source: (rawSource === "pasta" ? "pasta" : "online") as "pasta" | "online",
         date: d.toLocaleDateString("pt-BR"),
         time: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
         deviceName: deviceName || undefined,
+        artista: row.artista || undefined,
+        musica: row.musica || undefined,
       };
     });
   } catch { return []; }
 }
 
-async function addUploadLogToDb(userId: string, source: "pasta" | "online", deviceName?: string): Promise<UploadLogEntry[]> {
+async function addUploadLogToDb(
+  userId: string,
+  source: "pasta" | "online",
+  deviceName?: string,
+  artista?: string,
+  musica?: string,
+): Promise<UploadLogEntry[]> {
   const sourceValue = source === "pasta" && deviceName ? `pasta|${deviceName}` : source;
-  await supabase.from("xml_upload_history").insert({ user_id: userId, source: sourceValue });
+  await supabase.from("xml_upload_history").insert({
+    user_id: userId,
+    source: sourceValue,
+    artista: artista || null,
+    musica: musica || null,
+  } as any);
+  // Mantém apenas os 3 registros mais recentes por usuário
+  try {
+    const { data: keep } = await supabase
+      .from("xml_upload_history")
+      .select("id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3);
+    const keepIds = (keep || []).map((r: any) => r.id);
+    if (keepIds.length > 0) {
+      await supabase
+        .from("xml_upload_history")
+        .delete()
+        .eq("user_id", userId)
+        .not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
+    }
+  } catch {}
   return loadUploadHistoryFromDb(userId);
 }
 
