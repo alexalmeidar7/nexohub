@@ -190,10 +190,10 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
           }}
           onClick={() => {
             const targetId = effectiveUserId || user?.id;
-            window.open(`/user/${targetId}/nexohub/telapromo`, "_blank");
+            window.open(`/user/${targetId}/nexohub/locutor`, "_blank");
           }}
         >
-          <ExternalLink size={15} /> Abrir Tela Promo
+          <ExternalLink size={15} /> Abrir Módulo Locutor
         </button>
       </div>
 
