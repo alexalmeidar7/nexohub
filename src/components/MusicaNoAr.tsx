@@ -602,9 +602,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
-      // Log to history with real artist/music
+      // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
-        addUploadLogToDb(dataUserId, source, deviceNameRef.current, data.artista, data.titulo)
+        const logArtist = (data.artista && data.artista.trim()) || "Desconhecido";
+        const logTitle = (data.titulo && data.titulo.trim()) || "Sem título";
+        addUploadLogToDb(dataUserId, source, deviceNameRef.current, logArtist, logTitle)
           .then(setUploadHistory)
           .catch((e) => console.warn("[MusicaNoAr] history log failed:", e));
       }
