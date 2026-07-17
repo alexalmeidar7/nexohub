@@ -1082,15 +1082,33 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
   const progress = sliderResetting ? 0 : rawProgress;
 
+  const [onlineActivating, setOnlineActivating] = useState(false);
+  const [localActivating, setLocalActivating] = useState(false);
+
   const toggleOnlineSource = () => {
     if (!hasValidOnlineUrl) return;
-    const nextMode = buildSourceMode(!isOnlineSelected, isLocalSelected);
+    const willActivate = !isOnlineSelected;
+    const nextMode = buildSourceMode(willActivate, isLocalSelected);
+    if (willActivate) {
+      setOnlineActivating(true);
+      // Safety timeout — clear after 12s even if no read arrives
+      window.setTimeout(() => setOnlineActivating(false), 12000);
+    } else {
+      setOnlineActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
   const toggleLocalSource = () => {
     if (!hasValidLocalSource) return;
+    const willActivate = !isLocalSelected;
     const nextMode = buildSourceMode(isOnlineSelected, !isLocalSelected);
+    if (willActivate) {
+      setLocalActivating(true);
+      window.setTimeout(() => setLocalActivating(false), 12000);
+    } else {
+      setLocalActivating(false);
+    }
     void setSourceMode(nextMode);
   };
 
