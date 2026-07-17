@@ -300,6 +300,15 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
   const [showLimparConfirm, setShowLimparConfirm] = useState(false);
+
+  useEffect(() => {
+    if (!showLimparConfirm) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { e.stopPropagation(); setShowLimparConfirm(false); }
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [showLimparConfirm]);
   const [openNoticia, setOpenNoticia] = useState<Record<number, number | null>>({});
   const addToEscalada = useCallback((titulo: string, imagemUrl: string) => {
     if (!titulo.trim()) { toast.warning("Notícia sem título"); return; }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -890,6 +890,25 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [openMenuFor, setOpenMenuFor] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const tabRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  useLayoutEffect(() => {
+    if (!openMenuFor) { setMenuPos(null); return; }
+    const el = tabRefs.current[openMenuFor];
+    if (!el) return;
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      setMenuPos({ top: r.bottom + 6, left: r.left });
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [openMenuFor]);
 
   const updateScrollButtons = () => {
     const el = tabsScrollRef.current;
@@ -1148,7 +1167,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   const loading = loadingSite[activeChildId || s.id];
                   const isOpen = openMenuFor === s.id;
                   return (
-                    <div key={s.id} className="relative shrink-0" data-tab-id={s.id}>
+                    <div key={s.id} ref={(el) => { tabRefs.current[s.id] = el; }} className="relative shrink-0" data-tab-id={s.id}>
                       <button
                         onClick={() => {
                           if (children.length) {
@@ -1177,10 +1196,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                           <ChevronDown size={11} className={`transition ${isOpen ? "rotate-180" : ""}`} />
                         )}
                       </button>
-                      {children.length > 0 && isOpen && (
+                      {children.length > 0 && isOpen && menuPos && createPortal(
                         <div
-                          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[220px] rounded-xl overflow-hidden py-1"
-                          style={{ background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
+                          className="fixed z-[10002] min-w-[220px] rounded-xl overflow-hidden py-1"
+                          style={{ top: menuPos.top, left: menuPos.left, background: "#fff", boxShadow: "0 10px 30px rgba(10,37,64,0.18)", border: `1px solid ${NEXO_CYAN}33` }}
                           onMouseLeave={() => setOpenMenuFor(null)}
                         >
                           <button
@@ -1210,7 +1229,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                               </button>
                             );
                           })}
-                        </div>
+                        </div>,
+                        document.body
                       )}
                     </div>
                   );
