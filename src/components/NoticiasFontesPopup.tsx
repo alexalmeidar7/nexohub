@@ -261,18 +261,35 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
 function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: string }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
-  const dirRef = useRef<0 | 1 | -1>(0);
-  const speedRef = useRef(0);
+  const targetSpeedRef = useRef(0); // sinal + magnitude desejada (px/frame)
+  const currentSpeedRef = useRef(0); // valor suavizado (lerp)
+  const accRef = useRef(0); // acumulador subpixel
 
   // Reset scroll when switching site
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
+    targetSpeedRef.current = 0;
+    currentSpeedRef.current = 0;
+    accRef.current = 0;
   }, [siteId]);
 
   const tick = () => {
     const el = scrollerRef.current;
-    if (el && dirRef.current !== 0) {
-      el.scrollLeft += dirRef.current * speedRef.current;
+    if (el) {
+      // Lerp para transição suave entre parado/movendo (~120ms para chegar)
+      currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * 0.18;
+      const v = currentSpeedRef.current;
+      if (Math.abs(v) > 0.05) {
+        accRef.current += v;
+        const step = Math.trunc(accRef.current);
+        if (step !== 0) {
+          el.scrollLeft += step;
+          accRef.current -= step;
+        }
+      } else {
+        currentSpeedRef.current = 0;
+        accRef.current = 0;
+      }
     }
     rafRef.current = requestAnimationFrame(tick);
   };
@@ -290,24 +307,23 @@ function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: 
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const zone = Math.min(180, rect.width * 0.18);
+    const zone = Math.min(160, rect.width * 0.16);
     if (x < zone) {
       const intensity = 1 - x / zone; // 0..1
-      dirRef.current = -1;
-      speedRef.current = 3 + intensity * 18;
+      // easing quadrático para arranque suave
+      const eased = intensity * intensity;
+      targetSpeedRef.current = -(1.2 + eased * 10);
     } else if (x > rect.width - zone) {
       const intensity = 1 - (rect.width - x) / zone;
-      dirRef.current = 1;
-      speedRef.current = 3 + intensity * 18;
+      const eased = intensity * intensity;
+      targetSpeedRef.current = 1.2 + eased * 10;
     } else {
-      dirRef.current = 0;
-      speedRef.current = 0;
+      targetSpeedRef.current = 0;
     }
   };
 
   const onMouseLeave = () => {
-    dirRef.current = 0;
-    speedRef.current = 0;
+    targetSpeedRef.current = 0;
   };
 
   const nudge = (dir: -1 | 1) => {
@@ -342,9 +358,10 @@ function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: 
 
       <div
         ref={scrollerRef}
-        className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6 scroll-smooth"
-        style={{ scrollbarWidth: "thin" }}
+        className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6"
+        style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position" }}
       >
+
         {items.map((n, i) => {
           const dateLabel = formatPubDate(n.pubDate);
           return (
