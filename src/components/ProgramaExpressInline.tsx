@@ -1283,17 +1283,6 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
             return { ...b, noticias: next };
           }));
         }}
-        onAddNoticiaToBloco={(bi, item) => {
-          const titulo = (item.title || "").replace(/\uFFFD/g, "").trim();
-          if (!titulo) return;
-          setBlocos(prev => prev.map((b, i) => i === bi ? {
-            ...b,
-            noticias: [
-              ...b.noticias.filter(n => n.titulo || n.imagemUrl || n.texto_materia || n.resumo),
-              { titulo, imagemUrl: item.thumbnail || "", escalada: false, resumo: item.summary || "", texto_materia: "" } as any,
-            ],
-          } : b));
-        }}
       />
 
 
