@@ -864,10 +864,12 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   blocosCount?: number;
   onAddNoticiaToBloco?: (blocoIndex: number, item: NewsItem) => void;
+  initialBlocoItems?: Record<number, NewsItem[]>;
+  onBlocoItemsChange?: (blocoIndex: number, items: NewsItem[]) => void;
 }
 
 
-export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 0, onAddNoticiaToBloco }: Props) {
+export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 0, onAddNoticiaToBloco, initialBlocoItems, onBlocoItemsChange }: Props) {
   const { user } = useAuth();
   const [sites, setSites] = useState<Site[]>([]);
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
