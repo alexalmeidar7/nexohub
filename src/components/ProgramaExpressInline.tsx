@@ -8,6 +8,7 @@ import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, Chev
 import NoticiasFontesPopup from "./NoticiasFontesPopup";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 /* ── Podcast-specific types ── */
 interface PodcastData {
@@ -298,6 +299,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [escaladaList, setEscaladaList] = useState<{titulo: string; imagemUrl: string}[]>([]);
+  const [showLimparConfirm, setShowLimparConfirm] = useState(false);
   const [openNoticia, setOpenNoticia] = useState<Record<number, number | null>>({});
   const addToEscalada = useCallback((titulo: string, imagemUrl: string) => {
     if (!titulo.trim()) { toast.warning("Notícia sem título"); return; }
@@ -1233,10 +1235,8 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           <button
             onClick={() => {
               const total = blocos.reduce((acc, b) => acc + b.noticias.filter(n => n.titulo || n.imagemUrl || n.texto_materia || (n as any).resumo).length, 0);
-              if (total === 0) { toast.info("Nenhuma notícia para limpar"); return; }
-              if (!window.confirm(`Remover todas as ${total} notícia(s) dos blocos?`)) return;
-              setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
-              toast.success("Notícias removidas de todos os blocos");
+              if (total === 0 && escaladaList.length === 0) { toast.info("Nenhuma notícia para limpar"); return; }
+              setShowLimparConfirm(true);
             }}
             className="flex items-center gap-1.5 text-[11px] font-semibold py-1.5 px-3 hover:opacity-80 transition-all"
             style={{ backgroundColor: renderAsModal ? "#FFFFFF" : "rgba(255,255,255,0.15)", color: renderAsModal ? "#dc2626" : "var(--layout-header-text, #ffffff)", border: renderAsModal ? `2px solid #dc2626` : "none", borderRadius: renderAsModal ? 999 : 8 }}
@@ -1284,6 +1284,30 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           }));
         }}
       />
+
+      <AlertDialog open={showLimparConfirm} onOpenChange={setShowLimparConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar limpeza do roteiro</AlertDialogTitle>
+            <AlertDialogDescription>
+              Isso removerá todas as notícias dos blocos e também as manchetes cadastradas na escalada. Esta ação não pode ser desfeita. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
+                setEscaladaList([]);
+                toast.success("Notícias e manchetes removidas");
+              }}
+              style={{ background: "#dc2626", color: "#fff" }}
+            >
+              OK, limpar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
 
 
