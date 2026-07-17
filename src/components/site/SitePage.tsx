@@ -31,17 +31,17 @@ const MODULES: { id: ModuleId; label: string; icon: any; desc: string }[] = [
 
 function Toggle({ label, description, checked, onChange }: { label: string; description?: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg transition"
+    <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-full transition"
       style={{
-        background: checked ? "color-mix(in srgb, var(--layout-accent-color, #268ffa) 8%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)",
-        border: `1px solid color-mix(in srgb, var(--layout-${checked ? "accent-color, #268ffa" : "page-text, #1a1a1a"}) ${checked ? 20 : 8}%, transparent)`,
-      }}>
+        background: "#ffffff",
+        border: `2px solid ${checked ? "#00BFF0" : "rgba(10,37,64,0.12)"}`,
+      }} data-nexo-skip>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          {checked ? <Eye size={13} style={{ color: "var(--layout-accent-color, #268ffa)" }} /> : <EyeOff size={13} className="opacity-40" />}
-          <span className="text-sm font-medium">{label}</span>
+          {checked ? <Eye size={13} style={{ color: "#00BFF0" }} /> : <EyeOff size={13} style={{ color: "#64748B" }} />}
+          <span className="text-[12px] font-extrabold uppercase tracking-wider" style={{ color: "#0A2540" }}>{label}</span>
         </div>
-        {description && <p className="text-[11px] opacity-60 mt-0.5 pl-5">{description}</p>}
+        {description && <p className="text-[11px] mt-0.5 pl-5" style={{ color: "#64748B" }}>{description}</p>}
       </div>
       <Switch checked={checked} onCheckedChange={onChange} />
     </div>
@@ -49,23 +49,22 @@ function Toggle({ label, description, checked, onChange }: { label: string; desc
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="text-[11px] font-semibold uppercase tracking-wider opacity-60 block mb-1.5">{children}</label>;
+  return <label className="text-[11px] font-extrabold uppercase tracking-wider block mb-1.5" style={{ color: "#0A2540", letterSpacing: "1px" }}>{children}</label>;
 }
 
 function StatCard({ icon: Icon, label, value, hint, accent }: { icon: any; label: string; value: string | number; hint?: string; accent?: boolean }) {
   return (
-    <div className="rounded-xl p-3 flex flex-col gap-1 transition hover:scale-[1.02]"
+    <div className="rounded-2xl p-4 flex flex-col gap-1 transition hover:-translate-y-0.5"
       style={{
-        background: accent
-          ? "color-mix(in srgb, var(--layout-accent-color, #268ffa) 10%, transparent)"
-          : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)",
-        border: `1px solid color-mix(in srgb, var(--layout-${accent ? "accent-color, #268ffa" : "page-text, #1a1a1a"}) ${accent ? 25 : 8}%, transparent)`,
-      }}>
-      <div className="flex items-center gap-1.5 text-[11px] opacity-60 uppercase tracking-wider font-semibold">
+        background: accent ? "#C6F03C" : "#ffffff",
+        border: `2px solid ${accent ? "#C6F03C" : "#00BFF0"}`,
+        boxShadow: accent ? "0 4px 14px rgba(198,240,60,0.35)" : "0 2px 8px rgba(10,37,64,0.05)",
+      }} data-nexo-skip>
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-extrabold" style={{ color: "#0A2540", letterSpacing: "1px" }}>
         <Icon size={11} /> {label}
       </div>
-      <div className="text-2xl font-black leading-none" style={{ color: accent ? "var(--layout-accent-color, #268ffa)" : "inherit" }}>{value}</div>
-      {hint && <div className="text-[10px] opacity-50">{hint}</div>}
+      <div className="text-2xl font-black leading-none" style={{ color: "#0A2540" }}>{value}</div>
+      {hint && <div className="text-[10px] font-semibold" style={{ color: "#64748B" }}>{hint}</div>}
     </div>
   );
 }
@@ -127,49 +126,58 @@ export default function SitePage({ effectiveUserId }: Props) {
   const subtleBorder = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
+    <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: subtleBg, border: subtleBorder }}>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-2xl" style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: accent, color: "#fff" }}>
-            <Globe size={18} />
+          <div className="w-11 h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: "#00BFF0", color: "#fff" }}>
+            <Globe size={20} />
           </div>
           <div className="min-w-0">
-            <h1 className="text-base font-bold truncate" style={{ color: textColor }}>{config.site_nome || "Meu Site"}</h1>
-            <p className="text-[11px] opacity-60 truncate">
+            <h1 className="text-sm font-extrabold uppercase tracking-wider truncate" style={{ color: "#0A2540" }}>
+              {config.site_nome || "Meu Site"}
+            </h1>
+            <p className="text-[11px] font-semibold truncate" style={{ color: "#64748B" }}>
               Painel administrativo · {visibleCount} seções ativas
               {config.site_dominio ? ` · ${config.site_dominio}` : ""}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={openPreview} className="gap-1.5">
-            <ExternalLink size={14} /> Preview
-          </Button>
-          <Button size="sm" onClick={() => setModule("servidor")} className="gap-1.5" style={{ background: accent, color: "#fff" }}>
-            <UploadIcon size={14} /> Publicar
-          </Button>
+          <button onClick={openPreview}
+            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition"
+            style={{ background: "#ffffff", color: "#0A2540", border: "2px solid #00BFF0" }}>
+            <ExternalLink size={13} /> Preview
+          </button>
+          <button onClick={() => setModule("servidor")}
+            data-nexo="primary"
+            className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition"
+            style={{ background: "#C6F03C", color: "#0A2540", boxShadow: "0 4px 14px rgba(198,240,60,0.35)" }}>
+            <UploadIcon size={13} /> Publicar
+          </button>
         </div>
       </div>
 
       {/* Layout: sidebar modules + content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-4 flex-1 min-h-0">
         {/* Sidebar */}
-        <nav className="rounded-xl p-2 flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible" style={{ background: subtleBg, border: subtleBorder }}>
+        <nav className="rounded-2xl p-2 flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible"
+          style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
           {MODULES.map((m) => {
             const active = module === m.id;
             const Icon = m.icon;
             return (
               <button key={m.id} onClick={() => setModule(m.id)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition shrink-0 lg:w-full"
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-full text-left transition shrink-0 lg:w-full"
                 style={{
-                  background: active ? accent : "transparent",
-                  color: active ? "#fff" : "inherit",
+                  background: active ? "#00BFF0" : "transparent",
+                  color: active ? "#ffffff" : "#0A2540",
+                  fontFamily: "Montserrat, system-ui, sans-serif",
                 }}>
                 <Icon size={15} className="shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-xs font-semibold truncate">{m.label}</div>
-                  <div className="text-[10px] opacity-70 truncate hidden lg:block">{m.desc}</div>
+                  <div className="text-[11px] font-extrabold uppercase tracking-wider truncate">{m.label}</div>
+                  <div className="text-[10px] font-medium opacity-80 truncate hidden lg:block" style={{ color: active ? "#F1FAFD" : "#64748B" }}>{m.desc}</div>
                 </div>
               </button>
             );
@@ -177,8 +185,9 @@ export default function SitePage({ effectiveUserId }: Props) {
         </nav>
 
         {/* Content */}
-        <div className="rounded-xl overflow-hidden flex flex-col min-h-0" style={{ background: subtleBg, border: subtleBorder }}>
-          <div className="flex-1 overflow-y-auto p-4">
+        <div className="rounded-2xl overflow-hidden flex flex-col min-h-0"
+          style={{ background: "#D6F4FB", border: "2px solid #00BFF0" }} data-nexo-skip>
+          <div className="flex-1 overflow-y-auto p-5">
 
             {module === "overview" && (
               <div className="space-y-4">
