@@ -1410,8 +1410,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </span>
                   Origem Online
                 </h4>
-                <div className="flex gap-1.5">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
                     <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
                     <input
                       value={xmlUrl}
