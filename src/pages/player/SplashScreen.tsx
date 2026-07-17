@@ -5,9 +5,7 @@ import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 interface SplashScreenProps {
   logoUrl?: string | null;
   channelName?: string;
-  /** Called once the intro video finishes playing. Parent should still gate on backend readiness before advancing. */
   onFinish: () => void;
-  /** When true, fade out (backend is ready). */
   ready?: boolean;
 }
 
@@ -17,7 +15,6 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
   const [fadeOut, setFadeOut] = useState(false);
   const finishedRef = useRef(false);
 
-  // Fade out only when video ended AND backend ready
   useEffect(() => {
     if (videoEnded && ready && !finishedRef.current) {
       finishedRef.current = true;
@@ -31,7 +28,6 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     if (v) {
       try {
         v.pause();
-        // Keep paused on last frame
         v.currentTime = Math.max(0, v.duration - 0.05);
       } catch {}
     }
@@ -41,30 +37,24 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-700 ${
+      className={`fixed inset-0 z-50 overflow-hidden transition-opacity duration-700 ${
         fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       style={{ backgroundColor: "#131519" }}
-      onTransitionEnd={() => {
-        if (fadeOut) {
-          // no-op — parent controls unmount via step change
-        }
-      }}
     >
-      <div className="mb-12 flex items-center justify-center" style={{ height: "9.5rem" }}>
-        <video
-          ref={videoRef}
-          src={splashVideoAsset.url}
-          className="h-full w-auto object-contain drop-shadow-lg"
-          autoPlay
-          muted
-          playsInline
-          preload="auto"
-          onEnded={handleEnded}
-        />
+      <video
+        ref={videoRef}
+        src={splashVideoAsset.url}
+        className="absolute inset-0 w-full h-full object-cover"
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        onEnded={handleEnded}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <LoadingSpinner size={48} />
       </div>
-
-      <LoadingSpinner size={32} />
     </div>
   );
 }
