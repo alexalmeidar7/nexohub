@@ -1514,7 +1514,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                         fileInputRef.current?.click();
                       }
                     }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80"
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2"
                     style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
                   >
                     <Upload size={14} />
