@@ -1488,25 +1488,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </button>
                 </div>
 
-                {/* Status bar — hide AGUARDANDO when URL is empty */}
-                {isOnlineSelected && (music || lastSource === "online") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
-                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
-                    </span>
-                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
-                  </div>
-                ) : hasValidOnlineUrl ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                    <Loader2 size={12} className="animate-spin" />
-                    <span className="text-xs font-bold">AGUARDANDO LEITURA</span>
-                  </div>
-                ) : null}
+                {(() => {
+                  const st = buildStatus({ selected: isOnlineSelected, activating: onlineActivating, error: onlineError, lastReadAt: onlineLastReadAt, hasSource: hasValidOnlineUrl, delayed: !!onlineDelay });
+                  const ago = formatAgo(onlineLastReadAt);
+                  return (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {st.key === "ativando" || st.key === "atrasado" ? (
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                        ) : (
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
+                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                      </div>
+                      {ago && st.key !== "inativa" && st.key !== "erro" && (
+                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                      )}
+                    </div>
+                  );
+                })()}
                 {onlineError && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
                     <AlertTriangle size={11} />
-                    <span>⚠ {onlineError}</span>
+                    <span>{onlineError}</span>
                   </div>
                 )}
               </div>
