@@ -10,8 +10,12 @@ const NEXO_DARK = "#0A2540";
 
 const PROXY = "https://api.allorigins.win/raw?url=";
 
-type NewsItem = { title: string; link: string; thumbnail: string; pubDate: string };
+type NewsItem = { title: string; link: string; thumbnail: string; pubDate: string; summary?: string };
 type Site = { id: string; name: string; rss_url: string };
+
+function sanitizeTitle(t: string): string {
+  return (t || "").replace(/\uFFFD/g, "").replace(/\s+/g, " ").trim();
+}
 
 function decodeHtmlEntities(text: string): string {
   if (!text) return "";
@@ -258,34 +262,45 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
   return [];
 }
 
-function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: string }) {
+function NewsHorizontalScroller({
+  items,
+  siteId,
+  blocosCount,
+  onDropToBloco,
+}: {
+  items: NewsItem[];
+  siteId: string;
+  blocosCount: number;
+  onDropToBloco: (bi: number, item: NewsItem) => void;
+}) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
-  const targetSpeedRef = useRef(0); // sinal + magnitude desejada (px/frame)
-  const currentSpeedRef = useRef(0); // valor suavizado (lerp)
-  const accRef = useRef(0); // acumulador subpixel
+  const targetSpeedRef = useRef(0);
+  const currentSpeedRef = useRef(0);
+  const accRef = useRef(0);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [dragging, setDragging] = useState(false);
+  const draggedItemRef = useRef<NewsItem | null>(null);
+  const [hoverBloco, setHoverBloco] = useState<number | null>(null);
 
-  // Reset scroll when switching site
+  // Reset scroll + estado ao trocar de site
   useEffect(() => {
     if (scrollerRef.current) scrollerRef.current.scrollLeft = 0;
     targetSpeedRef.current = 0;
     currentSpeedRef.current = 0;
     accRef.current = 0;
+    setExpanded({});
   }, [siteId]);
 
   const tick = () => {
     const el = scrollerRef.current;
     if (el) {
-      // Lerp para transição suave entre parado/movendo (~120ms para chegar)
       currentSpeedRef.current += (targetSpeedRef.current - currentSpeedRef.current) * 0.18;
       const v = currentSpeedRef.current;
       if (Math.abs(v) > 0.05) {
         accRef.current += v;
         const step = Math.trunc(accRef.current);
-        if (step !== 0) {
-          el.scrollLeft += step;
-          accRef.current -= step;
-        }
+        if (step !== 0) { el.scrollLeft += step; accRef.current -= step; }
       } else {
         currentSpeedRef.current = 0;
         accRef.current = 0;
@@ -296,9 +311,7 @@ function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: 
 
   useEffect(() => {
     rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -309,22 +322,16 @@ function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: 
     const x = e.clientX - rect.left;
     const zone = Math.min(160, rect.width * 0.16);
     if (x < zone) {
-      const intensity = 1 - x / zone; // 0..1
-      // easing quadrático para arranque suave
-      const eased = intensity * intensity;
-      targetSpeedRef.current = -(1.2 + eased * 10);
+      const intensity = 1 - x / zone;
+      targetSpeedRef.current = -(1.2 + intensity * intensity * 10);
     } else if (x > rect.width - zone) {
       const intensity = 1 - (rect.width - x) / zone;
-      const eased = intensity * intensity;
-      targetSpeedRef.current = 1.2 + eased * 10;
+      targetSpeedRef.current = 1.2 + intensity * intensity * 10;
     } else {
       targetSpeedRef.current = 0;
     }
   };
-
-  const onMouseLeave = () => {
-    targetSpeedRef.current = 0;
-  };
+  const onMouseLeave = () => { targetSpeedRef.current = 0; };
 
   const nudge = (dir: -1 | 1) => {
     const el = scrollerRef.current;
@@ -332,88 +339,146 @@ function NewsHorizontalScroller({ items, siteId }: { items: NewsItem[]; siteId: 
     el.scrollBy({ left: dir * Math.min(600, el.clientWidth * 0.8), behavior: "smooth" });
   };
 
+  const toggleEye = (idx: number) => setExpanded((prev) => ({ ...prev, [idx]: !prev[idx] }));
+
   return (
-    <div className="relative h-full w-full" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
-      {/* Edge hint gradients */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
+    <div className="relative h-full w-full flex flex-col">
+      {/* Área rolável */}
+      <div className="relative flex-1 min-h-0" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10" style={{ background: "linear-gradient(to right, #FAFCFD, rgba(250,252,253,0))" }} />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10" style={{ background: "linear-gradient(to left, #FAFCFD, rgba(250,252,253,0))" }} />
 
-      {/* Nudge arrows */}
-      <button
-        onClick={() => nudge(-1)}
-        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
-        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
-        aria-label="Anterior"
-      >
-        <ChevronLeft size={18} />
-      </button>
-      <button
-        onClick={() => nudge(1)}
-        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition"
-        style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }}
-        aria-label="Próximo"
-      >
-        <ChevronRight size={18} />
-      </button>
+        <button onClick={() => nudge(-1)} className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }} aria-label="Anterior">
+          <ChevronLeft size={18} />
+        </button>
+        <button onClick={() => nudge(1)} className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition" style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}44` }} aria-label="Próximo">
+          <ChevronRight size={18} />
+        </button>
 
-      <div
-        ref={scrollerRef}
-        className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6"
-        style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position" }}
-      >
-
-        {items.map((n, i) => {
-          const dateLabel = formatPubDate(n.pubDate);
-          return (
-            <a
-              key={`${siteId}-${i}`}
-              href={n.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group shrink-0 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition"
-              style={{
-                width: 280,
-                background: NEXO_CARD_BG,
-                boxShadow: "0 6px 18px rgba(10,37,64,0.10)",
-                fontFamily: "'Montserrat', sans-serif",
-              }}
-            >
-              <div className="w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A`, aspectRatio: "4/3" }}>
-                {n.thumbnail ? (
-                  <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
-                    <Newspaper size={38} />
+        <div
+          ref={scrollerRef}
+          className="h-full w-full overflow-x-auto overflow-y-hidden flex items-stretch gap-4 px-8 py-6"
+          style={{ scrollbarWidth: "thin", scrollBehavior: "auto", willChange: "scroll-position" }}
+        >
+          {items.map((n, i) => {
+            const dateLabel = formatPubDate(n.pubDate);
+            const isOpen = !!expanded[i];
+            const title = sanitizeTitle(n.title);
+            return (
+              <div
+                key={`${siteId}-${i}`}
+                draggable
+                onDragStart={(e) => {
+                  draggedItemRef.current = n;
+                  setDragging(true);
+                  try {
+                    e.dataTransfer.effectAllowed = "copy";
+                    e.dataTransfer.setData("application/x-noticia", JSON.stringify(n));
+                    e.dataTransfer.setData("text/plain", title);
+                  } catch {}
+                }}
+                onDragEnd={() => { setDragging(false); draggedItemRef.current = null; setHoverBloco(null); }}
+                className="group shrink-0 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition cursor-grab active:cursor-grabbing"
+                style={{
+                  width: 280,
+                  background: NEXO_CARD_BG,
+                  boxShadow: "0 6px 18px rgba(10,37,64,0.10)",
+                  fontFamily: "'Montserrat', sans-serif",
+                }}
+              >
+                <div className="w-full overflow-hidden" style={{ background: `${NEXO_DARK}0A`, aspectRatio: "4/3" }}>
+                  {n.thumbnail ? (
+                    <img src={n.thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition" loading="lazy" referrerPolicy="no-referrer"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center" style={{ color: `${NEXO_DARK}55` }}>
+                      <Newspaper size={38} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 flex flex-col p-5 gap-3">
+                  <h3 className="text-[17px] leading-[1.15] font-black line-clamp-5" style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}>
+                    {title}
+                  </h3>
+                  {isOpen && (
+                    <p className="text-[12px] leading-snug" style={{ color: NEXO_DARK, opacity: 0.85, maxHeight: 120, overflow: "auto" }}>
+                      {sanitizeTitle(n.summary || "") || "Sem resumo disponível para esta notícia."}
+                    </p>
+                  )}
+                  <div className="mt-auto flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold" style={{ color: NEXO_DARK, opacity: 0.75 }}>
+                      {dateLabel || " "}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      {n.link && (
+                        <a href={n.link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+                          className="w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition" title="Abrir no site"
+                          style={{ background: "#fff", color: NEXO_DARK, border: `1px solid ${NEXO_CYAN}55` }}>
+                          <ExternalLink size={14} />
+                        </a>
+                      )}
+                      <button type="button" onClick={() => toggleEye(i)}
+                        className="w-9 h-9 rounded-full flex items-center justify-center transition hover:scale-110"
+                        style={{ background: isOpen ? NEXO_DARK : NEXO_CYAN, color: "#fff" }}
+                        aria-label={isOpen ? "Fechar resumo" : "Abrir resumo"}
+                        title={isOpen ? "Fechar resumo" : "Ver resumo"}>
+                        <Eye size={16} />
+                      </button>
+                    </div>
                   </div>
-                )}
-              </div>
-              <div className="flex-1 flex flex-col p-5 gap-4">
-                <h3
-                  className="text-[17px] leading-[1.15] font-black line-clamp-5"
-                  style={{ color: NEXO_DARK, letterSpacing: "-0.01em" }}
-                >
-                  {n.title}
-                </h3>
-                <div className="mt-auto flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold" style={{ color: NEXO_DARK, opacity: 0.75 }}>
-                    {dateLabel || " "}
-                  </span>
-                  <span
-                    className="w-9 h-9 rounded-full flex items-center justify-center transition group-hover:scale-110"
-                    style={{ background: NEXO_CYAN, color: "#fff" }}
-                    aria-label="Abrir notícia"
-                  >
-                    <Eye size={16} />
-                  </span>
                 </div>
               </div>
-            </a>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+
+      {/* Blocos - drop targets */}
+      {blocosCount > 0 && (
+        <div className="shrink-0 px-4 pt-3 pb-4 border-t" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: NEXO_DARK, opacity: 0.6 }}>
+              Arraste a notícia para o bloco
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: blocosCount }).map((_, bi) => {
+              const isHover = hoverBloco === bi;
+              return (
+                <div
+                  key={bi}
+                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; setHoverBloco(bi); }}
+                  onDragLeave={() => setHoverBloco((v) => (v === bi ? null : v))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setHoverBloco(null);
+                    let item: NewsItem | null = draggedItemRef.current;
+                    try {
+                      const raw = e.dataTransfer.getData("application/x-noticia");
+                      if (raw) item = JSON.parse(raw);
+                    } catch {}
+                    if (item) onDropToBloco(bi, item);
+                  }}
+                  className="flex-1 min-w-[110px] h-12 rounded-xl flex items-center justify-center text-[12px] font-black uppercase tracking-wider transition"
+                  style={{
+                    background: isHover ? NEXO_CYAN : "#fff",
+                    color: isHover ? "#fff" : NEXO_DARK,
+                    border: `2px ${dragging || isHover ? "solid" : "dashed"} ${NEXO_CYAN}`,
+                    boxShadow: isHover ? "0 6px 18px rgba(0,191,240,0.35)" : "none",
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                >
+                  Bloco {bi + 1}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 interface Props {
   open: boolean;
