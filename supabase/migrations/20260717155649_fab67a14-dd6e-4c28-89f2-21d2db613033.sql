@@ -1,0 +1,1 @@
+ALTER TABLE public.custom_news_sites ADD COLUMN IF NOT EXISTS parent_id uuid REFERENCES public.custom_news_sites(id) ON DELETE CASCADE; ALTER TABLE public.custom_news_sites ADD COLUMN IF NOT EXISTS category text;
