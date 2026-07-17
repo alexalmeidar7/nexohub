@@ -524,7 +524,7 @@ function NewsHorizontalScroller({
             >
               <div
                 className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-150 ease-out"
-                style={{ width: `${Math.round(scrollProgress * 100)}%`, background: `linear-gradient(90deg, ${NEXO_CYAN}, ${NEXO_LIME || NEXO_CYAN})` }}
+                style={{ width: `${Math.round(scrollProgress * 100)}%`, background: `linear-gradient(90deg, ${NEXO_CYAN}, ${NEXO_DARK})` }}
               />
               <div
                 className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
