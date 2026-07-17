@@ -252,6 +252,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [showPastePopup, setShowPastePopup] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [autoSaving, setAutoSaving] = useState(false);
+  const [showNoticiasFontes, setShowNoticiasFontes] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<number | null>(null);
   const [configuracoes, setConfiguracoes] = useState<{ producao_ai_habilitada: boolean; prompt_ai: string }>(() => {
     const savedHab = localStorage.getItem("producao_ai_habilitada");
