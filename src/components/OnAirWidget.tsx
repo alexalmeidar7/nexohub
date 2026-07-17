@@ -373,15 +373,6 @@ export default function OnAirWidget() {
           </p>
         </div>
 
-        {/* Music info */}
-        {musicData?.titulo && (
-          <div className="z-10 flex items-center gap-1.5 mb-1" style={{ maxWidth: "55%" }}>
-            <Music size={11} style={{ color: "var(--layout-accent-color)" }} className="flex-shrink-0" />
-            <p className="text-white/70 text-[10px] truncate">
-              {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
-            </p>
-          </div>
-        )}
 
         <div className="z-10 mb-4 flex items-center gap-1.5">
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
