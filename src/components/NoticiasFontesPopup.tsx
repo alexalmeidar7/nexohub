@@ -398,37 +398,65 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
 
         {/* Tabs */}
         {sites.length > 0 && (
-          <div className="flex items-center gap-1 px-4 py-2 overflow-x-auto border-b" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
-            {sites.map((s) => {
-              const active = s.id === activeTab;
-              const count = (newsBySite[s.id] || []).length;
-              const loading = loadingSite[s.id];
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => setActiveTab(s.id)}
-                  className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
-                  style={{
-                    background: active ? NEXO_CYAN : "#fff",
-                    color: active ? "#fff" : NEXO_DARK,
-                    border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
-                  }}
-                >
-                  <Globe size={11} />
-                  <span className="truncate max-w-[140px]">{s.name}</span>
-                  {loading ? (
-                    <Loader2 size={10} className="animate-spin" />
-                  ) : (
-                    <span className="text-[9px] opacity-80">{count}</span>
-                  )}
-                </button>
-              );
-            })}
+          <div className="flex items-stretch border-b" style={{ borderColor: "rgba(10,37,64,0.08)", background: "#F5FAFC" }}>
+            <button
+              onClick={() => scrollTabs("left")}
+              disabled={!canScrollLeft}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70"
+              style={{ color: NEXO_DARK }}
+              aria-label="Rolar abas para esquerda"
+              title="Anterior"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <div
+              ref={tabsScrollRef}
+              onScroll={updateScrollButtons}
+              className="flex-1 flex items-center gap-1 py-2 overflow-x-auto scroll-smooth"
+              style={{ scrollbarWidth: "none" }}
+            >
+              {sites.map((s) => {
+                const active = s.id === activeTab;
+                const count = (newsBySite[s.id] || []).length;
+                const loading = loadingSite[s.id];
+                return (
+                  <button
+                    key={s.id}
+                    data-tab-id={s.id}
+                    onClick={() => setActiveTab(s.id)}
+                    className="shrink-0 h-8 px-3 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition"
+                    style={{
+                      background: active ? NEXO_CYAN : "#fff",
+                      color: active ? "#fff" : NEXO_DARK,
+                      border: `2px solid ${active ? NEXO_CYAN : `${NEXO_CYAN}44`}`,
+                    }}
+                  >
+                    <Globe size={11} />
+                    <span className="truncate max-w-[140px]">{s.name}</span>
+                    {loading ? (
+                      <Loader2 size={10} className="animate-spin" />
+                    ) : (
+                      <span className="text-[9px] opacity-80">{count}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => scrollTabs("right")}
+              disabled={!canScrollRight}
+              className="shrink-0 w-8 flex items-center justify-center transition disabled:opacity-25 hover:bg-white/70 border-l"
+              style={{ color: NEXO_DARK, borderColor: "rgba(10,37,64,0.06)" }}
+              aria-label="Rolar abas para direita"
+              title="Próxima"
+            >
+              <ChevronRight size={18} />
+            </button>
             {activeSite && (
               <button
                 onClick={() => loadSiteNews(activeSite)}
                 disabled={activeLoading}
-                className="shrink-0 ml-auto h-8 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50"
+                className="shrink-0 h-8 my-2 mr-3 ml-2 px-3 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 transition hover:opacity-90 disabled:opacity-50 self-center"
                 style={{ background: "#fff", color: NEXO_DARK, border: `2px solid ${NEXO_CYAN}44` }}
                 title="Buscar notícias mais recentes"
               >
