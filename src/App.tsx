@@ -191,6 +191,8 @@ const App = () => (
 
             {/* Slug routes for dynamic access */}
             <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
+            <Route path="/:userSlug/locutor" element={<PromocoesKiosk />} />
+            <Route path="/locutor" element={<PromocoesKiosk />} />
             <Route path="/:userSlug/player" element={<PlayerHub />} />
             <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
             <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
