@@ -19,6 +19,8 @@ import { BackButton } from "@/components/ui/back-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLayoutColors, defaultLayoutColors } from "@/hooks/useLayoutColors";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
+import { AnimatedFlyout } from "@/components/AnimatedFlyout";
+
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
