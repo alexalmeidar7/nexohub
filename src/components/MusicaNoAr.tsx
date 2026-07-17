@@ -679,6 +679,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       lastOnlineSuccessRef.current = Date.now();
       setOnlineDelay(false);
       setOnlineError(null);
+      setOnlineActivating(false);
 
       const parsed = parseXmlString(data.content);
       if (!parsed) {
