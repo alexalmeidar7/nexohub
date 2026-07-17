@@ -41,15 +41,36 @@ function normalizeDayName(s: string): number | null {
   return null;
 }
 
-function matches(evt: Evt, date: Date) {
+function matches(evt: Evt & { periodo_inicio?: string | null; periodo_fim?: string | null; excecoes?: any }, date: Date) {
   if (!evt.data) return false;
   const evtDate = new Date(evt.data + "T12:00:00");
   const check = new Date(format(date, "yyyy-MM-dd") + "T12:00:00");
-  if (evt.recorrencia === "unico" || !evt.recorrencia) return isSameDay(evtDate, check);
-  if (check < evtDate) return false;
-  if (evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal") return evtDate.getDay() === check.getDay();
-  if (evt.recorrencia === "mensal") return evtDate.getDate() === check.getDate();
-  return false;
+  const checkStr = format(date, "yyyy-MM-dd");
+  let ok = false;
+  if (evt.recorrencia === "unico" || !evt.recorrencia) {
+    ok = isSameDay(evtDate, check);
+  } else if (check < evtDate) {
+    ok = false;
+  } else if (evt.recorrencia === "programa_semanal") {
+    // Segunda a sexta
+    const dow = check.getDay();
+    ok = dow >= 1 && dow <= 5;
+  } else if (evt.recorrencia === "semanal") {
+    ok = evtDate.getDay() === check.getDay();
+  } else if (evt.recorrencia === "mensal") {
+    ok = evtDate.getDate() === check.getDate();
+  }
+  if (!ok) return false;
+  if (evt.recorrencia && evt.recorrencia !== "unico") {
+    if (evt.periodo_inicio && checkStr < evt.periodo_inicio) return false;
+    if (evt.periodo_fim && checkStr > evt.periodo_fim) return false;
+  }
+  try {
+    const excs = Array.isArray(evt.excecoes) ? evt.excecoes : [];
+    const exc = excs.find((e: any) => e?.data === checkStr);
+    if (exc && exc.acao === "skip") return false;
+  } catch {}
+  return true;
 }
 
 const typeColors: Record<string, { bg: string; text: string; label: string }> = {
