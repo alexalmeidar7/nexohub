@@ -834,10 +834,7 @@ function NewsHorizontalScroller({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setBlocoItems((prev) => {
-                                const cur = prev[bi] || [];
-                                return { ...prev, [bi]: cur.filter((_, i) => i !== idx) };
-                              });
+                              mutateBloco(bi, (cur) => cur.filter((_, i) => i !== idx));
                             }}
                             className="shrink-0 opacity-60 hover:opacity-100 transition mt-0.5"
                             aria-label="Remover"
