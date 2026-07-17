@@ -1,7 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 import { useSplashVideoCache } from "./useSplashVideoCache";
+
+const ACCENT = "#d9ff65";
+
+function ElegantLoader() {
+  return (
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: "50%",
+        border: "1.5px solid rgba(255,255,255,0.08)",
+        borderTopColor: ACCENT,
+        borderRightColor: ACCENT,
+        animation: "splash-elegant-spin 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+        boxShadow: `0 0 24px ${ACCENT}22`,
+      }}
+    >
+      <style>{`@keyframes splash-elegant-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 
 interface SplashScreenProps {
