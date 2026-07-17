@@ -1286,7 +1286,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
       />
 
       <AlertDialog open={showLimparConfirm} onOpenChange={setShowLimparConfirm}>
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[10000]">
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar limpeza do roteiro</AlertDialogTitle>
             <AlertDialogDescription>
