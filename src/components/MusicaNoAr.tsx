@@ -1279,7 +1279,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           <div
             key={`${displayTitulo}-${displayArtista}`}
             className="rounded-2xl overflow-hidden relative animate-fade-in"
-            style={{ backgroundColor: "var(--layout-slider-bg, #0d0d0d)", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}
+            style={{ background: musicBoxBg, boxShadow: "0 4px 20px rgba(0,0,0,0.2)", transition: "background 800ms ease" }}
           >
             {/* Gradient progress fill */}
             <div
