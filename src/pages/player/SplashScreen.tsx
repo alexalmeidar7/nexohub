@@ -103,15 +103,15 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
           autoPlay
           playsInline
           preload="auto"
-
-        disablePictureInPicture
-        onEnded={handleEnded}
-        style={{
-          willChange: "transform, opacity",
-          transform: "translateZ(0)",
-          backfaceVisibility: "hidden",
-        }}
-      />
+          disablePictureInPicture
+          onEnded={handleEnded}
+          style={{
+            willChange: "transform, opacity",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
+          }}
+        />
+      )}
       <div
         className="absolute inset-0 flex items-center justify-center"
         style={{
