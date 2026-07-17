@@ -2472,7 +2472,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               toggleMute={toggleMute}
               handleVolume={handleVolume}
             />
-            {isVideo && !compactMode && (
+            {isVideo && videoActive && !compactMode && (
               <button
                 type="button"
                 onClick={(e) => {
