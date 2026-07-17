@@ -127,7 +127,7 @@ export default function SitePage({ effectiveUserId }: Props) {
   const subtleBorder = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-0">
+    <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 rounded-xl" style={{ background: subtleBg, border: subtleBorder }}>
         <div className="flex items-center gap-3 min-w-0">
