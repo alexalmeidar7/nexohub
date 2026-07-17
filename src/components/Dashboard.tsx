@@ -895,14 +895,33 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* Mobile menu overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            {/* Backdrop escurecido com fade */}
+            <div
+              className="absolute inset-0 animate-in fade-in duration-200"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div
+              className="relative w-[85vw] max-w-[320px] flex flex-col h-full overflow-y-auto shadow-2xl animate-in slide-in-from-left duration-300"
+              style={{
+                backgroundColor: layoutColors.navBg,
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: "env(safe-area-inset-bottom)",
+                paddingTop: "env(safe-area-inset-top)",
+              }}
+            >
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 sticky top-0 z-10" style={{ backgroundColor: layoutColors.navBg }}>
                 <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
-                  <X size={16} className="text-white" />
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 rounded-full active:scale-95 transition-transform"
+                  style={{ backgroundColor: layoutColors.buttonBg, minWidth: 40, minHeight: 40 }}
+                  aria-label="Fechar menu"
+                >
+                  <X size={18} className="text-white" />
                 </button>
               </div>
-              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2 animate-fade-in">
+              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-1 py-2 animate-fade-in">
                 {(displayedPill === "Chatbot"
                   ? sidebarMenu
                       .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
@@ -931,50 +950,79 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   return (
                     <div key={item.label}>
                       <button onClick={() => handleMenuClick(item)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all"
-                        style={{ color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`, backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent" }}
+                        className="w-full flex items-center gap-3 px-3 rounded-xl text-sm transition-all active:scale-[0.98]"
+                        style={{
+                          minHeight: 44,
+                          color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`,
+                          backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent",
+                        }}
                       >
-                        <Icon size={16} />
+                        <Icon size={18} />
                         <span className="flex-1 text-left capitalize">{item.label}</span>
-                        {item.children && (expanded ? <ChevronUp size={12} style={{ color: `${layoutColors.navText}40` }} /> : <ChevronDown size={12} style={{ color: `${layoutColors.navText}40` }} />)}
+                        {item.children && (
+                          <ChevronDown
+                            size={14}
+                            style={{
+                              color: `${layoutColors.navText}66`,
+                              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 220ms cubic-bezier(0.22,1,0.36,1)",
+                            }}
+                          />
+                        )}
                       </button>
-                      {item.children && expanded && (
-                        <div className="ml-6 space-y-0.5 mt-0.5">
-                          {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
-                            const ChildIcon = child.icon;
-                            const childActive = currentPage === child.page;
-                            return (
-                              <div key={child.label}>
-                                <button onClick={() => handleChildClick(child, item.label)}
-                                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
-                                  style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                                >
-                                  <ChildIcon size={12} />
-                                  <span>{child.label}</span>
-                                </button>
-                                {child.children && child.children.map(grand => {
-                                  const GrandIcon = grand.icon;
-                                  const grandActive = currentPage === grand.page;
-                                  return (
-                                    <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
-                                      className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 rounded-lg text-[10px] transition-all"
-                                      style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80` }}
-                                    >
-                                      <GrandIcon size={11} />
-                                      <span>{grand.label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            );
-                          })}
+                      {item.children && (
+                        <div
+                          className="overflow-hidden"
+                          style={{
+                            maxHeight: expanded ? 800 : 0,
+                            opacity: expanded ? 1 : 0,
+                            transition: "max-height 280ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease",
+                          }}
+                        >
+                          <div className="ml-6 space-y-0.5 mt-1 mb-1">
+                            {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
+                              const ChildIcon = child.icon;
+                              const childActive = currentPage === child.page;
+                              return (
+                                <div key={child.label}>
+                                  <button onClick={() => handleChildClick(child, item.label)}
+                                    className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
+                                    style={{
+                                      minHeight: 40,
+                                      color: childActive ? layoutColors.accentColor : `${layoutColors.navText}b3`,
+                                      backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
+                                    }}
+                                  >
+                                    <ChildIcon size={14} />
+                                    <span>{child.label}</span>
+                                  </button>
+                                  {child.children && child.children.map(grand => {
+                                    const GrandIcon = grand.icon;
+                                    const grandActive = currentPage === grand.page;
+                                    return (
+                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
+                                        className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
+                                        style={{
+                                          minHeight: 36,
+                                          color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80`,
+                                        }}
+                                      >
+                                        <GrandIcon size={12} />
+                                        <span>{grand.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </nav>
-              <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
+              <div className="px-4 py-4 sticky bottom-0" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a`, backgroundColor: layoutColors.navBg }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
                     {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
@@ -986,8 +1034,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
-            <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
           </div>
+
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
