@@ -80,7 +80,7 @@ export default function PlayerHub() {
       setStep(target);
       setFadeOut(false);
       setPendingStep(null);
-    }, 500);
+    }, 700);
   }, []);
 
   useEffect(() => {
