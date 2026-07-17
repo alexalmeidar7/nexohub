@@ -1285,29 +1285,44 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
         }}
       />
 
-      <AlertDialog open={showLimparConfirm} onOpenChange={setShowLimparConfirm}>
-        <AlertDialogContent className="z-[10000]">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar limpeza do roteiro</AlertDialogTitle>
-            <AlertDialogDescription>
+      {showLimparConfirm && (
+        <div
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ zIndex: 100000, background: "rgba(0,0,0,0.6)" }}
+          onClick={() => setShowLimparConfirm(false)}
+        >
+          <div
+            className="bg-background rounded-lg shadow-2xl border p-6 max-w-md w-[90%]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-2">Confirmar limpeza do roteiro</h2>
+            <p className="text-sm text-muted-foreground mb-4">
               Isso removerá todas as notícias dos blocos e também as manchetes cadastradas na escalada. Esta ação não pode ser desfeita. Deseja continuar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
-                setEscaladaList([]);
-                toast.success("Notícias e manchetes removidas");
-              }}
-              style={{ background: "#dc2626", color: "#fff" }}
-            >
-              OK, limpar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowLimparConfirm(false)}
+                className="px-4 py-2 rounded-md text-sm border hover:bg-muted"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
+                  setEscaladaList([]);
+                  toast.success("Notícias e manchetes removidas");
+                  setShowLimparConfirm(false);
+                }}
+                className="px-4 py-2 rounded-md text-sm font-semibold text-white"
+                style={{ background: "#dc2626" }}
+              >
+                OK, limpar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
 
 
