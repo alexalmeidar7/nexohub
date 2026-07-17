@@ -779,64 +779,80 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                 </Tooltip>
 
-                {/* Sidebar flyout submenu — flip para cima quando o item está na metade inferior do menu, para não cortar em 1366x768 */}
+                {/* Sidebar flyout submenu — destacado da barra com gap, blur e sombra suave */}
                 {item.children && isOpen && (() => {
                   const flipUp = itemIdx >= Math.ceil(arr.length / 2);
                   return (
                   <div
-                    className="absolute left-full ml-2 z-[70] animate-in fade-in slide-in-from-left-2 duration-200"
-                    style={flipUp ? { bottom: 0 } : { top: 0 }}
+                    className="absolute left-full z-[70] animate-in fade-in slide-in-from-left-3 duration-200"
+                    style={{ ...(flipUp ? { bottom: 0 } : { top: 0 }), marginLeft: 18, paddingLeft: 4 }}
                     onMouseEnter={clearMenuLeaveTimer}
                     onMouseLeave={scheduleCloseMenu}
                   >
+                    {/* ponte invisível para não perder hover no gap */}
+                    <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
                     <div
-                      className="rounded-2xl py-2 min-w-[190px] overflow-y-auto"
+                      className="rounded-2xl py-3 min-w-[210px] overflow-y-auto backdrop-blur-xl"
                       style={{
-                        backgroundColor: layoutColors.navBg,
-                        border: `1px solid ${layoutColors.borderColor}33`,
-                        boxShadow: "0 16px 48px rgba(0,0,0,0.3)",
+                        background: `linear-gradient(180deg, ${layoutColors.navBg}f2 0%, ${layoutColors.navBg}e6 100%)`,
+                        border: `1px solid ${layoutColors.navText}1f`,
+                        boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px ${layoutColors.accentColor}14, inset 0 1px 0 ${layoutColors.navText}0f`,
                         maxHeight: "calc(100vh - 24px)",
                       }}
                     >
-                      <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
-                      {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map((child, ci) => {
-                        const ChildIcon = child.icon;
-                        const childActive = currentPage === child.page;
-                        return (
-                          <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 30}ms`, animationFillMode: "both" }}>
-                            {child.separator && ci > 0 && (
-                              <div className="mx-3 my-1" style={{ borderTop: `1px solid ${layoutColors.navText}15` }} />
-                            )}
-                            <button
-                              onClick={() => handleChildClick(child, item.label)}
-                              className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-all"
-                              style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}cc` }}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = childActive ? layoutColors.accentColor : `${layoutColors.navText}cc`; }}
-                            >
-                              <ChildIcon size={13} />
-                              <span>{child.label}</span>
-                            </button>
-                            {child.children && child.children.map(grand => {
-                              const GrandIcon = grand.icon;
-                              const grandActive = currentPage === grand.page;
-                              return (
-                                <button
-                                  key={grand.label}
-                                  onClick={() => handleChildClick(grand, child.label)}
-                                  className="w-full text-left pl-9 pr-4 py-1.5 text-[11px] flex items-center gap-2 transition-all"
-                                  style={{ color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
-                                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = grandActive ? layoutColors.accentColor : `${layoutColors.navText}99`; }}
-                                >
-                                  <GrandIcon size={12} />
-                                  <span>{grand.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        );
-                      })}
+                      <div className="flex items-center gap-2 px-4 pb-2">
+                        <span className="inline-block rounded-full" style={{ width: 4, height: 12, background: layoutColors.accentColor }} />
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: `${layoutColors.navText}80` }}>{item.label}</p>
+                      </div>
+                      <div className="px-2">
+                        {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map((child, ci) => {
+                          const ChildIcon = child.icon;
+                          const childActive = currentPage === child.page;
+                          return (
+                            <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 25}ms`, animationFillMode: "both" }}>
+                              {child.separator && ci > 0 && (
+                                <div className="mx-2 my-1.5" style={{ borderTop: `1px solid ${layoutColors.navText}12` }} />
+                              )}
+                              <button
+                                onClick={() => handleChildClick(child, item.label)}
+                                className="w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
+                                style={{
+                                  color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
+                                  backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
+                                }}
+                                onMouseEnter={e => { if (!childActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}10`; e.currentTarget.style.color = layoutColors.navText; } }}
+                                onMouseLeave={e => { if (!childActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}d9`; } }}
+                              >
+                                {childActive && (
+                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full" style={{ width: 3, height: 14, background: layoutColors.accentColor }} />
+                                )}
+                                <ChildIcon size={14} />
+                                <span className="font-medium">{child.label}</span>
+                              </button>
+                              {child.children && child.children.map(grand => {
+                                const GrandIcon = grand.icon;
+                                const grandActive = currentPage === grand.page;
+                                return (
+                                  <button
+                                    key={grand.label}
+                                    onClick={() => handleChildClick(grand, child.label)}
+                                    className="w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
+                                    style={{
+                                      color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
+                                      backgroundColor: grandActive ? `${layoutColors.accentColor}10` : "transparent",
+                                    }}
+                                    onMouseEnter={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.navText; } }}
+                                    onMouseLeave={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}a6`; } }}
+                                  >
+                                    <GrandIcon size={12} />
+                                    <span>{grand.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                   );

@@ -24,6 +24,7 @@ export default function BotsStatusBox() {
     { name: "BotXMLMusica", label: "XML Música", ok: false, detail: "Aguardando...", lastRun: 0 },
     { name: "BotMusicaEmTudo", label: "Sync Telas", ok: false, detail: "Aguardando...", lastRun: 0 },
     { name: "BotLogosPats", label: "Logos/Pats", ok: false, detail: "Aguardando...", lastRun: 0 },
+    { name: "BotNoticiasFontes", label: "Notícias Fontes", ok: false, detail: "Aguardando...", lastRun: 0 },
   ]);
 
   const toggleMinimize = useCallback(() => {
@@ -119,6 +120,41 @@ export default function BotsStatusBox() {
     };
     check();
     const t = setInterval(check, 120000);
+    return () => clearInterval(t);
+  }, [user]);
+
+  // BotNoticiasFontes — verifica cache de notícias no backend (a cada 60s)
+  useEffect(() => {
+    if (!user) return;
+    const check = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("news_cache")
+          .select("updated_at, items")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false })
+          .limit(20);
+        if (error || !data || data.length === 0) {
+          setBots(prev => prev.map(b => b.name === "BotNoticiasFontes" ? { ...b, ok: false, detail: "Sem cache ainda", lastRun: 0 } : b));
+          return;
+        }
+        const newestTs = new Date(data[0].updated_at as string).getTime();
+        try { localStorage.setItem("bot_news_cache_last_run", String(newestTs)); } catch {}
+        const ageMin = Math.floor((Date.now() - newestTs) / 60000);
+        const total = (data as any[]).reduce((a, r) => a + (Array.isArray(r.items) ? r.items.length : 0), 0);
+        const ok = ageMin < 15;
+        setBots(prev => prev.map(b => b.name === "BotNoticiasFontes" ? {
+          ...b,
+          ok,
+          detail: ok ? `${total} notícias • ${ageMin}min` : `⚠ Cache ${ageMin}min atrás`,
+          lastRun: newestTs,
+        } : b));
+      } catch {
+        setBots(prev => prev.map(b => b.name === "BotNoticiasFontes" ? { ...b, ok: false, detail: "Falha ao verificar", lastRun: Date.now() } : b));
+      }
+    };
+    check();
+    const t = setInterval(check, 60000);
     return () => clearInterval(t);
   }, [user]);
 
