@@ -774,33 +774,6 @@ export default function RoteiroPrograma() {
             <Zap size={16} />
             Novo Roteiro
           </button>
-          <button
-            onClick={() => { setNovoRoteiroOpen(false); setAutomacaoOpen(true); }}
-            style={{
-              ...MONT,
-              height: 64,
-              padding: "0 22px",
-              borderRadius: 20,
-              background: ORANGE,
-              color: "#FFFFFF",
-              border: `2px solid ${ORANGE}`,
-              fontSize: 13,
-              fontWeight: 800,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              cursor: "pointer",
-              boxShadow: "0 6px 20px rgba(254, 137, 0, 0.35)",
-              transition: "all 0.2s ease",
-            }}
-            title="Abrir automação de programa"
-          >
-            <Bot size={16} />
-            Automação de Programa
-          </button>
         </div>
       </div>
 
