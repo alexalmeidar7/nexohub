@@ -2377,27 +2377,6 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.75) 100%)",
           }}
         />
-        {/* Botão de tela cheia — aparece quando o vídeo está ativo */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            const el = videoRef.current as any;
-            if (!el) return;
-            const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-            try { req?.call(el); } catch { /* noop */ }
-          }}
-          className="absolute bottom-2 right-2 z-20 w-8 h-8 rounded-lg flex items-center justify-center transition-opacity hover:scale-105"
-          style={{
-            background: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(8px)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            opacity: hoverVideo ? 1 : 0.35,
-          }}
-          title="Tela cheia"
-        >
-          <Maximize2 size={14} style={{ color: "#fff" }} />
-        </button>
       </div>
 
       {channels.length === 0 ? (
@@ -2493,6 +2472,23 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               toggleMute={toggleMute}
               handleVolume={handleVolume}
             />
+            {isVideo && !compactMode && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const el = videoRef.current as any;
+                  if (!el) return;
+                  const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+                  try { req?.call(el); } catch { /* noop */ }
+                }}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                style={{ background: "#001e2d" }}
+                title="Tela cheia"
+              >
+                <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+              </button>
+            )}
 
           </div>
         </div>
