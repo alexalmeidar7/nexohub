@@ -20,10 +20,68 @@ function decodeHtmlEntities(text: string): string {
   return el.value;
 }
 
+function pickTag(block: string, tag: string): string {
+  const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+  const m = block.match(re);
+  if (!m) return "";
+  let v = m[1].trim();
+  const cd = v.match(/<!\[CDATA\[([\s\S]*?)\]\]>/);
+  if (cd) v = cd[1].trim();
+  return v;
+}
+
+function parseRssRegex(xml: string): NewsItem[] {
+  const results: NewsItem[] = [];
+  const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
+  for (const block of blocks) {
+    let rawTitle = decodeHtmlEntities(pickTag(block, "title"));
+    let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+    if (title.includes(" - ")) title = title.split(" - ")[0].trim();
+    if (!title) continue;
+
+    // Link: <link>URL</link> or <link href="URL"/>
+    let link = pickTag(block, "link");
+    if (!link) {
+      const h = block.match(/<link[^>]*href=["']([^"']+)["']/i);
+      if (h) link = h[1];
+    }
+    link = link.trim();
+
+    const pubDate =
+      pickTag(block, "pubDate") ||
+      pickTag(block, "published") ||
+      pickTag(block, "updated") ||
+      pickTag(block, "dc:date") ||
+      pickTag(block, "date") ||
+      "";
+
+    let thumbnail = "";
+    const media = block.match(/<(?:media:content|media:thumbnail|thumbnail|content)[^>]*url=["']([^"']+)["']/i);
+    if (media) thumbnail = media[1];
+    if (!thumbnail) {
+      const enc = block.match(/<enclosure[^>]*url=["']([^"']+)["'][^>]*type=["']image[^"']*["']/i)
+        || block.match(/<enclosure[^>]*type=["']image[^"']*["'][^>]*url=["']([^"']+)["']/i);
+      if (enc) thumbnail = enc[1];
+    }
+    if (!thumbnail) {
+      const desc = pickTag(block, "description") || pickTag(block, "content:encoded") || pickTag(block, "summary");
+      const im = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (im) thumbnail = im[1];
+    }
+
+    results.push({ title, link, thumbnail, pubDate });
+  }
+  return results;
+}
+
 function parseRss(xml: string): NewsItem[] {
   const results: NewsItem[] = [];
   try {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
+    // Detect XML parse error (Chrome/Firefox both surface a parsererror element)
+    const hasParseError = !!doc.querySelector("parsererror");
+    if (hasParseError) return parseRssRegex(xml);
+
     const items = doc.querySelectorAll("item, entry");
     items.forEach((item) => {
       let rawTitle = decodeHtmlEntities(item.querySelector("title")?.textContent?.trim() || "");
@@ -52,6 +110,10 @@ function parseRss(xml: string): NewsItem[] {
       if (title) results.push({ title, link, thumbnail, pubDate });
     });
   } catch {}
+  // If DOM parsing produced nothing but the payload clearly has <item>, retry with regex
+  if (results.length === 0 && /<(item|entry)[\s>]/i.test(xml)) {
+    return parseRssRegex(xml);
+  }
   return results;
 }
 
