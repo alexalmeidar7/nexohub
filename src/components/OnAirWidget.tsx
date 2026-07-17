@@ -232,7 +232,7 @@ export default function OnAirWidget() {
         <span ref={anchorRef} className="hidden" aria-hidden="true" />
         <div className="flex items-center gap-2 mb-2">
           <Radio size={16} className="text-white/70" />
-          <span className="font-semibold text-white text-sm">NO AR</span>
+          <span className="font-semibold text-white text-sm" translate="no">NO AR</span>
         </div>
         <p className="text-white/50 text-xs">Nenhum programa no ar neste momento.</p>
         <UpcomingProgramsList programs={nextPrograms} apresentadores={nextApresentadores} />
