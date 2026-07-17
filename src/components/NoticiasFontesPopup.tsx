@@ -12,7 +12,7 @@ const NEXO_DARK = "#0A2540";
 const PROXY = "https://api.allorigins.win/raw?url=";
 
 type NewsItem = { title: string; link: string; thumbnail: string; pubDate: string; summary?: string };
-type Site = { id: string; name: string; rss_url: string };
+type Site = { id: string; name: string; rss_url: string; parent_id?: string | null; category?: string | null };
 
 function sanitizeTitle(t: string): string {
   return (t || "").replace(/\uFFFD/g, "").replace(/\s+/g, " ").trim();
