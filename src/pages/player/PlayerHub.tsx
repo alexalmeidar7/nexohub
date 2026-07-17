@@ -107,7 +107,7 @@ export default function PlayerHub() {
   if (step === "splash") {
     return (
       <div className={wrapperClass}>
-        <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} />
+        <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} ready={!loading && dataReady} />
       </div>
     );
   }
