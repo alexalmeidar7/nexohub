@@ -1314,6 +1314,18 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             className="w-full h-7 px-2 rounded text-[10px] outline-none"
                             style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
                           />
+                          <select
+                            value={editParentId}
+                            onChange={(e) => setEditParentId(e.target.value)}
+                            className="w-full h-7 px-2 rounded text-[10px] font-semibold outline-none"
+                            style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}55`, color: NEXO_DARK }}
+                            title="Hierarquia: fonte principal ou subfonte de outra"
+                          >
+                            <option value="">— Fonte principal —</option>
+                            {sites.filter((x) => !x.parent_id && x.id !== s.id).map((p) => (
+                              <option key={p.id} value={p.id}>Subfonte de: {p.name}</option>
+                            ))}
+                          </select>
                         </div>
                       ) : (
                         <div className="flex-1 min-w-0">
