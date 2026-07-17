@@ -15,14 +15,24 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
   const [fadeOut, setFadeOut] = useState(false);
   const finishedRef = useRef(false);
 
-  // Force preload on mount
+  // Force preload + try to play with audio; fallback to muted autoplay if blocked
   useEffect(() => {
     const v = videoRef.current;
-    if (v) {
-      try {
-        v.load();
-      } catch {}
-    }
+    if (!v) return;
+    try {
+      v.load();
+      v.muted = false;
+      v.volume = 1;
+      const p = v.play();
+      if (p && typeof p.catch === "function") {
+        p.catch(() => {
+          try {
+            v.muted = true;
+            v.play().catch(() => {});
+          } catch {}
+        });
+      }
+    } catch {}
   }, []);
 
   useEffect(() => {
