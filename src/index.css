@@ -1530,3 +1530,13 @@ img, video, canvas, svg { max-width: 100%; }
 
 
 
+
+/* Nexo — anel de foco visível (respeita a cor de destaque via --nexo-accent) */
+.nexo-focus {
+  outline: none;
+}
+.nexo-focus:focus-visible {
+  outline: 2px solid var(--nexo-accent, hsl(var(--primary)));
+  outline-offset: 2px;
+  border-radius: inherit;
+}
