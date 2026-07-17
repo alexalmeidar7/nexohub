@@ -747,8 +747,31 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const removeNoticia = (bi: number, ni: number) => {
     setBlocos(prev => {
       const alvo = prev[bi]?.noticias[ni];
-      if (alvo?.escalada && alvo.titulo) {
-        setEscaladaList(prevList => prevList.filter(e => e.titulo !== alvo.titulo));
+      const wasEscalada = !!alvo?.escalada && !!alvo?.titulo;
+      if (wasEscalada) {
+        setEscaladaList(prevList => prevList.filter(e => e.titulo !== alvo!.titulo));
+      }
+      if (alvo && (alvo.titulo || alvo.imagemUrl || (alvo as any).texto_materia || (alvo as any).resumo)) {
+        const snapshot = { ...alvo };
+        const label = (alvo.titulo || "Notícia").slice(0, 60);
+        toast.success(`Removida: ${label}`, {
+          action: {
+            label: "Desfazer",
+            onClick: () => {
+              setBlocos(cur => cur.map((b, i) => {
+                if (i !== bi) return b;
+                const noticias = [...b.noticias];
+                const insertAt = Math.min(ni, noticias.length);
+                noticias.splice(insertAt, 0, snapshot);
+                return { ...b, noticias };
+              }));
+              if (wasEscalada && snapshot.titulo) {
+                setEscaladaList(prevList => prevList.some(e => e.titulo === snapshot.titulo) ? prevList : [...prevList, { titulo: snapshot.titulo, imagemUrl: snapshot.imagemUrl || "" }]);
+              }
+            },
+          },
+          duration: 6000,
+        });
       }
       return prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.filter((_, j) => j !== ni) } : b);
     });
