@@ -1524,7 +1524,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed"
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
                     style={{
                       backgroundColor: isLocalSelected ? "#0d0446" : "#C6F03C",
                       color: isLocalSelected ? "#C6F03C" : "#0d0446",
