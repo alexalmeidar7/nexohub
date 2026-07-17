@@ -1008,12 +1008,14 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setEditingId(s.id);
     setEditName(s.name);
     setEditUrl(s.rss_url);
+    setEditParentId(s.parent_id || "");
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setEditName("");
     setEditUrl("");
+    setEditParentId("");
   };
 
   const saveEdit = async (id: string) => {
@@ -1022,10 +1024,23 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     let url = editUrl.trim();
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     const name = editName.trim();
-    const { error } = await supabase.from("custom_news_sites").update({ name, rss_url: url }).eq("id", id);
+    const parentId = editParentId || null;
+    // Prevent making a parent its own child, or nesting under one of its own children
+    const isDescendant = (candidateId: string): boolean => {
+      if (candidateId === id) return true;
+      const child = sites.find((x) => x.id === candidateId);
+      if (!child || !child.parent_id) return false;
+      return isDescendant(child.parent_id);
+    };
+    if (parentId && isDescendant(parentId)) {
+      setSavingEdit(false);
+      return;
+    }
+    const category = parentId ? name : null;
+    const { error } = await supabase.from("custom_news_sites").update({ name, rss_url: url, parent_id: parentId, category }).eq("id", id);
     setSavingEdit(false);
     if (error) return;
-    const updated: Site = { id, name, rss_url: url };
+    const updated: Site = { id, name, rss_url: url, parent_id: parentId, category };
     setSites((prev) => prev.map((s) => (s.id === id ? updated : s)));
     setNewsBySite((prev) => { const c = { ...prev }; delete c[id]; return c; });
     cancelEdit();
