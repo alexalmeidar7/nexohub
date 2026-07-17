@@ -1472,10 +1472,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-              {/* ── CENTER DIVIDER ── */}
-                <div className="flex flex-col items-center justify-center px-2" style={{ minWidth: 110 }}>
+                <div className="flex flex-col items-center justify-center lg:px-2 w-full lg:w-auto" style={{ minWidth: 0 }}>
                   <div
-                    className={`rounded-2xl px-3 py-4 flex flex-col items-center gap-2 w-full ${bothActive ? "music-dual-monitor-blink" : ""}`}
+                    className={`rounded-2xl px-3 py-3 lg:py-4 flex lg:flex-col items-center justify-center gap-2 w-full lg:w-[110px] ${bothActive ? "music-dual-monitor-blink" : ""}`}
                     style={{
                       background: bothActive
                         ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
@@ -1487,7 +1486,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   >
                     <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
                     <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
-                      Lendo as<br/>duas origens
+                      Lendo as duas origens
                     </span>
                   </div>
                 </div>
