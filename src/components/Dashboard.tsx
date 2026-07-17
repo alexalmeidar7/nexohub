@@ -780,15 +780,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </Tooltip>
 
                 {/* Sidebar flyout submenu — destacado da barra com gap, blur e sombra suave */}
-                {item.children && isOpen && (() => {
+                {item.children && (() => {
                   const flipUp = itemIdx >= Math.ceil(arr.length / 2);
                   return (
-                  <div
-                    className="absolute left-full z-[70] animate-in fade-in slide-in-from-left-3 duration-200"
+                  <AnimatedFlyout
+                    open={isOpen}
+                    className="absolute left-full z-[70]"
                     style={{ ...(flipUp ? { bottom: 0 } : { top: 0 }), marginLeft: 18, paddingLeft: 4 }}
                     onMouseEnter={clearMenuLeaveTimer}
                     onMouseLeave={scheduleCloseMenu}
                   >
+
                     {/* ponte invisível para não perder hover no gap */}
                     <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
                     <div
