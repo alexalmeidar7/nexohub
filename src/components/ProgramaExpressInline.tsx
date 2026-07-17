@@ -1831,7 +1831,7 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
 
 
 /* Sub-component for each noticia row */
-function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, isOpen, onToggleOpen, onAddToEscalada, alreadyInEscalada }: {
+function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRemove, onFetchLink, canRemove, editedFields, onRegenerateWeather, onRegenerateFinance, addingWeather, addingFinance, isOpen, onToggleOpen, onAddToEscalada, alreadyInEscalada, onMove, canMoveUp, canMoveDown }: {
   noticia: NewsItem; bi: number; ni: number;
   inputStyle: React.CSSProperties; fetchingLink: string | null;
   onUpdate: (bi: number, ni: number, field: keyof NewsItem, value: any) => void;
@@ -1847,6 +1847,9 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
   onToggleOpen: (open: boolean) => void;
   onAddToEscalada: () => void;
   alreadyInEscalada: boolean;
+  onMove: (bi: number, ni: number, dir: -1 | 1) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }) {
   const [linkInput, setLinkInput] = useState(noticia.link || "");
   const collapsed = !isOpen;
