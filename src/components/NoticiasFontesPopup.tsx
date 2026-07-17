@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Newspaper, Plus, Trash2, Loader2, X as XIcon, RefreshCw, ExternalLink, Globe, Settings, Pencil, Check, ChevronLeft, ChevronRight, Eye, Play, Pause, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
@@ -686,7 +687,12 @@ function NewsHorizontalScroller({
                       const it = item;
                       setBlocoItems((prev) => {
                         const cur = prev[bi] || [];
-                        if (cur.some((x) => x.link === it.link && x.title === it.title)) return prev;
+                        if (cur.some((x) => x.link === it.link && x.title === it.title)) {
+                          toast.warning("Notícia já adicionada neste bloco", {
+                            description: it.title.slice(0, 80),
+                          });
+                          return prev;
+                        }
                         return { ...prev, [bi]: [...cur, it] };
                       });
                       onDropToBloco(bi, it);
