@@ -970,6 +970,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           lastLocalSuccessRef.current = Date.now();
           setLocalDelay(false);
           setLocalError(null);
+          setLocalActivating(false);
           const parsed = parseXmlString(text);
           if (parsed) processMusicRef.current(parsed, "pasta");
           else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
