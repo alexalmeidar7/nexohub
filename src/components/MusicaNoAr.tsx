@@ -1434,12 +1434,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
                 {/* Status bar — hide AGUARDANDO when URL is empty */}
                 {isOnlineSelected && (music || lastSource === "online") ? (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "#0d0446", color: "#C6F03C", border: "1px solid #C6F03C" }}>
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-white" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#C6F03C" }} />
+                      <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#C6F03C" }} />
                     </span>
-                    <span className="text-xs font-bold">LENDO AQUI</span>
+                    <span className="text-xs font-black tracking-wide" style={{ color: "#C6F03C" }}>LENDO AQUI</span>
                   </div>
                 ) : hasValidOnlineUrl ? (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}>
