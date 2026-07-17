@@ -37,6 +37,7 @@ interface BroadcastData {
   tickerWeather: boolean;
   tickerQuotes: boolean;
   tickerSocials: boolean;
+  tickerUnitario: boolean;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
