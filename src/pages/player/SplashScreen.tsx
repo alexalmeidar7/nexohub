@@ -1,7 +1,27 @@
 import { useEffect, useRef, useState } from "react";
-import LoadingSpinner from "@/components/LoadingSpinner";
 import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 import { useSplashVideoCache } from "./useSplashVideoCache";
+
+const ACCENT = "#d9ff65";
+
+function ElegantLoader() {
+  return (
+    <div
+      style={{
+        width: 56,
+        height: 56,
+        borderRadius: "50%",
+        border: "1.5px solid rgba(255,255,255,0.08)",
+        borderTopColor: ACCENT,
+        borderRightColor: ACCENT,
+        animation: "splash-elegant-spin 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+        boxShadow: `0 0 24px ${ACCENT}22`,
+      }}
+    >
+      <style>{`@keyframes splash-elegant-spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
 
 
 interface SplashScreenProps {
@@ -113,18 +133,17 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         />
       )}
       <div
-        className="absolute inset-0 flex items-center justify-center"
+        className="absolute inset-x-0 bottom-0 flex items-end justify-center"
         style={{
-          transform: reducedMotion
-            ? "translateY(50px)"
-            : `translateY(50px) ${fadeOut ? "scale(0.9)" : "scale(1)"}`,
+          paddingBottom: "12vh",
+          transform: reducedMotion ? "none" : fadeOut ? "scale(0.9)" : "scale(1)",
           opacity: fadeOut ? 0 : 1,
           transition: reducedMotion
             ? `opacity ${fadeDuration}ms linear`
             : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
-        <LoadingSpinner size={48} />
+        <ElegantLoader />
       </div>
     </div>
   );
