@@ -441,19 +441,54 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
     const { data } = await supabase.from("custom_news_sites").select("id,name,rss_url").eq("user_id", user.id).order("created_at", { ascending: true });
     const list = (data as Site[]) || [];
     setSites(list);
+
+    // 1) Hidratação instantânea: puxa cache pronto do backend (atualizado a cada 5 min)
+    if (list.length) {
+      const { data: cached } = await supabase
+        .from("news_cache")
+        .select("site_id, items, updated_at")
+        .in("site_id", list.map((s) => s.id));
+      if (cached && cached.length) {
+        const map: Record<string, NewsItem[]> = {};
+        let newestTs = 0;
+        for (const row of cached as any[]) {
+          if (Array.isArray(row.items)) map[row.site_id] = row.items as NewsItem[];
+          const ts = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+          if (ts > newestTs) newestTs = ts;
+        }
+        setNewsBySite((prev) => ({ ...map, ...prev }));
+        if (newestTs) {
+          try { localStorage.setItem("bot_news_cache_last_run", String(newestTs)); } catch {}
+        }
+      }
+    }
     setInitialLoading(false);
     if (list.length && !activeTab) setActiveTab(list[0].id);
-    if (forceFetch) {
-      // Load in small parallel batches to avoid overwhelming the edge function
-      const CONCURRENCY = 3;
-      let i = 0;
-      const runNext = async (): Promise<void> => {
-        const idx = i++;
-        if (idx >= list.length) return;
-        await loadSiteNews(list[idx]);
-        return runNext();
-      };
-      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, list.length) }, runNext));
+
+    // 2) Se cache está velho (>5min) OU forçado, dispara refresh backend em background
+    const cacheAge = Number(localStorage.getItem("bot_news_cache_last_run") || "0");
+    const isStale = !cacheAge || Date.now() - cacheAge > 5 * 60 * 1000;
+    if (forceFetch && (isStale || list.length === 0)) {
+      supabase.functions.invoke("refresh-news-cache", { body: {} }).then(async () => {
+        // após refresh, recarrega do cache
+        const { data: refreshed } = await supabase
+          .from("news_cache")
+          .select("site_id, items, updated_at")
+          .in("site_id", list.map((s) => s.id));
+        if (refreshed && refreshed.length) {
+          const map: Record<string, NewsItem[]> = {};
+          let newestTs = 0;
+          for (const row of refreshed as any[]) {
+            if (Array.isArray(row.items)) map[row.site_id] = row.items as NewsItem[];
+            const ts = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+            if (ts > newestTs) newestTs = ts;
+          }
+          setNewsBySite(map);
+          if (newestTs) {
+            try { localStorage.setItem("bot_news_cache_last_run", String(newestTs)); } catch {}
+          }
+        }
+      }).catch((e) => console.warn("[NoticiasFontes] refresh-news-cache falhou", e));
     }
   };
 
@@ -462,6 +497,8 @@ export default function NoticiasFontesPopup({ open, onOpenChange }: Props) {
     const news = await fetchNews(s.rss_url);
     setNewsBySite((prev) => ({ ...prev, [s.id]: news }));
     setLoadingSite((prev) => ({ ...prev, [s.id]: false }));
+    // atualiza cache backend para essa fonte
+    supabase.functions.invoke("refresh-news-cache", { body: { site_id: s.id } }).catch(() => {});
   };
 
   useEffect(() => {
