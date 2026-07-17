@@ -14,6 +14,17 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
   const [videoEnded, setVideoEnded] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const finishedRef = useRef(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  // Detect prefers-reduced-motion
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
 
   // Force preload + try to play with audio; fallback to muted autoplay if blocked
   useEffect(() => {
@@ -21,8 +32,8 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     if (!v) return;
     try {
       v.load();
-      v.muted = false;
-      v.volume = 1;
+      v.muted = reducedMotion ? true : false;
+      v.volume = reducedMotion ? 0 : 1;
       const p = v.play();
       if (p && typeof p.catch === "function") {
         p.catch(() => {
@@ -33,15 +44,15 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         });
       }
     } catch {}
-  }, []);
+  }, [reducedMotion]);
 
   useEffect(() => {
     if (videoEnded && ready && !finishedRef.current) {
       finishedRef.current = true;
-      const t = setTimeout(() => setFadeOut(true), 120);
+      const t = setTimeout(() => setFadeOut(true), reducedMotion ? 0 : 120);
       return () => clearTimeout(t);
     }
-  }, [videoEnded, ready]);
+  }, [videoEnded, ready, reducedMotion]);
 
   const handleEnded = () => {
     const v = videoRef.current;
@@ -55,15 +66,19 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     onFinish();
   };
 
+  const fadeDuration = reducedMotion ? 200 : 900;
+  const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
+
   return (
     <div
       className="fixed inset-0 z-50 overflow-hidden pointer-events-auto"
       style={{
         backgroundColor: "#131519",
         opacity: fadeOut ? 0 : 1,
-        transform: fadeOut ? "scale(1.03)" : "scale(1)",
-        transition:
-          "opacity 900ms cubic-bezier(0.22, 1, 0.36, 1), transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+        transform: reducedMotion ? "none" : fadeOut ? "scale(1.03)" : "scale(1)",
+        transition: reducedMotion
+          ? `opacity ${fadeDuration}ms linear`
+          : `opacity ${fadeDuration}ms ${easing}, transform ${fadeDuration}ms ${easing}`,
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
@@ -85,10 +100,13 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
       <div
         className="absolute inset-0 flex items-center justify-center"
         style={{
-          transform: `translateY(50px) ${fadeOut ? "scale(0.9)" : "scale(1)"}`,
+          transform: reducedMotion
+            ? "translateY(50px)"
+            : `translateY(50px) ${fadeOut ? "scale(0.9)" : "scale(1)"}`,
           opacity: fadeOut ? 0 : 1,
-          transition:
-            "opacity 500ms ease-out, transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+          transition: reducedMotion
+            ? `opacity ${fadeDuration}ms linear`
+            : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
         <LoadingSpinner size={48} />
@@ -96,3 +114,4 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     </div>
   );
 }
+
