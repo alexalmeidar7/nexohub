@@ -1106,6 +1106,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
   const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
+  // Paleta extraída da capa para gradiente elegante do box de música
+  const coverPalette = useCoverPalette(displayCover || null);
+  const paletteContrast = getPaletteContrast(coverPalette);
+  const musicBoxBg = coverPalette
+    ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
+    : "var(--layout-slider-bg, #0d0d0d)";
+  const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
+  const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
+  const musicTextShadow = paletteContrast?.textShadow ?? "none";
+
   // Listen for manual curiosity sends from the settings table
   useEffect(() => {
     const handler = (e: any) => {
@@ -1204,16 +1214,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const NEXO_CYAN = "#00BFF0";
   const NEXO_CARD_BG = "#D6F4FB";
   const NEXO_DARK = "#0A2540";
-
-  // Paleta extraída da capa para gradiente elegante do box de música
-  const coverPalette = useCoverPalette(displayCover || null);
-  const paletteContrast = getPaletteContrast(coverPalette);
-  const musicBoxBg = coverPalette
-    ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
-    : "var(--layout-slider-bg, #0d0d0d)";
-  const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
-  const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
-  const musicTextShadow = paletteContrast?.textShadow ?? "none";
 
   return (
     <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
