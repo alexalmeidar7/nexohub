@@ -460,11 +460,6 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("Facebook", "facebook", "https://facebook.com/empresa")}
             {field("YouTube", "youtube", "https://youtube.com/empresa")}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {field("Nº seguidores Instagram", "instagramSubs", "Ex: 12000")}
-            {field("Nº seguidores Facebook", "facebookSubs", "Ex: 25000")}
-            {field("Nº inscritos YouTube (opcional)", "youtubeSubs", "Auto se vazio")}
-          </div>
           {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
         </div>
 
