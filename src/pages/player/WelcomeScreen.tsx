@@ -329,25 +329,36 @@ export default function WelcomeScreen({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setAuthMode("login")}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
+                disabled={signingIn}
+                aria-busy={signingIn}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: "rgba(255,255,255,0.12)",
                   border: "1px solid rgba(255,255,255,0.20)",
                   backdropFilter: "blur(10px)",
                 }}
               >
-                <LogIn className="w-4 h-4" />
-                entrar
+                {signingIn ? (
+                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                ) : (
+                  <LogIn className="w-4 h-4" />
+                )}
+                {signingIn ? "autenticando..." : "entrar"}
               </button>
               <button
                 onClick={() => setAuthMode("signup")}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
+                disabled={signingIn}
+                aria-busy={signingIn}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.16)",
                   backdropFilter: "blur(10px)",
                 }}
               >
+                {signingIn && (
+                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                )}
                 cadastre-se
               </button>
             </div>
