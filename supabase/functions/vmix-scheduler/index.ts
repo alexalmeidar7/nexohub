@@ -149,6 +149,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!settings?.vmix_url) continue;
+        if (isPrivateOrLocalUrl(settings.vmix_url)) { console.log(`[scheduler] skip preset (private URL) user=${preset.user_id}`); continue; }
+
+
 
         console.log(`[scheduler] Executing preset for "${programa.nome}" (user: ${preset.user_id})`);
         const result = await executeVmixCommands(
