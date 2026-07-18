@@ -39,10 +39,11 @@ export default function PlayerHub() {
     const fetchLogo = async () => {
       const userId = user?.id;
       if (userId) {
-        const { data } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single();
+        const { data } = await supabase.from("empresa_config").select("logo, nome, background_url").eq("user_id", userId).single();
         if (data) {
           setLogoUrl(data.logo);
           setChannelName(data.nome || "");
+          setChannelBg((data as any).background_url || null);
         }
         setDataReady(true);
         return;
@@ -56,6 +57,7 @@ export default function PlayerHub() {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
+            if (data.empresa?.background_url) setChannelBg(data.empresa.background_url);
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
