@@ -45,6 +45,7 @@ import {
   Phone,
 } from "lucide-react";
 
+import ElegantLoader from "@/components/player/ElegantLoader";
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
@@ -3040,7 +3041,7 @@ export default function PlayerPage() {
       {/* Buffering overlay — hidden for catalog channels */}
       {streamStalled && playing && !isCatalog && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
-          <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
+          <ElegantLoader size={56} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
         </div>
       )}
@@ -3381,7 +3382,7 @@ export default function PlayerPage() {
       {gradeOpen && (
         <Suspense fallback={
           <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            <Loader2 className="animate-spin" size={32} style={{ color: "#d30707" }} />
+            <ElegantLoader size={40} />
           </div>
         }>
           <PlayerGradeDialog programas={programas} onClose={() => setGradeOpen(false)} />
@@ -3901,7 +3902,7 @@ export default function PlayerPage() {
       )}
 
       {chatOpen && (
-        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
+        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><ElegantLoader size={32} /></div>}>
           <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
         </Suspense>
       )}

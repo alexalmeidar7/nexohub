@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { lovable } from "@/integrations/lovable/index";
-import { Loader2 } from "lucide-react";
+import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
 
 interface AccessScreenProps {
@@ -95,7 +95,7 @@ export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: Acces
       {loading && (
         <div className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-10 w-10 animate-spin text-player-accent" />
+            <ElegantLoader size={48} />
             <p className="text-white text-sm">Conectando ao Google...</p>
           </div>
         </div>
