@@ -293,38 +293,67 @@ export default function WelcomeScreen({
               </div>
             </>
           ) : (
-            <button
-              onClick={handleGoogleLogin}
-              disabled={signingIn}
-              className="group flex items-center gap-5 outline-none"
-            >
-              <div
-                className="relative rounded-[28px] flex items-center justify-center transition-all duration-500 ease-out group-hover:scale-[1.04]"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setAuthMode("login")}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
                 style={{
-                  width: "clamp(110px, 11vw, 150px)",
-                  height: "clamp(110px, 11vw, 150px)",
-                  background: "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                  boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                  backdropFilter: "blur(14px) saturate(1.2)",
-                  WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-                }}
-              >
-                <UserCircle className="w-14 h-14 text-white/85" strokeWidth={1.2} />
-              </div>
-              <div
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
-                style={{
-                  background: "rgba(255,255,255,0.10)",
-                  border: "1px solid rgba(255,255,255,0.18)",
+                  background: "rgba(255,255,255,0.12)",
+                  border: "1px solid rgba(255,255,255,0.20)",
                   backdropFilter: "blur(10px)",
                 }}
               >
                 <LogIn className="w-4 h-4" />
-                {signingIn ? "Conectando..." : "Entrar com Google"}
-              </div>
-            </button>
+                entrar
+              </button>
+              <button
+                onClick={() => setAuthMode("signup")}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                cadastre-se
+              </button>
+            </div>
           )}
+        </div>
+      </div>
+
+      {/* Login / Signup Popup */}
+      <Dialog open={authMode !== null} onOpenChange={(v) => { if (!v) setAuthMode(null); }}>
+        <DialogContent className="bg-neutral-950 border-white/10 text-white max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-white lowercase">
+              {authMode === "signup" ? "cadastre-se" : "entrar"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center gap-4 py-4">
+            <p className="text-white/70 text-sm text-center">
+              {authMode === "signup"
+                ? "crie sua conta usando o google para começar"
+                : "acesse sua conta com o google"}
+            </p>
+            <button
+              onClick={handleGoogleLogin}
+              disabled={signingIn}
+              className="w-full inline-flex items-center justify-center gap-3 px-5 py-3 rounded-full text-sm font-medium text-black bg-white hover:bg-white/90 transition-colors disabled:opacity-60"
+            >
+              <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 6.4 29.1 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5c10.8 0 19.5-8.7 19.5-19.5 0-1.2-.1-2.3-.4-3.5z"/>
+                <path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 6.4 29.1 4.5 24 4.5 16.3 4.5 9.7 8.9 6.3 14.1z"/>
+                <path fill="#4CAF50" d="M24 43.5c5.1 0 9.7-1.9 13.2-5l-6.1-5c-2 1.4-4.4 2.3-7.1 2.3-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.6 39 16.2 43.5 24 43.5z"/>
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.1 5C41.7 34.9 43.5 30 43.5 24c0-1.2-.1-2.3-.4-3.5z"/>
+              </svg>
+              {signingIn
+                ? "conectando..."
+                : authMode === "signup" ? "cadastrar com google" : "entrar com google"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
         </div>
       </div>
 
