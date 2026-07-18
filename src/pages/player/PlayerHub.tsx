@@ -140,6 +140,15 @@ export default function PlayerHub() {
     );
   }
 
+  // Home is protected — if we somehow land here without a user, force access screen.
+  if (!user) {
+    return (
+      <div className={wrapperClass}>
+        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} />
+      </div>
+    );
+  }
+
   return (
     <div className={wrapperClass}>
       <PlayerHome onBackToAccess={() => transitionTo("access")} />
