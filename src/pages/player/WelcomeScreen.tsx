@@ -31,11 +31,13 @@ const AVATARS = [
 interface Profile {
   nome: string;
   email: string;
-  cidade: string;
-  estado: string;
-  pais: string;
+  cpf: string;
   whatsapp: string;
   sexo: string;
+  estado: string;
+  cidade: string;
+  setor: string;
+  data_nascimento: string;
   avatar_url: string;
 }
 
