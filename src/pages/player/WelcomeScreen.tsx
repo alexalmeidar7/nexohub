@@ -441,42 +441,61 @@ export default function WelcomeScreen({
         <div className="mt-8 sm:mt-10 flex items-start gap-5">
           {user ? (
             <>
-              <button
-                onClick={() => { cancelAutoAdvance(); onContinue(); }}
-                className="group relative shrink-0 outline-none"
-                aria-label="Entrar no player"
-              >
-                <div
-                  className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+              <div className="flex flex-col gap-3 shrink-0">
+                <button
+                  onClick={() => { cancelAutoAdvance(); onContinue(); }}
+                  className="group relative shrink-0 outline-none"
+                  aria-label="Entrar no player"
+                >
+                  <div
+                    className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                    style={{
+                      width: "clamp(110px, 11vw, 150px)",
+                      height: "clamp(110px, 11vw, 150px)",
+                      background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    }}
+                  >
+                    <img
+                      src={displayAvatar}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                      draggable={false}
+                    />
+                    <span
+                      onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
+                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{
+                        background: "rgba(0,0,0,0.35)",
+                        border: "1px solid rgba(255,255,255,0.12)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                      aria-label="Editar perfil"
+                      role="button"
+                    >
+                      <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
+                  className="group relative shrink-0 outline-none rounded-[28px] flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
                     height: "clamp(110px, 11vw, 150px)",
-                    background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
-                    border: "1px solid rgba(255,255,255,0.14)",
-                    boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    background: `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
+                    border: "1px dashed rgba(255,255,255,0.22)",
+                    boxShadow: "0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
                   }}
+                  aria-label="Adicionar novo perfil"
+                  title="Adicionar novo perfil"
                 >
-                  <img
-                    src={displayAvatar}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                    draggable={false}
-                  />
-                  <span
-                    onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                    className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{
-                      background: "rgba(0,0,0,0.35)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      backdropFilter: "blur(6px)",
-                    }}
-                    aria-label="Editar perfil"
-                    role="button"
-                  >
-                    <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
-                  </span>
-                </div>
-              </button>
+                  <Plus className="w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
+                </button>
+              </div>
+
 
               <div className="flex flex-col gap-2 pt-2">
                 <div
