@@ -545,8 +545,8 @@ export default function OuvintesPage() {
         </div>
       </section>
 
-      {/* PONTUAÇÃO RULES */}
-      <PontuacaoRulesSection />
+
+
 
       {/* LIST CARD */}
       <section
