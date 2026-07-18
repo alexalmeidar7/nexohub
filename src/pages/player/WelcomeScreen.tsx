@@ -253,17 +253,43 @@ export default function WelcomeScreen({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-black text-white">
-      {/* Background: channel thumb */}
+      {/* Background: channel thumb intercalated with artist image (Ken Burns) */}
+      <style>{`
+        @keyframes ws-kenburns {
+          0%   { transform: scale(1.05) translateX(0%); }
+          100% { transform: scale(1.22) translateX(-6%); }
+        }
+        .ws-kenburns { animation: ws-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
+        .ws-bg-layer { transition: opacity 1.6s ease-in-out; }
+      `}</style>
       <div className="absolute inset-0">
         {backgroundUrl ? (
           <>
+            {/* Channel thumb layer */}
             <img
               src={backgroundUrl}
               alt=""
-              className="w-full h-full object-cover"
-              style={{ filter: "brightness(0.55) saturate(1.05)" }}
+              className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
+              style={{
+                filter: "brightness(0.55) saturate(1.05)",
+                opacity: bgVisible && !showArtistBg ? 1 : 0,
+              }}
               draggable={false}
             />
+            {/* Artist image layer */}
+            {artistImg && (
+              <img
+                src={artistImg}
+                alt=""
+                className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
+                style={{
+                  filter: "brightness(0.5) saturate(1.1) grayscale(0.15)",
+                  opacity: bgVisible && showArtistBg ? 1 : 0,
+                  animationDirection: "alternate-reverse",
+                }}
+                draggable={false}
+              />
+            )}
             <div
               className="absolute inset-0"
               style={{
@@ -282,6 +308,25 @@ export default function WelcomeScreen({
           />
         )}
       </div>
+
+      {/* Bottom-left: now-playing overlay (visible while artist bg is showing) */}
+      {nowPlaying && (
+        <div
+          className="absolute bottom-8 left-8 z-20 ws-bg-layer"
+          style={{ opacity: showArtistBg && artistImg ? 1 : 0 }}
+        >
+          <div className="text-[11px] uppercase tracking-[0.28em] text-white/60 mb-1">
+            tocando agora
+          </div>
+          <div className="text-white text-lg font-medium leading-tight max-w-[520px] truncate">
+            {nowPlaying.titulo}
+          </div>
+          <div className="text-white/70 text-sm leading-tight max-w-[520px] truncate">
+            {nowPlaying.artista}
+          </div>
+        </div>
+      )}
+
 
       {/* Top-right: Google identity pill */}
       {user && (() => {
