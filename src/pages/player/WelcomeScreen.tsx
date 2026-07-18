@@ -68,6 +68,28 @@ export default function WelcomeScreen({
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
   const [points, setPoints] = useState(0);
+  const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
+
+  useEffect(() => {
+    if (!backgroundUrl) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = 32; c.height = 32;
+        const ctx = c.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 32, 32);
+        const sample = (x: number, y: number) => {
+          const d = ctx.getImageData(x, y, 1, 1).data;
+          return `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
+        };
+        setBgColors([sample(6, 6), sample(26, 26)]);
+      } catch {}
+    };
+    img.src = backgroundUrl;
+  }, [backgroundUrl]);
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
@@ -202,11 +224,9 @@ export default function WelcomeScreen({
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
                     height: "clamp(110px, 11vw, 150px)",
-                    background: "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+                    background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
                     border: "1px solid rgba(255,255,255,0.14)",
                     boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                    backdropFilter: "blur(14px) saturate(1.2)",
-                    WebkitBackdropFilter: "blur(14px) saturate(1.2)",
                   }}
                 >
                   <img
@@ -217,16 +237,16 @@ export default function WelcomeScreen({
                   />
                   <span
                     onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     style={{
-                      background: "rgba(0,0,0,0.55)",
-                      border: "1px solid rgba(255,255,255,0.22)",
-                      backdropFilter: "blur(8px)",
+                      background: "rgba(0,0,0,0.35)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(6px)",
                     }}
                     aria-label="Editar perfil"
                     role="button"
                   >
-                    <Pencil className="w-3.5 h-3.5 text-white" />
+                    <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
                   </span>
                 </div>
               </button>
