@@ -97,7 +97,8 @@ export default function WelcomeScreen({
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
     email: user?.email || "",
-    cidade: "", estado: "", pais: "", whatsapp: "", sexo: "",
+    cpf: "", whatsapp: "", sexo: "",
+    estado: "", cidade: "", setor: "", data_nascimento: "",
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
 
@@ -106,13 +107,18 @@ export default function WelcomeScreen({
     if (!user) return;
     supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => {
       if (data) {
+        const d = data as any;
         setProfile({
-          nome: data.nome || userName,
-          email: data.email || user.email || "",
-          cidade: data.cidade || "", estado: data.estado || "",
-          pais: data.pais || "", whatsapp: data.whatsapp || "",
-          sexo: data.sexo || "",
-          avatar_url: data.avatar_url || "/avatars/usr-default.png",
+          nome: d.nome || userName,
+          email: d.email || user.email || "",
+          cpf: d.cpf || "",
+          whatsapp: d.whatsapp || "",
+          sexo: d.sexo || "",
+          estado: d.estado || "",
+          cidade: d.cidade || "",
+          setor: d.setor || "",
+          data_nascimento: d.data_nascimento || "",
+          avatar_url: d.avatar_url || "/avatars/usr-default.png",
         });
       }
     });
@@ -135,11 +141,14 @@ export default function WelcomeScreen({
     const { error } = await supabase.from("profiles").upsert({
       user_id: user.id,
       nome: profile.nome, email: profile.email,
-      cidade: profile.cidade, estado: profile.estado, pais: profile.pais,
+      cpf: profile.cpf || null,
       whatsapp: profile.whatsapp, sexo: profile.sexo,
+      estado: profile.estado, cidade: profile.cidade,
+      setor: profile.setor || null,
+      data_nascimento: profile.data_nascimento || null,
       avatar_url: profile.avatar_url,
       updated_at: new Date().toISOString(),
-    }, { onConflict: "user_id" });
+    } as any, { onConflict: "user_id" });
     setSaving(false);
     if (error) toast.error("Erro ao salvar perfil");
     else { toast.success("Perfil atualizado!"); setEditOpen(false); }
