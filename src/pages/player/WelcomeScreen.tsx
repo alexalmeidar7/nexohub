@@ -63,7 +63,7 @@ export default function WelcomeScreen({
   onContinue,
   onLoginSuccess,
 }: WelcomeScreenProps) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
