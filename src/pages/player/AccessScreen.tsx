@@ -6,10 +6,9 @@ import { toast } from "sonner";
 interface AccessScreenProps {
   logoUrl?: string | null;
   onLoginSuccess: () => void;
-  onGuest: () => void;
 }
 
-export default function AccessScreen({ logoUrl, onLoginSuccess, onGuest }: AccessScreenProps) {
+export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenProps) {
   const [loading, setLoading] = useState(false);
 
   const handleGoogleAuth = async () => {
