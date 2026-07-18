@@ -508,6 +508,7 @@ function HeroBanner({
         {/* Minha playlist card */}
         <button
           onClick={onPlaylist}
+          data-tv-focusable
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
