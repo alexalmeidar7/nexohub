@@ -243,7 +243,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = async (options?: { redirect?: boolean }) => {
+    const shouldRedirect = options?.redirect !== false;
     manualSignOutRef.current = true;
     // Clear keep-connected flag and cached session so the user actually logs out
     localStorage.setItem(KEEP_CONNECTED_KEY, "false");
@@ -257,9 +258,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setSession(null);
     setRole(null);
-    // Hard redirect to login so any cached state is cleared
-    window.location.href = "/";
+    if (shouldRedirect) {
+      // Hard redirect to login so any cached state is cleared
+      window.location.href = "/";
+    }
   };
+
 
   return (
     <AuthContext.Provider value={{ user, session, loading, role, signOut }}>
