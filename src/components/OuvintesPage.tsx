@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
+import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
 
 interface Ouvinte {
   id: string;
