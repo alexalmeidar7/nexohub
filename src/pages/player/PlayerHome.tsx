@@ -1119,6 +1119,49 @@ function writeCache(cacheId: string, data: Record<string, any>) {
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
+
+  // TV-style keyboard navigation between focusable cards/buttons
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable)) return;
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]"))
+        .filter(n => n.offsetParent !== null);
+      if (nodes.length === 0) return;
+      e.preventDefault();
+      // Clear any text selection (removes visible text cursor)
+      window.getSelection?.()?.removeAllRanges();
+      let idx = active ? nodes.indexOf(active) : -1;
+      if (idx === -1) { nodes[0].focus(); nodes[0].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+      const cur = nodes[idx].getBoundingClientRect();
+      const curCX = cur.left + cur.width / 2;
+      const curCY = cur.top + cur.height / 2;
+      let best = -1; let bestScore = Infinity;
+      nodes.forEach((n, i) => {
+        if (i === idx) return;
+        const r = n.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = cx - curCX; const dy = cy - curCY;
+        let ok = false;
+        if (e.key === "ArrowRight" && dx > 10 && Math.abs(dy) < r.height * 1.5) ok = true;
+        if (e.key === "ArrowLeft" && dx < -10 && Math.abs(dy) < r.height * 1.5) ok = true;
+        if (e.key === "ArrowDown" && dy > 10) ok = true;
+        if (e.key === "ArrowUp" && dy < -10) ok = true;
+        if (!ok) return;
+        const score = Math.hypot(dx, dy) + (e.key === "ArrowUp" || e.key === "ArrowDown" ? Math.abs(dx) * 2 : Math.abs(dy) * 2);
+        if (score < bestScore) { bestScore = score; best = i; }
+      });
+      if (best >= 0) {
+        nodes[best].focus();
+        nodes[best].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
