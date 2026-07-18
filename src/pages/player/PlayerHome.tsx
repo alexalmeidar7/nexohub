@@ -75,7 +75,6 @@ const formatTrackText = (value?: string | null) => {
 
 /* ─── Top Navigation Bar ─── */
 function TopNavBar({
-  logoUrl,
   items,
   activeKey,
   avatarUrl,
@@ -90,8 +89,8 @@ function TopNavBar({
   onPlayChannel,
   userId,
   radioName,
+  stationLogoUrl,
 }: {
-  logoUrl: string | null;
   items: { label: string; key: string; action: () => void }[];
   activeKey: string;
   avatarUrl?: string | null;
@@ -106,24 +105,16 @@ function TopNavBar({
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
   radioName?: string;
+  stationLogoUrl?: string | null;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (searchOpen) {
-      setSearchQuery("");
-      setMusicResults([]);
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
-  }, [searchOpen]);
-
-  // Debounced music search
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
     const q = searchQuery.trim();
@@ -137,7 +128,6 @@ function TopNavBar({
         .order("created_at", { ascending: false })
         .limit(10);
       if (data) {
-        // Deduplicate by musica+artista
         const seen = new Set<string>();
         setMusicResults(data.filter(m => {
           const key = `${m.musica}|${m.artista}`;
@@ -152,41 +142,15 @@ function TopNavBar({
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return { channels: [] as Channel[], programas: [] as Programa[], catalogs: [] as Channel[] };
-
-    // Extract date from query (anywhere in string)
-    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/;
-    const dateMatch = q.match(dateRegex);
-    const textPart = q.replace(dateRegex, "").trim();
-
-    let catalogsByDate: Channel[] = [];
-    if (dateMatch) {
-      const day = dateMatch[1].padStart(2, "0");
-      const month = dateMatch[2].padStart(2, "0");
-      const year = dateMatch[3] ? (dateMatch[3].length === 2 ? `20${dateMatch[3]}` : dateMatch[3]) : new Date().getFullYear().toString();
-      const dateStr = `${year}-${month}-${day}`;
-      const dateBR = `${day}/${month}/${year}`;
-      catalogsByDate = channels.filter(ch => {
-        if (ch.type !== "catalog") return false;
-        const nameMatch = ch.name.toLowerCase().includes(dateStr) || ch.name.toLowerCase().includes(dateBR) || ch.name.includes(`${day}/${month}`);
-        const descMatch = ch.descricao?.toLowerCase().includes(dateStr) || ch.descricao?.toLowerCase().includes(dateBR) || ch.descricao?.includes(`${day}/${month}`);
-        const matchesDate = nameMatch || descMatch;
-        if (!matchesDate) return false;
-        if (textPart) {
-          return ch.name.toLowerCase().includes(textPart) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(textPart)) || ch.descricao?.toLowerCase().includes(textPart);
-        }
-        return true;
-      });
-    }
-
+    if (!q) return { channels: [] as Channel[], programas: [] as Programa[] };
     return {
       channels: channels.filter(ch => ch.name.toLowerCase().includes(q) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(q))),
       programas: programas.filter(p => p.nome.toLowerCase().includes(q) || p.descricao?.toLowerCase().includes(q)),
-      catalogs: catalogsByDate,
     };
   }, [searchQuery, channels, programas]);
 
-  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0 || searchResults.catalogs.length > 0;
+  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
+  const showDropdown = searchFocused && searchQuery.trim().length > 0;
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -197,94 +161,154 @@ function TopNavBar({
     return () => document.removeEventListener("mousedown", handler);
   }, [profileOpen]);
 
-  return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-6 sm:px-10 py-4 gap-6">
-      {/* Company logo – no box background */}
-      <div className="w-20 h-20 overflow-hidden flex items-center justify-center flex-shrink-0">
-        {logoUrl ? (
-          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
-        ) : (
-          <Radio className="icon icon-lg text-white/30" />
-        )}
-      </div>
+  useEffect(() => {
+    if (!searchFocused) return;
+    const handler = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) setSearchFocused(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [searchFocused]);
 
-      {/* Nav links with glow underline */}
-      <nav className="flex items-center gap-1 sm:gap-2">
+  return (
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
+      {/* Nav links */}
+      <nav className="flex items-center gap-6 sm:gap-10">
         {items.map((item) => {
           const isActive = activeKey === item.key;
           return (
             <button
               key={item.key}
               onClick={item.action}
-              className="group relative px-4 py-2 text-sm font-light tracking-wide transition-all duration-200"
+              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
               style={{
-                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
+                fontFamily: "'Lufga', system-ui, sans-serif",
               }}
             >
               {item.label}
-              {/* Underline indicator */}
               <span
-                className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out"
+                className="absolute -bottom-1 left-0 w-full h-[2px] transition-all duration-300 ease-out"
                 style={{
-                  background: isActive ? "hsl(var(--player-accent))" : "transparent",
-                  boxShadow: isActive ? "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)" : "none",
+                  background: isActive ? "#fff" : "transparent",
                   transform: isActive ? "scaleX(1)" : "scaleX(0)",
                 }}
               />
-              {/* Hover underline */}
-              {!isActive && (
-                <span
-                  className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100"
-                  style={{
-                    background: "hsl(var(--player-accent))",
-                    boxShadow: "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)",
-                  }}
-                />
-              )}
             </button>
           );
         })}
       </nav>
 
+      {/* Inline search pill */}
+      <div ref={searchWrapRef} className="relative">
+        <div
+          className="flex items-center gap-3 rounded-full px-5 py-2"
+          style={{
+            border: "1px solid rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.02)",
+            minWidth: "260px",
+          }}
+        >
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            placeholder="buscar"
+            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase"
+            style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+          />
+          <Search className="w-4 h-4 text-white/70 shrink-0" />
+        </div>
+
+        {showDropdown && (
+          <div
+            className="absolute left-0 top-[calc(100%+8px)] z-[100] w-[380px] rounded-2xl overflow-hidden animate-fade-in"
+            style={{
+              background: "hsl(var(--player-bg))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
+              {!hasResults ? (
+                <p className="text-center text-white/25 text-sm py-6">Nenhum resultado</p>
+              ) : (
+                <>
+                  {searchResults.channels.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Canais</p>
+                      {searchResults.channels.map(ch => (
+                        <button key={ch.id} onClick={() => { setSearchFocused(false); setSearchQuery(""); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{ch.name}</span>
+                            <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.programas.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programação</p>
+                      {searchResults.programas.map((p, i) => (
+                        <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-left">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{p.nome}</span>
+                            <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {musicResults.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Músicas Tocadas</p>
+                      {musicResults.map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5">
+                          <div className="w-9 h-9 rounded-lg shrink-0 bg-white/5 flex items-center justify-center">
+                            <Disc className="w-4 h-4 text-white/30" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
+                            <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex-1" />
 
-      {/* Right icons */}
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <button
-            onClick={() => setSearchOpen(v => !v)}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
-            style={{ background: "rgba(255,255,255,0.06)" }}
-          >
-            <Search className="icon icon-xs" />
-          </button>
-        </div>
-        <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <Bell className="icon icon-xs" />
-        </button>
-        <button
-          onClick={() => {
-            if (document.fullscreenElement) document.exitFullscreen();
-            else document.documentElement.requestFullscreen?.();
-          }}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
-          style={{ background: "rgba(255,255,255,0.06)" }}
-        >
-          <Maximize className="icon icon-xs" />
-        </button>
-
-        {/* Profile */}
+      {/* Right: avatar (rounded square) + station logo */}
+      <div className="flex items-center gap-4">
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
-            style={{ background: "hsl(var(--player-accent))", border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{
+              borderRadius: "18px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
+              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
             ) : (
-              <User className="icon icon-xs text-white" />
+              <User className="icon icon-sm text-white m-auto" />
             )}
           </button>
 
@@ -313,122 +337,17 @@ function TopNavBar({
             </div>
           )}
         </div>
-      </div>
-      {/* Search Popup - rendered via portal for true viewport centering */}
-      {searchOpen && createPortal(
-        <>
-          <div className="fixed inset-0 z-[9999]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
-          <div
-            className="fixed z-[10000] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-fade-in"
-            style={{
-              top: "120px",
-              left: "0",
-              right: "0",
-              marginLeft: "auto",
-              marginRight: "auto",
-              background: "hsl(var(--player-bg))",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
-            }}
-          >
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <Search className="w-5 h-5 shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar canais, programas, músicas..."
-                autoFocus
-                className="flex-1 bg-transparent text-xl font-bold placeholder:text-white/25 placeholder:font-light outline-none"
-                style={{ color: "hsl(var(--player-accent))", caretColor: "hsl(var(--player-accent))" }}
-                onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="text-white/30 hover:text-white/60 transition-colors text-xs">Limpar</button>
-              )}
-            </div>
-            <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
-              {!searchQuery.trim() ? (
-                <p className="text-center text-white/20 text-sm py-8">Digite para buscar...</p>
-              ) : !hasResults ? (
-                <p className="text-center text-white/20 text-sm py-8">Nenhum resultado encontrado</p>
-              ) : (
-                <>
-                  {searchResults.channels.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Canais</p>
-                      {searchResults.channels.map(ch => (
-                        <button key={ch.id} onClick={() => { setSearchOpen(false); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
-                            <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.catalogs.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Catálogos por Data</p>
-                      {searchResults.catalogs.map(ch => (
-                        <button key={ch.id + "-cat"} onClick={() => { setSearchOpen(false); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Film className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
-                            <span className="text-[11px] text-white/30">{ch.catalog_name || "Catálogo"}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.programas.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programação</p>
-                      {searchResults.programas.map((p, i) => (
-                        <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{p.nome}</span>
-                            <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {musicResults.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Músicas Tocadas</p>
-                      {musicResults.map((m, i) => (
-                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                          <div className="w-9 h-9 rounded-lg shrink-0 bg-white/5 flex items-center justify-center">
-                            <Disc className="w-4 h-4 text-white/30" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
-                            <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+
+        {stationLogoUrl && (
+          <div className="w-[76px] h-[76px] flex items-center justify-center flex-shrink-0">
+            <img src={stationLogoUrl} alt="Emissora" className="w-full h-full object-contain" />
           </div>
-        </>,
-        document.body
-      )}
+        )}
+      </div>
     </header>
   );
 }
+
 
 /* ─── Expandable Description ─── */
 function ExpandableDescription({ text }: { text: string }) {
