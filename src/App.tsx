@@ -165,6 +165,7 @@ const App = () => (
       
       <AuthProvider>
         <BrowserRouter>
+          <PlayerSplashPrefetch />
           <ChunkErrorBoundary>
           <Suspense fallback={<RouteProgress />}>
           <Routes>
