@@ -110,11 +110,18 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
       return jsonResp({ ok: false, error: "missing url" });
     }
+    if (isPrivateOrLocalUrl(url)) {
+      return jsonResp({ ok: false, error: "url_not_allowed" });
+    }
+
     let text: string;
     try {
       const r = await fetch(url, { cache: "no-store" });
