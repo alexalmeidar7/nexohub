@@ -279,7 +279,11 @@ export default function OuvintesPage() {
 
   return (
     <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* PONTUAÇÃO RULES (collapsed by default, above form) */}
+      <PontuacaoRulesSection />
+
       {/* FORM CARD */}
+
       <section
         style={{
           background: CARD_BG,
@@ -541,8 +545,8 @@ export default function OuvintesPage() {
         </div>
       </section>
 
-      {/* PONTUAÇÃO RULES */}
-      <PontuacaoRulesSection />
+
+
 
       {/* LIST CARD */}
       <section
