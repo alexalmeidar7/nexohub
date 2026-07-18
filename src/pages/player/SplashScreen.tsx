@@ -140,7 +140,78 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
         pointerEvents: fadeOut ? "none" : "auto",
       }}
     >
-      {videoSrc && (
+      {/* Visual fallback: shown when the video failed to load/decode or hasn't
+          resolved from cache in a reasonable time. Guarantees the user never
+          sees a blank/frozen screen. */}
+      <div
+        aria-hidden={!videoFailed}
+        style={{
+          position: "absolute",
+          inset: 0,
+          opacity: videoFailed || !videoSrc ? 1 : 0,
+          transition: "opacity 600ms ease-out",
+          background:
+            "radial-gradient(120% 80% at 50% 40%, #1e2430 0%, #131519 60%, #0b0d10 100%)",
+          overflow: "hidden",
+        }}
+      >
+        {/* Subtle animated accent glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-20%",
+            left: "-10%",
+            width: "60%",
+            height: "60%",
+            background: `radial-gradient(circle, ${ACCENT}22 0%, transparent 70%)`,
+            filter: "blur(40px)",
+            animation: reducedMotion ? undefined : "splash-fallback-drift 8s ease-in-out infinite alternate",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-20%",
+            right: "-10%",
+            width: "70%",
+            height: "70%",
+            background: "radial-gradient(circle, #2a3244aa 0%, transparent 70%)",
+            filter: "blur(50px)",
+            animation: reducedMotion ? undefined : "splash-fallback-drift 10s ease-in-out infinite alternate-reverse",
+          }}
+        />
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            transform: reducedMotion ? "none" : "translateY(-6vh)",
+          }}
+        >
+          <img
+            src={nexoLogo}
+            alt=""
+            draggable={false}
+            style={{
+              width: "min(220px, 28vw)",
+              height: "auto",
+              opacity: 0.92,
+              filter: "drop-shadow(0 8px 40px rgba(0,0,0,0.5))",
+              animation: reducedMotion ? undefined : "splash-fallback-pulse 2.4s ease-in-out infinite",
+            }}
+          />
+        </div>
+        <style>{`
+          @keyframes splash-fallback-drift {
+            from { transform: translate(0, 0); }
+            to { transform: translate(6%, 4%); }
+          }
+          @keyframes splash-fallback-pulse {
+            0%, 100% { opacity: 0.85; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.015); }
+          }
+        `}</style>
+      </div>
+
+      {videoSrc && !videoFailed && (
         <video
           ref={videoRef}
           src={videoSrc}
