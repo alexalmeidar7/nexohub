@@ -299,7 +299,7 @@ export default function WelcomeScreen({
                   <span className="text-xs text-white/70">{points} pts</span>
                 </div>
                 <button
-                  onClick={async () => { cancelAutoAdvance(); await signOut(); }}
+                  onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
                   className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors"
                   style={{
                     background: "rgba(255,255,255,0.10)",
