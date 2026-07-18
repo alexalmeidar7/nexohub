@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { UserCircle, Pencil, LogIn, Star } from "lucide-react";
+import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
