@@ -64,7 +64,6 @@ export default function WelcomeScreen({
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(user ? COUNTDOWN_SECONDS : null);
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
 
@@ -91,30 +90,11 @@ export default function WelcomeScreen({
     });
   }, [user, userName]);
 
-  // Auto-advance countdown for logged users. Pause if interacted or edit modal open.
-  useEffect(() => {
-    if (!user) return;
-    if (interacted || editOpen || avatarPickerOpen) return;
-    setCountdown(COUNTDOWN_SECONDS);
-    const iv = setInterval(() => {
-      setCountdown((c) => {
-        if (c === null) return null;
-        if (c <= 1) {
-          clearInterval(iv);
-          if (!interactedRef.current) onContinue();
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [user, interacted, editOpen, avatarPickerOpen, onContinue]);
-
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
     setInteracted(true);
-    setCountdown(null);
   };
+
 
   const handleSave = async () => {
     if (!user) return;
@@ -288,28 +268,8 @@ export default function WelcomeScreen({
         )}
       </div>
 
-      {/* Bottom-right: countdown pill (only shown while auto-advancing) */}
-      {user && countdown !== null && countdown > 0 && !interacted && (
-        <div className="absolute bottom-8 right-8 sm:bottom-10 sm:right-10 z-10 animate-fade-in">
-          <div
-            className="flex items-center gap-3 px-5 py-3 rounded-full text-sm"
-            style={{
-              background: "rgba(255,255,255,0.10)",
-              border: "1px solid rgba(255,255,255,0.16)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
-            <span className="text-white/75">entrando automático em</span>
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center text-black text-sm font-semibold"
-              style={{ background: "#ffffff" }}
-            >
-              {countdown}
-            </span>
-          </div>
-        </div>
-      )}
+
+
 
       {/* Bottom-left: logout link for logged users */}
       {user && (
