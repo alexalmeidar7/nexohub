@@ -11,7 +11,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   role: AppRole | null;
-  signOut: () => Promise<void>;
+  signOut: (options?: { redirect?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -20,6 +20,7 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   role: null,
   signOut: async () => {},
+
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
