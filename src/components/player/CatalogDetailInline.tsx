@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
 import backArrowImg from "@/assets/back-arrow.png";
 import { Skeleton } from "@/components/ui/skeleton";
+import ElegantLoader from "@/components/player/ElegantLoader";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Channel {
