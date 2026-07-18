@@ -90,30 +90,11 @@ export default function WelcomeScreen({
     });
   }, [user, userName]);
 
-  // Auto-advance countdown for logged users. Pause if interacted or edit modal open.
-  useEffect(() => {
-    if (!user) return;
-    if (interacted || editOpen || avatarPickerOpen) return;
-    setCountdown(COUNTDOWN_SECONDS);
-    const iv = setInterval(() => {
-      setCountdown((c) => {
-        if (c === null) return null;
-        if (c <= 1) {
-          clearInterval(iv);
-          if (!interactedRef.current) onContinue();
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [user, interacted, editOpen, avatarPickerOpen, onContinue]);
-
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
     setInteracted(true);
-    setCountdown(null);
   };
+
 
   const handleSave = async () => {
     if (!user) return;
