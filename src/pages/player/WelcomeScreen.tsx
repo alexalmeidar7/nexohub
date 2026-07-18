@@ -535,15 +535,21 @@ export default function WelcomeScreen({
                 </div>
                 <button
                   onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
-                  className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors"
+                  disabled={loggingOut}
+                  aria-busy={loggingOut}
+                  className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   style={{
                     background: "rgba(255,255,255,0.10)",
                     border: "1px solid rgba(255,255,255,0.16)",
                     backdropFilter: "blur(8px)",
                   }}
                 >
-                  sair
+                  {loggingOut && (
+                    <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                  )}
+                  {loggingOut ? "saindo..." : "sair"}
                 </button>
+
               </div>
             </>
           ) : (
