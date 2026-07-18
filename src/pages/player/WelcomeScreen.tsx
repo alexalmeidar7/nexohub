@@ -729,84 +729,104 @@ export default function WelcomeScreen({
             {(() => {
               const inputStyle: React.CSSProperties = {
                 backgroundColor: "#323431",
-                border: "1px solid #323431",
+                border: "1px solid #3a3c39",
                 color: "#d9d9d9",
-                height: 40,
+                height: 42,
                 borderRadius: 10,
                 padding: "0 14px",
                 fontSize: 13,
                 width: "100%",
                 outline: "none",
+                transition: "border-color .15s ease, box-shadow .15s ease",
               };
-              const labelCls = "text-[11px] uppercase tracking-wider mb-1.5 block";
-              const labelStyle: React.CSSProperties = { color: "#d9d9d9", opacity: 0.55 };
+              const labelCls = "text-[10px] uppercase tracking-[0.12em] mb-1.5 block font-medium";
+              const labelStyle: React.CSSProperties = { color: "#d9d9d9", opacity: 0.5 };
+              const sectionTitle: React.CSSProperties = {
+                color: "#d9d9d9", opacity: 0.4,
+                fontSize: 10, letterSpacing: "0.18em",
+                textTransform: "uppercase", fontWeight: 600,
+                marginBottom: 10, paddingLeft: 2,
+              };
               return (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelCls} style={labelStyle}>Nome</label>
-                      <input style={inputStyle} value={profile.nome}
-                        onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))} />
-                    </div>
-                    <div>
-                      <label className={labelCls} style={labelStyle}>CPF</label>
-                      <input style={inputStyle} value={profile.cpf}
-                        onChange={e => setProfile(p => ({ ...p, cpf: e.target.value }))}
-                        placeholder="000.000.000-00" />
-                    </div>
-                  </div>
+                <div className="space-y-5">
+                  <style>{`
+                    .wsp-input:focus { border-color: #d9d9d9 !important; box-shadow: 0 0 0 3px rgba(217,217,217,0.08); }
+                    .wsp-input::placeholder { color: #d9d9d9; opacity: 0.28; }
+                  `}</style>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelCls} style={labelStyle}>WhatsApp</label>
-                      <input style={inputStyle} value={profile.whatsapp}
-                        onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                        placeholder="(00) 00000-0000" />
-                    </div>
-                    <div>
-                      <label className={labelCls} style={labelStyle}>E-mail</label>
-                      <input style={{ ...inputStyle, opacity: 0.7 }} value={profile.email} disabled />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className={labelCls} style={labelStyle}>Sexo</label>
-                      <select style={inputStyle} value={profile.sexo}
-                        onChange={e => setProfile(p => ({ ...p, sexo: e.target.value }))}>
-                        <option value="">Selecione</option>
-                        <option value="masculino">Masculino</option>
-                        <option value="feminino">Feminino</option>
-                        <option value="outro">Outro</option>
-                        <option value="prefiro_nao_dizer">Prefiro não dizer</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className={labelCls} style={labelStyle}>Data de nascimento</label>
-                      <input type="date" style={inputStyle} value={profile.data_nascimento}
-                        onChange={e => setProfile(p => ({ ...p, data_nascimento: e.target.value }))} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-[90px_1fr] gap-3">
-                    <div>
-                      <label className={labelCls} style={labelStyle}>UF</label>
-                      <input style={inputStyle} value={profile.estado} maxLength={2}
-                        onChange={e => setProfile(p => ({ ...p, estado: e.target.value.toUpperCase() }))}
-                        placeholder="SP" />
-                    </div>
-                    <div>
-                      <label className={labelCls} style={labelStyle}>Cidade</label>
-                      <input style={inputStyle} value={profile.cidade}
-                        onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
-                    </div>
-                  </div>
-
+                  {/* Identificação */}
                   <div>
-                    <label className={labelCls} style={labelStyle}>Bairro / Setor</label>
-                    <input style={inputStyle} value={profile.setor}
-                      onChange={e => setProfile(p => ({ ...p, setor: e.target.value }))}
-                      placeholder="Bairro ou região" />
+                    <div style={sectionTitle}>identificação</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls} style={labelStyle}>Nome completo</label>
+                        <input className="wsp-input" style={inputStyle} value={profile.nome}
+                          onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className={labelCls} style={labelStyle}>CPF</label>
+                        <input className="wsp-input" style={inputStyle} value={profile.cpf}
+                          onChange={e => setProfile(p => ({ ...p, cpf: e.target.value }))}
+                          placeholder="000.000.000-00" />
+                      </div>
+                      <div>
+                        <label className={labelCls} style={labelStyle}>Sexo</label>
+                        <select className="wsp-input" style={inputStyle} value={profile.sexo}
+                          onChange={e => setProfile(p => ({ ...p, sexo: e.target.value }))}>
+                          <option value="">Selecione</option>
+                          <option value="masculino">Masculino</option>
+                          <option value="feminino">Feminino</option>
+                          <option value="outro">Outro</option>
+                          <option value="prefiro_nao_dizer">Prefiro não dizer</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelCls} style={labelStyle}>Data de nascimento</label>
+                        <input type="date" className="wsp-input" style={inputStyle} value={profile.data_nascimento}
+                          onChange={e => setProfile(p => ({ ...p, data_nascimento: e.target.value }))} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contato */}
+                  <div>
+                    <div style={sectionTitle}>contato</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls} style={labelStyle}>WhatsApp</label>
+                        <input className="wsp-input" style={inputStyle} value={profile.whatsapp}
+                          onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
+                          placeholder="(00) 00000-0000" />
+                      </div>
+                      <div>
+                        <label className={labelCls} style={labelStyle}>E-mail</label>
+                        <input className="wsp-input" style={{ ...inputStyle, opacity: 0.6, cursor: "not-allowed" }} value={profile.email} disabled />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Localização */}
+                  <div>
+                    <div style={sectionTitle}>localização</div>
+                    <div className="grid grid-cols-[80px_1fr] gap-3">
+                      <div>
+                        <label className={labelCls} style={labelStyle}>UF</label>
+                        <input className="wsp-input" style={inputStyle} value={profile.estado} maxLength={2}
+                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value.toUpperCase() }))}
+                          placeholder="SP" />
+                      </div>
+                      <div>
+                        <label className={labelCls} style={labelStyle}>Cidade</label>
+                        <input className="wsp-input" style={inputStyle} value={profile.cidade}
+                          onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className={labelCls} style={labelStyle}>Bairro / Setor</label>
+                      <input className="wsp-input" style={inputStyle} value={profile.setor}
+                        onChange={e => setProfile(p => ({ ...p, setor: e.target.value }))}
+                        placeholder="Bairro ou região" />
+                    </div>
                   </div>
                 </div>
               );
