@@ -45,6 +45,7 @@ import {
   Phone,
 } from "lucide-react";
 
+import ElegantLoader from "@/components/player/ElegantLoader";
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
