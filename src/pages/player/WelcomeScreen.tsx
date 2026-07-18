@@ -897,6 +897,91 @@ export default function WelcomeScreen({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Add Sub-Profile Dialog */}
+      <Dialog open={addProfileOpen} onOpenChange={(v) => { setAddProfileOpen(v); if (v) cancelAutoAdvance(); }}>
+        <DialogContent className="bg-[#1f1f1f] border-white/10 text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white">Adicionar novo perfil</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-xs text-white/60 lowercase">nome do perfil</label>
+              <input
+                type="text"
+                value={newProfileName}
+                onChange={(e) => setNewProfileName(e.target.value)}
+                placeholder="ex: filho, esposa, quarto..."
+                className="mt-1 w-full px-3 py-2 rounded-lg bg-[#323431] text-white placeholder-white/30 border border-white/5 outline-none focus:border-white/20"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="text-xs text-white/60 lowercase">escolha um avatar</label>
+              <div className="mt-2 grid grid-cols-5 gap-2">
+                {AVATARS.map(av => (
+                  <button
+                    key={av}
+                    onClick={() => setNewProfileAvatar(av)}
+                    className={`w-full aspect-square rounded-2xl overflow-hidden border-2 transition-colors ${
+                      newProfileAvatar === av ? "border-white" : "border-transparent hover:border-white/40"
+                    }`}
+                  >
+                    <img src={av} alt="Avatar" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            {subProfiles.length > 0 && (
+              <div>
+                <label className="text-xs text-white/60 lowercase">perfis vinculados</label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {subProfiles.map(sp => (
+                    <div key={sp.id} className="flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-[#323431] border border-white/5">
+                      <img src={sp.avatar_url} alt={sp.name} className="w-6 h-6 rounded-full object-cover" />
+                      <span className="text-xs text-white/85">{sp.name}</span>
+                      <button
+                        onClick={() => {
+                          const next = subProfiles.filter(p => p.id !== sp.id);
+                          setSubProfiles(next);
+                          if (user) localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                        }}
+                        className="text-white/50 hover:text-white/90 text-xs leading-none pl-1"
+                        aria-label="Remover perfil"
+                      >×</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setAddProfileOpen(false)}
+                className="px-4 py-2 rounded-lg text-sm text-white/70 hover:text-white transition-colors"
+              >
+                cancelar
+              </button>
+              <button
+                onClick={() => {
+                  const name = newProfileName.trim();
+                  if (!name || !user) return;
+                  const next = [...subProfiles, { id: crypto.randomUUID(), name, avatar_url: newProfileAvatar }];
+                  setSubProfiles(next);
+                  localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                  setNewProfileName("");
+                  setNewProfileAvatar("/avatars/usr-default.png");
+                  setAddProfileOpen(false);
+                }}
+                disabled={!newProfileName.trim()}
+                className="px-4 py-2 rounded-lg text-sm bg-[#323431] text-white border border-white/10 hover:bg-[#3a3c39] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                salvar perfil
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
