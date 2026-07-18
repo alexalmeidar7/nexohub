@@ -8,6 +8,7 @@ import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, Chev
 import { Skeleton } from "@/components/ui/skeleton";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
+import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
