@@ -229,6 +229,42 @@ export default function WelcomeScreen({
         )}
       </div>
 
+      {/* Top-right: Google identity pill */}
+      {user && (() => {
+        const meta: any = (user as any).user_metadata || {};
+        const googleName = meta.full_name || meta.name || displayName;
+        const googlePic = meta.avatar_url || meta.picture || displayAvatar;
+        return (
+          <div className="absolute top-6 right-8 z-20 animate-fade-in">
+            <div
+              className="flex items-center gap-3 pl-2 pr-4 py-2 rounded-full"
+              style={{
+                background: "rgba(0,0,0,0.35)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                backdropFilter: "blur(14px)",
+                boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+              }}
+            >
+              <img
+                src={googlePic}
+                alt={googleName}
+                referrerPolicy="no-referrer"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = displayAvatar; }}
+                className="w-8 h-8 rounded-full object-cover"
+                style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+                draggable={false}
+              />
+              <div className="flex flex-col leading-tight">
+                <span className="text-[13px] font-medium text-white">{googleName}</span>
+                {user.email && (
+                  <span className="text-[10px] text-white/55">{user.email}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Left-aligned welcome layout */}
       <div className="absolute inset-0 z-10 flex flex-col justify-start px-8 sm:px-14 pt-10 sm:pt-14 animate-fade-in">
         {/* Heading */}
