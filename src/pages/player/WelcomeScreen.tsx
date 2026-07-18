@@ -268,28 +268,8 @@ export default function WelcomeScreen({
         )}
       </div>
 
-      {/* Bottom-right: countdown pill (only shown while auto-advancing) */}
-      {user && countdown !== null && countdown > 0 && !interacted && (
-        <div className="absolute bottom-8 right-8 sm:bottom-10 sm:right-10 z-10 animate-fade-in">
-          <div
-            className="flex items-center gap-3 px-5 py-3 rounded-full text-sm"
-            style={{
-              background: "rgba(255,255,255,0.10)",
-              border: "1px solid rgba(255,255,255,0.16)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-            }}
-          >
-            <span className="text-white/75">entrando automático em</span>
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center text-black text-sm font-semibold"
-              style={{ background: "#ffffff" }}
-            >
-              {countdown}
-            </span>
-          </div>
-        </div>
-      )}
+
+
 
       {/* Bottom-left: logout link for logged users */}
       {user && (
