@@ -3382,7 +3382,7 @@ export default function PlayerPage() {
       {gradeOpen && (
         <Suspense fallback={
           <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            <Loader2 className="animate-spin" size={32} style={{ color: "#d30707" }} />
+            <ElegantLoader size={40} />
           </div>
         }>
           <PlayerGradeDialog programas={programas} onClose={() => setGradeOpen(false)} />
