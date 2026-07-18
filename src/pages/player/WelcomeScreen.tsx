@@ -68,6 +68,7 @@ export default function WelcomeScreen({
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
   const [points, setPoints] = useState(0);
+  const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
   const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
 
   useEffect(() => {
