@@ -204,7 +204,6 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
           disablePictureInPicture
           onEnded={handleEnded}
           onError={handleVideoError}
-          onStalled={handleVideoError}
           style={{
             willChange: "transform, opacity",
             transform: "translateZ(0)",
