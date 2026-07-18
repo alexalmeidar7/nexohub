@@ -117,7 +117,7 @@ function HoverPreviewPopup({ video, x, y }: { video: PlaylistVideo; x: number; y
         <div className="relative w-full overflow-hidden" style={{ aspectRatio: "16/9", background: "#000" }}>
           {!videoReady && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
-              <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-white/80 animate-spin" />
+              <ElegantLoader size={40} />
             </div>
           )}
           <iframe
