@@ -67,6 +67,7 @@ export default function WelcomeScreen({
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
+  const [points, setPoints] = useState(0);
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
@@ -74,6 +75,7 @@ export default function WelcomeScreen({
     cidade: "", estado: "", pais: "", whatsapp: "", sexo: "",
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
+
 
   useEffect(() => {
     if (!user) return;
