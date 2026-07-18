@@ -23,6 +23,7 @@ export default function PlayerHub() {
   const skipToHome = searchParams.get("step") === "home";
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
@@ -38,10 +39,11 @@ export default function PlayerHub() {
     const fetchLogo = async () => {
       const userId = user?.id;
       if (userId) {
-        const { data } = await supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single();
+        const { data } = await supabase.from("empresa_config").select("logo, nome, background_url").eq("user_id", userId).single();
         if (data) {
           setLogoUrl(data.logo);
           setChannelName(data.nome || "");
+          setChannelBg((data as any).background_url || null);
         }
         setDataReady(true);
         return;
@@ -55,6 +57,7 @@ export default function PlayerHub() {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
+            if (data.empresa?.background_url) setChannelBg(data.empresa.background_url);
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
@@ -105,7 +108,7 @@ export default function PlayerHub() {
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
   // which then collapse to the wrapper's 0px height and become invisible.
-  const wrapperClass = `transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
+  const wrapperClass = `player-scope transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   if (step === "splash") {
     return (
@@ -127,7 +130,15 @@ export default function PlayerHub() {
     const userName = user?.email?.split("@")[0] || "Visitante";
     return (
       <div className={wrapperClass}>
-        <WelcomeScreen userName={userName} avatarUrl={null} onContinue={onWelcomeContinue} />
+        <WelcomeScreen
+          userName={userName}
+          avatarUrl={null}
+          backgroundUrl={channelBg}
+          channelName={channelName}
+          logoUrl={logoUrl}
+          onContinue={onWelcomeContinue}
+          onLoginSuccess={onLoginSuccess}
+        />
       </div>
     );
   }
@@ -138,3 +149,4 @@ export default function PlayerHub() {
     </div>
   );
 }
+

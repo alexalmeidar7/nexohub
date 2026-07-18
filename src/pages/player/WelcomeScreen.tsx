@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { UserCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { UserCircle, Pencil, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
@@ -40,276 +41,373 @@ interface Profile {
 interface WelcomeScreenProps {
   userName: string;
   avatarUrl?: string | null;
+  backgroundUrl?: string | null;
+  channelName?: string;
+  logoUrl?: string | null;
   onContinue: () => void;
+  onLoginSuccess?: () => void;
 }
 
-export default function WelcomeScreen({ userName, avatarUrl, onContinue }: WelcomeScreenProps) {
-  const [pressing, setPressing] = useState(false);
+const COUNTDOWN_SECONDS = 3;
+
+export default function WelcomeScreen({
+  userName,
+  avatarUrl,
+  backgroundUrl,
+  channelName,
+  logoUrl,
+  onContinue,
+  onLoginSuccess,
+}: WelcomeScreenProps) {
+  const { user, signOut } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const { user, signOut } = useAuth();
-
-  // Staggered animation states
-  const [showTitle, setShowTitle] = useState(false);
-  const [showAvatar, setShowAvatar] = useState(false);
-  const [showBottom, setShowBottom] = useState(false);
-
-  useEffect(() => {
-    const t1 = setTimeout(() => setShowTitle(true), 200);
-    const t2 = setTimeout(() => setShowAvatar(true), 900);
-    const t3 = setTimeout(() => setShowBottom(true), 1500);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
+  const [signingIn, setSigningIn] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(user ? COUNTDOWN_SECONDS : null);
+  const [interacted, setInteracted] = useState(false);
+  const interactedRef = useRef(false);
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
     email: user?.email || "",
-    cidade: "",
-    estado: "",
-    pais: "",
-    whatsapp: "",
-    sexo: "",
+    cidade: "", estado: "", pais: "", whatsapp: "", sexo: "",
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
 
-  // Load profile from DB
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setProfile({
-            nome: data.nome || userName,
-            email: data.email || user.email || "",
-            cidade: data.cidade || "",
-            estado: data.estado || "",
-            pais: data.pais || "",
-            whatsapp: data.whatsapp || "",
-            sexo: data.sexo || "",
-            avatar_url: data.avatar_url || "/avatars/usr-default.png",
-          });
+    supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) {
+        setProfile({
+          nome: data.nome || userName,
+          email: data.email || user.email || "",
+          cidade: data.cidade || "", estado: data.estado || "",
+          pais: data.pais || "", whatsapp: data.whatsapp || "",
+          sexo: data.sexo || "",
+          avatar_url: data.avatar_url || "/avatars/usr-default.png",
+        });
+      }
+    });
+  }, [user, userName]);
+
+  // Auto-advance countdown for logged users. Pause if interacted or edit modal open.
+  useEffect(() => {
+    if (!user) return;
+    if (interacted || editOpen || avatarPickerOpen) return;
+    setCountdown(COUNTDOWN_SECONDS);
+    const iv = setInterval(() => {
+      setCountdown((c) => {
+        if (c === null) return null;
+        if (c <= 1) {
+          clearInterval(iv);
+          if (!interactedRef.current) onContinue();
+          return 0;
         }
+        return c - 1;
       });
-  }, [user]);
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [user, interacted, editOpen, avatarPickerOpen, onContinue]);
+
+  const cancelAutoAdvance = () => {
+    interactedRef.current = true;
+    setInteracted(true);
+    setCountdown(null);
+  };
 
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .upsert({
-        user_id: user.id,
-        nome: profile.nome,
-        email: profile.email,
-        cidade: profile.cidade,
-        estado: profile.estado,
-        pais: profile.pais,
-        whatsapp: profile.whatsapp,
-        sexo: profile.sexo,
-        avatar_url: profile.avatar_url,
-        updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+    const { error } = await supabase.from("profiles").upsert({
+      user_id: user.id,
+      nome: profile.nome, email: profile.email,
+      cidade: profile.cidade, estado: profile.estado, pais: profile.pais,
+      whatsapp: profile.whatsapp, sexo: profile.sexo,
+      avatar_url: profile.avatar_url,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "user_id" });
     setSaving(false);
-    if (error) {
-      toast.error("Erro ao salvar perfil");
-    } else {
-      toast.success("Perfil atualizado!");
-      setEditOpen(false);
-    }
+    if (error) toast.error("Erro ao salvar perfil");
+    else { toast.success("Perfil atualizado!"); setEditOpen(false); }
   };
 
-  const handleLogout = async () => {
-    await signOut();
+  const handleGoogleLogin = async () => {
+    setSigningIn(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin + window.location.pathname,
+      });
+      if (result?.error) {
+        toast.error("Falha ao entrar com Google");
+        setSigningIn(false);
+        return;
+      }
+      if (result?.redirected) return;
+      onLoginSuccess?.();
+    } catch (e) {
+      toast.error("Falha ao entrar com Google");
+      setSigningIn(false);
+    }
   };
 
   const displayName = profile.nome || userName;
   const displayAvatar = profile.avatar_url || "/avatars/usr-default.png";
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-      style={{
-        background: "radial-gradient(ellipse at 50% 100%, hsl(var(--player-accent) / 0.35) 0%, hsl(var(--player-bg)) 60%, hsl(var(--player-bg) / 0.95) 100%)",
-      }}
-    >
-      <h1
-        className={`text-player-foreground text-2xl font-semibold mb-8 transition-all duration-700 ease-out ${
-          showTitle ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-        }`}
-      >
-        Bem vindo de volta, <span className="text-player-accent">{displayName}</span>
-      </h1>
-
-      <button
-        onClick={() => {
-          // Play login chime immediately in user gesture context
-          try {
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const now = ctx.currentTime;
-            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-            notes.forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = "sine";
-              osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + i * 0.12);
-              gain.gain.linearRampToValueAtTime(0.15, now + i * 0.12 + 0.04);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.12 + 0.35);
-              osc.connect(gain).connect(ctx.destination);
-              osc.start(now + i * 0.12);
-              osc.stop(now + i * 0.12 + 0.4);
-            });
-          } catch {}
-          onContinue();
-        }}
-        onMouseDown={() => setPressing(true)}
-        onMouseUp={() => setPressing(false)}
-        className={`w-40 h-40 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden mb-4 cursor-pointer transition-all duration-700 ease-out hover:scale-105 ${
-          showAvatar ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
-        } ${pressing ? "scale-95" : ""}`}
-      >
-        <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
-      </button>
-
-      <p className={`text-player-muted-foreground text-xs transition-all duration-500 ease-out ${showBottom ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-        clique para continuar
-      </p>
-
-      <div className={`flex items-center gap-1 mt-3 transition-all duration-500 ease-out delay-100 ${showBottom ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}>
-        <button
-          onClick={() => setEditOpen(true)}
-          className="text-player-accent text-sm hover:underline"
-        >
-          editar perfil
-        </button>
-        <span className="text-player-muted-foreground text-sm">|</span>
-        <button
-          onClick={handleLogout}
-          className="text-player-accent text-sm hover:underline"
-        >
-          sair
-        </button>
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black text-white">
+      {/* Background: channel thumb */}
+      <div className="absolute inset-0">
+        {backgroundUrl ? (
+          <>
+            <img
+              src={backgroundUrl}
+              alt=""
+              className="w-full h-full object-cover"
+              style={{ filter: "brightness(0.55) saturate(1.05)" }}
+              draggable={false}
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.9) 100%)",
+              }}
+            />
+          </>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(120% 80% at 30% 20%, #1e2430 0%, #131519 55%, #08090b 100%)",
+            }}
+          />
+        )}
       </div>
 
-      {/* Edit Profile Dialog */}
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="bg-player border-player-border text-player-foreground max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-player-foreground">Editar Perfil</DialogTitle>
-          </DialogHeader>
+      {/* Top-right: channel title + subtitle */}
+      <div className="absolute top-0 right-0 z-10 px-10 sm:px-14 pt-10 text-right animate-fade-in">
+        <div className="text-[10px] uppercase tracking-[0.28em] text-white/60">
+          {user ? "bem vindo de volta" : "bem vindo"}
+        </div>
+        <div
+          className="mt-2 font-semibold leading-tight"
+          style={{
+            fontSize: "clamp(28px, 3.6vw, 52px)",
+            letterSpacing: "-0.02em",
+            textShadow: "0 2px 24px rgba(0,0,0,0.55)",
+          }}
+        >
+          {channelName || "Nexo Player"}
+        </div>
+      </div>
 
+      {/* Center avatar card */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        {user ? (
+          <button
+            onClick={() => { cancelAutoAdvance(); onContinue(); }}
+            className="group relative flex flex-col items-center gap-5 outline-none"
+            aria-label="Entrar no player"
+          >
+            <div
+              className="relative rounded-[36px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+              style={{
+                width: "clamp(180px, 22vw, 260px)",
+                height: "clamp(180px, 22vw, 260px)",
+                background: "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+                border: "1px solid rgba(255,255,255,0.14)",
+                boxShadow:
+                  "0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                backdropFilter: "blur(14px) saturate(1.2)",
+                WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+              }}
+            >
+              <img
+                src={displayAvatar}
+                alt={displayName}
+                className="w-full h-full object-cover"
+                draggable={false}
+              />
+              {/* Edit hover chip (top-right of the avatar card) */}
+              <span
+                onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
+                className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 cursor-pointer"
+                style={{
+                  background: "rgba(0,0,0,0.55)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                  backdropFilter: "blur(8px)",
+                }}
+                aria-label="Editar perfil"
+                role="button"
+              >
+                <Pencil className="w-4 h-4 text-white" />
+              </span>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/55">continuar como</div>
+              <div className="mt-1 text-xl sm:text-2xl font-medium">{displayName}</div>
+            </div>
+          </button>
+        ) : (
+          <button
+            onClick={handleGoogleLogin}
+            disabled={signingIn}
+            className="group flex flex-col items-center gap-5 outline-none"
+          >
+            <div
+              className="relative rounded-[36px] flex items-center justify-center transition-all duration-500 ease-out group-hover:scale-[1.04]"
+              style={{
+                width: "clamp(180px, 22vw, 260px)",
+                height: "clamp(180px, 22vw, 260px)",
+                background: "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
+                border: "1px solid rgba(255,255,255,0.16)",
+                boxShadow:
+                  "0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                backdropFilter: "blur(14px) saturate(1.2)",
+                WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+              }}
+            >
+              <UserCircle className="w-20 h-20 text-white/85" strokeWidth={1.2} />
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-[0.28em] text-white/55">acesso</div>
+              <div className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
+                style={{
+                  background: "rgba(255,255,255,0.10)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                <LogIn className="w-4 h-4" />
+                {signingIn ? "Conectando..." : "Entrar com Google"}
+              </div>
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Bottom-right: countdown pill (only shown while auto-advancing) */}
+      {user && countdown !== null && countdown > 0 && !interacted && (
+        <div className="absolute bottom-8 right-8 sm:bottom-10 sm:right-10 z-10 animate-fade-in">
+          <div
+            className="flex items-center gap-3 px-5 py-3 rounded-full text-sm"
+            style={{
+              background: "rgba(255,255,255,0.10)",
+              border: "1px solid rgba(255,255,255,0.16)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+            }}
+          >
+            <span className="text-white/75">entrando automático em</span>
+            <span
+              className="w-7 h-7 rounded-full flex items-center justify-center text-black text-sm font-semibold"
+              style={{ background: "#ffffff" }}
+            >
+              {countdown}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom-left: logout link for logged users */}
+      {user && (
+        <div className="absolute bottom-8 left-8 sm:bottom-10 sm:left-10 z-10">
+          <button
+            onClick={async () => { cancelAutoAdvance(); await signOut(); }}
+            className="text-xs uppercase tracking-[0.24em] text-white/50 hover:text-white/85 transition-colors"
+          >
+            sair
+          </button>
+        </div>
+      )}
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editOpen} onOpenChange={(v) => { setEditOpen(v); if (v) cancelAutoAdvance(); }}>
+        <DialogContent className="bg-neutral-950 border-white/10 text-white max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white">Editar Perfil</DialogTitle>
+          </DialogHeader>
           <div className="flex flex-col items-center mb-4">
             <button
               onClick={() => setAvatarPickerOpen(true)}
-              className="w-24 h-24 rounded-full overflow-hidden border-2 border-player-accent hover:border-player-accent-hover transition-colors cursor-pointer bg-player-accent"
+              className="w-24 h-24 rounded-2xl overflow-hidden border border-white/15 hover:border-white/40 transition-colors cursor-pointer"
             >
-              <img src={profile.avatar_url || "/avatars/usr-default.png"} alt="Avatar" className="w-full h-full object-contain" />
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
             </button>
-            <span className="text-player-muted-foreground text-xs mt-1">clique para alterar</span>
+            <span className="text-white/50 text-xs mt-2">clique para alterar</span>
           </div>
-
           <div className="space-y-3">
             <div>
-              <Label className="text-player-muted-foreground text-xs">Nome</Label>
-              <Input
-                value={profile.nome}
-                onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-              />
+              <Label className="text-white/60 text-xs">Nome</Label>
+              <Input value={profile.nome} onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))}
+                className="rounded-full bg-white/5 border-white/10 text-white" />
             </div>
             <div>
-              <Label className="text-player-muted-foreground text-xs">E-mail</Label>
-              <Input
-                value={profile.email}
-                onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-                disabled
-              />
+              <Label className="text-white/60 text-xs">E-mail</Label>
+              <Input value={profile.email} disabled
+                className="rounded-full bg-white/5 border-white/10 text-white/70" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <Label className="text-player-muted-foreground text-xs">Cidade</Label>
-                <Input
-                  value={profile.cidade}
-                  onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))}
-                  className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-                />
+                <Label className="text-white/60 text-xs">Cidade</Label>
+                <Input value={profile.cidade} onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))}
+                  className="rounded-full bg-white/5 border-white/10 text-white" />
               </div>
               <div>
-                <Label className="text-player-muted-foreground text-xs">Estado</Label>
-                <Input
-                  value={profile.estado}
-                  onChange={e => setProfile(p => ({ ...p, estado: e.target.value }))}
-                  className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-                />
+                <Label className="text-white/60 text-xs">Estado</Label>
+                <Input value={profile.estado} onChange={e => setProfile(p => ({ ...p, estado: e.target.value }))}
+                  className="rounded-full bg-white/5 border-white/10 text-white" />
               </div>
             </div>
             <div>
-              <Label className="text-player-muted-foreground text-xs">País</Label>
-              <Input
-                value={profile.pais}
-                onChange={e => setProfile(p => ({ ...p, pais: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-              />
+              <Label className="text-white/60 text-xs">País</Label>
+              <Input value={profile.pais} onChange={e => setProfile(p => ({ ...p, pais: e.target.value }))}
+                className="rounded-full bg-white/5 border-white/10 text-white" />
             </div>
             <div>
-              <Label className="text-player-muted-foreground text-xs">WhatsApp</Label>
-              <Input
-                value={profile.whatsapp}
-                onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent"
-                placeholder="+55 11 99999-9999"
-              />
+              <Label className="text-white/60 text-xs">WhatsApp</Label>
+              <Input value={profile.whatsapp} onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
+                className="rounded-full bg-white/5 border-white/10 text-white" placeholder="+55 11 99999-9999" />
             </div>
             <div>
-              <Label className="text-player-muted-foreground text-xs">Sexo</Label>
+              <Label className="text-white/60 text-xs">Sexo</Label>
               <Select value={profile.sexo} onValueChange={v => setProfile(p => ({ ...p, sexo: v }))}>
-                <SelectTrigger className="rounded-full bg-player-card border-player-border text-black text-[14px] focus:border-player-accent focus:ring-player-accent">
+                <SelectTrigger className="rounded-full bg-white/5 border-white/10 text-white">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent className="bg-player-accent border-player-accent text-white text-[14px]">
-                  <SelectItem value="masculino" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Masculino</SelectItem>
-                  <SelectItem value="feminino" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Feminino</SelectItem>
-                  <SelectItem value="outro" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Outro</SelectItem>
-                  <SelectItem value="prefiro_nao_dizer" className="text-white text-[14px] focus:bg-white/20 focus:text-white">Prefiro não dizer</SelectItem>
+                <SelectContent className="bg-neutral-900 border-white/10 text-white">
+                  <SelectItem value="masculino">Masculino</SelectItem>
+                  <SelectItem value="feminino">Feminino</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                  <SelectItem value="prefiro_nao_dizer">Prefiro não dizer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          <Button variant="save"
-            onClick={handleSave}
-            disabled={saving}
-          >
+          <Button onClick={handleSave} disabled={saving} className="mt-4 rounded-full">
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </DialogContent>
       </Dialog>
 
-      {/* Avatar Picker Dialog */}
+      {/* Avatar Picker */}
       <Dialog open={avatarPickerOpen} onOpenChange={setAvatarPickerOpen}>
-        <DialogContent className="bg-player border-player-border text-player-foreground max-w-sm">
+        <DialogContent className="bg-neutral-950 border-white/10 text-white max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-player-foreground">Escolha seu avatar</DialogTitle>
+            <DialogTitle className="text-white">Escolha seu avatar</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-3 gap-3 py-2">
             {AVATARS.map(av => (
               <button
                 key={av}
-                onClick={() => {
-                  setProfile(p => ({ ...p, avatar_url: av }));
-                  setAvatarPickerOpen(false);
-                }}
-                className={`w-20 h-20 rounded-full overflow-hidden border-2 transition-colors mx-auto bg-player-accent ${
-                  profile.avatar_url === av ? "border-player-accent" : "border-transparent hover:border-player-accent-hover"
+                onClick={() => { setProfile(p => ({ ...p, avatar_url: av })); setAvatarPickerOpen(false); }}
+                className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-colors mx-auto ${
+                  profile.avatar_url === av ? "border-white" : "border-transparent hover:border-white/40"
                 }`}
               >
-                <img src={av} alt="Avatar" className="w-full h-full object-contain" />
+                <img src={av} alt="Avatar" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
