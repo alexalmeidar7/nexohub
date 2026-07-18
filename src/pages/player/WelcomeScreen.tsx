@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { UserCircle, Pencil, LogIn } from "lucide-react";
+import { UserCircle, Pencil, LogIn, Star } from "lucide-react";
+
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
@@ -66,6 +67,7 @@ export default function WelcomeScreen({
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
+  const [points, setPoints] = useState(0);
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
@@ -73,6 +75,7 @@ export default function WelcomeScreen({
     cidade: "", estado: "", pais: "", whatsapp: "", sexo: "",
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
+
 
   useEffect(() => {
     if (!user) return;
@@ -88,7 +91,12 @@ export default function WelcomeScreen({
         });
       }
     });
+    // Simple points tally from music likes
+    supabase.from("music_likes").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
   }, [user, userName]);
+
 
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
@@ -166,94 +174,126 @@ export default function WelcomeScreen({
         )}
       </div>
 
-      {/* Top-right: channel title + subtitle */}
-      <div className="absolute top-0 right-0 z-10 px-10 sm:px-14 pt-10 text-right animate-fade-in">
-        <div className="text-[10px] uppercase tracking-[0.28em] text-white/60">
-          {user ? "bem vindo de volta" : "bem vindo"}
-        </div>
-        <div
-          className="mt-2 font-semibold leading-tight"
+      {/* Left-aligned welcome layout */}
+      <div className="absolute inset-0 z-10 flex flex-col justify-start px-8 sm:px-14 pt-10 sm:pt-14 animate-fade-in">
+        {/* Heading */}
+        <h1
+          className="font-semibold leading-tight lowercase"
           style={{
-            fontSize: "clamp(28px, 3.6vw, 52px)",
-            letterSpacing: "-0.02em",
-            textShadow: "0 2px 24px rgba(0,0,0,0.55)",
+            fontSize: "clamp(22px, 2.4vw, 34px)",
+            letterSpacing: "-0.01em",
+            textShadow: "0 2px 20px rgba(0,0,0,0.55)",
           }}
         >
-          {channelName || "Nexo Player"}
-        </div>
-      </div>
+          {user ? "bem vindo de volta" : "bem vindo"}
+        </h1>
 
-      {/* Center avatar card */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        {user ? (
-          <button
-            onClick={() => { cancelAutoAdvance(); onContinue(); }}
-            className="group relative flex flex-col items-center gap-5 outline-none"
-            aria-label="Entrar no player"
-          >
-            <div
-              className="relative rounded-[36px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
-              style={{
-                width: "clamp(180px, 22vw, 260px)",
-                height: "clamp(180px, 22vw, 260px)",
-                background: "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
-                border: "1px solid rgba(255,255,255,0.14)",
-                boxShadow:
-                  "0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                backdropFilter: "blur(14px) saturate(1.2)",
-                WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-              }}
-            >
-              <img
-                src={displayAvatar}
-                alt={displayName}
-                className="w-full h-full object-cover"
-                draggable={false}
-              />
-              {/* Edit hover chip (top-right of the avatar card) */}
-              <span
-                onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0 cursor-pointer"
-                style={{
-                  background: "rgba(0,0,0,0.55)",
-                  border: "1px solid rgba(255,255,255,0.22)",
-                  backdropFilter: "blur(8px)",
-                }}
-                aria-label="Editar perfil"
-                role="button"
+        {/* Avatar + info row */}
+        <div className="mt-8 sm:mt-10 flex items-start gap-5">
+          {user ? (
+            <>
+              <button
+                onClick={() => { cancelAutoAdvance(); onContinue(); }}
+                className="group relative shrink-0 outline-none"
+                aria-label="Entrar no player"
               >
-                <Pencil className="w-4 h-4 text-white" />
-              </span>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-[0.28em] text-white/55">continuar como</div>
-              <div className="mt-1 text-xl sm:text-2xl font-medium">{displayName}</div>
-            </div>
-          </button>
-        ) : (
-          <button
-            onClick={handleGoogleLogin}
-            disabled={signingIn}
-            className="group flex flex-col items-center gap-5 outline-none"
-          >
-            <div
-              className="relative rounded-[36px] flex items-center justify-center transition-all duration-500 ease-out group-hover:scale-[1.04]"
-              style={{
-                width: "clamp(180px, 22vw, 260px)",
-                height: "clamp(180px, 22vw, 260px)",
-                background: "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
-                border: "1px solid rgba(255,255,255,0.16)",
-                boxShadow:
-                  "0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                backdropFilter: "blur(14px) saturate(1.2)",
-                WebkitBackdropFilter: "blur(14px) saturate(1.2)",
-              }}
+                <div
+                  className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                  style={{
+                    width: "clamp(110px, 11vw, 150px)",
+                    height: "clamp(110px, 11vw, 150px)",
+                    background: "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    backdropFilter: "blur(14px) saturate(1.2)",
+                    WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+                  }}
+                >
+                  <img
+                    src={displayAvatar}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    draggable={false}
+                  />
+                  <span
+                    onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
+                    style={{
+                      background: "rgba(0,0,0,0.55)",
+                      border: "1px solid rgba(255,255,255,0.22)",
+                      backdropFilter: "blur(8px)",
+                    }}
+                    aria-label="Editar perfil"
+                    role="button"
+                  >
+                    <Pencil className="w-3.5 h-3.5 text-white" />
+                  </span>
+                </div>
+              </button>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <div
+                  className="font-medium leading-none"
+                  style={{
+                    fontSize: "clamp(20px, 1.9vw, 28px)",
+                    textShadow: "0 2px 20px rgba(0,0,0,0.55)",
+                  }}
+                >
+                  {displayName}
+                </div>
+                <div className="flex items-center gap-2 text-white/85">
+                  <div className="flex items-center gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => {
+                      const rating = Math.min(5, Math.max(0, Math.round((points / 100) * 2) / 2));
+                      const filled = i < Math.floor(rating);
+                      const half = !filled && i < rating;
+                      return (
+                        <Star
+                          key={i}
+                          size={13}
+                          fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
+                          style={{ color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)" }}
+                        />
+                      );
+                    })}
+                  </div>
+                  <span className="text-xs text-white/70">{points} pts</span>
+                </div>
+                <button
+                  onClick={async () => { cancelAutoAdvance(); await signOut(); }}
+                  className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors"
+                  style={{
+                    background: "rgba(255,255,255,0.10)",
+                    border: "1px solid rgba(255,255,255,0.16)",
+                    backdropFilter: "blur(8px)",
+                  }}
+                >
+                  sair
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={handleGoogleLogin}
+              disabled={signingIn}
+              className="group flex items-center gap-5 outline-none"
             >
-              <UserCircle className="w-20 h-20 text-white/85" strokeWidth={1.2} />
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-[0.28em] text-white/55">acesso</div>
-              <div className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
+              <div
+                className="relative rounded-[28px] flex items-center justify-center transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                style={{
+                  width: "clamp(110px, 11vw, 150px)",
+                  height: "clamp(110px, 11vw, 150px)",
+                  background: "linear-gradient(145deg, rgba(255,255,255,0.10), rgba(255,255,255,0.02))",
+                  border: "1px solid rgba(255,255,255,0.16)",
+                  boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  backdropFilter: "blur(14px) saturate(1.2)",
+                  WebkitBackdropFilter: "blur(14px) saturate(1.2)",
+                }}
+              >
+                <UserCircle className="w-14 h-14 text-white/85" strokeWidth={1.2} />
+              </div>
+              <div
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
                 style={{
                   background: "rgba(255,255,255,0.10)",
                   border: "1px solid rgba(255,255,255,0.18)",
@@ -263,25 +303,12 @@ export default function WelcomeScreen({
                 <LogIn className="w-4 h-4" />
                 {signingIn ? "Conectando..." : "Entrar com Google"}
               </div>
-            </div>
-          </button>
-        )}
+            </button>
+          )}
+        </div>
       </div>
 
 
-
-
-      {/* Bottom-left: logout link for logged users */}
-      {user && (
-        <div className="absolute bottom-8 left-8 sm:bottom-10 sm:left-10 z-10">
-          <button
-            onClick={async () => { cancelAutoAdvance(); await signOut(); }}
-            className="text-xs uppercase tracking-[0.24em] text-white/50 hover:text-white/85 transition-colors"
-          >
-            sair
-          </button>
-        </div>
-      )}
 
       {/* Edit Profile Dialog */}
       <Dialog open={editOpen} onOpenChange={(v) => { setEditOpen(v); if (v) cancelAutoAdvance(); }}>
