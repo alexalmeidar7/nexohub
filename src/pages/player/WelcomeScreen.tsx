@@ -68,6 +68,28 @@ export default function WelcomeScreen({
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
   const [points, setPoints] = useState(0);
+  const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
+
+  useEffect(() => {
+    if (!backgroundUrl) return;
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = 32; c.height = 32;
+        const ctx = c.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, 32, 32);
+        const sample = (x: number, y: number) => {
+          const d = ctx.getImageData(x, y, 1, 1).data;
+          return `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
+        };
+        setBgColors([sample(6, 6), sample(26, 26)]);
+      } catch {}
+    };
+    img.src = backgroundUrl;
+  }, [backgroundUrl]);
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
