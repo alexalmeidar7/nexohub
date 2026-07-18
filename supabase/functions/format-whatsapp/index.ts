@@ -41,7 +41,11 @@ async function shortenUrl(url: string): Promise<string> {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
+
     const body = await req.json();
 
     // URL shortening mode
