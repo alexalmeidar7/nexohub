@@ -1553,11 +1553,24 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
   const sidebarItems = [
-    { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
-    { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
-    ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
+    { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
+    { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
+    { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
+    ...(user && shopActive ? [{ icon: ShoppingBag, label: "loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
+
+  // Presenter photo of currently on-air program
+  const currentPresenterFoto = useMemo(() => {
+    if (!currentProgram) return null;
+    const ids = currentProgram.apresentadores_ids?.length
+      ? currentProgram.apresentadores_ids
+      : currentProgram.apresentador_id
+        ? [currentProgram.apresentador_id]
+        : [];
+    if (!ids.length) return null;
+    return apresentadores.find(a => a.id === ids[0])?.foto || null;
+  }, [currentProgram, apresentadores]);
+
 
   // Track which section is in view for sidebar highlight
   useEffect(() => {
