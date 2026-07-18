@@ -3040,7 +3040,7 @@ export default function PlayerPage() {
       {/* Buffering overlay — hidden for catalog channels */}
       {streamStalled && playing && !isCatalog && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
-          <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
+          <ElegantLoader size={56} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
         </div>
       )}
