@@ -1007,6 +1007,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
   return (
     <button
       onClick={onClick}
+      data-tv-focusable
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: "160px",
