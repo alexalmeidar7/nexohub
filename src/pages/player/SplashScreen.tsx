@@ -99,6 +99,21 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     setVideoEnded(true);
   };
 
+  const handleVideoError = () => {
+    // If the video can't be decoded/served (404, wrong MIME, blocked codec),
+    // don't leave the splash stuck forever — treat it as "ended".
+    setVideoEnded(true);
+  };
+
+  // Absolute safety timeout: even if the <video> never fires `ended` or `error`
+  // (e.g. autoplay policies on some embedded browsers), force-progress after 8s.
+  useEffect(() => {
+    const t = setTimeout(() => setVideoEnded(true), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
+
+
   const fadeDuration = reducedMotion ? 200 : 900;
   const easing = "cubic-bezier(0.22, 1, 0.36, 1)";
 
@@ -125,6 +140,8 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
           preload="auto"
           disablePictureInPicture
           onEnded={handleEnded}
+          onError={handleVideoError}
+          onStalled={handleVideoError}
           style={{
             willChange: "transform, opacity",
             transform: "translateZ(0)",
