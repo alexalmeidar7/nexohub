@@ -1247,7 +1247,9 @@ export type Database = {
           ai_enabled: boolean | null
           avatar_url: string | null
           cidade: string | null
+          cpf: string | null
           created_at: string
+          data_nascimento: string | null
           email: string | null
           estado: string | null
           event_types_config: Json | null
@@ -1255,6 +1257,7 @@ export type Database = {
           journalistic_prompt: string | null
           nome: string | null
           pais: string | null
+          setor: string | null
           sexo: string | null
           updated_at: string
           user_id: string
@@ -1264,7 +1267,9 @@ export type Database = {
           ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
           event_types_config?: Json | null
@@ -1272,6 +1277,7 @@ export type Database = {
           journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
           updated_at?: string
           user_id: string
@@ -1281,7 +1287,9 @@ export type Database = {
           ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
           event_types_config?: Json | null
@@ -1289,6 +1297,7 @@ export type Database = {
           journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
           updated_at?: string
           user_id?: string
