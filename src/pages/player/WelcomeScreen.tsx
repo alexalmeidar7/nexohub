@@ -63,7 +63,7 @@ export default function WelcomeScreen({
   onContinue,
   onLoginSuccess,
 }: WelcomeScreenProps) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -215,7 +215,17 @@ export default function WelcomeScreen({
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      await signOut();
+      // Player é um sistema à parte: deslogar localmente SEM redirecionar
+      // para a tela de login do admin. Permanecemos nesta tela de boas-vindas,
+      // que então mostrará o estado "não autenticado" com botões entrar/cadastre-se.
+      try { localStorage.setItem("nexohub_keep_connected", "false"); } catch {}
+      try { localStorage.removeItem("nexohub_backup_session"); } catch {}
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch { /* ignore */ }
+      // Força o estado local imediatamente para não depender do refresh do provider
+      setAuthMode(null);
+      setAuthError(null);
     } catch (e) {
       toast.error("Não foi possível sair. Tente novamente.");
     } finally {
