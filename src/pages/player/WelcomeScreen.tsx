@@ -265,6 +265,30 @@ export default function WelcomeScreen({
     setSigningIn(true);
     setAuthError(null);
 
+    // Preflight: em domínios customizados que não estão registrados na Lovable,
+    // a rota /~oauth/initiate retorna 404 e o login com Google não funciona.
+    try {
+      const probe = await fetch(window.location.origin + "/~oauth/initiate", {
+        method: "GET",
+        redirect: "manual",
+        cache: "no-store",
+      });
+      // 404 real (não é opaqueredirect) => domínio não configurado
+      if (probe.status === 404) {
+        const msg =
+          "este domínio não está configurado para login com google. peça ao administrador para conectar o domínio em lovable › settings › domains.";
+        resetAuthUI(msg);
+        toast.error("Domínio não configurado para login Google", {
+          description:
+            "o domínio precisa ser adicionado como custom domain no painel da lovable para o google login funcionar aqui.",
+          duration: 8000,
+        });
+        return;
+      }
+    } catch {
+      // rede/opaqueredirect => segue o fluxo normal
+    }
+
     // Timeout de segurança: se não concluir em 90s, reabilita a UI
     authWatchdogRef.current.timer = window.setTimeout(() => {
       if (signingInRef.current) {
@@ -272,6 +296,7 @@ export default function WelcomeScreen({
         toast.error("Tempo esgotado no login Google");
       }
     }, 90_000) as unknown as number;
+
 
     // Se o usuário fechar o popup / voltar para a aba sem sessão, libera a UI
     const checkReturned = () => {
