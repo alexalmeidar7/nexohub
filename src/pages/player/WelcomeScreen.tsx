@@ -229,6 +229,42 @@ export default function WelcomeScreen({
         )}
       </div>
 
+      {/* Top-right: Google identity pill */}
+      {user && (() => {
+        const meta: any = (user as any).user_metadata || {};
+        const googleName = meta.full_name || meta.name || displayName;
+        const googlePic = meta.avatar_url || meta.picture || displayAvatar;
+        return (
+          <div className="absolute top-6 right-8 z-20 animate-fade-in">
+            <div
+              className="flex items-center gap-3 pl-2 pr-4 py-2 rounded-full"
+              style={{
+                background: "rgba(0,0,0,0.35)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                backdropFilter: "blur(14px)",
+                boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+              }}
+            >
+              <img
+                src={googlePic}
+                alt={googleName}
+                referrerPolicy="no-referrer"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = displayAvatar; }}
+                className="w-8 h-8 rounded-full object-cover"
+                style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+                draggable={false}
+              />
+              <div className="flex flex-col leading-tight">
+                <span className="text-[13px] font-medium text-white">{googleName}</span>
+                {user.email && (
+                  <span className="text-[10px] text-white/55">{user.email}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Left-aligned welcome layout */}
       <div className="absolute inset-0 z-10 flex flex-col justify-start px-8 sm:px-14 pt-10 sm:pt-14 animate-fade-in">
         {/* Heading */}
@@ -329,25 +365,36 @@ export default function WelcomeScreen({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setAuthMode("login")}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
+                disabled={signingIn}
+                aria-busy={signingIn}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: "rgba(255,255,255,0.12)",
                   border: "1px solid rgba(255,255,255,0.20)",
                   backdropFilter: "blur(10px)",
                 }}
               >
-                <LogIn className="w-4 h-4" />
-                entrar
+                {signingIn ? (
+                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                ) : (
+                  <LogIn className="w-4 h-4" />
+                )}
+                {signingIn ? "autenticando..." : "entrar"}
               </button>
               <button
                 onClick={() => setAuthMode("signup")}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03]"
+                disabled={signingIn}
+                aria-busy={signingIn}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{
                   background: "rgba(255,255,255,0.04)",
                   border: "1px solid rgba(255,255,255,0.16)",
                   backdropFilter: "blur(10px)",
                 }}
               >
+                {signingIn && (
+                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                )}
                 cadastre-se
               </button>
             </div>
