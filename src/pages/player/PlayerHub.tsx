@@ -89,10 +89,19 @@ export default function PlayerHub() {
   useEffect(() => {
     if (!splashDone || loading || !dataReady) return;
     // Security rule: only authenticated users can reach the player home.
-    // Anonymous users go to the access/login screen; ?step=home is ignored when signed out.
-    const target: Step = user ? (skipToHome ? "home" : "welcome") : "access";
-    transitionTo(target);
+    // Anonymous users vão para a tela de boas-vindas, que já mostra os botões
+    // "entrar com google" / "cadastre-se". Isso permite que, após um logout na
+    // própria welcome, o usuário continue nela em modo deslogado (sem cair na
+    // AccessScreen). ?step=home é ignorado quando deslogado.
+    setStep((current) => {
+      if (current === "welcome") return current; // não sair da welcome ao deslogar
+      const target: Step = user ? (skipToHome ? "home" : "welcome") : "welcome";
+      if (target === current) return current;
+      transitionTo(target);
+      return current;
+    });
   }, [splashDone, loading, dataReady, user, skipToHome, transitionTo]);
+
 
   const onLoginSuccess = useCallback(() => {
     transitionTo("welcome");
