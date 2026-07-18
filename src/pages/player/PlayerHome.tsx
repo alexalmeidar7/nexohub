@@ -1676,7 +1676,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
                       radioName={channelName}
-                      stationLogoUrl={heroChannel?.logo_url || logoUrl}
+                      stationLogoUrl={logoUrl || heroChannel?.logo_url}
                     />
                   </>
 
