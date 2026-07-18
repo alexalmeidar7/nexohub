@@ -447,6 +447,7 @@ function HeroBanner({
         {/* Ouvir card */}
         <button
           onClick={onOuvir}
+          data-tv-focusable
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
