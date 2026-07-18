@@ -4,6 +4,7 @@ import { UserCircle, Pencil, LogIn, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getMusicData } from "@/lib/musicData";
 import {
   Dialog,
   DialogContent,
@@ -128,6 +129,59 @@ export default function WelcomeScreen({
       .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
   }, [user, userName]);
 
+  // === Background sequence: delayed reveal + intercalated artist image ===
+  const [bgVisible, setBgVisible] = useState(false);
+  const [artistImg, setArtistImg] = useState<string | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<{ titulo: string; artista: string } | null>(null);
+  const [showArtistBg, setShowArtistBg] = useState(false);
+  const artistImgCacheRef = useRef<Record<string, string>>({});
+
+  // Delay background reveal by 1.5s so text/avatar show first
+  useEffect(() => {
+    const t = setTimeout(() => setBgVisible(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Poll now-playing every 4s
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const tick = async () => {
+      const d = getMusicData(user.id);
+      if (!d?.music) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
+      const { titulo, artista } = d.music;
+      const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
+      if (!artista || isBreak) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
+      if (!cancelled) setNowPlaying({ titulo, artista });
+      const key = artista.toLowerCase();
+      if (artistImgCacheRef.current[key]) {
+        if (!cancelled) setArtistImg(artistImgCacheRef.current[key]);
+        return;
+      }
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
+        if (cancelled) return;
+        if (!error && data?.ok && data?.url) {
+          artistImgCacheRef.current[key] = data.url;
+          setArtistImg(data.url);
+        } else {
+          setArtistImg(null);
+        }
+      } catch { if (!cancelled) setArtistImg(null); }
+    };
+    tick();
+    const id = setInterval(tick, 4000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [user?.id]);
+
+  // Alternate channel bg <-> artist bg every 5s (only when artist image available)
+  useEffect(() => {
+    if (!artistImg) { setShowArtistBg(false); return; }
+    const id = setInterval(() => setShowArtistBg((v) => !v), 5000);
+    return () => clearInterval(id);
+  }, [artistImg]);
+
+
 
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
@@ -199,17 +253,43 @@ export default function WelcomeScreen({
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden bg-black text-white">
-      {/* Background: channel thumb */}
+      {/* Background: channel thumb intercalated with artist image (Ken Burns) */}
+      <style>{`
+        @keyframes ws-kenburns {
+          0%   { transform: scale(1.05) translateX(0%); }
+          100% { transform: scale(1.22) translateX(-6%); }
+        }
+        .ws-kenburns { animation: ws-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
+        .ws-bg-layer { transition: opacity 1.6s ease-in-out; }
+      `}</style>
       <div className="absolute inset-0">
         {backgroundUrl ? (
           <>
+            {/* Channel thumb layer */}
             <img
               src={backgroundUrl}
               alt=""
-              className="w-full h-full object-cover"
-              style={{ filter: "brightness(0.55) saturate(1.05)" }}
+              className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
+              style={{
+                filter: "brightness(0.55) saturate(1.05)",
+                opacity: bgVisible && !showArtistBg ? 1 : 0,
+              }}
               draggable={false}
             />
+            {/* Artist image layer */}
+            {artistImg && (
+              <img
+                src={artistImg}
+                alt=""
+                className={`ws-kenburns ws-bg-layer absolute inset-0 w-full h-full object-cover`}
+                style={{
+                  filter: "brightness(0.5) saturate(1.1) grayscale(0.15)",
+                  opacity: bgVisible && showArtistBg ? 1 : 0,
+                  animationDirection: "alternate-reverse",
+                }}
+                draggable={false}
+              />
+            )}
             <div
               className="absolute inset-0"
               style={{
@@ -228,6 +308,25 @@ export default function WelcomeScreen({
           />
         )}
       </div>
+
+      {/* Bottom-left: now-playing overlay (visible while artist bg is showing) */}
+      {nowPlaying && (
+        <div
+          className="absolute bottom-8 left-8 z-20 ws-bg-layer"
+          style={{ opacity: showArtistBg && artistImg ? 1 : 0 }}
+        >
+          <div className="text-[11px] uppercase tracking-[0.28em] text-white/60 mb-1">
+            tocando agora
+          </div>
+          <div className="text-white text-lg font-medium leading-tight max-w-[520px] truncate">
+            {nowPlaying.titulo}
+          </div>
+          <div className="text-white/70 text-sm leading-tight max-w-[520px] truncate">
+            {nowPlaying.artista}
+          </div>
+        </div>
+      )}
+
 
       {/* Top-right: Google identity pill */}
       {user && (() => {
