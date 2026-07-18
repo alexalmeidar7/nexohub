@@ -52,16 +52,17 @@ export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenPr
       <h1 className="text-player-foreground text-2xl font-semibold mb-12">Quem vai acessar?</h1>
 
       <div className="flex items-start gap-8">
-        {/* Guest option (left) */}
-        <button onClick={onGuest} className="flex flex-col items-center gap-4 group">
+        {/* Login/Signup with Google */}
+        <button onClick={handleGoogleAuth} className="flex flex-col items-center gap-4 group" disabled={loading}>
           <div className="w-32 h-32 rounded-full bg-player-accent flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
             <img src="/avatars/usr-default.png" alt="Visitante" className="w-full h-full object-contain" />
           </div>
-          <p className="text-player-muted-foreground text-xs text-center max-w-[10rem] leading-relaxed">cadastre-se ou faça login para ter uma experiência incrível com a Positiva!</p>
+          <p className="text-player-muted-foreground text-xs text-center max-w-[10rem] leading-relaxed">cadastre-se ou faça login para ter uma experiência incrível!</p>
           <div className="flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); handleGoogleAuth(); }}
               className="text-player-accent text-sm hover:underline"
+              disabled={loading}
             >
               entrar
             </button>
@@ -69,26 +70,24 @@ export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenPr
             <button
               onClick={(e) => { e.stopPropagation(); handleGoogleAuth(); }}
               className="text-player-accent text-sm hover:underline"
+              disabled={loading}
             >
               fazer cadastro
             </button>
           </div>
         </button>
 
-        {/* Divider */}
-        <div className="h-48 w-px bg-player-border mt-4" />
-
-        {/* Logo option (right) */}
-        <button onClick={onGuest} className="flex flex-col items-center gap-4 group">
-          <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center transition-transform group-hover:scale-105 overflow-hidden">
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain" />
-            ) : (
-              <span className="text-player-foreground text-3xl font-bold">P</span>
-            )}
-          </div>
-          <p className="text-player-foreground text-sm">só quero acessar</p>
-        </button>
+        {logoUrl && (
+          <>
+            <div className="h-48 w-px bg-player-border mt-4" />
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-32 h-32 rounded-full bg-player-accent-soft flex items-center justify-center overflow-hidden">
+                <img src={logoUrl} alt="Logo" className="h-20 w-auto object-contain" />
+              </div>
+              <p className="text-player-muted-foreground text-xs">acesso exclusivo para ouvintes cadastrados</p>
+            </div>
+          </>
+        )}
       </div>
 
       {loading && (
