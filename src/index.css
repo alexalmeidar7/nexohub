@@ -1552,3 +1552,16 @@ img, video, canvas, svg { max-width: 100%; }
   outline-offset: 2px;
   border-radius: inherit;
 }
+
+/* TV keyboard navigation focus (Player Home) */
+[data-tv-focusable] {
+  outline: none;
+  transition: transform 0.25s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.25s, border-color 0.25s;
+}
+[data-tv-focusable]:focus-visible {
+  transform: scale(1.08);
+  outline: 3px solid rgba(255,255,255,0.95);
+  outline-offset: 4px;
+  z-index: 20;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+}
