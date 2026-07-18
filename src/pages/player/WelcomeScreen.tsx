@@ -155,6 +155,20 @@ export default function WelcomeScreen({
   };
 
   const [authError, setAuthError] = useState<string | null>(null);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch (e) {
+      toast.error("Não foi possível sair. Tente novamente.");
+    } finally {
+      setLoggingOut(false);
+      setLogoutConfirmOpen(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setSigningIn(true);
