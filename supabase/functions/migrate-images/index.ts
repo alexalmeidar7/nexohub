@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireUser } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -50,11 +52,24 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
-    const { table = "all", limit = 5 } = await req.json().catch(() => ({}));
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    // Only admin role can run tenant-wide backfill
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: auth.sub, _role: "admin" });
+    if (!isAdmin) {
+      return new Response(JSON.stringify({ ok: false, error: "Admin only" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { table = "all", limit = 5 } = await req.json().catch(() => ({}));
+
 
     const results: string[] = [];
 

@@ -1,6 +1,8 @@
 // Probes a stream stats URL (audio or video) and returns candidate XPath-like
 // paths that point to numeric listener/viewer counts, so the UI can help the
 // user pick the right XPath without knowing the response format.
+import { requireUser, isPrivateOrLocalUrl } from "../_shared/auth.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -108,11 +110,18 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
     const { url } = await req.json();
     if (!url || typeof url !== "string") {
       return jsonResp({ ok: false, error: "missing url" });
     }
+    if (isPrivateOrLocalUrl(url)) {
+      return jsonResp({ ok: false, error: "url_not_allowed" });
+    }
+
     let text: string;
     try {
       const r = await fetch(url, { cache: "no-store" });
