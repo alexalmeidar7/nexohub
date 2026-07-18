@@ -760,7 +760,7 @@ export default function WelcomeScreen({
             {(() => {
               const inputStyle: React.CSSProperties = {
                 backgroundColor: "#323431",
-                border: "1px solid #3a3c39",
+                border: "1.5px solid rgba(217,217,217,0.35)",
                 color: "#d9d9d9",
                 height: 42,
                 borderRadius: 10,

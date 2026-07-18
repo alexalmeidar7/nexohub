@@ -447,6 +447,7 @@ function HeroBanner({
         {/* Ouvir card */}
         <button
           onClick={onOuvir}
+          data-tv-focusable
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
@@ -475,6 +476,7 @@ function HeroBanner({
         {/* Assistir card */}
         <button
           onClick={onAssistir}
+          data-tv-focusable
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
@@ -506,6 +508,7 @@ function HeroBanner({
         {/* Minha playlist card */}
         <button
           onClick={onPlaylist}
+          data-tv-focusable
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
@@ -1004,6 +1007,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
   return (
     <button
       onClick={onClick}
+      data-tv-focusable
       className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
       style={{
         width: "160px",
@@ -1115,6 +1119,49 @@ function writeCache(cacheId: string, data: Record<string, any>) {
 export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
+
+  // TV-style keyboard navigation between focusable cards/buttons
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable)) return;
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]"))
+        .filter(n => n.offsetParent !== null);
+      if (nodes.length === 0) return;
+      e.preventDefault();
+      // Clear any text selection (removes visible text cursor)
+      window.getSelection?.()?.removeAllRanges();
+      let idx = active ? nodes.indexOf(active) : -1;
+      if (idx === -1) { nodes[0].focus(); nodes[0].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+      const cur = nodes[idx].getBoundingClientRect();
+      const curCX = cur.left + cur.width / 2;
+      const curCY = cur.top + cur.height / 2;
+      let best = -1; let bestScore = Infinity;
+      nodes.forEach((n, i) => {
+        if (i === idx) return;
+        const r = n.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = cx - curCX; const dy = cy - curCY;
+        let ok = false;
+        if (e.key === "ArrowRight" && dx > 10 && Math.abs(dy) < r.height * 1.5) ok = true;
+        if (e.key === "ArrowLeft" && dx < -10 && Math.abs(dy) < r.height * 1.5) ok = true;
+        if (e.key === "ArrowDown" && dy > 10) ok = true;
+        if (e.key === "ArrowUp" && dy < -10) ok = true;
+        if (!ok) return;
+        const score = Math.hypot(dx, dy) + (e.key === "ArrowUp" || e.key === "ArrowDown" ? Math.abs(dx) * 2 : Math.abs(dy) * 2);
+        if (score < bestScore) { bestScore = score; best = i; }
+      });
+      if (best >= 0) {
+        nodes[best].focus();
+        nodes[best].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -1676,7 +1723,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
                       radioName={channelName}
-                      stationLogoUrl={heroChannel?.logo_url || logoUrl}
+                      stationLogoUrl={logoUrl || heroChannel?.logo_url}
                     />
                   </>
 
@@ -1686,7 +1733,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
-                {/* Canais ao Vivo + Catálogo em linha contínua */}
+                {/* Catálogo (Canais ao Vivo removido) */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
                     <div className="mb-8">
@@ -1696,28 +1743,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       </div>
                     </div>
                   ) : (
-                    <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
-                      {streamingChannels.map(ch => (
-                        <StreamingCard
-                          key={ch.id}
-                          channel={ch}
-                          currentProgram={currentProgram || undefined}
-                          nowPlaying={nowPlaying}
-                          onClick={() => goToPlayer(ch.id)}
-                        />
-                      ))}
-
-                      {/* Separator */}
-                      {(streamingChannels.length > 0 && (Object.keys(catalogGroups).length > 0 || user)) && (
-                        <div className="flex-shrink-0 flex items-center px-2">
-                          <div className="w-px h-3/4 bg-white/10" />
-                        </div>
-                      )}
-
-                      {/* Catálogo cards inline */}
+                    <ContentRow title="Catálogo" scrollRoot={contentScrollRef}>
+                      {/* Meu Top 10 */}
                       {user && (
                         <button
                           key="__top10__"
+                          data-tv-focusable
                           onClick={() => goToTop10()}
                           className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer flex flex-col items-center justify-center gap-3"
                           style={{
@@ -1763,6 +1794,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </ContentRow>
                   )}
                 </section>
+
 
                 {user && shopActive && (
                   <section id="section-shop" className="scroll-mt-4 pt-4">
