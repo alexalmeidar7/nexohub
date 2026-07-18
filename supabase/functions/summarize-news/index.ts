@@ -10,7 +10,11 @@ const corsHeaders = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
+
     const { title, content } = await req.json();
     const fallback = { resumo: title || "Resumo indisponível.", tempo_leitura: "1 min" };
 
