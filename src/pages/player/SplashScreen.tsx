@@ -35,6 +35,7 @@ interface SplashScreenProps {
 export default function SplashScreen({ onFinish, ready = true }: SplashScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
   const finishedRef = useRef(false);
   const [reducedMotion, setReducedMotion] = useState(false);
