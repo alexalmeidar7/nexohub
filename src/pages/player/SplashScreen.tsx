@@ -2,29 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 import nexoLogo from "@/assets/logo-nexo.png";
 import { useSplashVideoCache } from "./useSplashVideoCache";
+import ElegantLoader from "@/components/player/ElegantLoader";
 
 const ACCENT = "#ffffff";
 
-/**
- * Apple-TV style splash loader — thin white ring with a soft gradient arc.
- */
-function SplashRingLoader() {
-  return (
-    <div
-      style={{
-        width: 42,
-        height: 42,
-        borderRadius: "50%",
-        border: "2px solid rgba(120,120,120,0.55)",
-        borderTopColor: "#ffffff",
-        animation: "splash-ring-spin 0.9s linear infinite",
-        boxSizing: "border-box",
-      }}
-    >
-      <style>{`@keyframes splash-ring-spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
 
 
 
@@ -245,7 +226,7 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
             : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
-        <SplashRingLoader />
+        <ElegantLoader size={42} />
       </div>
     </div>
   );
