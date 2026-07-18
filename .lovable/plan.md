@@ -1,96 +1,93 @@
+# Redesign Player — Estilo Apple TV
 
-# Chatbot WhatsApp — NexoHub
+Refatoração visual completa das 3 telas do fluxo `/player` (Splash → Boas-vindas → Home), seguindo os mockups anexados. Tipografia global do player passa a ser **Lufga**. Toda a paleta, raios, sombras e degrades ficam confinados ao escopo do player (não afeta o resto do app).
 
-Sistema completo de WhatsApp integrado à Meta Cloud API oficial, plugado na seção **Chatbot** do NexoHub.
+## 1. Tipografia Lufga (global do player)
 
-## Arquitetura
+- Adicionar `@font-face` para Lufga (Regular 400, Medium 500, SemiBold 600, Bold 700) em `src/index.css` sob um seletor escopado (`.player-scope { font-family: 'Lufga', ...}`).
+- Arquivos das fontes hospedados via `lovable-assets` a partir de `/mnt/user-uploads/` se o usuário anexar depois; enquanto isso uso `Lufga` com fallback CDN (`fontshare`) para não quebrar. Se falhar, cai para `-apple-system, "SF Pro Display"` — mesmo espírito Apple TV.
+- Wrapper `<div className="player-scope">` no `PlayerHub` para não vazar em outras páginas.
+- Todo texto em lowercase quando o mockup mostra (títulos, labels de card, nav).
 
-```text
-Ouvinte (WhatsApp)
-      │
-      ▼
-Meta Cloud API  ──webhook──►  edge fn: whatsapp-webhook
-                                      │
-                                      ├─► grava em wa_messages
-                                      ├─► roda automação ativa (wa_flows)
-                                      └─► envia resposta via edge fn: whatsapp-send
+## 2. Tela 1 — Splash Video Loading
 
-NexoHub / Chatbot UI
-      ├─ Caixa de Entrada (Realtime) ──► whatsapp-send
-      ├─ Construtor de Automações  ──► wa_flows
-      └─ Disparo em Massa          ──► whatsapp-broadcast
-```
+Ajustes em `SplashScreen.tsx`:
+- Mantém o vídeo em background full-cover.
+- **Novo loader**: círculo aberto ~48px, stroke fino branco com um arco degradê branco→transparente girando (idêntico ao print). Substitui o `ElegantLoader` lime **apenas** dentro do splash. Componente novo `SplashRingLoader`.
+- Posição do loader inalterada (12vh do bottom, centralizado).
+- Fallback visual mantém logo Nexo Player.
 
-## Credenciais Meta (a pedir depois que o webhook estiver no ar)
+## 3. Tela 2 — Boas-vindas (`WelcomeScreen.tsx`)
 
-1. `WHATSAPP_ACCESS_TOKEN` — token permanente do App Business
-2. `WHATSAPP_PHONE_NUMBER_ID` — ID do número
-3. `WHATSAPP_VERIFY_TOKEN` — string aleatória que gero para o handshake do webhook
-4. `WHATSAPP_APP_SECRET` — para validar assinatura das requisições
+Reescrita para bater com o mockup:
+- **Background**: `thumb` do canal (campo `empresa_config.thumb` / `capa` — uso o que existir; hoje o `PlayerHub` já busca `logo` e `nome`, vou estender `public-player-data` e a query autenticada para trazer também `thumb`). Cover, sem blur, com leve overlay escuro `linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55))` para legibilidade.
+- **Canto sup. esquerdo**: texto `"bem vindo de volta"` em Lufga bold, lowercase, ~40px, branco.
+- **Abaixo do texto**: card do avatar — thumbnail 3D estilo memoji (mantém o avatar do perfil se houver, senão placeholder 3D genérico), rótulo com nome + estrelas (rank já existente) + pontos.
+- **Hover no avatar**: aparece ícone lápis flutuante no canto sup. direito do card + botão "sair" abaixo (como no mockup).
+- **Se não logado**: mesmo card mostra CTA "entrar com google" (usa `lovable.auth.signInWithOAuth('google')` já existente no `AccessScreen`). Nesse caso não há auto-avanço.
+- **Auto-avanço**: se logado e sem interação por 3s, mostra no canto inf. esquerdo o pill `entrando automático em 3…2…1` (Lufga medium, fundo `rgba(255,255,255,.08)`, radius 10px, padding 10x14). Ao zerar, `onContinue()`. Qualquer hover/click no avatar cancela o timer.
+- Cantos arredondados dos cards: **28px** (bate com Apple TV / mockup).
 
-Fluxo: **primeiro** publico o edge function `whatsapp-webhook`, **depois** te passo a URL + Verify Token para você colar no painel da Meta, **depois** peço os 3 secrets restantes.
+## 4. Tela 3 — Home Player (`PlayerHome.tsx`)
 
-## Banco de dados (Lovable Cloud)
+Reestruturação completa da home:
 
-Tabelas novas (todas com RLS por `user_id` + GRANTs):
+### Header
+- Nav lowercase Lufga: `home · streamings · on demand · buscar` alinhado à esquerda, item ativo com sublinhado fino branco.
+- Campo `buscar` como pill com borda `rgba(255,255,255,.25)` + ícone lupa.
+- Canto sup. direito: avatar do usuário + logo do canal (empresa).
 
-- **wa_contacts** — `id, user_id, phone, name, profile_name, ouvinte_id (fk ouvintes), tags[], last_message_at, unread_count, blocked`
-- **wa_messages** — `id, user_id, contact_id, direction (in/out), type (text/image/audio/template), body, media_url, wa_message_id, status (sent/delivered/read/failed), automation_id, created_at`
-- **wa_flows** — `id, user_id, name, trigger (keyword/first_contact/any), trigger_value, steps (jsonb), active, created_at`
-- **wa_broadcasts** — `id, user_id, name, template_or_text, audience_filter (jsonb), scheduled_at, status, sent_count, total_count, created_at`
+### Background
+- `thumb` do canal ocupa a viewport (mesmo overlay do welcome).
 
-Ligação com **ouvintes** existente: `wa_contacts.ouvinte_id` referencia `ouvintes.id`. Quando a automação de cadastro completa, cria/atualiza registro em `ouvintes` e amarra ao contato.
+### Linha de cards (regra: **sempre 1 linha visível**)
+Container flex horizontal, gap 20px, altura fixa (~230px), cards com radius 28px.
 
-## Edge Functions
+1. **Card OUVIR** (streaming áudio)
+   - Fundo: degradê gerado a partir de **2 cores dominantes da foto do locutor no ar** (uso `src/lib/coverPalette.ts` que já existe — extraio 2 amostras e faço `linear-gradient(135deg, c1, c2)`).
+   - Chip `ouvir` no topo esquerdo.
+   - Foto do locutor recortada à direita (mask com fade suave para a esquerda).
+   - Texto: `no ar` / `<nome do programa>` (bold) / `HH:MM/HH:MM`.
+2. **Card ASSISTIR** (streaming vídeo)
+   - Fundo: imagem do artista tocando agora, tratada P&B + `opacity: .64` sobre base preta.
+   - Chip `assistir` topo esquerdo.
+   - `tocando` / `<nome música>` (bold) / `<artista>`.
+3. **Card MINHA PLAYLIST** (condicional: logado **e** com músicas curtidas)
+   - Fundo azul acinzentado com ícone 3D de notas musicais (uso ícone já existente ou emoji `🎵` estilizado 3D — se necessário gero um asset PNG transparente).
+   - Label `minha playlist`.
 
-1. **whatsapp-webhook** (`verify_jwt=false`)
-   - GET: responde `hub.challenge` validando `WHATSAPP_VERIFY_TOKEN`
-   - POST: valida assinatura HMAC com `WHATSAPP_APP_SECRET`, grava mensagem, executa automação
-2. **whatsapp-send** — envia texto/mídia via Graph API, grava outbound em `wa_messages`
-3. **whatsapp-broadcast** — dispara em lote respeitando rate-limit da Meta (fila com pausa)
-4. **whatsapp-flow-runner** (interno, chamado pelo webhook) — executa passo atual da automação e persiste estado no contato
+### Navegação por linhas
+- Mostrar sempre **uma** linha por vez. As outras linhas (streamings/on demand/etc já existentes no `PlayerHome` atual) viram "páginas verticais" que trocam via:
+  - Scroll wheel (debounced, 1 troca por ~500ms).
+  - Setas ↑ ↓ do teclado para trocar de linha.
+  - Setas ← → para focar entre os cards da linha atual (com anel de foco sutil).
+- Transição: crossfade + translateY(24px) 400ms cubic-bezier(.22,1,.36,1).
+- Indicador de linha discreto na lateral direita (bolinhas verticais).
 
-## Automação de Cadastro do Ouvinte
+### Logo Nexo Player
+- PNG anexado (`user-uploads://LOGO_-_NEXO_PLAYER.png`) importado via lovable-assets.
+- Fixo no canto inferior direito, `opacity: .40`, altura ~40px, junto do botão `?` de ajuda existente.
 
-Fluxo fixo (sem IA), executado no primeiro contato ou pela palavra-chave `cadastrar`:
+## 5. Dados adicionais necessários
 
-```text
-1. "Olá! 👋 Sou o assistente da rádio. Qual seu *nome completo*?"
-2. "Prazer, {nome}! Qual sua *cidade*?"
-3. "Qual sua *data de nascimento*? (dd/mm/aaaa)"
-4. "Qual seu *e-mail*?"
-5. "Qual sua *música* ou *artista favorito*?"
-6. Confirma resumo → salva em `ouvintes` + amarra `wa_contacts.ouvinte_id`
-7. Menu: [1] Pedir música  [2] Participar de promoção  [3] Falar com locutor
-```
+- `public-player-data` (edge function) e a query autenticada devem retornar `empresa.thumb` (se não existir a coluna, uso `capa` ou `logo` como fallback). **Não** crio migration nova a menos que confirme falta da coluna — checo `types.ts` antes.
+- Reaproveita `useGlobalMusicSync` (música/artista tocando) e `EPG` atual (programa no ar + horários).
 
-Estado do fluxo guardado em `wa_contacts.flow_state (jsonb)`. Validação server-side de cada resposta (email, data, tamanho). Fora do fluxo: responde "Um humano irá te responder em breve" e marca `unread`.
+## 6. Escopo e não-escopo
 
-## UI — `src/components/ChatbotHome.tsx` (substitui placeholder)
+**Dentro**: `SplashScreen.tsx`, `WelcomeScreen.tsx`, `PlayerHome.tsx` (header + primeira linha + navegação entre linhas), Lufga global no scope do player, logo Nexo Player, novo loader do splash, extração de paleta para o card Ouvir.
 
-Layout com 4 abas (pills no estilo NexoHub existente):
+**Fora** (mantém como está): telas `Streamings`, `On Demand`, `Catálogo`, Player em execução (bottom bar), Chat, Grade EPG, Shopping — só os cards de entrada da Home mudam.
 
-- **Caixa de Entrada** — split view: lista de conversas à esquerda com badge de não lidas, painel de chat à direita com histórico + composer. Atualização via Supabase Realtime na `wa_messages`. Botão "Assumir humano" pausa automação para aquele contato.
-- **Automações** — lista de fluxos + editor visual simples (passos sequenciais: pergunta → validação → salvar campo). Toggle ativo/inativo. Fluxo "Cadastro de Ouvinte" já vem pré-criado.
-- **Disparo em Massa** — form: nome, mensagem, seletor de público (todos / por cidade / por tag), agendar ou enviar agora, barra de progresso.
-- **Contatos** — tabela dos `wa_contacts` com filtros, link para o ouvinte cadastrado, exportação CSV.
+## Arquivos previstos
 
-Design segue o padrão `nexo-form-design-system` já em memória (pill cyan/lime, Montserrat, bg #D6F4FB).
+- `src/index.css` — @font-face Lufga + escopo `.player-scope`.
+- `src/pages/player/SplashScreen.tsx` — novo `SplashRingLoader`.
+- `src/pages/player/WelcomeScreen.tsx` — reescrita seguindo mockup.
+- `src/pages/player/PlayerHome.tsx` — novo header + linhas paginadas + navegação teclado/scroll.
+- `src/pages/player/PlayerHub.tsx` — wrapper `.player-scope` + fetch de `thumb`.
+- `src/pages/player/hooks/useRowPager.ts` — novo hook para navegação vertical entre linhas.
+- `src/assets/nexo-player-logo.png.asset.json` — logo via lovable-assets.
+- `supabase/functions/public-player-data/index.ts` — incluir `thumb` no retorno (só se ainda não vier).
 
-## Ordem de execução
-
-1. Criar migrações (tabelas + RLS + GRANT) e gerar `WHATSAPP_VERIFY_TOKEN`
-2. Publicar `whatsapp-webhook` (GET handshake pronto)
-3. **Pausa** → te entrego a URL do webhook + Verify Token para você colar na Meta e configurar o app
-4. Você me passa `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_APP_SECRET` via secrets seguros
-5. Publico `whatsapp-send`, `whatsapp-broadcast` e o runner de fluxo
-6. Substituo `ChatbotHome.tsx` pelas 4 abas funcionais
-7. Testes: envio/recebimento, automação de cadastro completa até salvar em `ouvintes`, disparo em massa para 2-3 números
-
-## Riscos / observações
-
-- Meta exige **template aprovado** para iniciar conversa depois de 24h sem resposta do usuário. Mensagens dentro da janela de 24h são livres. O disparo em massa para usuários "frios" precisará de template aprovado no Business Manager — sinalizo isso no UI.
-- Número precisa estar verificado no Meta Business e o app fora do modo dev para atingir usuários fora da lista de teste.
-- Rate limit inicial da Meta: 250 conversas/24h (Tier 1). Escala automaticamente.
-
-Confirma que posso seguir por aí? Assim que aprovar eu começo pelo banco + webhook e te aviso quando for hora de configurar na Meta.
+Confirma que posso seguir? Se sim, implemento tudo de uma vez.
