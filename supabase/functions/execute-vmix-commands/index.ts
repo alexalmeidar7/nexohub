@@ -52,6 +52,13 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+    if (isPrivateOrLocalUrl(vmixBaseUrl)) {
+      return new Response(
+        JSON.stringify({ error: "vMix URL points to a private/local address" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
 
     const { commands } = await req.json();
 
