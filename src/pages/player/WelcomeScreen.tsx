@@ -234,27 +234,76 @@ export default function WelcomeScreen({
     }
   };
 
+  // Watchdog para o fluxo do Google (timeout + retorno sem sessão)
+  const authWatchdogRef = useRef<{ timer?: number; onVis?: () => void; onFocus?: () => void }>({});
+  const signingInRef = useRef(false);
+  useEffect(() => { signingInRef.current = signingIn; }, [signingIn]);
+
+  const clearAuthWatchdog = () => {
+    const w = authWatchdogRef.current;
+    if (w.timer) { clearTimeout(w.timer); w.timer = undefined; }
+    if (w.onVis) { document.removeEventListener("visibilitychange", w.onVis); w.onVis = undefined; }
+    if (w.onFocus) { window.removeEventListener("focus", w.onFocus); w.onFocus = undefined; }
+  };
+  const resetAuthUI = (msg?: string) => {
+    clearAuthWatchdog();
+    setSigningIn(false);
+    if (msg) setAuthError(msg);
+  };
+  useEffect(() => () => clearAuthWatchdog(), []);
+
   const handleGoogleLogin = async () => {
+    clearAuthWatchdog();
     setSigningIn(true);
     setAuthError(null);
+
+    // Timeout de segurança: se não concluir em 90s, reabilita a UI
+    authWatchdogRef.current.timer = window.setTimeout(() => {
+      if (signingInRef.current) {
+        resetAuthUI("tempo esgotado ao conectar com o google. tente novamente.");
+        toast.error("Tempo esgotado no login Google");
+      }
+    }, 90_000) as unknown as number;
+
+    // Se o usuário fechar o popup / voltar para a aba sem sessão, libera a UI
+    const checkReturned = () => {
+      setTimeout(async () => {
+        if (!signingInRef.current) return;
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (!data?.session && signingInRef.current) {
+            resetAuthUI("login cancelado ou não concluído. tente novamente.");
+          }
+        } catch {
+          if (signingInRef.current) resetAuthUI("falha ao verificar sessão. tente novamente.");
+        }
+      }, 1500);
+    };
+    const onVis = () => { if (document.visibilityState === "visible") checkReturned(); };
+    const onFocus = () => checkReturned();
+    authWatchdogRef.current.onVis = onVis;
+    authWatchdogRef.current.onFocus = onFocus;
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onFocus);
+
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + window.location.pathname,
       });
       if (result?.error) {
         const msg = (result.error as any)?.message || "não foi possível conectar com o google. tente novamente.";
-        setAuthError(msg);
+        resetAuthUI(msg);
         toast.error("Falha ao entrar com Google");
-        setSigningIn(false);
         return;
       }
-      if (result?.redirected) return;
+      if (result?.redirected) return; // navegação em curso; watchdog cuida do retorno
+      clearAuthWatchdog();
+      setSigningIn(false);
       onLoginSuccess?.();
     } catch (e: any) {
       const msg = e?.message || "erro inesperado ao conectar com o google.";
-      setAuthError(msg);
+      resetAuthUI(msg);
       toast.error("Falha ao entrar com Google");
-      setSigningIn(false);
     }
   };
 
