@@ -1,4 +1,4 @@
-import { Loader2 } from "lucide-react";
+import ElegantLoader from "@/components/player/ElegantLoader";
 
 interface LoadingSpinnerProps {
   size?: number;
@@ -23,11 +23,9 @@ export default function LoadingSpinner({
         className={`fixed inset-0 z-50 flex items-center justify-center ${className}`}
         style={{ backgroundColor: background }}
       >
-        <Loader2 className="animate-spin" size={size} style={{ color }} />
+        <ElegantLoader size={size} color={color} />
       </div>
     );
   }
-  return (
-    <Loader2 className={`animate-spin ${className}`} size={size} style={{ color }} />
-  );
+  return <ElegantLoader size={size} color={color} className={className} />;
 }
