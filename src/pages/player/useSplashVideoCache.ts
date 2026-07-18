@@ -65,7 +65,10 @@ export function prefetchSplashVideo(url: string = splashVideoAsset.url): Promise
  * URL) and never has to reload mid-playback (which caused audio/video desync).
  */
 export function useSplashVideoCache(url: string): string | null {
-  const [src, setSrc] = useState<string | null>(sharedResolved);
+  // Retorna a URL bruta imediatamente para o <video> começar a carregar sem
+  // depender do Cache Storage (que pode falhar por CORS/embedded browsers).
+  // O prefetch para blob acontece em paralelo apenas para acelerar próximos acessos.
+  const [src, setSrc] = useState<string | null>(sharedResolved || url || null);
 
   useEffect(() => {
     if (!url) return;
@@ -75,8 +78,12 @@ export function useSplashVideoCache(url: string): string | null {
     }
     let cancelled = false;
     prefetchSplashVideo(url).then((resolved) => {
-      if (!cancelled) setSrc(resolved);
-    });
+      // Só troca para o blob se ainda estivermos usando a URL crua e o
+      // resolvido for de fato um blob: (evita re-carregar o vídeo no meio).
+      if (!cancelled && resolved && resolved.startsWith("blob:")) {
+        setSrc((prev) => (prev && prev.startsWith("blob:") ? prev : resolved));
+      }
+    }).catch(() => { /* mantém a URL crua */ });
     return () => {
       cancelled = true;
     };
