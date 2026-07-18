@@ -3,6 +3,22 @@ import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 
 const CACHE_NAME = "nexo-splash-v1";
 
+// Origem canônica onde a CDN de assets da Lovable (/__l5e/...) é servida.
+// Em domínios customizados/externos essa rota não existe e retorna HTML,
+// então precisamos apontar para a origem publicada oficial.
+const CANONICAL_ASSET_ORIGIN = "https://nexohub.lovable.app";
+
+export function resolveSplashUrl(rawUrl: string = splashVideoAsset.url): string {
+  if (!rawUrl) return rawUrl;
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  if (rawUrl.startsWith("/__l5e/")) return CANONICAL_ASSET_ORIGIN + rawUrl;
+  if (typeof window !== "undefined") {
+    try { return new URL(rawUrl, window.location.origin).toString(); } catch {}
+  }
+  return rawUrl;
+}
+
+
 /**
  * Module-scoped prefetch state so that:
  *   - The prefetcher (called on route entry) and the hook (called by
