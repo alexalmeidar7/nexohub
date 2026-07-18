@@ -227,15 +227,10 @@ export default function WelcomeScreen({
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      // Player é um sistema à parte: deslogar localmente SEM redirecionar
-      // para a tela de login do admin. Permanecemos nesta tela de boas-vindas,
-      // que então mostrará o estado "não autenticado" com botões entrar/cadastre-se.
-      try { localStorage.setItem("nexohub_keep_connected", "false"); } catch {}
-      try { localStorage.removeItem("nexohub_backup_session"); } catch {}
-      try {
-        await supabase.auth.signOut({ scope: "local" });
-      } catch { /* ignore */ }
-      // Força o estado local imediatamente para não depender do refresh do provider
+      // Player é um sistema à parte: deslogar SEM redirecionar para o /admin.
+      // Usa o signOut do contexto (marca manualSignOutRef para o listener não
+      // restaurar a sessão do backup) e permanece nesta tela de boas-vindas.
+      await signOut({ redirect: false });
       setAuthMode(null);
       setAuthError(null);
     } catch (e) {
@@ -245,6 +240,7 @@ export default function WelcomeScreen({
       setLogoutConfirmOpen(false);
     }
   };
+
 
   // Watchdog para o fluxo do Google (timeout + retorno sem sessão)
   const authWatchdogRef = useRef<{ timer?: number; onVis?: () => void; onFocus?: () => void }>({});
