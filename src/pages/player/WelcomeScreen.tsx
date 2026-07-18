@@ -70,6 +70,14 @@ export default function WelcomeScreen({
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
+
+  useEffect(() => {
+    if (!user) { setSubProfiles([]); return; }
+    try {
+      const raw = localStorage.getItem(`nexohub_sub_profiles_${user.id}`);
+      setSubProfiles(raw ? JSON.parse(raw) : []);
+    } catch { setSubProfiles([]); }
+  }, [user?.id]);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
