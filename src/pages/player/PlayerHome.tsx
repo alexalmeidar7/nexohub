@@ -75,7 +75,6 @@ const formatTrackText = (value?: string | null) => {
 
 /* ─── Top Navigation Bar ─── */
 function TopNavBar({
-  logoUrl,
   items,
   activeKey,
   avatarUrl,
@@ -90,8 +89,8 @@ function TopNavBar({
   onPlayChannel,
   userId,
   radioName,
+  stationLogoUrl,
 }: {
-  logoUrl: string | null;
   items: { label: string; key: string; action: () => void }[];
   activeKey: string;
   avatarUrl?: string | null;
@@ -106,24 +105,16 @@ function TopNavBar({
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
   radioName?: string;
+  stationLogoUrl?: string | null;
 }) {
   const [profileOpen, setProfileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const searchWrapRef = useRef<HTMLDivElement>(null);
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (searchOpen) {
-      setSearchQuery("");
-      setMusicResults([]);
-      setTimeout(() => searchInputRef.current?.focus(), 50);
-    }
-  }, [searchOpen]);
-
-  // Debounced music search
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
     const q = searchQuery.trim();
@@ -137,7 +128,6 @@ function TopNavBar({
         .order("created_at", { ascending: false })
         .limit(10);
       if (data) {
-        // Deduplicate by musica+artista
         const seen = new Set<string>();
         setMusicResults(data.filter(m => {
           const key = `${m.musica}|${m.artista}`;
@@ -152,41 +142,15 @@ function TopNavBar({
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return { channels: [] as Channel[], programas: [] as Programa[], catalogs: [] as Channel[] };
-
-    // Extract date from query (anywhere in string)
-    const dateRegex = /(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/;
-    const dateMatch = q.match(dateRegex);
-    const textPart = q.replace(dateRegex, "").trim();
-
-    let catalogsByDate: Channel[] = [];
-    if (dateMatch) {
-      const day = dateMatch[1].padStart(2, "0");
-      const month = dateMatch[2].padStart(2, "0");
-      const year = dateMatch[3] ? (dateMatch[3].length === 2 ? `20${dateMatch[3]}` : dateMatch[3]) : new Date().getFullYear().toString();
-      const dateStr = `${year}-${month}-${day}`;
-      const dateBR = `${day}/${month}/${year}`;
-      catalogsByDate = channels.filter(ch => {
-        if (ch.type !== "catalog") return false;
-        const nameMatch = ch.name.toLowerCase().includes(dateStr) || ch.name.toLowerCase().includes(dateBR) || ch.name.includes(`${day}/${month}`);
-        const descMatch = ch.descricao?.toLowerCase().includes(dateStr) || ch.descricao?.toLowerCase().includes(dateBR) || ch.descricao?.includes(`${day}/${month}`);
-        const matchesDate = nameMatch || descMatch;
-        if (!matchesDate) return false;
-        if (textPart) {
-          return ch.name.toLowerCase().includes(textPart) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(textPart)) || ch.descricao?.toLowerCase().includes(textPart);
-        }
-        return true;
-      });
-    }
-
+    if (!q) return { channels: [] as Channel[], programas: [] as Programa[] };
     return {
       channels: channels.filter(ch => ch.name.toLowerCase().includes(q) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(q))),
       programas: programas.filter(p => p.nome.toLowerCase().includes(q) || p.descricao?.toLowerCase().includes(q)),
-      catalogs: catalogsByDate,
     };
   }, [searchQuery, channels, programas]);
 
-  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0 || searchResults.catalogs.length > 0;
+  const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
+  const showDropdown = searchFocused && searchQuery.trim().length > 0;
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -197,94 +161,154 @@ function TopNavBar({
     return () => document.removeEventListener("mousedown", handler);
   }, [profileOpen]);
 
-  return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-6 sm:px-10 py-4 gap-6">
-      {/* Company logo – no box background */}
-      <div className="w-20 h-20 overflow-hidden flex items-center justify-center flex-shrink-0">
-        {logoUrl ? (
-          <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
-        ) : (
-          <Radio className="icon icon-lg text-white/30" />
-        )}
-      </div>
+  useEffect(() => {
+    if (!searchFocused) return;
+    const handler = (e: MouseEvent) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) setSearchFocused(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [searchFocused]);
 
-      {/* Nav links with glow underline */}
-      <nav className="flex items-center gap-1 sm:gap-2">
+  return (
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
+      {/* Nav links */}
+      <nav className="flex items-center gap-6 sm:gap-10">
         {items.map((item) => {
           const isActive = activeKey === item.key;
           return (
             <button
               key={item.key}
               onClick={item.action}
-              className="group relative px-4 py-2 text-sm font-light tracking-wide transition-all duration-200"
+              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
               style={{
-                color: isActive ? "#fff" : "rgba(255,255,255,0.5)",
+                color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
+                fontFamily: "'Lufga', system-ui, sans-serif",
               }}
             >
               {item.label}
-              {/* Underline indicator */}
               <span
-                className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out"
+                className="absolute -bottom-1 left-0 w-full h-[2px] transition-all duration-300 ease-out"
                 style={{
-                  background: isActive ? "hsl(var(--player-accent))" : "transparent",
-                  boxShadow: isActive ? "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)" : "none",
+                  background: isActive ? "#fff" : "transparent",
                   transform: isActive ? "scaleX(1)" : "scaleX(0)",
                 }}
               />
-              {/* Hover underline */}
-              {!isActive && (
-                <span
-                  className="absolute bottom-0 left-0 w-full h-[1.5px] transition-all duration-300 ease-out origin-left scale-x-0 group-hover:scale-x-100"
-                  style={{
-                    background: "hsl(var(--player-accent))",
-                    boxShadow: "0 0 8px hsl(var(--player-accent)), 0 0 16px hsla(var(--player-accent) / 0.4)",
-                  }}
-                />
-              )}
             </button>
           );
         })}
       </nav>
 
+      {/* Inline search pill */}
+      <div ref={searchWrapRef} className="relative">
+        <div
+          className="flex items-center gap-3 rounded-full px-5 py-2"
+          style={{
+            border: "1px solid rgba(255,255,255,0.35)",
+            background: "rgba(255,255,255,0.02)",
+            minWidth: "260px",
+          }}
+        >
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            placeholder="buscar"
+            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase"
+            style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+          />
+          <Search className="w-4 h-4 text-white/70 shrink-0" />
+        </div>
+
+        {showDropdown && (
+          <div
+            className="absolute left-0 top-[calc(100%+8px)] z-[100] w-[380px] rounded-2xl overflow-hidden animate-fade-in"
+            style={{
+              background: "hsl(var(--player-bg))",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 12px 48px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
+              {!hasResults ? (
+                <p className="text-center text-white/25 text-sm py-6">Nenhum resultado</p>
+              ) : (
+                <>
+                  {searchResults.channels.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Canais</p>
+                      {searchResults.channels.map(ch => (
+                        <button key={ch.id} onClick={() => { setSearchFocused(false); setSearchQuery(""); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{ch.name}</span>
+                            <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {searchResults.programas.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programação</p>
+                      {searchResults.programas.map((p, i) => (
+                        <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 text-left">
+                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
+                            {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{p.nome}</span>
+                            <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {musicResults.length > 0 && (
+                    <div>
+                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Músicas Tocadas</p>
+                      {musicResults.map((m, i) => (
+                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5">
+                          <div className="w-9 h-9 rounded-lg shrink-0 bg-white/5 flex items-center justify-center">
+                            <Disc className="w-4 h-4 text-white/30" />
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
+                            <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="flex-1" />
 
-      {/* Right icons */}
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <button
-            onClick={() => setSearchOpen(v => !v)}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
-            style={{ background: "rgba(255,255,255,0.06)" }}
-          >
-            <Search className="icon icon-xs" />
-          </button>
-        </div>
-        <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors" style={{ background: "rgba(255,255,255,0.06)" }}>
-          <Bell className="icon icon-xs" />
-        </button>
-        <button
-          onClick={() => {
-            if (document.fullscreenElement) document.exitFullscreen();
-            else document.documentElement.requestFullscreen?.();
-          }}
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors"
-          style={{ background: "rgba(255,255,255,0.06)" }}
-        >
-          <Maximize className="icon icon-xs" />
-        </button>
-
-        {/* Profile */}
+      {/* Right: avatar (rounded square) + station logo */}
+      <div className="flex items-center gap-4">
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-110"
-            style={{ background: "hsl(var(--player-accent))", border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105"
+            style={{
+              borderRadius: "18px",
+              background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
+              border: "1px solid rgba(255,255,255,0.15)",
+            }}
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-contain" />
+              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
             ) : (
-              <User className="icon icon-xs text-white" />
+              <User className="icon icon-sm text-white m-auto" />
             )}
           </button>
 
@@ -313,122 +337,17 @@ function TopNavBar({
             </div>
           )}
         </div>
-      </div>
-      {/* Search Popup - rendered via portal for true viewport centering */}
-      {searchOpen && createPortal(
-        <>
-          <div className="fixed inset-0 z-[9999]" style={{ background: "transparent" }} onClick={() => setSearchOpen(false)} />
-          <div
-            className="fixed z-[10000] w-[min(480px,90vw)] rounded-2xl overflow-hidden animate-fade-in"
-            style={{
-              top: "120px",
-              left: "0",
-              right: "0",
-              marginLeft: "auto",
-              marginRight: "auto",
-              background: "hsl(var(--player-bg))",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 12px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
-            }}
-          >
-            <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-              <Search className="w-5 h-5 shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar canais, programas, músicas..."
-                autoFocus
-                className="flex-1 bg-transparent text-xl font-bold placeholder:text-white/25 placeholder:font-light outline-none"
-                style={{ color: "hsl(var(--player-accent))", caretColor: "hsl(var(--player-accent))" }}
-                onKeyDown={(e) => { if (e.key === "Escape") setSearchOpen(false); }}
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery("")} className="text-white/30 hover:text-white/60 transition-colors text-xs">Limpar</button>
-              )}
-            </div>
-            <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
-              {!searchQuery.trim() ? (
-                <p className="text-center text-white/20 text-sm py-8">Digite para buscar...</p>
-              ) : !hasResults ? (
-                <p className="text-center text-white/20 text-sm py-8">Nenhum resultado encontrado</p>
-              ) : (
-                <>
-                  {searchResults.channels.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Canais</p>
-                      {searchResults.channels.map(ch => (
-                        <button key={ch.id} onClick={() => { setSearchOpen(false); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
-                            <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.catalogs.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Catálogos por Data</p>
-                      {searchResults.catalogs.map(ch => (
-                        <button key={ch.id + "-cat"} onClick={() => { setSearchOpen(false); onPlayChannel?.(ch); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors text-left">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Film className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
-                            <span className="text-[11px] text-white/30">{ch.catalog_name || "Catálogo"}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.programas.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Programação</p>
-                      {searchResults.programas.map((p, i) => (
-                        <div key={p.id || i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                          <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-white/5 flex items-center justify-center">
-                            {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{p.nome}</span>
-                            <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {musicResults.length > 0 && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-white/30 px-3 py-1.5">Músicas Tocadas</p>
-                      {musicResults.map((m, i) => (
-                        <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/5 transition-colors">
-                          <div className="w-9 h-9 rounded-lg shrink-0 bg-white/5 flex items-center justify-center">
-                            <Disc className="w-4 h-4 text-white/30" />
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
-                            <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+
+        {stationLogoUrl && (
+          <div className="w-[76px] h-[76px] flex items-center justify-center flex-shrink-0">
+            <img src={stationLogoUrl} alt="Emissora" className="w-full h-full object-contain" />
           </div>
-        </>,
-        document.body
-      )}
+        )}
+      </div>
     </header>
   );
 }
+
 
 /* ─── Expandable Description ─── */
 function ExpandableDescription({ text }: { text: string }) {
@@ -473,239 +392,156 @@ function ExpandableDescription({ text }: { text: string }) {
   );
 }
 
-/* ─── Hero Banner ─── */
+/* ─── Hero Banner (Apple TV cards layout) ─── */
 function HeroBanner({
   currentProgram,
-  nextProgram,
   nowPlaying,
-  channelName,
-  presenterName,
-  nextPresenterName,
-  onPlay,
-  onGrade,
-  logoUrl,
+  presenterFoto,
+  backgroundUrl,
+  onOuvir,
+  onAssistir,
+  onPlaylist,
 }: {
   currentProgram?: Programa;
-  nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
-  channelName?: string;
-  presenterName?: string | null;
-  nextPresenterName?: string | null;
-  onPlay: () => void;
-  onGrade: () => void;
-  logoUrl?: string | null;
+  presenterFoto?: string | null;
+  backgroundUrl?: string | null;
+  onOuvir: () => void;
+  onAssistir: () => void;
+  onPlaylist: () => void;
 }) {
-  const INTERVAL = 8000;
-
-  const slides = useMemo(() => {
-    const s: { program: Programa | undefined; label: string }[] = [];
-    s.push({ program: currentProgram, label: "ao vivo" });
-    if (nextProgram) s.push({ program: nextProgram, label: "A seguir" });
-    return s;
-  }, [currentProgram, nextProgram]);
-
-  const [activeIdx, setActiveIdx] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [slides.length]);
-
-  const goTo = (idx: number) => {
-    if (idx === activeIdx) return;
-    setActiveIdx(idx);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (slides.length > 1) {
-      timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
-    }
+  const cardBase: React.CSSProperties = {
+    borderRadius: "22px",
+    width: "260px",
+    height: "160px",
+    fontFamily: "'Lufga', system-ui, sans-serif",
   };
-
-  const displayProgram = slides[activeIdx]?.program;
-  const activeLabel = slides[activeIdx]?.label || "ao vivo";
-  const displayPresenter = activeIdx === 0 ? presenterName : nextPresenterName;
-
-  // Progress bar
-  let pct = 0;
-  if (currentProgram) {
-    const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
-    const [hf, mf] = currentProgram.horario_fim.split(":").map(Number);
-    const now = new Date();
-    const startMin = hi * 60 + mi;
-    let endMin = hf * 60 + mf;
-    if (endMin <= startMin) endMin += 1440;
-    const curMin = now.getHours() * 60 + now.getMinutes();
-    const total = endMin - startMin;
-    const elapsed = Math.max(0, Math.min(total, curMin - startMin));
-    pct = total > 0 ? (elapsed / total) * 100 : 0;
-  }
-
-  // Program assets for hero
-  const programSeal = displayProgram?.selo || null;
-  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
-      {/* Thumb as hero background */}
-      {heroThumb ? (
+      {/* Fullscreen background */}
+      {backgroundUrl ? (
         <>
           <img
-            key={`hero-bg-${displayProgram?.id || heroThumb}`}
-            src={heroThumb}
-            alt={displayProgram?.nome ? `Thumb do programa ${displayProgram.nome}` : ""}
+            src={backgroundUrl}
+            alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.92) 26%, hsla(var(--player-bg) / 0.55) 58%, hsla(var(--player-bg) / 0.68) 100%)",
+              background: "linear-gradient(to top, hsla(var(--player-bg) / 0.55) 0%, hsla(var(--player-bg) / 0.15) 50%, hsla(var(--player-bg) / 0.35) 100%)",
             }}
           />
         </>
       ) : (
         <div
           className="absolute inset-0"
-          style={{
-            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)" }}
         />
       )}
 
-      {/* Accent glow behind program logo */}
-      <div
-        className="absolute z-[1] pointer-events-none"
-        style={{
-          width: "600px",
-          height: "600px",
-          left: "15%",
-          top: "30%",
-          transform: "translate(-50%, -50%)",
-          background: `radial-gradient(ellipse at center, hsla(var(--player-accent) / 0.25) 0%, hsla(var(--player-accent) / 0.08) 40%, transparent 70%)`,
-          filter: "blur(40px)",
-        }}
-      />
-
-      {/* Content positioned at bottom-left */}
-      <div className="absolute left-0 right-0 z-10 px-8 sm:px-12" style={{ maxWidth: "760px", top: "50%", transform: "translateY(-50%)" }}>
-        {programSeal && (
-          <div className="mb-4">
-            <img
-              key={`program-logo-${displayProgram?.id || programSeal}`}
-              src={programSeal}
-              alt={displayProgram?.nome || ""}
-              className="h-16 sm:h-20 lg:h-24 object-contain"
-              style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
-            />
-          </div>
-        )}
-
-        {!programSeal && displayProgram && (
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4"
-            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}
-          >
-            {displayProgram.nome}
-          </h1>
-        )}
-
-        {nowPlaying?.musica && (
-          <div className="mb-2 overflow-hidden">
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              {/* Presenter name to the left of music */}
-              {(displayPresenter || displayProgram?.nome) && (
-                <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0 whitespace-nowrap">
-                  <Mic className="w-3.5 h-3.5" style={{ color: "hsl(var(--player-accent))" }} />
-                  <span>{displayPresenter || displayProgram?.nome}</span>
-                  <span className="mx-1 text-white/20">|</span>
-                </span>
+      {/* Bottom-left cards row */}
+      <div className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5">
+        {/* Ouvir card */}
+        <button
+          onClick={onOuvir}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {/* Presenter photo pinned right */}
+          {presenterFoto && (
+            <div className="absolute right-0 top-0 bottom-0 w-[45%] overflow-hidden">
+              <img src={presenterFoto} alt="" className="w-full h-full object-cover" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)" }} />
+            </div>
+          )}
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">ouvir</span>
+            <div className="mt-auto">
+              <p className="text-[13px] text-white/70 leading-none">no ar</p>
+              <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[55%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
+              {currentProgram && (
+                <p className="text-[12px] text-white/60 mt-1">{currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}</p>
               )}
-              <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span
-                key={`hero-music-${nowPlaying.musica}-${nowPlaying.artista}`}
-                className="text-sm text-white/80"
-                style={{ animation: "playerSlideInLeft 0.5s ease-out" }}
-              >
-                {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
-              </span>
             </div>
           </div>
-        )}
+        </button>
 
-        {displayProgram && (
-          <div className="mb-4 space-y-1 text-sm text-white/65">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
+        {/* Assistir card */}
+        <button
+          onClick={onAssistir}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "#1a1a1a",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {nowPlaying?.capa && (
+            <img
+              src={nowPlaying.capa}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: "grayscale(1) brightness(0.65)", opacity: 0.85 }}
+            />
+          )}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">assistir</span>
+            <div className="mt-auto">
+              <p className="text-[13px] text-white/70 leading-none">tocando</p>
+              <p className="text-[18px] font-semibold text-white leading-tight truncate">{nowPlaying?.musica ? formatTrackText(nowPlaying.musica) : "—"}</p>
+              {nowPlaying?.artista && (
+                <p className="text-[12px] text-white/70 mt-0.5 truncate">{formatTrackText(nowPlaying.artista)}</p>
+              )}
             </div>
-            {displayProgram.descricao && (
-              <ExpandableDescription text={displayProgram.descricao} />
-            )}
           </div>
-        )}
+        </button>
 
-        {/* Badge + Play */}
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full"
-            style={{ border: "1px solid hsla(var(--player-accent) / 0.4)", color: "hsl(var(--player-accent))" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
-            {activeLabel}
-          </span>
-          <button
-            onClick={onPlay}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 hover:brightness-110"
-            style={{
-              background: "hsla(var(--player-accent) / 0.15)",
-              color: "#fff",
-            }}
-          >
-            <Play className="h-3 w-3 fill-current" />
-            Play
-          </button>
-        </div>
-
+        {/* Minha playlist card */}
+        <button
+          onClick={onPlaylist}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.35) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="absolute right-3 bottom-2 opacity-90 pointer-events-none">
+            <Music className="w-[110px] h-[110px] text-white/80" strokeWidth={1.3} />
+          </div>
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <div className="mt-auto">
+              <p className="text-[18px] font-semibold text-white leading-tight">minha</p>
+              <p className="text-[18px] font-semibold text-white leading-tight">playlist</p>
+            </div>
+          </div>
+        </button>
       </div>
 
-      {/* Carousel progress indicators */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-6 left-8 sm:left-12 z-10 flex items-center gap-1.5">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => goTo(idx)}
-              className="relative h-[5px] rounded-full overflow-hidden transition-all duration-300"
-              style={{
-                width: idx === activeIdx ? 28 : 8,
-                background: "rgba(255,255,255,0.2)",
-              }}
-            >
-              {idx === activeIdx && (
-                <span
-                  key={`fill-${activeIdx}`}
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: "hsl(var(--player-accent))",
-                    animation: `hero-fill ${INTERVAL}ms linear forwards`,
-                  }}
-                />
-              )}
-              {idx < activeIdx && (
-                <span
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.45)" }}
-                />
-              )}
-            </button>
-          ))}
-          <style>{`@keyframes hero-fill { from { width: 0% } to { width: 100% } }`}</style>
+      {/* Bottom-right help + nexo logo */}
+      <div className="absolute bottom-10 right-10 z-10 flex items-center gap-4">
+        <button
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
+          style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+          aria-label="Ajuda"
+        >
+          <span className="text-sm font-light">?</span>
+        </button>
+        <div className="h-9 flex items-center">
+          <img src={nexoPlayerLogo.url} alt="nexo player" className="h-8 object-contain" />
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
 
 /* ─── Streaming Card (Live channels) ─── */
 function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
@@ -1717,11 +1553,24 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
 
   const sidebarItems = [
-    { icon: Home, label: "Home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
-    { icon: Radio, label: "Streaming", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
-    { icon: Film, label: "Catálogo", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
-    ...(user && shopActive ? [{ icon: ShoppingBag, label: "Loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
+    { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
+    { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
+    { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
+    ...(user && shopActive ? [{ icon: ShoppingBag, label: "loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
   ];
+
+  // Presenter photo of currently on-air program
+  const currentPresenterFoto = useMemo(() => {
+    if (!currentProgram) return null;
+    const ids = currentProgram.apresentadores_ids?.length
+      ? currentProgram.apresentadores_ids
+      : currentProgram.apresentador_id
+        ? [currentProgram.apresentador_id]
+        : [];
+    if (!ids.length) return null;
+    return apresentadores.find(a => a.id === ids[0])?.foto || null;
+  }, [currentProgram, apresentadores]);
+
 
   // Track which section is in view for sidebar highlight
   useEffect(() => {
@@ -1799,17 +1648,20 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   <>
                     <HeroBanner
                       currentProgram={currentProgram || undefined}
-                      nextProgram={nextProgram}
                       nowPlaying={nowPlaying}
-                      channelName={channelName}
-                      presenterName={currentPresenterName}
-                      nextPresenterName={nextPresenterName}
-                      onPlay={() => goToPlayer(streamingChannels[0]?.id)}
-                      onGrade={() => setShowGrade(true)}
-                      logoUrl={logoUrl}
+                      presenterFoto={currentPresenterFoto}
+                      backgroundUrl={heroChannel?.background_url || heroChannel?.cover_url || null}
+                      onOuvir={() => {
+                        const audio = streamingChannels.find(c => c.type === "audio_live") || streamingChannels[0];
+                        if (audio) goToPlayer(audio.id);
+                      }}
+                      onAssistir={() => {
+                        const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];
+                        if (video) goToPlayer(video.id);
+                      }}
+                      onPlaylist={() => goToTop10()}
                     />
                     <TopNavBar
-                      logoUrl={logoUrl}
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={profileAvatar}
@@ -1824,8 +1676,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
                       radioName={channelName}
+                      stationLogoUrl={heroChannel?.logo_url || logoUrl}
                     />
                   </>
+
                 )}
               </div>
 
