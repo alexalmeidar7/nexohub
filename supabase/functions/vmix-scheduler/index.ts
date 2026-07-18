@@ -185,6 +185,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!settings?.vmix_url) continue;
+        if (isPrivateOrLocalUrl(settings.vmix_url)) { console.log(`[scheduler] skip button (private URL) user=${btn.user_id}`); continue; }
+
+
 
         console.log(`[scheduler] Executing button "${btn.nome}" (user: ${btn.user_id})`);
         const result = await executeVmixCommands(
