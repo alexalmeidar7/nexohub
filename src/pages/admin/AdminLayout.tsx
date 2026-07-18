@@ -65,7 +65,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              onClick={signOut}
+              onClick={() => signOut()}
               className="w-10 h-10 rounded-xl flex items-center justify-center mb-2 transition-all duration-200 hover:bg-white/10"
               style={{ color: "#2ebff5" }}
             >

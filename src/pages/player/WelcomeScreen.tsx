@@ -63,7 +63,7 @@ export default function WelcomeScreen({
   onContinue,
   onLoginSuccess,
 }: WelcomeScreenProps) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [addProfileOpen, setAddProfileOpen] = useState(false);
@@ -227,15 +227,10 @@ export default function WelcomeScreen({
   const confirmLogout = async () => {
     setLoggingOut(true);
     try {
-      // Player é um sistema à parte: deslogar localmente SEM redirecionar
-      // para a tela de login do admin. Permanecemos nesta tela de boas-vindas,
-      // que então mostrará o estado "não autenticado" com botões entrar/cadastre-se.
-      try { localStorage.setItem("nexohub_keep_connected", "false"); } catch {}
-      try { localStorage.removeItem("nexohub_backup_session"); } catch {}
-      try {
-        await supabase.auth.signOut({ scope: "local" });
-      } catch { /* ignore */ }
-      // Força o estado local imediatamente para não depender do refresh do provider
+      // Player é um sistema à parte: deslogar SEM redirecionar para o /admin.
+      // Usa o signOut do contexto (marca manualSignOutRef para o listener não
+      // restaurar a sessão do backup) e permanece nesta tela de boas-vindas.
+      await signOut({ redirect: false });
       setAuthMode(null);
       setAuthError(null);
     } catch (e) {
@@ -245,6 +240,7 @@ export default function WelcomeScreen({
       setLogoutConfirmOpen(false);
     }
   };
+
 
   // Watchdog para o fluxo do Google (timeout + retorno sem sessão)
   const authWatchdogRef = useRef<{ timer?: number; onVis?: () => void; onFocus?: () => void }>({});
@@ -760,7 +756,7 @@ export default function WelcomeScreen({
             {(() => {
               const inputStyle: React.CSSProperties = {
                 backgroundColor: "#323431",
-                border: "1px solid #3a3c39",
+                border: "1.5px solid rgba(217,217,217,0.35)",
                 color: "#d9d9d9",
                 height: 42,
                 borderRadius: 10,
