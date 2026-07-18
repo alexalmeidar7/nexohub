@@ -93,17 +93,14 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
     setVideoEnded(true);
   };
 
-  // If the src never resolves from cache/network in a reasonable time, show fallback.
-  useEffect(() => {
-    if (videoSrc) return;
-    const t = setTimeout(() => setVideoFailed(true), 3500);
-    return () => clearTimeout(t);
-  }, [videoSrc]);
+  // Se o src ainda não resolveu do cache, apenas mantém o fallback visível.
+  // NÃO marcamos como "failed" — isso impediria o vídeo de aparecer quando
+  // a rede finalmente entregar o arquivo (usuário em conexão lenta).
 
   // Absolute safety timeout: even if the <video> never fires `ended` or `error`
-  // (e.g. autoplay policies on some embedded browsers), force-progress after 8s.
+  // (e.g. autoplay policies on some embedded browsers), force-progress after 12s.
   useEffect(() => {
-    const t = setTimeout(() => setVideoEnded(true), 8000);
+    const t = setTimeout(() => setVideoEnded(true), 12000);
     return () => clearTimeout(t);
   }, []);
 
