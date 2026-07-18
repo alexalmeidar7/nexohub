@@ -12,14 +12,12 @@ function SplashRingLoader() {
   return (
     <div
       style={{
-        width: 46,
-        height: 46,
+        width: 42,
+        height: 42,
         borderRadius: "50%",
-        border: "1.5px solid rgba(255,255,255,0.14)",
-        borderTopColor: "rgba(255,255,255,0.95)",
-        borderRightColor: "rgba(255,255,255,0.55)",
-        animation: "splash-ring-spin 1.05s cubic-bezier(0.45,0.05,0.55,0.95) infinite",
-        boxShadow: "0 0 18px rgba(255,255,255,0.18)",
+        border: "2px solid rgba(120,120,120,0.55)",
+        borderTopColor: "#ffffff",
+        animation: "splash-ring-spin 0.9s linear infinite",
         boxSizing: "border-box",
       }}
     >
@@ -27,6 +25,7 @@ function SplashRingLoader() {
     </div>
   );
 }
+
 
 
 
