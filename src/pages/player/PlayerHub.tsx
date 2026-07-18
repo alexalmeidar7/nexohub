@@ -88,15 +88,13 @@ export default function PlayerHub() {
 
   useEffect(() => {
     if (!splashDone || loading || !dataReady) return;
-    // Security rule: only authenticated users can reach the player home.
-    // Anonymous users vão para a tela de boas-vindas, que já mostra os botões
-    // "entrar com google" / "cadastre-se". Isso permite que, após um logout na
-    // própria welcome, o usuário continue nela em modo deslogado (sem cair na
-    // AccessScreen). ?step=home é ignorado quando deslogado.
+    // A WelcomeScreen agora cobre AMBOS os estados (logado e deslogado),
+    // mostrando os botões "entrar com google" / "cadastre-se" quando não há
+    // usuário. Assim, após o logout o usuário permanece na welcome.
+    // Home continua protegido: se não estiver logado, cai na welcome.
+    const target: Step = user && skipToHome ? "home" : "welcome";
     setStep((current) => {
-      if (current === "welcome") return current; // não sair da welcome ao deslogar
-      const target: Step = user ? (skipToHome ? "home" : "welcome") : "welcome";
-      if (target === current) return current;
+      if (current === target) return current;
       transitionTo(target);
       return current;
     });
@@ -124,15 +122,9 @@ export default function PlayerHub() {
     );
   }
 
-  if (step === "access") {
-    return (
-      <div className={wrapperClass}>
-        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} />
-      </div>
-    );
-  }
-
-  if (step === "welcome") {
+  // Se o usuário estiver deslogado, sempre renderiza a WelcomeScreen (que possui
+  // os botões entrar/cadastre-se). Nunca redireciona para AccessScreen.
+  if (step === "welcome" || !user) {
     const userName = user?.email?.split("@")[0] || "Visitante";
     return (
       <div className={wrapperClass}>
@@ -149,19 +141,11 @@ export default function PlayerHub() {
     );
   }
 
-  // Home is protected — if we somehow land here without a user, force access screen.
-  if (!user) {
-    return (
-      <div className={wrapperClass}>
-        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} />
-      </div>
-    );
-  }
-
   return (
     <div className={wrapperClass}>
-      <PlayerHome onBackToAccess={() => transitionTo("access")} />
+      <PlayerHome onBackToAccess={() => transitionTo("welcome")} />
     </div>
   );
 }
+
 
