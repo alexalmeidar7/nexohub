@@ -155,6 +155,20 @@ export default function WelcomeScreen({
   };
 
   const [authError, setAuthError] = useState<string | null>(null);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const confirmLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch (e) {
+      toast.error("Não foi possível sair. Tente novamente.");
+    } finally {
+      setLoggingOut(false);
+      setLogoutConfirmOpen(false);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     setSigningIn(true);
@@ -299,7 +313,7 @@ export default function WelcomeScreen({
                   <span className="text-xs text-white/70">{points} pts</span>
                 </div>
                 <button
-                  onClick={async () => { cancelAutoAdvance(); await signOut(); }}
+                  onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
                   className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors"
                   style={{
                     background: "rgba(255,255,255,0.10)",
@@ -340,6 +354,46 @@ export default function WelcomeScreen({
           )}
         </div>
       </div>
+
+      {/* Logout Confirmation */}
+      <Dialog open={logoutConfirmOpen} onOpenChange={(v) => { if (!loggingOut) setLogoutConfirmOpen(v); }}>
+        <DialogContent
+          className="max-w-sm p-0"
+          style={{ backgroundColor: "#1f1f1f", border: "1px solid #323431", color: "#d9d9d9" }}
+        >
+          <div className="px-6 pt-6 pb-4">
+            <DialogHeader>
+              <DialogTitle className="text-[15px] font-semibold" style={{ color: "#d9d9d9" }}>
+                sair da conta?
+              </DialogTitle>
+            </DialogHeader>
+            <p className="text-xs mt-2" style={{ color: "#d9d9d9", opacity: 0.65 }}>
+              você continuará nesta tela e precisará entrar novamente para acessar seu perfil.
+            </p>
+          </div>
+          <div className="px-6 pb-6 pt-2 flex items-center justify-end gap-2">
+            <button
+              onClick={() => setLogoutConfirmOpen(false)}
+              disabled={loggingOut}
+              className="px-5 h-10 rounded-full text-sm transition-colors disabled:opacity-60"
+              style={{ backgroundColor: "transparent", color: "#d9d9d9", border: "1px solid #323431" }}
+            >
+              cancelar
+            </button>
+            <button
+              onClick={confirmLogout}
+              disabled={loggingOut}
+              className="px-6 h-10 rounded-full text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60 inline-flex items-center gap-2"
+              style={{ backgroundColor: "#323431", color: "#d9d9d9", border: "1px solid #3d3f3c" }}
+            >
+              {loggingOut && (
+                <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-white/20 border-t-white animate-spin" aria-hidden />
+              )}
+              {loggingOut ? "saindo..." : "sim, sair"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Login / Signup Popup */}
       <Dialog open={authMode !== null} onOpenChange={(v) => { if (!v) { setAuthMode(null); setAuthError(null); } }}>
