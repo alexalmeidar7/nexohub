@@ -66,6 +66,10 @@ export default function WelcomeScreen({
   const { user } = useAuth();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
+  const [addProfileOpen, setAddProfileOpen] = useState(false);
+  const [newProfileName, setNewProfileName] = useState("");
+  const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
+  const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
