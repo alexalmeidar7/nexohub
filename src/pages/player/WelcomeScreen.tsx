@@ -154,20 +154,27 @@ export default function WelcomeScreen({
     else { toast.success("Perfil atualizado!"); setEditOpen(false); }
   };
 
+  const [authError, setAuthError] = useState<string | null>(null);
+
   const handleGoogleLogin = async () => {
     setSigningIn(true);
+    setAuthError(null);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + window.location.pathname,
       });
       if (result?.error) {
+        const msg = (result.error as any)?.message || "não foi possível conectar com o google. tente novamente.";
+        setAuthError(msg);
         toast.error("Falha ao entrar com Google");
         setSigningIn(false);
         return;
       }
       if (result?.redirected) return;
       onLoginSuccess?.();
-    } catch (e) {
+    } catch (e: any) {
+      const msg = e?.message || "erro inesperado ao conectar com o google.";
+      setAuthError(msg);
       toast.error("Falha ao entrar com Google");
       setSigningIn(false);
     }
