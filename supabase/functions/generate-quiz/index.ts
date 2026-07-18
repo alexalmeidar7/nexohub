@@ -1,4 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { requireUser } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,8 +53,12 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  const auth = await requireUser(req, corsHeaders);
+  if (auth instanceof Response) return auth;
+
   try {
     const { categoria } = await req.json();
+
     if (!categoria) {
       return new Response(JSON.stringify({ error: "categoria required" }), {
         status: 400,
