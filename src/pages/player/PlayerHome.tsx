@@ -2110,6 +2110,24 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           }}
         />
       )}
+
+      {/* Nexo Player brand mark — Apple TV bottom-right at 40% opacity */}
+      <img
+        src={nexoPlayerLogo.url}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="pointer-events-none select-none fixed z-40"
+        style={{
+          right: "22px",
+          bottom: "16px",
+          height: "clamp(18px, 2.2vh, 24px)",
+          width: "auto",
+          opacity: 0.4,
+          filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.5))",
+        }}
+      />
     </div>
   );
 }
+
