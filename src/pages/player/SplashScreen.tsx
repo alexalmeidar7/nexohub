@@ -103,9 +103,17 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
 
   const handleVideoError = () => {
     // If the video can't be decoded/served (404, wrong MIME, blocked codec),
-    // don't leave the splash stuck forever — treat it as "ended".
+    // don't leave the splash stuck forever — show a visual fallback and treat as ended.
+    setVideoFailed(true);
     setVideoEnded(true);
   };
+
+  // If the src never resolves from cache/network in a reasonable time, show fallback.
+  useEffect(() => {
+    if (videoSrc) return;
+    const t = setTimeout(() => setVideoFailed(true), 3500);
+    return () => clearTimeout(t);
+  }, [videoSrc]);
 
   // Absolute safety timeout: even if the <video> never fires `ended` or `error`
   // (e.g. autoplay policies on some embedded browsers), force-progress after 8s.
