@@ -64,7 +64,6 @@ export default function WelcomeScreen({
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(user ? COUNTDOWN_SECONDS : null);
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
 
