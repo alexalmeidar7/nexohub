@@ -129,6 +129,59 @@ export default function WelcomeScreen({
       .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
   }, [user, userName]);
 
+  // === Background sequence: delayed reveal + intercalated artist image ===
+  const [bgVisible, setBgVisible] = useState(false);
+  const [artistImg, setArtistImg] = useState<string | null>(null);
+  const [nowPlaying, setNowPlaying] = useState<{ titulo: string; artista: string } | null>(null);
+  const [showArtistBg, setShowArtistBg] = useState(false);
+  const artistImgCacheRef = useRef<Record<string, string>>({});
+
+  // Delay background reveal by 1.5s so text/avatar show first
+  useEffect(() => {
+    const t = setTimeout(() => setBgVisible(true), 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Poll now-playing every 4s
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const tick = async () => {
+      const d = getMusicData(user.id);
+      if (!d?.music) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
+      const { titulo, artista } = d.music;
+      const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
+      if (!artista || isBreak) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
+      if (!cancelled) setNowPlaying({ titulo, artista });
+      const key = artista.toLowerCase();
+      if (artistImgCacheRef.current[key]) {
+        if (!cancelled) setArtistImg(artistImgCacheRef.current[key]);
+        return;
+      }
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
+        if (cancelled) return;
+        if (!error && data?.ok && data?.url) {
+          artistImgCacheRef.current[key] = data.url;
+          setArtistImg(data.url);
+        } else {
+          setArtistImg(null);
+        }
+      } catch { if (!cancelled) setArtistImg(null); }
+    };
+    tick();
+    const id = setInterval(tick, 4000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [user?.id]);
+
+  // Alternate channel bg <-> artist bg every 5s (only when artist image available)
+  useEffect(() => {
+    if (!artistImg) { setShowArtistBg(false); return; }
+    const id = setInterval(() => setShowArtistBg((v) => !v), 5000);
+    return () => clearInterval(id);
+  }, [artistImg]);
+
+
 
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
