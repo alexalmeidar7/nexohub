@@ -349,42 +349,48 @@ export default function WelcomeScreen({
             <div>
               <Label className="text-white/60 text-xs">Nome</Label>
               <Input value={profile.nome} onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))}
-                className="rounded-full bg-white/5 border-white/10 text-white" />
+                className="rounded-full border-white/10 text-white placeholder:text-white/40"
+                style={{ backgroundColor: "#323431" }} />
             </div>
             <div>
               <Label className="text-white/60 text-xs">E-mail</Label>
               <Input value={profile.email} disabled
-                className="rounded-full bg-white/5 border-white/10 text-white/70" />
+                className="rounded-full border-white/10 text-white/70"
+                style={{ backgroundColor: "#323431" }} />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-white/60 text-xs">Cidade</Label>
                 <Input value={profile.cidade} onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))}
-                  className="rounded-full bg-white/5 border-white/10 text-white" />
+                  className="rounded-full border-white/10 text-white"
+                  style={{ backgroundColor: "#323431" }} />
               </div>
               <div>
                 <Label className="text-white/60 text-xs">Estado</Label>
                 <Input value={profile.estado} onChange={e => setProfile(p => ({ ...p, estado: e.target.value }))}
-                  className="rounded-full bg-white/5 border-white/10 text-white" />
+                  className="rounded-full border-white/10 text-white"
+                  style={{ backgroundColor: "#323431" }} />
               </div>
             </div>
             <div>
               <Label className="text-white/60 text-xs">País</Label>
               <Input value={profile.pais} onChange={e => setProfile(p => ({ ...p, pais: e.target.value }))}
-                className="rounded-full bg-white/5 border-white/10 text-white" />
+                className="rounded-full border-white/10 text-white"
+                style={{ backgroundColor: "#323431" }} />
             </div>
             <div>
               <Label className="text-white/60 text-xs">WhatsApp</Label>
               <Input value={profile.whatsapp} onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                className="rounded-full bg-white/5 border-white/10 text-white" placeholder="+55 11 99999-9999" />
+                className="rounded-full border-white/10 text-white placeholder:text-white/40"
+                style={{ backgroundColor: "#323431" }} placeholder="+55 11 99999-9999" />
             </div>
             <div>
               <Label className="text-white/60 text-xs">Sexo</Label>
               <Select value={profile.sexo} onValueChange={v => setProfile(p => ({ ...p, sexo: v }))}>
-                <SelectTrigger className="rounded-full bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="rounded-full border-white/10 text-white" style={{ backgroundColor: "#323431" }}>
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-900 border-white/10 text-white">
+                <SelectContent className="border-white/10 text-white" style={{ backgroundColor: "#323431" }}>
                   <SelectItem value="masculino">Masculino</SelectItem>
                   <SelectItem value="feminino">Feminino</SelectItem>
                   <SelectItem value="outro">Outro</SelectItem>
@@ -393,7 +399,12 @@ export default function WelcomeScreen({
               </Select>
             </div>
           </div>
-          <Button onClick={handleSave} disabled={saving} className="mt-4 rounded-full">
+          <Button
+            onClick={handleSave}
+            disabled={saving}
+            className="mt-5 rounded-full text-white border border-white/10 hover:opacity-90"
+            style={{ backgroundColor: "#323431" }}
+          >
             {saving ? "Salvando..." : "Salvar"}
           </Button>
         </DialogContent>
