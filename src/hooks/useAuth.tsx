@@ -157,19 +157,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`Auth event: ${event}`);
 
-      // Se o evento for INITIAL_SESSION e não tivermos sessão, tentamos recuperar a última conhecida se "mantenha-me conectado" estiver ativo
+      // If INITIAL_SESSION arrives empty but we have a backup, restore it so a
+      // hard refresh keeps the user on the welcome screen.
       if (event === "INITIAL_SESSION" && !session) {
-        const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
-        if (keepConnected && lastGoodSessionRef.current) {
-          console.log("Auth: Tentando restaurar sessão inicial salva.");
+        if (lastGoodSessionRef.current) {
+          console.log("Auth: Restoring session from backup on INITIAL_SESSION.");
           void updateAuth(lastGoodSessionRef.current);
           return;
         }
       }
 
       if (event === "SIGNED_OUT") {
-        const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
-        
         // Manual logout should always work
         if (manualSignOutRef.current) {
           manualSignOutRef.current = false;
@@ -177,27 +175,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // If 'keep connected' is on and it wasn't a manual sign out, IGNORE the SIGNED_OUT event.
-        // This usually happens when another device logs out or a session expires on one tab but should persist globally.
-        if (keepConnected && lastGoodSessionRef.current) {
-          console.warn("Auth: Ignored SIGNED_OUT event because 'keep connected' is active.");
-          // We don't call updateAuth(null) here, we stay as we are.
+        // Ignore involuntary SIGNED_OUT events (e.g. sign-out on another device
+        // or transient auth hiccups) when we still have a backed-up session.
+        if (lastGoodSessionRef.current) {
+          console.warn("Auth: Ignored involuntary SIGNED_OUT event; keeping user logged in.");
           return;
         }
-        
+
         void updateAuth(null);
         return;
       }
-      
+
       if (event === "TOKEN_REFRESHED" || event === "SIGNED_IN") {
         lastGoodSessionRef.current = session;
-        // Sempre garantimos que persista se estiver logado
         if (session) {
-          const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
-          if (keepConnected) {
-            // Backup session storage for aggressive recovery
+          // Always back up the session so refreshes restore the same login.
+          try {
+            localStorage.setItem(KEEP_CONNECTED_KEY, "true");
             localStorage.setItem('nexohub_backup_session', JSON.stringify(session));
-          }
+          } catch { /* storage may be full or blocked */ }
         }
       }
 
@@ -211,13 +207,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted) return;
         
         if (error || !session) {
-          // If we have no session but 'keep connected' is ON, we might have a transient network failure
-          const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
-          if (keepConnected && lastGoodSessionRef.current) {
-             console.log("Auth: No session found on start, but keep-connected is active. Restoring last known good session.");
+          // If we have a backed-up session, restore it (covers transient network failures)
+          if (lastGoodSessionRef.current) {
+             console.log("Auth: No session found on start. Restoring last known good session.");
              void updateAuth(lastGoodSessionRef.current);
              return;
           }
+
 
           // Otherwise, try one silent refresh before giving up
           return supabase.auth.refreshSession().then(({ data: refreshed }) => {
