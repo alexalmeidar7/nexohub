@@ -4,6 +4,7 @@ import { UserCircle, Pencil, LogIn, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getMusicData } from "@/lib/musicData";
 import {
   Dialog,
   DialogContent,
