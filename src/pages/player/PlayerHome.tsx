@@ -1686,7 +1686,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
-                {/* Canais ao Vivo + Catálogo em linha contínua */}
+                {/* Catálogo (Canais ao Vivo removido) */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
                     <div className="mb-8">
@@ -1696,28 +1696,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       </div>
                     </div>
                   ) : (
-                    <ContentRow title="Canais ao Vivo" scrollRoot={contentScrollRef}>
-                      {streamingChannels.map(ch => (
-                        <StreamingCard
-                          key={ch.id}
-                          channel={ch}
-                          currentProgram={currentProgram || undefined}
-                          nowPlaying={nowPlaying}
-                          onClick={() => goToPlayer(ch.id)}
-                        />
-                      ))}
-
-                      {/* Separator */}
-                      {(streamingChannels.length > 0 && (Object.keys(catalogGroups).length > 0 || user)) && (
-                        <div className="flex-shrink-0 flex items-center px-2">
-                          <div className="w-px h-3/4 bg-white/10" />
-                        </div>
-                      )}
-
-                      {/* Catálogo cards inline */}
+                    <ContentRow title="Catálogo" scrollRoot={contentScrollRef}>
+                      {/* Meu Top 10 */}
                       {user && (
                         <button
                           key="__top10__"
+                          data-tv-focusable
                           onClick={() => goToTop10()}
                           className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer flex flex-col items-center justify-center gap-3"
                           style={{
@@ -1763,6 +1747,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </ContentRow>
                   )}
                 </section>
+
 
                 {user && shopActive && (
                   <section id="section-shop" className="scroll-mt-4 pt-4">
