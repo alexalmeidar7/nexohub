@@ -224,11 +224,9 @@ export default function WelcomeScreen({
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
                     height: "clamp(110px, 11vw, 150px)",
-                    background: "linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02))",
+                    background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
                     border: "1px solid rgba(255,255,255,0.14)",
                     boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                    backdropFilter: "blur(14px) saturate(1.2)",
-                    WebkitBackdropFilter: "blur(14px) saturate(1.2)",
                   }}
                 >
                   <img
@@ -239,16 +237,16 @@ export default function WelcomeScreen({
                   />
                   <span
                     onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300"
+                    className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                     style={{
-                      background: "rgba(0,0,0,0.55)",
-                      border: "1px solid rgba(255,255,255,0.22)",
-                      backdropFilter: "blur(8px)",
+                      background: "rgba(0,0,0,0.35)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(6px)",
                     }}
                     aria-label="Editar perfil"
                     role="button"
                   >
-                    <Pencil className="w-3.5 h-3.5 text-white" />
+                    <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
                   </span>
                 </div>
               </button>
