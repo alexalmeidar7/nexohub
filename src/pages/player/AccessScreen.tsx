@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { lovable } from "@/integrations/lovable/index";
 import { Loader2 } from "lucide-react";
+import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
 
 interface AccessScreenProps {
