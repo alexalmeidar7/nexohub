@@ -392,239 +392,156 @@ function ExpandableDescription({ text }: { text: string }) {
   );
 }
 
-/* ─── Hero Banner ─── */
+/* ─── Hero Banner (Apple TV cards layout) ─── */
 function HeroBanner({
   currentProgram,
-  nextProgram,
   nowPlaying,
-  channelName,
-  presenterName,
-  nextPresenterName,
-  onPlay,
-  onGrade,
-  logoUrl,
+  presenterFoto,
+  backgroundUrl,
+  onOuvir,
+  onAssistir,
+  onPlaylist,
 }: {
   currentProgram?: Programa;
-  nextProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
-  channelName?: string;
-  presenterName?: string | null;
-  nextPresenterName?: string | null;
-  onPlay: () => void;
-  onGrade: () => void;
-  logoUrl?: string | null;
+  presenterFoto?: string | null;
+  backgroundUrl?: string | null;
+  onOuvir: () => void;
+  onAssistir: () => void;
+  onPlaylist: () => void;
 }) {
-  const INTERVAL = 8000;
-
-  const slides = useMemo(() => {
-    const s: { program: Programa | undefined; label: string }[] = [];
-    s.push({ program: currentProgram, label: "ao vivo" });
-    if (nextProgram) s.push({ program: nextProgram, label: "A seguir" });
-    return s;
-  }, [currentProgram, nextProgram]);
-
-  const [activeIdx, setActiveIdx] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (slides.length <= 1) return;
-    timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [slides.length]);
-
-  const goTo = (idx: number) => {
-    if (idx === activeIdx) return;
-    setActiveIdx(idx);
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (slides.length > 1) {
-      timerRef.current = setInterval(() => setActiveIdx(prev => (prev + 1) % slides.length), INTERVAL);
-    }
+  const cardBase: React.CSSProperties = {
+    borderRadius: "22px",
+    width: "260px",
+    height: "160px",
+    fontFamily: "'Lufga', system-ui, sans-serif",
   };
-
-  const displayProgram = slides[activeIdx]?.program;
-  const activeLabel = slides[activeIdx]?.label || "ao vivo";
-  const displayPresenter = activeIdx === 0 ? presenterName : nextPresenterName;
-
-  // Progress bar
-  let pct = 0;
-  if (currentProgram) {
-    const [hi, mi] = currentProgram.horario_inicio.split(":").map(Number);
-    const [hf, mf] = currentProgram.horario_fim.split(":").map(Number);
-    const now = new Date();
-    const startMin = hi * 60 + mi;
-    let endMin = hf * 60 + mf;
-    if (endMin <= startMin) endMin += 1440;
-    const curMin = now.getHours() * 60 + now.getMinutes();
-    const total = endMin - startMin;
-    const elapsed = Math.max(0, Math.min(total, curMin - startMin));
-    pct = total > 0 ? (elapsed / total) * 100 : 0;
-  }
-
-  // Program assets for hero
-  const programSeal = displayProgram?.selo || null;
-  const heroThumb = displayProgram?.thumb || displayProgram?.capa || null;
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
-      {/* Thumb as hero background */}
-      {heroThumb ? (
+      {/* Fullscreen background */}
+      {backgroundUrl ? (
         <>
           <img
-            key={`hero-bg-${displayProgram?.id || heroThumb}`}
-            src={heroThumb}
-            alt={displayProgram?.nome ? `Thumb do programa ${displayProgram.nome}` : ""}
+            src={backgroundUrl}
+            alt=""
             className="absolute inset-0 w-full h-full object-cover"
             style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background: "linear-gradient(to top, hsl(var(--player-bg)) 0%, hsla(var(--player-bg) / 0.92) 26%, hsla(var(--player-bg) / 0.55) 58%, hsla(var(--player-bg) / 0.68) 100%)",
+              background: "linear-gradient(to top, hsla(var(--player-bg) / 0.55) 0%, hsla(var(--player-bg) / 0.15) 50%, hsla(var(--player-bg) / 0.35) 100%)",
             }}
           />
         </>
       ) : (
         <div
           className="absolute inset-0"
-          style={{
-            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)",
-          }}
+          style={{ background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)" }}
         />
       )}
 
-      {/* Accent glow behind program logo */}
-      <div
-        className="absolute z-[1] pointer-events-none"
-        style={{
-          width: "600px",
-          height: "600px",
-          left: "15%",
-          top: "30%",
-          transform: "translate(-50%, -50%)",
-          background: `radial-gradient(ellipse at center, hsla(var(--player-accent) / 0.25) 0%, hsla(var(--player-accent) / 0.08) 40%, transparent 70%)`,
-          filter: "blur(40px)",
-        }}
-      />
-
-      {/* Content positioned at bottom-left */}
-      <div className="absolute left-0 right-0 z-10 px-8 sm:px-12" style={{ maxWidth: "760px", top: "50%", transform: "translateY(-50%)" }}>
-        {programSeal && (
-          <div className="mb-4">
-            <img
-              key={`program-logo-${displayProgram?.id || programSeal}`}
-              src={programSeal}
-              alt={displayProgram?.nome || ""}
-              className="h-16 sm:h-20 lg:h-24 object-contain"
-              style={{ animation: "playerFadeSlideIn 0.6s ease-out" }}
-            />
-          </div>
-        )}
-
-        {!programSeal && displayProgram && (
-          <h1
-            className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight mb-4"
-            style={{ textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}
-          >
-            {displayProgram.nome}
-          </h1>
-        )}
-
-        {nowPlaying?.musica && (
-          <div className="mb-2 overflow-hidden">
-            <div className="flex items-center gap-1.5 overflow-hidden">
-              {/* Presenter name to the left of music */}
-              {(displayPresenter || displayProgram?.nome) && (
-                <span className="flex items-center gap-1 text-sm text-white/50 flex-shrink-0 whitespace-nowrap">
-                  <Mic className="w-3.5 h-3.5" style={{ color: "hsl(var(--player-accent))" }} />
-                  <span>{displayPresenter || displayProgram?.nome}</span>
-                  <span className="mx-1 text-white/20">|</span>
-                </span>
+      {/* Bottom-left cards row */}
+      <div className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5">
+        {/* Ouvir card */}
+        <button
+          onClick={onOuvir}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {/* Presenter photo pinned right */}
+          {presenterFoto && (
+            <div className="absolute right-0 top-0 bottom-0 w-[45%] overflow-hidden">
+              <img src={presenterFoto} alt="" className="w-full h-full object-cover" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 40%)", WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 40%)" }} />
+            </div>
+          )}
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">ouvir</span>
+            <div className="mt-auto">
+              <p className="text-[13px] text-white/70 leading-none">no ar</p>
+              <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[55%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
+              {currentProgram && (
+                <p className="text-[12px] text-white/60 mt-1">{currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}</p>
               )}
-              <Music className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span
-                key={`hero-music-${nowPlaying.musica}-${nowPlaying.artista}`}
-                className="text-sm text-white/80"
-                style={{ animation: "playerSlideInLeft 0.5s ease-out" }}
-              >
-                {nowPlaying.musica}{nowPlaying.artista ? ` — ${nowPlaying.artista}` : ""}
-              </span>
             </div>
           </div>
-        )}
+        </button>
 
-        {displayProgram && (
-          <div className="mb-4 space-y-1 text-sm text-white/65">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Clock className="h-3.5 w-3.5 flex-shrink-0" style={{ color: "hsl(var(--player-accent))" }} />
-              <span>{displayProgram.horario_inicio} — {displayProgram.horario_fim}</span>
+        {/* Assistir card */}
+        <button
+          onClick={onAssistir}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "#1a1a1a",
+            border: "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          {nowPlaying?.capa && (
+            <img
+              src={nowPlaying.capa}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: "grayscale(1) brightness(0.65)", opacity: 0.85 }}
+            />
+          )}
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">assistir</span>
+            <div className="mt-auto">
+              <p className="text-[13px] text-white/70 leading-none">tocando</p>
+              <p className="text-[18px] font-semibold text-white leading-tight truncate">{nowPlaying?.musica ? formatTrackText(nowPlaying.musica) : "—"}</p>
+              {nowPlaying?.artista && (
+                <p className="text-[12px] text-white/70 mt-0.5 truncate">{formatTrackText(nowPlaying.artista)}</p>
+              )}
             </div>
-            {displayProgram.descricao && (
-              <ExpandableDescription text={displayProgram.descricao} />
-            )}
           </div>
-        )}
+        </button>
 
-        {/* Badge + Play */}
-        <div className="flex items-center gap-3">
-          <span
-            className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold px-3 py-1.5 rounded-full"
-            style={{ border: "1px solid hsla(var(--player-accent) / 0.4)", color: "hsl(var(--player-accent))" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "hsl(var(--player-accent))" }} />
-            {activeLabel}
-          </span>
-          <button
-            onClick={onPlay}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all duration-200 hover:brightness-110"
-            style={{
-              background: "hsla(var(--player-accent) / 0.15)",
-              color: "#fff",
-            }}
-          >
-            <Play className="h-3 w-3 fill-current" />
-            Play
-          </button>
-        </div>
-
+        {/* Minha playlist card */}
+        <button
+          onClick={onPlaylist}
+          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
+          style={{
+            ...cardBase,
+            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.35) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+        >
+          <div className="absolute right-3 bottom-2 opacity-90 pointer-events-none">
+            <Music className="w-[110px] h-[110px] text-white/80" strokeWidth={1.3} />
+          </div>
+          <div className="relative z-[1] p-4 flex flex-col h-full">
+            <div className="mt-auto">
+              <p className="text-[18px] font-semibold text-white leading-tight">minha</p>
+              <p className="text-[18px] font-semibold text-white leading-tight">playlist</p>
+            </div>
+          </div>
+        </button>
       </div>
 
-      {/* Carousel progress indicators */}
-      {slides.length > 1 && (
-        <div className="absolute bottom-6 left-8 sm:left-12 z-10 flex items-center gap-1.5">
-          {slides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => goTo(idx)}
-              className="relative h-[5px] rounded-full overflow-hidden transition-all duration-300"
-              style={{
-                width: idx === activeIdx ? 28 : 8,
-                background: "rgba(255,255,255,0.2)",
-              }}
-            >
-              {idx === activeIdx && (
-                <span
-                  key={`fill-${activeIdx}`}
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: "hsl(var(--player-accent))",
-                    animation: `hero-fill ${INTERVAL}ms linear forwards`,
-                  }}
-                />
-              )}
-              {idx < activeIdx && (
-                <span
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.45)" }}
-                />
-              )}
-            </button>
-          ))}
-          <style>{`@keyframes hero-fill { from { width: 0% } to { width: 100% } }`}</style>
+      {/* Bottom-right help + nexo logo */}
+      <div className="absolute bottom-10 right-10 z-10 flex items-center gap-4">
+        <button
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
+          style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+          aria-label="Ajuda"
+        >
+          <span className="text-sm font-light">?</span>
+        </button>
+        <div className="h-9 flex items-center">
+          <img src={nexoPlayerLogo.url} alt="nexo player" className="h-8 object-contain" />
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
 
 /* ─── Streaming Card (Live channels) ─── */
 function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
