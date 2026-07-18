@@ -40,9 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Load backup session if available and keepConnected is true
-    const keepConnected = localStorage.getItem(KEEP_CONNECTED_KEY) === "true";
-    if (keepConnected && !lastGoodSessionRef.current) {
+    // Always try to restore the last known good session from backup on boot,
+    // so a hard refresh keeps the user signed in and on the welcome screen
+    // without requiring an explicit "keep connected" opt-in.
+    if (!lastGoodSessionRef.current) {
       const backup = localStorage.getItem('nexohub_backup_session');
       if (backup) {
         try {
@@ -52,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     }
+
 
     const timers: ReturnType<typeof setTimeout>[] = [];
 
