@@ -87,26 +87,25 @@ export function useSplashVideoCache(url: string): string | null {
 
 
   useEffect(() => {
-    if (!url) return;
+    if (!absUrl) return;
     if (sharedResolved) {
       setSrc(sharedResolved);
       return;
     }
     let cancelled = false;
-    prefetchSplashVideo(url).then((resolved) => {
-      // Só troca para o blob se ainda estivermos usando a URL crua e o
-      // resolvido for de fato um blob: (evita re-carregar o vídeo no meio).
+    prefetchSplashVideo(absUrl).then((resolved) => {
       if (!cancelled && resolved && resolved.startsWith("blob:")) {
         setSrc((prev) => (prev && prev.startsWith("blob:") ? prev : resolved));
       }
-    }).catch(() => { /* mantém a URL crua */ });
+    }).catch(() => { /* mantém a URL absoluta */ });
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [absUrl]);
 
   return src;
 }
+
 
 // Best-effort cleanup on page unload (browsers usually collect anyway).
 if (typeof window !== "undefined") {
