@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
+import nexoLogo from "@/assets/logo-nexo.png";
 import { useSplashVideoCache } from "./useSplashVideoCache";
 
 const ACCENT = "#d9ff65";
