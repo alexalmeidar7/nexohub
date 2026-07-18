@@ -3,26 +3,31 @@ import splashVideoAsset from "@/assets/nexo_player_splash.mp4.asset.json";
 import nexoLogo from "@/assets/logo-nexo.png";
 import { useSplashVideoCache } from "./useSplashVideoCache";
 
-const ACCENT = "#d9ff65";
+const ACCENT = "#ffffff";
 
-function ElegantLoader() {
+/**
+ * Apple-TV style splash loader — thin white ring with a soft gradient arc.
+ */
+function SplashRingLoader() {
   return (
     <div
       style={{
-        width: 56,
-        height: 56,
+        width: 46,
+        height: 46,
         borderRadius: "50%",
-        border: "1.5px solid rgba(255,255,255,0.08)",
-        borderTopColor: ACCENT,
-        borderRightColor: ACCENT,
-        animation: "splash-elegant-spin 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite",
-        boxShadow: `0 0 24px ${ACCENT}22`,
+        border: "1.5px solid rgba(255,255,255,0.14)",
+        borderTopColor: "rgba(255,255,255,0.95)",
+        borderRightColor: "rgba(255,255,255,0.55)",
+        animation: "splash-ring-spin 1.05s cubic-bezier(0.45,0.05,0.55,0.95) infinite",
+        boxShadow: "0 0 18px rgba(255,255,255,0.18)",
+        boxSizing: "border-box",
       }}
     >
-      <style>{`@keyframes splash-elegant-spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`@keyframes splash-ring-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
+
 
 
 interface SplashScreenProps {
