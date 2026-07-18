@@ -1648,17 +1648,20 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   <>
                     <HeroBanner
                       currentProgram={currentProgram || undefined}
-                      nextProgram={nextProgram}
                       nowPlaying={nowPlaying}
-                      channelName={channelName}
-                      presenterName={currentPresenterName}
-                      nextPresenterName={nextPresenterName}
-                      onPlay={() => goToPlayer(streamingChannels[0]?.id)}
-                      onGrade={() => setShowGrade(true)}
-                      logoUrl={logoUrl}
+                      presenterFoto={currentPresenterFoto}
+                      backgroundUrl={heroChannel?.background_url || heroChannel?.cover_url || null}
+                      onOuvir={() => {
+                        const audio = streamingChannels.find(c => c.type === "audio_live") || streamingChannels[0];
+                        if (audio) goToPlayer(audio.id);
+                      }}
+                      onAssistir={() => {
+                        const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];
+                        if (video) goToPlayer(video.id);
+                      }}
+                      onPlaylist={() => goToTop10()}
                     />
                     <TopNavBar
-                      logoUrl={logoUrl}
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={profileAvatar}
@@ -1673,8 +1676,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
                       radioName={channelName}
+                      stationLogoUrl={heroChannel?.logo_url || logoUrl}
                     />
                   </>
+
                 )}
               </div>
 
