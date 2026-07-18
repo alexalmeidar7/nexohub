@@ -371,81 +371,146 @@ export default function WelcomeScreen({
 
       {/* Edit Profile Dialog */}
       <Dialog open={editOpen} onOpenChange={(v) => { setEditOpen(v); if (v) cancelAutoAdvance(); }}>
-        <DialogContent className="bg-neutral-950 border-white/10 text-white max-w-md max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-white">Editar Perfil</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center mb-4">
+        <DialogContent
+          className="max-w-lg max-h-[90vh] overflow-y-auto p-0"
+          style={{ backgroundColor: "#1f1f1f", border: "1px solid #323431", color: "#d9d9d9" }}
+        >
+          <div className="px-6 pt-6 pb-4 border-b" style={{ borderColor: "#323431" }}>
+            <DialogHeader>
+              <DialogTitle className="text-[15px] font-semibold uppercase tracking-wide" style={{ color: "#d9d9d9" }}>
+                Editar Perfil
+              </DialogTitle>
+              <p className="text-xs mt-1" style={{ color: "#d9d9d9", opacity: 0.55 }}>
+                complete seus dados para uma experiência personalizada
+              </p>
+            </DialogHeader>
+          </div>
+
+          <div className="px-6 py-5">
+            <div className="flex items-center gap-4 mb-6">
+              <button
+                onClick={() => setAvatarPickerOpen(true)}
+                className="w-20 h-20 rounded-2xl overflow-hidden transition-all shrink-0"
+                style={{ border: "1px solid #323431", backgroundColor: "#323431" }}
+              >
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              </button>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium" style={{ color: "#d9d9d9" }}>{profile.nome || "seu perfil"}</span>
+                <button
+                  onClick={() => setAvatarPickerOpen(true)}
+                  className="text-xs mt-1 self-start px-3 py-1 rounded-full transition-colors"
+                  style={{ backgroundColor: "#323431", color: "#d9d9d9" }}
+                >
+                  alterar avatar
+                </button>
+              </div>
+            </div>
+
+            {(() => {
+              const inputStyle: React.CSSProperties = {
+                backgroundColor: "#323431",
+                border: "1px solid #323431",
+                color: "#d9d9d9",
+                height: 40,
+                borderRadius: 10,
+                padding: "0 14px",
+                fontSize: 13,
+                width: "100%",
+                outline: "none",
+              };
+              const labelCls = "text-[11px] uppercase tracking-wider mb-1.5 block";
+              const labelStyle: React.CSSProperties = { color: "#d9d9d9", opacity: 0.55 };
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls} style={labelStyle}>Nome</label>
+                      <input style={inputStyle} value={profile.nome}
+                        onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label className={labelCls} style={labelStyle}>CPF</label>
+                      <input style={inputStyle} value={profile.cpf}
+                        onChange={e => setProfile(p => ({ ...p, cpf: e.target.value }))}
+                        placeholder="000.000.000-00" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls} style={labelStyle}>WhatsApp</label>
+                      <input style={inputStyle} value={profile.whatsapp}
+                        onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
+                        placeholder="(00) 00000-0000" />
+                    </div>
+                    <div>
+                      <label className={labelCls} style={labelStyle}>E-mail</label>
+                      <input style={{ ...inputStyle, opacity: 0.7 }} value={profile.email} disabled />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelCls} style={labelStyle}>Sexo</label>
+                      <select style={inputStyle} value={profile.sexo}
+                        onChange={e => setProfile(p => ({ ...p, sexo: e.target.value }))}>
+                        <option value="">Selecione</option>
+                        <option value="masculino">Masculino</option>
+                        <option value="feminino">Feminino</option>
+                        <option value="outro">Outro</option>
+                        <option value="prefiro_nao_dizer">Prefiro não dizer</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls} style={labelStyle}>Data de nascimento</label>
+                      <input type="date" style={inputStyle} value={profile.data_nascimento}
+                        onChange={e => setProfile(p => ({ ...p, data_nascimento: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-[90px_1fr] gap-3">
+                    <div>
+                      <label className={labelCls} style={labelStyle}>UF</label>
+                      <input style={inputStyle} value={profile.estado} maxLength={2}
+                        onChange={e => setProfile(p => ({ ...p, estado: e.target.value.toUpperCase() }))}
+                        placeholder="SP" />
+                    </div>
+                    <div>
+                      <label className={labelCls} style={labelStyle}>Cidade</label>
+                      <input style={inputStyle} value={profile.cidade}
+                        onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelCls} style={labelStyle}>Bairro / Setor</label>
+                    <input style={inputStyle} value={profile.setor}
+                      onChange={e => setProfile(p => ({ ...p, setor: e.target.value }))}
+                      placeholder="Bairro ou região" />
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="px-6 pb-6 pt-2 flex items-center justify-end gap-2">
             <button
-              onClick={() => setAvatarPickerOpen(true)}
-              className="w-24 h-24 rounded-2xl overflow-hidden border border-white/15 hover:border-white/40 transition-colors cursor-pointer"
+              onClick={() => setEditOpen(false)}
+              className="px-5 h-10 rounded-full text-sm transition-colors"
+              style={{ backgroundColor: "transparent", color: "#d9d9d9", border: "1px solid #323431" }}
             >
-              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              cancelar
             </button>
-            <span className="text-white/50 text-xs mt-2">clique para alterar</span>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 h-10 rounded-full text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-60"
+              style={{ backgroundColor: "#323431", color: "#d9d9d9", border: "1px solid #3d3f3c" }}
+            >
+              {saving ? "salvando..." : "salvar"}
+            </button>
           </div>
-          <div className="space-y-3">
-            <div>
-              <Label className="text-white/60 text-xs">Nome</Label>
-              <Input value={profile.nome} onChange={e => setProfile(p => ({ ...p, nome: e.target.value }))}
-                className="rounded-full border-white/10 text-white placeholder:text-white/40"
-                style={{ backgroundColor: "#323431" }} />
-            </div>
-            <div>
-              <Label className="text-white/60 text-xs">E-mail</Label>
-              <Input value={profile.email} disabled
-                className="rounded-full border-white/10 text-white/70"
-                style={{ backgroundColor: "#323431" }} />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="text-white/60 text-xs">Cidade</Label>
-                <Input value={profile.cidade} onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))}
-                  className="rounded-full border-white/10 text-white"
-                  style={{ backgroundColor: "#323431" }} />
-              </div>
-              <div>
-                <Label className="text-white/60 text-xs">Estado</Label>
-                <Input value={profile.estado} onChange={e => setProfile(p => ({ ...p, estado: e.target.value }))}
-                  className="rounded-full border-white/10 text-white"
-                  style={{ backgroundColor: "#323431" }} />
-              </div>
-            </div>
-            <div>
-              <Label className="text-white/60 text-xs">País</Label>
-              <Input value={profile.pais} onChange={e => setProfile(p => ({ ...p, pais: e.target.value }))}
-                className="rounded-full border-white/10 text-white"
-                style={{ backgroundColor: "#323431" }} />
-            </div>
-            <div>
-              <Label className="text-white/60 text-xs">WhatsApp</Label>
-              <Input value={profile.whatsapp} onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                className="rounded-full border-white/10 text-white placeholder:text-white/40"
-                style={{ backgroundColor: "#323431" }} placeholder="+55 11 99999-9999" />
-            </div>
-            <div>
-              <Label className="text-white/60 text-xs">Sexo</Label>
-              <Select value={profile.sexo} onValueChange={v => setProfile(p => ({ ...p, sexo: v }))}>
-                <SelectTrigger className="rounded-full border-white/10 text-white" style={{ backgroundColor: "#323431" }}>
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent className="border-white/10 text-white" style={{ backgroundColor: "#323431" }}>
-                  <SelectItem value="masculino">Masculino</SelectItem>
-                  <SelectItem value="feminino">Feminino</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
-                  <SelectItem value="prefiro_nao_dizer">Prefiro não dizer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="mt-5 rounded-full text-white border border-white/10 hover:opacity-90"
-            style={{ backgroundColor: "#323431" }}
-          >
-            {saving ? "Salvando..." : "Salvar"}
-          </Button>
         </DialogContent>
       </Dialog>
 
