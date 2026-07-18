@@ -91,7 +91,12 @@ export default function WelcomeScreen({
         });
       }
     });
+    // Simple points tally from music likes
+    supabase.from("music_likes").select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
   }, [user, userName]);
+
 
   const cancelAutoAdvance = () => {
     interactedRef.current = true;
