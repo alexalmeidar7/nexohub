@@ -354,8 +354,6 @@ export default function WelcomeScreen({
           </div>
         </DialogContent>
       </Dialog>
-        </div>
-      </div>
 
 
 
