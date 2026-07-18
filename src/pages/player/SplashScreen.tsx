@@ -246,7 +246,7 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
             : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
-        <ElegantLoader />
+        <SplashRingLoader />
       </div>
     </div>
   );
