@@ -65,9 +65,10 @@ async function loadSplash(url: string): Promise<string> {
  * Safe to call many times — the work is deduped.
  */
 export function prefetchSplashVideo(url: string = splashVideoAsset.url): Promise<string> {
+  const abs = resolveSplashUrl(url);
   if (sharedResolved) return Promise.resolve(sharedResolved);
   if (sharedPromise) return sharedPromise;
-  sharedPromise = loadSplash(url).then((src) => {
+  sharedPromise = loadSplash(abs).then((src) => {
     sharedResolved = src;
     return src;
   });
@@ -81,10 +82,9 @@ export function prefetchSplashVideo(url: string = splashVideoAsset.url): Promise
  * URL) and never has to reload mid-playback (which caused audio/video desync).
  */
 export function useSplashVideoCache(url: string): string | null {
-  // Retorna a URL bruta imediatamente para o <video> começar a carregar sem
-  // depender do Cache Storage (que pode falhar por CORS/embedded browsers).
-  // O prefetch para blob acontece em paralelo apenas para acelerar próximos acessos.
-  const [src, setSrc] = useState<string | null>(sharedResolved || url || null);
+  const absUrl = resolveSplashUrl(url);
+  const [src, setSrc] = useState<string | null>(sharedResolved || absUrl || null);
+
 
   useEffect(() => {
     if (!url) return;
