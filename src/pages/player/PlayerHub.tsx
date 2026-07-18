@@ -23,6 +23,7 @@ export default function PlayerHub() {
   const skipToHome = searchParams.get("step") === "home";
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
   const [fadeOut, setFadeOut] = useState(false);
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
