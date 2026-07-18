@@ -21,7 +21,7 @@ export default function PlayerHub() {
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams] = useSearchParams();
   const skipToHome = searchParams.get("step") === "home";
-  const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
+  const [step, setStep] = useState<Step>("splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -88,17 +88,14 @@ export default function PlayerHub() {
 
   useEffect(() => {
     if (!splashDone || loading || !dataReady) return;
-    // If user is already logged in (returning user), go straight to welcome
-    const target: Step = user ? "welcome" : "access";
+    // Security rule: only authenticated users can reach the player home.
+    // Anonymous users go to the access/login screen; ?step=home is ignored when signed out.
+    const target: Step = user ? (skipToHome ? "home" : "welcome") : "access";
     transitionTo(target);
-  }, [splashDone, loading, dataReady, user, transitionTo]);
+  }, [splashDone, loading, dataReady, user, skipToHome, transitionTo]);
 
   const onLoginSuccess = useCallback(() => {
     transitionTo("welcome");
-  }, [transitionTo]);
-
-  const onGuest = useCallback(() => {
-    transitionTo("home");
   }, [transitionTo]);
 
   const onWelcomeContinue = useCallback(() => {
@@ -121,7 +118,7 @@ export default function PlayerHub() {
   if (step === "access") {
     return (
       <div className={wrapperClass}>
-        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} onGuest={onGuest} />
+        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} />
       </div>
     );
   }
@@ -139,6 +136,15 @@ export default function PlayerHub() {
           onContinue={onWelcomeContinue}
           onLoginSuccess={onLoginSuccess}
         />
+      </div>
+    );
+  }
+
+  // Home is protected — if we somehow land here without a user, force access screen.
+  if (!user) {
+    return (
+      <div className={wrapperClass}>
+        <AccessScreen logoUrl={logoUrl} onLoginSuccess={onLoginSuccess} />
       </div>
     );
   }
