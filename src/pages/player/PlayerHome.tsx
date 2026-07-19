@@ -446,7 +446,15 @@ function HeroBanner({
       )}
 
       {/* Bottom-left cards row */}
-      <div className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5">
+      <div
+        data-tv-row="0"
+        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5 transition-all duration-500 ease-out"
+        style={{
+          transform: cardsVisible ? "translateY(0)" : "translateY(-120%)",
+          opacity: cardsVisible ? 1 : 0,
+          pointerEvents: cardsVisible ? "auto" : "none",
+        }}
+      >
         {/* Ouvir card */}
         <button
           onClick={onOuvir}
