@@ -233,12 +233,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
           let artistImg = "";
           if (data.artista && data.artista !== "Desconhecido") {
-            const { data: artistRes } = await supabase.functions.invoke("fetch-artist-image", {
-              body: { artist: data.artista },
-            });
-            if (artistRes?.ok && artistRes?.url) {
-              artistImg = artistRes.url;
-            }
+            artistImg = (await fetchArtistImageCached(data.artista)) || "";
           }
 
           const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
