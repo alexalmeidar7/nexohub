@@ -1,93 +1,62 @@
-# Redesign Player — Estilo Apple TV
+# Redesign — Player de Áudio (`/player` — modo áudio)
 
-Refatoração visual completa das 3 telas do fluxo `/player` (Splash → Boas-vindas → Home), seguindo os mockups anexados. Tipografia global do player passa a ser **Lufga**. Toda a paleta, raios, sombras e degrades ficam confinados ao escopo do player (não afeta o resto do app).
+Layout novo baseado no mockup anexado. Substitui a tela atual do player de áudio (`src/pages/Player.tsx` no modo audio) mantendo `PlayerHome`, `WelcomeScreen` e demais telas intactas.
 
-## 1. Tipografia Lufga (global do player)
+## Estrutura visual
 
-- Adicionar `@font-face` para Lufga (Regular 400, Medium 500, SemiBold 600, Bold 700) em `src/index.css` sob um seletor escopado (`.player-scope { font-family: 'Lufga', ...}`).
-- Arquivos das fontes hospedados via `lovable-assets` a partir de `/mnt/user-uploads/` se o usuário anexar depois; enquanto isso uso `Lufga` com fallback CDN (`fontshare`) para não quebrar. Se falhar, cai para `-apple-system, "SF Pro Display"` — mesmo espírito Apple TV.
-- Wrapper `<div className="player-scope">` no `PlayerHub` para não vazar em outras páginas.
-- Todo texto em lowercase quando o mockup mostra (títulos, labels de card, nav).
+```text
+┌───────────────────────────────────────────────────────────────────────┐
+│ ▲▼ canal            [ao vivo][chat][karaoke][músicas tocadas]   LOGO │
+│    Cultura FM Áudio                                              CANAL│
+│                                                                       │
+│   ┌─────┐┌─────┐┌─────┐┌──────────────────┐                          │
+│   │23:22││23:22││23:17││ no ar        ♥   │  a seguir                │
+│   │tocou││tocou││tocou││                  │  top 20 da cultura       │
+│   │ ... ││ ... ││ ... ││  [FOTO LOCUTOR]  │  17:00/18:00             │
+│   └─────┘└─────┘└─────┘│                  │       ⊕ (grade)          │
+│  ← carrossel 50 últimas│  no ar           │                          │
+│                        │  sabadão cultura │                          │
+│                        │  12:00/17:00     │                          │
+│                        │  ▓▓▓▓▓▓▓░░░░     │                          │
+│                        └──────────────────┘                          │
+│                                                            [ao vivo] │
+│ ▓▓▓▓▓▓▓▓▓▓●─────────────────────────────────────────────────────────  │
+│                          ▶ / ❚❚                              ? nexo  │
+└───────────────────────────────────────────────────────────────────────┘
+```
 
-## 2. Tela 1 — Splash Video Loading
+## Componentes / arquivos
 
-Ajustes em `SplashScreen.tsx`:
-- Mantém o vídeo em background full-cover.
-- **Novo loader**: círculo aberto ~48px, stroke fino branco com um arco degradê branco→transparente girando (idêntico ao print). Substitui o `ElegantLoader` lime **apenas** dentro do splash. Componente novo `SplashRingLoader`.
-- Posição do loader inalterada (12vh do bottom, centralizado).
-- Fallback visual mantém logo Nexo Player.
+- `src/pages/player/AudioPlayerScreen.tsx` (novo) — tela completa do player de áudio.
+- `src/components/player/audio/ChannelSwitcher.tsx` — botões ▲▼ + label do canal atual.
+- `src/components/player/audio/TopActions.tsx` — pills "ao vivo / chat / karaoke / músicas tocadas".
+- `src/components/player/audio/NowPlayingCard.tsx` — card central: foto locutor, gradiente extraído da foto (2 cores via `coverPalette`), nome do programa, horários, progresso.
+- `src/components/player/audio/HistoryCarousel.tsx` — carrossel horizontal empilhado à esquerda com últimas 50 músicas (capa + nome + horário) com animação de "empurrar" a cada nova música.
+- `src/components/player/audio/UpNextPanel.tsx` — "a seguir" + botão ⊕ que abre `PlayerGradeDialog`.
+- `src/components/player/audio/TimeshiftBar.tsx` — barra inferior com scrubbing dos últimos 5 min + botão play/pause central + pill "ao vivo".
+- `src/hooks/useAudioTimeshift.ts` — buffer rolling de 5 min via `MediaSource` + `SourceBuffer` do HLS.js (grava segmentos em memória; permite `currentTime` retroativo até 300 s).
+- Reutilizar: `useGlobalMusicSync`, `fetch-artist-image` (via `artistImageCache`), `coverPalette.extractPaletteFromImage`, `PlayerGradeDialog`, chat/karaoke/músicas tocadas já existentes.
 
-## 3. Tela 2 — Boas-vindas (`WelcomeScreen.tsx`)
+## Dados
 
-Reescrita para bater com o mockup:
-- **Background**: `thumb` do canal (campo `empresa_config.thumb` / `capa` — uso o que existir; hoje o `PlayerHub` já busca `logo` e `nome`, vou estender `public-player-data` e a query autenticada para trazer também `thumb`). Cover, sem blur, com leve overlay escuro `linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55))` para legibilidade.
-- **Canto sup. esquerdo**: texto `"bem vindo de volta"` em Lufga bold, lowercase, ~40px, branco.
-- **Abaixo do texto**: card do avatar — thumbnail 3D estilo memoji (mantém o avatar do perfil se houver, senão placeholder 3D genérico), rótulo com nome + estrelas (rank já existente) + pontos.
-- **Hover no avatar**: aparece ícone lápis flutuante no canto sup. direito do card + botão "sair" abaixo (como no mockup).
-- **Se não logado**: mesmo card mostra CTA "entrar com google" (usa `lovable.auth.signInWithOAuth('google')` já existente no `AccessScreen`). Nesse caso não há auto-avanço.
-- **Auto-avanço**: se logado e sem interação por 3s, mostra no canto inf. esquerdo o pill `entrando automático em 3…2…1` (Lufga medium, fundo `rgba(255,255,255,.08)`, radius 10px, padding 10x14). Ao zerar, `onContinue()`. Qualquer hover/click no avatar cancela o timer.
-- Cantos arredondados dos cards: **28px** (bate com Apple TV / mockup).
+- Últimas 50 músicas: query em `music_history` do owner do canal (edge `public-player-data` já retorna histórico; ampliar `limit` para 50).
+- Programa no ar + a seguir: já vem de `programas` / grade atual usada em `PlayerHome`.
+- Foto locutor: `apresentadores.foto_url` do programa atual.
+- Palette do gradiente: `extractPaletteFromImage(fotoLocutor)` → CSS `linear-gradient(135deg, c1, c2)`.
 
-## 4. Tela 3 — Home Player (`PlayerHome.tsx`)
+## Timeshift 5 min (áudio)
 
-Reestruturação completa da home:
+- HLS.js configurado com `backBufferLength: 300` já mantém segmentos em memória.
+- Scrubbing: setar `audio.currentTime = liveEdge - offset` (0–300 s).
+- Botão "ao vivo" volta para `liveSyncPosition`.
+- Se o stream não permitir seek retroativo (algumas origens rejeitam), esconder a parte "-5 min" e manter só barra "ao vivo" (fallback silencioso).
 
-### Header
-- Nav lowercase Lufga: `home · streamings · on demand · buscar` alinhado à esquerda, item ativo com sublinhado fino branco.
-- Campo `buscar` como pill com borda `rgba(255,255,255,.25)` + ícone lupa.
-- Canto sup. direito: avatar do usuário + logo do canal (empresa).
+## Navegação
 
-### Background
-- `thumb` do canal ocupa a viewport (mesmo overlay do welcome).
+- Teclado espacial já existente é aplicado nos elementos com `data-focusable`: switcher, cada pill, card no ar, painel a seguir, ⊕, timeshift, play/pause.
+- Carrossel de histórico avança sozinho quando nova música entra (animação slide + fade da nova capa entrando da direita, empurrando as antigas para a esquerda).
 
-### Linha de cards (regra: **sempre 1 linha visível**)
-Container flex horizontal, gap 20px, altura fixa (~230px), cards com radius 28px.
+## Fora de escopo
 
-1. **Card OUVIR** (streaming áudio)
-   - Fundo: degradê gerado a partir de **2 cores dominantes da foto do locutor no ar** (uso `src/lib/coverPalette.ts` que já existe — extraio 2 amostras e faço `linear-gradient(135deg, c1, c2)`).
-   - Chip `ouvir` no topo esquerdo.
-   - Foto do locutor recortada à direita (mask com fade suave para a esquerda).
-   - Texto: `no ar` / `<nome do programa>` (bold) / `HH:MM/HH:MM`.
-2. **Card ASSISTIR** (streaming vídeo)
-   - Fundo: imagem do artista tocando agora, tratada P&B + `opacity: .64` sobre base preta.
-   - Chip `assistir` topo esquerdo.
-   - `tocando` / `<nome música>` (bold) / `<artista>`.
-3. **Card MINHA PLAYLIST** (condicional: logado **e** com músicas curtidas)
-   - Fundo azul acinzentado com ícone 3D de notas musicais (uso ícone já existente ou emoji `🎵` estilizado 3D — se necessário gero um asset PNG transparente).
-   - Label `minha playlist`.
-
-### Navegação por linhas
-- Mostrar sempre **uma** linha por vez. As outras linhas (streamings/on demand/etc já existentes no `PlayerHome` atual) viram "páginas verticais" que trocam via:
-  - Scroll wheel (debounced, 1 troca por ~500ms).
-  - Setas ↑ ↓ do teclado para trocar de linha.
-  - Setas ← → para focar entre os cards da linha atual (com anel de foco sutil).
-- Transição: crossfade + translateY(24px) 400ms cubic-bezier(.22,1,.36,1).
-- Indicador de linha discreto na lateral direita (bolinhas verticais).
-
-### Logo Nexo Player
-- PNG anexado (`user-uploads://LOGO_-_NEXO_PLAYER.png`) importado via lovable-assets.
-- Fixo no canto inferior direito, `opacity: .40`, altura ~40px, junto do botão `?` de ajuda existente.
-
-## 5. Dados adicionais necessários
-
-- `public-player-data` (edge function) e a query autenticada devem retornar `empresa.thumb` (se não existir a coluna, uso `capa` ou `logo` como fallback). **Não** crio migration nova a menos que confirme falta da coluna — checo `types.ts` antes.
-- Reaproveita `useGlobalMusicSync` (música/artista tocando) e `EPG` atual (programa no ar + horários).
-
-## 6. Escopo e não-escopo
-
-**Dentro**: `SplashScreen.tsx`, `WelcomeScreen.tsx`, `PlayerHome.tsx` (header + primeira linha + navegação entre linhas), Lufga global no scope do player, logo Nexo Player, novo loader do splash, extração de paleta para o card Ouvir.
-
-**Fora** (mantém como está): telas `Streamings`, `On Demand`, `Catálogo`, Player em execução (bottom bar), Chat, Grade EPG, Shopping — só os cards de entrada da Home mudam.
-
-## Arquivos previstos
-
-- `src/index.css` — @font-face Lufga + escopo `.player-scope`.
-- `src/pages/player/SplashScreen.tsx` — novo `SplashRingLoader`.
-- `src/pages/player/WelcomeScreen.tsx` — reescrita seguindo mockup.
-- `src/pages/player/PlayerHome.tsx` — novo header + linhas paginadas + navegação teclado/scroll.
-- `src/pages/player/PlayerHub.tsx` — wrapper `.player-scope` + fetch de `thumb`.
-- `src/pages/player/hooks/useRowPager.ts` — novo hook para navegação vertical entre linhas.
-- `src/assets/nexo-player-logo.png.asset.json` — logo via lovable-assets.
-- `supabase/functions/public-player-data/index.ts` — incluir `thumb` no retorno (só se ainda não vier).
-
-Confirma que posso seguir? Se sim, implemento tudo de uma vez.
+- Não altero `WelcomeScreen`, `PlayerHome`, nem player de vídeo.
+- Não crio novo bucket/edge para gravar áudio no servidor — o timeshift usa buffer client-side do HLS (5 min é o que o HLS mantém em memória sem custo de storage). Deixo comentário no código explicando o trade-off caso queira depois virar server-side.
