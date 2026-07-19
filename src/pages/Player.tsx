@@ -2115,6 +2115,7 @@ export default function PlayerPage() {
       if (!newMuted) autoplayMutedRef.current = false;
       if (videoRef.current) videoRef.current.muted = newMuted;
       if (audioRef.current) audioRef.current.muted = newMuted;
+      try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
       return newMuted;
     });
   }, []);
