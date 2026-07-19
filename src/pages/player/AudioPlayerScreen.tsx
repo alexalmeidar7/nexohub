@@ -616,18 +616,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 );
               })}
             </div>
-            {/* Indicador de posição do carrossel */}
-            {history.length > 1 && (
-              <div className="absolute bottom-2 left-4 right-16 flex items-center gap-1 pointer-events-none">
-                {Array.from({ length: Math.min(history.length, CAROUSEL_VISIBLE) }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[2px] flex-1 rounded-full transition-all"
-                    style={{ background: i === activeIndex ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.15)" }}
-                  />
-                ))}
-              </div>
-            )}
           </div>
 
 
