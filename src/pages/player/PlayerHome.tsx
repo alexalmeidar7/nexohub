@@ -1068,13 +1068,13 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       }}
     >
       {image ? (
-        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.9 }} />
+        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
           <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 100%)" }} />
       <div className="relative z-[1] p-4 flex flex-col h-full">
         <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
         <div className="mt-auto">
