@@ -1132,6 +1132,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
 
+  const [activeRow, setActiveRow] = useState(0);
+  const ROW_COUNT = 2;
+
+
+
   // TV-style keyboard navigation between focusable cards/buttons
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
