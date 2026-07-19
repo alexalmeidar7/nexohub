@@ -931,15 +931,15 @@ export default function WelcomeScreen({
             {(() => {
               const inputStyle: React.CSSProperties = {
                 backgroundColor: "#323431",
-                border: "1.5px solid rgba(217,217,217,0.55)",
+                border: "1px solid #d9d9d9",
                 color: "#d9d9d9",
-                height: 42,
+                height: 44,
                 borderRadius: 10,
                 padding: "0 14px",
                 fontSize: 13,
                 width: "100%",
                 outline: "none",
-                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+                boxShadow: "0 0 0 1px rgba(217,217,217,0.15)",
                 transition: "border-color .15s ease, box-shadow .15s ease",
               };
               const formatWhatsapp = (raw: string) => {
