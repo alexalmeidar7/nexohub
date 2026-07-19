@@ -569,27 +569,6 @@ function HeroBanner({
           </div>
         </button>
 
-        {/* Minha playlist card */}
-        <button
-          onClick={onPlaylist}
-          data-tv-focusable
-          className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
-          style={{
-            ...cardBase,
-            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.35) 0%, hsla(var(--player-accent) / 0.15) 100%)",
-            border: "1px solid rgba(255,255,255,0.1)",
-          }}
-        >
-          <div className="absolute right-3 bottom-2 opacity-90 pointer-events-none">
-            <Music className="w-[110px] h-[110px] text-white/80" strokeWidth={1.3} />
-          </div>
-          <div className="relative z-[1] p-4 flex flex-col h-full">
-            <div className="mt-auto">
-              <p className="text-[18px] font-semibold text-white leading-tight">minha</p>
-              <p className="text-[18px] font-semibold text-white leading-tight">playlist</p>
-            </div>
-          </div>
-        </button>
       </div>
 
       {/* Bottom-right help + nexo logo */}
