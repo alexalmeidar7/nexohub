@@ -53,7 +53,10 @@ interface WelcomeScreenProps {
   onContinue: () => void;
   onLoginSuccess?: () => void;
   initialEditOpen?: boolean;
+  userSlug?: string | null;
+  publicUserId?: string | null;
 }
+
 
 const COUNTDOWN_SECONDS = 3;
 
@@ -66,7 +69,10 @@ export default function WelcomeScreen({
   onContinue,
   onLoginSuccess,
   initialEditOpen = false,
+  userSlug = null,
+  publicUserId = null,
 }: WelcomeScreenProps) {
+
   const { user, signOut } = useAuth();
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
@@ -176,9 +182,12 @@ export default function WelcomeScreen({
       img.src = url;
     });
 
-  // Poll now-playing every 4s and react instantly to artist changes
+  // Poll now-playing every 4s and react instantly to artist changes.
+  // Works for authenticated owner (via localStorage populated by useGlobalMusicSync)
+  // AND for public/slug flow (via public-player-data edge function on the tenant).
   useEffect(() => {
-    if (!user?.id) return;
+    const hasSlug = !!(userSlug && userSlug !== ":userSlug");
+    if (!user?.id && !hasSlug && !publicUserId) return;
     let cancelled = false;
 
     const applyArtistImage = async (artista: string) => {
@@ -198,13 +207,33 @@ export default function WelcomeScreen({
       try { await preloadImage(url); } catch {}
       if (cancelled || lastArtistRef.current?.toLowerCase() !== key) return;
       setArtistImg(url);
-      // Reveal the new artist bg immediately when it becomes available
       setShowArtistBg(true);
     };
 
+    const readCurrent = async (): Promise<{ titulo: string; artista: string } | null> => {
+      // Prefer public endpoint whenever we're on a tenant slug — the auth
+      // user's local music data may belong to a different tenant.
+      if (hasSlug) {
+        try {
+          const { data } = await supabase.functions.invoke("public-player-data", {
+            body: { slug: userSlug, section: "now_playing" },
+          });
+          if (data?.artista || data?.musica) {
+            return { titulo: String(data.musica || ""), artista: String(data.artista || "") };
+          }
+        } catch {}
+        return null;
+      }
+      if (user?.id) {
+        const d = getMusicData(user.id);
+        if (d?.music) return { titulo: d.music.titulo, artista: d.music.artista };
+      }
+      return null;
+    };
+
     const tick = async () => {
-      const d = getMusicData(user.id);
-      if (!d?.music) {
+      const cur = await readCurrent();
+      if (!cur) {
         if (!cancelled) {
           setNowPlaying((prev) => (prev === null ? prev : null));
           setArtistImg((prev) => (prev === null ? prev : null));
@@ -212,7 +241,7 @@ export default function WelcomeScreen({
         }
         return;
       }
-      const { titulo, artista } = d.music;
+      const { titulo, artista } = cur;
       const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
       if (!artista || isBreak) {
         if (!cancelled) {
@@ -224,24 +253,23 @@ export default function WelcomeScreen({
       }
       const key = artista.toLowerCase();
       const sameArtist = lastArtistRef.current?.toLowerCase() === key;
-      // Only update nowPlaying when title or artist actually changed
       if (!cancelled) {
         setNowPlaying((prev) => {
           if (prev && prev.titulo === titulo && prev.artista === artista) return prev;
           return { titulo, artista };
         });
       }
-      if (sameArtist) return; // same artist — do not swap background
+      if (sameArtist) return;
       lastArtistRef.current = artista;
       if (!cancelled) setShowArtistBg(false);
       setTimeout(() => { if (!cancelled) applyArtistImage(artista); }, 250);
     };
 
-
     tick();
     const id = setInterval(tick, 4000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [user?.id]);
+  }, [user?.id, userSlug, publicUserId]);
+
 
   // Alternate channel bg <-> artist bg every 5s (only when artist image available)
   useEffect(() => {
