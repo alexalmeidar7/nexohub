@@ -602,6 +602,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isNow = i === 0;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
+                const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 return (
                   <div
