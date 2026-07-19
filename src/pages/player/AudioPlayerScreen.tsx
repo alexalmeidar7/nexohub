@@ -472,6 +472,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </div>
       )}
 
+      {/* Toast de atalho de teclado */}
+      {kbdHint && (
+        <div
+          className="absolute top-20 left-1/2 -translate-x-1/2 z-40 px-4 py-1.5 rounded-full text-[12px] font-medium backdrop-blur-md border shadow-lg"
+          style={{ background: "rgba(0,0,0,0.55)", borderColor: "rgba(255,255,255,0.18)", color: "white" }}
+        >
+          {kbdHint}
+        </div>
+      )}
+
+
       {/* ============== TOP BAR ============== */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
         {/* Channel switcher */}
