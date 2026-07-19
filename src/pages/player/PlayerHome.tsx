@@ -217,13 +217,13 @@ function TopNavBar({
       </nav>
 
       {/* Inline search pill */}
-      <div ref={searchWrapRef} className="relative">
+      <div ref={searchWrapRef} className="relative flex-1 min-w-[160px] max-w-[380px]">
         <div
-          className="flex items-center gap-3 rounded-full px-5 py-2"
+          className="flex items-center gap-3 rounded-full px-4 sm:px-5 py-2"
           style={{
             border: "1px solid rgba(255,255,255,0.35)",
             background: "rgba(255,255,255,0.02)",
-            minWidth: "260px",
+            width: "100%",
           }}
         >
           <input
