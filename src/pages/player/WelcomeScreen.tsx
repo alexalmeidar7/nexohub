@@ -199,23 +199,38 @@ export default function WelcomeScreen({
     const tick = async () => {
       const d = getMusicData(user.id);
       if (!d?.music) {
-        if (!cancelled) { setNowPlaying(null); setArtistImg(null); lastArtistRef.current = null; }
+        if (!cancelled) {
+          setNowPlaying((prev) => (prev === null ? prev : null));
+          setArtistImg((prev) => (prev === null ? prev : null));
+          lastArtistRef.current = null;
+        }
         return;
       }
       const { titulo, artista } = d.music;
       const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
       if (!artista || isBreak) {
-        if (!cancelled) { setNowPlaying(null); setArtistImg(null); lastArtistRef.current = null; }
+        if (!cancelled) {
+          setNowPlaying((prev) => (prev === null ? prev : null));
+          setArtistImg((prev) => (prev === null ? prev : null));
+          lastArtistRef.current = null;
+        }
         return;
       }
-      if (!cancelled) setNowPlaying({ titulo, artista });
       const key = artista.toLowerCase();
-      if (lastArtistRef.current?.toLowerCase() === key) return; // same artist, nothing to do
+      const sameArtist = lastArtistRef.current?.toLowerCase() === key;
+      // Only update nowPlaying when title or artist actually changed
+      if (!cancelled) {
+        setNowPlaying((prev) => {
+          if (prev && prev.titulo === titulo && prev.artista === artista) return prev;
+          return { titulo, artista };
+        });
+      }
+      if (sameArtist) return; // same artist — do not swap background
       lastArtistRef.current = artista;
-      // Fade out current artist bg before swapping (if any)
       if (!cancelled) setShowArtistBg(false);
       setTimeout(() => { if (!cancelled) applyArtistImage(artista); }, 250);
     };
+
 
     tick();
     const id = setInterval(tick, 4000);
