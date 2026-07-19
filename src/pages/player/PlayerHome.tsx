@@ -1002,36 +1002,37 @@ function TrendingCard({ item, idx, channels, onClick }: {
   );
 }
 
-/* ─── Catalog Card ─── */
+/* ─── Catalog Card (horizontal, matches Ouvir/Assistir style) ─── */
 function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       data-tv-focusable
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      className="flex-shrink-0 relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
       style={{
-        width: "160px",
-        aspectRatio: "2/3",
-        background: "hsla(var(--player-accent) / 0.06)",
-        border: "1px solid hsla(var(--player-accent) / 0.1)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.border = "3px solid #fff";
-        e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.1)";
-        e.currentTarget.style.boxShadow = "none";
+        width: "260px",
+        height: "160px",
+        borderRadius: "22px",
+        background: "#1a1a1a",
+        border: "1px solid rgba(255,255,255,0.08)",
+        fontFamily: "'Lufga', system-ui, sans-serif",
       }}
     >
       {image ? (
-        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
+        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.9 }} />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
           <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
-
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
+      <div className="relative z-[1] p-4 flex flex-col h-full">
+        <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
+        <div className="mt-auto">
+          <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[70%] lowercase">{title}</p>
+          {subtitle && <p className="text-[12px] text-white/70 mt-0.5 truncate">{subtitle}</p>}
+        </div>
+      </div>
     </button>
   );
 }
@@ -1603,7 +1604,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
     { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
     { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
-    ...(user && shopActive ? [{ icon: ShoppingBag, label: "loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
+    
   ];
 
   // Presenter photo of currently on-air program
@@ -1625,7 +1626,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const container = contentScrollRef.current;
     if (!container) return;
 
-    const sectionIds = ["section-streaming", "section-content", "section-shop"];
+    const sectionIds = ["section-streaming", "section-content"];
     const handleScroll = () => {
       const scrollTop = container.scrollTop;
       const containerHeight = container.clientHeight;
@@ -1733,47 +1734,43 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
-                {/* Catálogo (Canais ao Vivo removido) */}
+                {/* On Demand */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
                     <div className="mb-8">
                       <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
                       <div className="flex gap-3">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-[22px] bg-white/8" style={{ width: 260, height: 160 }} />)}
                       </div>
                     </div>
                   ) : (
-                    <ContentRow title="Catálogo" scrollRoot={contentScrollRef}>
-                      {/* Meu Top 10 */}
+                    <ContentRow title="on demand" scrollRoot={contentScrollRef}>
+                      {/* Meu Top 10 — mesmo estilo dos cards ouvir/assistir */}
                       {user && (
                         <button
                           key="__top10__"
                           data-tv-focusable
                           onClick={() => goToTop10()}
-                          className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer flex flex-col items-center justify-center gap-3"
+                          className="flex-shrink-0 relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
                           style={{
-                            width: "160px",
-                            aspectRatio: "2/3",
-                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.5) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.3) 100%)",
-                            border: "1px solid hsla(var(--player-accent) / 0.15)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.border = "3px solid #fff";
-                            e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.15)";
-                            e.currentTarget.style.boxShadow = "none";
+                            width: "260px",
+                            height: "160px",
+                            borderRadius: "22px",
+                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            fontFamily: "'Lufga', system-ui, sans-serif",
                           }}
                         >
-                          <div className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-[88px] h-[88px] rounded-full overflow-hidden border-2 shadow-lg" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
                             <img src={profileAvatar || "/avatars/usr-default.png"} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <div className="flex flex-col items-center gap-0.5 px-2">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "hsla(var(--player-accent) / 0.8)" }}>♫ playlist</span>
-                            <span className="text-base font-black text-white leading-tight">Meu</span>
-                            <span className="text-2xl font-black leading-none" style={{ color: "hsl(var(--player-accent))" }}>TOP 10</span>
-                            <span className="text-[9px] text-white/40 mt-1">♥ músicas curtidas</span>
+                          <div className="relative z-[1] p-4 flex flex-col h-full">
+                            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">♫ playlist</span>
+                            <div className="mt-auto">
+                              <p className="text-[13px] text-white/70 leading-none lowercase">meu</p>
+                              <p className="text-[22px] font-bold text-white leading-tight">TOP 10</p>
+                              <p className="text-[11px] text-white/60 mt-0.5">♥ músicas curtidas</p>
+                            </div>
                           </div>
                         </button>
                       )}
@@ -1796,65 +1793,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 </section>
 
 
-                {user && shopActive && (
-                  <section id="section-shop" className="scroll-mt-4 pt-4">
-                    <h2 className="text-lg font-bold mb-4 text-white">Loja</h2>
-                    {!dataLoaded ? (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                        {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/8" />)}
-                      </div>
-                    ) : shopProducts.length === 0 ? (
-                      <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                        Nenhum produto disponível
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                        {shopProducts.map((product: any) => (
-                          <div
-                            key={product.id}
-                            className="group rounded-xl overflow-hidden transition-all duration-300"
-                            style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
-                            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
-                            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-                          >
-                            <div className="aspect-square overflow-hidden relative">
-                              {product.image_url ? (
-                                <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-transparent">
-                                  <ShoppingBag className="h-8 w-8 text-white/20" />
-                                </div>
-                              )}
-                              <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
-                                R$ {product.price.toFixed(2).replace(".", ",")}
-                              </div>
-                              {product.stock <= 3 && (
-                                <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-yellow-500/90 text-black">
-                                  {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
-                                </span>
-                              )}
-                            </div>
-                            <div className="p-3 flex flex-col gap-1.5">
-                              <p className="text-xs font-bold text-white truncate group-hover:text-player-accent transition-colors">{product.name}</p>
-                              {product.description && <p className="text-[10px] text-white/40 line-clamp-2">{product.description}</p>}
-                              {product.payment_url && (
-                                <a
-                                  href={product.payment_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                                  style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
-                                >
-                                  Comprar
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                )}
+
               </div>
             </>
           )}
@@ -1903,65 +1842,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </Suspense>
           )}
 
-          {visibleSection === "shop" && shopActive && (
-            <div className="px-6 sm:px-10 pt-8 pb-8">
-              <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
-              {!dataLoaded ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/8" />)}
-                </div>
-              ) : shopProducts.length === 0 ? (
-                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum produto disponível
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                  {shopProducts.map((product: any) => (
-                    <div
-                      key={product.id}
-                      className="group rounded-xl overflow-hidden transition-all duration-300"
-                      style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-                    >
-                      <div className="aspect-square overflow-hidden relative">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-transparent">
-                            <ShoppingBag className="h-8 w-8 text-white/20" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
-                          R$ {product.price.toFixed(2).replace(".", ",")}
-                        </div>
-                        {product.stock <= 3 && (
-                          <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-yellow-500/90 text-black">
-                            {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-3 flex flex-col gap-1.5">
-                        <p className="text-xs font-bold text-white truncate group-hover:text-player-accent transition-colors">{product.name}</p>
-                        {product.description && <p className="text-[10px] text-white/40 line-clamp-2">{product.description}</p>}
-                        {product.payment_url && (
-                          <a
-                            href={product.payment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
-                          >
-                            Comprar
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
