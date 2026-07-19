@@ -224,7 +224,7 @@ export default function WatchProfilePopup({
         {/* Liked songs */}
         <div className="px-4 py-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Heart size={12} fill="hsl(var(--player-accent))" style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
           </div>
           {loading ? (
