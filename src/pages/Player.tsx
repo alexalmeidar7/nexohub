@@ -450,18 +450,29 @@ export default function PlayerPage() {
     }
   }, [user]);
 
-  useEffect(() => {
+  const refreshProfileFromDb = useCallback(async () => {
     if (!user) return;
-    supabase
+    const { data } = await supabase
       .from("profiles")
       .select("nome, avatar_url")
       .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.nome) setProfileName(data.nome);
-        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
-      });
+      .single();
+    if (data?.nome) setProfileName(data.nome);
+    if (data?.avatar_url) setProfileAvatar(data.avatar_url);
   }, [user]);
+
+  useEffect(() => { void refreshProfileFromDb(); }, [refreshProfileFromDb]);
+
+  // Sincroniza nome/avatar em qualquer aba/tela do player sem recarregar.
+  useEffect(() => {
+    return onProfileChanged((detail) => {
+      if (detail.nome != null) setProfileName(detail.nome);
+      if (detail.avatar_url != null) setProfileAvatar(detail.avatar_url);
+      if (detail.reason === "switch" || detail.reason === "edit") {
+        void refreshProfileFromDb();
+      }
+    });
+  }, [refreshProfileFromDb]);
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
