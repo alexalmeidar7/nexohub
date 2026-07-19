@@ -320,6 +320,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Pills */}
           <nav className="ml-6 flex items-center gap-2">
+            <button
+              onClick={onBackHome}
+              className="px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border bg-white/6 border-white/10 text-white/85 hover:bg-white/15 hover:text-white"
+              aria-label="Voltar para Home"
+              data-focusable
+            >
+              <ArrowLeft size={12} />
+              voltar
+            </button>
             <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={seekLive} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
             <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
