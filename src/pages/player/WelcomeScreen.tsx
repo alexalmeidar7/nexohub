@@ -1432,7 +1432,7 @@ export default function WelcomeScreen({
                 disabled={!newProfileName.trim()}
                 className="px-4 py-2 rounded-lg text-sm bg-[#323431] text-white border border-white/10 hover:bg-[#3a3c39] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                salvar perfil
+                adicionar perfil
               </button>
             </div>
           </div>
