@@ -657,7 +657,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </button>
             <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
-            <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
+            <PillBtn active={karaokeEnabled} label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
             <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
           </nav>
         </div>
@@ -1086,33 +1086,65 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         {/* play row */}
         <div className="mt-4 flex items-center justify-between">
           {/* volume */}
-          <div
-            className="relative flex items-center gap-2"
-            onMouseEnter={() => setVolHover(true)}
-            onMouseLeave={() => setVolHover(false)}
-          >
-            <button
-              onClick={() => onSetMuted(!muted)}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
-              data-focusable
-              aria-label="Volume"
-            >
-              {muted || volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
-            </button>
-            <div
-              className="overflow-hidden transition-all"
-              style={{ width: volHover ? 120 : 0 }}
-            >
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={muted ? 0 : volume}
-                onChange={(e) => { const v = Number(e.target.value); onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
-                className="w-28 accent-white"
-              />
-            </div>
-          </div>
+          {(() => {
+            const vol = muted ? 0 : volume;
+            const expanded = volHover;
+            return (
+              <div
+                className="relative flex items-center"
+                onMouseEnter={() => setVolHover(true)}
+                onMouseLeave={() => setVolHover(false)}
+              >
+                <div
+                  className="flex items-center rounded-full backdrop-blur-md transition-all duration-300 ease-out"
+                  style={{
+                    background: expanded ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    paddingRight: expanded ? 14 : 0,
+                    boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
+                  }}
+                >
+                  <button
+                    onClick={() => onSetMuted(!muted)}
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
+                    data-focusable
+                    aria-label={muted ? "Ativar som" : "Silenciar"}
+                    title={muted ? "Ativar som" : "Silenciar"}
+                  >
+                    {muted || volume === 0
+                      ? <VolumeX size={16} className="text-white/80" />
+                      : <Volume2 size={16} className="text-white" />}
+                  </button>
+                  <div
+                    className="overflow-hidden transition-all duration-300 ease-out"
+                    style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
+                  >
+                    <div className="flex items-center gap-3 pl-1">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={vol}
+                        onChange={(e) => { const v = Number(e.target.value); onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
+                        aria-label="Volume"
+                        className="nexo-volume-slider"
+                        style={{
+                          width: 96,
+                          background: `linear-gradient(to right, #ffffff 0%, #ffffff ${vol}%, rgba(255,255,255,0.18) ${vol}%, rgba(255,255,255,0.18) 100%)`,
+                        }}
+                      />
+                      <span
+                        className="text-[10px] font-semibold tabular-nums tracking-wider text-white/70 w-6 text-right select-none"
+                      >
+                        {vol}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
 
           {/* play/pause central */}
           <button
