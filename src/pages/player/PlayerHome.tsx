@@ -2052,11 +2052,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   and slides up into view when activeRow === 1. The rest of the page stays still. */}
               <div
                 data-tv-row="1"
-                className="absolute left-8 sm:left-12 z-20 flex items-end gap-5"
+                className="absolute left-4 sm:left-8 md:left-12 right-4 sm:right-8 md:right-12 z-20 flex items-end gap-5"
                 style={{
                   bottom: "2.5rem",
-                  right: "2.5rem",
-                  transform: activeRow === 1 ? "translateY(0)" : "translateY(108%)",
+                  transform: activeRow === 1 ? "translateY(0)" : "translateY(calc(100% + 4rem))",
                   opacity: activeRow === 1 ? 1 : 0,
                   pointerEvents: activeRow === 1 ? "auto" : "none",
                   willChange: "transform, opacity",
