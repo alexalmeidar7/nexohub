@@ -87,7 +87,7 @@ export default function PlayerHub() {
   }, [user, userSlug]);
 
 
-  const [splashDone, setSplashDone] = useState(false);
+  const [splashDone, setSplashDone] = useState(skipToHome);
   const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(false);
 
   const onSplashFinish = useCallback(() => {
