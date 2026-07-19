@@ -138,12 +138,19 @@ export default function PlayerHub() {
 
 
   const onLoginSuccess = useCallback(() => {
-    transitionTo("welcome");
-  }, [transitionTo]);
+    // Após login, se o fluxo pediu ?step=home, vai direto para home.
+    transitionTo(skipToHome ? "home" : "welcome");
+  }, [transitionTo, skipToHome]);
 
   const onWelcomeContinue = useCallback(() => {
+    try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    const next = new URLSearchParams(searchParams);
+    if (next.get("step") !== "home") {
+      next.set("step", "home");
+      setSearchParams(next, { replace: true });
+    }
     transitionTo("home");
-  }, [transitionTo]);
+  }, [transitionTo, storageKey, searchParams, setSearchParams]);
 
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
