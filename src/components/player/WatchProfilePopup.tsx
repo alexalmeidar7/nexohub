@@ -1,6 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
+import { toast } from "sonner";
+
+const AVATARS = [
+  "/avatars/usr-default.png",
+  "/avatars/usr-1.png",
+  "/avatars/usr-2.png",
+  "/avatars/usr-3.png",
+  "/avatars/usr-4.png",
+  "/avatars/usr-5.png",
+  "/avatars/usr-6.png",
+  "/avatars/usr-7.png",
+  "/avatars/usr-8.png",
+];
 
 interface LikedSong {
   titulo: string;
@@ -18,6 +31,7 @@ interface WatchProfilePopupProps {
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
   onLogout?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
@@ -50,6 +64,7 @@ export default function WatchProfilePopup({
   onEditProfile,
   onSwitchProfile,
   onLogout,
+  onAvatarChange,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
@@ -57,6 +72,31 @@ export default function WatchProfilePopup({
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
+  const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
+
+  useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
+
+  const handlePickAvatar = async (url: string) => {
+    if (!userId || savingAvatar) return;
+    setSavingAvatar(url);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", userId);
+      if (error) throw error;
+      setCurrentAvatar(url);
+      onAvatarChange?.(url);
+      toast.success("Avatar atualizado");
+      setPickerOpen(false);
+    } catch (err: any) {
+      toast.error("Não foi possível atualizar o avatar");
+    } finally {
+      setSavingAvatar(null);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -151,16 +191,25 @@ export default function WatchProfilePopup({
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-full overflow-hidden shrink-0"
+          <button
+            type="button"
+            onClick={() => setPickerOpen(v => !v)}
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 group"
             style={{ border: "2px solid #ffffff" }}
+            aria-label="Alterar avatar"
+            title="Alterar avatar"
           >
             <img
-              src={avatarUrl || "/avatars/usr-default.png"}
+              src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
               alt={userName}
               className="w-full h-full object-cover"
             />
-          </div>
+            <span
+              className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Camera size={14} className="text-white" />
+            </span>
+          </button>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-sm font-bold text-white truncate">{userName}</span>
             {userEmail && (
@@ -184,6 +233,54 @@ export default function WatchProfilePopup({
         </div>
 
         <div className="w-full h-px bg-white/8" />
+
+        {/* Avatar picker */}
+        {pickerOpen && (
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Escolher avatar</span>
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="text-white/40 hover:text-white text-[10px]"
+              >
+                cancelar
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {AVATARS.map((av) => {
+                const active = (currentAvatar || avatarUrl) === av;
+                const saving = savingAvatar === av;
+                return (
+                  <button
+                    key={av}
+                    onClick={() => handlePickAvatar(av)}
+                    disabled={!!savingAvatar}
+                    className="relative aspect-square rounded-full overflow-hidden transition-transform hover:scale-105 disabled:opacity-60"
+                    style={{
+                      border: active ? "2px solid #ffffff" : "2px solid rgba(255,255,255,0.15)",
+                    }}
+                    title="Selecionar avatar"
+                  >
+                    <img src={av} alt="" className="w-full h-full object-cover" />
+                    {active && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Check size={12} className="text-white" />
+                      </span>
+                    )}
+                    {saving && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[9px] text-white">
+                        ...
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {pickerOpen && <div className="w-full h-px bg-white/8" />}
+
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-1 px-4 py-3">
