@@ -725,7 +725,7 @@ export default function WelcomeScreen({
         const googleName = meta.full_name || meta.name || displayName;
         const googlePic = meta.avatar_url || meta.picture || displayAvatar;
         return (
-          <div className="absolute top-6 right-8 z-20 animate-fade-in">
+          <div className="absolute top-10 sm:top-14 right-8 sm:right-14 z-20 animate-fade-in">
             <div
               className="flex items-center gap-3 pl-2 pr-4 py-2 rounded-full"
               style={{
