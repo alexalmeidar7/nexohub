@@ -132,11 +132,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
 
   // ---- Estado de carregamento/erro da foto do locutor ----
+  // Só reseta quando a URL da foto REALMENTE muda (troca de programa/apresentador),
+  // não a cada troca de música. Se a URL já foi carregada antes, mantém "loaded".
+  const loadedLocutorUrlRef = useRef<string | null>(null);
   const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(
     locutorFoto ? "loading" : "error"
   );
   useEffect(() => {
-    setLocutorImgState(locutorFoto ? "loading" : "error");
+    if (!locutorFoto) {
+      loadedLocutorUrlRef.current = null;
+      setLocutorImgState("error");
+      return;
+    }
+    if (loadedLocutorUrlRef.current === locutorFoto) {
+      setLocutorImgState("loaded");
+    } else {
+      setLocutorImgState("loading");
+    }
   }, [locutorFoto]);
   const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
   const locutorIniciais = apresentadorNome
@@ -867,7 +879,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 <img
                   src={locutorFoto}
                   alt={apresentadorNome || ""}
-                  onLoad={() => setLocutorImgState("loaded")}
+                  onLoad={() => {
+                    loadedLocutorUrlRef.current = locutorFoto;
+                    setLocutorImgState("loaded");
+                  }}
                   onError={() => setLocutorImgState("error")}
                   className="absolute inset-0 w-full h-full object-cover object-top opacity-95 transition-opacity duration-500"
                   style={{
