@@ -350,10 +350,12 @@ function TopNavBar({
               <WatchProfilePopup
                 userId={userId}
                 userName={userName || "Visitante"}
-                avatarUrl={avatarUrl || null}
+                userEmail={userEmail || null}
+                avatarUrl={googleAvatarUrl || avatarUrl || null}
                 radioName={radioName}
                 onClose={() => setProfileOpen(false)}
                 onEditProfile={onEditProfile}
+                onSwitchProfile={onSwitchProfile}
                 onLogout={showLogout ? onLogout : undefined}
               />
             </Suspense>
