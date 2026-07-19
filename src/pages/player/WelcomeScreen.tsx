@@ -1004,7 +1004,13 @@ export default function WelcomeScreen({
               return (
                 <div className="space-y-5">
                   <style>{`
-                    .wsp-input:focus { border-color: #d9d9d9 !important; box-shadow: 0 0 0 3px rgba(217,217,217,0.08); }
+                    .wsp-input:hover:not(:focus) { border-color: #ffffff !important; }
+                    .wsp-input:focus {
+                      border-color: #C6F03C !important;
+                      background-color: #3a3d38 !important;
+                      color: #ffffff !important;
+                      box-shadow: 0 0 0 3px rgba(198,240,60,0.25), 0 0 12px rgba(198,240,60,0.15) !important;
+                    }
                     .wsp-input::placeholder { color: #d9d9d9; opacity: 0.28; }
                   `}</style>
 
