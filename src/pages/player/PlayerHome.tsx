@@ -600,7 +600,7 @@ function HeroBanner({
       </div>
 
       {/* Bottom-right help + nexo logo */}
-      <div className="absolute bottom-10 right-10 z-10 flex items-center gap-4">
+      <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
         <button
           className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
           style={{ border: "1px solid rgba(255,255,255,0.35)" }}
