@@ -174,22 +174,29 @@ function TopNavBar({
     <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
       {/* Nav links */}
       <nav className="flex items-center gap-6 sm:gap-10">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const isActive = activeKey === item.key;
           return (
             <button
               key={item.key}
               onClick={item.action}
               data-tv-focusable
-              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
+              data-tv-topnav={idx + 1}
+              title={`Atalho: ${idx + 1}`}
+              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
                 fontFamily: "'Lufga', system-ui, sans-serif",
               }}
+              onFocus={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
+              onBlur={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget && !isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
             >
               {item.label}
               <span
+                data-underline
                 className="absolute -bottom-1 left-0 w-full h-[2px] transition-all duration-300 ease-out"
                 style={{
                   background: isActive ? "#fff" : "transparent",
@@ -217,8 +224,25 @@ function TopNavBar({
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             placeholder="buscar"
-            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase"
+            data-tv-focusable
+            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
             style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+            onKeyDown={(e) => {
+              const el = e.currentTarget;
+              const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+              const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
+              const nav = (dir: "next" | "prev") => {
+                const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]")).filter(n => n.offsetParent !== null);
+                const i = nodes.indexOf(el as unknown as HTMLElement);
+                if (i < 0) return;
+                const t = dir === "next" ? nodes[i + 1] : nodes[i - 1];
+                if (t) { e.preventDefault(); el.blur(); t.focus(); }
+              };
+              if (e.key === "ArrowRight" && atEnd) nav("next");
+              else if (e.key === "ArrowLeft" && atStart) nav("prev");
+              else if (e.key === "ArrowDown" || e.key === "ArrowUp") { el.blur(); }
+              else if (e.key === "Escape") el.blur();
+            }}
           />
           <Search className="w-4 h-4 text-white/70 shrink-0" />
         </div>
@@ -299,7 +323,8 @@ function TopNavBar({
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105"
+            data-tv-focusable
+            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60"
             style={{
               borderRadius: "18px",
               background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
@@ -1240,6 +1265,41 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     }, 60);
     return () => window.clearTimeout(t);
   }, [activeRow]);
+
+  // Top menu keyboard shortcuts: 1-9 activate nav items, M focuses first, Esc blurs/closes
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const active = document.activeElement as HTMLElement | null;
+      const isTyping = !!active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable);
+
+      if (e.key === "Escape") {
+        if (active && typeof active.blur === "function") active.blur();
+        // Close open menus/popovers via outside click
+        document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        return;
+      }
+
+      if (isTyping) return;
+
+      if (/^[1-9]$/.test(e.key)) {
+        const btn = document.querySelector<HTMLElement>(`[data-tv-topnav="${e.key}"]`);
+        if (btn) {
+          e.preventDefault();
+          btn.focus();
+          btn.click();
+        }
+        return;
+      }
+
+      if (e.key === "m" || e.key === "M") {
+        const first = document.querySelector<HTMLElement>('[data-tv-topnav="1"]');
+        if (first) { e.preventDefault(); first.focus(); }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
 
 
   const { userSlug } = useParams();
