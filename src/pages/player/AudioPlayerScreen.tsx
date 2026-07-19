@@ -317,22 +317,33 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => { if (rafRef.current) clearTimeout(rafRef.current as any); };
   }, [audioRef, canal?.id, playing]);
 
-  const seekBySeconds = (secsBack: number) => {
+  const seekBySeconds = (secsBack: number, opts?: { forcePlay?: boolean }) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
     const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
     const clampedBack = Math.min(secsBack, Math.min(TIMESHIFT_WINDOW, end - start));
     const target = Math.max(start + 0.5, end - clampedBack);
+    const wasPaused = a.paused;
     try { a.currentTime = target; } catch {}
-    // garantir playback contínuo após o seek
-    if (a.paused) { void a.play().catch(() => {}); }
+    // Se pediu retomada explícita OU o player estava tocando, garantir playback
+    if (opts?.forcePlay || !wasPaused) {
+      const resume = () => { void a.play().catch(() => {}); };
+      if (a.readyState >= 2) resume();
+      else a.addEventListener("canplay", resume, { once: true });
+      // Sincroniza o estado do parent se estava pausado e forçamos play
+      if (opts?.forcePlay && wasPaused && !playing) onTogglePlay();
+    }
   };
-  const seekLive = () => {
+  const seekLive = (opts?: { forcePlay?: boolean }) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
+    const wasPaused = a.paused;
     try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
-    if (a.paused) { void a.play().catch(() => {}); }
+    if (opts?.forcePlay || !wasPaused) {
+      void a.play().catch(() => {});
+      if (opts?.forcePlay && wasPaused && !playing) onTogglePlay();
+    }
   };
 
   // ---- Atalhos de teclado (Space play/pause, ←/→ seek) ----
