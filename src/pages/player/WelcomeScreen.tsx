@@ -850,6 +850,7 @@ export default function WelcomeScreen({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setAuthMode("login")}
+                data-ws-focusable="true"
                 disabled={signingIn}
                 aria-busy={signingIn}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
