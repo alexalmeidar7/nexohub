@@ -1842,65 +1842,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             </Suspense>
           )}
 
-          {visibleSection === "shop" && shopActive && (
-            <div className="px-6 sm:px-10 pt-8 pb-8">
-              <h1 className="text-2xl font-bold mb-6 text-white">Loja</h1>
-              {!dataLoaded ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="w-full aspect-[3/4] rounded-xl bg-white/8" />)}
-                </div>
-              ) : shopProducts.length === 0 ? (
-                <div className="w-full h-40 rounded-xl bg-player-surface border border-player-border flex items-center justify-center text-player-muted-foreground text-sm">
-                  Nenhum produto disponível
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-                  {shopProducts.map((product: any) => (
-                    <div
-                      key={product.id}
-                      className="group rounded-xl overflow-hidden transition-all duration-300"
-                      style={{ background: "hsla(var(--player-accent) / 0.06)", border: "1px solid hsla(var(--player-accent) / 0.1)" }}
-                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.4)"; e.currentTarget.style.boxShadow = "0 8px 32px hsla(var(--player-accent) / 0.15)"; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "hsla(var(--player-accent) / 0.1)"; e.currentTarget.style.boxShadow = "none"; }}
-                    >
-                      <div className="aspect-square overflow-hidden relative">
-                        {product.image_url ? (
-                          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/5 to-transparent">
-                            <ShoppingBag className="h-8 w-8 text-white/20" />
-                          </div>
-                        )}
-                        <div className="absolute bottom-2 right-2 px-2 py-1 rounded-full text-xs font-bold text-white" style={{ background: "rgba(0,0,0,0.5)", border: "1px solid hsla(var(--player-accent) / 0.2)" }}>
-                          R$ {product.price.toFixed(2).replace(".", ",")}
-                        </div>
-                        {product.stock <= 3 && (
-                          <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-yellow-500/90 text-black">
-                            {product.stock === 1 ? "Último!" : `Restam ${product.stock}`}
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-3 flex flex-col gap-1.5">
-                        <p className="text-xs font-bold text-white truncate group-hover:text-player-accent transition-colors">{product.name}</p>
-                        {product.description && <p className="text-[10px] text-white/40 line-clamp-2">{product.description}</p>}
-                        {product.payment_url && (
-                          <a
-                            href={product.payment_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-1 w-full text-center text-[10px] font-bold py-2 rounded-lg transition-all uppercase tracking-wider text-white"
-                            style={{ background: "hsla(var(--player-accent) / 0.15)", border: "1px solid hsla(var(--player-accent) / 0.25)" }}
-                          >
-                            Comprar
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
