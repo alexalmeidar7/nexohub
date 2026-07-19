@@ -496,7 +496,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
+    <div
+      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+      style={{
+        background: "#050810",
+        fontFamily: "'Lufga', 'Inter', sans-serif",
+        opacity: exiting ? 0 : 1,
+        transform: exiting ? "scale(0.97)" : "scale(1)",
+        filter: exiting ? "blur(6px)" : "blur(0)",
+      }}
+    >
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {bgLayers.map((l, idx) => (
