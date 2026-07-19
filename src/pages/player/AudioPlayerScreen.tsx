@@ -599,10 +599,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
                 const isActive = depth === 0;
                 const isNow = i === 0;
+                const ago = secsAgoFor(t.horario);
+                const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
+                const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    className="absolute right-0 rounded-[32px] overflow-hidden shadow-2xl"
+                    onClick={canRewind ? () => seekBySeconds(ago) : undefined}
+                    role={canRewind ? "button" : undefined}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
@@ -650,9 +656,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                         tocando
                       </div>
-                    ) : isActive && (
-                      <div className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-md border border-white/20 text-white uppercase tracking-widest">
-                        #{i + 1}
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
+                        className="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/15 transition"
+                        aria-label={isLiked ? "Descurtir" : "Curtir"}
+                      >
+                        <Heart size={16} fill={isLiked ? "#ff3355" : "none"} stroke={isLiked ? "#ff3355" : "white"} />
+                      </button>
+                    )}
+
+                    {/* Hint de rewind (aparece no hover se dentro dos 5 min) */}
+                    {canRewind && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/35">
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-black text-[11px] font-semibold shadow-lg">
+                          <Rewind size={14} />
+                          voltar -{Math.round(ago)}s
+                        </div>
                       </div>
                     )}
 
