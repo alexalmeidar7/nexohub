@@ -921,9 +921,11 @@ export default function WelcomeScreen({
                             }}
                           />
                           <img
+                            key={sp.avatar_url}
                             src={sp.avatar_url}
                             alt={sp.name}
-                            className="relative w-full h-full object-cover"
+                            className="relative w-full h-full object-cover animate-avatar-in"
+                            style={{ animationDelay: `${250 + spIdx * 180}ms` }}
                             draggable={false}
                           />
                         </div>
