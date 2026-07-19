@@ -1759,6 +1759,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         if (video) goToPlayer(video.id);
                       }}
                       onPlaylist={() => goToTop10()}
+                      cardsVisible={activeRow === 0}
                     />
                     <TopNavBar
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
