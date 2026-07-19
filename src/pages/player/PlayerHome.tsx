@@ -1257,7 +1257,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       window.removeEventListener("keydown", handler);
       window.removeEventListener("keydown", enterHandler);
     };
-  }, []);
+  }, [activeRow]);
+
 
   // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
   useEffect(() => {
