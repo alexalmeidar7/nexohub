@@ -437,40 +437,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
 
-      {/* Indicador de atraso / retorno ao vivo */}
-      {(isBehind || backToLiveFlash) && (
-        <div
-          className="absolute top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-md border text-[12px] font-medium shadow-lg transition-all duration-300"
-          style={{
-            background: isBehind ? "rgba(255,180,0,0.18)" : "rgba(0,200,120,0.20)",
-            borderColor: isBehind ? "rgba(255,200,80,0.45)" : "rgba(80,255,180,0.45)",
-            color: isBehind ? "#ffd77a" : "#8effc8",
-          }}
-          role="status"
-          aria-live="polite"
-        >
-          {isBehind ? (
-            <>
-              <Rewind size={14} />
-              <span>atrasado do ao vivo</span>
-              <span className="tabular-nums opacity-90">
-                −{Math.floor(ts.offset / 60)}:{String(Math.round(ts.offset % 60)).padStart(2, "0")}
-              </span>
-              <button
-                onClick={seekLive}
-                className="ml-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] uppercase tracking-widest"
-              >
-                ir ao vivo
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>de volta ao vivo</span>
-            </>
-          )}
-        </div>
-      )}
 
       {/* Toast de atalho de teclado */}
       {kbdHint && (
@@ -732,11 +698,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         <div className="flex justify-end mb-2">
           <button
             onClick={seekLive}
-            className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
+            className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden"
             aria-label="Voltar ao vivo"
           >
-            <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-            {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+            <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
+              {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+            </span>
           </button>
         </div>
 
