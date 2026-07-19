@@ -294,6 +294,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return Math.max(0, (now.getTime() - played.getTime()) / 1000);
   };
   const REWIND_LIMIT = 300; // 5 min
+  const [preparingRewind, setPreparingRewind] = useState<string | null>(null);
+  const preparingRewindTimerRef = useRef<number | null>(null);
+
 
 
 
@@ -670,10 +673,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
                 const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
+                const rewindKey = `${i}-${t.horario}-${t.musica}`;
+                const isPreparing = preparingRewind === rewindKey;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     onClick={canRewind ? () => {
+                      setPreparingRewind(rewindKey);
+                      if (preparingRewindTimerRef.current) clearTimeout(preparingRewindTimerRef.current);
+                      preparingRewindTimerRef.current = window.setTimeout(() => setPreparingRewind(null), 1400) as any;
                       seekBySeconds(ago, { forcePlay: true });
                       toast.success(`Voltando ${Math.round(ago)}s`, {
                         description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
@@ -682,9 +690,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       });
                     } : undefined}
                     role={canRewind ? "button" : undefined}
-                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
+                    aria-busy={isPreparing || undefined}
                     title={undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
+
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
@@ -742,8 +752,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       </button>
                     )}
 
-                    {/* Hint de rewind (aparece no hover se dentro dos 5 min) */}
-                    {canRewind && (
+                    {/* Hint de rewind (hover) — some quando preparando */}
+                    {canRewind && !isPreparing && (
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/35">
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-black text-[11px] font-semibold shadow-lg">
                           <Rewind size={14} />
@@ -751,6 +761,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         </div>
                       </div>
                     )}
+
+                    {/* Feedback discreto de "preparando rewind" */}
+                    {isPreparing && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/45 backdrop-blur-[2px] animate-fade-in">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 text-black text-[11px] font-semibold shadow-lg">
+                          <span
+                            className="w-3 h-3 rounded-full border-2 border-black/25 border-t-black animate-spin"
+                            aria-hidden
+                          />
+                          preparando
+                        </div>
+                      </div>
+                    )}
+
 
 
 
