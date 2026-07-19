@@ -230,6 +230,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     seekBySeconds(TIMESHIFT_WINDOW - dragVal);
     setDragVal(null);
   };
+  const [backToLiveFlash, setBackToLiveFlash] = useState(false);
+  const prevOffsetRef = useRef(0);
+  useEffect(() => {
+    const wasBehind = prevOffsetRef.current > 2;
+    const nowLive = ts.offset <= 1;
+    if (wasBehind && nowLive) {
+      setBackToLiveFlash(true);
+      const t = setTimeout(() => setBackToLiveFlash(false), 2500);
+      prevOffsetRef.current = ts.offset;
+      return () => clearTimeout(t);
+    }
+    prevOffsetRef.current = ts.offset;
+  }, [ts.offset]);
+  const isBehind = ts.offset > 2;
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
