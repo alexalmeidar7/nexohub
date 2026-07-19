@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } fro
 import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import {
+  isLocutorImageCached,
+  markLocutorImageLoaded,
+  preloadLocutorImage,
+  preloadLocutorImages,
+} from "@/lib/locutorImageCache";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
 
@@ -44,11 +50,15 @@ export interface AudioPlayerScreenProps {
   user: any;
   profileAvatar: string | null;
   userDisplayName: string;
+  userEmail?: string | null;
   signOut: () => Promise<void>;
   effectiveUserId: string | null;
   isPublicMode: boolean;
   userSlug: string | null | undefined;
   onBackHome: () => void;
+  onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 interface HistoryTrack {
@@ -81,9 +91,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     karaokeEnabled, setKaraokeEnabled,
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
-    user, profileAvatar, userDisplayName, signOut,
+    user, profileAvatar, userDisplayName, userEmail, signOut,
     effectiveUserId,
     onBackHome,
+    onEditProfile, onSwitchProfile, onAvatarChange,
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
@@ -135,21 +146,43 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // Só reseta quando a URL da foto REALMENTE muda (troca de programa/apresentador),
   // não a cada troca de música. Se a URL já foi carregada antes, mantém "loaded".
   const loadedLocutorUrlRef = useRef<string | null>(null);
-  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(
-    locutorFoto ? "loading" : "error"
-  );
+  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(() => {
+    if (!locutorFoto) return "error";
+    return isLocutorImageCached(locutorFoto) ? "loaded" : "loading";
+  });
   useEffect(() => {
     if (!locutorFoto) {
       loadedLocutorUrlRef.current = null;
       setLocutorImgState("error");
       return;
     }
-    if (loadedLocutorUrlRef.current === locutorFoto) {
+    if (loadedLocutorUrlRef.current === locutorFoto || isLocutorImageCached(locutorFoto)) {
+      loadedLocutorUrlRef.current = locutorFoto;
       setLocutorImgState("loaded");
-    } else {
-      setLocutorImgState("loading");
+      return;
     }
+    setLocutorImgState("loading");
+    // Preload em background — se resolver antes do <img> montar, o cache do
+    // browser já entrega instantaneamente e evita flicker do skeleton.
+    let cancelled = false;
+    preloadLocutorImage(locutorFoto).then((ok) => {
+      if (cancelled) return;
+      if (ok) {
+        loadedLocutorUrlRef.current = locutorFoto;
+        setLocutorImgState("loaded");
+      }
+    });
+    return () => { cancelled = true; };
   }, [locutorFoto]);
+
+  // Pré-carrega em background as fotos de TODOS os apresentadores + capas de
+  // programas para que a troca entre programas seja instantânea.
+  useEffect(() => {
+    const urls: Array<string | null | undefined> = [];
+    apresentadores?.forEach((a) => urls.push(a?.foto));
+    programas?.forEach((p) => { urls.push(p?.capa); urls.push(p?.thumb); });
+    if (urls.length) preloadLocutorImages(urls);
+  }, [apresentadores, programas]);
   const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
   const locutorIniciais = apresentadorNome
     .split(/\s+/)
@@ -881,6 +914,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   alt={apresentadorNome || ""}
                   onLoad={() => {
                     loadedLocutorUrlRef.current = locutorFoto;
+                    markLocutorImageLoaded(locutorFoto);
                     setLocutorImgState("loaded");
                   }}
                   onError={() => setLocutorImgState("error")}
@@ -1138,10 +1172,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <WatchProfilePopup
             userId={user.id}
             userName={userDisplayName}
+            userEmail={userEmail ?? user?.email ?? null}
             avatarUrl={profileAvatar}
             radioName={empresaNome || undefined}
             onClose={() => setWatchProfileOpen(false)}
-            onEditProfile={undefined}
+            onEditProfile={onEditProfile}
+            onSwitchProfile={onSwitchProfile}
+            onAvatarChange={onAvatarChange}
             onLogout={async () => { await signOut(); window.location.href = "/"; }}
           />
         </Suspense>
