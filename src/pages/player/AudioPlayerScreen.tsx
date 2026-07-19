@@ -914,6 +914,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   alt={apresentadorNome || ""}
                   onLoad={() => {
                     loadedLocutorUrlRef.current = locutorFoto;
+                    markLocutorImageLoaded(locutorFoto);
                     setLocutorImgState("loaded");
                   }}
                   onError={() => setLocutorImgState("error")}
