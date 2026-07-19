@@ -474,7 +474,7 @@ function HeroBanner({
   }, [bgSources.length]);
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "100dvh", minHeight: "560px", backgroundColor: "hsl(var(--player-bg))" }}>
       {/* Fullscreen background — mirror of WelcomeScreen (channel thumb ⇄ artist cover) */}
       <style>{`
         @keyframes ph-kenburns {
