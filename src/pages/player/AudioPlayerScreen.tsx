@@ -285,17 +285,58 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
-  // ---- Progresso da música atual ----
-  const [trackStart, setTrackStart] = useState<number>(() => Date.now());
-  useEffect(() => { setTrackStart(Date.now()); }, [musicData?.titulo, musicData?.artista]);
-  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  // ---- Progresso da música atual (sincronizado com o tempo real do player) ----
+  // Ancoramos no audio.currentTime no momento em que a faixa mudou; assim o
+  // elapsed acompanha exatamente o player (respeita pausa, buffer, seek).
+  const trackStartMediaRef = useRef<number | null>(null);
+  const trackStartWallRef = useRef<number>(Date.now());
+  const [mediaTime, setMediaTime] = useState<number>(0);
+  const [wallNow, setWallNow] = useState<number>(() => Date.now());
+
+  // Reancorar sempre que a música mudar
   useEffect(() => {
-    const id = setInterval(() => setNowTs(Date.now()), 500);
-    return () => clearInterval(id);
-  }, []);
+    const a = audioRef.current;
+    trackStartMediaRef.current = a && Number.isFinite(a.currentTime) ? a.currentTime : null;
+    trackStartWallRef.current = Date.now();
+    setMediaTime(a?.currentTime ?? 0);
+    setWallNow(Date.now());
+  }, [musicData?.titulo, musicData?.artista, audioRef]);
+
+  // Atualiza mediaTime a partir do próprio elemento (timeupdate + rAF fallback)
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const sync = () => setMediaTime(a.currentTime || 0);
+    a.addEventListener("timeupdate", sync);
+    a.addEventListener("seeked", sync);
+    a.addEventListener("playing", sync);
+    const id = setInterval(() => {
+      setMediaTime(a.currentTime || 0);
+      setWallNow(Date.now());
+    }, 500);
+    return () => {
+      a.removeEventListener("timeupdate", sync);
+      a.removeEventListener("seeked", sync);
+      a.removeEventListener("playing", sync);
+      clearInterval(id);
+    };
+  }, [audioRef, canal?.id]);
+
   const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
-  const trackElapsedRaw = Math.max(0, (nowTs - trackStart) / 1000 - ts.offset);
-  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedRaw) : trackElapsedRaw;
+  const trackElapsedLive = (() => {
+    const anchor = trackStartMediaRef.current;
+    if (anchor != null && Number.isFinite(mediaTime)) {
+      return Math.max(0, mediaTime - anchor);
+    }
+    // fallback caso currentTime não esteja disponível
+    return Math.max(0, (wallNow - trackStartWallRef.current) / 1000 - ts.offset);
+  })();
+  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedLive) : trackElapsedLive;
+
+  // Estado local do arraste da barra da música — o seek só é aplicado ao soltar
+  const [trackDrag, setTrackDrag] = useState<number | null>(null);
+  const trackDisplay = trackDrag != null ? trackDrag : trackElapsed;
+
   const fmtMS = (s: number) => {
     const v = Math.max(0, Math.floor(s));
     return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`;
@@ -304,6 +345,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     if (newElapsed >= trackElapsed) { seekLive(); return; }
     const deltaBack = trackElapsed - newElapsed; // segundos a mais para trás
     seekBySeconds(ts.offset + deltaBack);
+  };
+  const commitTrackDrag = () => {
+    if (trackDrag == null) return;
+    const val = trackDrag;
+    setTrackDrag(null);
+    seekTrackTo(val);
   };
 
   return (
