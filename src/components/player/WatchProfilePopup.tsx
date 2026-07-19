@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
 import { toast } from "sonner";
+import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
 
 const AVATARS = [
   "/avatars/usr-default.png",
