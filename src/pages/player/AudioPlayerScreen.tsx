@@ -86,6 +86,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     onBackHome,
   } = props;
 
+  // ---- Transição de saída ao voltar para Home ----
+  const [exiting, setExiting] = useState(false);
+  const handleBackHome = useCallback(() => {
+    if (exiting) return;
+    setExiting(true);
+    setTimeout(() => onBackHome(), 480);
+  }, [exiting, onBackHome]);
+
   // ---- Apresentador do programa no ar ----
   const apresentador = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;
