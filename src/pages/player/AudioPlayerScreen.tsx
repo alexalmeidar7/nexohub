@@ -230,6 +230,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     seekBySeconds(TIMESHIFT_WINDOW - dragVal);
     setDragVal(null);
   };
+  const [backToLiveFlash, setBackToLiveFlash] = useState(false);
+  const prevOffsetRef = useRef(0);
+  useEffect(() => {
+    const wasBehind = prevOffsetRef.current > 2;
+    const nowLive = ts.offset <= 1;
+    if (wasBehind && nowLive) {
+      setBackToLiveFlash(true);
+      const t = setTimeout(() => setBackToLiveFlash(false), 2500);
+      prevOffsetRef.current = ts.offset;
+      return () => clearTimeout(t);
+    }
+    prevOffsetRef.current = ts.offset;
+  }, [ts.offset]);
+  const isBehind = ts.offset > 2;
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
@@ -271,17 +285,58 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
-  // ---- Progresso da música atual ----
-  const [trackStart, setTrackStart] = useState<number>(() => Date.now());
-  useEffect(() => { setTrackStart(Date.now()); }, [musicData?.titulo, musicData?.artista]);
-  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  // ---- Progresso da música atual (sincronizado com o tempo real do player) ----
+  // Ancoramos no audio.currentTime no momento em que a faixa mudou; assim o
+  // elapsed acompanha exatamente o player (respeita pausa, buffer, seek).
+  const trackStartMediaRef = useRef<number | null>(null);
+  const trackStartWallRef = useRef<number>(Date.now());
+  const [mediaTime, setMediaTime] = useState<number>(0);
+  const [wallNow, setWallNow] = useState<number>(() => Date.now());
+
+  // Reancorar sempre que a música mudar
   useEffect(() => {
-    const id = setInterval(() => setNowTs(Date.now()), 500);
-    return () => clearInterval(id);
-  }, []);
+    const a = audioRef.current;
+    trackStartMediaRef.current = a && Number.isFinite(a.currentTime) ? a.currentTime : null;
+    trackStartWallRef.current = Date.now();
+    setMediaTime(a?.currentTime ?? 0);
+    setWallNow(Date.now());
+  }, [musicData?.titulo, musicData?.artista, audioRef]);
+
+  // Atualiza mediaTime a partir do próprio elemento (timeupdate + rAF fallback)
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const sync = () => setMediaTime(a.currentTime || 0);
+    a.addEventListener("timeupdate", sync);
+    a.addEventListener("seeked", sync);
+    a.addEventListener("playing", sync);
+    const id = setInterval(() => {
+      setMediaTime(a.currentTime || 0);
+      setWallNow(Date.now());
+    }, 500);
+    return () => {
+      a.removeEventListener("timeupdate", sync);
+      a.removeEventListener("seeked", sync);
+      a.removeEventListener("playing", sync);
+      clearInterval(id);
+    };
+  }, [audioRef, canal?.id]);
+
   const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
-  const trackElapsedRaw = Math.max(0, (nowTs - trackStart) / 1000 - ts.offset);
-  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedRaw) : trackElapsedRaw;
+  const trackElapsedLive = (() => {
+    const anchor = trackStartMediaRef.current;
+    if (anchor != null && Number.isFinite(mediaTime)) {
+      return Math.max(0, mediaTime - anchor);
+    }
+    // fallback caso currentTime não esteja disponível
+    return Math.max(0, (wallNow - trackStartWallRef.current) / 1000 - ts.offset);
+  })();
+  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedLive) : trackElapsedLive;
+
+  // Estado local do arraste da barra da música — o seek só é aplicado ao soltar
+  const [trackDrag, setTrackDrag] = useState<number | null>(null);
+  const trackDisplay = trackDrag != null ? trackDrag : trackElapsed;
+
   const fmtMS = (s: number) => {
     const v = Math.max(0, Math.floor(s));
     return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`;
@@ -290,6 +345,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     if (newElapsed >= trackElapsed) { seekLive(); return; }
     const deltaBack = trackElapsed - newElapsed; // segundos a mais para trás
     seekBySeconds(ts.offset + deltaBack);
+  };
+  const commitTrackDrag = () => {
+    if (trackDrag == null) return;
+    const val = trackDrag;
+    setTrackDrag(null);
+    seekTrackTo(val);
   };
 
   return (
@@ -305,6 +366,41 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
+
+      {/* Indicador de atraso / retorno ao vivo */}
+      {(isBehind || backToLiveFlash) && (
+        <div
+          className="absolute top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-md border text-[12px] font-medium shadow-lg transition-all duration-300"
+          style={{
+            background: isBehind ? "rgba(255,180,0,0.18)" : "rgba(0,200,120,0.20)",
+            borderColor: isBehind ? "rgba(255,200,80,0.45)" : "rgba(80,255,180,0.45)",
+            color: isBehind ? "#ffd77a" : "#8effc8",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          {isBehind ? (
+            <>
+              <Rewind size={14} />
+              <span>atrasado do ao vivo</span>
+              <span className="tabular-nums opacity-90">
+                −{Math.floor(ts.offset / 60)}:{String(Math.round(ts.offset % 60)).padStart(2, "0")}
+              </span>
+              <button
+                onClick={seekLive}
+                className="ml-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] uppercase tracking-widest"
+              >
+                ir ao vivo
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>de volta ao vivo</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ============== TOP BAR ============== */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
@@ -524,8 +620,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   <div className="mt-2 relative group/track">
                     <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                       <div
-                        className="h-full bg-white/95 transition-all duration-300"
-                        style={{ width: `${trackDur > 0 ? (trackElapsed / trackDur) * 100 : 0}%` }}
+                        className="h-full bg-white/95"
+                        style={{
+                          width: `${trackDur > 0 ? (trackDisplay / trackDur) * 100 : 0}%`,
+                          transition: trackDrag != null ? "none" : "width 300ms linear",
+                        }}
                       />
                     </div>
                     {trackDur > 0 && (
@@ -534,14 +633,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         min={0}
                         max={Math.max(1, Math.floor(trackDur))}
                         step={1}
-                        value={Math.min(Math.floor(trackDur), Math.floor(trackElapsed))}
-                        onChange={(e) => seekTrackTo(Number(e.target.value))}
+                        value={Math.min(Math.floor(trackDur), Math.floor(trackDisplay))}
+                        onChange={(e) => setTrackDrag(Number(e.target.value))}
+                        onMouseUp={commitTrackDrag}
+                        onTouchEnd={commitTrackDrag}
+                        onPointerUp={commitTrackDrag}
+                        onKeyUp={commitTrackDrag}
+                        onBlur={commitTrackDrag}
                         className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
                         aria-label="Avançar/retroceder na música"
                       />
                     )}
                     <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
-                      <span>{fmtMS(trackElapsed)}</span>
+                      <span>{fmtMS(trackDisplay)}</span>
                       <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
                     </div>
                   </div>
