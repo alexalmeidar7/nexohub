@@ -191,16 +191,25 @@ export default function WatchProfilePopup({
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-full overflow-hidden shrink-0"
+          <button
+            type="button"
+            onClick={() => setPickerOpen(v => !v)}
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 group"
             style={{ border: "2px solid #ffffff" }}
+            aria-label="Alterar avatar"
+            title="Alterar avatar"
           >
             <img
-              src={avatarUrl || "/avatars/usr-default.png"}
+              src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
               alt={userName}
               className="w-full h-full object-cover"
             />
-          </div>
+            <span
+              className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Camera size={14} className="text-white" />
+            </span>
+          </button>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-sm font-bold text-white truncate">{userName}</span>
             {userEmail && (
