@@ -155,7 +155,10 @@ export default function PlayerHub() {
           onContinue={onWelcomeContinue}
           onLoginSuccess={onLoginSuccess}
           initialEditOpen={welcomeEditOnMount}
+          userSlug={userSlug && userSlug !== ":userSlug" ? userSlug : null}
+          publicUserId={publicUserId}
         />
+
       </div>
     );
   }
