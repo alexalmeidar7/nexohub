@@ -760,12 +760,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       />
                     )}
 
-                    {/* badge TOCANDO AGORA no card ativo */}
+                    {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
-                      <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                        tocando
-                      </div>
+                      <>
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          tocando
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
+                          className="absolute top-12 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/15 transition"
+                          aria-label={isLiked ? "Descurtir música" : "Curtir música"}
+                          aria-pressed={isLiked}
+                          title={isLiked ? "Você curtiu esta música" : "Curtir esta música"}
+                        >
+                          <Heart size={16} fill={isLiked ? "#ff3355" : "none"} stroke={isLiked ? "#ff3355" : "white"} />
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
