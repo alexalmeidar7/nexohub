@@ -1207,6 +1207,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [activeCatalog, setActiveCatalog] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
+  const [activeRow, setActiveRow] = useState(0);
+  const ROW_COUNT = 2;
 
   const [miniPlayerData, setMiniPlayerData] = useState<MiniPlayerData | null>(null);
 
