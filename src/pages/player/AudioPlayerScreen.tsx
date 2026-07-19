@@ -82,6 +82,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     empresaLogo, empresaNome,
     user, profileAvatar, userDisplayName, signOut,
     effectiveUserId,
+    onBackHome,
   } = props;
 
   // ---- Apresentador do programa no ar ----
@@ -96,6 +97,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const gradient = palette
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
+
+  // ---- Background dinâmico com base na CAPA DA MÚSICA (crossfade elegante) ----
+  const musicCover: string | null = musicData?.capa || null;
+  const musicPalette = useCoverPalette(musicCover);
+  const musicGradient = musicPalette
+    ? `radial-gradient(ellipse at 20% 20%, ${musicPalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${musicPalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${musicPalette.primary} 0%, ${musicPalette.secondary} 100%)`
+    : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
+  const [bgLayers, setBgLayers] = useState<{ id: number; g: string }[]>([{ id: 0, g: musicGradient }]);
+  const bgIdRef = useRef(1);
+  useEffect(() => {
+    setBgLayers((prev) => {
+      if (prev[prev.length - 1]?.g === musicGradient) return prev;
+      return [...prev, { id: bgIdRef.current++, g: musicGradient }];
+    });
+  }, [musicGradient]);
+  useEffect(() => {
+    if (bgLayers.length <= 2) return;
+    const t = setTimeout(() => setBgLayers((p) => p.slice(-2)), 1800);
+    return () => clearTimeout(t);
+  }, [bgLayers]);
 
   // ---- Progresso do programa no ar ----
   const [progPct, setProgPct] = useState(0);
