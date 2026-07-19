@@ -84,13 +84,28 @@ export default function WelcomeScreen({
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
 
+  // Load sub-profiles: hydrate from localStorage cache first, then reconcile with DB (profiles.sub_profiles)
   useEffect(() => {
     if (!user) { setSubProfiles([]); return; }
+    const cacheKey = `nexohub_sub_profiles_${user.id}`;
     try {
-      const raw = localStorage.getItem(`nexohub_sub_profiles_${user.id}`);
-      setSubProfiles(raw ? JSON.parse(raw) : []);
-    } catch { setSubProfiles([]); }
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) setSubProfiles(JSON.parse(raw));
+    } catch { /* ignore */ }
+    supabase.from("profiles").select("sub_profiles").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      const remote = Array.isArray((data as any)?.sub_profiles) ? (data as any).sub_profiles : [];
+      setSubProfiles(remote);
+      try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
+    });
   }, [user?.id]);
+
+  const persistSubProfiles = async (next: Array<{ id: string; name: string; avatar_url: string }>) => {
+    setSubProfiles(next);
+    if (!user) return;
+    try { localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+    await supabase.from("profiles").update({ sub_profiles: next as any }).eq("user_id", user.id);
+  };
+
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
