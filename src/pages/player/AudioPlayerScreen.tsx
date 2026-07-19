@@ -265,6 +265,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
+  // ---- Progresso da música atual ----
+  const [trackStart, setTrackStart] = useState<number>(() => Date.now());
+  useEffect(() => { setTrackStart(Date.now()); }, [musicData?.titulo, musicData?.artista]);
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 500);
+    return () => clearInterval(id);
+  }, []);
+  const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
+  const trackElapsedRaw = Math.max(0, (nowTs - trackStart) / 1000 - ts.offset);
+  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedRaw) : trackElapsedRaw;
+  const fmtMS = (s: number) => {
+    const v = Math.max(0, Math.floor(s));
+    return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`;
+  };
+  const seekTrackTo = (newElapsed: number) => {
+    if (newElapsed >= trackElapsed) { seekLive(); return; }
+    const deltaBack = trackElapsed - newElapsed; // segundos a mais para trás
+    seekBySeconds(ts.offset + deltaBack);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
@@ -482,10 +503,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual */}
+              {/* música atual + progresso */}
               {musicData?.titulo && (
-                <div className="mt-3 text-[12px] opacity-85 truncate">
-                  ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                <div className="mt-3">
+                  <div className="text-[12px] opacity-85 truncate">
+                    ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                  </div>
+                  <div className="mt-2 relative group/track">
+                    <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
+                      <div
+                        className="h-full bg-white/95 transition-all duration-300"
+                        style={{ width: `${trackDur > 0 ? (trackElapsed / trackDur) * 100 : 0}%` }}
+                      />
+                    </div>
+                    {trackDur > 0 && (
+                      <input
+                        type="range"
+                        min={0}
+                        max={Math.max(1, Math.floor(trackDur))}
+                        step={1}
+                        value={Math.min(Math.floor(trackDur), Math.floor(trackElapsed))}
+                        onChange={(e) => seekTrackTo(Number(e.target.value))}
+                        className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
+                        aria-label="Avançar/retroceder na música"
+                      />
+                    )}
+                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
+                      <span>{fmtMS(trackElapsed)}</span>
+                      <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
