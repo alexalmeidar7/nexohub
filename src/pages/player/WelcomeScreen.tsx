@@ -774,56 +774,111 @@ export default function WelcomeScreen({
           {user ? (
             <>
               <div className="flex flex-col gap-3 shrink-0">
-                <button
-                  onClick={() => { cancelAutoAdvance(); onContinue(); }}
-                  className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
-                  aria-label="Entrar no player"
-                  data-ws-focusable="true"
-                >
-                  <div
-                    className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
-                    style={{
-                      width: "clamp(110px, 11vw, 150px)",
-                      height: "clamp(110px, 11vw, 150px)",
-                      border: "1px solid rgba(255,255,255,0.14)",
-                      boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
-                    }}
+                <div className="flex items-center gap-4 shrink-0">
+                  <button
+                    onClick={() => { cancelAutoAdvance(); onContinue(); }}
+                    className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
+                    aria-label="Entrar no player"
+                    data-ws-focusable="true"
                   >
-                    {prevBgColors && (
+                    <div
+                      className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                      style={{
+                        width: "clamp(110px, 11vw, 150px)",
+                        height: "clamp(110px, 11vw, 150px)",
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                      }}
+                    >
+                      {prevBgColors && (
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                        />
+                      )}
                       <div
                         className="absolute inset-0 pointer-events-none"
-                        style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                        style={{
+                          background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                          opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                          transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                        }}
                       />
-                    )}
+                      <img
+                        src={displayAvatar}
+                        alt={displayName}
+                        className="relative w-full h-full object-cover"
+                        draggable={false}
+                      />
+                      <span
+                        onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        style={{
+                          background: "rgba(0,0,0,0.35)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          backdropFilter: "blur(6px)",
+                        }}
+                        aria-label="Editar perfil"
+                        role="button"
+                      >
+                        <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
+                      </span>
+                    </div>
+                  </button>
+
+                  <div className="flex flex-col gap-1.5 min-w-0">
                     <div
-                      className="absolute inset-0 pointer-events-none"
+                      className="text-white font-semibold leading-tight truncate"
                       style={{
-                        background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
-                        opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
-                        transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                        fontSize: "clamp(20px, 1.9vw, 28px)",
+                        textShadow: "0 2px 20px rgba(0,0,0,0.55)",
+                        maxWidth: "clamp(140px, 16vw, 240px)",
                       }}
-                    />
-                    <img
-                      src={displayAvatar}
-                      alt={displayName}
-                      className="relative w-full h-full object-cover"
-                      draggable={false}
-                    />
-                    <span
-                      onClick={(e) => { e.stopPropagation(); cancelAutoAdvance(); setEditOpen(true); }}
-                      className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                      style={{
-                        background: "rgba(0,0,0,0.35)",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                        backdropFilter: "blur(6px)",
-                      }}
-                      aria-label="Editar perfil"
-                      role="button"
                     >
-                      <Pencil className="w-3 h-3 text-white/75" strokeWidth={1.5} />
-                    </span>
+                      {displayName}
+                    </div>
+                    <div className="flex items-center gap-2 text-white/85">
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => {
+                          const rating = Math.min(5, Math.max(0, Math.round((points / 100) * 2) / 2));
+                          const filled = i < Math.floor(rating);
+                          const half = !filled && i < rating;
+                          return (
+                            <Star
+                              key={i}
+                              size={13}
+                              fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
+                              className="ws-star-pop"
+                              style={{
+                                color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
+                                animationDelay: `${i * 120}ms`,
+                              }}
+                            />
+                          );
+                        })}
+                      </div>
+                      <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
+                    </div>
+                    <button
+                      onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
+                      data-ws-focusable="true"
+                      disabled={loggingOut}
+                      aria-busy={loggingOut}
+                      className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                      style={{
+                        background: "rgba(255,255,255,0.10)",
+                        border: "1px solid rgba(255,255,255,0.16)",
+                        backdropFilter: "blur(8px)",
+                      }}
+                    >
+                      {loggingOut && (
+                        <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                      )}
+                      {loggingOut ? "saindo..." : "sair"}
+                    </button>
                   </div>
-                </button>
+                </div>
+
 
                 {subProfiles.map(sp => {
                   const spPoints = Number((sp as any).points) || 0;
@@ -949,58 +1004,6 @@ export default function WelcomeScreen({
               </div>
 
 
-
-              <div className="flex flex-col gap-2 pt-2">
-                <div
-                  className="font-medium leading-none"
-                  style={{
-                    fontSize: "clamp(20px, 1.9vw, 28px)",
-                    textShadow: "0 2px 20px rgba(0,0,0,0.55)",
-                  }}
-                >
-                  {displayName}
-                </div>
-                <div className="flex items-center gap-2 text-white/85">
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      const rating = Math.min(5, Math.max(0, Math.round((points / 100) * 2) / 2));
-                      const filled = i < Math.floor(rating);
-                      const half = !filled && i < rating;
-                      return (
-                        <Star
-                          key={i}
-                          size={13}
-                          fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
-                          className="ws-star-pop"
-                          style={{
-                            color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
-                            animationDelay: `${i * 120}ms`,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
-                </div>
-                <button
-                  onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
-                  data-ws-focusable="true"
-                  disabled={loggingOut}
-                  aria-busy={loggingOut}
-                  className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{
-                    background: "rgba(255,255,255,0.10)",
-                    border: "1px solid rgba(255,255,255,0.16)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  {loggingOut && (
-                    <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
-                  )}
-                  {loggingOut ? "saindo..." : "sair"}
-                </button>
-
-              </div>
             </>
           ) : (
             <div className="flex items-center gap-3">
