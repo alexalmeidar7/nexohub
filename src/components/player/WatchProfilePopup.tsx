@@ -1,6 +1,19 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
+import { toast } from "sonner";
+
+const AVATARS = [
+  "/avatars/usr-default.png",
+  "/avatars/usr-1.png",
+  "/avatars/usr-2.png",
+  "/avatars/usr-3.png",
+  "/avatars/usr-4.png",
+  "/avatars/usr-5.png",
+  "/avatars/usr-6.png",
+  "/avatars/usr-7.png",
+  "/avatars/usr-8.png",
+];
 
 interface LikedSong {
   titulo: string;
