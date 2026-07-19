@@ -160,7 +160,7 @@ export default function WatchProfilePopup({
       // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
       const profileP = supabase
         .from("profiles")
-        .select("nome")
+        .select("nome, avatar_url")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -181,20 +181,25 @@ export default function WatchProfilePopup({
       const entryCount = hoursRes.count ?? 0;
       setTotalHours(Math.round(entryCount * 0.5 * 10) / 10); // 30 min per entry
 
-      // Chat count by name
+      // Mantém nome/avatar exibidos sincronizados com o que está no banco,
+      // caso tenham mudado em outra aba/tela.
       if (profileRes.data?.nome) {
+        setDisplayName(profileRes.data.nome);
         const chatRes = await supabase
           .from("player_chat_messages")
           .select("id", { count: "exact", head: true })
           .eq("nome", profileRes.data.nome);
         setChatCount(chatRes.count ?? 0);
       }
+      if (profileRes.data?.avatar_url) {
+        setCurrentAvatar(profileRes.data.avatar_url);
+      }
 
       setLoading(false);
     };
 
     fetchAll();
-  }, [userId]);
+  }, [userId, refreshTick]);
 
   const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
   const label = fanLabel(stars);
