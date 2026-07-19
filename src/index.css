@@ -211,6 +211,11 @@
   0% { opacity: 0; transform: translateY(24px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+@keyframes playerBgKenBurns {
+  0%   { transform: scale(1.08) translate3d(0, 0, 0); }
+  50%  { transform: scale(1.14) translate3d(-1.2%, -0.8%, 0); }
+  100% { transform: scale(1.08) translate3d(0, 0, 0); }
+}
 @keyframes player-card-pop {
   0% { opacity: 0; transform: scale(0.92) translateY(12px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
