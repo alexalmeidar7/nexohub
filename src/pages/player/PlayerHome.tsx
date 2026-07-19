@@ -1906,13 +1906,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   and slides up into view when activeRow === 1. The rest of the page stays still. */}
               <div
                 data-tv-row="1"
-                className="absolute left-8 sm:left-12 z-20 flex items-end gap-5 transition-all duration-500 ease-out"
+                className="absolute left-8 sm:left-12 z-20 flex items-end gap-5"
                 style={{
-                  bottom: "2.5rem", // same as hero cards row (bottom-10)
+                  bottom: "2.5rem",
                   right: "2.5rem",
-                  transform: activeRow === 1 ? "translateY(0)" : "translateY(120%)",
+                  transform: activeRow === 1 ? "translateY(0)" : "translateY(108%)",
                   opacity: activeRow === 1 ? 1 : 0,
                   pointerEvents: activeRow === 1 ? "auto" : "none",
+                  willChange: "transform, opacity",
+                  transition: activeRow === 1
+                    ? "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease-out 120ms"
+                    : "transform 640ms cubic-bezier(0.32, 0, 0.67, 0), opacity 320ms ease-in",
                 }}
               >
                 {dataLoaded && (
