@@ -146,21 +146,43 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // Só reseta quando a URL da foto REALMENTE muda (troca de programa/apresentador),
   // não a cada troca de música. Se a URL já foi carregada antes, mantém "loaded".
   const loadedLocutorUrlRef = useRef<string | null>(null);
-  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(
-    locutorFoto ? "loading" : "error"
-  );
+  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(() => {
+    if (!locutorFoto) return "error";
+    return isLocutorImageCached(locutorFoto) ? "loaded" : "loading";
+  });
   useEffect(() => {
     if (!locutorFoto) {
       loadedLocutorUrlRef.current = null;
       setLocutorImgState("error");
       return;
     }
-    if (loadedLocutorUrlRef.current === locutorFoto) {
+    if (loadedLocutorUrlRef.current === locutorFoto || isLocutorImageCached(locutorFoto)) {
+      loadedLocutorUrlRef.current = locutorFoto;
       setLocutorImgState("loaded");
-    } else {
-      setLocutorImgState("loading");
+      return;
     }
+    setLocutorImgState("loading");
+    // Preload em background — se resolver antes do <img> montar, o cache do
+    // browser já entrega instantaneamente e evita flicker do skeleton.
+    let cancelled = false;
+    preloadLocutorImage(locutorFoto).then((ok) => {
+      if (cancelled) return;
+      if (ok) {
+        loadedLocutorUrlRef.current = locutorFoto;
+        setLocutorImgState("loaded");
+      }
+    });
+    return () => { cancelled = true; };
   }, [locutorFoto]);
+
+  // Pré-carrega em background as fotos de TODOS os apresentadores + capas de
+  // programas para que a troca entre programas seja instantânea.
+  useEffect(() => {
+    const urls: Array<string | null | undefined> = [];
+    apresentadores?.forEach((a) => urls.push(a?.foto));
+    programas?.forEach((p) => { urls.push(p?.capa); urls.push(p?.thumb); });
+    if (urls.length) preloadLocutorImages(urls);
+  }, [apresentadores, programas]);
   const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
   const locutorIniciais = apresentadorNome
     .split(/\s+/)
