@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { emitProfileChanged } from "@/lib/profileSync";
 import {
   Dialog,
   DialogContent,
