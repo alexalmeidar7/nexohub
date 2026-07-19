@@ -1155,7 +1155,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
    ═══════════════════════════════════════════════════════ */
 
 interface PlayerHomeProps {
-  onBackToAccess?: () => void;
+  onBackToAccess?: (openEdit?: boolean) => void;
 }
 
 /* ─── Local cache helpers ─── */
