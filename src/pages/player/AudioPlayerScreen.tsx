@@ -583,7 +583,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    className="absolute right-0 rounded-2xl overflow-hidden shadow-2xl"
+                    className="absolute right-0 rounded-[32px] overflow-hidden shadow-2xl"
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
