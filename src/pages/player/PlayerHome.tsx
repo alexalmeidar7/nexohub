@@ -450,8 +450,8 @@ function HeroBanner({
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
-    width: "260px",
-    height: "160px",
+    width: "clamp(180px, 26vw, 260px)",
+    height: "clamp(120px, 17vw, 160px)",
     fontFamily: "'Lufga', system-ui, sans-serif",
   };
 
