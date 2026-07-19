@@ -1396,8 +1396,7 @@ export default function WelcomeScreen({
                       <button
                         onClick={() => {
                           const next = subProfiles.filter(p => p.id !== sp.id);
-                          setSubProfiles(next);
-                          if (user) localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                          persistSubProfiles(next);
                         }}
                         className="text-white/50 hover:text-white/90 text-xs leading-none pl-1"
                         aria-label="Remover perfil"
