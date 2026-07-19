@@ -673,10 +673,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
                 const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
+                const rewindKey = `${i}-${t.horario}-${t.musica}`;
+                const isPreparing = preparingRewind === rewindKey;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     onClick={canRewind ? () => {
+                      setPreparingRewind(rewindKey);
+                      if (preparingRewindTimerRef.current) clearTimeout(preparingRewindTimerRef.current);
+                      preparingRewindTimerRef.current = window.setTimeout(() => setPreparingRewind(null), 1400) as any;
                       seekBySeconds(ago, { forcePlay: true });
                       toast.success(`Voltando ${Math.round(ago)}s`, {
                         description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
@@ -685,9 +690,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       });
                     } : undefined}
                     role={canRewind ? "button" : undefined}
-                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
+                    aria-busy={isPreparing || undefined}
                     title={undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
+
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
