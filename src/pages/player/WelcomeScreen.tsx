@@ -441,17 +441,14 @@ export default function WelcomeScreen({
       const key = artista.toLowerCase();
       const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes(key);
       if (!artista || isBreak) return;
-      if (artistImgCacheRef.current[key]) return;
-      try {
-        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
-        if (error || !data?.ok || !data?.url) return;
-        artistImgCacheRef.current[key] = data.url as string;
-        // decode em background — resultado só é usado no próximo tick
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.src = data.url as string;
-        try { await (img as any).decode?.(); } catch {}
-      } catch {}
+      if (artistImgCacheRef.current[key] || getArtistImageSync(artista)) return;
+      const url = await fetchArtistImageCached(artista);
+      if (!url) return;
+      artistImgCacheRef.current[key] = url;
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = url;
+      try { await (img as any).decode?.(); } catch {}
     };
 
     const onMusic = (e: Event) => {
