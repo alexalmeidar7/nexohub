@@ -1002,36 +1002,37 @@ function TrendingCard({ item, idx, channels, onClick }: {
   );
 }
 
-/* ─── Catalog Card ─── */
+/* ─── Catalog Card (horizontal, matches Ouvir/Assistir style) ─── */
 function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: string | null; title: string; subtitle?: string; logoUrl?: string | null; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       data-tv-focusable
-      className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer"
+      className="flex-shrink-0 relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
       style={{
-        width: "160px",
-        aspectRatio: "2/3",
-        background: "hsla(var(--player-accent) / 0.06)",
-        border: "1px solid hsla(var(--player-accent) / 0.1)",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.border = "3px solid #fff";
-        e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.1)";
-        e.currentTarget.style.boxShadow = "none";
+        width: "260px",
+        height: "160px",
+        borderRadius: "22px",
+        background: "#1a1a1a",
+        border: "1px solid rgba(255,255,255,0.08)",
+        fontFamily: "'Lufga', system-ui, sans-serif",
       }}
     >
       {image ? (
-        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105" />
+        <img src={image} alt={title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" style={{ opacity: 0.9 }} />
       ) : (
         <div className="absolute inset-0 w-full h-full flex items-center justify-center" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, hsl(var(--player-bg)) 100%)" }}>
           <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
-
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
+      <div className="relative z-[1] p-4 flex flex-col h-full">
+        <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
+        <div className="mt-auto">
+          <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[70%] lowercase">{title}</p>
+          {subtitle && <p className="text-[12px] text-white/70 mt-0.5 truncate">{subtitle}</p>}
+        </div>
+      </div>
     </button>
   );
 }
