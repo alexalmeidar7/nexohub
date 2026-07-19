@@ -19,9 +19,27 @@ export default function PlayerHub() {
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
-  const [searchParams] = useSearchParams();
-  const skipToHome = searchParams.get("step") === "home";
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
+  const storageKey = `player-step-home:${userSlug || "root"}`;
+  const skipToHome =
+    searchParams.get("step") === "home" ||
+    (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
+
+  // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
+  useEffect(() => {
+    if (searchParams.get("step") === "home") {
+      try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    } else if (skipToHome && !searchParams.get("step")) {
+      // Restaura o param na URL para que reloads/back voltem à home.
+      const next = new URLSearchParams(searchParams);
+      next.set("step", "home");
+      setSearchParams(next, { replace: true });
+    }
+    // Limpa a flag ao voltar para welcome via botão "trocar de perfil".
+    // Isso é feito em onBackToAccess abaixo.
+  }, [searchParams, setSearchParams, skipToHome, storageKey]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
