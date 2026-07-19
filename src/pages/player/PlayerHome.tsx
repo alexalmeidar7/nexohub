@@ -1916,6 +1916,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
                     />
+                      );
+                    })()}
                   </>
 
                 )}
