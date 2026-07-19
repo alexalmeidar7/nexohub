@@ -469,13 +469,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             data-focusable
           >
             {/* foto locutor */}
-            {locutorFoto && (
+            {locutorFoto ? (
               <img
                 src={locutorFoto}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover object-top mix-blend-luminosity opacity-95"
                 style={{ maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)" }}
               />
+            ) : (
+              <div className="absolute inset-0 flex items-start justify-center pt-10 pointer-events-none">
+                <Music2 size={140} className="text-white/10" strokeWidth={1} />
+              </div>
             )}
             {/* overlay gradient para leitura */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)" }} />
