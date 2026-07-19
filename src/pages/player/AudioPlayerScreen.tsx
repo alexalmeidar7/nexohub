@@ -1143,10 +1143,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <WatchProfilePopup
             userId={user.id}
             userName={userDisplayName}
+            userEmail={userEmail ?? user?.email ?? null}
             avatarUrl={profileAvatar}
             radioName={empresaNome || undefined}
             onClose={() => setWatchProfileOpen(false)}
-            onEditProfile={undefined}
+            onEditProfile={onEditProfile}
+            onSwitchProfile={onSwitchProfile}
+            onAvatarChange={onAvatarChange}
             onLogout={async () => { await signOut(); window.location.href = "/"; }}
           />
         </Suspense>
