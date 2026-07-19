@@ -117,28 +117,76 @@ export default function WelcomeScreen({
     return () => cancelAnimationFrame(raf);
   }, [points]);
 
-  // Keyboard navigation on welcome screen (arrows + Enter)
+  // Spatial keyboard navigation (arrows) + Enter/Space to activate
   useEffect(() => {
+    const getNodes = () =>
+      Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
+        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+
+    const pickSpatial = (
+      from: HTMLElement,
+      dir: "up" | "down" | "left" | "right",
+      nodes: HTMLElement[],
+    ): HTMLElement | null => {
+      const a = from.getBoundingClientRect();
+      const ax = a.left + a.width / 2;
+      const ay = a.top + a.height / 2;
+      let best: HTMLElement | null = null;
+      let bestScore = Infinity;
+      for (const n of nodes) {
+        if (n === from) continue;
+        const b = n.getBoundingClientRect();
+        const bx = b.left + b.width / 2;
+        const by = b.top + b.height / 2;
+        const dx = bx - ax;
+        const dy = by - ay;
+        let primary = 0;
+        let cross = 0;
+        if (dir === "right") { if (dx <= 4) continue; primary = dx; cross = Math.abs(dy); }
+        else if (dir === "left") { if (dx >= -4) continue; primary = -dx; cross = Math.abs(dy); }
+        else if (dir === "down") { if (dy <= 4) continue; primary = dy; cross = Math.abs(dx); }
+        else { if (dy >= -4) continue; primary = -dy; cross = Math.abs(dx); }
+        // heavy penalty on cross-axis so we stay in the same row/column when possible
+        const score = primary + cross * 2.2;
+        if (score < bestScore) { bestScore = score; best = n; }
+      }
+      // Fallback: wrap-around — closest node overall in that half
+      if (!best) {
+        for (const n of nodes) {
+          if (n === from) continue;
+          const b = n.getBoundingClientRect();
+          const bx = b.left + b.width / 2;
+          const by = b.top + b.height / 2;
+          const score = Math.hypot(bx - ax, by - ay);
+          if (score < bestScore) { bestScore = score; best = n; }
+        }
+      }
+      return best;
+    };
+
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
-      const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
-        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+      const nodes = getNodes();
       if (nodes.length === 0) return;
       const active = document.activeElement as HTMLElement | null;
-      let idx = nodes.findIndex(n => n === active);
+      const current = active && nodes.includes(active) ? active : null;
+
       if (e.key === "Enter" || e.key === " ") {
-        if (idx >= 0) { e.preventDefault(); nodes[idx].click(); }
+        if (current) { e.preventDefault(); current.click(); }
         return;
       }
       e.preventDefault();
-      if (idx < 0) { nodes[0].focus(); return; }
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") idx = (idx + 1) % nodes.length;
-      else idx = (idx - 1 + nodes.length) % nodes.length;
-      nodes[idx].focus();
+      if (!current) { nodes[0].focus(); return; }
+      const dir =
+        e.key === "ArrowUp" ? "up" :
+        e.key === "ArrowDown" ? "down" :
+        e.key === "ArrowLeft" ? "left" : "right";
+      const next = pickSpatial(current, dir as any, nodes);
+      next?.focus();
     };
     window.addEventListener("keydown", onKey);
-    // auto-focus first item shortly after mount
     const t = window.setTimeout(() => {
+      if (document.activeElement && (document.activeElement as HTMLElement).matches?.('[data-ws-focusable="true"]')) return;
       const first = document.querySelector<HTMLElement>('[data-ws-focusable="true"]');
       first?.focus();
     }, 400);
