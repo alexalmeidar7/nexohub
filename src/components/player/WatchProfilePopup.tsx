@@ -153,30 +153,29 @@ export default function WatchProfilePopup({
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
           <div
             className="w-12 h-12 rounded-full overflow-hidden shrink-0"
-            style={{ border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+            style={{ border: "2px solid #ffffff" }}
           >
             <img
               src={avatarUrl || "/avatars/usr-default.png"}
               alt={userName}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-sm font-bold text-white truncate">{userName}</span>
-            {/* Fan rating */}
-            <div className="flex items-center gap-1 mt-0.5">
+            {userEmail && (
+              <span className="text-[10px] text-white/50 truncate">{userEmail}</span>
+            )}
+            {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
+            <div className="flex items-center gap-0.5 mt-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  size={12}
-                  className="transition-colors"
-                  fill={i < stars ? "hsl(var(--player-accent))" : "transparent"}
-                  style={{ color: i < stars ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.2)" }}
+                  size={13}
+                  fill={i < stars ? "#ffffff" : "transparent"}
+                  style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.25)" }}
                 />
               ))}
-              <span className="text-[10px] font-semibold ml-1" style={{ color: "hsl(var(--player-accent))" }}>
-                {label}{radioName ? ` ${radioName}` : ""}
-              </span>
             </div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white p-1">
