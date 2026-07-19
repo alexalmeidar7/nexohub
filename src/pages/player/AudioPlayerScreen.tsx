@@ -1094,20 +1094,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Karaoke */}
-      {karaokeEnabled && playing && (
-        <Suspense fallback={null}>
-          <KaraokeOverlay
-            artist={musicData?.artista}
-            title={musicData?.titulo}
-            audioElement={audioRef.current}
-            visible={karaokeEnabled}
-            duration={musicData?.duracao}
-            onLyricsNotFound={() => {}}
-            onLyricsFound={() => {}}
-          />
-        </Suspense>
-      )}
+      {/* Karaoke agora é inline, dentro da coluna "a seguir" (ver <InlineKaraoke /> abaixo do botão +) */}
+
 
       {/* Grade */}
       {gradeOpen && (
