@@ -1012,8 +1012,9 @@ export default function WelcomeScreen({
                       <div>
                         <label className={labelCls} style={labelStyle}>WhatsApp</label>
                         <input className="wsp-input" style={inputStyle} value={profile.whatsapp}
-                          onChange={e => setProfile(p => ({ ...p, whatsapp: e.target.value }))}
-                          placeholder="(00) 00000-0000" />
+                          onChange={e => setProfile(p => ({ ...p, whatsapp: formatWhatsapp(e.target.value) }))}
+                          placeholder="+55 (00) 00000-0000" inputMode="tel" maxLength={19} />
+
                       </div>
                       <div>
                         <label className={labelCls} style={labelStyle}>E-mail</label>
