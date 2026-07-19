@@ -842,7 +842,7 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
             <ChevronRight className="h-5 w-5" />
           </button>
         )}
-        <div ref={scrollRef} className="flex gap-3 overflow-x-auto overflow-y-visible pb-2 pl-1 scrollbar-hide scroll-smooth card-row-hover">
+        <div ref={scrollRef} className="flex gap-3 overflow-x-auto overflow-y-visible py-2 px-3 -mx-3 scrollbar-hide scroll-smooth card-row-hover">
           {children}
         </div>
       </div>
