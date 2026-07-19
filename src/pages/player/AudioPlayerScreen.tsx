@@ -357,8 +357,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     className="absolute right-0 rounded-2xl overflow-hidden shadow-2xl"
                     style={{
-                      width: isActive ? 260 : 240,
-                      height: isActive ? 360 : 340,
+                      width: isActive ? 280 : 240,
+                      height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
                       filter: `blur(${blur}px) grayscale(${gray}%)`,
