@@ -551,7 +551,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <ArrowLeft size={12} />
               voltar
             </button>
-            <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={seekLive} />
+            <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
             <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
             <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
