@@ -736,7 +736,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <img
                 src={locutorFoto}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover object-top mix-blend-luminosity opacity-95"
+                className="absolute inset-0 w-full h-full object-cover object-top opacity-95"
                 style={{ maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)" }}
               />
             ) : (

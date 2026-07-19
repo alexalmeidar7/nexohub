@@ -19,9 +19,27 @@ export default function PlayerHub() {
   const { user, loading } = useAuth();
   const { userSlug } = useParams();
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
-  const [searchParams] = useSearchParams();
-  const skipToHome = searchParams.get("step") === "home";
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
+  const storageKey = `player-step-home:${userSlug || "root"}`;
+  const skipToHome =
+    searchParams.get("step") === "home" ||
+    (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
+
+  // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
+  useEffect(() => {
+    if (searchParams.get("step") === "home") {
+      try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    } else if (skipToHome && !searchParams.get("step")) {
+      // Restaura o param na URL para que reloads/back voltem à home.
+      const next = new URLSearchParams(searchParams);
+      next.set("step", "home");
+      setSearchParams(next, { replace: true });
+    }
+    // Limpa a flag ao voltar para welcome via botão "trocar de perfil".
+    // Isso é feito em onBackToAccess abaixo.
+  }, [searchParams, setSearchParams, skipToHome, storageKey]);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
@@ -120,12 +138,19 @@ export default function PlayerHub() {
 
 
   const onLoginSuccess = useCallback(() => {
-    transitionTo("welcome");
-  }, [transitionTo]);
+    // Após login, se o fluxo pediu ?step=home, vai direto para home.
+    transitionTo(skipToHome ? "home" : "welcome");
+  }, [transitionTo, skipToHome]);
 
   const onWelcomeContinue = useCallback(() => {
+    try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    const next = new URLSearchParams(searchParams);
+    if (next.get("step") !== "home") {
+      next.set("step", "home");
+      setSearchParams(next, { replace: true });
+    }
     transitionTo("home");
-  }, [transitionTo]);
+  }, [transitionTo, storageKey, searchParams, setSearchParams]);
 
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
@@ -168,6 +193,13 @@ export default function PlayerHub() {
       <PlayerHome
         onBackToAccess={(openEdit?: boolean) => {
           setWelcomeEditOnMount(!!openEdit);
+          // "Trocar de perfil": limpa a persistência de step=home.
+          try { window.localStorage.removeItem(storageKey); } catch {}
+          const next = new URLSearchParams(searchParams);
+          if (next.has("step")) {
+            next.delete("step");
+            setSearchParams(next, { replace: true });
+          }
           transitionTo("welcome");
         }}
       />
