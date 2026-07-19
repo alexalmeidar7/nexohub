@@ -408,7 +408,7 @@ function TopNavBar({
                 onEditProfile={onEditProfile}
                 onSwitchProfile={onSwitchProfile}
                 onLogout={showLogout ? onLogout : undefined}
-                onAvatarChange={onAvatarChange as any}
+                onAvatarChange={onAvatarChange}
               />
             </Suspense>
           )}
