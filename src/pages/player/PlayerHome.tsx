@@ -174,13 +174,15 @@ function TopNavBar({
     <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
       {/* Nav links */}
       <nav className="flex items-center gap-6 sm:gap-10">
-        {items.map((item) => {
+        {items.map((item, idx) => {
           const isActive = activeKey === item.key;
           return (
             <button
               key={item.key}
               onClick={item.action}
               data-tv-focusable
+              data-tv-topnav={idx + 1}
+              title={`Atalho: ${idx + 1}`}
               className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
