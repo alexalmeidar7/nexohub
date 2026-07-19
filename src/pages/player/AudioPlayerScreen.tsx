@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, 
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import ElegantLoader from "@/components/player/ElegantLoader";
+import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
@@ -601,20 +602,29 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isNow = i === 0;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
+                const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    onClick={canRewind ? () => seekBySeconds(ago) : undefined}
+                    onClick={canRewind ? () => {
+                      seekBySeconds(ago);
+                      toast.success(`Voltando ${Math.round(ago)}s`, {
+                        description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
+                        icon: <Rewind size={16} />,
+                        duration: 2600,
+                      });
+                    } : undefined}
                     role={canRewind ? "button" : undefined}
-                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
+                    title={isExpired ? "O retorno no tempo só está disponível para faixas tocadas nos últimos 5 min." : undefined}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
-                      opacity,
-                      filter: `blur(${blur}px) grayscale(${gray}%)`,
+                      opacity: isExpired ? Math.max(0.35, opacity * 0.55) : opacity,
+                      filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
@@ -675,6 +685,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         </div>
                       </div>
                     )}
+
+                    {/* Tooltip para faixas fora da janela de 5 min */}
+                    {isExpired && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/55 backdrop-blur-[2px]">
+                        <div className="max-w-[85%] text-center px-3 py-2 rounded-2xl bg-black/85 border border-white/15 text-white text-[10.5px] leading-snug shadow-2xl">
+                          <div className="flex items-center justify-center gap-1.5 font-semibold uppercase tracking-widest text-white/70 mb-1 text-[9.5px]">
+                            <Rewind size={11} /> indisponível
+                          </div>
+                          Retornar no tempo só funciona nas últimas 5 min de transmissão.
+                        </div>
+                      </div>
+                    )}
+
 
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
                       {hhmm(t.horario)}
