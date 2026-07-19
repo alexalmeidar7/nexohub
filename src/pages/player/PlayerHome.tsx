@@ -2021,11 +2021,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       presenterFoto={currentPresenterFoto}
                       backgroundUrl={heroChannel?.logo_url || null}
                       onOuvir={() => {
-                        const audio = streamingChannels.find(c => c.type === "audio_live") || streamingChannels[0];
+                        const audioChannels = streamingChannels.filter(c => c.type === "audio_live" || c.type === "audio");
+                        let lastId: string | null = null;
+                        try { lastId = user?.id ? localStorage.getItem(`nexo_last_audio_channel_${user.id}`) : null; } catch {}
+                        const audio =
+                          (lastId && audioChannels.find(c => c.id === lastId)) ||
+                          audioChannels[0] ||
+                          streamingChannels[0];
                         if (!audio) return;
-                        // Navega direto ao player de áudio — sem splash / sem fade
+                        // Navega direto ao player de áudio — sem splash / sem fade, retomando último canal
                         const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
-                        navigate(`${watchPath}?ch=${audio.id}`, { state: { fromPath: `${location.pathname}${location.search}` } });
+                        navigate(`${watchPath}?ch=${audio.id}&autoplay=1`, { state: { fromPath: `${location.pathname}${location.search}` } });
                       }}
                       onAssistir={() => {
                         const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];

@@ -119,6 +119,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
+  const coverCacheRef = useRef<Map<string, string>>(new Map());
+  const fetchCover = async (artista: string, musica: string): Promise<string | undefined> => {
+    const key = `${(artista || "").toLowerCase()}|${(musica || "").toLowerCase()}`;
+    if (!key.trim() || key === "|") return undefined;
+    const cached = coverCacheRef.current.get(key);
+    if (cached !== undefined) return cached || undefined;
+    try {
+      const q = encodeURIComponent(`${artista} ${musica}`.trim());
+      const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error("itunes fail");
+      const j = await r.json();
+      const url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
+      coverCacheRef.current.set(key, url);
+      return url || undefined;
+    } catch {
+      coverCacheRef.current.set(key, "");
+      return undefined;
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -130,16 +150,55 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         .order("created_at", { ascending: false })
         .limit(HIST_MAX);
       if (cancelled || !data) return;
-      setHistory(data as HistoryTrack[]);
+      // Hidrata com capas já em cache imediatamente
+      const withCached = (data as HistoryTrack[]).map((t) => ({
+        ...t,
+        capa: coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) || undefined,
+      }));
+      setHistory(withCached);
+      // Busca capas faltantes das primeiras 12 em paralelo
+      const targets = withCached.slice(0, 12).filter((t) => !t.capa);
+      await Promise.all(targets.map(async (t) => {
+        const cover = await fetchCover(t.artista, t.musica);
+        if (!cancelled && cover) {
+          setHistory((prev) => prev.map((p) => (p.artista === t.artista && p.musica === t.musica ? { ...p, capa: cover } : p)));
+        }
+      }));
     };
     load();
     const id = setInterval(load, 30000);
     return () => { cancelled = true; clearInterval(id); };
   }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
 
-  // Animação: chave incrementa a cada nova música para triggerar slide-in
+  // ---- Navegação do carrossel de histórico ----
+  // activeIndex = 0 significa "mais recente" (encostada na capa central).
+  // Ao mover o mouse mais para a esquerda, avançamos no histórico (índices maiores).
+  const [activeIndex, setActiveIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const CAROUSEL_VISIBLE = 10;
+  const maxIndex = Math.max(0, Math.min(history.length, HIST_MAX) - 1);
+
+  useEffect(() => { setActiveIndex(0); }, [history[0]?.musica, history[0]?.artista]);
+
+  const handleCarouselMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const rel = (e.clientX - rect.left) / rect.width; // 0 esquerda .. 1 direita
+    // Direita (rel≈1) => índice 0 (mais recente). Esquerda (rel≈0) => índice maior.
+    const idx = Math.round((1 - Math.max(0, Math.min(1, rel))) * Math.min(maxIndex, CAROUSEL_VISIBLE - 1));
+    setActiveIndex(idx);
+  };
+  const handleCarouselWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) < 4 && Math.abs(e.deltaX) < 4) return;
+    const dir = (e.deltaY + e.deltaX) > 0 ? 1 : -1;
+    setActiveIndex((i) => Math.max(0, Math.min(maxIndex, i + dir)));
+  };
+
+  // Chave para animar entrada de nova música
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
+
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
   const TIMESHIFT_WINDOW = 300; // segundos
@@ -269,41 +328,69 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — atrás e à esquerda */}
-          <div className="relative flex-1 h-[420px] pointer-events-none" style={{ perspective: "1200px" }}>
+          {/* HISTORY CAROUSEL — atrás e à esquerda, navegável pelo mouse */}
+          <div
+            ref={carouselRef}
+            onMouseMove={handleCarouselMouseMove}
+            onMouseLeave={() => setActiveIndex(0)}
+            onWheel={handleCarouselWheel}
+            className="relative flex-1 h-[420px] cursor-ew-resize"
+            style={{ perspective: "1200px" }}
+            aria-label="Histórico de músicas — mova o mouse para navegar"
+          >
+            {/* Dica visual da zona de navegação */}
+            <div className="absolute left-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-r from-white/[0.04] to-transparent" />
             <div className="absolute inset-0 flex items-center justify-end pr-4">
-              {history.slice(0, 6).map((t, i) => {
-                // i=0 é a mais recente (mais próxima da capa central)
-                const depth = i;
-                const scale = 1 - depth * 0.06;
-                const translateX = -depth * 60;
-                const opacity = Math.max(0, 0.85 - depth * 0.18);
-                const blur = depth * 1.2;
+              {history.slice(0, CAROUSEL_VISIBLE).map((t, i) => {
+                // depth relativa ao activeIndex: 0 = destacada (na frente)
+                const depth = i - activeIndex;
+                const abs = Math.abs(depth);
+                const scale = 1 - Math.min(abs, 5) * 0.055;
+                const translateX = -depth * 72;
+                // itens escondidos "atrás" do índice ativo têm opacidade menor
+                const opacity = depth < 0 ? 0 : Math.max(0, 0.95 - abs * 0.16);
+                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
+                const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
+                const isActive = depth === 0;
                 return (
                   <div
-                    key={`${carKey}-${i}-${t.musica}`}
+                    key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     className="absolute right-0 rounded-2xl overflow-hidden shadow-2xl"
                     style={{
-                      width: 240,
-                      height: 340,
+                      width: isActive ? 260 : 240,
+                      height: isActive ? 360 : 340,
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
-                      filter: `blur(${blur}px) grayscale(60%)`,
+                      filter: `blur(${blur}px) grayscale(${gray}%)`,
                       background: "#111",
-                      zIndex: 10 - depth,
-                      transition: "transform 800ms cubic-bezier(.22,1,.36,1), opacity 800ms",
-                      animation: i === 0 ? "audioHistIn 700ms cubic-bezier(.22,1,.36,1)" : undefined,
+                      zIndex: 20 - abs,
+                      transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
+                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 700ms cubic-bezier(.22,1,.36,1)" : undefined,
+                      boxShadow: isActive ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)" : undefined,
                     }}
                   >
+                    {/* Background da capa */}
                     {t.capa ? (
-                      <img src={t.capa} alt="" className="w-full h-full object-cover" />
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `url(${t.capa})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                      />
                     ) : (
-                      <div className="w-full h-full" style={{ background: "linear-gradient(135deg,#222,#000)" }} />
+                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#2a2a2a,#000)" }} />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-                    <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/80">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                    <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
                       {hhmm(t.horario)}
                     </div>
+                    {isActive && (
+                      <div className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-md border border-white/20 text-white uppercase tracking-widest">
+                        #{i + 1}
+                      </div>
+                    )}
                     <div className="absolute bottom-3 left-3 right-3">
                       <div className="text-[10px] uppercase tracking-widest text-white/60">tocou</div>
                       <div className="text-sm font-bold leading-tight truncate">{t.artista}</div>
@@ -313,7 +400,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 );
               })}
             </div>
+            {/* Indicador de posição do carrossel */}
+            {history.length > 1 && (
+              <div className="absolute bottom-2 left-4 right-16 flex items-center gap-1 pointer-events-none">
+                {Array.from({ length: Math.min(history.length, CAROUSEL_VISIBLE) }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-[2px] flex-1 rounded-full transition-all"
+                    style={{ background: i === activeIndex ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.15)" }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* NOW PLAYING CARD */}
           <div
