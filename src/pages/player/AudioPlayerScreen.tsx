@@ -622,7 +622,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* NOW PLAYING CARD */}
           <div
             className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
-            style={{ width: 460, height: 480, background: gradient }}
+            style={{ width: 368, height: 384, background: gradient }}
             data-focusable
           >
             {/* foto locutor */}
