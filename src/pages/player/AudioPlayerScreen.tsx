@@ -533,7 +533,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             aria-label="Histórico de músicas — mova o mouse para navegar"
           >
             {/* Dica visual da zona de navegação */}
-            <div className="absolute left-0 top-0 bottom-0 w-24 pointer-events-none bg-gradient-to-r from-white/[0.04] to-transparent" />
+            {/* zona de navegação (sem gradiente visual) */}
             <div className="absolute inset-0 flex items-center justify-end pr-4">
               {history.slice(0, CAROUSEL_VISIBLE).map((t, i) => {
                 // depth relativa ao activeIndex: 0 = destacada (na frente)
