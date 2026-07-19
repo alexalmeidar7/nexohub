@@ -546,6 +546,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
                 const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
                 const isActive = depth === 0;
+                const isNow = i === 0;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
@@ -560,7 +561,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
                       animation: (i === 0 && activeIndex === 0) ? "audioHistIn 700ms cubic-bezier(.22,1,.36,1)" : undefined,
-                      boxShadow: isActive ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)" : undefined,
+                      boxShadow: isNow
+                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
+                        : isActive
+                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+                          : undefined,
                     }}
                   >
                     {/* Background da capa */}
@@ -580,23 +585,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     )}
 
                     {/* dark bottom gradient para legibilidade do nome */}
-                    {i === 0 && (
+                    {isNow && (
                       <div
                         className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
                         style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)" }}
                       />
                     )}
 
-                    <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
-                      {hhmm(t.horario)}
-                    </div>
-                    {isActive && (
+                    {/* badge TOCANDO AGORA no card ativo */}
+                    {isNow ? (
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                        tocando
+                      </div>
+                    ) : isActive && (
                       <div className="absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-md border border-white/20 text-white uppercase tracking-widest">
                         #{i + 1}
                       </div>
                     )}
+
+                    <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
+                      {hhmm(t.horario)}
+                    </div>
                     <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-                      <div className="text-[10px] uppercase tracking-widest text-white/80">{i === 0 ? "tocando agora" : "tocou"}</div>
+                      <div className="text-[10px] uppercase tracking-widest text-white/80">{isNow ? "tocando agora" : "tocou"}</div>
                       <div className="text-sm font-bold leading-tight truncate">{t.artista}</div>
                       <div className="text-[11px] text-white/85 truncate">{t.musica}</div>
                     </div>
