@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
+import { usePreloadedImages, preloadImage } from "@/hooks/usePreloadImages";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -446,10 +447,15 @@ function HeroBanner({
   };
 
   // Alternating backgrounds: channel thumb + current artist cover
-  const bgSources = useMemo(
-    () => [backgroundUrl, nowPlaying?.capa].filter((v): v is string => !!v),
-    [backgroundUrl, nowPlaying?.capa]
-  );
+  // Preload + decode both URLs so cross-fade never flickers.
+  const bgSources = usePreloadedImages([backgroundUrl, nowPlaying?.capa]);
+
+  // Warm cache as soon as a new artist cover arrives, even before it becomes bgSources.
+  useEffect(() => {
+    if (nowPlaying?.capa) preloadImage(nowPlaying.capa);
+    if (backgroundUrl) preloadImage(backgroundUrl);
+  }, [backgroundUrl, nowPlaying?.capa]);
+
   const [bgIdx, setBgIdx] = useState(0);
   useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
   useEffect(() => {
