@@ -1259,6 +1259,7 @@ export type Database = {
           pais: string | null
           setor: string | null
           sexo: string | null
+          sub_profiles: Json
           updated_at: string
           user_id: string
           whatsapp: string | null
@@ -1279,6 +1280,7 @@ export type Database = {
           pais?: string | null
           setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id: string
           whatsapp?: string | null
@@ -1299,6 +1301,7 @@ export type Database = {
           pais?: string | null
           setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id?: string
           whatsapp?: string | null

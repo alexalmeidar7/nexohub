@@ -84,13 +84,28 @@ export default function WelcomeScreen({
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
 
+  // Load sub-profiles: hydrate from localStorage cache first, then reconcile with DB (profiles.sub_profiles)
   useEffect(() => {
     if (!user) { setSubProfiles([]); return; }
+    const cacheKey = `nexohub_sub_profiles_${user.id}`;
     try {
-      const raw = localStorage.getItem(`nexohub_sub_profiles_${user.id}`);
-      setSubProfiles(raw ? JSON.parse(raw) : []);
-    } catch { setSubProfiles([]); }
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) setSubProfiles(JSON.parse(raw));
+    } catch { /* ignore */ }
+    supabase.from("profiles").select("sub_profiles").eq("user_id", user.id).maybeSingle().then(({ data }) => {
+      const remote = Array.isArray((data as any)?.sub_profiles) ? (data as any).sub_profiles : [];
+      setSubProfiles(remote);
+      try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
+    });
   }, [user?.id]);
+
+  const persistSubProfiles = async (next: Array<{ id: string; name: string; avatar_url: string }>) => {
+    setSubProfiles(next);
+    if (!user) return;
+    try { localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
+    await supabase.from("profiles").update({ sub_profiles: next as any }).eq("user_id", user.id);
+  };
+
   const [saving, setSaving] = useState(false);
   const [signingIn, setSigningIn] = useState(false);
   const [interacted, setInteracted] = useState(false);
@@ -117,28 +132,76 @@ export default function WelcomeScreen({
     return () => cancelAnimationFrame(raf);
   }, [points]);
 
-  // Keyboard navigation on welcome screen (arrows + Enter)
+  // Spatial keyboard navigation (arrows) + Enter/Space to activate
   useEffect(() => {
+    const getNodes = () =>
+      Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
+        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+
+    const pickSpatial = (
+      from: HTMLElement,
+      dir: "up" | "down" | "left" | "right",
+      nodes: HTMLElement[],
+    ): HTMLElement | null => {
+      const a = from.getBoundingClientRect();
+      const ax = a.left + a.width / 2;
+      const ay = a.top + a.height / 2;
+      let best: HTMLElement | null = null;
+      let bestScore = Infinity;
+      for (const n of nodes) {
+        if (n === from) continue;
+        const b = n.getBoundingClientRect();
+        const bx = b.left + b.width / 2;
+        const by = b.top + b.height / 2;
+        const dx = bx - ax;
+        const dy = by - ay;
+        let primary = 0;
+        let cross = 0;
+        if (dir === "right") { if (dx <= 4) continue; primary = dx; cross = Math.abs(dy); }
+        else if (dir === "left") { if (dx >= -4) continue; primary = -dx; cross = Math.abs(dy); }
+        else if (dir === "down") { if (dy <= 4) continue; primary = dy; cross = Math.abs(dx); }
+        else { if (dy >= -4) continue; primary = -dy; cross = Math.abs(dx); }
+        // heavy penalty on cross-axis so we stay in the same row/column when possible
+        const score = primary + cross * 2.2;
+        if (score < bestScore) { bestScore = score; best = n; }
+      }
+      // Fallback: wrap-around — closest node overall in that half
+      if (!best) {
+        for (const n of nodes) {
+          if (n === from) continue;
+          const b = n.getBoundingClientRect();
+          const bx = b.left + b.width / 2;
+          const by = b.top + b.height / 2;
+          const score = Math.hypot(bx - ax, by - ay);
+          if (score < bestScore) { bestScore = score; best = n; }
+        }
+      }
+      return best;
+    };
+
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
-      const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
-        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+      const nodes = getNodes();
       if (nodes.length === 0) return;
       const active = document.activeElement as HTMLElement | null;
-      let idx = nodes.findIndex(n => n === active);
+      const current = active && nodes.includes(active) ? active : null;
+
       if (e.key === "Enter" || e.key === " ") {
-        if (idx >= 0) { e.preventDefault(); nodes[idx].click(); }
+        if (current) { e.preventDefault(); current.click(); }
         return;
       }
       e.preventDefault();
-      if (idx < 0) { nodes[0].focus(); return; }
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") idx = (idx + 1) % nodes.length;
-      else idx = (idx - 1 + nodes.length) % nodes.length;
-      nodes[idx].focus();
+      if (!current) { nodes[0].focus(); return; }
+      const dir =
+        e.key === "ArrowUp" ? "up" :
+        e.key === "ArrowDown" ? "down" :
+        e.key === "ArrowLeft" ? "left" : "right";
+      const next = pickSpatial(current, dir as any, nodes);
+      next?.focus();
     };
     window.addEventListener("keydown", onKey);
-    // auto-focus first item shortly after mount
     const t = window.setTimeout(() => {
+      if (document.activeElement && (document.activeElement as HTMLElement).matches?.('[data-ws-focusable="true"]')) return;
       const first = document.querySelector<HTMLElement>('[data-ws-focusable="true"]');
       first?.focus();
     }, 400);
@@ -791,7 +854,66 @@ export default function WelcomeScreen({
                   />
                   <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
                 </button>
+
+                {subProfiles.length > 0 && (
+                  <div
+                    className="grid gap-2 mt-1"
+                    style={{
+                      gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
+                      width: "clamp(110px, 11vw, 150px)",
+                    }}
+                  >
+                    {subProfiles.map(sp => (
+                      <button
+                        key={sp.id}
+                        data-ws-focusable="true"
+                        onClick={() => {
+                          cancelAutoAdvance();
+                          setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
+                          onContinue();
+                        }}
+                        title={sp.name}
+                        aria-label={`Entrar como ${sp.name}`}
+                        className="group relative aspect-square rounded-xl overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-transform duration-300 hover:scale-[1.06]"
+                        style={{
+                          border: "1px solid rgba(255,255,255,0.14)",
+                          boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14)",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})` }}
+                        />
+                        <img
+                          src={sp.avatar_url}
+                          alt={sp.name}
+                          className="relative w-full h-full object-cover"
+                          draggable={false}
+                        />
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            persistSubProfiles(subProfiles.filter(p => p.id !== sp.id));
+                          }}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full text-white/85 text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}
+                          role="button"
+                          aria-label={`Remover perfil ${sp.name}`}
+                        >
+                          ×
+                        </span>
+                        <span
+                          className="absolute bottom-0 left-0 right-0 text-[9px] text-center text-white/90 py-0.5 truncate"
+                          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0))" }}
+                        >
+                          {sp.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
 
 
               <div className="flex flex-col gap-2 pt-2">
@@ -1274,8 +1396,7 @@ export default function WelcomeScreen({
                       <button
                         onClick={() => {
                           const next = subProfiles.filter(p => p.id !== sp.id);
-                          setSubProfiles(next);
-                          if (user) localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                          persistSubProfiles(next);
                         }}
                         className="text-white/50 hover:text-white/90 text-xs leading-none pl-1"
                         aria-label="Remover perfil"
@@ -1297,8 +1418,7 @@ export default function WelcomeScreen({
                   const name = newProfileName.trim();
                   if (!name || !user) return;
                   const next = [...subProfiles, { id: crypto.randomUUID(), name, avatar_url: newProfileAvatar }];
-                  setSubProfiles(next);
-                  localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                  persistSubProfiles(next);
                   setNewProfileName("");
                   setNewProfileAvatar("/avatars/usr-default.png");
                   setAddProfileOpen(false);
