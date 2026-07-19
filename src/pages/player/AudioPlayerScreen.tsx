@@ -3,6 +3,7 @@ import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, 
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import ElegantLoader from "@/components/player/ElegantLoader";
+import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
