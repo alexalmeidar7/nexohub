@@ -180,6 +180,7 @@ function TopNavBar({
             <button
               key={item.key}
               onClick={item.action}
+              data-tv-focusable
               className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
@@ -401,6 +402,7 @@ function HeroBanner({
   onOuvir,
   onAssistir,
   onPlaylist,
+  cardsVisible = true,
 }: {
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
@@ -409,6 +411,7 @@ function HeroBanner({
   onOuvir: () => void;
   onAssistir: () => void;
   onPlaylist: () => void;
+  cardsVisible?: boolean;
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
@@ -443,7 +446,15 @@ function HeroBanner({
       )}
 
       {/* Bottom-left cards row */}
-      <div className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5">
+      <div
+        data-tv-row="0"
+        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5 transition-all duration-500 ease-out"
+        style={{
+          transform: cardsVisible ? "translateY(0)" : "translateY(-120%)",
+          opacity: cardsVisible ? 1 : 0,
+          pointerEvents: cardsVisible ? "auto" : "none",
+        }}
+      >
         {/* Ouvir card */}
         <button
           onClick={onOuvir}
@@ -1121,6 +1132,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const { user, signOut, loading: authLoading } = useAuth();
   useGlobalMusicSync();
 
+  const [activeRow, setActiveRow] = useState(0);
+  const ROW_COUNT = 2;
+
+
+
   // TV-style keyboard navigation between focusable cards/buttons
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1162,6 +1178,41 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
+
+  // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable)) return;
+      const rowEl = active?.closest?.("[data-tv-row]") as HTMLElement | null;
+      if (!rowEl) return;
+      const rowIndex = Number(rowEl.dataset.tvRow);
+      if (Number.isNaN(rowIndex)) return;
+      if (e.key === "ArrowDown" && rowIndex < ROW_COUNT - 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveRow(rowIndex + 1);
+      } else if (e.key === "ArrowUp" && rowIndex > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveRow(rowIndex - 1);
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, []);
+
+  // Move focus to first focusable in the newly-active row
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const rowEl = document.querySelector(`[data-tv-row="${activeRow}"]`) as HTMLElement | null;
+      const first = rowEl?.querySelector<HTMLElement>("[data-tv-focusable]");
+      first?.focus({ preventScroll: true });
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [activeRow]);
+
 
   const { userSlug } = useParams();
   const navigate = useNavigate();
@@ -1673,7 +1724,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       )}
 
       {/* Main content */}
-      <div ref={contentScrollRef} className={`flex-1 h-full ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-y-auto scroll-smooth"}`}>
+      <div ref={contentScrollRef} className={`flex-1 h-full relative ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-hidden"}`}>
         <div className={`transition-all duration-500 ease-in-out ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "h-full" : ""}`} style={{ opacity: sectionFading ? 0 : 1, transform: sectionFading ? "translateY(12px)" : "translateY(0)" }}>
 
           {visibleSection !== "catalog-detail" && visibleSection !== "top10" && (
@@ -1708,6 +1759,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         if (video) goToPlayer(video.id);
                       }}
                       onPlaylist={() => goToTop10()}
+                      cardsVisible={activeRow === 0}
                     />
                     <TopNavBar
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
@@ -1731,21 +1783,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 )}
               </div>
 
-              {/* All sections stacked vertically */}
-              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
-
-                {/* On Demand */}
-                <section id="section-streaming" className="scroll-mt-4">
-                  {!dataLoaded ? (
-                    <div className="mb-8">
-                      <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
-                      <div className="flex gap-3">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-[22px] bg-white/8" style={{ width: 260, height: 160 }} />)}
-                      </div>
-                    </div>
-                  ) : (
+              {/* On Demand — overlay row: sits at the same position as the hero cards row
+                  and slides up into view when activeRow === 1. The rest of the page stays still. */}
+              <div
+                data-tv-row="1"
+                className="absolute left-8 sm:left-12 z-20 flex items-end gap-5 transition-all duration-500 ease-out"
+                style={{
+                  bottom: "2.5rem", // same as hero cards row (bottom-10)
+                  right: "2.5rem",
+                  transform: activeRow === 1 ? "translateY(0)" : "translateY(120%)",
+                  opacity: activeRow === 1 ? 1 : 0,
+                  pointerEvents: activeRow === 1 ? "auto" : "none",
+                }}
+              >
+                {dataLoaded && (
+                  <div className="flex-1 min-w-0">
                     <ContentRow title="on demand" scrollRoot={contentScrollRef}>
-                      {/* Meu Top 10 — mesmo estilo dos cards ouvir/assistir */}
                       {user && (
                         <button
                           key="__top10__"
@@ -1789,12 +1842,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         );
                       })}
                     </ContentRow>
-                  )}
-                </section>
-
-
-
+                  </div>
+                )}
               </div>
+
             </>
           )}
 
