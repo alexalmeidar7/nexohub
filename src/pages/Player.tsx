@@ -2691,14 +2691,14 @@ export default function PlayerPage() {
   }, [handleHomeClick, user, is991Channel, shopActive]);
 
   if (loading) {
+    // Minimal loading: apenas loader central em fundo preto (sem splash)
     return (
-      <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-        <div className="absolute inset-y-0 right-0 left-0">
-          <PlayerSkeleton status={loadingStatus} />
-        </div>
+      <div className="h-screen w-screen bg-black flex items-center justify-center animate-fade-in">
+        <ElegantLoader size={44} />
       </div>
     );
   }
+
 
   // ===== New Apple-TV audio player screen (for audio channels only) =====
   if (canal && isAudio && !isYoutube && !isCatalog) {

@@ -2022,7 +2022,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       backgroundUrl={heroChannel?.logo_url || null}
                       onOuvir={() => {
                         const audio = streamingChannels.find(c => c.type === "audio_live") || streamingChannels[0];
-                        if (audio) goToPlayer(audio.id);
+                        if (!audio) return;
+                        // Navega direto ao player de áudio — sem splash / sem fade
+                        const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+                        navigate(`${watchPath}?ch=${audio.id}`, { state: { fromPath: `${location.pathname}${location.search}` } });
                       }}
                       onAssistir={() => {
                         const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];
