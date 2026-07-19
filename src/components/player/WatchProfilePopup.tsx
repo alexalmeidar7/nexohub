@@ -234,6 +234,54 @@ export default function WatchProfilePopup({
 
         <div className="w-full h-px bg-white/8" />
 
+        {/* Avatar picker */}
+        {pickerOpen && (
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Escolher avatar</span>
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="text-white/40 hover:text-white text-[10px]"
+              >
+                cancelar
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {AVATARS.map((av) => {
+                const active = (currentAvatar || avatarUrl) === av;
+                const saving = savingAvatar === av;
+                return (
+                  <button
+                    key={av}
+                    onClick={() => handlePickAvatar(av)}
+                    disabled={!!savingAvatar}
+                    className="relative aspect-square rounded-full overflow-hidden transition-transform hover:scale-105 disabled:opacity-60"
+                    style={{
+                      border: active ? "2px solid #ffffff" : "2px solid rgba(255,255,255,0.15)",
+                    }}
+                    title="Selecionar avatar"
+                  >
+                    <img src={av} alt="" className="w-full h-full object-cover" />
+                    {active && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Check size={12} className="text-white" />
+                      </span>
+                    )}
+                    {saving && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[9px] text-white">
+                        ...
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {pickerOpen && <div className="w-full h-px bg-white/8" />}
+
+
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-1 px-4 py-3">
           <div className="flex flex-col items-center gap-0.5">
