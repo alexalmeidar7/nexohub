@@ -589,17 +589,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 min={0}
                 max={TIMESHIFT_WINDOW}
                 step={1}
-                value={Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  seekBySeconds(TIMESHIFT_WINDOW - val);
-                }}
+                value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
+                onChange={(e) => setDragVal(Number(e.target.value))}
+                onMouseUp={commitDrag}
+                onTouchEnd={commitDrag}
+                onPointerUp={commitDrag}
+                onKeyUp={commitDrag}
                 className="w-40 h-1 accent-white cursor-ew-resize"
               />
               <span className="text-[10px] tabular-nums text-white/80 min-w-[46px] text-right">
-                {ts.offset > 1
-                  ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}`
-                  : "ao vivo"}
+                {(() => {
+                  const off = dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset;
+                  return off > 1
+                    ? `-${Math.floor(off / 60)}:${String(Math.round(off % 60)).padStart(2, "0")}`
+                    : "ao vivo";
+                })()}
               </span>
             </div>
             <button
