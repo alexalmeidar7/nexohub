@@ -107,6 +107,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
 
+  // ---- Estado de carregamento/erro da foto do locutor ----
+  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(
+    locutorFoto ? "loading" : "error"
+  );
+  useEffect(() => {
+    setLocutorImgState(locutorFoto ? "loading" : "error");
+  }, [locutorFoto]);
+  const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
+  const locutorIniciais = apresentadorNome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("") || "•";
+
   // ---- Background dinâmico com base na CAPA DA MÚSICA (crossfade elegante) ----
   const musicCover: string | null = musicData?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
