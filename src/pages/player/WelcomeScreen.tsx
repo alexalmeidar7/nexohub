@@ -1004,58 +1004,6 @@ export default function WelcomeScreen({
               </div>
 
 
-
-              <div className="flex flex-col gap-2 pt-2">
-                <div
-                  className="font-medium leading-none"
-                  style={{
-                    fontSize: "clamp(20px, 1.9vw, 28px)",
-                    textShadow: "0 2px 20px rgba(0,0,0,0.55)",
-                  }}
-                >
-                  {displayName}
-                </div>
-                <div className="flex items-center gap-2 text-white/85">
-                  <div className="flex items-center gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => {
-                      const rating = Math.min(5, Math.max(0, Math.round((points / 100) * 2) / 2));
-                      const filled = i < Math.floor(rating);
-                      const half = !filled && i < rating;
-                      return (
-                        <Star
-                          key={i}
-                          size={13}
-                          fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
-                          className="ws-star-pop"
-                          style={{
-                            color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
-                            animationDelay: `${i * 120}ms`,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
-                </div>
-                <button
-                  onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
-                  data-ws-focusable="true"
-                  disabled={loggingOut}
-                  aria-busy={loggingOut}
-                  className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  style={{
-                    background: "rgba(255,255,255,0.10)",
-                    border: "1px solid rgba(255,255,255,0.16)",
-                    backdropFilter: "blur(8px)",
-                  }}
-                >
-                  {loggingOut && (
-                    <span className="inline-block w-3 h-3 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
-                  )}
-                  {loggingOut ? "saindo..." : "sair"}
-                </button>
-
-              </div>
             </>
           ) : (
             <div className="flex items-center gap-3">
