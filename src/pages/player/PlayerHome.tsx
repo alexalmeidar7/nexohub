@@ -323,7 +323,8 @@ function TopNavBar({
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
-            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-transform duration-200 hover:scale-105"
+            data-tv-focusable
+            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60"
             style={{
               borderRadius: "18px",
               background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
