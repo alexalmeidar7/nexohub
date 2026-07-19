@@ -265,6 +265,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
+  // ---- Progresso da música atual ----
+  const [trackStart, setTrackStart] = useState<number>(() => Date.now());
+  useEffect(() => { setTrackStart(Date.now()); }, [musicData?.titulo, musicData?.artista]);
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 500);
+    return () => clearInterval(id);
+  }, []);
+  const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
+  const trackElapsedRaw = Math.max(0, (nowTs - trackStart) / 1000 - ts.offset);
+  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedRaw) : trackElapsedRaw;
+  const fmtMS = (s: number) => {
+    const v = Math.max(0, Math.floor(s));
+    return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`;
+  };
+  const seekTrackTo = (newElapsed: number) => {
+    if (newElapsed >= trackElapsed) { seekLive(); return; }
+    const deltaBack = trackElapsed - newElapsed; // segundos a mais para trás
+    seekBySeconds(ts.offset + deltaBack);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
