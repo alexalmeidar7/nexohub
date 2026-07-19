@@ -815,12 +815,16 @@ export default function WelcomeScreen({
                           key={i}
                           size={13}
                           fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
-                          style={{ color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)" }}
+                          className="ws-star-pop"
+                          style={{
+                            color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
+                            animationDelay: `${i * 120}ms`,
+                          }}
                         />
                       );
                     })}
                   </div>
-                  <span className="text-xs text-white/70">{points} pts</span>
+                  <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
                 </div>
                 <button
                   onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
