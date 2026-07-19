@@ -885,6 +885,12 @@ export default function WelcomeScreen({
                         onClick={() => {
                           cancelAutoAdvance();
                           setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
+                          emitProfileChanged({
+                            userId: user?.id ?? null,
+                            nome: sp.name,
+                            avatar_url: sp.avatar_url,
+                            reason: "switch",
+                          });
                           onContinue();
                         }}
                         title={sp.name}
