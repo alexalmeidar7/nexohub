@@ -1869,7 +1869,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* Hero Banner with Top Nav inside */}
               <div className="relative" id="section-home">
                 {!dataLoaded ? (
-                  <div style={{ height: "100vh" }} className="relative">
+                  <div style={{ height: "100dvh", minHeight: "560px" }} className="relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
                     <div className="absolute bottom-16 left-12 space-y-3">
                       <Skeleton className="h-40 w-72 rounded-2xl bg-white/10" />
