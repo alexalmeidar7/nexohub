@@ -1980,7 +1980,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           {visibleSection !== "catalog-detail" && visibleSection !== "top10" && (
             <>
               {/* Hero Banner with Top Nav inside */}
-              <div className="relative" id="section-home">
+              <div className="relative overflow-hidden" id="section-home">
                 {!dataLoaded ? (
                   <div style={{ height: "100dvh", minHeight: "560px" }} className="relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
