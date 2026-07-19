@@ -357,6 +357,18 @@ export default function PlayerPage() {
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   usePublicHead(isPublicMode ? userSlug : null, "Player");
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
+  const playerWelcomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player", [userSlug]);
+  const clearHomeSkipFlag = useCallback(() => {
+    try { window.localStorage.removeItem(`player-step-home:${userSlug || "root"}`); } catch {}
+  }, [userSlug]);
+  const handleEditProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    navigate(`${playerWelcomePath}?edit=1`);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
+  const handleSwitchProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    navigate(playerWelcomePath);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
