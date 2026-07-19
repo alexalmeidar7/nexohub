@@ -116,6 +116,7 @@ function TopNavBar({
   radioName,
   stationLogoUrl,
   paletteSource,
+  onAvatarChange,
 }: {
   items: { label: string; key: string; action: () => void }[];
   activeKey: string;
@@ -136,6 +137,7 @@ function TopNavBar({
   radioName?: string;
   stationLogoUrl?: string | null;
   paletteSource?: string | null;
+  onAvatarChange?: (url: string) => void;
 }) {
 
   const [profileOpen, setProfileOpen] = useState(false);
