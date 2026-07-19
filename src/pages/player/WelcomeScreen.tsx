@@ -688,7 +688,7 @@ export default function WelcomeScreen({
                       style={{
                         background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
                         opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
-                        transition: "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
+                        transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
                       }}
                     />
                     <img
@@ -736,7 +736,7 @@ export default function WelcomeScreen({
                     style={{
                       background: `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
                       opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
-                      transition: "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
                     }}
                   />
                   <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
