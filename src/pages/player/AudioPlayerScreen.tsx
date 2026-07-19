@@ -85,9 +85,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     karaokeEnabled, setKaraokeEnabled,
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
-    user, profileAvatar, userDisplayName, signOut,
+    user, profileAvatar, userDisplayName, userEmail, signOut,
     effectiveUserId,
     onBackHome,
+    onEditProfile, onSwitchProfile, onAvatarChange,
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
