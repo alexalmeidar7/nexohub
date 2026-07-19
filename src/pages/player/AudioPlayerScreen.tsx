@@ -222,7 +222,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
-  const TIMESHIFT_WINDOW = 300; // segundos
+  const TIMESHIFT_WINDOW = 1800; // segundos (30 min)
   const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
@@ -575,7 +575,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             {/* Slider de rewind (aparece no hover) */}
             <div
               className="flex items-center gap-2 mr-2 pr-3 pl-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 opacity-0 pointer-events-none translate-x-2 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 transition-all duration-200"
-              aria-label="Retroceder até 5 minutos"
+              aria-label="Retroceder até 30 minutos"
             >
               <Rewind size={12} className="text-white/80" />
               <input
@@ -626,7 +626,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               seekBySeconds(TIMESHIFT_WINDOW - val);
             }}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
-            aria-label="Voltar até 5 minutos"
+            aria-label="Voltar até 30 minutos"
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
             <span>-5min</span>

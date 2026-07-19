@@ -1572,9 +1572,9 @@ export default function PlayerPage() {
             liveSyncDurationCount: 3,
             liveMaxLatencyDurationCount: 10,
             liveDurationInfinity: true,
-            // Timeshift: manter 5 min (300s) de áudio para trás no buffer
-            backBufferLength: 300,
-            liveBackBufferLength: 300,
+            // Timeshift: manter 30 min (1800s) de áudio para trás no buffer
+            backBufferLength: 1800,
+            liveBackBufferLength: 1800,
             fragLoadingMaxRetry: 8,
             fragLoadingMaxRetryTimeout: 15000,
             fragLoadingRetryDelay: 500,
