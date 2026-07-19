@@ -560,7 +560,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Pills */}
           <nav className="ml-6 flex items-center gap-2">
             <button
-              onClick={onBackHome}
+              onClick={handleBackHome}
               className="px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border bg-white/6 border-white/10 text-white/85 hover:bg-white/15 hover:text-white"
               aria-label="Voltar para Home"
               data-focusable
