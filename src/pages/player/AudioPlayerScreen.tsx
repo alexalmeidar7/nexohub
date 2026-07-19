@@ -94,6 +94,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     setTimeout(() => onBackHome(), 480);
   }, [exiting, onBackHome]);
 
+  // ---- Curtir PROGRAMA (independente do like da música) ----
+  const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
+  const currentProgId = currentProg?.id ? String(currentProg.id) : null;
+  const [programLiked, setProgramLiked] = useState<boolean>(false);
+  useEffect(() => {
+    if (!currentProgId) { setProgramLiked(false); return; }
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const set: string[] = raw ? JSON.parse(raw) : [];
+      setProgramLiked(Array.isArray(set) && set.includes(currentProgId));
+    } catch { setProgramLiked(false); }
+  }, [currentProgId, programLikeStorageKey]);
+  const toggleProgramLike = useCallback(() => {
+    if (!currentProgId) return;
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const has = arr.includes(currentProgId);
+      const next = has ? arr.filter((x) => x !== currentProgId) : [...arr, currentProgId];
+      localStorage.setItem(programLikeStorageKey, JSON.stringify(next));
+      setProgramLiked(!has);
+    } catch {}
+  }, [currentProgId, programLikeStorageKey]);
+
   // ---- Apresentador do programa no ar ----
   const apresentador = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;
@@ -736,12 +760,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       />
                     )}
 
-                    {/* badge TOCANDO AGORA no card ativo */}
+                    {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
-                      <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                        <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                        tocando
-                      </div>
+                      <>
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                          tocando
+                        </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
+                          className="absolute top-12 right-3 w-9 h-9 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/75 backdrop-blur-md border border-white/15 transition"
+                          aria-label={isLiked ? "Descurtir música" : "Curtir música"}
+                          aria-pressed={isLiked}
+                          title={isLiked ? "Você curtiu esta música" : "Curtir esta música"}
+                        >
+                          <Heart size={16} fill={isLiked ? "#ff3355" : "none"} stroke={isLiked ? "#ff3355" : "white"} />
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
@@ -846,14 +881,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-medium bg-black/55 backdrop-blur-md border border-white/10">
               no ar
             </div>
-            {/* like */}
+            {/* like do PROGRAMA */}
             <button
-              onClick={onToggleLike}
+              onClick={toggleProgramLike}
               className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-black/45 hover:bg-black/70 border border-white/10 transition"
               data-focusable
-              aria-label="Curtir"
+              aria-label={programLiked ? "Descurtir programa" : "Curtir programa"}
+              aria-pressed={programLiked}
+              title={programLiked ? "Você curtiu este programa" : "Curtir este programa"}
             >
-              <Heart size={18} fill={liked ? "#ff3355" : "none"} stroke={liked ? "#ff3355" : "white"} />
+              <Heart size={18} fill={programLiked ? "#ffffff" : "none"} stroke="#ffffff" />
             </button>
 
             {/* bottom info */}
