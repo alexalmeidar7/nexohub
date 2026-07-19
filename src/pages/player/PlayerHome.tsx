@@ -1876,7 +1876,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       currentProgram={currentProgram || undefined}
                       nowPlaying={nowPlaying}
                       presenterFoto={currentPresenterFoto}
-                      backgroundUrl={heroChannel?.background_url || heroChannel?.cover_url || null}
+                      backgroundUrl={heroChannel?.logo_url || heroChannel?.cover_url || heroChannel?.background_url || null}
                       onOuvir={() => {
                         const audio = streamingChannels.find(c => c.type === "audio_live") || streamingChannels[0];
                         if (audio) goToPlayer(audio.id);
