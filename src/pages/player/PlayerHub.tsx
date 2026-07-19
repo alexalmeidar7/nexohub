@@ -40,8 +40,13 @@ export default function PlayerHub() {
       if (!channels || channels.length === 0) return null;
       const live = channels.filter((c) => c?.active !== false && (c?.type === "audio_live" || c?.type === "video_live"));
       const pool = live.length > 0 ? live : channels;
-      const found = pool.find((c) => c?.cover_url) || pool.find((c) => c?.background_url) || pool[0];
-      return found?.cover_url || found?.background_url || null;
+      // Priority: logo_url (Thumb do Canal 1920×1080) → cover_url (Capa 1080×1920) → background_url (Logo)
+      const found =
+        pool.find((c) => c?.logo_url) ||
+        pool.find((c) => c?.cover_url) ||
+        pool.find((c) => c?.background_url) ||
+        pool[0];
+      return found?.logo_url || found?.cover_url || found?.background_url || null;
     };
 
     const fetchLogo = async () => {
@@ -49,7 +54,7 @@ export default function PlayerHub() {
       if (userId) {
         const [empRes, chRes] = await Promise.all([
           supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
-          supabase.from("streaming_channels").select("cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
+          supabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
         ]);
         if (empRes.data) {
           setLogoUrl(empRes.data.logo);

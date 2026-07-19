@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { UserCircle, Pencil, LogIn, Star, Plus } from "lucide-react";
 
 import { useAuth } from "@/hooks/useAuth";
+import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
@@ -65,6 +66,9 @@ export default function WelcomeScreen({
   onLoginSuccess,
 }: WelcomeScreenProps) {
   const { user, signOut } = useAuth();
+  // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
+  // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
+  useGlobalMusicSync();
   const [editOpen, setEditOpen] = useState(false);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [addProfileOpen, setAddProfileOpen] = useState(false);
