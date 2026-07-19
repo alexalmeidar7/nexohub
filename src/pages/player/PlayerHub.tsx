@@ -193,6 +193,13 @@ export default function PlayerHub() {
       <PlayerHome
         onBackToAccess={(openEdit?: boolean) => {
           setWelcomeEditOnMount(!!openEdit);
+          // "Trocar de perfil": limpa a persistência de step=home.
+          try { window.localStorage.removeItem(storageKey); } catch {}
+          const next = new URLSearchParams(searchParams);
+          if (next.has("step")) {
+            next.delete("step");
+            setSearchParams(next, { replace: true });
+          }
           transitionTo("welcome");
         }}
       />
