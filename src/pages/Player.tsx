@@ -2092,6 +2092,7 @@ export default function PlayerPage() {
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
     volumeRef.current = val;
+    try { localStorage.setItem("player:lastVolume", String(val)); } catch {}
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
