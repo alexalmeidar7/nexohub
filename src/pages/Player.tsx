@@ -357,6 +357,18 @@ export default function PlayerPage() {
   const isPublicMode = !!userSlug && !userSlug.startsWith(":");
   usePublicHead(isPublicMode ? userSlug : null, "Player");
   const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
+  const playerWelcomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player` : "/user/nexohub/player", [userSlug]);
+  const clearHomeSkipFlag = useCallback(() => {
+    try { window.localStorage.removeItem(`player-step-home:${userSlug || "root"}`); } catch {}
+  }, [userSlug]);
+  const handleEditProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    navigate(`${playerWelcomePath}?edit=1`);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
+  const handleSwitchProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    navigate(playerWelcomePath);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
@@ -2753,11 +2765,15 @@ export default function PlayerPage() {
           user={user}
           profileAvatar={profileAvatar}
           userDisplayName={userDisplayName}
+          userEmail={user?.email ?? null}
           signOut={signOut}
           effectiveUserId={effectiveUserId}
           isPublicMode={isPublicMode}
           userSlug={userSlug}
           onBackHome={handleHomeClick}
+          onEditProfile={handleEditProfile}
+          onSwitchProfile={handleSwitchProfile}
+          onAvatarChange={(url) => setProfileAvatar(url)}
         />
       </Suspense>
     );
@@ -3414,10 +3430,13 @@ export default function PlayerPage() {
                   <WatchProfilePopup
                     userId={user.id}
                     userName={userDisplayName}
+                    userEmail={user?.email ?? null}
                     avatarUrl={profileAvatar}
                     radioName={empresaNome || undefined}
                     onClose={() => setWatchProfileOpen(false)}
-                    onEditProfile={undefined}
+                    onEditProfile={handleEditProfile}
+                    onSwitchProfile={handleSwitchProfile}
+                    onAvatarChange={(url) => setProfileAvatar(url)}
                     onLogout={async () => { await signOut(); navigate("/"); }}
                   />
                 </Suspense>

@@ -44,11 +44,15 @@ export interface AudioPlayerScreenProps {
   user: any;
   profileAvatar: string | null;
   userDisplayName: string;
+  userEmail?: string | null;
   signOut: () => Promise<void>;
   effectiveUserId: string | null;
   isPublicMode: boolean;
   userSlug: string | null | undefined;
   onBackHome: () => void;
+  onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 interface HistoryTrack {
@@ -81,9 +85,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     karaokeEnabled, setKaraokeEnabled,
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
-    user, profileAvatar, userDisplayName, signOut,
+    user, profileAvatar, userDisplayName, userEmail, signOut,
     effectiveUserId,
     onBackHome,
+    onEditProfile, onSwitchProfile, onAvatarChange,
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
@@ -1138,10 +1143,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <WatchProfilePopup
             userId={user.id}
             userName={userDisplayName}
+            userEmail={userEmail ?? user?.email ?? null}
             avatarUrl={profileAvatar}
             radioName={empresaNome || undefined}
             onClose={() => setWatchProfileOpen(false)}
-            onEditProfile={undefined}
+            onEditProfile={onEditProfile}
+            onSwitchProfile={onSwitchProfile}
+            onAvatarChange={onAvatarChange}
             onLogout={async () => { await signOut(); window.location.href = "/"; }}
           />
         </Suspense>

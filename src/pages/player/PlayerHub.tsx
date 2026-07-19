@@ -106,7 +106,19 @@ export default function PlayerHub() {
 
 
   const [splashDone, setSplashDone] = useState(skipToHome);
-  const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(false);
+  const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(
+    searchParams.get("edit") === "1"
+  );
+
+  // Se voltou do player com ?edit=1, limpa o param depois de armazenar a intenção.
+  useEffect(() => {
+    if (searchParams.get("edit") === "1") {
+      setWelcomeEditOnMount(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("edit");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   const onSplashFinish = useCallback(() => {
     setSplashDone(true);
