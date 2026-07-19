@@ -309,6 +309,13 @@ export default function WelcomeScreen({
     setInteracted(true);
   };
 
+  // Se abrimos a WelcomeScreen já com o dialog de edição (vindo do Home > Editar perfil),
+  // cancelamos o auto-advance para o usuário editar com calma.
+  useEffect(() => {
+    if (initialEditOpen) cancelAutoAdvance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialEditOpen]);
+
 
   const handleSave = async () => {
     if (!user) return;
