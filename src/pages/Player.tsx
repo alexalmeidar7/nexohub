@@ -2131,6 +2131,7 @@ export default function PlayerPage() {
     const newMuted = val === 0;
     setMuted(newMuted);
     mutedRef.current = newMuted;
+    try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
   // Keep media elements in sync with muted/volume state
