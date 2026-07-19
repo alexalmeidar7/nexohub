@@ -43,10 +43,12 @@ function fanLabel(stars: number): string {
 export default function WatchProfilePopup({
   userId,
   userName,
+  userEmail,
   avatarUrl,
   radioName,
   onClose,
   onEditProfile,
+  onSwitchProfile,
   onLogout,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
