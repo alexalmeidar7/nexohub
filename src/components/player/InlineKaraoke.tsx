@@ -73,16 +73,20 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     return () => { cancelled = true; };
   }, [enabled, artist, title, duration]);
 
-  // Sync current line using audio.currentTime, fallback to localStorage start
+  // Sync current line using audio.currentTime, fallback to localStorage start.
+  // Aplica offset negativo de 30s para compensar o buffer/latência do streaming
+  // — a letra aparece atrasada em relação ao clock da faixa, ficando alinhada
+  // com o que o ouvinte está de fato ouvindo pela transmissão.
+  const STREAM_LATENCY_SECONDS = 30;
   useEffect(() => {
     if (!enabled || lines.length === 0) return;
     const tick = () => {
       let elapsed: number | null = null;
       if (audioElement && Number.isFinite(audioElement.currentTime) && audioElement.currentTime > 0) {
-        elapsed = audioElement.currentTime;
+        elapsed = audioElement.currentTime - STREAM_LATENCY_SECONDS;
       } else {
         const startStr = localStorage.getItem(MUSIC_START_KEY);
-        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - 25;
+        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - STREAM_LATENCY_SECONDS;
       }
       if (elapsed !== null) {
         let cur = -1;

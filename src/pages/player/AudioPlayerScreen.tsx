@@ -183,6 +183,24 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     programas?.forEach((p) => { urls.push(p?.capa); urls.push(p?.thumb); });
     if (urls.length) preloadLocutorImages(urls);
   }, [apresentadores, programas]);
+
+  // Preload prioritário do PRÓXIMO programa: assim que a grade indica quem entra
+  // a seguir, já garantimos que a foto do locutor e a capa/thumb estejam em cache
+  // antes da troca — sem skeleton visível no handoff.
+  useEffect(() => {
+    if (!nextProg) return;
+    const nextApresentador = nextProg.apresentador_id
+      ? apresentadores?.find((a) => a.id === nextProg.apresentador_id)
+      : null;
+    const priority = [
+      nextApresentador?.foto,
+      nextProg?.capa,
+      nextProg?.thumb,
+    ].filter(Boolean) as string[];
+    // Dispara um preload individual (alta prioridade) para cada URL crítica.
+    priority.forEach((url) => { void preloadLocutorImage(url); });
+  }, [nextProg, apresentadores]);
+
   const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
   const locutorIniciais = apresentadorNome
     .split(/\s+/)
@@ -657,7 +675,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </button>
             <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
-            <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
+            <PillBtn active={karaokeEnabled} label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
             <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
           </nav>
         </div>
