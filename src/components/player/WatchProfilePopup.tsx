@@ -64,6 +64,7 @@ export default function WatchProfilePopup({
   onEditProfile,
   onSwitchProfile,
   onLogout,
+  onAvatarChange,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
@@ -71,6 +72,31 @@ export default function WatchProfilePopup({
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
+  const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
+
+  useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
+
+  const handlePickAvatar = async (url: string) => {
+    if (!userId || savingAvatar) return;
+    setSavingAvatar(url);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", userId);
+      if (error) throw error;
+      setCurrentAvatar(url);
+      onAvatarChange?.(url);
+      toast.success("Avatar atualizado");
+      setPickerOpen(false);
+    } catch (err: any) {
+      toast.error("Não foi possível atualizar o avatar");
+    } finally {
+      setSavingAvatar(null);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
