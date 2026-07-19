@@ -713,8 +713,9 @@ export default function WelcomeScreen({
               <div className="flex flex-col gap-3 shrink-0">
                 <button
                   onClick={() => { cancelAutoAdvance(); onContinue(); }}
-                  className="group relative shrink-0 outline-none"
+                  className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
                   aria-label="Entrar no player"
+                  data-ws-focusable="true"
                 >
                   <div
                     className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
