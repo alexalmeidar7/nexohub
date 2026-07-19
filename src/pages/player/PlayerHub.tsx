@@ -36,15 +36,26 @@ export default function PlayerHub() {
 
 
   useEffect(() => {
+    const pickChannelThumb = (channels: any[] | null | undefined): string | null => {
+      if (!channels || channels.length === 0) return null;
+      const live = channels.filter((c) => c?.active !== false && (c?.type === "audio_live" || c?.type === "video_live"));
+      const pool = live.length > 0 ? live : channels;
+      const found = pool.find((c) => c?.cover_url) || pool.find((c) => c?.background_url) || pool[0];
+      return found?.cover_url || found?.background_url || null;
+    };
+
     const fetchLogo = async () => {
       const userId = user?.id;
       if (userId) {
-        const { data } = await supabase.from("empresa_config").select("logo, nome, background_url").eq("user_id", userId).single();
-        if (data) {
-          setLogoUrl(data.logo);
-          setChannelName(data.nome || "");
-          setChannelBg((data as any).background_url || null);
+        const [empRes, chRes] = await Promise.all([
+          supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
+          supabase.from("streaming_channels").select("cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
+        ]);
+        if (empRes.data) {
+          setLogoUrl(empRes.data.logo);
+          setChannelName(empRes.data.nome || "");
         }
+        setChannelBg(pickChannelThumb(chRes.data as any[] | null));
         setDataReady(true);
         return;
       }
@@ -57,7 +68,7 @@ export default function PlayerHub() {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
-            if (data.empresa?.background_url) setChannelBg(data.empresa.background_url);
+            setChannelBg(pickChannelThumb(data.channels));
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
@@ -69,6 +80,7 @@ export default function PlayerHub() {
     };
     fetchLogo();
   }, [user, userSlug]);
+
 
   const [splashDone, setSplashDone] = useState(false);
 
