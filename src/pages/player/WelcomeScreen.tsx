@@ -828,6 +828,7 @@ export default function WelcomeScreen({
                 </div>
                 <button
                   onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
+                  data-ws-focusable="true"
                   disabled={loggingOut}
                   aria-busy={loggingOut}
                   className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
