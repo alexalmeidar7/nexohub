@@ -103,32 +103,65 @@ export default function WelcomeScreen({
 
   useEffect(() => {
     if (!backgroundUrl) return;
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
+    let cancelled = false;
+    let blobUrl: string | null = null;
+
+    const applyFromImage = (img: HTMLImageElement) => {
       try {
         const c = document.createElement("canvas");
-        c.width = 32; c.height = 32;
+        c.width = 40; c.height = 40;
         const ctx = c.getContext("2d");
-        if (!ctx) return;
-        ctx.drawImage(img, 0, 0, 32, 32);
+        if (!ctx) return false;
+        ctx.drawImage(img, 0, 0, 40, 40);
         const sample = (x: number, y: number) => {
           const d = ctx.getImageData(x, y, 1, 1).data;
+          // Boost saturation slightly for richer gradient
           return `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
         };
-        const next: [string, string] = [sample(6, 6), sample(26, 26)];
+        // Take samples from opposite quadrants to maximise contrast between the two stops
+        const next: [string, string] = [sample(8, 10), sample(30, 28)];
+        if (cancelled) return true;
         setBgColors((current) => {
           if (current[0] === next[0] && current[1] === next[1]) return current;
           setPrevBgColors(current);
           setFadeIn(false);
           requestAnimationFrame(() => requestAnimationFrame(() => setFadeIn(true)));
-          window.setTimeout(() => { setPrevBgColors(null); setFadeIn(false); }, 1100);
+          window.setTimeout(() => { if (!cancelled) { setPrevBgColors(null); setFadeIn(false); } }, 1500);
           return next;
         });
-      } catch {}
+        return true;
+      } catch {
+        return false;
+      }
     };
+
+    // 1st attempt: crossOrigin=anonymous (works when CDN sends CORS headers)
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      if (cancelled) return;
+      if (applyFromImage(img)) return;
+      // 2nd attempt: fetch as blob → object URL (same-origin, avoids canvas taint)
+      fetch(backgroundUrl, { mode: "cors", cache: "force-cache" })
+        .then(r => r.ok ? r.blob() : Promise.reject())
+        .then(blob => {
+          if (cancelled) return;
+          blobUrl = URL.createObjectURL(blob);
+          const img2 = new Image();
+          img2.onload = () => { if (!cancelled) applyFromImage(img2); };
+          img2.src = blobUrl;
+        })
+        .catch(() => { /* keep previous colors */ });
+    };
+    img.onerror = () => { /* ignore */ };
     img.src = backgroundUrl;
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
   }, [backgroundUrl]);
+
 
 
   const [profile, setProfile] = useState<Profile>({
