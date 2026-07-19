@@ -364,10 +364,12 @@ export default function PlayerPage() {
   }, [userSlug]);
   const handleEditProfile = useCallback(() => {
     clearHomeSkipFlag();
+    emitProfileChanged({ reason: "edit" });
     navigate(`${playerWelcomePath}?edit=1`);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const handleSwitchProfile = useCallback(() => {
     clearHomeSkipFlag();
+    emitProfileChanged({ reason: "switch" });
     navigate(playerWelcomePath);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const { user, loading: authLoading, signOut } = useAuth();
