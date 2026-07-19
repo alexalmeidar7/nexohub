@@ -2039,7 +2039,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
                       paletteSource={heroChannel?.logo_url || null}
-
+                      onAvatarChange={(url) => setProfileAvatar(url)}
                     />
                       );
                     })()}
