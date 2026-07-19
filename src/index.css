@@ -1603,3 +1603,39 @@ img, video, canvas, svg { max-width: 100%; }
   animation: avatarIn 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+
+/* Slider de volume elegante — /player/watch */
+.nexo-volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  transition: height 160ms ease;
+}
+.nexo-volume-slider:hover { height: 6px; }
+.nexo-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.15);
+  border: none;
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+.nexo-volume-slider:hover::-webkit-slider-thumb,
+.nexo-volume-slider:focus-visible::-webkit-slider-thumb { transform: scale(1.25); }
+.nexo-volume-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.15);
+  cursor: pointer;
+}
+.nexo-volume-slider::-moz-range-track { background: transparent; height: 4px; border-radius: 999px; }
