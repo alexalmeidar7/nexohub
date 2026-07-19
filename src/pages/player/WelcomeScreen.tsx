@@ -69,7 +69,10 @@ export default function WelcomeScreen({
   onContinue,
   onLoginSuccess,
   initialEditOpen = false,
+  userSlug = null,
+  publicUserId = null,
 }: WelcomeScreenProps) {
+
   const { user, signOut } = useAuth();
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
