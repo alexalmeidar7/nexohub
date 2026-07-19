@@ -231,10 +231,17 @@ function TopNavBar({
               const el = e.currentTarget;
               const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
               const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
-              if ((e.key === "ArrowLeft" && atStart) || (e.key === "ArrowRight" && atEnd) || e.key === "ArrowUp" || e.key === "ArrowDown") {
-                // Let global TV navigation take over
-                el.blur();
-              }
+              const nav = (dir: "next" | "prev") => {
+                const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]")).filter(n => n.offsetParent !== null);
+                const i = nodes.indexOf(el as unknown as HTMLElement);
+                if (i < 0) return;
+                const t = dir === "next" ? nodes[i + 1] : nodes[i - 1];
+                if (t) { e.preventDefault(); el.blur(); t.focus(); }
+              };
+              if (e.key === "ArrowRight" && atEnd) nav("next");
+              else if (e.key === "ArrowLeft" && atStart) nav("prev");
+              else if (e.key === "ArrowDown" || e.key === "ArrowUp") { el.blur(); }
+              else if (e.key === "Escape") el.blur();
             }}
           />
           <Search className="w-4 h-4 text-white/70 shrink-0" />
