@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
@@ -85,6 +85,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     effectiveUserId,
     onBackHome,
   } = props;
+
+  // ---- Transição de saída ao voltar para Home ----
+  const [exiting, setExiting] = useState(false);
+  const handleBackHome = useCallback(() => {
+    if (exiting) return;
+    setExiting(true);
+    setTimeout(() => onBackHome(), 480);
+  }, [exiting, onBackHome]);
 
   // ---- Apresentador do programa no ar ----
   const apresentador = useMemo(() => {
@@ -488,7 +496,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
+    <div
+      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+      style={{
+        background: "#050810",
+        fontFamily: "'Lufga', 'Inter', sans-serif",
+        opacity: exiting ? 0 : 1,
+        transform: exiting ? "scale(0.97)" : "scale(1)",
+        filter: exiting ? "blur(6px)" : "blur(0)",
+      }}
+    >
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {bgLayers.map((l, idx) => (
@@ -543,7 +560,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Pills */}
           <nav className="ml-6 flex items-center gap-2">
             <button
-              onClick={onBackHome}
+              onClick={handleBackHome}
               className="px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border bg-white/6 border-white/10 text-white/85 hover:bg-white/15 hover:text-white"
               aria-label="Voltar para Home"
               data-focusable
