@@ -474,42 +474,51 @@ function HeroBanner({
 
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
-      {/* Fullscreen background with cross-fade + ken burns */}
+      {/* Fullscreen background — mirror of WelcomeScreen (channel thumb ⇄ artist cover) */}
+      <style>{`
+        @keyframes ph-kenburns {
+          0%   { transform: scale(1.05) translateX(0%); }
+          100% { transform: scale(1.22) translateX(-6%); }
+        }
+        .ph-kenburns { animation: ph-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
+        .ph-bg-layer { transition: opacity 1.6s ease-in-out; }
+      `}</style>
       {bgSources.length > 0 ? (
         <>
-          {bgSources.map((src, i) => (
-            <div
-              key={src + i}
-              className="absolute inset-0 overflow-hidden"
-              style={{
-                opacity: i === bgIdx ? 1 : 0,
-                transition: "opacity 1500ms ease-in-out",
-              }}
-            >
+          {bgSources.map((src, i) => {
+            const isArtist = i === 1; // index 0 = channel thumb, 1 = artist cover
+            return (
               <img
+                key={src + i}
                 src={src}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                className="ph-kenburns ph-bg-layer absolute inset-0 w-full h-full object-cover"
                 style={{
-                  animation: "playerBgKenBurns 22s ease-in-out infinite",
-                  transformOrigin: "center center",
+                  opacity: i === bgIdx ? 1 : 0,
+                  filter: isArtist
+                    ? "brightness(0.5) saturate(1.1) grayscale(0.15)"
+                    : "brightness(0.55) saturate(1.05)",
+                  animationDirection: isArtist ? "alternate-reverse" : "alternate",
                 }}
+                draggable={false}
               />
-            </div>
-          ))}
+            );
+          })}
           <div
-            className="absolute inset-0"
+            className="absolute inset-0 pointer-events-none"
             style={{
-              background: "linear-gradient(to top, hsla(var(--player-bg) / 0.55) 0%, hsla(var(--player-bg) / 0.15) 50%, hsla(var(--player-bg) / 0.35) 100%)",
+              background:
+                "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.15) 30%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.9) 100%)",
             }}
           />
         </>
       ) : (
         <div
           className="absolute inset-0"
-          style={{ background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)" }}
+          style={{ background: "radial-gradient(120% 80% at 30% 20%, #1e2430 0%, #131519 55%, #08090b 100%)" }}
         />
       )}
+
 
 
       {/* Bottom-left cards row */}
