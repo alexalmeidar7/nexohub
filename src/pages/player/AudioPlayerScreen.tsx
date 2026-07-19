@@ -94,6 +94,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     setTimeout(() => onBackHome(), 480);
   }, [exiting, onBackHome]);
 
+  // ---- Curtir PROGRAMA (independente do like da música) ----
+  const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
+  const currentProgId = currentProg?.id ? String(currentProg.id) : null;
+  const [programLiked, setProgramLiked] = useState<boolean>(false);
+  useEffect(() => {
+    if (!currentProgId) { setProgramLiked(false); return; }
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const set: string[] = raw ? JSON.parse(raw) : [];
+      setProgramLiked(Array.isArray(set) && set.includes(currentProgId));
+    } catch { setProgramLiked(false); }
+  }, [currentProgId, programLikeStorageKey]);
+  const toggleProgramLike = useCallback(() => {
+    if (!currentProgId) return;
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const has = arr.includes(currentProgId);
+      const next = has ? arr.filter((x) => x !== currentProgId) : [...arr, currentProgId];
+      localStorage.setItem(programLikeStorageKey, JSON.stringify(next));
+      setProgramLiked(!has);
+    } catch {}
+  }, [currentProgId, programLikeStorageKey]);
+
   // ---- Apresentador do programa no ar ----
   const apresentador = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;
