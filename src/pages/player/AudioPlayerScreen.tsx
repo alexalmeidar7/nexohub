@@ -449,9 +449,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
         {/* Channel logo (canto superior direito) */}
         <div className="flex items-center gap-3">
-          {canal?.logo_url && (
+          {(canal?.background_url || canal?.logo_url) && (
             <img
-              src={canal.logo_url}
+              src={canal.background_url || canal.logo_url}
               alt=""
               className="h-16 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
             />
