@@ -2,6 +2,12 @@ import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } fro
 import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import {
+  isLocutorImageCached,
+  markLocutorImageLoaded,
+  preloadLocutorImage,
+  preloadLocutorImages,
+} from "@/lib/locutorImageCache";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import { toast } from "sonner";
 
