@@ -282,6 +282,76 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     if (a.paused) { void a.play().catch(() => {}); }
   };
 
+  // ---- Atalhos de teclado (Space play/pause, ←/→ seek) ----
+  const [kbdHint, setKbdHint] = useState<string | null>(null);
+  const kbdHintTimerRef = useRef<number | null>(null);
+  const flashHint = (msg: string) => {
+    setKbdHint(msg);
+    if (kbdHintTimerRef.current) clearTimeout(kbdHintTimerRef.current);
+    kbdHintTimerRef.current = window.setTimeout(() => setKbdHint(null), 1200) as any;
+  };
+  useEffect(() => {
+    const isTyping = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t as any).isContentEditable === true;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (isTyping(e.target)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.code) {
+        case "Space":
+        case "KeyK": {
+          e.preventDefault();
+          onTogglePlay();
+          flashHint(playing ? "pausado" : "reproduzindo");
+          break;
+        }
+        case "ArrowLeft": {
+          e.preventDefault();
+          const step = e.shiftKey ? 30 : 10;
+          seekBySeconds(ts.offset + step);
+          flashHint(`− ${step}s`);
+          break;
+        }
+        case "ArrowRight": {
+          e.preventDefault();
+          const step = e.shiftKey ? 30 : 10;
+          const newOffset = Math.max(0, ts.offset - step);
+          if (newOffset <= 1) { seekLive(); flashHint("ao vivo"); }
+          else { seekBySeconds(newOffset); flashHint(`+ ${step}s`); }
+          break;
+        }
+        case "KeyL":
+        case "End": {
+          e.preventDefault();
+          seekLive();
+          flashHint("ao vivo");
+          break;
+        }
+        case "KeyJ": {
+          e.preventDefault();
+          seekBySeconds(ts.offset + 30);
+          flashHint("− 30s");
+          break;
+        }
+        case "KeyM": {
+          e.preventDefault();
+          onSetMuted(!muted);
+          flashHint(muted ? "som ativo" : "sem som");
+          break;
+        }
+        default: break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (kbdHintTimerRef.current) clearTimeout(kbdHintTimerRef.current);
+    };
+  }, [onTogglePlay, onSetMuted, muted, playing, ts.offset]);
+
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
@@ -402,6 +472,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </div>
       )}
 
+      {/* Toast de atalho de teclado */}
+      {kbdHint && (
+        <div
+          className="absolute top-20 left-1/2 -translate-x-1/2 z-40 px-4 py-1.5 rounded-full text-[12px] font-medium backdrop-blur-md border shadow-lg"
+          style={{ background: "rgba(0,0,0,0.55)", borderColor: "rgba(255,255,255,0.18)", color: "white" }}
+        >
+          {kbdHint}
+        </div>
+      )}
+
+
       {/* ============== TOP BAR ============== */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
         {/* Channel switcher */}
@@ -502,7 +583,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    className="absolute right-0 rounded-2xl overflow-hidden shadow-2xl"
+                    className="absolute right-0 rounded-[32px] overflow-hidden shadow-2xl"
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
@@ -566,7 +647,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD */}
           <div
-            className="relative rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
+            className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
             style={{ width: 460, height: 480, background: gradient }}
             data-focusable
           >
@@ -611,43 +692,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual + progresso */}
+              {/* música atual */}
               {musicData?.titulo && (
                 <div className="mt-3">
                   <div className="text-[12px] opacity-85 truncate">
                     ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
-                  </div>
-                  <div className="mt-2 relative group/track">
-                    <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
-                      <div
-                        className="h-full bg-white/95"
-                        style={{
-                          width: `${trackDur > 0 ? (trackDisplay / trackDur) * 100 : 0}%`,
-                          transition: trackDrag != null ? "none" : "width 300ms linear",
-                        }}
-                      />
-                    </div>
-                    {trackDur > 0 && (
-                      <input
-                        type="range"
-                        min={0}
-                        max={Math.max(1, Math.floor(trackDur))}
-                        step={1}
-                        value={Math.min(Math.floor(trackDur), Math.floor(trackDisplay))}
-                        onChange={(e) => setTrackDrag(Number(e.target.value))}
-                        onMouseUp={commitTrackDrag}
-                        onTouchEnd={commitTrackDrag}
-                        onPointerUp={commitTrackDrag}
-                        onKeyUp={commitTrackDrag}
-                        onBlur={commitTrackDrag}
-                        className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
-                        aria-label="Avançar/retroceder na música"
-                      />
-                    )}
-                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
-                      <span>{fmtMS(trackDisplay)}</span>
-                      <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
-                    </div>
                   </div>
                 </div>
               )}

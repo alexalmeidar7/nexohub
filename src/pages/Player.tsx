@@ -380,8 +380,14 @@ export default function PlayerPage() {
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
   const autoplayMutedRef = useRef(false);
-  const [volume, setVolume] = useState(80);
-  const volumeRef = useRef(80);
+  const [volume, setVolume] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("player:lastVolume");
+      const n = saved != null ? Number(saved) : NaN;
+      return Number.isFinite(n) && n >= 0 && n <= 100 ? n : 80;
+    } catch { return 80; }
+  });
+  const volumeRef = useRef<number>(volume);
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
@@ -2086,6 +2092,7 @@ export default function PlayerPage() {
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
     volumeRef.current = val;
+    try { localStorage.setItem("player:lastVolume", String(val)); } catch {}
     const v = val / 100;
     if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
     if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
