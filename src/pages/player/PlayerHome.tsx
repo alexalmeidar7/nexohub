@@ -339,19 +339,35 @@ function TopNavBar({
           <button
             onClick={() => setProfileOpen(v => !v)}
             data-tv-focusable
-            className="overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px]"
+            className="relative overflow-hidden cursor-pointer transition-all duration-500 ease-out hover:scale-[1.04] focus:outline-none focus-visible:outline-none focus:scale-[1.04] focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px]"
             style={{
               borderRadius: "18px",
-              background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
-              border: "1px solid rgba(255,255,255,0.15)",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.18)",
             }}
           >
+            {prevBgColors && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+              />
+            )}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            />
             {avatarUrl ? (
-              <img src={avatarUrl} alt={userName} className="w-full h-full object-cover" />
+              <img src={avatarUrl} alt={userName} className="relative w-full h-full object-cover" />
             ) : (
-              <User className="icon icon-sm text-white m-auto" />
+              <User className="relative icon icon-sm text-white m-auto" />
             )}
           </button>
+
+
 
           {profileOpen && userId && (
             <Suspense fallback={null}>
