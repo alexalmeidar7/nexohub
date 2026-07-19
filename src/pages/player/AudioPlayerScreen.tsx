@@ -267,6 +267,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
+      {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {bgLayers.map((l, idx) => (
+          <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
+        ))}
+      </div>
       {/* Background decorativo do canal (logo) muito sutil */}
       {canal?.background_url && (
         <div
@@ -275,11 +281,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             backgroundImage: `url(${canal.background_url})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.06,
+            opacity: 0.04,
           }}
         />
       )}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.6) 100%)" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
 
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
