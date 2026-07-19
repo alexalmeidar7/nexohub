@@ -645,7 +645,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     } : undefined}
                     role={canRewind ? "button" : undefined}
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
-                    title={isExpired ? "O retorno no tempo só está disponível para faixas tocadas nos últimos 5 min." : undefined}
+                    title={undefined}
                     className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
@@ -714,17 +714,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       </div>
                     )}
 
-                    {/* Tooltip para faixas fora da janela de 5 min */}
-                    {isExpired && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/55 backdrop-blur-[2px]">
-                        <div className="max-w-[85%] text-center px-3 py-2 rounded-2xl bg-black/85 border border-white/15 text-white text-[10.5px] leading-snug shadow-2xl">
-                          <div className="flex items-center justify-center gap-1.5 font-semibold uppercase tracking-widest text-white/70 mb-1 text-[9.5px]">
-                            <Rewind size={11} /> indisponível
-                          </div>
-                          Retornar no tempo só funciona nas últimas 5 min de transmissão.
-                        </div>
-                      </div>
-                    )}
+
+
 
 
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
