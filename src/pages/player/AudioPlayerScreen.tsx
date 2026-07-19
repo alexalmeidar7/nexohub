@@ -294,6 +294,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return Math.max(0, (now.getTime() - played.getTime()) / 1000);
   };
   const REWIND_LIMIT = 300; // 5 min
+  const [preparingRewind, setPreparingRewind] = useState<string | null>(null);
+  const preparingRewindTimerRef = useRef<number | null>(null);
+
 
 
 
