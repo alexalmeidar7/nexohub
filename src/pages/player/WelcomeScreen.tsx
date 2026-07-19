@@ -825,6 +825,68 @@ export default function WelcomeScreen({
                   </div>
                 </button>
 
+                {subProfiles.map(sp => (
+                  <button
+                    key={sp.id}
+                    data-ws-focusable="true"
+                    onClick={() => {
+                      cancelAutoAdvance();
+                      setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
+                      onContinue();
+                    }}
+                    title={sp.name}
+                    aria-label={`Entrar como ${sp.name}`}
+                    className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
+                  >
+                    <div
+                      className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                      style={{
+                        width: "clamp(110px, 11vw, 150px)",
+                        height: "clamp(110px, 11vw, 150px)",
+                        border: "1px solid rgba(255,255,255,0.14)",
+                        boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                      }}
+                    >
+                      {prevBgColors && (
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                        />
+                      )}
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                          opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                          transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                        }}
+                      />
+                      <img
+                        src={sp.avatar_url}
+                        alt={sp.name}
+                        className="relative w-full h-full object-cover"
+                        draggable={false}
+                      />
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          persistSubProfiles(subProfiles.filter(p => p.id !== sp.id));
+                        }}
+                        className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        style={{
+                          background: "rgba(0,0,0,0.35)",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          backdropFilter: "blur(6px)",
+                        }}
+                        role="button"
+                        aria-label={`Remover perfil ${sp.name}`}
+                      >
+                        <span className="text-white/75 text-xs leading-none">×</span>
+                      </span>
+                    </div>
+                  </button>
+                ))}
+
                 <button
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
                   data-ws-focusable="true"
@@ -854,70 +916,6 @@ export default function WelcomeScreen({
                   />
                   <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
                 </button>
-
-                {subProfiles.length > 0 && (
-                  <div
-                    className="grid gap-2 mt-1"
-                    style={{
-                      gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
-                      width: "clamp(110px, 11vw, 150px)",
-                    }}
-                  >
-                    {subProfiles.map(sp => (
-                      <button
-                        key={sp.id}
-                        data-ws-focusable="true"
-                        onClick={() => {
-                          cancelAutoAdvance();
-                          setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
-                          onContinue();
-                        }}
-                        title={sp.name}
-                        aria-label={`Entrar como ${sp.name}`}
-                        className="group relative aspect-square rounded-xl overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-transform duration-300 hover:scale-[1.06]"
-                        style={{
-                          border: "1px solid rgba(255,255,255,0.14)",
-                          boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14)",
-                        }}
-                       >
-                        {prevBgColors && (
-                          <div
-                            className="absolute inset-0 pointer-events-none transition-opacity duration-[1400ms] ease-in-out opacity-0"
-                            style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
-                          />
-                        )}
-                        <div
-                          className="absolute inset-0 pointer-events-none transition-opacity duration-[1400ms] ease-in-out"
-                          style={{ background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})` }}
-                        />
-                        <img
-                          src={sp.avatar_url}
-                          alt={sp.name}
-                          className="relative w-full h-full object-cover"
-                          draggable={false}
-                        />
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            persistSubProfiles(subProfiles.filter(p => p.id !== sp.id));
-                          }}
-                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full text-white/85 text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}
-                          role="button"
-                          aria-label={`Remover perfil ${sp.name}`}
-                        >
-                          ×
-                        </span>
-                        <span
-                          className="absolute bottom-0 left-0 right-0 text-[9px] text-center text-white/90 py-0.5 truncate"
-                          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0))" }}
-                        >
-                          {sp.name}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
 
 
