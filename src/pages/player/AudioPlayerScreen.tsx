@@ -583,7 +583,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    className="absolute right-0 rounded-2xl overflow-hidden shadow-2xl"
+                    className="absolute right-0 rounded-[32px] overflow-hidden shadow-2xl"
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
@@ -647,7 +647,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD */}
           <div
-            className="relative rounded-3xl overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
+            className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
             style={{ width: 460, height: 480, background: gradient }}
             data-focusable
           >
@@ -692,43 +692,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual + progresso */}
+              {/* música atual */}
               {musicData?.titulo && (
                 <div className="mt-3">
                   <div className="text-[12px] opacity-85 truncate">
                     ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
-                  </div>
-                  <div className="mt-2 relative group/track">
-                    <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
-                      <div
-                        className="h-full bg-white/95"
-                        style={{
-                          width: `${trackDur > 0 ? (trackDisplay / trackDur) * 100 : 0}%`,
-                          transition: trackDrag != null ? "none" : "width 300ms linear",
-                        }}
-                      />
-                    </div>
-                    {trackDur > 0 && (
-                      <input
-                        type="range"
-                        min={0}
-                        max={Math.max(1, Math.floor(trackDur))}
-                        step={1}
-                        value={Math.min(Math.floor(trackDur), Math.floor(trackDisplay))}
-                        onChange={(e) => setTrackDrag(Number(e.target.value))}
-                        onMouseUp={commitTrackDrag}
-                        onTouchEnd={commitTrackDrag}
-                        onPointerUp={commitTrackDrag}
-                        onKeyUp={commitTrackDrag}
-                        onBlur={commitTrackDrag}
-                        className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
-                        aria-label="Avançar/retroceder na música"
-                      />
-                    )}
-                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
-                      <span>{fmtMS(trackDisplay)}</span>
-                      <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -762,44 +730,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
         {/* live pill com rewind interativo no hover (à direita) */}
         <div className="flex justify-end mb-2">
-          <div className="group relative flex items-center">
-            {/* Slider de rewind (aparece no hover) */}
-            <div
-              className="flex items-center gap-2 mr-2 pr-3 pl-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 opacity-0 pointer-events-none translate-x-2 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 transition-all duration-200"
-              aria-label="Retroceder até 30 minutos"
-            >
-              <Rewind size={12} className="text-white/80" />
-              <input
-                type="range"
-                min={0}
-                max={TIMESHIFT_WINDOW}
-                step={1}
-                value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                onChange={(e) => setDragVal(Number(e.target.value))}
-                onMouseUp={commitDrag}
-                onTouchEnd={commitDrag}
-                onPointerUp={commitDrag}
-                onKeyUp={commitDrag}
-                className="w-40 h-1 accent-white cursor-ew-resize"
-              />
-              <span className="text-[10px] tabular-nums text-white/80 min-w-[46px] text-right">
-                {(() => {
-                  const off = dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset;
-                  return off > 1
-                    ? `-${Math.floor(off / 60)}:${String(Math.round(off % 60)).padStart(2, "0")}`
-                    : "ao vivo";
-                })()}
-              </span>
-            </div>
-            <button
-              onClick={seekLive}
-              className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
-              aria-label="Voltar ao vivo"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-              {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
-            </button>
-          </div>
+          <button
+            onClick={seekLive}
+            className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
+            aria-label="Voltar ao vivo"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+            {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+          </button>
         </div>
 
         {/* timeshift bar (janela fixa 5 min) */}
