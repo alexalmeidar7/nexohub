@@ -503,10 +503,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual */}
+              {/* música atual + progresso */}
               {musicData?.titulo && (
-                <div className="mt-3 text-[12px] opacity-85 truncate">
-                  ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                <div className="mt-3">
+                  <div className="text-[12px] opacity-85 truncate">
+                    ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                  </div>
+                  <div className="mt-2 relative group/track">
+                    <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
+                      <div
+                        className="h-full bg-white/95 transition-all duration-300"
+                        style={{ width: `${trackDur > 0 ? (trackElapsed / trackDur) * 100 : 0}%` }}
+                      />
+                    </div>
+                    {trackDur > 0 && (
+                      <input
+                        type="range"
+                        min={0}
+                        max={Math.max(1, Math.floor(trackDur))}
+                        step={1}
+                        value={Math.min(Math.floor(trackDur), Math.floor(trackElapsed))}
+                        onChange={(e) => seekTrackTo(Number(e.target.value))}
+                        className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
+                        aria-label="Avançar/retroceder na música"
+                      />
+                    )}
+                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
+                      <span>{fmtMS(trackElapsed)}</span>
+                      <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
