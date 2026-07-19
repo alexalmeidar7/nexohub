@@ -31,6 +31,7 @@ interface WatchProfilePopupProps {
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
   onLogout?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
