@@ -178,9 +178,9 @@ function TopNavBar({
   }, [searchFocused]);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8">
       {/* Nav links */}
-      <nav className="flex items-center gap-6 sm:gap-10">
+      <nav className="flex items-center flex-wrap gap-3 sm:gap-6 md:gap-10">
         {items.map((item, idx) => {
           const isActive = activeKey === item.key;
           return (
@@ -190,11 +190,12 @@ function TopNavBar({
               data-tv-focusable
               data-tv-topnav={idx + 1}
               title={`Atalho: ${idx + 1}`}
-              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
+              className="group relative py-1 font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
                 fontFamily: "'Lufga', system-ui, sans-serif",
+                fontSize: "clamp(15px, 1.6vw, 22px)",
               }}
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
               onBlur={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
@@ -216,13 +217,13 @@ function TopNavBar({
       </nav>
 
       {/* Inline search pill */}
-      <div ref={searchWrapRef} className="relative">
+      <div ref={searchWrapRef} className="relative flex-1 min-w-[160px] max-w-[380px]">
         <div
-          className="flex items-center gap-3 rounded-full px-5 py-2"
+          className="flex items-center gap-3 rounded-full px-4 sm:px-5 py-2"
           style={{
             border: "1px solid rgba(255,255,255,0.35)",
             background: "rgba(255,255,255,0.02)",
-            minWidth: "260px",
+            width: "100%",
           }}
         >
           <input
@@ -323,15 +324,15 @@ function TopNavBar({
         )}
       </div>
 
-      <div className="flex-1" />
+      <div className="hidden md:block flex-1" />
 
       {/* Right: avatar (rounded square) + station logo */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
             data-tv-focusable
-            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60"
+            className="overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px]"
             style={{
               borderRadius: "18px",
               background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
@@ -374,7 +375,7 @@ function TopNavBar({
         </div>
 
         {stationLogoUrl && (
-          <div className="w-[76px] h-[76px] flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center justify-center flex-shrink-0 w-[52px] h-[52px] sm:w-[64px] sm:h-[64px] md:w-[76px] md:h-[76px]">
             <img src={stationLogoUrl} alt="Emissora" className="w-full h-full object-contain" />
           </div>
         )}
@@ -449,8 +450,8 @@ function HeroBanner({
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
-    width: "260px",
-    height: "160px",
+    width: "clamp(180px, 26vw, 260px)",
+    height: "clamp(120px, 17vw, 160px)",
     fontFamily: "'Lufga', system-ui, sans-serif",
   };
 
@@ -473,7 +474,7 @@ function HeroBanner({
   }, [bgSources.length]);
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
+    <div className="relative w-full overflow-hidden" style={{ height: "100dvh", minHeight: "560px", backgroundColor: "hsl(var(--player-bg))" }}>
       {/* Fullscreen background — mirror of WelcomeScreen (channel thumb ⇄ artist cover) */}
       <style>{`
         @keyframes ph-kenburns {
@@ -524,7 +525,7 @@ function HeroBanner({
       {/* Bottom-left cards row */}
       <div
         data-tv-row="0"
-        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5"
+        className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 md:left-12 right-4 sm:right-auto z-10 flex flex-wrap items-end gap-3 sm:gap-5"
         style={{
           transform: cardsVisible ? "translateY(0)" : "translateY(-108%)",
           opacity: cardsVisible ? 1 : 0,
@@ -599,7 +600,7 @@ function HeroBanner({
       </div>
 
       {/* Bottom-right help + nexo logo */}
-      <div className="absolute bottom-10 right-10 z-10 flex items-center gap-4">
+      <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
         <button
           className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
           style={{ border: "1px solid rgba(255,255,255,0.35)" }}
@@ -1868,7 +1869,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* Hero Banner with Top Nav inside */}
               <div className="relative" id="section-home">
                 {!dataLoaded ? (
-                  <div style={{ height: "100vh" }} className="relative">
+                  <div style={{ height: "100dvh", minHeight: "560px" }} className="relative">
                     <Skeleton className="absolute inset-0 bg-white/5" />
                     <div className="absolute bottom-16 left-12 space-y-3">
                       <Skeleton className="h-40 w-72 rounded-2xl bg-white/10" />
