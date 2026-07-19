@@ -141,16 +141,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
 
-  // ---- Timeshift (buffer nativo do HLS) ----
-  const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available
+  // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
+  const TIMESHIFT_WINDOW = 300; // segundos
+  const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
       const a = audioRef.current;
-      if (a && a.buffered && a.buffered.length > 0 && Number.isFinite(a.duration)) {
+      if (a && a.buffered && a.buffered.length > 0) {
         const start = a.buffered.start(0);
         const end = a.buffered.end(a.buffered.length - 1);
-        const back = Math.max(0, Math.min(300, end - start));
+        const rawBack = Math.max(0, end - start);
+        const back = Math.min(TIMESHIFT_WINDOW, rawBack);
         const offset = Math.max(0, Math.min(back, end - a.currentTime));
         setTs({ offset, back });
       } else {
@@ -165,13 +167,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const seekBySeconds = (secsBack: number) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
+    const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
-    a.currentTime = Math.max(a.buffered.start(0), end - secsBack);
+    const clampedBack = Math.min(secsBack, Math.min(TIMESHIFT_WINDOW, end - start));
+    const target = Math.max(start + 0.5, end - clampedBack);
+    try { a.currentTime = target; } catch {}
+    // garantir playback contínuo após o seek
+    if (a.paused) { void a.play().catch(() => {}); }
   };
   const seekLive = () => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
-    a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5;
+    try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
+    if (a.paused) { void a.play().catch(() => {}); }
   };
 
   // ---- Volume UI ----
@@ -395,29 +403,33 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </button>
         </div>
 
-        {/* timeshift bar */}
+        {/* timeshift bar (janela fixa 5 min) */}
         <div className="relative">
           <div className="h-1 rounded-full bg-white/12 overflow-hidden">
             <div
               className="h-full bg-white/85 transition-all duration-500"
-              style={{ width: ts.back > 0 ? `${(1 - ts.offset / Math.max(1, ts.back)) * 100}%` : "100%" }}
+              style={{ width: `${(1 - ts.offset / TIMESHIFT_WINDOW) * 100}%` }}
             />
           </div>
           <input
             type="range"
             min={0}
-            max={Math.max(1, Math.round(ts.back))}
-            value={Math.round(ts.back - ts.offset)}
+            max={TIMESHIFT_WINDOW}
+            step={1}
+            value={Math.round(TIMESHIFT_WINDOW - ts.offset)}
             onChange={(e) => {
-              const val = Number(e.target.value); // 0..back  (0=oldest, back=live)
-              seekBySeconds(ts.back - val);
+              const val = Number(e.target.value); // 0..300 (0=oldest, 300=live)
+              seekBySeconds(TIMESHIFT_WINDOW - val);
             }}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
             aria-label="Voltar até 5 minutos"
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
-            <span>-{Math.round(ts.back / 60)}min buffer</span>
-            <span>{ts.offset > 1 ? `-${Math.round(ts.offset)}s` : "AO VIVO"}</span>
+            <span>-5min</span>
+            <span>
+              {ts.offset > 1 ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}` : "AO VIVO"}
+            </span>
+            <span>disponível: -{Math.round(ts.back)}s</span>
           </div>
         </div>
 
