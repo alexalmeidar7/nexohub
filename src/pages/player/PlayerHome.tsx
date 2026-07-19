@@ -1604,7 +1604,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); handleSectionChange("home"); } },
     { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); handleSectionChange("streaming"); } },
     { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); handleSectionChange("content"); } },
-    ...(user && shopActive ? [{ icon: ShoppingBag, label: "loja", key: "shop", action: () => { setActiveCatalog(null); handleSectionChange("shop"); } }] : []),
+    
   ];
 
   // Presenter photo of currently on-air program
