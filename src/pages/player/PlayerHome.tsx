@@ -1933,6 +1933,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       userId={user?.id}
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
+                      paletteSource={heroChannel?.logo_url || null}
+
                     />
                       );
                     })()}
