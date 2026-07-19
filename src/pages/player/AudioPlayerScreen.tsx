@@ -70,6 +70,92 @@ interface HistoryTrack {
 
 const HIST_MAX = 50;
 
+/**
+ * Slider de volume com estado local + rAF throttling.
+ * Evita re-render do player inteiro a cada movimento do drag
+ * e usa CSS var (--vol) para atualizar o fill sem reflow do style inline.
+ */
+function SmoothVolumeSlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [local, setLocal] = useState<number>(value);
+  const draggingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const pendingRef = useRef<number | null>(null);
+
+  // Sincroniza valor externo quando não está arrastando
+  useEffect(() => {
+    if (!draggingRef.current) setLocal(value);
+  }, [value]);
+
+  useEffect(() => () => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const flush = useCallback(() => {
+    rafRef.current = null;
+    if (pendingRef.current != null) {
+      const v = pendingRef.current;
+      pendingRef.current = null;
+      onChange(v);
+    }
+  }, [onChange]);
+
+  const schedule = useCallback((v: number) => {
+    pendingRef.current = v;
+    if (rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(flush);
+    }
+  }, [flush]);
+
+  const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = Number(e.target.value);
+    setLocal(v);
+    schedule(v);
+  }, [schedule]);
+
+  const endDrag = useCallback(() => {
+    draggingRef.current = false;
+    if (pendingRef.current != null) {
+      const v = pendingRef.current;
+      pendingRef.current = null;
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      onChange(v);
+    }
+  }, [onChange]);
+
+  const startDrag = useCallback(() => { draggingRef.current = true; }, []);
+
+  return (
+    <>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={local}
+        onChange={handleInput}
+        onPointerDown={startDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onKeyDown={startDrag}
+        onKeyUp={endDrag}
+        onBlur={endDrag}
+        aria-label="Volume"
+        className="nexo-volume-slider"
+        style={{ width: 96, ["--vol" as any]: `${local}%` }}
+      />
+      <span className="text-[10px] font-semibold tabular-nums tracking-wider text-white/70 w-6 text-right select-none">
+        {local}
+      </span>
+    </>
+  );
+}
+
+
 function hhmm(dateOrTime: string | Date | undefined) {
   if (!dateOrTime) return "";
   if (dateOrTime instanceof Date) {
