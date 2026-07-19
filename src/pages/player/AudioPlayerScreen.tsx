@@ -870,14 +870,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-medium bg-black/55 backdrop-blur-md border border-white/10">
               no ar
             </div>
-            {/* like */}
+            {/* like do PROGRAMA */}
             <button
-              onClick={onToggleLike}
+              onClick={toggleProgramLike}
               className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-black/45 hover:bg-black/70 border border-white/10 transition"
               data-focusable
-              aria-label="Curtir"
+              aria-label={programLiked ? "Descurtir programa" : "Curtir programa"}
+              aria-pressed={programLiked}
+              title={programLiked ? "Você curtiu este programa" : "Curtir este programa"}
             >
-              <Heart size={18} fill={liked ? "#ff3355" : "none"} stroke={liked ? "#ff3355" : "white"} />
+              <Heart size={18} fill={programLiked ? "#ffffff" : "none"} stroke="#ffffff" />
             </button>
 
             {/* bottom info */}
