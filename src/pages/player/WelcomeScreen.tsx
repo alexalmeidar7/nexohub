@@ -96,6 +96,54 @@ export default function WelcomeScreen({
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
   const [points, setPoints] = useState(0);
+  const [displayedPoints, setDisplayedPoints] = useState(0);
+
+  // Count-up animation for points
+  useEffect(() => {
+    if (points <= 0) { setDisplayedPoints(0); return; }
+    const duration = 1200;
+    const start = performance.now();
+    const from = 0;
+    const to = points;
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayedPoints(Math.round(from + (to - from) * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [points]);
+
+  // Keyboard navigation on welcome screen (arrows + Enter)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
+        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+      if (nodes.length === 0) return;
+      const active = document.activeElement as HTMLElement | null;
+      let idx = nodes.findIndex(n => n === active);
+      if (e.key === "Enter" || e.key === " ") {
+        if (idx >= 0) { e.preventDefault(); nodes[idx].click(); }
+        return;
+      }
+      e.preventDefault();
+      if (idx < 0) { nodes[0].focus(); return; }
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") idx = (idx + 1) % nodes.length;
+      else idx = (idx - 1 + nodes.length) % nodes.length;
+      nodes[idx].focus();
+    };
+    window.addEventListener("keydown", onKey);
+    // auto-focus first item shortly after mount
+    const t = window.setTimeout(() => {
+      const first = document.querySelector<HTMLElement>('[data-ws-focusable="true"]');
+      first?.focus();
+    }, 400);
+    return () => { window.removeEventListener("keydown", onKey); window.clearTimeout(t); };
+  }, [user]);
   const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
   const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
   const [prevBgColors, setPrevBgColors] = useState<[string, string] | null>(null);
