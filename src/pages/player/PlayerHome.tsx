@@ -507,11 +507,15 @@ function HeroBanner({
       {/* Bottom-left cards row */}
       <div
         data-tv-row="0"
-        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5 transition-all duration-500 ease-out"
+        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5"
         style={{
-          transform: cardsVisible ? "translateY(0)" : "translateY(-120%)",
+          transform: cardsVisible ? "translateY(0)" : "translateY(-108%)",
           opacity: cardsVisible ? 1 : 0,
           pointerEvents: cardsVisible ? "auto" : "none",
+          willChange: "transform, opacity",
+          transition: cardsVisible
+            ? "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 520ms ease-out 120ms"
+            : "transform 640ms cubic-bezier(0.32, 0, 0.67, 0), opacity 320ms ease-in",
         }}
       >
         {/* Ouvir card */}
