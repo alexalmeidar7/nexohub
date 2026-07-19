@@ -3430,10 +3430,13 @@ export default function PlayerPage() {
                   <WatchProfilePopup
                     userId={user.id}
                     userName={userDisplayName}
+                    userEmail={user?.email ?? null}
                     avatarUrl={profileAvatar}
                     radioName={empresaNome || undefined}
                     onClose={() => setWatchProfileOpen(false)}
-                    onEditProfile={undefined}
+                    onEditProfile={handleEditProfile}
+                    onSwitchProfile={handleSwitchProfile}
+                    onAvatarChange={(url) => setProfileAvatar(url)}
                     onLogout={async () => { await signOut(); navigate("/"); }}
                   />
                 </Suspense>
