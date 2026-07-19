@@ -931,7 +931,7 @@ export default function WelcomeScreen({
             {(() => {
               const inputStyle: React.CSSProperties = {
                 backgroundColor: "#323431",
-                border: "1.5px solid rgba(217,217,217,0.35)",
+                border: "1.5px solid rgba(217,217,217,0.55)",
                 color: "#d9d9d9",
                 height: 42,
                 borderRadius: 10,
@@ -939,8 +939,23 @@ export default function WelcomeScreen({
                 fontSize: 13,
                 width: "100%",
                 outline: "none",
+                boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
                 transition: "border-color .15s ease, box-shadow .15s ease",
               };
+              const formatWhatsapp = (raw: string) => {
+                const digits = raw.replace(/\D/g, "").replace(/^55/, "").slice(0, 11);
+                const ddd = digits.slice(0, 2);
+                const p1 = digits.slice(2, 7);
+                const p2 = digits.slice(7, 11);
+                if (!digits) return "";
+                let out = "+55";
+                if (ddd) out += ` (${ddd}`;
+                if (ddd.length === 2) out += ")";
+                if (p1) out += ` ${p1}`;
+                if (p2) out += `-${p2}`;
+                return out;
+              };
+
               const labelCls = "text-[10px] uppercase tracking-[0.12em] mb-1.5 block font-medium";
               const labelStyle: React.CSSProperties = { color: "#d9d9d9", opacity: 0.5 };
               const sectionTitle: React.CSSProperties = {
