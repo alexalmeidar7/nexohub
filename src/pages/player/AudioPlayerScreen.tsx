@@ -698,11 +698,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         <div className="flex justify-end mb-2">
           <button
             onClick={seekLive}
-            className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
+            className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden"
             aria-label="Voltar ao vivo"
           >
-            <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-            {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+            <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+            <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
+              {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+            </span>
           </button>
         </div>
 
