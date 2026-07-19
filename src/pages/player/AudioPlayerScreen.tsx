@@ -645,7 +645,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     } : undefined}
                     role={canRewind ? "button" : undefined}
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
-                    title={isExpired ? "O retorno no tempo só está disponível para faixas tocadas nos últimos 5 min." : undefined}
+                    title={undefined}
                     className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
