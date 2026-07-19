@@ -622,7 +622,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="h-1 rounded-full bg-white/12 overflow-hidden">
             <div
               className="h-full bg-white/85 transition-all duration-500"
-              style={{ width: `${(1 - ts.offset / TIMESHIFT_WINDOW) * 100}%` }}
+              style={{ width: `${(1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100}%` }}
             />
           </div>
           <input
@@ -630,11 +630,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             min={0}
             max={TIMESHIFT_WINDOW}
             step={1}
-            value={Math.round(TIMESHIFT_WINDOW - ts.offset)}
-            onChange={(e) => {
-              const val = Number(e.target.value); // 0..300 (0=oldest, 300=live)
-              seekBySeconds(TIMESHIFT_WINDOW - val);
-            }}
+            value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
+            onChange={(e) => setDragVal(Number(e.target.value))}
+            onMouseUp={commitDrag}
+            onTouchEnd={commitDrag}
+            onPointerUp={commitDrag}
+            onKeyUp={commitDrag}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
             aria-label="Voltar até 30 minutos"
           />
