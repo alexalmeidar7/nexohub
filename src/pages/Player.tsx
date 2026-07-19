@@ -60,6 +60,7 @@ const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"))
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
 
 function toTitleCase(str: string): string {
   return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
