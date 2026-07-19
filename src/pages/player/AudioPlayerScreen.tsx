@@ -631,7 +631,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             {/* Dica visual da zona de navegação */}
             {/* zona de navegação (sem gradiente visual) */}
             <div className="absolute inset-0 flex items-center justify-end pr-4">
+              {history.length === 0 && Array.from({ length: 5 }).map((_, i) => {
+                const depth = i;
+                const scale = 1 - Math.min(depth, 5) * 0.055;
+                const translateX = -depth * 72;
+                const opacity = Math.max(0, 0.9 - depth * 0.18);
+                const size = i === 0 ? 280 : 240;
+                return (
+                  <div
+                    key={`skeleton-hist-${i}`}
+                    className="absolute right-0 rounded-[32px] overflow-hidden animate-pulse"
+                    style={{
+                      width: size,
+                      height: size,
+                      transform: `translateX(${translateX}px) scale(${scale})`,
+                      opacity,
+                      background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      zIndex: 20 - depth,
+                    }}
+                  />
+                );
+              })}
               {history.slice(0, CAROUSEL_VISIBLE).map((t, i) => {
+
                 // depth relativa ao activeIndex: 0 = destacada (na frente)
                 const depth = i - activeIndex;
                 const abs = Math.abs(depth);
