@@ -811,7 +811,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         {/* live pill com rewind interativo no hover (à direita) */}
         <div className="flex justify-end mb-2">
           <button
-            onClick={seekLive}
+            onClick={() => seekLive()}
             className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden"
             aria-label="Voltar ao vivo"
           >
