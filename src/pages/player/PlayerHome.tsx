@@ -1946,7 +1946,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     <TopNavBar
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
-                      avatarUrl={profileAvatar}
+                      avatarUrl={(profileAvatar && !profileAvatar.includes("usr-default")) ? profileAvatar : (googlePhoto || profileAvatar)}
                       userName={googleName || userName}
                       userEmail={googleEmail}
                       googleAvatarUrl={googlePhoto}
