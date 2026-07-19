@@ -76,8 +76,30 @@ export default function WatchProfilePopup({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
   const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
+  // Contador que força refetch quando o perfil ou avatar mudam externamente.
+  const [refreshTick, setRefreshTick] = useState(0);
+  // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
+  // ao receber `nexo:profile:changed` sem esperar props do parent.
+  const [displayName, setDisplayName] = useState(userName);
+  const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
 
   useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
+  useEffect(() => { setDisplayName(userName); }, [userName]);
+  useEffect(() => { setDisplayEmail(userEmail); }, [userEmail]);
+
+  // Refetch quando prop `userName` ou `avatarUrl` mudarem (troca de subperfil).
+  useEffect(() => { setRefreshTick(t => t + 1); }, [userName, avatarUrl]);
+
+  // Escuta o barramento global de perfil e atualiza tudo em tempo real.
+  useEffect(() => {
+    const off = onProfileChanged((detail) => {
+      if (detail.nome != null) setDisplayName(detail.nome);
+      if (detail.email !== undefined) setDisplayEmail(detail.email);
+      if (detail.avatar_url != null) setCurrentAvatar(detail.avatar_url);
+      setRefreshTick(t => t + 1);
+    });
+    return off;
+  }, []);
 
   const handlePickAvatar = async (url: string) => {
     if (!userId || savingAvatar) return;
@@ -90,6 +112,7 @@ export default function WatchProfilePopup({
       if (error) throw error;
       setCurrentAvatar(url);
       onAvatarChange?.(url);
+      emitProfileChanged({ userId, avatar_url: url, reason: "avatar" });
       toast.success("Avatar atualizado");
       setPickerOpen(false);
     } catch (err: any) {
