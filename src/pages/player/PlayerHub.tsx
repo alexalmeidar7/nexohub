@@ -153,6 +153,7 @@ export default function PlayerHub() {
           logoUrl={logoUrl}
           onContinue={onWelcomeContinue}
           onLoginSuccess={onLoginSuccess}
+          initialEditOpen={welcomeEditOnMount}
         />
       </div>
     );
@@ -160,7 +161,12 @@ export default function PlayerHub() {
 
   return (
     <div className={wrapperClass}>
-      <PlayerHome onBackToAccess={() => transitionTo("welcome")} />
+      <PlayerHome
+        onBackToAccess={(openEdit?: boolean) => {
+          setWelcomeEditOnMount(!!openEdit);
+          transitionTo("welcome");
+        }}
+      />
     </div>
   );
 }
