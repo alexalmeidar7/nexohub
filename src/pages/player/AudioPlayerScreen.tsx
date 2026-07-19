@@ -578,7 +578,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
                       </div>
                     )}
-                    
+
+                    {/* dark bottom gradient para legibilidade do nome */}
+                    {i === 0 && (
+                      <div
+                        className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
+                        style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)" }}
+                      />
+                    )}
+
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
                       {hhmm(t.horario)}
                     </div>
@@ -587,10 +595,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         #{i + 1}
                       </div>
                     )}
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <div className="text-[10px] uppercase tracking-widest text-white/60">tocou</div>
+                    <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+                      <div className="text-[10px] uppercase tracking-widest text-white/80">{i === 0 ? "tocando agora" : "tocou"}</div>
                       <div className="text-sm font-bold leading-tight truncate">{t.artista}</div>
-                      <div className="text-[11px] text-white/70 truncate">{t.musica}</div>
+                      <div className="text-[11px] text-white/85 truncate">{t.musica}</div>
                     </div>
                   </div>
                 );
