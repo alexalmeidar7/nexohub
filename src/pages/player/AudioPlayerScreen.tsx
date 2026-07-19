@@ -273,18 +273,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
-      {/* Background decorativo do canal (logo) muito sutil */}
-      {canal?.background_url && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: `url(${canal.background_url})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: 0.04,
-          }}
-        />
-      )}
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
 
       {/* Media elements (owned by parent HLS) */}
