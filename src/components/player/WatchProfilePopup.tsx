@@ -230,7 +230,7 @@ export default function WatchProfilePopup({
           >
             <img
               src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
-              alt={userName}
+              alt={displayName}
               className="w-full h-full object-cover"
             />
             <span
@@ -240,9 +240,9 @@ export default function WatchProfilePopup({
             </span>
           </button>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-bold text-white truncate">{userName}</span>
-            {userEmail && (
-              <span className="text-[10px] text-white/50 truncate">{userEmail}</span>
+            <span className="text-sm font-bold text-white truncate">{displayName}</span>
+            {displayEmail && (
+              <span className="text-[10px] text-white/50 truncate">{displayEmail}</span>
             )}
             {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
             <div className="flex items-center gap-0.5 mt-1">
