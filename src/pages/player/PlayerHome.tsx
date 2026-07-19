@@ -1892,12 +1892,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={profileAvatar}
-                      userName={userName}
+                      userName={(user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || userName}
+                      userEmail={user?.email || null}
+                      googleAvatarUrl={(user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null}
                       showLogout={!!user}
                       showSignup={!user && !!onBackToAccess}
                       onLogout={handleSignOut}
-                      onSignup={onBackToAccess}
-                      onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
+                      onSignup={() => onBackToAccess?.()}
+                      onEditProfile={user && onBackToAccess ? () => onBackToAccess(true) : undefined}
+                      onSwitchProfile={user && onBackToAccess ? () => onBackToAccess(false) : undefined}
                       channels={channels}
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
