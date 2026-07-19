@@ -420,17 +420,44 @@ function HeroBanner({
     fontFamily: "'Lufga', system-ui, sans-serif",
   };
 
+  // Alternating backgrounds: channel thumb + current artist cover
+  const bgSources = useMemo(
+    () => [backgroundUrl, nowPlaying?.capa].filter((v): v is string => !!v),
+    [backgroundUrl, nowPlaying?.capa]
+  );
+  const [bgIdx, setBgIdx] = useState(0);
+  useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
+  useEffect(() => {
+    if (bgSources.length <= 1) return;
+    const id = setInterval(() => setBgIdx(i => (i + 1) % bgSources.length), 8000);
+    return () => clearInterval(id);
+  }, [bgSources.length]);
+
   return (
     <div className="relative w-full overflow-hidden" style={{ height: "100vh", backgroundColor: "hsl(var(--player-bg))" }}>
-      {/* Fullscreen background */}
-      {backgroundUrl ? (
+      {/* Fullscreen background with cross-fade + ken burns */}
+      {bgSources.length > 0 ? (
         <>
-          <img
-            src={backgroundUrl}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ animation: "playerFadeSlideIn 0.8s ease-out" }}
-          />
+          {bgSources.map((src, i) => (
+            <div
+              key={src + i}
+              className="absolute inset-0 overflow-hidden"
+              style={{
+                opacity: i === bgIdx ? 1 : 0,
+                transition: "opacity 1500ms ease-in-out",
+              }}
+            >
+              <img
+                src={src}
+                alt=""
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  animation: "playerBgKenBurns 22s ease-in-out infinite",
+                  transformOrigin: "center center",
+                }}
+              />
+            </div>
+          ))}
           <div
             className="absolute inset-0"
             style={{
@@ -444,6 +471,7 @@ function HeroBanner({
           style={{ background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.25) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.1) 100%)" }}
         />
       )}
+
 
       {/* Bottom-left cards row */}
       <div
