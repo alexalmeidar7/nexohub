@@ -348,15 +348,10 @@ export default function WelcomeScreen({
 
     const applyArtistImage = async (artista: string) => {
       const key = artista.toLowerCase();
-      let url = artistImgCacheRef.current[key] || null;
+      let url = getArtistImageSync(artista) || artistImgCacheRef.current[key] || null;
       if (!url) {
-        try {
-          const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
-          if (!error && data?.ok && data?.url) {
-            url = data.url as string;
-            artistImgCacheRef.current[key] = url;
-          }
-        } catch {}
+        url = await fetchArtistImageCached(artista);
+        if (url) artistImgCacheRef.current[key] = url;
       }
       if (cancelled) return;
       if (!url) { setArtistImg(null); return; }
