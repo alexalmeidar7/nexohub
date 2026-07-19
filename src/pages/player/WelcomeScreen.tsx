@@ -881,7 +881,7 @@ export default function WelcomeScreen({
                 </div>
 
 
-                {subProfiles.map(sp => {
+                {subProfiles.map((sp, spIdx) => {
                   const spPoints = Number((sp as any).points) || 0;
                   const spRating = Math.min(5, Math.max(0, Math.round((spPoints / 100) * 2) / 2));
                   return (
