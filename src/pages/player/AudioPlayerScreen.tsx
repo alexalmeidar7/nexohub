@@ -222,8 +222,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
-  const TIMESHIFT_WINDOW = 300; // segundos
+  const TIMESHIFT_WINDOW = 1800; // segundos (30 min)
   const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
+  const [dragVal, setDragVal] = useState<number | null>(null); // valor local durante arraste do rewind
+  const commitDrag = () => {
+    if (dragVal == null) return;
+    seekBySeconds(TIMESHIFT_WINDOW - dragVal);
+    setDragVal(null);
+  };
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
@@ -575,7 +581,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             {/* Slider de rewind (aparece no hover) */}
             <div
               className="flex items-center gap-2 mr-2 pr-3 pl-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 opacity-0 pointer-events-none translate-x-2 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 transition-all duration-200"
-              aria-label="Retroceder até 5 minutos"
+              aria-label="Retroceder até 30 minutos"
             >
               <Rewind size={12} className="text-white/80" />
               <input
@@ -583,17 +589,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 min={0}
                 max={TIMESHIFT_WINDOW}
                 step={1}
-                value={Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  seekBySeconds(TIMESHIFT_WINDOW - val);
-                }}
+                value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
+                onChange={(e) => setDragVal(Number(e.target.value))}
+                onMouseUp={commitDrag}
+                onTouchEnd={commitDrag}
+                onPointerUp={commitDrag}
+                onKeyUp={commitDrag}
                 className="w-40 h-1 accent-white cursor-ew-resize"
               />
               <span className="text-[10px] tabular-nums text-white/80 min-w-[46px] text-right">
-                {ts.offset > 1
-                  ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}`
-                  : "ao vivo"}
+                {(() => {
+                  const off = dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset;
+                  return off > 1
+                    ? `-${Math.floor(off / 60)}:${String(Math.round(off % 60)).padStart(2, "0")}`
+                    : "ao vivo";
+                })()}
               </span>
             </div>
             <button
@@ -612,7 +622,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="h-1 rounded-full bg-white/12 overflow-hidden">
             <div
               className="h-full bg-white/85 transition-all duration-500"
-              style={{ width: `${(1 - ts.offset / TIMESHIFT_WINDOW) * 100}%` }}
+              style={{ width: `${(1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100}%` }}
             />
           </div>
           <input
@@ -620,13 +630,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             min={0}
             max={TIMESHIFT_WINDOW}
             step={1}
-            value={Math.round(TIMESHIFT_WINDOW - ts.offset)}
-            onChange={(e) => {
-              const val = Number(e.target.value); // 0..300 (0=oldest, 300=live)
-              seekBySeconds(TIMESHIFT_WINDOW - val);
-            }}
+            value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
+            onChange={(e) => setDragVal(Number(e.target.value))}
+            onMouseUp={commitDrag}
+            onTouchEnd={commitDrag}
+            onPointerUp={commitDrag}
+            onKeyUp={commitDrag}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
-            aria-label="Voltar até 5 minutos"
+            aria-label="Voltar até 30 minutos"
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
             <span>-5min</span>
