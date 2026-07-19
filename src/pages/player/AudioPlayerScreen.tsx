@@ -869,10 +869,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               </div>
               {/* música atual */}
               {musicData?.titulo && (
-                <div className="mt-3">
-                  <div className="text-[12px] opacity-85 truncate">
-                    ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                <div className="mt-3 flex flex-col gap-0.5">
+                  <div
+                    className="text-[15px] font-semibold leading-tight truncate tracking-tight"
+                    title={musicData.titulo}
+                  >
+                    {musicData.titulo}
                   </div>
+                  {musicData.artista && (
+                    <div
+                      className="text-[11px] uppercase tracking-[0.14em] opacity-70 truncate"
+                      title={musicData.artista}
+                    >
+                      {musicData.artista}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
