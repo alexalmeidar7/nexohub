@@ -1209,8 +1209,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       e.preventDefault();
       // Clear any text selection (removes visible text cursor)
       window.getSelection?.()?.removeAllRanges();
+      // Special-case: ArrowDown from top-nav (menu / search / avatar) jumps to first card of the currently visible row
+      if (e.key === "ArrowDown" && active && (active.hasAttribute("data-tv-topnav") || active.hasAttribute("data-tv-topnav-extra") || !active.closest("[data-tv-row]"))) {
+        const visibleRow = document.querySelector<HTMLElement>(`[data-tv-row="${activeRow}"]`);
+        const firstCard = visibleRow?.querySelector<HTMLElement>("[data-tv-focusable]");
+        if (firstCard) { firstCard.focus(); firstCard.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+      }
       let idx = active ? nodes.indexOf(active) : -1;
       if (idx === -1) { nodes[0].focus(); nodes[0].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+
       const cur = nodes[idx].getBoundingClientRect();
       const curCX = cur.left + cur.width / 2;
       const curCY = cur.top + cur.height / 2;
@@ -1250,7 +1257,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       window.removeEventListener("keydown", handler);
       window.removeEventListener("keydown", enterHandler);
     };
-  }, []);
+  }, [activeRow]);
+
 
   // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
   useEffect(() => {
