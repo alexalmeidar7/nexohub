@@ -552,6 +552,12 @@ export default function PlayerPage() {
   useEffect(() => {
     if (!canal || !userId || canal.id === watchHistoryRecordedRef.current) return;
     watchHistoryRecordedRef.current = canal.id;
+
+    // Persist last audio channel for auto-resume on PlayerHome "OUVIR"
+    if (canal.type === "audio_live" || canal.type === "audio") {
+      try { localStorage.setItem(`nexo_last_audio_channel_${userId}`, canal.id); } catch {}
+    }
+
     
     const recordHistory = async () => {
       const { error } = await supabase.from("watch_history").insert({
