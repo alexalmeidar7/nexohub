@@ -282,6 +282,76 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     if (a.paused) { void a.play().catch(() => {}); }
   };
 
+  // ---- Atalhos de teclado (Space play/pause, ←/→ seek) ----
+  const [kbdHint, setKbdHint] = useState<string | null>(null);
+  const kbdHintTimerRef = useRef<number | null>(null);
+  const flashHint = (msg: string) => {
+    setKbdHint(msg);
+    if (kbdHintTimerRef.current) clearTimeout(kbdHintTimerRef.current);
+    kbdHintTimerRef.current = window.setTimeout(() => setKbdHint(null), 1200) as any;
+  };
+  useEffect(() => {
+    const isTyping = (el: EventTarget | null) => {
+      const t = el as HTMLElement | null;
+      if (!t) return false;
+      const tag = t.tagName;
+      return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || (t as any).isContentEditable === true;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (isTyping(e.target)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.code) {
+        case "Space":
+        case "KeyK": {
+          e.preventDefault();
+          onTogglePlay();
+          flashHint(playing ? "pausado" : "reproduzindo");
+          break;
+        }
+        case "ArrowLeft": {
+          e.preventDefault();
+          const step = e.shiftKey ? 30 : 10;
+          seekBySeconds(ts.offset + step);
+          flashHint(`− ${step}s`);
+          break;
+        }
+        case "ArrowRight": {
+          e.preventDefault();
+          const step = e.shiftKey ? 30 : 10;
+          const newOffset = Math.max(0, ts.offset - step);
+          if (newOffset <= 1) { seekLive(); flashHint("ao vivo"); }
+          else { seekBySeconds(newOffset); flashHint(`+ ${step}s`); }
+          break;
+        }
+        case "KeyL":
+        case "End": {
+          e.preventDefault();
+          seekLive();
+          flashHint("ao vivo");
+          break;
+        }
+        case "KeyJ": {
+          e.preventDefault();
+          seekBySeconds(ts.offset + 30);
+          flashHint("− 30s");
+          break;
+        }
+        case "KeyM": {
+          e.preventDefault();
+          onSetMuted(!muted);
+          flashHint(muted ? "som ativo" : "sem som");
+          break;
+        }
+        default: break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (kbdHintTimerRef.current) clearTimeout(kbdHintTimerRef.current);
+    };
+  }, [onTogglePlay, onSetMuted, muted, playing, ts.offset]);
+
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
