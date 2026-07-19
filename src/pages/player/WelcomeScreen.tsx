@@ -1418,8 +1418,7 @@ export default function WelcomeScreen({
                   const name = newProfileName.trim();
                   if (!name || !user) return;
                   const next = [...subProfiles, { id: crypto.randomUUID(), name, avatar_url: newProfileAvatar }];
-                  setSubProfiles(next);
-                  localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next));
+                  persistSubProfiles(next);
                   setNewProfileName("");
                   setNewProfileAvatar("/avatars/usr-default.png");
                   setAddProfileOpen(false);
