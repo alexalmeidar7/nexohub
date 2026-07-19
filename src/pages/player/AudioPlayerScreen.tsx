@@ -969,6 +969,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               >
                 <Plus size={18} />
               </button>
+
+              {/* Karaokê inline — aparece abaixo do botão + quando ativado */}
+              {karaokeEnabled && (
+                <Suspense fallback={null}>
+                  <InlineKaraoke
+                    enabled={karaokeEnabled}
+                    artist={musicData?.artista}
+                    title={musicData?.titulo}
+                    duration={musicData?.duracao}
+                    audioElement={audioRef.current}
+                  />
+                </Suspense>
+              )}
             </div>
           </div>
         </div>
