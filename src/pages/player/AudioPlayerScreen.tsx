@@ -578,7 +578,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                    
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
                       {hhmm(t.horario)}
                     </div>
