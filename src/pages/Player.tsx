@@ -2787,7 +2787,7 @@ export default function PlayerPage() {
           onBackHome={handleHomeClick}
           onEditProfile={handleEditProfile}
           onSwitchProfile={handleSwitchProfile}
-          onAvatarChange={(url) => setProfileAvatar(url)}
+          onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, avatar_url: url, reason: "avatar" }); }}
         />
       </Suspense>
     );
@@ -3450,7 +3450,7 @@ export default function PlayerPage() {
                     onClose={() => setWatchProfileOpen(false)}
                     onEditProfile={handleEditProfile}
                     onSwitchProfile={handleSwitchProfile}
-                    onAvatarChange={(url) => setProfileAvatar(url)}
+                    onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, avatar_url: url, reason: "avatar" }); }}
                     onLogout={async () => { await signOut(); navigate("/"); }}
                   />
                 </Suspense>
