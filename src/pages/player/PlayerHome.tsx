@@ -375,7 +375,7 @@ function TopNavBar({
         </div>
 
         {stationLogoUrl && (
-          <div className="w-[76px] h-[76px] flex items-center justify-center flex-shrink-0">
+          <div className="flex items-center justify-center flex-shrink-0 w-[52px] h-[52px] sm:w-[64px] sm:h-[64px] md:w-[76px] md:h-[76px]">
             <img src={stationLogoUrl} alt="Emissora" className="w-full h-full object-contain" />
           </div>
         )}
