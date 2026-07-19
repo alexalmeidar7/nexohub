@@ -616,14 +616,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       });
                     } : undefined}
                     role={canRewind ? "button" : undefined}
-                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
+                    title={isExpired ? "O retorno no tempo só está disponível para faixas tocadas nos últimos 5 min." : undefined}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
-                      opacity,
-                      filter: `blur(${blur}px) grayscale(${gray}%)`,
+                      opacity: isExpired ? Math.max(0.35, opacity * 0.55) : opacity,
+                      filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
