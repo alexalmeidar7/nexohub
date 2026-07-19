@@ -44,11 +44,15 @@ export interface AudioPlayerScreenProps {
   user: any;
   profileAvatar: string | null;
   userDisplayName: string;
+  userEmail?: string | null;
   signOut: () => Promise<void>;
   effectiveUserId: string | null;
   isPublicMode: boolean;
   userSlug: string | null | undefined;
   onBackHome: () => void;
+  onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 interface HistoryTrack {
