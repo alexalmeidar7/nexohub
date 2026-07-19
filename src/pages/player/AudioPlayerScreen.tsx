@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
+const InlineKaraoke = lazy(() => import("@/components/player/InlineKaraoke"));
 const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
 
 export interface AudioPlayerScreenProps {
