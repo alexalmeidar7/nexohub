@@ -125,7 +125,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (!effectiveUserId) return;
       const { data } = await supabase
         .from("musicas_tocadas")
-        .select("musica, artista, horario, capa")
+        .select("musica, artista, horario")
         .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false })
         .limit(HIST_MAX);
