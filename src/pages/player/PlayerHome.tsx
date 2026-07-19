@@ -126,6 +126,8 @@ function TopNavBar({
   const profileRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { bgColors, prevBgColors, fadeIn } = useBgPalette(paletteSource);
+
 
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
