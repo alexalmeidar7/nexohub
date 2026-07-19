@@ -805,9 +805,10 @@ export default function WelcomeScreen({
                         }}
                       />
                       <img
+                        key={displayAvatar}
                         src={displayAvatar}
                         alt={displayName}
-                        className="relative w-full h-full object-cover"
+                        className="relative w-full h-full object-cover animate-avatar-in"
                         draggable={false}
                       />
                       <span
