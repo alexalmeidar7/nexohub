@@ -98,6 +98,8 @@ export default function WelcomeScreen({
   const [points, setPoints] = useState(0);
   const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
   const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
+  const [prevBgColors, setPrevBgColors] = useState<[string, string] | null>(null);
+  const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
     if (!backgroundUrl) return;
@@ -114,11 +116,20 @@ export default function WelcomeScreen({
           const d = ctx.getImageData(x, y, 1, 1).data;
           return `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
         };
-        setBgColors([sample(6, 6), sample(26, 26)]);
+        const next: [string, string] = [sample(6, 6), sample(26, 26)];
+        setBgColors((current) => {
+          if (current[0] === next[0] && current[1] === next[1]) return current;
+          setPrevBgColors(current);
+          setFadeIn(false);
+          requestAnimationFrame(() => requestAnimationFrame(() => setFadeIn(true)));
+          window.setTimeout(() => { setPrevBgColors(null); setFadeIn(false); }, 1100);
+          return next;
+        });
       } catch {}
     };
     img.src = backgroundUrl;
   }, [backgroundUrl]);
+
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
