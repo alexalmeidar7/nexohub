@@ -1626,7 +1626,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const container = contentScrollRef.current;
     if (!container) return;
 
-    const sectionIds = ["section-streaming", "section-content", "section-shop"];
+    const sectionIds = ["section-streaming", "section-content"];
     const handleScroll = () => {
       const scrollTop = container.scrollTop;
       const containerHeight = container.clientHeight;
