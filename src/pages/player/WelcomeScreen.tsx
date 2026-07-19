@@ -98,6 +98,8 @@ export default function WelcomeScreen({
   const [points, setPoints] = useState(0);
   const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
   const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
+  const [prevBgColors, setPrevBgColors] = useState<[string, string] | null>(null);
+  const [fadeIn, setFadeIn] = useState(false);
 
   useEffect(() => {
     if (!backgroundUrl) return;
@@ -114,11 +116,20 @@ export default function WelcomeScreen({
           const d = ctx.getImageData(x, y, 1, 1).data;
           return `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
         };
-        setBgColors([sample(6, 6), sample(26, 26)]);
+        const next: [string, string] = [sample(6, 6), sample(26, 26)];
+        setBgColors((current) => {
+          if (current[0] === next[0] && current[1] === next[1]) return current;
+          setPrevBgColors(current);
+          setFadeIn(false);
+          requestAnimationFrame(() => requestAnimationFrame(() => setFadeIn(true)));
+          window.setTimeout(() => { setPrevBgColors(null); setFadeIn(false); }, 1100);
+          return next;
+        });
       } catch {}
     };
     img.src = backgroundUrl;
   }, [backgroundUrl]);
+
 
   const [profile, setProfile] = useState<Profile>({
     nome: userName,
@@ -629,15 +640,28 @@ export default function WelcomeScreen({
                     style={{
                       width: "clamp(110px, 11vw, 150px)",
                       height: "clamp(110px, 11vw, 150px)",
-                      background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
                       border: "1px solid rgba(255,255,255,0.14)",
                       boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
                     }}
                   >
+                    {prevBgColors && (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                      />
+                    )}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                        opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                        transition: "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}
+                    />
                     <img
                       src={displayAvatar}
                       alt={displayName}
-                      className="w-full h-full object-cover"
+                      className="relative w-full h-full object-cover"
                       draggable={false}
                     />
                     <span
@@ -658,18 +682,31 @@ export default function WelcomeScreen({
 
                 <button
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
-                  className="group relative shrink-0 outline-none rounded-[28px] flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
+                  className="group relative shrink-0 outline-none rounded-[28px] overflow-hidden flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
                     height: "clamp(110px, 11vw, 150px)",
-                    background: `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
                     border: "1px dashed rgba(255,255,255,0.22)",
                     boxShadow: "0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
                   }}
                   aria-label="Adicionar novo perfil"
                   title="Adicionar novo perfil"
                 >
-                  <Plus className="w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
+                  {prevBgColors && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: `linear-gradient(145deg, ${prevBgColors[1]}, ${prevBgColors[0]})` }}
+                    />
+                  )}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
+                      opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                      transition: "opacity 900ms cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  />
+                  <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
                 </button>
               </div>
 
