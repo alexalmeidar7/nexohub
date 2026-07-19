@@ -11,10 +11,12 @@ interface LikedSong {
 interface WatchProfilePopupProps {
   userId: string;
   userName: string;
+  userEmail?: string | null;
   avatarUrl: string | null;
   radioName?: string;
   onClose: () => void;
   onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
   onLogout?: () => void;
 }
 
