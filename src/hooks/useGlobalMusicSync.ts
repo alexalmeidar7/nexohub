@@ -6,6 +6,7 @@ import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
+import { fetchArtistImageCached } from "@/lib/artistImageCache";
 
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
@@ -232,12 +233,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
           let artistImg = "";
           if (data.artista && data.artista !== "Desconhecido") {
-            const { data: artistRes } = await supabase.functions.invoke("fetch-artist-image", {
-              body: { artist: data.artista },
-            });
-            if (artistRes?.ok && artistRes?.url) {
-              artistImg = artistRes.url;
-            }
+            artistImg = (await fetchArtistImageCached(data.artista)) || "";
           }
 
           const curRaw = localStorage.getItem(MUSIC_DATA_KEY);
