@@ -119,6 +119,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
+  const coverCacheRef = useRef<Map<string, string>>(new Map());
+  const fetchCover = async (artista: string, musica: string): Promise<string | undefined> => {
+    const key = `${(artista || "").toLowerCase()}|${(musica || "").toLowerCase()}`;
+    if (!key.trim() || key === "|") return undefined;
+    const cached = coverCacheRef.current.get(key);
+    if (cached !== undefined) return cached || undefined;
+    try {
+      const q = encodeURIComponent(`${artista} ${musica}`.trim());
+      const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
+      if (!r.ok) throw new Error("itunes fail");
+      const j = await r.json();
+      const url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
+      coverCacheRef.current.set(key, url);
+      return url || undefined;
+    } catch {
+      coverCacheRef.current.set(key, "");
+      return undefined;
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -130,16 +150,55 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         .order("created_at", { ascending: false })
         .limit(HIST_MAX);
       if (cancelled || !data) return;
-      setHistory(data as HistoryTrack[]);
+      // Hidrata com capas já em cache imediatamente
+      const withCached = (data as HistoryTrack[]).map((t) => ({
+        ...t,
+        capa: coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) || undefined,
+      }));
+      setHistory(withCached);
+      // Busca capas faltantes das primeiras 12 em paralelo
+      const targets = withCached.slice(0, 12).filter((t) => !t.capa);
+      await Promise.all(targets.map(async (t) => {
+        const cover = await fetchCover(t.artista, t.musica);
+        if (!cancelled && cover) {
+          setHistory((prev) => prev.map((p) => (p.artista === t.artista && p.musica === t.musica ? { ...p, capa: cover } : p)));
+        }
+      }));
     };
     load();
     const id = setInterval(load, 30000);
     return () => { cancelled = true; clearInterval(id); };
   }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
 
-  // Animação: chave incrementa a cada nova música para triggerar slide-in
+  // ---- Navegação do carrossel de histórico ----
+  // activeIndex = 0 significa "mais recente" (encostada na capa central).
+  // Ao mover o mouse mais para a esquerda, avançamos no histórico (índices maiores).
+  const [activeIndex, setActiveIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const CAROUSEL_VISIBLE = 10;
+  const maxIndex = Math.max(0, Math.min(history.length, HIST_MAX) - 1);
+
+  useEffect(() => { setActiveIndex(0); }, [history[0]?.musica, history[0]?.artista]);
+
+  const handleCarouselMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = carouselRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const rel = (e.clientX - rect.left) / rect.width; // 0 esquerda .. 1 direita
+    // Direita (rel≈1) => índice 0 (mais recente). Esquerda (rel≈0) => índice maior.
+    const idx = Math.round((1 - Math.max(0, Math.min(1, rel))) * Math.min(maxIndex, CAROUSEL_VISIBLE - 1));
+    setActiveIndex(idx);
+  };
+  const handleCarouselWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (Math.abs(e.deltaY) < 4 && Math.abs(e.deltaX) < 4) return;
+    const dir = (e.deltaY + e.deltaX) > 0 ? 1 : -1;
+    setActiveIndex((i) => Math.max(0, Math.min(maxIndex, i + dir)));
+  };
+
+  // Chave para animar entrada de nova música
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
+
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
   const TIMESHIFT_WINDOW = 300; // segundos
