@@ -1783,21 +1783,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                 )}
               </div>
 
-              {/* All sections stacked vertically */}
-              <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
-
-                {/* On Demand */}
-                <section id="section-streaming" className="scroll-mt-4">
-                  {!dataLoaded ? (
-                    <div className="mb-8">
-                      <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
-                      <div className="flex gap-3">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-[22px] bg-white/8" style={{ width: 260, height: 160 }} />)}
-                      </div>
-                    </div>
-                  ) : (
+              {/* On Demand — overlay row: sits at the same position as the hero cards row
+                  and slides up into view when activeRow === 1. The rest of the page stays still. */}
+              <div
+                data-tv-row="1"
+                className="absolute left-8 sm:left-12 z-20 flex items-end gap-5 transition-all duration-500 ease-out"
+                style={{
+                  bottom: "2.5rem", // same as hero cards row (bottom-10)
+                  right: "2.5rem",
+                  transform: activeRow === 1 ? "translateY(0)" : "translateY(120%)",
+                  opacity: activeRow === 1 ? 1 : 0,
+                  pointerEvents: activeRow === 1 ? "auto" : "none",
+                }}
+              >
+                {dataLoaded && (
+                  <div className="flex-1 min-w-0">
                     <ContentRow title="on demand" scrollRoot={contentScrollRef}>
-                      {/* Meu Top 10 — mesmo estilo dos cards ouvir/assistir */}
                       {user && (
                         <button
                           key="__top10__"
@@ -1841,12 +1842,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                         );
                       })}
                     </ContentRow>
-                  )}
-                </section>
-
-
-
+                  </div>
+                )}
               </div>
+
             </>
           )}
 
