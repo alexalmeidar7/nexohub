@@ -21,7 +21,7 @@ export default function PlayerHub() {
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams] = useSearchParams();
   const skipToHome = searchParams.get("step") === "home";
-  const [step, setStep] = useState<Step>("splash");
+  const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [channelBg, setChannelBg] = useState<string | null>(null);
   const [channelName, setChannelName] = useState("");
