@@ -525,7 +525,7 @@ function HeroBanner({
       {/* Bottom-left cards row */}
       <div
         data-tv-row="0"
-        className="absolute bottom-10 left-8 sm:left-12 z-10 flex items-end gap-5"
+        className="absolute bottom-6 sm:bottom-10 left-4 sm:left-8 md:left-12 right-4 sm:right-auto z-10 flex flex-wrap items-end gap-3 sm:gap-5"
         style={{
           transform: cardsVisible ? "translateY(0)" : "translateY(-108%)",
           opacity: cardsVisible ? 1 : 0,
