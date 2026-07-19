@@ -1888,13 +1888,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlaylist={() => goToTop10()}
                       cardsVisible={activeRow === 0}
                     />
+                    {(() => {
+                      const googleIdentity = (user?.identities || []).find((i: any) => i.provider === "google");
+                      const gData: any = googleIdentity?.identity_data || {};
+                      const meta: any = user?.user_metadata || {};
+                      const googleName = gData.full_name || gData.name || meta.full_name || meta.name || null;
+                      const googleEmail = gData.email || user?.email || null;
+                      const googlePhoto = gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || null;
+                      return (
                     <TopNavBar
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={profileAvatar}
-                      userName={(user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || userName}
-                      userEmail={user?.email || null}
-                      googleAvatarUrl={(user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null}
+                      userName={googleName || userName}
+                      userEmail={googleEmail}
+                      googleAvatarUrl={googlePhoto}
                       showLogout={!!user}
                       showSignup={!user && !!onBackToAccess}
                       onLogout={handleSignOut}
