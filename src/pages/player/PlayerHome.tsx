@@ -509,28 +509,21 @@ function HeroBanner({
 
   // Fetch artist image (Deezer) for the current playing artist and use it as
   // the alternating background — never the album cover (which was showing before).
-  const [artistImg, setArtistImg] = useState<string | null>(null);
-  const artistImgCacheRef = useRef<Record<string, string>>({});
+  // Cache compartilhado (memória + localStorage, 7 dias) para reduzir chamadas.
+  const [artistImg, setArtistImg] = useState<string | null>(() => {
+    const a = (nowPlaying?.artista || "").trim();
+    return a ? getArtistImageSync(a) : null;
+  });
   useEffect(() => {
     const artista = (nowPlaying?.artista || "").trim();
     const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes(artista.toLowerCase());
     if (!artista || isBreak) { setArtistImg(null); return; }
-    const key = artista.toLowerCase();
-    const cached = artistImgCacheRef.current[key];
-    if (cached) { setArtistImg(cached); return; }
+    const sync = getArtistImageSync(artista);
+    if (sync) { setArtistImg(sync); return; }
     let cancelled = false;
-    (async () => {
-      try {
-        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
-        if (cancelled) return;
-        if (!error && data?.ok && data?.url) {
-          artistImgCacheRef.current[key] = data.url as string;
-          setArtistImg(data.url as string);
-        } else {
-          setArtistImg(null);
-        }
-      } catch { if (!cancelled) setArtistImg(null); }
-    })();
+    fetchArtistImageCached(artista).then((url) => {
+      if (!cancelled) setArtistImg(url);
+    });
     return () => { cancelled = true; };
   }, [nowPlaying?.artista]);
 
