@@ -56,6 +56,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
@@ -2696,6 +2697,54 @@ export default function PlayerPage() {
           <PlayerSkeleton status={loadingStatus} />
         </div>
       </div>
+    );
+  }
+
+  // ===== New Apple-TV audio player screen (for audio channels only) =====
+  if (canal && isAudio && !isYoutube && !isCatalog) {
+    return (
+      <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
+        <AudioPlayerScreen
+          audioRef={audioRef}
+          videoRef={videoRef}
+          canal={canal}
+          canais={canais}
+          liveChannels={liveChannels}
+          navigateChannel={navigateChannel}
+          programas={programas}
+          currentProg={currentProg}
+          nextProg={nextProg}
+          apresentadores={apresentadores}
+          musicData={musicData}
+          playing={playing}
+          muted={muted}
+          volume={volume}
+          buffering={buffering}
+          onTogglePlay={handlePlayCanal}
+          onSetMuted={setMuted}
+          onSetVolume={(v) => { setVolume(v); if (audioRef.current) audioRef.current.volume = v / 100; }}
+          liked={liked}
+          onToggleLike={toggleLike}
+          chatOpen={chatOpen}
+          setChatOpen={setChatOpen}
+          gradeOpen={gradeOpen}
+          setGradeOpen={setGradeOpen}
+          karaokeEnabled={karaokeEnabled}
+          setKaraokeEnabled={setKaraokeEnabled}
+          watchProfileOpen={watchProfileOpen}
+          setWatchProfileOpen={setWatchProfileOpen}
+          empresaLogo={empresaLogo}
+          empresaNome={empresaNome}
+          user={user}
+          profileAvatar={profileAvatar}
+          userDisplayName={userDisplayName}
+          signOut={signOut}
+          effectiveUserId={effectiveUserId}
+          isPublicMode={isPublicMode}
+          userSlug={userSlug}
+          onBackHome={handleHomeClick}
+        />
+      </Suspense>
     );
   }
 
