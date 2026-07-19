@@ -94,6 +94,7 @@ function TopNavBar({
   userId,
   radioName,
   stationLogoUrl,
+  paletteSource,
 }: {
   items: { label: string; key: string; action: () => void }[];
   activeKey: string;
@@ -113,7 +114,9 @@ function TopNavBar({
   userId?: string | null;
   radioName?: string;
   stationLogoUrl?: string | null;
+  paletteSource?: string | null;
 }) {
+
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
