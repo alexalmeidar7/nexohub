@@ -224,8 +224,18 @@ function TopNavBar({
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
             placeholder="buscar"
-            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase"
+            data-tv-focusable
+            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
             style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+            onKeyDown={(e) => {
+              const el = e.currentTarget;
+              const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+              const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
+              if ((e.key === "ArrowLeft" && atStart) || (e.key === "ArrowRight" && atEnd) || e.key === "ArrowUp" || e.key === "ArrowDown") {
+                // Let global TV navigation take over
+                el.blur();
+              }
+            }}
           />
           <Search className="w-4 h-4 text-white/70 shrink-0" />
         </div>
