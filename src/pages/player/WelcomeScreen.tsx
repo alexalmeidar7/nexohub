@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import {
   Dialog,
   DialogContent,
