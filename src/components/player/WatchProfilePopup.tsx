@@ -193,7 +193,7 @@ export default function WatchProfilePopup({
             <span className="text-[9px] text-white/40">ouvindo</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <Heart size={14} style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={14} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-xs font-bold text-white">{likedSongs.length}</span>
             <span className="text-[9px] text-white/40">curtidas</span>
           </div>
