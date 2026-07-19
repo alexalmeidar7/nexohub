@@ -147,6 +147,8 @@ export default function WelcomeScreen({
   const [nowPlaying, setNowPlaying] = useState<{ titulo: string; artista: string } | null>(null);
   const [showArtistBg, setShowArtistBg] = useState(false);
   const artistImgCacheRef = useRef<Record<string, string>>({});
+  const lastArtistRef = useRef<string | null>(null);
+  const alternateTimerRef = useRef<number | null>(null);
 
   // Delay background reveal by 1.5s so text/avatar show first
   useEffect(() => {
@@ -154,33 +156,66 @@ export default function WelcomeScreen({
     return () => clearTimeout(t);
   }, []);
 
-  // Poll now-playing every 4s
+  // Preload an image and only resolve after decode to prevent flicker
+  const preloadImage = (url: string) =>
+    new Promise<string>((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = async () => {
+        try { await (img as any).decode?.(); } catch {}
+        resolve(url);
+      };
+      img.onerror = () => reject(new Error("preload failed"));
+      img.src = url;
+    });
+
+  // Poll now-playing every 4s and react instantly to artist changes
   useEffect(() => {
     if (!user?.id) return;
     let cancelled = false;
+
+    const applyArtistImage = async (artista: string) => {
+      const key = artista.toLowerCase();
+      let url = artistImgCacheRef.current[key] || null;
+      if (!url) {
+        try {
+          const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
+          if (!error && data?.ok && data?.url) {
+            url = data.url as string;
+            artistImgCacheRef.current[key] = url;
+          }
+        } catch {}
+      }
+      if (cancelled) return;
+      if (!url) { setArtistImg(null); return; }
+      try { await preloadImage(url); } catch {}
+      if (cancelled || lastArtistRef.current?.toLowerCase() !== key) return;
+      setArtistImg(url);
+      // Reveal the new artist bg immediately when it becomes available
+      setShowArtistBg(true);
+    };
+
     const tick = async () => {
       const d = getMusicData(user.id);
-      if (!d?.music) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
-      const { titulo, artista } = d.music;
-      const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
-      if (!artista || isBreak) { if (!cancelled) { setNowPlaying(null); setArtistImg(null); } return; }
-      if (!cancelled) setNowPlaying({ titulo, artista });
-      const key = artista.toLowerCase();
-      if (artistImgCacheRef.current[key]) {
-        if (!cancelled) setArtistImg(artistImgCacheRef.current[key]);
+      if (!d?.music) {
+        if (!cancelled) { setNowPlaying(null); setArtistImg(null); lastArtistRef.current = null; }
         return;
       }
-      try {
-        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
-        if (cancelled) return;
-        if (!error && data?.ok && data?.url) {
-          artistImgCacheRef.current[key] = data.url;
-          setArtistImg(data.url);
-        } else {
-          setArtistImg(null);
-        }
-      } catch { if (!cancelled) setArtistImg(null); }
+      const { titulo, artista } = d.music;
+      const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes((artista || "").toLowerCase());
+      if (!artista || isBreak) {
+        if (!cancelled) { setNowPlaying(null); setArtistImg(null); lastArtistRef.current = null; }
+        return;
+      }
+      if (!cancelled) setNowPlaying({ titulo, artista });
+      const key = artista.toLowerCase();
+      if (lastArtistRef.current?.toLowerCase() === key) return; // same artist, nothing to do
+      lastArtistRef.current = artista;
+      // Fade out current artist bg before swapping (if any)
+      if (!cancelled) setShowArtistBg(false);
+      setTimeout(() => { if (!cancelled) applyArtistImage(artista); }, 250);
     };
+
     tick();
     const id = setInterval(tick, 4000);
     return () => { cancelled = true; clearInterval(id); };
@@ -188,10 +223,14 @@ export default function WelcomeScreen({
 
   // Alternate channel bg <-> artist bg every 5s (only when artist image available)
   useEffect(() => {
+    if (alternateTimerRef.current) { clearInterval(alternateTimerRef.current); alternateTimerRef.current = null; }
     if (!artistImg) { setShowArtistBg(false); return; }
-    const id = setInterval(() => setShowArtistBg((v) => !v), 5000);
-    return () => clearInterval(id);
+    alternateTimerRef.current = window.setInterval(() => setShowArtistBg((v) => !v), 5000);
+    return () => {
+      if (alternateTimerRef.current) { clearInterval(alternateTimerRef.current); alternateTimerRef.current = null; }
+    };
   }, [artistImg]);
+
 
 
 
