@@ -392,8 +392,12 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const mutedRef = useRef(false);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try { return localStorage.getItem("player:lastMuted") === "1"; } catch { return false; }
+  });
+  const mutedRef = useRef<boolean>((() => {
+    try { return localStorage.getItem("player:lastMuted") === "1"; } catch { return false; }
+  })());
   const autoplayMutedRef = useRef(false);
   const [volume, setVolume] = useState<number>(() => {
     try {
