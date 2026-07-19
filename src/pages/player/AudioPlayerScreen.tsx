@@ -730,44 +730,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
         {/* live pill com rewind interativo no hover (à direita) */}
         <div className="flex justify-end mb-2">
-          <div className="group relative flex items-center">
-            {/* Slider de rewind (aparece no hover) */}
-            <div
-              className="flex items-center gap-2 mr-2 pr-3 pl-3 py-1 rounded-full bg-black/55 backdrop-blur-md border border-white/10 opacity-0 pointer-events-none translate-x-2 group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-x-0 transition-all duration-200"
-              aria-label="Retroceder até 30 minutos"
-            >
-              <Rewind size={12} className="text-white/80" />
-              <input
-                type="range"
-                min={0}
-                max={TIMESHIFT_WINDOW}
-                step={1}
-                value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                onChange={(e) => setDragVal(Number(e.target.value))}
-                onMouseUp={commitDrag}
-                onTouchEnd={commitDrag}
-                onPointerUp={commitDrag}
-                onKeyUp={commitDrag}
-                className="w-40 h-1 accent-white cursor-ew-resize"
-              />
-              <span className="text-[10px] tabular-nums text-white/80 min-w-[46px] text-right">
-                {(() => {
-                  const off = dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset;
-                  return off > 1
-                    ? `-${Math.floor(off / 60)}:${String(Math.round(off % 60)).padStart(2, "0")}`
-                    : "ao vivo";
-                })()}
-              </span>
-            </div>
-            <button
-              onClick={seekLive}
-              className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
-              aria-label="Voltar ao vivo"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-              {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
-            </button>
-          </div>
+          <button
+            onClick={seekLive}
+            className="px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition"
+            aria-label="Voltar ao vivo"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+            {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+          </button>
         </div>
 
         {/* timeshift bar (janela fixa 5 min) */}
