@@ -53,7 +53,10 @@ interface WelcomeScreenProps {
   onContinue: () => void;
   onLoginSuccess?: () => void;
   initialEditOpen?: boolean;
+  userSlug?: string | null;
+  publicUserId?: string | null;
 }
+
 
 const COUNTDOWN_SECONDS = 3;
 
