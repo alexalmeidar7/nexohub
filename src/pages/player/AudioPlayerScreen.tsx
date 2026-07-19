@@ -141,16 +141,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
 
-  // ---- Timeshift (buffer nativo do HLS) ----
-  const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available
+  // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
+  const TIMESHIFT_WINDOW = 300; // segundos
+  const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
       const a = audioRef.current;
-      if (a && a.buffered && a.buffered.length > 0 && Number.isFinite(a.duration)) {
+      if (a && a.buffered && a.buffered.length > 0) {
         const start = a.buffered.start(0);
         const end = a.buffered.end(a.buffered.length - 1);
-        const back = Math.max(0, Math.min(300, end - start));
+        const rawBack = Math.max(0, end - start);
+        const back = Math.min(TIMESHIFT_WINDOW, rawBack);
         const offset = Math.max(0, Math.min(back, end - a.currentTime));
         setTs({ offset, back });
       } else {
@@ -165,13 +167,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const seekBySeconds = (secsBack: number) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
+    const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
-    a.currentTime = Math.max(a.buffered.start(0), end - secsBack);
+    const clampedBack = Math.min(secsBack, Math.min(TIMESHIFT_WINDOW, end - start));
+    const target = Math.max(start + 0.5, end - clampedBack);
+    try { a.currentTime = target; } catch {}
+    // garantir playback contínuo após o seek
+    if (a.paused) { void a.play().catch(() => {}); }
   };
   const seekLive = () => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
-    a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5;
+    try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
+    if (a.paused) { void a.play().catch(() => {}); }
   };
 
   // ---- Volume UI ----
