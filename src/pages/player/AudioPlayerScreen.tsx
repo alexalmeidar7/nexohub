@@ -94,6 +94,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     setTimeout(() => onBackHome(), 480);
   }, [exiting, onBackHome]);
 
+  // ---- Curtir PROGRAMA (independente do like da música) ----
+  const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
+  const currentProgId = currentProg?.id ? String(currentProg.id) : null;
+  const [programLiked, setProgramLiked] = useState<boolean>(false);
+  useEffect(() => {
+    if (!currentProgId) { setProgramLiked(false); return; }
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const set: string[] = raw ? JSON.parse(raw) : [];
+      setProgramLiked(Array.isArray(set) && set.includes(currentProgId));
+    } catch { setProgramLiked(false); }
+  }, [currentProgId, programLikeStorageKey]);
+  const toggleProgramLike = useCallback(() => {
+    if (!currentProgId) return;
+    try {
+      const raw = localStorage.getItem(programLikeStorageKey);
+      const arr: string[] = raw ? JSON.parse(raw) : [];
+      const has = arr.includes(currentProgId);
+      const next = has ? arr.filter((x) => x !== currentProgId) : [...arr, currentProgId];
+      localStorage.setItem(programLikeStorageKey, JSON.stringify(next));
+      setProgramLiked(!has);
+    } catch {}
+  }, [currentProgId, programLikeStorageKey]);
+
   // ---- Apresentador do programa no ar ----
   const apresentador = useMemo(() => {
     if (!currentProg?.apresentador_id) return null;
@@ -693,7 +717,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
                     aria-busy={isPreparing || undefined}
                     title={undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
 
                     style={{
                       width: isActive ? 280 : 240,
@@ -846,14 +870,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-medium bg-black/55 backdrop-blur-md border border-white/10">
               no ar
             </div>
-            {/* like */}
+            {/* like do PROGRAMA */}
             <button
-              onClick={onToggleLike}
+              onClick={toggleProgramLike}
               className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-black/45 hover:bg-black/70 border border-white/10 transition"
               data-focusable
-              aria-label="Curtir"
+              aria-label={programLiked ? "Descurtir programa" : "Curtir programa"}
+              aria-pressed={programLiked}
+              title={programLiked ? "Você curtiu este programa" : "Curtir este programa"}
             >
-              <Heart size={18} fill={liked ? "#ff3355" : "none"} stroke={liked ? "#ff3355" : "white"} />
+              <Heart size={18} fill={programLiked ? "#ffffff" : "none"} stroke="#ffffff" />
             </button>
 
             {/* bottom info */}
@@ -869,10 +895,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               </div>
               {/* música atual */}
               {musicData?.titulo && (
-                <div className="mt-3">
-                  <div className="text-[12px] opacity-85 truncate">
-                    ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                <div className="mt-3 flex flex-col gap-0.5">
+                  <div
+                    className="text-[15px] font-semibold leading-tight truncate tracking-tight"
+                    title={musicData.titulo}
+                  >
+                    {musicData.titulo}
                   </div>
+                  {musicData.artista && (
+                    <div
+                      className="text-[11px] uppercase tracking-[0.14em] opacity-70 truncate"
+                      title={musicData.artista}
+                    >
+                      {musicData.artista}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
