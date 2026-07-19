@@ -1318,10 +1318,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 }
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
+  const base =
+    "px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0";
+  const activeCls =
+    "bg-white/15 border-white/25 text-white hover:bg-white/20 hover:border-white/35 focus-visible:bg-white/20";
+  const idleCls =
+    "bg-white/6 border-white/10 text-white/75 hover:bg-white/12 hover:border-white/20 hover:text-white focus-visible:bg-white/12 focus-visible:text-white";
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border ${active ? "bg-white/15 border-white/25 text-white" : "bg-white/6 border-white/10 text-white/75 hover:bg-white/12 hover:text-white"}`}
+      aria-pressed={!!active}
+      className={`${base} ${active ? activeCls : idleCls}`}
       data-focusable
     >
       {icon}
@@ -1329,6 +1337,7 @@ function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.
     </button>
   );
 }
+
 
 function BgFadeLayer({ gradient, initialOpacity }: { gradient: string; initialOpacity: number }) {
   const [op, setOp] = useState(initialOpacity);
