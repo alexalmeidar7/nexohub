@@ -1174,6 +1174,41 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      const active = document.activeElement as HTMLElement | null;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable)) return;
+      const rowEl = active?.closest?.("[data-tv-row]") as HTMLElement | null;
+      if (!rowEl) return;
+      const rowIndex = Number(rowEl.dataset.tvRow);
+      if (Number.isNaN(rowIndex)) return;
+      if (e.key === "ArrowDown" && rowIndex < ROW_COUNT - 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveRow(rowIndex + 1);
+      } else if (e.key === "ArrowUp" && rowIndex > 0) {
+        e.preventDefault();
+        e.stopPropagation();
+        setActiveRow(rowIndex - 1);
+      }
+    };
+    window.addEventListener("keydown", handler, true);
+    return () => window.removeEventListener("keydown", handler, true);
+  }, []);
+
+  // Move focus to first focusable in the newly-active row
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      const rowEl = document.querySelector(`[data-tv-row="${activeRow}"]`) as HTMLElement | null;
+      const first = rowEl?.querySelector<HTMLElement>("[data-tv-focusable]");
+      first?.focus({ preventScroll: true });
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [activeRow]);
+
+
   const { userSlug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
