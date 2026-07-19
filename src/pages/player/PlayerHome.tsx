@@ -559,7 +559,7 @@ function HeroBanner({
               src={nowPlaying.capa}
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: "grayscale(1) brightness(0.65)", opacity: 0.85 }}
+              style={{ filter: "grayscale(1) brightness(0.75)" }}
             />
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
@@ -1074,7 +1074,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
           <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 60%)" }} />
       <div className="relative z-[1] p-4 flex flex-col h-full">
         <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
         <div className="mt-auto">
@@ -1213,8 +1213,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         nodes[best].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       }
     };
+    // Enter/Space: aciona o elemento focado como se fosse um clique do mouse
+    const enterHandler = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || !active.matches?.("[data-tv-focusable]")) return;
+      if (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable) return;
+      e.preventDefault();
+      active.click();
+    };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", enterHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("keydown", enterHandler);
+    };
   }, []);
 
   // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
