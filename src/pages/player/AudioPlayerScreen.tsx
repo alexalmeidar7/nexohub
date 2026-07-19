@@ -619,7 +619,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     onClick={canRewind ? () => {
-                      seekBySeconds(ago);
+                      seekBySeconds(ago, { forcePlay: true });
                       toast.success(`Voltando ${Math.round(ago)}s`, {
                         description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
                         icon: <Rewind size={16} />,
