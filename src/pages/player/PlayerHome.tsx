@@ -1074,7 +1074,7 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
           <Film className="h-10 w-10 text-white/15" />
         </div>
       )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.05) 100%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 60%)" }} />
       <div className="relative z-[1] p-4 flex flex-col h-full">
         <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
         <div className="mt-auto">
