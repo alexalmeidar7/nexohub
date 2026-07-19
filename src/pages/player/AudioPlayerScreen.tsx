@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const KaraokeOverlay = lazy(() => import("@/components/KaraokeOverlay"));
+const InlineKaraoke = lazy(() => import("@/components/player/InlineKaraoke"));
 const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
 
 export interface AudioPlayerScreenProps {
@@ -626,16 +626,41 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               className="h-16 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
             />
           )}
-          {/* Avatar do usuário */}
+          {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
             <button
               onClick={() => setWatchProfileOpen(!watchProfileOpen)}
-              className="w-10 h-10 rounded-full overflow-hidden border-2 hover:scale-105 transition"
-              style={{ borderColor: "rgba(255,255,255,0.4)" }}
+              className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
               data-focusable
-              aria-label="Perfil"
+              aria-label="Abrir perfil"
+              aria-expanded={watchProfileOpen}
+              title={userDisplayName || "Perfil"}
             >
-              <img src={profileAvatar || "/avatars/usr-default.png"} alt="" className="w-full h-full object-cover" />
+              <span
+                className="relative w-10 h-10 rounded-full p-[2px]"
+                style={{
+                  background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
+                }}
+              >
+                <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
+                <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
+                  {profileAvatar ? (
+                    <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
+                      {(userDisplayName || "U").trim().charAt(0)}
+                    </span>
+                  )}
+                </span>
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+              </span>
+              <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
+                <span className="text-[12px] font-semibold text-white truncate max-w-[140px]">
+                  {userDisplayName || "Usuário"}
+                </span>
+              </span>
+              <ChevronDown size={14} className="text-white/70 group-hover:text-white transition-transform duration-300 group-hover:translate-y-0.5" />
             </button>
           )}
         </div>
@@ -944,6 +969,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               >
                 <Plus size={18} />
               </button>
+
+              {/* Karaokê inline — aparece abaixo do botão + quando ativado */}
+              {karaokeEnabled && (
+                <Suspense fallback={null}>
+                  <InlineKaraoke
+                    enabled={karaokeEnabled}
+                    artist={musicData?.artista}
+                    title={musicData?.titulo}
+                    duration={musicData?.duracao}
+                    audioElement={audioRef.current}
+                  />
+                </Suspense>
+              )}
             </div>
           </div>
         </div>
@@ -1069,20 +1107,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Karaoke */}
-      {karaokeEnabled && playing && (
-        <Suspense fallback={null}>
-          <KaraokeOverlay
-            artist={musicData?.artista}
-            title={musicData?.titulo}
-            audioElement={audioRef.current}
-            visible={karaokeEnabled}
-            duration={musicData?.duracao}
-            onLyricsNotFound={() => {}}
-            onLyricsFound={() => {}}
-          />
-        </Suspense>
-      )}
+      {/* Karaoke agora é inline, dentro da coluna "a seguir" (ver <InlineKaraoke /> abaixo do botão +) */}
+
 
       {/* Grade */}
       {gradeOpen && (
