@@ -96,6 +96,102 @@ export default function WelcomeScreen({
   const [interacted, setInteracted] = useState(false);
   const interactedRef = useRef(false);
   const [points, setPoints] = useState(0);
+  const [displayedPoints, setDisplayedPoints] = useState(0);
+
+  // Count-up animation for points
+  useEffect(() => {
+    if (points <= 0) { setDisplayedPoints(0); return; }
+    const duration = 1200;
+    const start = performance.now();
+    const from = 0;
+    const to = points;
+    let raf = 0;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / duration);
+      // easeOutCubic
+      const eased = 1 - Math.pow(1 - t, 3);
+      setDisplayedPoints(Math.round(from + (to - from) * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [points]);
+
+  // Spatial keyboard navigation (arrows) + Enter/Space to activate
+  useEffect(() => {
+    const getNodes = () =>
+      Array.from(document.querySelectorAll<HTMLElement>('[data-ws-focusable="true"]'))
+        .filter(el => el.offsetParent !== null && !el.hasAttribute("disabled"));
+
+    const pickSpatial = (
+      from: HTMLElement,
+      dir: "up" | "down" | "left" | "right",
+      nodes: HTMLElement[],
+    ): HTMLElement | null => {
+      const a = from.getBoundingClientRect();
+      const ax = a.left + a.width / 2;
+      const ay = a.top + a.height / 2;
+      let best: HTMLElement | null = null;
+      let bestScore = Infinity;
+      for (const n of nodes) {
+        if (n === from) continue;
+        const b = n.getBoundingClientRect();
+        const bx = b.left + b.width / 2;
+        const by = b.top + b.height / 2;
+        const dx = bx - ax;
+        const dy = by - ay;
+        let primary = 0;
+        let cross = 0;
+        if (dir === "right") { if (dx <= 4) continue; primary = dx; cross = Math.abs(dy); }
+        else if (dir === "left") { if (dx >= -4) continue; primary = -dx; cross = Math.abs(dy); }
+        else if (dir === "down") { if (dy <= 4) continue; primary = dy; cross = Math.abs(dx); }
+        else { if (dy >= -4) continue; primary = -dy; cross = Math.abs(dx); }
+        // heavy penalty on cross-axis so we stay in the same row/column when possible
+        const score = primary + cross * 2.2;
+        if (score < bestScore) { bestScore = score; best = n; }
+      }
+      // Fallback: wrap-around — closest node overall in that half
+      if (!best) {
+        for (const n of nodes) {
+          if (n === from) continue;
+          const b = n.getBoundingClientRect();
+          const bx = b.left + b.width / 2;
+          const by = b.top + b.height / 2;
+          const score = Math.hypot(bx - ax, by - ay);
+          if (score < bestScore) { bestScore = score; best = n; }
+        }
+      }
+      return best;
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
+      const nodes = getNodes();
+      if (nodes.length === 0) return;
+      const active = document.activeElement as HTMLElement | null;
+      const current = active && nodes.includes(active) ? active : null;
+
+      if (e.key === "Enter" || e.key === " ") {
+        if (current) { e.preventDefault(); current.click(); }
+        return;
+      }
+      e.preventDefault();
+      if (!current) { nodes[0].focus(); return; }
+      const dir =
+        e.key === "ArrowUp" ? "up" :
+        e.key === "ArrowDown" ? "down" :
+        e.key === "ArrowLeft" ? "left" : "right";
+      const next = pickSpatial(current, dir as any, nodes);
+      next?.focus();
+    };
+    window.addEventListener("keydown", onKey);
+    const t = window.setTimeout(() => {
+      if (document.activeElement && (document.activeElement as HTMLElement).matches?.('[data-ws-focusable="true"]')) return;
+      const first = document.querySelector<HTMLElement>('[data-ws-focusable="true"]');
+      first?.focus();
+    }, 400);
+    return () => { window.removeEventListener("keydown", onKey); window.clearTimeout(t); };
+  }, [user]);
   const [authMode, setAuthMode] = useState<"login" | "signup" | null>(null);
   const [bgColors, setBgColors] = useState<[string, string]>(["rgba(40,40,50,0.85)", "rgba(15,15,20,0.9)"]);
   const [prevBgColors, setPrevBgColors] = useState<[string, string] | null>(null);
@@ -665,8 +761,9 @@ export default function WelcomeScreen({
               <div className="flex flex-col gap-3 shrink-0">
                 <button
                   onClick={() => { cancelAutoAdvance(); onContinue(); }}
-                  className="group relative shrink-0 outline-none"
+                  className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
                   aria-label="Entrar no player"
+                  data-ws-focusable="true"
                 >
                   <div
                     className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
@@ -715,6 +812,8 @@ export default function WelcomeScreen({
 
                 <button
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
+                  data-ws-focusable="true"
+                  aria-label="Adicionar novo perfil"
                   className="group relative shrink-0 outline-none rounded-[28px] overflow-hidden flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
@@ -722,7 +821,6 @@ export default function WelcomeScreen({
                     border: "1px dashed rgba(255,255,255,0.22)",
                     boxShadow: "0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
                   }}
-                  aria-label="Adicionar novo perfil"
                   title="Adicionar novo perfil"
                 >
                   {prevBgColors && (
@@ -765,15 +863,20 @@ export default function WelcomeScreen({
                           key={i}
                           size={13}
                           fill={filled ? "#ffffff" : half ? "url(#half-star)" : "transparent"}
-                          style={{ color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)" }}
+                          className="ws-star-pop"
+                          style={{
+                            color: filled || half ? "#ffffff" : "rgba(255,255,255,0.35)",
+                            animationDelay: `${i * 120}ms`,
+                          }}
                         />
                       );
                     })}
                   </div>
-                  <span className="text-xs text-white/70">{points} pts</span>
+                  <span className="text-xs text-white/70 tabular-nums">{displayedPoints} pts</span>
                 </div>
                 <button
                   onClick={() => { cancelAutoAdvance(); setLogoutConfirmOpen(true); }}
+                  data-ws-focusable="true"
                   disabled={loggingOut}
                   aria-busy={loggingOut}
                   className="mt-1 self-start text-[11px] lowercase px-3 py-1 rounded-full transition-colors inline-flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
@@ -795,6 +898,7 @@ export default function WelcomeScreen({
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setAuthMode("login")}
+                data-ws-focusable="true"
                 disabled={signingIn}
                 aria-busy={signingIn}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
@@ -813,6 +917,7 @@ export default function WelcomeScreen({
               </button>
               <button
                 onClick={() => setAuthMode("signup")}
+                data-ws-focusable="true"
                 disabled={signingIn}
                 aria-busy={signingIn}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
