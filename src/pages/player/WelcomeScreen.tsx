@@ -773,7 +773,6 @@ export default function WelcomeScreen({
                     border: "1px dashed rgba(255,255,255,0.22)",
                     boxShadow: "0 18px 50px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10)",
                   }}
-                  aria-label="Adicionar novo perfil"
                   title="Adicionar novo perfil"
                 >
                   {prevBgColors && (
