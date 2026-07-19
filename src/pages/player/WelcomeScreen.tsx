@@ -854,7 +854,66 @@ export default function WelcomeScreen({
                   />
                   <Plus className="relative w-8 h-8 text-white/85 transition-transform duration-300 group-hover:rotate-90" strokeWidth={1.5} />
                 </button>
+
+                {subProfiles.length > 0 && (
+                  <div
+                    className="grid gap-2 mt-1"
+                    style={{
+                      gridTemplateColumns: "repeat(auto-fill, minmax(56px, 1fr))",
+                      width: "clamp(110px, 11vw, 150px)",
+                    }}
+                  >
+                    {subProfiles.map(sp => (
+                      <button
+                        key={sp.id}
+                        data-ws-focusable="true"
+                        onClick={() => {
+                          cancelAutoAdvance();
+                          setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
+                          onContinue();
+                        }}
+                        title={sp.name}
+                        aria-label={`Entrar como ${sp.name}`}
+                        className="group relative aspect-square rounded-xl overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-white/70 transition-transform duration-300 hover:scale-[1.06]"
+                        style={{
+                          border: "1px solid rgba(255,255,255,0.14)",
+                          boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14)",
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{ background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})` }}
+                        />
+                        <img
+                          src={sp.avatar_url}
+                          alt={sp.name}
+                          className="relative w-full h-full object-cover"
+                          draggable={false}
+                        />
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            persistSubProfiles(subProfiles.filter(p => p.id !== sp.id));
+                          }}
+                          className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full text-white/85 text-[10px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                          style={{ background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.18)" }}
+                          role="button"
+                          aria-label={`Remover perfil ${sp.name}`}
+                        >
+                          ×
+                        </span>
+                        <span
+                          className="absolute bottom-0 left-0 right-0 text-[9px] text-center text-white/90 py-0.5 truncate"
+                          style={{ background: "linear-gradient(0deg, rgba(0,0,0,0.6), rgba(0,0,0,0))" }}
+                        >
+                          {sp.name}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
+
 
 
               <div className="flex flex-col gap-2 pt-2">
