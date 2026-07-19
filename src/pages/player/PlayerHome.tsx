@@ -1241,6 +1241,35 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => window.removeEventListener("keydown", handler, true);
   }, []);
 
+  // Mouse wheel: scroll down/up navigates between rows (throttled)
+  useEffect(() => {
+    let lastAt = 0;
+    const onWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement | null;
+      // ignore wheel inside horizontal card rows / scrollable inner areas
+      if (target?.closest?.("[data-tv-hscroll]")) return;
+      if (Math.abs(e.deltaY) < 8) return;
+      const now = Date.now();
+      if (now - lastAt < 550) { e.preventDefault(); return; }
+      if (e.deltaY > 0) {
+        setActiveRow((r) => {
+          if (r >= ROW_COUNT - 1) return r;
+          lastAt = now;
+          return r + 1;
+        });
+      } else {
+        setActiveRow((r) => {
+          if (r <= 0) return r;
+          lastAt = now;
+          return r - 1;
+        });
+      }
+      e.preventDefault();
+    };
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => window.removeEventListener("wheel", onWheel as EventListener);
+  }, []);
+
   // Move focus to first focusable in the newly-active row
   useEffect(() => {
     const t = window.setTimeout(() => {
