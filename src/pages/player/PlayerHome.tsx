@@ -402,6 +402,7 @@ function HeroBanner({
   onOuvir,
   onAssistir,
   onPlaylist,
+  cardsVisible = true,
 }: {
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
@@ -410,6 +411,7 @@ function HeroBanner({
   onOuvir: () => void;
   onAssistir: () => void;
   onPlaylist: () => void;
+  cardsVisible?: boolean;
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
