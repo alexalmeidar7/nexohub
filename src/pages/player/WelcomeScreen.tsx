@@ -764,6 +764,8 @@ export default function WelcomeScreen({
 
                 <button
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
+                  data-ws-focusable="true"
+                  aria-label="Adicionar novo perfil"
                   className="group relative shrink-0 outline-none rounded-[28px] overflow-hidden flex items-center justify-center transition-all duration-500 ease-out hover:scale-[1.04]"
                   style={{
                     width: "clamp(110px, 11vw, 150px)",
