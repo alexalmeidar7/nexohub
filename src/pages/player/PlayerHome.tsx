@@ -183,15 +183,20 @@ function TopNavBar({
               data-tv-focusable
               data-tv-topnav={idx + 1}
               title={`Atalho: ${idx + 1}`}
-              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
+              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
                 fontFamily: "'Lufga', system-ui, sans-serif",
               }}
+              onFocus={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
+              onBlur={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
+              onMouseLeave={(e) => { if (document.activeElement !== e.currentTarget && !isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
             >
               {item.label}
               <span
+                data-underline
                 className="absolute -bottom-1 left-0 w-full h-[2px] transition-all duration-300 ease-out"
                 style={{
                   background: isActive ? "#fff" : "transparent",
