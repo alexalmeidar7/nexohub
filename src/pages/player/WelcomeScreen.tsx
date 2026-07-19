@@ -52,6 +52,7 @@ interface WelcomeScreenProps {
   logoUrl?: string | null;
   onContinue: () => void;
   onLoginSuccess?: () => void;
+  initialEditOpen?: boolean;
 }
 
 const COUNTDOWN_SECONDS = 3;
@@ -64,12 +65,13 @@ export default function WelcomeScreen({
   logoUrl,
   onContinue,
   onLoginSuccess,
+  initialEditOpen = false,
 }: WelcomeScreenProps) {
   const { user, signOut } = useAuth();
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
   useGlobalMusicSync();
-  const [editOpen, setEditOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(initialEditOpen);
   const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
   const [addProfileOpen, setAddProfileOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState("");
