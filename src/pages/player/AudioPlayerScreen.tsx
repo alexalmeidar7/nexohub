@@ -701,3 +701,22 @@ function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.
     </button>
   );
 }
+
+function BgFadeLayer({ gradient, initialOpacity }: { gradient: string; initialOpacity: number }) {
+  const [op, setOp] = useState(initialOpacity);
+  useEffect(() => {
+    if (initialOpacity >= 1) return;
+    const id = requestAnimationFrame(() => setOp(1));
+    return () => cancelAnimationFrame(id);
+  }, [initialOpacity]);
+  return (
+    <div
+      className="absolute inset-0"
+      style={{
+        background: gradient,
+        opacity: op,
+        transition: "opacity 1200ms ease-in-out",
+      }}
+    />
+  );
+}
