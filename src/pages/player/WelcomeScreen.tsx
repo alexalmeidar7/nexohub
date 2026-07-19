@@ -1004,6 +1004,9 @@ export default function WelcomeScreen({
               return (
                 <div className="space-y-5">
                   <style>{`
+                    .wsp-input {
+                      transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease, color 200ms ease !important;
+                    }
                     .wsp-input:hover:not(:focus) { border-color: #ffffff !important; }
                     .wsp-input:focus {
                       border-color: #ffffff !important;
