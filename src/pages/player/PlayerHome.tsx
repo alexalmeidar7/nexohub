@@ -180,6 +180,7 @@ function TopNavBar({
             <button
               key={item.key}
               onClick={item.action}
+              data-tv-focusable
               className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
