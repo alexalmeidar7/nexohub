@@ -222,7 +222,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
-  const TIMESHIFT_WINDOW = 300; // segundos
+  const TIMESHIFT_WINDOW = 1800; // segundos (30 min)
   const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
