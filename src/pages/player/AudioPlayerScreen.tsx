@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio } from "lucide-react";
+import { ChevronUp, ChevronDown, ArrowLeft, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import ElegantLoader from "@/components/player/ElegantLoader";
@@ -82,6 +82,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     empresaLogo, empresaNome,
     user, profileAvatar, userDisplayName, signOut,
     effectiveUserId,
+    onBackHome,
   } = props;
 
   // ---- Apresentador do programa no ar ----
@@ -96,6 +97,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const gradient = palette
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
+
+  // ---- Background dinâmico com base na CAPA DA MÚSICA (crossfade elegante) ----
+  const musicCover: string | null = musicData?.capa || null;
+  const musicPalette = useCoverPalette(musicCover);
+  const musicGradient = musicPalette
+    ? `radial-gradient(ellipse at 20% 20%, ${musicPalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${musicPalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${musicPalette.primary} 0%, ${musicPalette.secondary} 100%)`
+    : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
+  const [bgLayers, setBgLayers] = useState<{ id: number; g: string }[]>([{ id: 0, g: musicGradient }]);
+  const bgIdRef = useRef(1);
+  useEffect(() => {
+    setBgLayers((prev) => {
+      if (prev[prev.length - 1]?.g === musicGradient) return prev;
+      return [...prev, { id: bgIdRef.current++, g: musicGradient }];
+    });
+  }, [musicGradient]);
+  useEffect(() => {
+    if (bgLayers.length <= 2) return;
+    const t = setTimeout(() => setBgLayers((p) => p.slice(-2)), 1800);
+    return () => clearTimeout(t);
+  }, [bgLayers]);
 
   // ---- Progresso do programa no ar ----
   const [progPct, setProgPct] = useState(0);
@@ -246,6 +267,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
+      {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {bgLayers.map((l, idx) => (
+          <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
+        ))}
+      </div>
       {/* Background decorativo do canal (logo) muito sutil */}
       {canal?.background_url && (
         <div
@@ -254,11 +281,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             backgroundImage: `url(${canal.background_url})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            opacity: 0.06,
+            opacity: 0.04,
           }}
         />
       )}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.6) 100%)" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
 
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
@@ -293,6 +320,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Pills */}
           <nav className="ml-6 flex items-center gap-2">
+            <button
+              onClick={onBackHome}
+              className="px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border bg-white/6 border-white/10 text-white/85 hover:bg-white/15 hover:text-white"
+              aria-label="Voltar para Home"
+              data-focusable
+            >
+              <ArrowLeft size={12} />
+              voltar
+            </button>
             <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={seekLive} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
             <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
@@ -663,5 +699,24 @@ function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.
       {icon}
       {label}
     </button>
+  );
+}
+
+function BgFadeLayer({ gradient, initialOpacity }: { gradient: string; initialOpacity: number }) {
+  const [op, setOp] = useState(initialOpacity);
+  useEffect(() => {
+    if (initialOpacity >= 1) return;
+    const id = requestAnimationFrame(() => setOp(1));
+    return () => cancelAnimationFrame(id);
+  }, [initialOpacity]);
+  return (
+    <div
+      className="absolute inset-0"
+      style={{
+        background: gradient,
+        opacity: op,
+        transition: "opacity 1200ms ease-in-out",
+      }}
+    />
   );
 }
