@@ -1243,6 +1243,41 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => window.clearTimeout(t);
   }, [activeRow]);
 
+  // Top menu keyboard shortcuts: 1-9 activate nav items, M focuses first, Esc blurs/closes
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const active = document.activeElement as HTMLElement | null;
+      const isTyping = !!active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable);
+
+      if (e.key === "Escape") {
+        if (active && typeof active.blur === "function") active.blur();
+        // Close open menus/popovers via outside click
+        document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+        return;
+      }
+
+      if (isTyping) return;
+
+      if (/^[1-9]$/.test(e.key)) {
+        const btn = document.querySelector<HTMLElement>(`[data-tv-topnav="${e.key}"]`);
+        if (btn) {
+          e.preventDefault();
+          btn.focus();
+          btn.click();
+        }
+        return;
+      }
+
+      if (e.key === "m" || e.key === "M") {
+        const first = document.querySelector<HTMLElement>('[data-tv-topnav="1"]');
+        if (first) { e.preventDefault(); first.focus(); }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+
 
   const { userSlug } = useParams();
   const navigate = useNavigate();
