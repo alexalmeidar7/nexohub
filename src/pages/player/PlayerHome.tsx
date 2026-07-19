@@ -80,11 +80,14 @@ function TopNavBar({
   activeKey,
   avatarUrl,
   userName,
+  userEmail,
+  googleAvatarUrl,
   showLogout,
   showSignup,
   onLogout,
   onSignup,
   onEditProfile,
+  onSwitchProfile,
   channels = [],
   programas = [],
   onPlayChannel,
@@ -96,11 +99,14 @@ function TopNavBar({
   activeKey: string;
   avatarUrl?: string | null;
   userName?: string;
+  userEmail?: string | null;
+  googleAvatarUrl?: string | null;
   showLogout?: boolean;
   showSignup?: boolean;
   onLogout?: () => void;
   onSignup?: () => void;
   onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
   channels?: Channel[];
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
@@ -344,10 +350,12 @@ function TopNavBar({
               <WatchProfilePopup
                 userId={userId}
                 userName={userName || "Visitante"}
-                avatarUrl={avatarUrl || null}
+                userEmail={userEmail || null}
+                avatarUrl={googleAvatarUrl || avatarUrl || null}
                 radioName={radioName}
                 onClose={() => setProfileOpen(false)}
                 onEditProfile={onEditProfile}
+                onSwitchProfile={onSwitchProfile}
                 onLogout={showLogout ? onLogout : undefined}
               />
             </Suspense>
@@ -1147,7 +1155,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
    ═══════════════════════════════════════════════════════ */
 
 interface PlayerHomeProps {
-  onBackToAccess?: () => void;
+  onBackToAccess?: (openEdit?: boolean) => void;
 }
 
 /* ─── Local cache helpers ─── */
@@ -1884,12 +1892,15 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={profileAvatar}
-                      userName={userName}
+                      userName={(user?.user_metadata as any)?.full_name || (user?.user_metadata as any)?.name || userName}
+                      userEmail={user?.email || null}
+                      googleAvatarUrl={(user?.user_metadata as any)?.avatar_url || (user?.user_metadata as any)?.picture || null}
                       showLogout={!!user}
                       showSignup={!user && !!onBackToAccess}
                       onLogout={handleSignOut}
-                      onSignup={onBackToAccess}
-                      onEditProfile={user ? () => setProfileDialogOpen(true) : undefined}
+                      onSignup={() => onBackToAccess?.()}
+                      onEditProfile={user && onBackToAccess ? () => onBackToAccess(true) : undefined}
+                      onSwitchProfile={user && onBackToAccess ? () => onBackToAccess(false) : undefined}
                       channels={channels}
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}

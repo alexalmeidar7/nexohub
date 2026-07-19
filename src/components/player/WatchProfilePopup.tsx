@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, X } from "lucide-react";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
 
 interface LikedSong {
   titulo: string;
@@ -11,10 +11,12 @@ interface LikedSong {
 interface WatchProfilePopupProps {
   userId: string;
   userName: string;
+  userEmail?: string | null;
   avatarUrl: string | null;
   radioName?: string;
   onClose: () => void;
   onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
   onLogout?: () => void;
 }
 
@@ -41,10 +43,12 @@ function fanLabel(stars: number): string {
 export default function WatchProfilePopup({
   userId,
   userName,
+  userEmail,
   avatarUrl,
   radioName,
   onClose,
   onEditProfile,
+  onSwitchProfile,
   onLogout,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -149,30 +153,29 @@ export default function WatchProfilePopup({
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
           <div
             className="w-12 h-12 rounded-full overflow-hidden shrink-0"
-            style={{ border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+            style={{ border: "2px solid #ffffff" }}
           >
             <img
               src={avatarUrl || "/avatars/usr-default.png"}
               alt={userName}
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
             />
           </div>
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-sm font-bold text-white truncate">{userName}</span>
-            {/* Fan rating */}
-            <div className="flex items-center gap-1 mt-0.5">
+            {userEmail && (
+              <span className="text-[10px] text-white/50 truncate">{userEmail}</span>
+            )}
+            {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
+            <div className="flex items-center gap-0.5 mt-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  size={12}
-                  className="transition-colors"
-                  fill={i < stars ? "hsl(var(--player-accent))" : "transparent"}
-                  style={{ color: i < stars ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.2)" }}
+                  size={13}
+                  fill={i < stars ? "#ffffff" : "transparent"}
+                  style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.25)" }}
                 />
               ))}
-              <span className="text-[10px] font-semibold ml-1" style={{ color: "hsl(var(--player-accent))" }}>
-                {label}{radioName ? ` ${radioName}` : ""}
-              </span>
             </div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white p-1">
@@ -190,7 +193,7 @@ export default function WatchProfilePopup({
             <span className="text-[9px] text-white/40">ouvindo</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <Heart size={14} style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={14} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-xs font-bold text-white">{likedSongs.length}</span>
             <span className="text-[9px] text-white/40">curtidas</span>
           </div>
@@ -221,7 +224,7 @@ export default function WatchProfilePopup({
         {/* Liked songs */}
         <div className="px-4 py-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Heart size={12} fill="hsl(var(--player-accent))" style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
           </div>
           {loading ? (
@@ -269,6 +272,14 @@ export default function WatchProfilePopup({
               className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
             >
               <User size={13} /> Editar perfil
+            </button>
+          )}
+          {onSwitchProfile && (
+            <button
+              onClick={() => { onClose(); onSwitchProfile(); }}
+              className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
+            >
+              <Users size={13} /> Trocar de perfil
             </button>
           )}
           {onLogout && (

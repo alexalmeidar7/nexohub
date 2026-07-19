@@ -88,6 +88,7 @@ export default function PlayerHub() {
 
 
   const [splashDone, setSplashDone] = useState(false);
+  const [welcomeEditOnMount, setWelcomeEditOnMount] = useState(false);
 
   const onSplashFinish = useCallback(() => {
     setSplashDone(true);
@@ -153,6 +154,7 @@ export default function PlayerHub() {
           logoUrl={logoUrl}
           onContinue={onWelcomeContinue}
           onLoginSuccess={onLoginSuccess}
+          initialEditOpen={welcomeEditOnMount}
         />
       </div>
     );
@@ -160,7 +162,12 @@ export default function PlayerHub() {
 
   return (
     <div className={wrapperClass}>
-      <PlayerHome onBackToAccess={() => transitionTo("welcome")} />
+      <PlayerHome
+        onBackToAccess={(openEdit?: boolean) => {
+          setWelcomeEditOnMount(!!openEdit);
+          transitionTo("welcome");
+        }}
+      />
     </div>
   );
 }
