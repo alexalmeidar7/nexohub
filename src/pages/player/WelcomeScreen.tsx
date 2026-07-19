@@ -881,7 +881,7 @@ export default function WelcomeScreen({
                 </div>
 
 
-                {subProfiles.map(sp => {
+                {subProfiles.map((sp, spIdx) => {
                   const spPoints = Number((sp as any).points) || 0;
                   const spRating = Math.min(5, Math.max(0, Math.round((spPoints / 100) * 2) / 2));
                   return (
@@ -921,9 +921,11 @@ export default function WelcomeScreen({
                             }}
                           />
                           <img
+                            key={sp.avatar_url}
                             src={sp.avatar_url}
                             alt={sp.name}
-                            className="relative w-full h-full object-cover"
+                            className="relative w-full h-full object-cover animate-avatar-in"
+                            style={{ animationDelay: `${250 + spIdx * 180}ms` }}
                             draggable={false}
                           />
                         </div>
