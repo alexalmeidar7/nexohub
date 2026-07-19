@@ -107,6 +107,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
 
+  // ---- Estado de carregamento/erro da foto do locutor ----
+  const [locutorImgState, setLocutorImgState] = useState<"loading" | "loaded" | "error">(
+    locutorFoto ? "loading" : "error"
+  );
+  useEffect(() => {
+    setLocutorImgState(locutorFoto ? "loading" : "error");
+  }, [locutorFoto]);
+  const apresentadorNome: string = apresentador?.nome || currentProg?.nome || "";
+  const locutorIniciais = apresentadorNome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase())
+    .join("") || "•";
+
   // ---- Background dinâmico com base na CAPA DA MÚSICA (crossfade elegante) ----
   const musicCover: string | null = musicData?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
@@ -740,16 +755,41 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             data-focusable
           >
             {/* foto locutor */}
-            {locutorFoto ? (
-              <img
-                src={locutorFoto}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover object-top opacity-95"
-                style={{ maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)" }}
-              />
+            {locutorFoto && locutorImgState !== "error" ? (
+              <>
+                <img
+                  src={locutorFoto}
+                  alt={apresentadorNome || ""}
+                  onLoad={() => setLocutorImgState("loaded")}
+                  onError={() => setLocutorImgState("error")}
+                  className="absolute inset-0 w-full h-full object-cover object-top opacity-95 transition-opacity duration-500"
+                  style={{
+                    maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+                    WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+                    opacity: locutorImgState === "loaded" ? 0.95 : 0,
+                  }}
+                />
+                {locutorImgState === "loading" && (
+                  <div
+                    className="absolute inset-0 animate-pulse"
+                    style={{
+                      background:
+                        "linear-gradient(110deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.04) 100%)",
+                      maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+                      WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+                    }}
+                  />
+                )}
+              </>
             ) : (
-              <div className="absolute inset-0 flex items-start justify-center pt-10 pointer-events-none">
-                <Music2 size={140} className="text-white/10" strokeWidth={1} />
+              <div className="absolute inset-0 flex flex-col items-center justify-start pt-14 pointer-events-none gap-3">
+                <div
+                  className="w-24 h-24 rounded-full flex items-center justify-center text-white/85 text-2xl font-semibold border border-white/15 backdrop-blur-md"
+                  style={{ background: "rgba(255,255,255,0.08)" }}
+                >
+                  {locutorIniciais}
+                </div>
+                <Music2 size={60} className="text-white/10" strokeWidth={1} />
               </div>
             )}
             {/* overlay gradient para leitura */}
