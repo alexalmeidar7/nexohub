@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
 import { toast } from "sonner";
+import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
 
 const AVATARS = [
   "/avatars/usr-default.png",
@@ -75,8 +76,30 @@ export default function WatchProfilePopup({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
   const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
+  // Contador que força refetch quando o perfil ou avatar mudam externamente.
+  const [refreshTick, setRefreshTick] = useState(0);
+  // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
+  // ao receber `nexo:profile:changed` sem esperar props do parent.
+  const [displayName, setDisplayName] = useState(userName);
+  const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
 
   useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
+  useEffect(() => { setDisplayName(userName); }, [userName]);
+  useEffect(() => { setDisplayEmail(userEmail); }, [userEmail]);
+
+  // Refetch quando prop `userName` ou `avatarUrl` mudarem (troca de subperfil).
+  useEffect(() => { setRefreshTick(t => t + 1); }, [userName, avatarUrl]);
+
+  // Escuta o barramento global de perfil e atualiza tudo em tempo real.
+  useEffect(() => {
+    const off = onProfileChanged((detail) => {
+      if (detail.nome != null) setDisplayName(detail.nome);
+      if (detail.email !== undefined) setDisplayEmail(detail.email);
+      if (detail.avatar_url != null) setCurrentAvatar(detail.avatar_url);
+      setRefreshTick(t => t + 1);
+    });
+    return off;
+  }, []);
 
   const handlePickAvatar = async (url: string) => {
     if (!userId || savingAvatar) return;
@@ -89,6 +112,7 @@ export default function WatchProfilePopup({
       if (error) throw error;
       setCurrentAvatar(url);
       onAvatarChange?.(url);
+      emitProfileChanged({ userId, avatar_url: url, reason: "avatar" });
       toast.success("Avatar atualizado");
       setPickerOpen(false);
     } catch (err: any) {
@@ -136,7 +160,7 @@ export default function WatchProfilePopup({
       // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
       const profileP = supabase
         .from("profiles")
-        .select("nome")
+        .select("nome, avatar_url")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -157,20 +181,25 @@ export default function WatchProfilePopup({
       const entryCount = hoursRes.count ?? 0;
       setTotalHours(Math.round(entryCount * 0.5 * 10) / 10); // 30 min per entry
 
-      // Chat count by name
+      // Mantém nome/avatar exibidos sincronizados com o que está no banco,
+      // caso tenham mudado em outra aba/tela.
       if (profileRes.data?.nome) {
+        setDisplayName(profileRes.data.nome);
         const chatRes = await supabase
           .from("player_chat_messages")
           .select("id", { count: "exact", head: true })
           .eq("nome", profileRes.data.nome);
         setChatCount(chatRes.count ?? 0);
       }
+      if (profileRes.data?.avatar_url) {
+        setCurrentAvatar(profileRes.data.avatar_url);
+      }
 
       setLoading(false);
     };
 
     fetchAll();
-  }, [userId]);
+  }, [userId, refreshTick]);
 
   const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
   const label = fanLabel(stars);
@@ -201,7 +230,7 @@ export default function WatchProfilePopup({
           >
             <img
               src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
-              alt={userName}
+              alt={displayName}
               className="w-full h-full object-cover"
             />
             <span
@@ -211,9 +240,9 @@ export default function WatchProfilePopup({
             </span>
           </button>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-bold text-white truncate">{userName}</span>
-            {userEmail && (
-              <span className="text-[10px] text-white/50 truncate">{userEmail}</span>
+            <span className="text-sm font-bold text-white truncate">{displayName}</span>
+            {displayEmail && (
+              <span className="text-[10px] text-white/50 truncate">{displayEmail}</span>
             )}
             {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
             <div className="flex items-center gap-0.5 mt-1">

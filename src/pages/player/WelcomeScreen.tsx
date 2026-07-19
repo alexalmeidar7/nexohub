@@ -8,6 +8,7 @@ import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { emitProfileChanged } from "@/lib/profileSync";
 import {
   Dialog,
   DialogContent,
@@ -884,6 +885,12 @@ export default function WelcomeScreen({
                         onClick={() => {
                           cancelAutoAdvance();
                           setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
+                          emitProfileChanged({
+                            userId: user?.id ?? null,
+                            nome: sp.name,
+                            avatar_url: sp.avatar_url,
+                            reason: "switch",
+                          });
                           onContinue();
                         }}
                         title={sp.name}
