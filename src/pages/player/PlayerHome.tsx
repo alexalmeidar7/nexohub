@@ -178,9 +178,9 @@ function TopNavBar({
   }, [searchFocused]);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex items-center px-8 sm:px-12 pt-8 pb-4 gap-8">
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center flex-wrap px-4 sm:px-8 md:px-12 pt-4 sm:pt-8 pb-4 gap-3 sm:gap-6 md:gap-8">
       {/* Nav links */}
-      <nav className="flex items-center gap-6 sm:gap-10">
+      <nav className="flex items-center flex-wrap gap-3 sm:gap-6 md:gap-10">
         {items.map((item, idx) => {
           const isActive = activeKey === item.key;
           return (
