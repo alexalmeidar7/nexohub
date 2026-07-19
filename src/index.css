@@ -1612,23 +1612,41 @@ img, video, canvas, svg { max-width: 100%; }
   border-radius: 999px;
   outline: none;
   cursor: pointer;
+  touch-action: none;
+  will-change: background;
   transition: height 160ms ease;
+  /* Fill controlado por --vol para evitar re-render do style inline em cada tick */
+  background: linear-gradient(
+    to right,
+    #ffffff 0%,
+    #ffffff var(--vol, 0%),
+    rgba(255, 255, 255, 0.18) var(--vol, 0%),
+    rgba(255, 255, 255, 0.18) 100%
+  );
 }
 .nexo-volume-slider:hover { height: 6px; }
+.nexo-volume-slider::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 100%;
+  border-radius: 999px;
+}
 .nexo-volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 12px;
   height: 12px;
+  margin-top: -4px;
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.15);
   border: none;
   cursor: pointer;
-  transition: transform 160ms ease;
+  will-change: transform;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .nexo-volume-slider:hover::-webkit-slider-thumb,
 .nexo-volume-slider:focus-visible::-webkit-slider-thumb { transform: scale(1.25); }
+.nexo-volume-slider:active::-webkit-slider-thumb { transform: scale(1.35); transition-duration: 80ms; }
 .nexo-volume-slider::-moz-range-thumb {
   width: 12px;
   height: 12px;
@@ -1637,5 +1655,16 @@ img, video, canvas, svg { max-width: 100%; }
   border: none;
   box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 0 2px rgba(255,255,255,0.15);
   cursor: pointer;
+  will-change: transform;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+.nexo-volume-slider:hover::-moz-range-thumb,
+.nexo-volume-slider:focus-visible::-moz-range-thumb { transform: scale(1.25); }
+.nexo-volume-slider:active::-moz-range-thumb { transform: scale(1.35); transition-duration: 80ms; }
 .nexo-volume-slider::-moz-range-track { background: transparent; height: 4px; border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) {
+  .nexo-volume-slider,
+  .nexo-volume-slider::-webkit-slider-thumb,
+  .nexo-volume-slider::-moz-range-thumb { transition: none; }
+}
+

@@ -70,6 +70,92 @@ interface HistoryTrack {
 
 const HIST_MAX = 50;
 
+/**
+ * Slider de volume com estado local + rAF throttling.
+ * Evita re-render do player inteiro a cada movimento do drag
+ * e usa CSS var (--vol) para atualizar o fill sem reflow do style inline.
+ */
+function SmoothVolumeSlider({
+  value,
+  onChange,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+}) {
+  const [local, setLocal] = useState<number>(value);
+  const draggingRef = useRef(false);
+  const rafRef = useRef<number | null>(null);
+  const pendingRef = useRef<number | null>(null);
+
+  // Sincroniza valor externo quando não está arrastando
+  useEffect(() => {
+    if (!draggingRef.current) setLocal(value);
+  }, [value]);
+
+  useEffect(() => () => {
+    if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+  }, []);
+
+  const flush = useCallback(() => {
+    rafRef.current = null;
+    if (pendingRef.current != null) {
+      const v = pendingRef.current;
+      pendingRef.current = null;
+      onChange(v);
+    }
+  }, [onChange]);
+
+  const schedule = useCallback((v: number) => {
+    pendingRef.current = v;
+    if (rafRef.current == null) {
+      rafRef.current = requestAnimationFrame(flush);
+    }
+  }, [flush]);
+
+  const handleInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = Number(e.target.value);
+    setLocal(v);
+    schedule(v);
+  }, [schedule]);
+
+  const endDrag = useCallback(() => {
+    draggingRef.current = false;
+    if (pendingRef.current != null) {
+      const v = pendingRef.current;
+      pendingRef.current = null;
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+      onChange(v);
+    }
+  }, [onChange]);
+
+  const startDrag = useCallback(() => { draggingRef.current = true; }, []);
+
+  return (
+    <>
+      <input
+        type="range"
+        min={0}
+        max={100}
+        value={local}
+        onChange={handleInput}
+        onPointerDown={startDrag}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onKeyDown={startDrag}
+        onKeyUp={endDrag}
+        onBlur={endDrag}
+        aria-label="Volume"
+        className="nexo-volume-slider"
+        style={{ width: 96, ["--vol" as any]: `${local}%` }}
+      />
+      <span className="text-[10px] font-semibold tabular-nums tracking-wider text-white/70 w-6 text-right select-none">
+        {local}
+      </span>
+    </>
+  );
+}
+
+
 function hhmm(dateOrTime: string | Date | undefined) {
   if (!dateOrTime) return "";
   if (dateOrTime instanceof Date) {
@@ -1138,26 +1224,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
                   >
                     <div className="flex items-center gap-3 pl-1">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
+                      <SmoothVolumeSlider
                         value={vol}
-                        onChange={(e) => { const v = Number(e.target.value); onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
-                        aria-label="Volume"
-                        className="nexo-volume-slider"
-                        style={{
-                          width: 96,
-                          background: `linear-gradient(to right, #ffffff 0%, #ffffff ${vol}%, rgba(255,255,255,0.18) ${vol}%, rgba(255,255,255,0.18) 100%)`,
-                        }}
+                        onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
                       />
-                      <span
-                        className="text-[10px] font-semibold tabular-nums tracking-wider text-white/70 w-6 text-right select-none"
-                      >
-                        {vol}
-                      </span>
                     </div>
                   </div>
+
                 </div>
               </div>
             );
@@ -1245,10 +1318,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 }
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
+  const base =
+    "px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] border transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-0";
+  const activeCls =
+    "bg-white/15 border-white/25 text-white hover:bg-white/20 hover:border-white/35 focus-visible:bg-white/20";
+  const idleCls =
+    "bg-white/6 border-white/10 text-white/75 hover:bg-white/12 hover:border-white/20 hover:text-white focus-visible:bg-white/12 focus-visible:text-white";
   return (
     <button
+      type="button"
       onClick={onClick}
-      className={`px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border ${active ? "bg-white/15 border-white/25 text-white" : "bg-white/6 border-white/10 text-white/75 hover:bg-white/12 hover:text-white"}`}
+      aria-pressed={!!active}
+      className={`${base} ${active ? activeCls : idleCls}`}
       data-focusable
     >
       {icon}
@@ -1256,6 +1337,7 @@ function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.
     </button>
   );
 }
+
 
 function BgFadeLayer({ gradient, initialOpacity }: { gradient: string; initialOpacity: number }) {
   const [op, setOp] = useState(initialOpacity);
