@@ -76,6 +76,25 @@ const formatTrackText = (value?: string | null) => {
     .join("");
 };
 
+/* ─── Keyboard Key Cap (used in help tooltip) ─── */
+function KeyCap({ children, small, wide }: { children: React.ReactNode; small?: boolean; wide?: boolean }) {
+  const size = small ? "h-6 min-w-[24px] text-[10px]" : "h-8 min-w-[32px] text-sm";
+  const px = wide ? "px-2.5" : "px-1.5";
+  return (
+    <span
+      className={`inline-flex items-center justify-center ${size} ${px} rounded-md font-semibold text-white`}
+      style={{
+        background: "rgba(255,255,255,0.08)",
+        border: "1px solid rgba(255,255,255,0.3)",
+        boxShadow: "inset 0 -2px 0 rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.4)",
+        fontFamily: "'Lufga', sans-serif",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
 /* ─── Top Navigation Bar ─── */
 function TopNavBar({
   items,
