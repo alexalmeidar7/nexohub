@@ -324,15 +324,15 @@ function TopNavBar({
         )}
       </div>
 
-      <div className="flex-1" />
+      <div className="hidden md:block flex-1" />
 
       {/* Right: avatar (rounded square) + station logo */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 ml-auto">
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
             data-tv-focusable
-            className="w-[68px] h-[68px] overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60"
+            className="overflow-hidden cursor-pointer transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:outline-none focus:scale-105 focus:ring-2 focus:ring-white/60 w-[48px] h-[48px] sm:w-[56px] sm:h-[56px] md:w-[68px] md:h-[68px]"
             style={{
               borderRadius: "18px",
               background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04))",
