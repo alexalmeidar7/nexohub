@@ -447,10 +447,15 @@ function HeroBanner({
   };
 
   // Alternating backgrounds: channel thumb + current artist cover
-  const bgSources = useMemo(
-    () => [backgroundUrl, nowPlaying?.capa].filter((v): v is string => !!v),
-    [backgroundUrl, nowPlaying?.capa]
-  );
+  // Preload + decode both URLs so cross-fade never flickers.
+  const bgSources = usePreloadedImages([backgroundUrl, nowPlaying?.capa]);
+
+  // Warm cache as soon as a new artist cover arrives, even before it becomes bgSources.
+  useEffect(() => {
+    if (nowPlaying?.capa) preloadImage(nowPlaying.capa);
+    if (backgroundUrl) preloadImage(backgroundUrl);
+  }, [backgroundUrl, nowPlaying?.capa]);
+
   const [bgIdx, setBgIdx] = useState(0);
   useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
   useEffect(() => {
