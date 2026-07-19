@@ -80,11 +80,14 @@ function TopNavBar({
   activeKey,
   avatarUrl,
   userName,
+  userEmail,
+  googleAvatarUrl,
   showLogout,
   showSignup,
   onLogout,
   onSignup,
   onEditProfile,
+  onSwitchProfile,
   channels = [],
   programas = [],
   onPlayChannel,
@@ -96,11 +99,14 @@ function TopNavBar({
   activeKey: string;
   avatarUrl?: string | null;
   userName?: string;
+  userEmail?: string | null;
+  googleAvatarUrl?: string | null;
   showLogout?: boolean;
   showSignup?: boolean;
   onLogout?: () => void;
   onSignup?: () => void;
   onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
   channels?: Channel[];
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
