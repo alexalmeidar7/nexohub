@@ -606,7 +606,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
-                    onClick={canRewind ? () => seekBySeconds(ago) : undefined}
+                    onClick={canRewind ? () => {
+                      seekBySeconds(ago);
+                      toast.success(`Voltando ${Math.round(ago)}s`, {
+                        description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
+                        icon: <Rewind size={16} />,
+                        duration: 2600,
+                      });
+                    } : undefined}
                     role={canRewind ? "button" : undefined}
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
                     className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
