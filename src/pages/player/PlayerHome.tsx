@@ -253,7 +253,13 @@ function TopNavBar({
                 const t = dir === "next" ? nodes[i + 1] : nodes[i - 1];
                 if (t) { e.preventDefault(); el.blur(); t.focus(); }
               };
-              if (e.key === "ArrowRight" && atEnd) nav("next");
+              if (e.key === "ArrowRight") {
+                e.preventDefault();
+                el.blur();
+                const avatarBtn = profileRef.current?.querySelector<HTMLElement>("[data-tv-focusable]");
+                if (avatarBtn) avatarBtn.focus();
+                else nav("next");
+              }
               else if (e.key === "ArrowLeft" && atStart) nav("prev");
               else if (e.key === "ArrowDown" || e.key === "ArrowUp") { el.blur(); }
               else if (e.key === "Escape") el.blur();
