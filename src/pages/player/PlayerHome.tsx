@@ -630,13 +630,67 @@ function HeroBanner({
 
       {/* Bottom-right help + nexo logo */}
       <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
-        <button
-          className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
-          style={{ border: "1px solid rgba(255,255,255,0.35)" }}
-          aria-label="Ajuda"
-        >
-          <span className="text-sm font-light">?</span>
-        </button>
+        <div className="relative group">
+          <button
+            className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
+            style={{ border: "1px solid rgba(255,255,255,0.35)" }}
+            aria-label="Ajuda de navegação"
+          >
+            <span className="text-sm font-light">?</span>
+          </button>
+          <div
+            className="pointer-events-none absolute bottom-full right-0 mb-3 w-[320px] opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
+            role="tooltip"
+          >
+            <div
+              className="rounded-2xl p-5"
+              style={{
+                background: "#000",
+                border: "1px solid rgba(255,255,255,0.15)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
+              }}
+            >
+              <p className="text-white text-sm font-semibold mb-1" style={{ fontFamily: "'Lufga', sans-serif" }}>
+                Navegação por teclado
+              </p>
+              <p className="text-white/70 text-[11px] leading-relaxed mb-4">
+                Use as teclas do teclado para navegar pelos ícones, cards e menus do player.
+              </p>
+
+              <div className="flex flex-col items-center gap-1 mb-4">
+                <KeyCap>↑</KeyCap>
+                <div className="flex items-center gap-1">
+                  <KeyCap>←</KeyCap>
+                  <KeyCap>↓</KeyCap>
+                  <KeyCap>→</KeyCap>
+                </div>
+              </div>
+
+              <div className="space-y-2 text-[11px] text-white">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1"><KeyCap small>←</KeyCap><KeyCap small>→</KeyCap></div>
+                  <span className="text-white/80">Navegar entre cards e ícones</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1"><KeyCap small>↑</KeyCap><KeyCap small>↓</KeyCap></div>
+                  <span className="text-white/80">Trocar de linha / menu</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <KeyCap small wide>Enter</KeyCap>
+                  <span className="text-white/80">Selecionar item</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <KeyCap small wide>Esc</KeyCap>
+                  <span className="text-white/80">Voltar</span>
+                </div>
+              </div>
+            </div>
+            <div
+              className="absolute -bottom-1.5 right-4 w-3 h-3 rotate-45"
+              style={{ background: "#000", borderRight: "1px solid rgba(255,255,255,0.15)", borderBottom: "1px solid rgba(255,255,255,0.15)" }}
+            />
+          </div>
+        </div>
         <div className="h-9 flex items-center">
           <img src={nexoPlayerLogo.url} alt="nexo player" className="h-8 object-contain" />
         </div>
