@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio } from "lucide-react";
+import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import ElegantLoader from "@/components/player/ElegantLoader";
@@ -265,6 +265,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Volume UI ----
   const [volHover, setVolHover] = useState(false);
 
+  // ---- Progresso da música atual ----
+  const [trackStart, setTrackStart] = useState<number>(() => Date.now());
+  useEffect(() => { setTrackStart(Date.now()); }, [musicData?.titulo, musicData?.artista]);
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTs(Date.now()), 500);
+    return () => clearInterval(id);
+  }, []);
+  const trackDur = Math.max(0, Number(musicData?.duracao) || 0);
+  const trackElapsedRaw = Math.max(0, (nowTs - trackStart) / 1000 - ts.offset);
+  const trackElapsed = trackDur > 0 ? Math.min(trackDur, trackElapsedRaw) : trackElapsedRaw;
+  const fmtMS = (s: number) => {
+    const v = Math.max(0, Math.floor(s));
+    return `${Math.floor(v / 60)}:${String(v % 60).padStart(2, "0")}`;
+  };
+  const seekTrackTo = (newElapsed: number) => {
+    if (newElapsed >= trackElapsed) { seekLive(); return; }
+    const deltaBack = trackElapsed - newElapsed; // segundos a mais para trás
+    seekBySeconds(ts.offset + deltaBack);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden text-white select-none" style={{ background: "#050810", fontFamily: "'Lufga', 'Inter', sans-serif" }}>
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
@@ -404,7 +425,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         }}
                       />
                     ) : (
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#2a2a2a,#000)" }} />
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+                        <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
+                      </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
@@ -446,13 +469,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             data-focusable
           >
             {/* foto locutor */}
-            {locutorFoto && (
+            {locutorFoto ? (
               <img
                 src={locutorFoto}
                 alt=""
                 className="absolute inset-0 w-full h-full object-cover object-top mix-blend-luminosity opacity-95"
                 style={{ maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)", WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)" }}
               />
+            ) : (
+              <div className="absolute inset-0 flex items-start justify-center pt-10 pointer-events-none">
+                <Music2 size={140} className="text-white/10" strokeWidth={1} />
+              </div>
             )}
             {/* overlay gradient para leitura */}
             <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)" }} />
@@ -482,10 +509,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual */}
+              {/* música atual + progresso */}
               {musicData?.titulo && (
-                <div className="mt-3 text-[12px] opacity-85 truncate">
-                  ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                <div className="mt-3">
+                  <div className="text-[12px] opacity-85 truncate">
+                    ♫ {musicData.titulo}{musicData.artista ? ` — ${musicData.artista}` : ""}
+                  </div>
+                  <div className="mt-2 relative group/track">
+                    <div className="h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
+                      <div
+                        className="h-full bg-white/95 transition-all duration-300"
+                        style={{ width: `${trackDur > 0 ? (trackElapsed / trackDur) * 100 : 0}%` }}
+                      />
+                    </div>
+                    {trackDur > 0 && (
+                      <input
+                        type="range"
+                        min={0}
+                        max={Math.max(1, Math.floor(trackDur))}
+                        step={1}
+                        value={Math.min(Math.floor(trackDur), Math.floor(trackElapsed))}
+                        onChange={(e) => seekTrackTo(Number(e.target.value))}
+                        className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
+                        aria-label="Avançar/retroceder na música"
+                      />
+                    )}
+                    <div className="mt-1 flex justify-between text-[10px] tabular-nums text-white/60">
+                      <span>{fmtMS(trackElapsed)}</span>
+                      <span>{trackDur > 0 ? fmtMS(trackDur) : "--:--"}</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
