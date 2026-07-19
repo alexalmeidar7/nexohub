@@ -879,9 +879,15 @@ export default function WelcomeScreen({
                           border: "1px solid rgba(255,255,255,0.14)",
                           boxShadow: "0 8px 22px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14)",
                         }}
-                      >
+                       >
+                        {prevBgColors && (
+                          <div
+                            className="absolute inset-0 pointer-events-none transition-opacity duration-[1400ms] ease-in-out opacity-0"
+                            style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                          />
+                        )}
                         <div
-                          className="absolute inset-0 pointer-events-none"
+                          className="absolute inset-0 pointer-events-none transition-opacity duration-[1400ms] ease-in-out"
                           style={{ background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})` }}
                         />
                         <img
