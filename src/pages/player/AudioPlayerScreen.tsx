@@ -425,7 +425,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         }}
                       />
                     ) : (
-                      <div className="absolute inset-0" style={{ background: "linear-gradient(135deg,#2a2a2a,#000)" }} />
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+                        <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
+                      </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
