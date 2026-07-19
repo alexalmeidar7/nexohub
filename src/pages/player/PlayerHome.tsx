@@ -1734,47 +1734,43 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
               {/* All sections stacked vertically */}
               <div className="px-6 sm:px-10 pb-8 relative z-10" style={{ marginTop: "-4px", background: `hsl(var(--player-bg))` }}>
 
-                {/* Catálogo (Canais ao Vivo removido) */}
+                {/* On Demand */}
                 <section id="section-streaming" className="scroll-mt-4">
                   {!dataLoaded ? (
                     <div className="mb-8">
                       <Skeleton className="h-5 w-44 bg-white/10 mb-3" />
                       <div className="flex gap-3">
-                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-xl bg-white/8" style={{ width: 160, aspectRatio: "2/3" }} />)}
+                        {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="flex-shrink-0 rounded-[22px] bg-white/8" style={{ width: 260, height: 160 }} />)}
                       </div>
                     </div>
                   ) : (
-                    <ContentRow title="Catálogo" scrollRoot={contentScrollRef}>
-                      {/* Meu Top 10 */}
+                    <ContentRow title="on demand" scrollRoot={contentScrollRef}>
+                      {/* Meu Top 10 — mesmo estilo dos cards ouvir/assistir */}
                       {user && (
                         <button
                           key="__top10__"
                           data-tv-focusable
                           onClick={() => goToTop10()}
-                          className="flex-shrink-0 rounded-2xl overflow-hidden relative transition-all duration-300 group cursor-pointer flex flex-col items-center justify-center gap-3"
+                          className="flex-shrink-0 relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
                           style={{
-                            width: "160px",
-                            aspectRatio: "2/3",
-                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.5) 0%, hsl(var(--player-bg)) 50%, hsla(var(--player-accent) / 0.3) 100%)",
-                            border: "1px solid hsla(var(--player-accent) / 0.15)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.border = "3px solid #fff";
-                            e.currentTarget.style.boxShadow = "0 4px 20px hsla(var(--player-accent) / 0.15)";
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.border = "1px solid hsla(var(--player-accent) / 0.15)";
-                            e.currentTarget.style.boxShadow = "none";
+                            width: "260px",
+                            height: "160px",
+                            borderRadius: "22px",
+                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+                            border: "1px solid rgba(255,255,255,0.08)",
+                            fontFamily: "'Lufga', system-ui, sans-serif",
                           }}
                         >
-                          <div className="w-16 h-16 rounded-full overflow-hidden border-2 shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-[88px] h-[88px] rounded-full overflow-hidden border-2 shadow-lg" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
                             <img src={profileAvatar || "/avatars/usr-default.png"} alt="" className="w-full h-full object-cover" />
                           </div>
-                          <div className="flex flex-col items-center gap-0.5 px-2">
-                            <span className="text-[10px] uppercase tracking-[0.2em] font-semibold" style={{ color: "hsla(var(--player-accent) / 0.8)" }}>♫ playlist</span>
-                            <span className="text-base font-black text-white leading-tight">Meu</span>
-                            <span className="text-2xl font-black leading-none" style={{ color: "hsl(var(--player-accent))" }}>TOP 10</span>
-                            <span className="text-[9px] text-white/40 mt-1">♥ músicas curtidas</span>
+                          <div className="relative z-[1] p-4 flex flex-col h-full">
+                            <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">♫ playlist</span>
+                            <div className="mt-auto">
+                              <p className="text-[13px] text-white/70 leading-none lowercase">meu</p>
+                              <p className="text-[22px] font-bold text-white leading-tight">TOP 10</p>
+                              <p className="text-[11px] text-white/60 mt-0.5">♥ músicas curtidas</p>
+                            </div>
                           </div>
                         </button>
                       )}
@@ -1795,6 +1791,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </ContentRow>
                   )}
                 </section>
+
 
 
                 {user && shopActive && (
