@@ -2093,7 +2093,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     : "transform 640ms cubic-bezier(0.32, 0, 0.67, 0), opacity 320ms ease-in",
                 }}
               >
-                {dataLoaded && (
+                {!dataLoaded ? (
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-end gap-5 overflow-hidden">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div key={`ondemand-skel-${i}`} className="shrink-0 flex flex-col gap-2">
+                          <Skeleton
+                            className="rounded-[22px] bg-white/8"
+                            style={{ width: 260, height: 160 }}
+                          />
+                          <Skeleton className="h-3 w-32 rounded bg-white/6" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
                   <div className="flex-1 min-w-0">
                     <ContentRow title="on demand" scrollRoot={contentScrollRef}>
                       {user && (
@@ -2141,6 +2155,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                     </ContentRow>
                   </div>
                 )}
+
               </div>
 
             </>
