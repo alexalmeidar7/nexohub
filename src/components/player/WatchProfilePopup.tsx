@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, X } from "lucide-react";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X } from "lucide-react";
 
 interface LikedSong {
   titulo: string;
