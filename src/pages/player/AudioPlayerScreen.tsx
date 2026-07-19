@@ -220,6 +220,58 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
 
+  // ---- Curtidas do histórico (heart por card) ----
+  const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
+  const likeKey = (artista: string, musica: string) => `${(artista || "").toLowerCase()}||${(musica || "").toLowerCase()}`;
+  useEffect(() => {
+    let cancelled = false;
+    if (!user?.id || history.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("music_likes")
+        .select("artista,titulo")
+        .eq("user_id", user.id)
+        .limit(500);
+      if (cancelled || !data) return;
+      setHistoryLikes(new Set(data.map((r: any) => likeKey(r.artista, r.titulo))));
+    })();
+    return () => { cancelled = true; };
+  }, [user?.id, history.length]);
+
+  const toggleHistoryLike = async (t: HistoryTrack) => {
+    if (!user?.id || !t.artista || !t.musica) return;
+    const key = likeKey(t.artista, t.musica);
+    const already = historyLikes.has(key);
+    // Optimistic UI
+    setHistoryLikes((prev) => {
+      const next = new Set(prev);
+      already ? next.delete(key) : next.add(key);
+      return next;
+    });
+    if (already) {
+      await supabase.from("music_likes").delete()
+        .eq("user_id", user.id).eq("artista", t.artista).eq("titulo", t.musica);
+    } else {
+      await supabase.from("music_likes").insert({
+        user_id: user.id, artista: t.artista, titulo: t.musica, capa: t.capa || "",
+      });
+    }
+  };
+
+  // ---- Segundos atrás para cada faixa do histórico (para permitir voltar no streaming) ----
+  const secsAgoFor = (horario?: string) => {
+    if (!horario) return Infinity;
+    const m = String(horario).match(/(\d{2}):(\d{2})/);
+    if (!m) return Infinity;
+    const now = new Date();
+    const played = new Date(now);
+    played.setHours(parseInt(m[1], 10), parseInt(m[2], 10), 0, 0);
+    if (played.getTime() > now.getTime() + 60_000) played.setDate(played.getDate() - 1);
+    return Math.max(0, (now.getTime() - played.getTime()) / 1000);
+  };
+  const REWIND_LIMIT = 300; // 5 min
+
+
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
   const TIMESHIFT_WINDOW = 1800; // segundos (30 min)
