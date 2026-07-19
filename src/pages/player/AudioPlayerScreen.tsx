@@ -317,22 +317,33 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => { if (rafRef.current) clearTimeout(rafRef.current as any); };
   }, [audioRef, canal?.id, playing]);
 
-  const seekBySeconds = (secsBack: number) => {
+  const seekBySeconds = (secsBack: number, opts?: { forcePlay?: boolean }) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
     const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
     const clampedBack = Math.min(secsBack, Math.min(TIMESHIFT_WINDOW, end - start));
     const target = Math.max(start + 0.5, end - clampedBack);
+    const wasPaused = a.paused;
     try { a.currentTime = target; } catch {}
-    // garantir playback contínuo após o seek
-    if (a.paused) { void a.play().catch(() => {}); }
+    // Se pediu retomada explícita OU o player estava tocando, garantir playback
+    if (opts?.forcePlay || !wasPaused) {
+      const resume = () => { void a.play().catch(() => {}); };
+      if (a.readyState >= 2) resume();
+      else a.addEventListener("canplay", resume, { once: true });
+      // Sincroniza o estado do parent se estava pausado e forçamos play
+      if (opts?.forcePlay && wasPaused && !playing) onTogglePlay();
+    }
   };
-  const seekLive = () => {
+  const seekLive = (opts?: { forcePlay?: boolean }) => {
     const a = audioRef.current;
     if (!a || !a.buffered.length) return;
+    const wasPaused = a.paused;
     try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
-    if (a.paused) { void a.play().catch(() => {}); }
+    if (opts?.forcePlay || !wasPaused) {
+      void a.play().catch(() => {});
+      if (opts?.forcePlay && wasPaused && !playing) onTogglePlay();
+    }
   };
 
   // ---- Atalhos de teclado (Space play/pause, ←/→ seek) ----
@@ -540,7 +551,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <ArrowLeft size={12} />
               voltar
             </button>
-            <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={seekLive} />
+            <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
             <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
             <PillBtn label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
             <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
@@ -602,12 +613,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isNow = i === 0;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
+                const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
                     onClick={canRewind ? () => {
-                      seekBySeconds(ago);
+                      seekBySeconds(ago, { forcePlay: true });
                       toast.success(`Voltando ${Math.round(ago)}s`, {
                         description: `${t.artista} — ${t.musica} · retomando às ${hhmm(t.horario)}`,
                         icon: <Rewind size={16} />,
@@ -615,14 +627,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       });
                     } : undefined}
                     role={canRewind ? "button" : undefined}
-                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : ""}`}
+                    aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : isExpired ? "Fora da janela de 5 min" : undefined}
+                    title={isExpired ? "O retorno no tempo só está disponível para faixas tocadas nos últimos 5 min." : undefined}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : isExpired ? "cursor-not-allowed" : ""}`}
                     style={{
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
-                      opacity,
-                      filter: `blur(${blur}px) grayscale(${gray}%)`,
+                      opacity: isExpired ? Math.max(0.35, opacity * 0.55) : opacity,
+                      filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
@@ -683,6 +696,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         </div>
                       </div>
                     )}
+
+                    {/* Tooltip para faixas fora da janela de 5 min */}
+                    {isExpired && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/55 backdrop-blur-[2px]">
+                        <div className="max-w-[85%] text-center px-3 py-2 rounded-2xl bg-black/85 border border-white/15 text-white text-[10.5px] leading-snug shadow-2xl">
+                          <div className="flex items-center justify-center gap-1.5 font-semibold uppercase tracking-widest text-white/70 mb-1 text-[9.5px]">
+                            <Rewind size={11} /> indisponível
+                          </div>
+                          Retornar no tempo só funciona nas últimas 5 min de transmissão.
+                        </div>
+                      </div>
+                    )}
+
 
                     <div className="absolute top-3 left-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
                       {hhmm(t.horario)}
@@ -785,7 +811,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         {/* live pill com rewind interativo no hover (à direita) */}
         <div className="flex justify-end mb-2">
           <button
-            onClick={seekLive}
+            onClick={() => seekLive()}
             className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden"
             aria-label="Voltar ao vivo"
           >
