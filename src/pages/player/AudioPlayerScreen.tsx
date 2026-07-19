@@ -879,7 +879,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 <img
                   src={locutorFoto}
                   alt={apresentadorNome || ""}
-                  onLoad={() => setLocutorImgState("loaded")}
+                  onLoad={() => {
+                    loadedLocutorUrlRef.current = locutorFoto;
+                    setLocutorImgState("loaded");
+                  }}
                   onError={() => setLocutorImgState("error")}
                   className="absolute inset-0 w-full h-full object-cover object-top opacity-95 transition-opacity duration-500"
                   style={{
