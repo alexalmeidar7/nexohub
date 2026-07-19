@@ -752,8 +752,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       </button>
                     )}
 
-                    {/* Hint de rewind (aparece no hover se dentro dos 5 min) */}
-                    {canRewind && (
+                    {/* Hint de rewind (hover) — some quando preparando */}
+                    {canRewind && !isPreparing && (
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none bg-black/35">
                         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 text-black text-[11px] font-semibold shadow-lg">
                           <Rewind size={14} />
@@ -761,6 +761,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         </div>
                       </div>
                     )}
+
+                    {/* Feedback discreto de "preparando rewind" */}
+                    {isPreparing && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/45 backdrop-blur-[2px] animate-fade-in">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 text-black text-[11px] font-semibold shadow-lg">
+                          <span
+                            className="w-3 h-3 rounded-full border-2 border-black/25 border-t-black animate-spin"
+                            aria-hidden
+                          />
+                          preparando
+                        </div>
+                      </div>
+                    )}
+
 
 
 
