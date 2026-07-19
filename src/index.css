@@ -1570,3 +1570,20 @@ img, video, canvas, svg { max-width: 100%; }
   z-index: 20;
   box-shadow: 0 10px 40px rgba(0,0,0,0.55);
 }
+
+/* Welcome Screen: star pop-in + gentle twinkle */
+@keyframes wsStarPop {
+  0%   { transform: scale(0.2) rotate(-18deg); opacity: 0; }
+  60%  { transform: scale(1.25) rotate(6deg);  opacity: 1; }
+  100% { transform: scale(1) rotate(0deg);     opacity: 1; }
+}
+@keyframes wsStarTwinkle {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+  50%      { filter: drop-shadow(0 0 6px rgba(255,255,255,0.55)); }
+}
+.ws-star-pop {
+  transform-origin: center;
+  animation:
+    wsStarPop 700ms cubic-bezier(0.34, 1.56, 0.64, 1) both,
+    wsStarTwinkle 2600ms ease-in-out 900ms infinite;
+}
