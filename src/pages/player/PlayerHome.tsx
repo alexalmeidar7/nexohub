@@ -559,7 +559,7 @@ function HeroBanner({
               src={nowPlaying.capa}
               alt=""
               className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: "grayscale(1) brightness(0.65)", opacity: 0.85 }}
+              style={{ filter: "grayscale(1) brightness(0.75)" }}
             />
           )}
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.15) 100%)" }} />
