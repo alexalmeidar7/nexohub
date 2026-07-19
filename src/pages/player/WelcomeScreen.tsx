@@ -1006,10 +1006,10 @@ export default function WelcomeScreen({
                   <style>{`
                     .wsp-input:hover:not(:focus) { border-color: #ffffff !important; }
                     .wsp-input:focus {
-                      border-color: #C6F03C !important;
-                      background-color: #3a3d38 !important;
+                      border-color: #ffffff !important;
+                      background-color: #323431 !important;
                       color: #ffffff !important;
-                      box-shadow: 0 0 0 3px rgba(198,240,60,0.25), 0 0 12px rgba(198,240,60,0.15) !important;
+                      box-shadow: 0 0 0 3px rgba(255,255,255,0.18), 0 0 12px rgba(255,255,255,0.08) !important;
                     }
                     .wsp-input::placeholder { color: #d9d9d9; opacity: 0.28; }
                   `}</style>
