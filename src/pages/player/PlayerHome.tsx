@@ -1213,8 +1213,21 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         nodes[best].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
       }
     };
+    // Enter/Space: aciona o elemento focado como se fosse um clique do mouse
+    const enterHandler = (e: KeyboardEvent) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active || !active.matches?.("[data-tv-focusable]")) return;
+      if (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as any).isContentEditable) return;
+      e.preventDefault();
+      active.click();
+    };
     window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener("keydown", enterHandler);
+    return () => {
+      window.removeEventListener("keydown", handler);
+      window.removeEventListener("keydown", enterHandler);
+    };
   }, []);
 
   // Row-carousel navigation: ArrowUp/Down swaps whole rows in-place
