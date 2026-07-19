@@ -232,6 +232,54 @@ export default function WelcomeScreen({
     };
   }, [artistImg]);
 
+  // Pré-carregar próximo artista: assim que uma nova música é escrita no
+  // localStorage (via useGlobalMusicSync), busca a imagem do novo artista e
+  // decodifica em background, mantendo o cache quente antes do próximo tick.
+  useEffect(() => {
+    if (!user?.id) return;
+    const prewarm = async (artista: string) => {
+      const key = artista.toLowerCase();
+      const isBreak = ["break", "vinhetas", "hora certa", "desconhecido"].includes(key);
+      if (!artista || isBreak) return;
+      if (artistImgCacheRef.current[key]) return;
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist: artista } });
+        if (error || !data?.ok || !data?.url) return;
+        artistImgCacheRef.current[key] = data.url as string;
+        // decode em background — resultado só é usado no próximo tick
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = data.url as string;
+        try { await (img as any).decode?.(); } catch {}
+      } catch {}
+    };
+
+    const onMusic = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { userId?: string; data?: { artista?: string } } | undefined;
+      if (!detail || detail.userId !== user.id) return;
+      const artista = detail.data?.artista;
+      if (artista) prewarm(artista);
+    };
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key || !e.newValue) return;
+      if (!e.key.endsWith(`::${user.id}`)) return;
+      if (!e.key.startsWith("masterview_music_data::")) return;
+      try {
+        const parsed = JSON.parse(e.newValue);
+        if (parsed?.artista) prewarm(parsed.artista);
+      } catch {}
+    };
+
+    window.addEventListener(MUSIC_DATA_EVENT, onMusic as EventListener);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener(MUSIC_DATA_EVENT, onMusic as EventListener);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [user?.id]);
+
+
+
 
 
 
