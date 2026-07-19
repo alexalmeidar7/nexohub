@@ -190,11 +190,12 @@ function TopNavBar({
               data-tv-focusable
               data-tv-topnav={idx + 1}
               title={`Atalho: ${idx + 1}`}
-              className="group relative py-1 text-[22px] font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
+              className="group relative py-1 font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
                 fontFamily: "'Lufga', system-ui, sans-serif",
+                fontSize: "clamp(15px, 1.6vw, 22px)",
               }}
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.color = "#fff"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "#fff"; u.style.transform = "scaleX(1)"; } }}
               onBlur={(e) => { if (!isActive) { (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.55)"; const u = e.currentTarget.querySelector<HTMLElement>("[data-underline]"); if (u) { u.style.background = "transparent"; u.style.transform = "scaleX(0)"; } } }}
