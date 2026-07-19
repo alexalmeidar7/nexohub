@@ -2765,11 +2765,15 @@ export default function PlayerPage() {
           user={user}
           profileAvatar={profileAvatar}
           userDisplayName={userDisplayName}
+          userEmail={user?.email ?? null}
           signOut={signOut}
           effectiveUserId={effectiveUserId}
           isPublicMode={isPublicMode}
           userSlug={userSlug}
           onBackHome={handleHomeClick}
+          onEditProfile={handleEditProfile}
+          onSwitchProfile={handleSwitchProfile}
+          onAvatarChange={(url) => setProfileAvatar(url)}
         />
       </Suspense>
     );
