@@ -1138,26 +1138,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
                   >
                     <div className="flex items-center gap-3 pl-1">
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
+                      <SmoothVolumeSlider
                         value={vol}
-                        onChange={(e) => { const v = Number(e.target.value); onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
-                        aria-label="Volume"
-                        className="nexo-volume-slider"
-                        style={{
-                          width: 96,
-                          background: `linear-gradient(to right, #ffffff 0%, #ffffff ${vol}%, rgba(255,255,255,0.18) ${vol}%, rgba(255,255,255,0.18) 100%)`,
-                        }}
+                        onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
                       />
-                      <span
-                        className="text-[10px] font-semibold tabular-nums tracking-wider text-white/70 w-6 text-right select-none"
-                      >
-                        {vol}
-                      </span>
                     </div>
                   </div>
+
                 </div>
               </div>
             );
