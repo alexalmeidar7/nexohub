@@ -230,6 +230,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     seekBySeconds(TIMESHIFT_WINDOW - dragVal);
     setDragVal(null);
   };
+  const [backToLiveFlash, setBackToLiveFlash] = useState(false);
+  const prevOffsetRef = useRef(0);
+  useEffect(() => {
+    const wasBehind = prevOffsetRef.current > 2;
+    const nowLive = ts.offset <= 1;
+    if (wasBehind && nowLive) {
+      setBackToLiveFlash(true);
+      const t = setTimeout(() => setBackToLiveFlash(false), 2500);
+      prevOffsetRef.current = ts.offset;
+      return () => clearTimeout(t);
+    }
+    prevOffsetRef.current = ts.offset;
+  }, [ts.offset]);
+  const isBehind = ts.offset > 2;
   const rafRef = useRef<number | null>(null);
   useEffect(() => {
     const tick = () => {
@@ -305,6 +319,41 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
+
+      {/* Indicador de atraso / retorno ao vivo */}
+      {(isBehind || backToLiveFlash) && (
+        <div
+          className="absolute top-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 px-4 py-1.5 rounded-full backdrop-blur-md border text-[12px] font-medium shadow-lg transition-all duration-300"
+          style={{
+            background: isBehind ? "rgba(255,180,0,0.18)" : "rgba(0,200,120,0.20)",
+            borderColor: isBehind ? "rgba(255,200,80,0.45)" : "rgba(80,255,180,0.45)",
+            color: isBehind ? "#ffd77a" : "#8effc8",
+          }}
+          role="status"
+          aria-live="polite"
+        >
+          {isBehind ? (
+            <>
+              <Rewind size={14} />
+              <span>atrasado do ao vivo</span>
+              <span className="tabular-nums opacity-90">
+                −{Math.floor(ts.offset / 60)}:{String(Math.round(ts.offset % 60)).padStart(2, "0")}
+              </span>
+              <button
+                onClick={seekLive}
+                className="ml-1 px-2 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-[10px] uppercase tracking-widest"
+              >
+                ir ao vivo
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>de volta ao vivo</span>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ============== TOP BAR ============== */}
       <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
