@@ -419,6 +419,32 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
   };
 
+  const currentHistoryTrack = useCallback((cover?: string): HistoryTrack | null => {
+    const artista = String(musicData?.artista || "").trim();
+    const musica = String(musicData?.titulo || "").trim();
+    const lowerTitle = musica.toLowerCase();
+    if (!artista || !musica || lowerTitle === "sem título" || lowerTitle === "sem titulo") return null;
+    return {
+      artista,
+      musica,
+      horario: musicData?.horario || hhmm(new Date()),
+      capa: cover || musicData?.capa || resolvedMusicCover || undefined,
+    };
+  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa, resolvedMusicCover]);
+
+  const sameTrack = (a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) =>
+    !!a && !!b
+    && (a.artista || "").trim().toLowerCase() === (b.artista || "").trim().toLowerCase()
+    && (a.musica || "").trim().toLowerCase() === (b.musica || "").trim().toLowerCase();
+
+  const ensureCurrentAtFront = useCallback((tracks: HistoryTrack[], cover?: string): HistoryTrack[] => {
+    const current = currentHistoryTrack(cover);
+    if (!current) return tracks;
+    const existingCurrent = tracks.find((t) => sameTrack(t, current));
+    const mergedCurrent = { ...current, horario: existingCurrent?.horario || current.horario, capa: current.capa || existingCurrent?.capa };
+    return [mergedCurrent, ...tracks.filter((t) => !sameTrack(t, current))].slice(0, HIST_MAX);
+  }, [currentHistoryTrack]);
+
   useEffect(() => {
     let cancelled = false;
     const artista = String(musicData?.artista || "").trim();
@@ -434,6 +460,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       warmCover(musicData.capa);
       const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
       coverCacheRef.current.set(key, musicData.capa);
+      setHistory((prev) => ensureCurrentAtFront(prev, musicData.capa));
       return;
     }
 
@@ -441,15 +468,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     fetchCover(artista, musica).then((cover) => {
       if (cancelled || !cover) return;
       setResolvedMusicCover(cover);
-      setHistory((prev) => prev.map((t, idx) => {
-        const sameTrack = (t.artista || "").trim().toLowerCase() === artista.toLowerCase()
-          && (t.musica || "").trim().toLowerCase() === musica.toLowerCase();
-        return sameTrack || idx === 0 ? { ...t, capa: t.capa || cover } : t;
-      }));
+      setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
 
     return () => { cancelled = true; };
-  }, [musicData?.titulo, musicData?.artista, musicData?.capa]);
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa, ensureCurrentAtFront]);
 
   useEffect(() => {
     let cancelled = false;
@@ -486,7 +509,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           // Ainda assim, mescla capas que possam ter sido descobertas
           return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
         }
-        return withCached;
+        return ensureCurrentAtFront(withCached);
       });
       // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
       withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
@@ -531,7 +554,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       document.removeEventListener("visibilitychange", onVis);
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover]);
+  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
 
 
   // ---- Navegação do carrossel de histórico ----
