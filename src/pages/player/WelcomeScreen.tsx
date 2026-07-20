@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 const AVATARS = [
   "/avatars/usr-default.png",
@@ -76,6 +77,7 @@ export default function WelcomeScreen({
 }: WelcomeScreenProps) {
 
   const { user, signOut } = useAuth();
+  const radioUserId = publicUserId || user?.id || null;
   // Mantém a sincronização da "música no ar" ativa também na tela de boas-vindas,
   // para que a imagem do artista (Deezer) apareça sem depender do PlayerHome.
   useGlobalMusicSync();
@@ -86,26 +88,26 @@ export default function WelcomeScreen({
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
 
-  // Load sub-profiles: hydrate from localStorage cache first, then reconcile with DB (profiles.sub_profiles)
+  // Load sub-profiles scoped by radio so the same listener can belong to multiple stations.
   useEffect(() => {
-    if (!user) { setSubProfiles([]); return; }
-    const cacheKey = `nexohub_sub_profiles_${user.id}`;
+    if (!user || !radioUserId) { setSubProfiles([]); return; }
+    const cacheKey = `nexohub_sub_profiles_${user.id}_${radioUserId}`;
     try {
       const raw = localStorage.getItem(cacheKey);
       if (raw) setSubProfiles(JSON.parse(raw));
     } catch { /* ignore */ }
-    supabase.from("profiles").select("sub_profiles").eq("user_id", user.id).maybeSingle().then(({ data }) => {
-      const remote = Array.isArray((data as any)?.sub_profiles) ? (data as any).sub_profiles : [];
+    fetchPlayerListenerProfile(user, radioUserId, userName).then((data) => {
+      const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
       setSubProfiles(remote);
       try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
     });
-  }, [user?.id]);
+  }, [user, radioUserId, userName]);
 
   const persistSubProfiles = async (next: Array<{ id: string; name: string; avatar_url: string }>) => {
     setSubProfiles(next);
-    if (!user) return;
-    try { localStorage.setItem(`nexohub_sub_profiles_${user.id}`, JSON.stringify(next)); } catch { /* ignore */ }
-    await supabase.from("profiles").update({ sub_profiles: next as any }).eq("user_id", user.id);
+    if (!user || !radioUserId) return;
+    try { localStorage.setItem(`nexohub_sub_profiles_${user.id}_${radioUserId}`, JSON.stringify(next)); } catch { /* ignore */ }
+    await upsertPlayerListenerProfile(user.id, radioUserId, { sub_profiles: next as any });
   };
 
   const [saving, setSaving] = useState(false);
@@ -287,8 +289,8 @@ export default function WelcomeScreen({
 
 
   useEffect(() => {
-    if (!user) return;
-    supabase.from("profiles").select("*").eq("user_id", user.id).single().then(({ data }) => {
+    if (!user || !radioUserId) return;
+    fetchPlayerListenerProfile(user, radioUserId, userName).then((data) => {
       if (data) {
         const d = data as any;
         setProfile({
@@ -308,8 +310,9 @@ export default function WelcomeScreen({
     // Simple points tally from music likes
     supabase.from("music_likes").select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
+      .eq("radio_user_id", radioUserId)
       .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
-  }, [user, userName]);
+  }, [user, userName, radioUserId]);
 
   // === Background sequence: delayed reveal + intercalated artist image ===
   const [bgVisible, setBgVisible] = useState(false);
@@ -497,8 +500,7 @@ export default function WelcomeScreen({
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-    const { error } = await supabase.from("profiles").upsert({
-      user_id: user.id,
+    const { error } = await upsertPlayerListenerProfile(user.id, radioUserId || user.id, {
       nome: profile.nome, email: profile.email,
       cpf: profile.cpf || null,
       whatsapp: profile.whatsapp, sexo: profile.sexo,
@@ -506,8 +508,7 @@ export default function WelcomeScreen({
       setor: profile.setor || null,
       data_nascimento: profile.data_nascimento || null,
       avatar_url: profile.avatar_url,
-      updated_at: new Date().toISOString(),
-    } as any, { onConflict: "user_id" });
+    } as any);
     setSaving(false);
     if (error) toast.error("Erro ao salvar perfil");
     else { toast.success("Perfil atualizado!"); setEditOpen(false); }
@@ -887,6 +888,7 @@ export default function WelcomeScreen({
                           setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
                           emitProfileChanged({
                             userId: user?.id ?? null,
+                            radioUserId,
                             nome: sp.name,
                             avatar_url: sp.avatar_url,
                             reason: "switch",

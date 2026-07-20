@@ -114,6 +114,7 @@ function TopNavBar({
   programas = [],
   onPlayChannel,
   userId,
+  radioUserId,
   radioName,
   stationLogoUrl,
   paletteSource,
@@ -135,6 +136,7 @@ function TopNavBar({
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
+  radioUserId?: string | null;
   radioName?: string;
   stationLogoUrl?: string | null;
   paletteSource?: string | null;
@@ -404,6 +406,7 @@ function TopNavBar({
                 userName={userName || "Visitante"}
                 userEmail={userEmail || null}
                 avatarUrl={googleAvatarUrl || avatarUrl || null}
+                radioUserId={radioUserId}
                 radioName={radioName}
                 onClose={() => setProfileOpen(false)}
                 onEditProfile={onEditProfile}
@@ -2023,7 +2026,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onOuvir={() => {
                         const audioChannels = streamingChannels.filter(c => c.type === "audio_live" || c.type === "audio");
                         let lastId: string | null = null;
-                        try { lastId = user?.id ? localStorage.getItem(`nexo_last_audio_channel_${user.id}`) : null; } catch {}
+                        try { lastId = ownerUserId ? localStorage.getItem(`nexo_last_audio_channel_${ownerUserId}`) : null; } catch {}
                         const audio =
                           (lastId && audioChannels.find(c => c.id === lastId)) ||
                           audioChannels[0] ||
@@ -2065,6 +2068,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
+                      radioUserId={ownerUserId}
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
                       paletteSource={heroChannel?.logo_url || null}
@@ -2184,6 +2188,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             }>
               <Top10DetailInline
                 avatarUrl={profileAvatar}
+                radioUserId={ownerUserId}
                 onBack={goBackFromTop10}
                 onPlayVideo={(videoId, playlist) => {
                   setFadeOut(true);
@@ -2230,6 +2235,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           profileEmail={profileEmail}
           profileCity={profileCity}
           profileAvatar={profileAvatar}
+          radioUserId={ownerUserId}
           onClose={() => setProfileDialogOpen(false)}
           onSaved={(data) => {
             if (data.nome) setProfileName(data.nome);
