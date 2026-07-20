@@ -64,6 +64,7 @@ export interface AudioPlayerScreenProps {
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
   onAvatarChange?: (url: string) => void;
+  isVideoChannel?: boolean;
 }
 
 interface HistoryTrack {
