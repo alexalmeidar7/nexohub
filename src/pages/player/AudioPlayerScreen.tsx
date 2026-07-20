@@ -75,6 +75,12 @@ interface HistoryTrack {
 
 const HIST_MAX = 50;
 
+function sameHistoryTrack(a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) {
+  return !!a && !!b
+    && (a.artista || "").trim().toLowerCase() === (b.artista || "").trim().toLowerCase()
+    && (a.musica || "").trim().toLowerCase() === (b.musica || "").trim().toLowerCase();
+}
+
 /**
  * Slider de volume com estado local + rAF throttling.
  * Evita re-render do player inteiro a cada movimento do drag
@@ -322,10 +328,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .map((w) => w[0]?.toUpperCase())
     .join("") || "•";
 
+  const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
+
   // ---- Background dinâmico ----
   // Preferência: capa da música (Deezer/artista).
   // Fallback: paleta derivada da imagem do "NO AR" (foto do apresentador / capa do programa).
-  const musicCover: string | null = musicData?.capa || null;
+  const musicCover: string | null = musicData?.capa || resolvedMusicCover || null;
   const onAirImage: string | null = apresentador?.foto || currentProg?.thumb || currentProg?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
   const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
@@ -417,6 +425,56 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
   };
 
+  const currentHistoryTrack = useCallback((cover?: string): HistoryTrack | null => {
+    const artista = String(musicData?.artista || "").trim();
+    const musica = String(musicData?.titulo || "").trim();
+    const lowerTitle = musica.toLowerCase();
+    if (!artista || !musica || lowerTitle === "sem título" || lowerTitle === "sem titulo") return null;
+    return {
+      artista,
+      musica,
+      horario: musicData?.horario || hhmm(new Date()),
+      capa: cover || musicData?.capa || undefined,
+    };
+  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa]);
+
+  const ensureCurrentAtFront = useCallback((tracks: HistoryTrack[], cover?: string): HistoryTrack[] => {
+    const current = currentHistoryTrack(cover);
+    if (!current) return tracks;
+    const existingCurrent = tracks.find((t) => sameHistoryTrack(t, current));
+    const mergedCurrent = { ...current, horario: existingCurrent?.horario || current.horario, capa: current.capa || existingCurrent?.capa };
+    return [mergedCurrent, ...tracks.filter((t) => !sameHistoryTrack(t, current))].slice(0, HIST_MAX);
+  }, [currentHistoryTrack]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const artista = String(musicData?.artista || "").trim();
+    const musica = String(musicData?.titulo || "").trim();
+
+    if (!artista || !musica || musica.toLowerCase() === "sem título" || musica.toLowerCase() === "sem titulo") {
+      setResolvedMusicCover("");
+      return;
+    }
+
+    if (musicData?.capa) {
+      setResolvedMusicCover(musicData.capa);
+      warmCover(musicData.capa);
+      const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
+      coverCacheRef.current.set(key, musicData.capa);
+      setHistory((prev) => ensureCurrentAtFront(prev, musicData.capa));
+      return;
+    }
+
+    setResolvedMusicCover("");
+    fetchCover(artista, musica).then((cover) => {
+      if (cancelled || !cover) return;
+      setResolvedMusicCover(cover);
+      setHistory((prev) => ensureCurrentAtFront(prev, cover));
+    });
+
+    return () => { cancelled = true; };
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa, ensureCurrentAtFront]);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -432,10 +490,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       const withCached = (data as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
-          (musicData?.capa &&
+          ((musicData?.capa || resolvedMusicCover) &&
             (t.musica || "").trim().toLowerCase() === (musicData?.titulo || "").trim().toLowerCase() &&
             (t.artista || "").trim().toLowerCase() === (musicData?.artista || "").trim().toLowerCase()
-            ? musicData.capa
+            ? (musicData?.capa || resolvedMusicCover)
             : undefined) ||
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
           getArtistImageSync(t.artista) ||
@@ -452,7 +510,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           // Ainda assim, mescla capas que possam ter sido descobertas
           return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
         }
-        return withCached;
+        return ensureCurrentAtFront(withCached, musicData?.capa || resolvedMusicCover);
       });
       // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
       withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
@@ -497,7 +555,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       document.removeEventListener("visibilitychange", onVis);
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
+  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
 
 
   // ---- Navegação do carrossel de histórico ----
@@ -969,6 +1027,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         >
                           <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
                             {(t.horario || "").slice(0, 5)}
+                          </div>
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/8 border border-white/10">
+                            {t.capa ? (
+                              <img
+                                src={t.capa}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center">
+                                <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
+                              </div>
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
