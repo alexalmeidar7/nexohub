@@ -1035,7 +1035,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     }}
                   >
                     {/* Background da capa */}
-                    {t.capa ? (
+                    {isNow ? (
+                      <NowCoverCrossfade capa={t.capa} isActive={isActive} />
+                    ) : t.capa ? (
                       <div
                         className="absolute inset-0"
                         style={{
@@ -1062,11 +1064,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {isNow ? (
                       <>
                         <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
-                          <span aria-hidden className="flex items-end gap-[2px] h-3">
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: '0ms' }} />
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '100%', animationDelay: '150ms' }} />
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '65%', animationDelay: '300ms' }} />
-                          </span>
+                          <VolumeEqBars volume={volume} muted={muted} playing={playing} />
                           <span>Tocando agora</span>
                         </div>
                         <button
@@ -1576,6 +1574,121 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     </div>
   );
 }
+function VolumeEqBars({ volume, muted, playing }: { volume: number; muted: boolean; playing: boolean }) {
+  // Nível efetivo (0..1): silencia quando mudo ou pausado
+  const level = muted || !playing ? 0 : Math.min(1, Math.max(0, volume));
+  // Amplitude mínima para não sumir totalmente quando ativo
+  const amp = level <= 0 ? 0 : 0.25 + level * 0.75;
+  // Velocidade da animação acompanha o volume: mais alto = mais rápido
+  const dur = level <= 0 ? 0 : (1.15 - level * 0.55).toFixed(2);
+  const barBase = "w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 transition-[height,opacity] duration-200 ease-out";
+  const heights = [40, 100, 65];
+  const delays = [0, 150, 300];
+  return (
+    <span
+      aria-hidden
+      className="flex items-end gap-[2px] h-3"
+      style={{ ["--vol" as any]: amp, opacity: level <= 0 ? 0.4 : 1 }}
+    >
+      {heights.map((h, i) => (
+        <span
+          key={i}
+          className={barBase}
+          style={{
+            height: level <= 0 ? "18%" : `calc(${h}% * var(--vol))`,
+            animation: level <= 0 ? "none" : `eqbar ${dur}s ease-in-out ${delays[i]}ms infinite`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+/**
+ * Crossfade suave entre capas quando a música muda no card "tocando agora".
+ * Mantém a capa anterior visível e faz fade-in + micro-zoom da nova por cima.
+ */
+function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive: boolean }) {
+  const [layers, setLayers] = useState<Array<{ id: number; url: string }>>(() =>
+    capa ? [{ id: 0, url: capa }] : []
+  );
+  const seqRef = useRef(0);
+  const lastUrlRef = useRef<string | null>(capa || null);
+
+  useEffect(() => {
+    const next = capa || null;
+    if (next === lastUrlRef.current) return;
+    lastUrlRef.current = next;
+    if (!next) {
+      setLayers([]);
+      return;
+    }
+    // Pré-decode para começar o fade só quando a imagem estiver pronta
+    const img = new Image();
+    img.decoding = "async";
+    img.src = next;
+    const start = () => {
+      seqRef.current += 1;
+      const id = seqRef.current;
+      setLayers((prev) => [...prev.slice(-1), { id, url: next }]);
+      // Remove camadas antigas depois do fade concluir
+      window.setTimeout(() => {
+        setLayers((prev) => prev.filter((l) => l.id === id));
+      }, 950);
+    };
+    if ((img as any).decode) {
+      (img as any).decode().then(start).catch(start);
+    } else {
+      img.onload = start;
+      img.onerror = start;
+    }
+  }, [capa]);
+
+  if (layers.length === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+        <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {layers.map((l, idx) => {
+        const isTop = idx === layers.length - 1;
+        const isFirst = layers.length === 1;
+        return (
+          <div
+            key={l.id}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${l.url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: isTop ? 1 : 0,
+              transform: isTop ? "scale(1)" : "scale(1.04)",
+              filter: isTop ? "blur(0px)" : "blur(2px)",
+              transition: isFirst
+                ? "none"
+                : "opacity 900ms cubic-bezier(.4,0,.2,1), transform 1100ms cubic-bezier(.22,1,.36,1), filter 900ms cubic-bezier(.4,0,.2,1)",
+              animation: isTop && !isFirst ? "nowCoverIn 900ms cubic-bezier(.22,1,.36,1) both" : undefined,
+              willChange: "opacity, transform, filter",
+            }}
+          />
+        );
+      })}
+      <style>{`
+        @keyframes nowCoverIn {
+          0%   { opacity: 0; transform: scale(1.06); filter: blur(3px) brightness(1.1); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
+        }
+      `}</style>
+    </>
+  );
+}
+
+
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
   const base =
