@@ -127,6 +127,21 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
 
+    // reset drift tracking for the new song
+    songStartMsRef.current = Date.now();
+    driftRef.current = { points: [], rate: 0, baseAt: 0, baseOffset: offset };
+    // auto-sync: warm start from user's recent offset history (median)
+    if (autoSync) {
+      const hist = loadOffsetHistory();
+      if (hist.length >= 2) {
+        const sorted = [...hist].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        if (Number.isFinite(median) && Math.abs(median - offset) > 0.24) {
+          setOffset(Math.round(median * 100) / 100);
+        }
+      }
+    }
+
     setLines([]); setIdx(-1); setNotFound(false); setLoading(true);
     let cancelled = false;
 
