@@ -409,6 +409,8 @@ function TopNavBar({
           </div>
         )}
       </div>
+        );
+      })()}
 
       <div className="hidden md:block flex-1" />
 
