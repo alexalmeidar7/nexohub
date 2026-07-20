@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import {
