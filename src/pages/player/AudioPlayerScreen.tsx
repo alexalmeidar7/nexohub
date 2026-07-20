@@ -523,6 +523,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
   const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
 
+  // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
+  useEffect(() => {
+    upcomingProgs.forEach((p) => {
+      const url = p?.thumb || p?.capa;
+      if (url) warmCover(url);
+    });
+  }, [upcomingProgs]);
+
   // ---- Curtidas do histórico (heart por card) ----
   const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
   const likeKey = (artista: string, musica: string) => `${(artista || "").toLowerCase()}||${(musica || "").toLowerCase()}`;
