@@ -1820,6 +1820,14 @@ export function ProgramShowcaseCard({
           <img
             src={foto}
             alt={apresentador?.nome || program?.nome || ""}
+            ref={(node) => {
+              // Se a imagem já está no cache do browser (preloader) o onLoad
+              // pode nunca disparar — detecta via .complete no mount.
+              if (node && node.complete && node.naturalWidth > 0) {
+                if (imgState !== "loaded") setImgState("loaded");
+                if (foto) onImageLoad?.(foto);
+              }
+            }}
             onLoad={() => {
               setImgState("loaded");
               if (foto) onImageLoad?.(foto);
