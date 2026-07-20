@@ -1160,6 +1160,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* ============== CENTER STAGE ============== */}
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
+        {isVideoChannel ? (
+          <div className="relative w-full max-w-[1400px] px-8">
+            <video
+              ref={videoRef}
+              className="w-full aspect-video bg-black rounded-3xl shadow-[0_30px_80px_rgba(0,0,0,0.6)] object-contain border border-white/10"
+              muted={muted}
+              playsInline
+              autoPlay={false}
+            />
+          </div>
+        ) : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
           {/* HISTORY CAROUSEL — navegação por setas e swipe */}
