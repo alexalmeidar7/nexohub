@@ -115,7 +115,12 @@ export default function PlayerCatalog() {
     else navigate(`/user/nexohub/player`);
   };
 
-  const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
+  const handleSignOut = async () => {
+    await signOut();
+    const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
+    navigate(dest);
+  };
+
 
   const scrollPlaylist = (dir: "left" | "right") => {
     if (!scrollRef.current) return;

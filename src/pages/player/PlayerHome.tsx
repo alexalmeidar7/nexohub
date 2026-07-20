@@ -2051,7 +2051,12 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     }
   }, [visibleSection, scrollToSection]);
 
-  const handleSignOut = async () => { await signOut(); navigate("/user/nexohub/player"); };
+  const handleSignOut = async () => {
+    await signOut();
+    const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
+    navigate(dest);
+  };
+
 
   const sidebarItems = [
     { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },

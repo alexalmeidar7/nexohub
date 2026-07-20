@@ -1125,7 +1125,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     onEditProfile={onEditProfile}
                     onSwitchProfile={onSwitchProfile}
                     onAvatarChange={onAvatarChange}
-                    onLogout={async () => { await signOut(); window.location.href = "/"; }}
+                    onLogout={async () => {
+                      await signOut();
+                      const dest = userSlug && !String(userSlug).startsWith(":") ? `/${userSlug}/player` : "/player";
+                      window.location.href = dest;
+                    }}
+
                   />
                 </Suspense>
               )}
