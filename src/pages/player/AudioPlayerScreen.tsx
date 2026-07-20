@@ -370,6 +370,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
   const coverCacheRef = useRef<Map<string, string>>(new Map());
+  const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
   // Cache de imagens já decodificadas (warm cache) para crossfade instantâneo
   const decodedCoversRef = useRef<Set<string>>(new Set());
   const warmCover = (url?: string | null) => {
@@ -419,6 +420,38 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   useEffect(() => {
     let cancelled = false;
+    const artista = String(musicData?.artista || "").trim();
+    const musica = String(musicData?.titulo || "").trim();
+
+    if (!artista || !musica || musica.toLowerCase() === "sem título" || musica.toLowerCase() === "sem titulo") {
+      setResolvedMusicCover("");
+      return;
+    }
+
+    if (musicData?.capa) {
+      setResolvedMusicCover(musicData.capa);
+      warmCover(musicData.capa);
+      const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
+      coverCacheRef.current.set(key, musicData.capa);
+      return;
+    }
+
+    setResolvedMusicCover("");
+    fetchCover(artista, musica).then((cover) => {
+      if (cancelled || !cover) return;
+      setResolvedMusicCover(cover);
+      setHistory((prev) => prev.map((t, idx) => {
+        const sameTrack = (t.artista || "").trim().toLowerCase() === artista.toLowerCase()
+          && (t.musica || "").trim().toLowerCase() === musica.toLowerCase();
+        return sameTrack || idx === 0 ? { ...t, capa: t.capa || cover } : t;
+      }));
+    });
+
+    return () => { cancelled = true; };
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa]);
+
+  useEffect(() => {
+    let cancelled = false;
     const load = async () => {
       if (!effectiveUserId) return;
       const { data } = await supabase
@@ -432,10 +465,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       const withCached = (data as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
-          (musicData?.capa &&
+          ((musicData?.capa || resolvedMusicCover) &&
             (t.musica || "").trim().toLowerCase() === (musicData?.titulo || "").trim().toLowerCase() &&
             (t.artista || "").trim().toLowerCase() === (musicData?.artista || "").trim().toLowerCase()
-            ? musicData.capa
+            ? (musicData?.capa || resolvedMusicCover)
             : undefined) ||
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
           getArtistImageSync(t.artista) ||
@@ -497,7 +530,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       document.removeEventListener("visibilitychange", onVis);
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
+  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover]);
 
 
   // ---- Navegação do carrossel de histórico ----
