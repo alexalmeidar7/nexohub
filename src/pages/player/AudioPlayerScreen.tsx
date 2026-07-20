@@ -1433,51 +1433,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isActive = depth === 0;
                 const isFirst = i === 0;
                 const cover = p?.thumb || p?.capa || null;
+                const size = isActive ? 280 : 240;
                 return (
                   <div
                     key={`up-${p?.id || i}`}
-                    className="absolute left-0 rounded-[32px] overflow-hidden shadow-2xl"
+                    className="absolute left-0"
                     style={{
-                      width: isActive ? 280 : 240,
-                      height: isActive ? 280 : 240,
+                      width: size,
+                      height: size,
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
                       filter: `blur(${blur}px)`,
-                      background: "#111",
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
-                      boxShadow: isFirst
-                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
-                        : isActive
-                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
-                          : undefined,
                     }}
                   >
-                    {cover ? (
-                      <NowCoverCrossfade capa={cover} isActive={isActive} />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
-                        <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
-                      </div>
-                    )}
-                    <div
-                      className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
-                      style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)" }}
+                    <UpcomingProgramCard
+                      program={p}
+                      apresentadores={apresentadores}
+                      isActive={isActive}
+                      isFirst={isFirst}
                     />
-                    {isFirst && (
-                      <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                        a seguir
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
-                      {hhmm(p?.horario_inicio)}
-                    </div>
-                    <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-                      <div className="text-[10px] uppercase tracking-widest text-white/80">
-                        {hhmm(p?.horario_inicio)}/{hhmm(p?.horario_fim)}
-                      </div>
-                      <div className="text-sm font-bold leading-tight truncate">{p?.nome || "—"}</div>
-                    </div>
                   </div>
                 );
               })}
@@ -1694,6 +1670,96 @@ function detectReducedMotion(): boolean {
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch { return false; }
+}
+
+function UpcomingProgramCard({
+  program,
+  apresentadores,
+  isActive,
+  isFirst,
+}: {
+  program: any;
+  apresentadores: any[];
+  isActive: boolean;
+  isFirst: boolean;
+}) {
+  const apresentador = useMemo(() => {
+    if (!program?.apresentador_id) return null;
+    return apresentadores?.find((a) => a.id === program.apresentador_id) || null;
+  }, [program, apresentadores]);
+
+  const foto: string | null = apresentador?.foto || program?.thumb || program?.capa || null;
+  const palette = useCoverPalette(foto);
+  const gradient = palette
+    ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
+    : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
+
+  const [imgState, setImgState] = useState<"loading" | "loaded" | "error">(foto ? "loading" : "error");
+  useEffect(() => { setImgState(foto ? "loading" : "error"); }, [foto]);
+
+  const iniciais = useMemo(() => {
+    const nome = apresentador?.nome || program?.nome || "";
+    return String(nome).split(/\s+/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || "").join("") || "•";
+  }, [apresentador, program]);
+
+  return (
+    <div
+      className="relative w-full h-full rounded-[32px] overflow-hidden"
+      style={{
+        background: gradient,
+        boxShadow: isFirst
+          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
+          : isActive
+            ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+            : "0 20px 40px rgba(0,0,0,0.5)",
+      }}
+    >
+      {foto && imgState !== "error" ? (
+        <img
+          src={foto}
+          alt={apresentador?.nome || program?.nome || ""}
+          onLoad={() => setImgState("loaded")}
+          onError={() => setImgState("error")}
+          className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
+          style={{
+            maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+            opacity: imgState === "loaded" ? 0.95 : 0,
+          }}
+        />
+      ) : (
+        <div className="absolute inset-0 flex flex-col items-center justify-start pt-8 pointer-events-none gap-2">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-white/85 text-lg font-semibold border border-white/15 backdrop-blur-md"
+            style={{ background: "rgba(255,255,255,0.08)" }}
+          >
+            {iniciais}
+          </div>
+        </div>
+      )}
+
+      {/* overlay para legibilidade */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)" }}
+      />
+
+      {isFirst && (
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+          a seguir
+        </div>
+      )}
+      <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
+        {hhmm(program?.horario_inicio)}
+      </div>
+      <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+        <div className="text-[10px] uppercase tracking-widest text-white/80">
+          {hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}
+        </div>
+        <div className="text-sm font-bold leading-tight truncate text-white">{program?.nome || "—"}</div>
+      </div>
+    </div>
+  );
 }
 
 function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive: boolean }) {
