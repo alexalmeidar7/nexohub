@@ -211,6 +211,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Auto-hide controls (video channel): fade out after 3s of inactivity
+  const [controlsVisible, setControlsVisible] = useState<boolean>(true);
+  useEffect(() => {
+    if (!isVideoChannel) { setControlsVisible(true); return; }
+    let t: number | undefined;
+    const show = () => {
+      setControlsVisible(true);
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(() => setControlsVisible(false), 3000);
+    };
+    show();
+    const evs: (keyof WindowEventMap)[] = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "pointermove"];
+    evs.forEach(e => window.addEventListener(e, show, { passive: true }));
+    return () => {
+      if (t) window.clearTimeout(t);
+      evs.forEach(e => window.removeEventListener(e, show));
+    };
+  }, [isVideoChannel]);
+  const controlsStyle: React.CSSProperties = {
+    opacity: controlsVisible ? 1 : 0,
+    transform: controlsVisible ? "translateY(0)" : undefined,
+    transition: "opacity 450ms ease, transform 450ms ease",
+    pointerEvents: controlsVisible ? "auto" : "none",
+  };
   // Animação de entrada: carrosséis laterais deslizam para fora "de trás" do card central
   const [entered, setEntered] = useState<boolean>(false);
   useEffect(() => {
@@ -966,7 +990,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
       {/* ============== TOP BAR ============== */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
+      {isVideoChannel && (
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 right-0 z-20 pointer-events-none"
+          style={{
+            height: 160,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)",
+            opacity: controlsVisible ? 1 : 0,
+            transition: "opacity 450ms ease",
+          }}
+        />
+      )}
+      <header
+        className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6"
+        style={isVideoChannel ? controlsStyle : undefined}
+      >
         {/* Channel switcher */}
         <div className="flex items-center gap-4">
           <div className="flex flex-col gap-1">
@@ -1608,7 +1647,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       </main>
 
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
-      <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
+      {isVideoChannel && (
+        <div
+          aria-hidden
+          className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none"
+          style={{
+            height: 200,
+            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0) 100%)",
+            opacity: controlsVisible ? 1 : 0,
+            transition: "opacity 450ms ease",
+          }}
+        />
+      )}
+      <footer
+        className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
+        style={isVideoChannel ? controlsStyle : undefined}
+      >
         {!isVideoChannel && (<>
         {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
