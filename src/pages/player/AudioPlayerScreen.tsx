@@ -835,7 +835,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     </span>
                   )}
                 </span>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                
               </span>
               <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
                 <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
