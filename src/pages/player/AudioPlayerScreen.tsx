@@ -303,17 +303,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .join("") || "•";
 
   // ---- Background dinâmico ----
-  // Preferência: capa da música (Deezer/artista). Fallback: thumb do canal.
+  // Preferência: capa da música (Deezer/artista).
+  // Fallback: paleta derivada da imagem do "NO AR" (foto do apresentador / capa do programa).
   const musicCover: string | null = musicData?.capa || null;
-  const channelThumb: string | null = canal?.background_url || canal?.logo_url || null;
+  const onAirImage: string | null = apresentador?.foto || currentProg?.thumb || currentProg?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
-  const channelPalette = useCoverPalette(!musicCover ? channelThumb : null);
-  const activePalette = musicCover ? musicPalette : channelPalette;
+  const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
+  const activePalette = musicCover ? musicPalette : onAirPalette;
   const musicGradient = activePalette
     ? `radial-gradient(ellipse at 20% 20%, ${activePalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${activePalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${activePalette.primary} 0%, ${activePalette.secondary} 100%)`
-    : (!musicCover && channelThumb
-        ? `url(${channelThumb}) center/cover no-repeat, linear-gradient(135deg, #1a1f2e 0%, #050810 100%)`
-        : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)");
+    : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
   const [bgLayers, setBgLayers] = useState<{ id: number; g: string }[]>([{ id: 0, g: musicGradient }]);
   const bgIdRef = useRef(1);
   useEffect(() => {
