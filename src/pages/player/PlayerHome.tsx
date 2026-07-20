@@ -741,6 +741,7 @@ function HeroBanner({
                 <div className="flex items-center gap-2">
                   <KeyCap small wide>Esc</KeyCap>
                   <span className="text-white/80">Voltar</span>
+                </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-white/10">
