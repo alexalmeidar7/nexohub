@@ -2629,15 +2629,14 @@ function PollDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out]"
-      onClick={onClose}
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out] pointer-events-none"
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+
       <div
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md rounded-2xl border border-white/12 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden"
+        className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden pointer-events-auto"
       >
         {/* Cabeçalho com faixa animada */}
         <div className="relative px-5 pt-5 pb-3">
