@@ -229,9 +229,26 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-white/60">
           <Mic size={11} /> karaokê
+          {autoSync && driftRef.current.rate !== 0 && (
+            <span className="normal-case tracking-normal text-[9px] text-white/45 ml-1">· auto ativo</span>
+          )}
         </div>
         {/* Offset adjuster — finer 0.25s steps */}
         <div className="flex items-center gap-1 text-white/70" title="Ajuste o atraso da letra para casar com o áudio">
+          <button
+            onClick={() => setAutoSync((v) => !v)}
+            className={
+              "mr-1 w-6 h-6 rounded-full flex items-center justify-center border transition " +
+              (autoSync
+                ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/25"
+                : "border-white/15 hover:bg-white/10 text-white/70")
+            }
+            aria-label={autoSync ? "Desativar auto-ajuste" : "Ativar auto-ajuste"}
+            title={autoSync ? "Auto-ajuste de sincronia: ligado" : "Auto-ajuste de sincronia: desligado"}
+            data-focusable
+          >
+            <Zap size={11} />
+          </button>
           <button
             onClick={() => setOffset((o) => Math.round((o + 0.25) * 100) / 100)}
             className="w-6 h-6 rounded-full flex items-center justify-center border border-white/15 hover:bg-white/10 transition"
