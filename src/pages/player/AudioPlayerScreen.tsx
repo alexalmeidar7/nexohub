@@ -411,6 +411,46 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [carKey, setCarKey] = useState(0);
   useEffect(() => { setCarKey((k) => k + 1); }, [history[0]?.musica, history[0]?.artista]);
 
+  // ---- Próximos programas (grade seguinte) ----
+  const upcomingProgs = useMemo(() => {
+    if (!Array.isArray(programas) || programas.length === 0) return [] as any[];
+    const DAY_SHORT = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"];
+    const DAY_FULL = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
+    const now = new Date();
+    const hhmmNow = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
+    const afterTime = currentProg?.horario_fim ? String(currentProg.horario_fim).slice(0, 5) : hhmmNow;
+    const inDay = (p: any, d: Date) => {
+      const dias = p?.dias_semana || [];
+      if (!dias.length) return true;
+      return dias.includes(DAY_SHORT[d.getDay()]) || dias.includes(DAY_FULL[d.getDay()]);
+    };
+    const todayList = programas
+      .filter((p) => p?.ativo && inDay(p, now) && String(p.horario_inicio || "").slice(0, 5) >= afterTime)
+      .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
+    const result: any[] = [...todayList];
+    if (result.length < 8) {
+      const t = new Date(now); t.setDate(t.getDate() + 1);
+      const tomorrowList = programas
+        .filter((p) => p?.ativo && inDay(p, t))
+        .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
+      result.push(...tomorrowList);
+    }
+    const seen = new Set<string>();
+    return result.filter((p) => {
+      const k = String(p?.id || `${p?.nome}-${p?.horario_inicio}`);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).slice(0, 8);
+  }, [programas, currentProg]);
+
+  const [upcomingIndex, setUpcomingIndex] = useState(0);
+  const UPCOMING_VISIBLE = 8;
+  const upcomingMax = Math.max(0, Math.min(upcomingProgs.length, UPCOMING_VISIBLE) - 1);
+  useEffect(() => { setUpcomingIndex(0); }, [upcomingProgs[0]?.id]);
+  const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
+  const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
+
   // ---- Curtidas do histórico (heart por card) ----
   const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
   const likeKey = (artista: string, musica: string) => `${(artista || "").toLowerCase()}||${(musica || "").toLowerCase()}`;
