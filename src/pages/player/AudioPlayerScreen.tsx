@@ -373,7 +373,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         ...t,
         capa: coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) || undefined,
       }));
-      setHistory(withCached);
+      setHistory((prev) => {
+        // Evita re-render se o topo não mudou (mesma música + mesmo horário)
+        if (
+          prev.length === withCached.length &&
+          prev[0]?.musica === withCached[0]?.musica &&
+          prev[0]?.artista === withCached[0]?.artista &&
+          prev[0]?.horario === withCached[0]?.horario
+        ) {
+          // Ainda assim, mescla capas que possam ter sido descobertas
+          return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
+        }
+        return withCached;
+      });
       // Busca capas faltantes das primeiras 12 em paralelo
       const targets = withCached.slice(0, 12).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
@@ -384,9 +396,38 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       }));
     };
     load();
+
+    // Polling de segurança
     const id = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(id); };
+
+    // Realtime: atualiza instantaneamente ao inserir/atualizar/deletar no histórico do usuário
+    const channel = supabase
+      .channel(`musicas_tocadas:${effectiveUserId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "musicas_tocadas", filter: `user_id=eq.${effectiveUserId}` },
+        () => { load(); }
+      )
+      .subscribe();
+
+    // Reforço: quando a música ao vivo muda, o INSERT pode chegar milissegundos depois — refaz o load com pequeno atraso
+    const kickTimer = window.setTimeout(load, 800);
+    const kickTimer2 = window.setTimeout(load, 2500);
+
+    // Refetch ao voltar para a aba
+    const onVis = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      clearTimeout(kickTimer);
+      clearTimeout(kickTimer2);
+      document.removeEventListener("visibilitychange", onVis);
+      try { supabase.removeChannel(channel); } catch {}
+    };
   }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
+
 
   // ---- Navegação do carrossel de histórico ----
   // activeIndex = 0 significa "mais recente" (encostada na capa central).
@@ -1021,11 +1062,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {isNow ? (
                       <>
                         <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
-                          <span aria-hidden className="flex items-end gap-[2px] h-3">
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: '0ms' }} />
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '100%', animationDelay: '150ms' }} />
-                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '65%', animationDelay: '300ms' }} />
-                          </span>
+                          <VolumeEqBars volume={volume} muted={muted} playing={playing} />
                           <span>Tocando agora</span>
                         </div>
                         <button
@@ -1535,6 +1572,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     </div>
   );
 }
+function VolumeEqBars({ volume, muted, playing }: { volume: number; muted: boolean; playing: boolean }) {
+  // Nível efetivo (0..1): silencia quando mudo ou pausado
+  const level = muted || !playing ? 0 : Math.min(1, Math.max(0, volume));
+  // Amplitude mínima para não sumir totalmente quando ativo
+  const amp = level <= 0 ? 0 : 0.25 + level * 0.75;
+  // Velocidade da animação acompanha o volume: mais alto = mais rápido
+  const dur = level <= 0 ? 0 : (1.15 - level * 0.55).toFixed(2);
+  const barBase = "w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 transition-[height,opacity] duration-200 ease-out";
+  const heights = [40, 100, 65];
+  const delays = [0, 150, 300];
+  return (
+    <span
+      aria-hidden
+      className="flex items-end gap-[2px] h-3"
+      style={{ ["--vol" as any]: amp, opacity: level <= 0 ? 0.4 : 1 }}
+    >
+      {heights.map((h, i) => (
+        <span
+          key={i}
+          className={barBase}
+          style={{
+            height: level <= 0 ? "18%" : `calc(${h}% * var(--vol))`,
+            animation: level <= 0 ? "none" : `eqbar ${dur}s ease-in-out ${delays[i]}ms infinite`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
   const base =
