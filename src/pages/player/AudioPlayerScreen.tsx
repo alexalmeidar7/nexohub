@@ -322,10 +322,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .map((w) => w[0]?.toUpperCase())
     .join("") || "•";
 
+  const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
+
   // ---- Background dinâmico ----
   // Preferência: capa da música (Deezer/artista).
   // Fallback: paleta derivada da imagem do "NO AR" (foto do apresentador / capa do programa).
-  const musicCover: string | null = musicData?.capa || null;
+  const musicCover: string | null = musicData?.capa || resolvedMusicCover || null;
   const onAirImage: string | null = apresentador?.foto || currentProg?.thumb || currentProg?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
   const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
@@ -370,7 +372,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
   const coverCacheRef = useRef<Map<string, string>>(new Map());
-  const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
   // Cache de imagens já decodificadas (warm cache) para crossfade instantâneo
   const decodedCoversRef = useRef<Set<string>>(new Set());
   const warmCover = (url?: string | null) => {
