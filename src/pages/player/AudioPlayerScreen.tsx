@@ -1246,84 +1246,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          <div
-            className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
-            style={{ width: 368, height: 384, background: gradient }}
-            data-focusable
-          >
-            {/* foto locutor */}
-            {locutorFoto && locutorImgState !== "error" ? (
-              <>
-                <img
-                  src={locutorFoto}
-                  alt={apresentadorNome || ""}
-                  onLoad={() => {
-                    loadedLocutorUrlRef.current = locutorFoto;
-                    markLocutorImageLoaded(locutorFoto);
-                    setLocutorImgState("loaded");
-                  }}
-                  onError={() => setLocutorImgState("error")}
-                  className="absolute inset-0 w-full h-full object-cover object-top opacity-95 transition-opacity duration-500"
-                  style={{
-                    maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-                    WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-                    opacity: locutorImgState === "loaded" ? 0.95 : 0,
-                  }}
-                />
-                {locutorImgState === "loading" && (
-                  <div
-                    className="absolute inset-0 animate-pulse"
-                    style={{
-                      background:
-                        "linear-gradient(110deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.04) 100%)",
-                      maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-                      WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-                    }}
-                  />
-                )}
-              </>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-start pt-14 pointer-events-none gap-3">
-                <div
-                  className="w-24 h-24 rounded-full flex items-center justify-center text-white/85 text-2xl font-semibold border border-white/15 backdrop-blur-md"
-                  style={{ background: "rgba(255,255,255,0.08)" }}
-                >
-                  {locutorIniciais}
-                </div>
-                <Music2 size={60} className="text-white/10" strokeWidth={1} />
-              </div>
-            )}
-            {/* overlay gradient para leitura */}
-            <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)" }} />
-
-            {/* badge NO AR */}
-            <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-medium bg-black/55 backdrop-blur-md border border-white/10">
-              no ar
-            </div>
-            {/* like do PROGRAMA */}
-            <button
-              onClick={toggleProgramLike}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-black/45 hover:bg-black/70 border border-white/10 transition"
-              data-focusable
-              aria-label={programLiked ? "Descurtir programa" : "Curtir programa"}
-              aria-pressed={programLiked}
-              title={programLiked ? "Você curtiu este programa" : "Curtir este programa"}
-            >
-              <Heart size={18} fill={programLiked ? "#ffffff" : "none"} stroke="#ffffff" />
-            </button>
-
-            {/* bottom info */}
-            <div className="absolute bottom-4 left-5 right-5" style={{ color: contrast?.textColor || "#fff", textShadow: contrast?.textShadow }}>
-              <div className="text-[11px] uppercase tracking-widest opacity-80">no ar</div>
-              <div className="text-2xl font-bold leading-tight">{currentProg?.nome || canal?.name || "—"}</div>
-              <div className="text-[12px] opacity-80 mt-0.5">
-                {currentProg ? `${hhmm(currentProg.horario_inicio)}/${hhmm(currentProg.horario_fim)}` : ""}
-              </div>
-              {/* progress bar */}
-              <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
-                <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
-              </div>
-            </div>
+          <div style={{ width: 368, height: 384 }} data-focusable>
+            <ProgramShowcaseCard
+              program={currentProg}
+              apresentadores={apresentadores}
+              variant="live"
+              radius={40}
+              fallbackTitle={canal?.name}
+              progressPct={progPct}
+              liked={programLiked}
+              onToggleLike={toggleProgramLike}
+              onImageLoad={(url) => {
+                loadedLocutorUrlRef.current = url;
+                markLocutorImageLoaded(url);
+                setLocutorImgState("loaded");
+              }}
+            />
           </div>
 
           {/* Botão + centralizado abaixo do card NO AR */}
