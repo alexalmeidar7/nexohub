@@ -11,6 +11,7 @@ import {
   preloadLocutorImages,
 } from "@/lib/locutorImageCache";
 import ElegantLoader from "@/components/player/ElegantLoader";
+import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
