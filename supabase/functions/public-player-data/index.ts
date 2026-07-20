@@ -259,6 +259,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({
+          userId,
           musica: musicData?.titulo || "",
           artista: musicData?.artista || "",
           capa: musicData?.capa || "",

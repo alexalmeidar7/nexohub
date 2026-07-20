@@ -83,6 +83,7 @@ interface YoutubeVideo {
 
 interface Canal {
   id: string;
+  user_id?: string;
   numero_canal: string;
   name: string;
   logo_url: string;
@@ -692,6 +693,62 @@ export default function PlayerPage() {
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [streamRequested, setStreamRequested] = useState(false);
   const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
+  const playbackSessionRef = useRef(0);
+
+  const stopAllPlayback = useCallback((clearChannelState = false) => {
+    playbackSessionRef.current += 1;
+    destroyMiniAudio();
+    clearMiniPlayerData();
+    if (hlsRef.current) {
+      try { hlsRef.current.destroy(); } catch {}
+      hlsRef.current = null;
+    }
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+    if (warmupAbortRef.current) {
+      try { warmupAbortRef.current.abort(); } catch {}
+      warmupAbortRef.current = null;
+    }
+    resetMediaElement(audioRef.current);
+    resetMediaElement(videoRef.current);
+    setPlaying(false);
+    setBuffering(false);
+    setStreamRequested(false);
+    setStreamStalled(false);
+    setHlsLevels([]);
+    setHlsCurrentLevel(-1);
+    connectRetryRef.current = { chId: null, n: 0 };
+    if (clearChannelState) {
+      setCanais([]);
+      setCurrentIndex(0);
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      setProgramas([]);
+      setApresentadores([]);
+      setShopProducts([]);
+      setMusicData(null);
+      setArtistBgUrl(null);
+      setPublicUserId(null);
+      setPlayerColorUserId(null);
+      setEmpresaLogo(null);
+      setEmpresaNome(null);
+      setWhatsappPhone(null);
+    }
+  }, []);
+
+  const activePublicSlugRef = useRef<string | null>(null);
+  useEffect(() => {
+    const slug = isPublicMode && userSlug && !userSlug.startsWith(":") ? userSlug.toLowerCase().trim() : null;
+    if (activePublicSlugRef.current === slug) return;
+    activePublicSlugRef.current = slug;
+    publicBootstrapRef.current = { slug: null, loaded: false };
+    autoPlayedRef.current = false;
+    warmedPrerollChannelIdRef.current = null;
+    setPrerollDone(!requestedChannelId);
+    stopAllPlayback(true);
+  }, [isPublicMode, requestedChannelId, stopAllPlayback, userSlug]);
 
   // HLS Quality selector state
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
@@ -708,11 +765,12 @@ export default function PlayerPage() {
   const playlistRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!playlistOpen || !user) return;
-    supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", user.id)
+    const playlistOwnerId = isPublicMode ? publicUserId : user?.id;
+    if (!playlistOpen || !playlistOwnerId) return;
+    supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
       .order("created_at", { ascending: false }).limit(20)
       .then(({ data }) => { if (data) setRecentTracks(data); });
-  }, [playlistOpen, user]);
+  }, [isPublicMode, playlistOpen, publicUserId, user?.id]);
 
   // Close playlist on outside click
   useEffect(() => {
@@ -878,9 +936,13 @@ export default function PlayerPage() {
             return;
           }
 
-          setPublicUserId(data.userId);
-          setPlayerColorUserId(data.userId);
-          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog" || c.id === requestedChannelId));
+          const ownerId = typeof data.userId === "string" ? data.userId : null;
+          setPublicUserId(ownerId);
+          setPlayerColorUserId(ownerId);
+          const ownerChannels = ((data.channels || []) as Canal[])
+            .filter((c) => !ownerId || !c.user_id || c.user_id === ownerId)
+            .filter(c => c.type !== "catalog" || c.id === requestedChannelId);
+          setCanais(ownerChannels);
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
@@ -1250,6 +1312,7 @@ export default function PlayerPage() {
           });
           if (cancelled || error || !data) return;
 
+          if (publicUserId && typeof data.userId === "string" && data.userId !== publicUserId) return;
           const incoming = data.musicData || (data.musica
             ? {
                 titulo: data.musica,
@@ -1522,6 +1585,7 @@ export default function PlayerPage() {
   // Play stream
   const playStream = useCallback(
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
+      const sessionId = ++playbackSessionRef.current;
       destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       resetMediaElement(audioRef.current);
@@ -1547,12 +1611,14 @@ export default function PlayerPage() {
         : mutedRef.current || volumeRef.current === 0;
 
       const handlePlayStarted = () => {
+        if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
         setPlaying(true);
         setBuffering(false);
       };
 
       const handlePlayBlocked = (label: string, error: unknown) => {
+        if (playbackSessionRef.current !== sessionId) return;
         console.warn(label, error);
         // If play was blocked and we weren't muted, retry muted (autoplay policy)
         if (!shouldStartMuted && forceAutoplay) {
@@ -1563,7 +1629,15 @@ export default function PlayerPage() {
           const media = isAudioType ? audioRef.current : videoRef.current;
           if (media) {
             media.muted = true;
-            media.play().then(() => { setPlaying(true); setBuffering(false); }).catch(() => { setPlaying(false); setBuffering(false); });
+            media.play().then(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              setPlaying(true);
+              setBuffering(false);
+            }).catch(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              setPlaying(false);
+              setBuffering(false);
+            });
           }
           return;
         }
@@ -1586,6 +1660,7 @@ export default function PlayerPage() {
         : normalizedUrl;
       let Hls: typeof HlsType | null = null;
       if (useHls) Hls = await getHls();
+      if (playbackSessionRef.current !== sessionId) return;
 
       if (isAudioType) {
         const audio = audioRef.current;
@@ -1626,10 +1701,14 @@ export default function PlayerPage() {
           hls.attachMedia(audio);
           if (userInitiated || forceAutoplay) requestAudioPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (!playRequested || audio.paused) requestAudioPlay();
           });
-          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.FRAG_BUFFERED, () => {
+            if (playbackSessionRef.current === sessionId) setBuffering(false);
+          });
           hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (data.fatal) {
               console.warn("HLS fatal error on audio, recovering...", data.type);
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
@@ -1644,10 +1723,11 @@ export default function PlayerPage() {
           audio.load();
           // Add error handler for reconnection on stream failures
           const onError = () => {
+            if (playbackSessionRef.current !== sessionId) return;
             console.warn("Native audio stream error, will retry...");
             setBuffering(true);
             setTimeout(() => {
-              if (audio.error) {
+              if (playbackSessionRef.current === sessionId && audio.error) {
                 audio.src = normalizedUrl;
                 audio.load();
                 void requestPlay(audio);
@@ -1700,6 +1780,7 @@ export default function PlayerPage() {
           hls.attachMedia(video);
           if (userInitiated || forceAutoplay) requestVideoPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (data.levels && data.levels.length > 0) {
               const levels = data.levels.map((l: any, i: number) => ({
                 height: l.height || 0,
@@ -1711,10 +1792,13 @@ export default function PlayerPage() {
             }
             if (!playRequested || video.paused) requestVideoPlay();
           });
-          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.FRAG_BUFFERED, () => {
+            if (playbackSessionRef.current === sessionId) setBuffering(false);
+          });
           let mediaErrorRecoveries = 0;
           let networkRetries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (!data.fatal) {
               if (data.details === "bufferStalledError" && video.readyState >= 2) {
                 const buffered = video.buffered;
@@ -1738,7 +1822,9 @@ export default function PlayerPage() {
                 console.warn("Too many network errors, full restart");
                 hls.destroy();
                 hlsRef.current = null;
-                setTimeout(() => playStream(url, type), 1500);
+                setTimeout(() => {
+                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                }, 1500);
               }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               mediaErrorRecoveries++;
@@ -1748,7 +1834,9 @@ export default function PlayerPage() {
                 console.warn("Too many media errors, restarting HLS");
                 hls.destroy();
                 hlsRef.current = null;
-                setTimeout(() => playStream(url, type), 1500);
+                setTimeout(() => {
+                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                }, 1500);
               }
             } else {
               hls.destroy();
