@@ -373,7 +373,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         ...t,
         capa: coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) || undefined,
       }));
-      setHistory(withCached);
+      setHistory((prev) => {
+        // Evita re-render se o topo não mudou (mesma música + mesmo horário)
+        if (
+          prev.length === withCached.length &&
+          prev[0]?.musica === withCached[0]?.musica &&
+          prev[0]?.artista === withCached[0]?.artista &&
+          prev[0]?.horario === withCached[0]?.horario
+        ) {
+          // Ainda assim, mescla capas que possam ter sido descobertas
+          return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
+        }
+        return withCached;
+      });
       // Busca capas faltantes das primeiras 12 em paralelo
       const targets = withCached.slice(0, 12).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
@@ -384,9 +396,38 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       }));
     };
     load();
+
+    // Polling de segurança
     const id = setInterval(load, 30000);
-    return () => { cancelled = true; clearInterval(id); };
+
+    // Realtime: atualiza instantaneamente ao inserir/atualizar/deletar no histórico do usuário
+    const channel = supabase
+      .channel(`musicas_tocadas:${effectiveUserId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "musicas_tocadas", filter: `user_id=eq.${effectiveUserId}` },
+        () => { load(); }
+      )
+      .subscribe();
+
+    // Reforço: quando a música ao vivo muda, o INSERT pode chegar milissegundos depois — refaz o load com pequeno atraso
+    const kickTimer = window.setTimeout(load, 800);
+    const kickTimer2 = window.setTimeout(load, 2500);
+
+    // Refetch ao voltar para a aba
+    const onVis = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      clearTimeout(kickTimer);
+      clearTimeout(kickTimer2);
+      document.removeEventListener("visibilitychange", onVis);
+      try { supabase.removeChannel(channel); } catch {}
+    };
   }, [effectiveUserId, musicData?.titulo, musicData?.artista]);
+
 
   // ---- Navegação do carrossel de histórico ----
   // activeIndex = 0 significa "mais recente" (encostada na capa central).
