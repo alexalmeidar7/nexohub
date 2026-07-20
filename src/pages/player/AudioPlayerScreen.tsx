@@ -484,10 +484,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const hhmmNow = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
     // Excluir programa atual, mas não filtrar por horario_fim (pode não estar setado)
     const currentId = currentProg?.id ? String(currentProg.id) : null;
+    // Normaliza (minúscula + sem acento) para comparar com valores como "Segunda", "Terça", "Sábado"
+    const norm = (s: any) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const inDay = (p: any, d: Date) => {
-      const dias = p?.dias_semana || [];
+      const dias = Array.isArray(p?.dias_semana) ? p.dias_semana : [];
       if (!dias.length) return true;
-      return dias.includes(DAY_SHORT[d.getDay()]) || dias.includes(DAY_FULL[d.getDay()]);
+      const set = new Set(dias.map(norm));
+      return set.has(DAY_SHORT[d.getDay()]) || set.has(DAY_FULL[d.getDay()]);
     };
     const result: any[] = [];
     // Varre os próximos 7 dias para garantir algo sempre
