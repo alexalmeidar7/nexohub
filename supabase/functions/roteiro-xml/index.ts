@@ -116,7 +116,11 @@ Deno.serve(async (req) => {
       apoioVideos = [];
     }
 
-    const logoUrl = programa?.selo || programa?.capa || "";
+    // NEVER emit base64/data URIs in XML — vMix and log viewers choke on
+    // multi-MB payload nodes. Only accept real http(s) URLs; anything else
+    // (data:, blob:, empty) collapses to "".
+    const rawLogo = programa?.selo || programa?.capa || "";
+    const logoUrl = typeof rawLogo === "string" && /^https?:\/\//i.test(rawLogo) ? rawLogo : "";
     const whatsappNum = empresa?.telefone_participacao || "";
     const qrcodeLink = whatsappNum && !scheduledHidden
       ? `https://wa.me/${whatsappNum.replace(/\D/g, "")}`
