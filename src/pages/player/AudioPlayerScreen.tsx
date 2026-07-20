@@ -1518,7 +1518,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </div>
 
         {/* play row */}
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           {/* volume */}
           {(() => {
             const vol = muted ? 0 : volume;
@@ -1578,7 +1578,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </button>
 
           {/* Help + logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-self-end">
             <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
             <div className="relative group">
               <button
