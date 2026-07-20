@@ -2859,8 +2859,8 @@ export default function PlayerPage() {
   }
 
 
-  // ===== New Apple-TV audio player screen (for audio channels only) =====
-  if (canal && isAudio && !isYoutube && !isCatalog) {
+  // ===== New Apple-TV player screen (for audio and video channels) =====
+  if (canal && (isAudio || isVideo) && !isYoutube && !isCatalog) {
     return (
       <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
         <AudioPlayerScreen
