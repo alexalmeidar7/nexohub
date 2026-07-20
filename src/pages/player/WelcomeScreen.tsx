@@ -1015,7 +1015,7 @@ export default function WelcomeScreen({
 
             </>
           ) : (
-            <div className="w-full flex items-center justify-center gap-5 pr-8 sm:pr-14">
+            <div className="w-full flex items-center justify-center gap-5">
               {[
                 { key: "login", label: "entrar", icon: <LogIn className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: true },
                 { key: "signup", label: "cadastre-se", icon: <Plus className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: false },
