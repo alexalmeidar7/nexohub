@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import {
   isLocutorImageCached,
   markLocutorImageLoaded,
@@ -395,16 +396,24 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
     try {
       const q = encodeURIComponent(`${artista} ${musica}`.trim());
-      const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 4000);
+      const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: controller.signal });
+      window.clearTimeout(timeoutId);
       if (!r.ok) throw new Error("itunes fail");
       const j = await r.json();
-      const url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
+      let url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
+      if (!url) {
+        url = await fetchArtistImageCached(artista) || "";
+      }
       coverCacheRef.current.set(key, url);
       if (url) warmCover(url);
       return url || undefined;
     } catch {
-      coverCacheRef.current.set(key, "");
-      return undefined;
+      const fallback = getArtistImageSync(artista) || await fetchArtistImageCached(artista) || "";
+      coverCacheRef.current.set(key, fallback);
+      if (fallback) warmCover(fallback);
+      return fallback || undefined;
     }
   };
 
@@ -422,7 +431,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       // Hidrata com capas já em cache imediatamente
       const withCached = (data as HistoryTrack[]).map((t) => ({
         ...t,
-        capa: coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) || undefined,
+        capa:
+          (musicData?.capa &&
+            (t.musica || "").trim().toLowerCase() === (musicData?.titulo || "").trim().toLowerCase() &&
+            (t.artista || "").trim().toLowerCase() === (musicData?.artista || "").trim().toLowerCase()
+            ? musicData.capa
+            : undefined) ||
+          coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
+          getArtistImageSync(t.artista) ||
+          undefined,
       }));
       setHistory((prev) => {
         // Evita re-render se o topo não mudou (mesma música + mesmo horário)
