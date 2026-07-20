@@ -398,19 +398,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   useEffect(() => { setActiveIndex(0); }, [history[0]?.musica, history[0]?.artista]);
 
-  const handleCarouselMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const rel = (e.clientX - rect.left) / rect.width; // 0 esquerda .. 1 direita
-    // Direita (rel≈1) => índice 0 (mais recente). Esquerda (rel≈0) => índice maior.
-    const idx = Math.round((1 - Math.max(0, Math.min(1, rel))) * Math.min(maxIndex, CAROUSEL_VISIBLE - 1));
-    setActiveIndex(idx);
-  };
+  const carouselMax = Math.min(maxIndex, CAROUSEL_VISIBLE - 1);
+  const goPrev = () => setActiveIndex((i) => Math.max(0, i - 1)); // mais recente
+  const goNext = () => setActiveIndex((i) => Math.min(carouselMax, i + 1)); // mais antigo
   const handleCarouselWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (Math.abs(e.deltaY) < 4 && Math.abs(e.deltaX) < 4) return;
     const dir = (e.deltaY + e.deltaX) > 0 ? 1 : -1;
-    setActiveIndex((i) => Math.max(0, Math.min(maxIndex, i + dir)));
+    setActiveIndex((i) => Math.max(0, Math.min(carouselMax, i + dir)));
   };
 
   // Chave para animar entrada de nova música
