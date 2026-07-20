@@ -153,6 +153,7 @@ function TopNavBar({
   const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { bgColors, prevBgColors, fadeIn } = useBgPalette(paletteSource);
 
@@ -252,50 +253,94 @@ function TopNavBar({
         })}
       </nav>
 
-      {/* Inline search pill */}
-      <div ref={searchWrapRef} className="relative flex-1 min-w-[160px] max-w-[380px]">
+      {/* Inline search pill (expande da esquerda para direita ao focar) */}
+      {(() => {
+        const expanded = searchFocused || searchQuery.trim().length > 0;
+        return (
+      <div
+        ref={searchWrapRef}
+        className="relative transition-[flex,max-width,width] duration-300 ease-out"
+        style={{
+          flex: expanded ? "1 1 0%" : "0 0 40px",
+          maxWidth: expanded ? 380 : 40,
+          minWidth: expanded ? 200 : 40,
+        }}
+      >
         <div
-          className="flex items-center gap-3 rounded-full px-4 sm:px-5 py-2"
+          className="flex items-center rounded-full overflow-hidden transition-all duration-300 ease-out"
           style={{
             border: "1px solid rgba(255,255,255,0.35)",
             background: "rgba(255,255,255,0.02)",
             width: "100%",
+            height: 40,
+            paddingLeft: expanded ? 16 : 0,
+            paddingRight: expanded ? 12 : 0,
+            gap: expanded ? 12 : 0,
+            justifyContent: expanded ? "flex-start" : "center",
+            cursor: expanded ? "text" : "pointer",
+          }}
+          onClick={() => {
+            if (!expanded) {
+              setSearchFocused(true);
+              requestAnimationFrame(() => searchInputRef.current?.focus());
+            }
           }}
         >
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            placeholder="buscar"
-            data-tv-focusable
-            className="flex-1 min-w-0 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
-            style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
-            onKeyDown={(e) => {
-              const el = e.currentTarget;
-              const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
-              const atEnd = el.selectionStart === el.value.length && el.selectionEnd === el.value.length;
-              const nav = (dir: "next" | "prev") => {
-                const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]")).filter(n => n.offsetParent !== null);
-                const i = nodes.indexOf(el as unknown as HTMLElement);
-                if (i < 0) return;
-                const t = dir === "next" ? nodes[i + 1] : nodes[i - 1];
-                if (t) { e.preventDefault(); el.blur(); t.focus(); }
-              };
-              if (e.key === "ArrowRight") {
-                e.preventDefault();
-                el.blur();
-                const avatarBtn = profileRef.current?.querySelector<HTMLElement>("[data-tv-focusable]");
-                if (avatarBtn) avatarBtn.focus();
-                else nav("next");
-              }
-              else if (e.key === "ArrowLeft" && atStart) nav("prev");
-              else if (e.key === "ArrowDown" || e.key === "ArrowUp") { el.blur(); }
-              else if (e.key === "Escape") el.blur();
-            }}
-          />
-          <Search className="w-4 h-4 text-white/70 shrink-0" />
+          {!expanded && (
+            <button
+              type="button"
+              aria-label="buscar"
+              data-tv-focusable
+              onFocus={() => setSearchFocused(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSearchFocused(true);
+                requestAnimationFrame(() => searchInputRef.current?.focus());
+              }}
+              className="w-10 h-10 flex items-center justify-center outline-none focus-visible:outline-none"
+            >
+              <Search className="w-4 h-4 text-white/80" />
+            </button>
+          )}
+          {expanded && (
+            <>
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                placeholder="buscar"
+                data-tv-focusable
+                className="flex-1 min-w-0 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
+                style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
+                onKeyDown={(e) => {
+                  const el = e.currentTarget;
+                  const atStart = el.selectionStart === 0 && el.selectionEnd === 0;
+                  const nav = (dir: "next" | "prev") => {
+                    const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-tv-focusable]")).filter(n => n.offsetParent !== null);
+                    const i = nodes.indexOf(el as unknown as HTMLElement);
+                    if (i < 0) return;
+                    const t = dir === "next" ? nodes[i + 1] : nodes[i - 1];
+                    if (t) { e.preventDefault(); el.blur(); t.focus(); }
+                  };
+                  if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    el.blur();
+                    const avatarBtn = profileRef.current?.querySelector<HTMLElement>("[data-tv-focusable]");
+                    if (avatarBtn) avatarBtn.focus();
+                    else nav("next");
+                  }
+                  else if (e.key === "ArrowLeft" && atStart) nav("prev");
+                  else if (e.key === "ArrowDown" || e.key === "ArrowUp") { el.blur(); }
+                  else if (e.key === "Escape") { setSearchQuery(""); el.blur(); setSearchFocused(false); }
+                }}
+              />
+              <Search className="w-4 h-4 text-white/70 shrink-0" />
+            </>
+          )}
         </div>
+
 
         {showDropdown && (
           <div
@@ -365,6 +410,8 @@ function TopNavBar({
           </div>
         )}
       </div>
+        );
+      })()}
 
       <div className="hidden md:block flex-1" />
 
