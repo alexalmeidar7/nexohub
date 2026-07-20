@@ -175,7 +175,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     liked, onToggleLike,
     chatOpen, setChatOpen, gradeOpen, setGradeOpen,
     karaokeEnabled, setKaraokeEnabled,
-    playedListOpen, setPlayedListOpen,
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
     user, profileAvatar, userDisplayName, userEmail, signOut,
