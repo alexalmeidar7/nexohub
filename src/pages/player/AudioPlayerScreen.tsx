@@ -1444,7 +1444,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <span>
               {ts.offset > 1 ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}` : "AO VIVO"}
             </span>
-            <span>disponível: -{Math.round(ts.back)}s</span>
+            <span>você pode voltar a programação em {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
           </div>
         </div>
 
