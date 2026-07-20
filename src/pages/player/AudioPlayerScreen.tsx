@@ -1035,7 +1035,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     }}
                   >
                     {/* Background da capa */}
-                    {t.capa ? (
+                    {isNow ? (
+                      <NowCoverCrossfade capa={t.capa} isActive={isActive} />
+                    ) : t.capa ? (
                       <div
                         className="absolute inset-0"
                         style={{
