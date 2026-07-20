@@ -428,9 +428,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       artista,
       musica,
       horario: musicData?.horario || hhmm(new Date()),
-      capa: cover || musicData?.capa || resolvedMusicCover || undefined,
+      capa: cover || musicData?.capa || undefined,
     };
-  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa, resolvedMusicCover]);
+  }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa]);
 
   const sameTrack = (a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) =>
     !!a && !!b
@@ -509,7 +509,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           // Ainda assim, mescla capas que possam ter sido descobertas
           return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
         }
-        return ensureCurrentAtFront(withCached);
+        return ensureCurrentAtFront(withCached, musicData?.capa || resolvedMusicCover);
       });
       // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
       withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
