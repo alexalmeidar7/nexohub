@@ -153,6 +153,7 @@ function TopNavBar({
   const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
   const searchWrapRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { bgColors, prevBgColors, fadeIn } = useBgPalette(paletteSource);
 
