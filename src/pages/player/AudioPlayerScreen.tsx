@@ -947,40 +947,57 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           )}
           {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
-            <button
-              onClick={() => setWatchProfileOpen(!watchProfileOpen)}
-              className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
-              data-focusable
-              aria-label="Abrir perfil"
-              aria-expanded={watchProfileOpen}
-              title={userDisplayName || "Perfil"}
-            >
-              <span
-                className="relative w-10 h-10 rounded-full p-[2px]"
-                style={{
-                  background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
-                }}
+            <div className="relative">
+              <button
+                onClick={() => setWatchProfileOpen(!watchProfileOpen)}
+                className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
+                data-focusable
+                aria-label="Abrir perfil"
+                aria-expanded={watchProfileOpen}
+                title={userDisplayName || "Perfil"}
               >
-                <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
-                <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
-                  {profileAvatar ? (
-                    <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
-                      {(userDisplayName || "U").trim().charAt(0)}
-                    </span>
-                  )}
+                <span
+                  className="relative w-10 h-10 rounded-full p-[2px]"
+                  style={{
+                    background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
+                  }}
+                >
+                  <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
+                  <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
+                    {profileAvatar ? (
+                      <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
+                        {(userDisplayName || "U").trim().charAt(0)}
+                      </span>
+                    )}
+                  </span>
                 </span>
-                
-              </span>
-              <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
-                <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
-                <span className="text-[12px] font-semibold text-white truncate max-w-[140px]">
-                  {userDisplayName || "Usuário"}
+                <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
+                  <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
+                  <span className="text-[12px] font-semibold text-white truncate max-w-[140px]">
+                    {userDisplayName || "Usuário"}
+                  </span>
                 </span>
-              </span>
-              <ChevronDown size={14} className="text-white/70 group-hover:text-white transition-transform duration-300 group-hover:translate-y-0.5" />
-            </button>
+                <ChevronDown size={14} className="text-white/70 group-hover:text-white transition-transform duration-300 group-hover:translate-y-0.5" />
+              </button>
+              {watchProfileOpen && (
+                <Suspense fallback={null}>
+                  <WatchProfilePopup
+                    userId={user.id}
+                    userName={userDisplayName}
+                    userEmail={userEmail ?? user?.email ?? null}
+                    avatarUrl={profileAvatar}
+                    radioName={empresaNome || undefined}
+                    onClose={() => setWatchProfileOpen(false)}
+                    onEditProfile={onEditProfile}
+                    onSwitchProfile={onSwitchProfile}
+                    onAvatarChange={onAvatarChange}
+                    onLogout={async () => { await signOut(); window.location.href = "/"; }}
+                  />
+                </Suspense>
+              )}
+            </div>
           )}
         </div>
       </header>
