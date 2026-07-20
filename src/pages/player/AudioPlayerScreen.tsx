@@ -202,6 +202,25 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const currentProgId = currentProg?.id ? String(currentProg.id) : null;
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (e) {
+      console.warn("[fullscreen] toggle failed", e);
+    }
+  }, []);
   useEffect(() => {
     if (!currentProgId) { setProgramLiked(false); return; }
     try {
