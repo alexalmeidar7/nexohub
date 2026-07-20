@@ -1635,23 +1635,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Profile popup */}
-      {watchProfileOpen && user && (
-        <Suspense fallback={null}>
-          <WatchProfilePopup
-            userId={user.id}
-            userName={userDisplayName}
-            userEmail={userEmail ?? user?.email ?? null}
-            avatarUrl={profileAvatar}
-            radioName={empresaNome || undefined}
-            onClose={() => setWatchProfileOpen(false)}
-            onEditProfile={onEditProfile}
-            onSwitchProfile={onSwitchProfile}
-            onAvatarChange={onAvatarChange}
-            onLogout={async () => { await signOut(); window.location.href = "/"; }}
-          />
-        </Suspense>
-      )}
 
       <style>{`
         @keyframes audioHistIn {
