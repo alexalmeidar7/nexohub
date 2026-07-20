@@ -1527,8 +1527,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       <style>{`
         @keyframes audioHistIn {
-          from { transform: translateX(140px) scale(1.08); opacity: 0; filter: blur(6px) grayscale(0%); }
-          to   { transform: translateX(0) scale(1);        opacity: 0.85; filter: blur(0) grayscale(60%); }
+          0%   { transform: translateX(180px) scale(1.12) rotate(1.5deg); opacity: 0; filter: blur(10px) grayscale(0%) brightness(1.15); box-shadow: 0 40px 80px rgba(0,0,0,0.8), 0 0 0 2px rgba(255,255,255,0.7), 0 0 60px rgba(255,255,255,0.35); }
+          55%  { transform: translateX(-8px) scale(1.03) rotate(-0.3deg); opacity: 1;  filter: blur(1.5px) grayscale(0%) brightness(1.06); }
+          100% { transform: translateX(0) scale(1) rotate(0deg);           opacity: 1;  filter: blur(0) grayscale(0%) brightness(1); box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18); }
         }
       `}</style>
     </div>
