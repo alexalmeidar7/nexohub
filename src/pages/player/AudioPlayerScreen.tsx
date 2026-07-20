@@ -990,7 +990,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
       {/* ============== TOP BAR ============== */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6">
+      {isVideoChannel && (
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 right-0 z-20 pointer-events-none"
+          style={{
+            height: 160,
+            background: "linear-gradient(to bottom, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0) 100%)",
+            opacity: controlsVisible ? 1 : 0,
+            transition: "opacity 450ms ease",
+          }}
+        />
+      )}
+      <header
+        className="absolute top-0 left-0 right-0 z-30 flex items-start justify-between px-8 pt-6"
+        style={isVideoChannel ? controlsStyle : undefined}
+      >
         {/* Channel switcher */}
         <div className="flex items-center gap-4">
           <div className="flex flex-col gap-1">
