@@ -1578,7 +1578,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </button>
 
           {/* Help + logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-self-end">
             <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
             <div className="relative group">
               <button
