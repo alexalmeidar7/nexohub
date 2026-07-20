@@ -2018,7 +2018,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
       )}
 
-      <PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={publicUserId || user?.id || null} />
+      <PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={ownerUserId || user?.id || null} />
 
 
 
