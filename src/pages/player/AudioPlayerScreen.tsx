@@ -1378,7 +1378,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          <div style={{ width: 368, height: 384 }} data-focusable>
+          <div
+            style={{
+              width: 368,
+              height: 384,
+              transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : "translateY(0) scale(1)",
+              transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              willChange: "transform",
+            }}
+            data-focusable
+          >
             <ProgramShowcaseCard
               program={currentProg}
               apresentadores={apresentadores}
@@ -1400,6 +1409,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <button
             onClick={() => setGradeOpen(true)}
             className="w-11 h-11 rounded-full flex items-center justify-center border border-white/25 hover:bg-white/10 transition"
+            style={{
+              transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
+              transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
             aria-label="Ver grade completa de programação"
             title="Grade de programação"
             data-focusable
@@ -1407,18 +1420,31 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <Plus size={20} />
           </button>
 
-          {/* Karaokê inline — aparece abaixo do botão + quando ativado */}
-          {karaokeEnabled && (
-            <Suspense fallback={null}>
-              <InlineKaraoke
-                enabled={karaokeEnabled}
-                artist={musicData?.artista}
-                title={musicData?.titulo}
-                duration={musicData?.duracao}
-                audioElement={audioRef.current}
-              />
-            </Suspense>
-          )}
+          {/* Karaokê inline — desliza suavemente por baixo quando ativado */}
+          <div
+            style={{
+              width: "100%",
+              maxHeight: karaokeEnabled ? 360 : 0,
+              opacity: karaokeEnabled ? 1 : 0,
+              transform: karaokeEnabled ? "translateY(-16px)" : "translateY(24px)",
+              transition:
+                "max-height 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              overflow: "hidden",
+              pointerEvents: karaokeEnabled ? "auto" : "none",
+            }}
+          >
+            {karaokeEnabled && (
+              <Suspense fallback={null}>
+                <InlineKaraoke
+                  enabled={karaokeEnabled}
+                  artist={musicData?.artista}
+                  title={musicData?.titulo}
+                  duration={musicData?.duracao}
+                  audioElement={audioRef.current}
+                />
+              </Suspense>
+            )}
+          </div>
           </div>
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
