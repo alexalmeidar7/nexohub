@@ -116,6 +116,7 @@ function TopNavBar({
   onPlayChannel,
   userId,
   radioUserId,
+  musicUserId,
   radioName,
   stationLogoUrl,
   paletteSource,
@@ -138,6 +139,7 @@ function TopNavBar({
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
   radioUserId?: string | null;
+  musicUserId?: string | null;
   radioName?: string;
   stationLogoUrl?: string | null;
   paletteSource?: string | null;
@@ -157,12 +159,13 @@ function TopNavBar({
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
     const q = searchQuery.trim();
-    if (!q || !userId) { setMusicResults([]); return; }
+    const scopedMusicUserId = musicUserId || radioUserId || userId;
+    if (!q || !scopedMusicUserId) { setMusicResults([]); return; }
     musicSearchTimer.current = setTimeout(async () => {
       const { data } = await supabase
         .from("musicas_tocadas")
         .select("musica, artista")
-        .eq("user_id", userId)
+        .eq("user_id", scopedMusicUserId)
         .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -177,7 +180,7 @@ function TopNavBar({
       }
     }, 300);
     return () => { if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current); };
-  }, [searchQuery, userId]);
+  }, [searchQuery, userId, radioUserId, musicUserId]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -2081,6 +2084,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
                       radioUserId={ownerUserId}
+                      musicUserId={ownerUserId}
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
                       paletteSource={heroChannel?.logo_url || null}
