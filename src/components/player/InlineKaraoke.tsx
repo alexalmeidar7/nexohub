@@ -192,7 +192,7 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [enabled, lines, audioElement, MUSIC_START_KEY, offset]);
+  }, [enabled, lines, audioElement, MUSIC_START_KEY, offset, autoSync]);
 
   // Render fixed 5 slots (-2..+2) with stable keys so lines animate between positions
   const window5 = useMemo(() => {
