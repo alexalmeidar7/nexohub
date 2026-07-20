@@ -1441,10 +1441,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden cursor-ew-resize select-none touch-none"
               aria-label="Voltar ao vivo (arraste para voltar no tempo)"
             >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-              <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
-                {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
-              </span>
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${(dragVal != null || ts.offset > 1) ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+              {(() => {
+                if (dragVal != null) {
+                  const targetOffset = Math.max(0, TIMESHIFT_WINDOW - dragVal);
+                  const mm = Math.floor(targetOffset / 60);
+                  const ss = String(Math.round(targetOffset % 60)).padStart(2, "0");
+                  return <span key="drag" className="inline-block animate-fade-in tabular-nums">-{mm}:{ss}</span>;
+                }
+                return (
+                  <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
+                    {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+                  </span>
+                );
+              })()}
             </button>
             <div className="pointer-events-none absolute right-0 bottom-full mb-2 px-2 py-1 rounded-md bg-black/80 backdrop-blur text-[10px] text-white/90 whitespace-nowrap opacity-0 group-hover/live:opacity-100 transition-opacity duration-200 border border-white/10">
               {"<<"} arraste para voltar no tempo
@@ -1679,12 +1689,29 @@ export function ProgramShowcaseCard({
   const isLive = variant === "live";
 
   const apresentador = useMemo(() => {
-    if (!program?.apresentador_id) return null;
-    return apresentadores?.find((a) => a.id === program.apresentador_id) || null;
+    if (!program) return null;
+    const ids: string[] = Array.isArray(program.apresentadores_ids) && program.apresentadores_ids.length
+      ? program.apresentadores_ids
+      : program.apresentador_id
+        ? [program.apresentador_id]
+        : [];
+    for (const id of ids) {
+      const a = apresentadores?.find((x) => x.id === id);
+      if (a?.foto) return a;
+    }
+    // fallback: primeiro apresentador encontrado, mesmo sem foto
+    for (const id of ids) {
+      const a = apresentadores?.find((x) => x.id === id);
+      if (a) return a;
+    }
+    return null;
   }, [program, apresentadores]);
 
   const foto: string | null =
-    apresentador?.foto || program?.thumb || program?.capa || null;
+    (apresentador?.foto && String(apresentador.foto).trim()) ||
+    (program?.thumb && String(program.thumb).trim()) ||
+    (program?.capa && String(program.capa).trim()) ||
+    null;
 
   const palette = useCoverPalette(foto);
   const contrast = getPaletteContrast(palette);
