@@ -245,4 +245,8 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
           })}
         </div>
       )}
+    </div>
+  );
+}
+
 
