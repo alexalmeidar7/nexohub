@@ -361,8 +361,13 @@ function TopNavBar({
             }}
           >
             <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
-              {!hasResults ? (
+              {isTyping ? (
+                <p className="text-center text-white/30 text-sm py-6">digitando…</p>
+              ) : !debouncedQuery ? (
+                <p className="text-center text-white/25 text-sm py-6">digite ao menos 2 caracteres</p>
+              ) : !hasResults ? (
                 <p className="text-center text-white/25 text-sm py-6">Nenhum resultado</p>
+
               ) : (
                 <>
                   {searchResults.channels.length > 0 && (
