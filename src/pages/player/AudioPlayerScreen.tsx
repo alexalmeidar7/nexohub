@@ -1212,9 +1212,29 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
           <div
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const dx = e.clientX - Number(el.dataset.swipeX || 0);
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNextUp(); else goPrevUp();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Próximos programas — use as setas para navegar"
+            aria-label="Próximos programas — arraste ou use as setas para navegar"
           >
             {upcomingProgs.length > 1 && (
               <>
