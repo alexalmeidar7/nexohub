@@ -484,10 +484,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const hhmmNow = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
     // Excluir programa atual, mas não filtrar por horario_fim (pode não estar setado)
     const currentId = currentProg?.id ? String(currentProg.id) : null;
+    // Normaliza (minúscula + sem acento) para comparar com valores como "Segunda", "Terça", "Sábado"
+    const norm = (s: any) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
     const inDay = (p: any, d: Date) => {
-      const dias = p?.dias_semana || [];
+      const dias = Array.isArray(p?.dias_semana) ? p.dias_semana : [];
       if (!dias.length) return true;
-      return dias.includes(DAY_SHORT[d.getDay()]) || dias.includes(DAY_FULL[d.getDay()]);
+      const set = new Set(dias.map(norm));
+      return set.has(DAY_SHORT[d.getDay()]) || set.has(DAY_FULL[d.getDay()]);
     };
     const result: any[] = [];
     // Varre os próximos 7 dias para garantir algo sempre
@@ -522,6 +525,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   useEffect(() => { setUpcomingIndex(0); }, [upcomingProgs[0]?.id]);
   const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
   const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
+
+  // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
+  useEffect(() => {
+    upcomingProgs.forEach((p) => {
+      const url = p?.thumb || p?.capa;
+      if (url) warmCover(url);
+    });
+  }, [upcomingProgs]);
 
   // ---- Curtidas do histórico (heart por card) ----
   const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
@@ -1394,14 +1405,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     }}
                   >
                     {cover ? (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(${cover})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
+                      <NowCoverCrossfade capa={cover} isActive={isActive} />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
                         <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
