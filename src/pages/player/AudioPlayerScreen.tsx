@@ -1604,6 +1604,91 @@ function VolumeEqBars({ volume, muted, playing }: { volume: number; muted: boole
   );
 }
 
+/**
+ * Crossfade suave entre capas quando a música muda no card "tocando agora".
+ * Mantém a capa anterior visível e faz fade-in + micro-zoom da nova por cima.
+ */
+function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive: boolean }) {
+  const [layers, setLayers] = useState<Array<{ id: number; url: string }>>(() =>
+    capa ? [{ id: 0, url: capa }] : []
+  );
+  const seqRef = useRef(0);
+  const lastUrlRef = useRef<string | null>(capa || null);
+
+  useEffect(() => {
+    const next = capa || null;
+    if (next === lastUrlRef.current) return;
+    lastUrlRef.current = next;
+    if (!next) {
+      setLayers([]);
+      return;
+    }
+    // Pré-decode para começar o fade só quando a imagem estiver pronta
+    const img = new Image();
+    img.decoding = "async";
+    img.src = next;
+    const start = () => {
+      seqRef.current += 1;
+      const id = seqRef.current;
+      setLayers((prev) => [...prev.slice(-1), { id, url: next }]);
+      // Remove camadas antigas depois do fade concluir
+      window.setTimeout(() => {
+        setLayers((prev) => prev.filter((l) => l.id === id));
+      }, 950);
+    };
+    if ((img as any).decode) {
+      (img as any).decode().then(start).catch(start);
+    } else {
+      img.onload = start;
+      img.onerror = start;
+    }
+  }, [capa]);
+
+  if (layers.length === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+        <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {layers.map((l, idx) => {
+        const isTop = idx === layers.length - 1;
+        const isFirst = layers.length === 1;
+        return (
+          <div
+            key={l.id}
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${l.url})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              opacity: isTop ? 1 : 0,
+              transform: isTop ? "scale(1)" : "scale(1.04)",
+              filter: isTop ? "blur(0px)" : "blur(2px)",
+              transition: isFirst
+                ? "none"
+                : "opacity 900ms cubic-bezier(.4,0,.2,1), transform 1100ms cubic-bezier(.22,1,.36,1), filter 900ms cubic-bezier(.4,0,.2,1)",
+              animation: isTop && !isFirst ? "nowCoverIn 900ms cubic-bezier(.22,1,.36,1) both" : undefined,
+              willChange: "opacity, transform, filter",
+            }}
+          />
+        );
+      })}
+      <style>{`
+        @keyframes nowCoverIn {
+          0%   { opacity: 0; transform: scale(1.06); filter: blur(3px) brightness(1.1); }
+          60%  { opacity: 1; }
+          100% { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
+        }
+      `}</style>
+    </>
+  );
+}
+
+
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
   const base =
