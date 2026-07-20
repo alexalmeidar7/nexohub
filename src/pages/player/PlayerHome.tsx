@@ -2010,6 +2010,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Hero channel = first streaming channel
   const heroChannel = streamingChannels[0];
+  const { bgColors: top10Colors } = useBgPalette(heroChannel?.logo_url || undefined);
+  const top10Gradient = `radial-gradient(ellipse at 20% 20%, ${top10Colors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${top10Colors[1]} 0%, transparent 65%), linear-gradient(135deg, ${top10Colors[0]} 0%, ${top10Colors[1]} 100%)`;
 
 
   return (
