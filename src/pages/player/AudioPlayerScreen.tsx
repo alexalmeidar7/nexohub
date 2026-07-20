@@ -912,7 +912,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
-                      opacity: isExpired ? Math.max(0.35, opacity * 0.55) : opacity,
+                      opacity: isActive ? 1 : (isExpired ? Math.max(0.35, opacity * 0.55) : opacity),
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
