@@ -2614,14 +2614,15 @@ function MenuItem({
 }
 
 function PollDialog({
-  poll, alreadyVoted, onClose, onVoted,
+  poll, alreadyVoted, previousVote, onClose, onVoted,
 }: {
   poll: ActivePoll;
   alreadyVoted: boolean;
+  previousVote?: number | null;
   onClose: () => void;
-  onVoted: () => void;
+  onVoted: (optionIndex: number) => void;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(previousVote ?? null);
   const [submitted, setSubmitted] = useState(alreadyVoted);
 
   useEffect(() => {
@@ -2633,8 +2634,9 @@ function PollDialog({
   const submit = () => {
     if (selected == null) return;
     setSubmitted(true);
-    onVoted();
+    onVoted(selected);
   };
+
 
   return (
     <div
