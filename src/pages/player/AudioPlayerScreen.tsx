@@ -1448,9 +1448,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
                     }}
                   >
-                    <UpcomingProgramCard
+                    <ProgramShowcaseCard
                       program={p}
                       apresentadores={apresentadores}
+                      variant="upcoming"
                       isActive={isActive}
                       isFirst={isFirst}
                     />
