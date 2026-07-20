@@ -523,6 +523,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
   const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
 
+  // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
+  useEffect(() => {
+    upcomingProgs.forEach((p) => {
+      const url = p?.thumb || p?.capa;
+      if (url) warmCover(url);
+    });
+  }, [upcomingProgs]);
+
   // ---- Curtidas do histórico (heart por card) ----
   const [historyLikes, setHistoryLikes] = useState<Set<string>>(new Set());
   const likeKey = (artista: string, musica: string) => `${(artista || "").toLowerCase()}||${(musica || "").toLowerCase()}`;
@@ -1394,14 +1402,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     }}
                   >
                     {cover ? (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(${cover})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
+                      <NowCoverCrossfade capa={cover} isActive={isActive} />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
                         <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
@@ -1641,15 +1642,39 @@ function VolumeEqBars({ volume, muted, playing }: { volume: number; muted: boole
 }
 
 /**
- * Crossfade suave entre capas quando a música muda no card "tocando agora".
- * Mantém a capa anterior visível e faz fade-in + micro-zoom da nova por cima.
+ * Crossfade suave entre capas com monitoramento de FPS.
+ * - Amostra o frame-rate durante a transição (rAF).
+ * - Se detectar quedas persistentes (< 45 FPS em 2 transições) ou
+ *   `prefers-reduced-motion`, degrada automaticamente para um fade
+ *   simples (sem blur/scale) e menor duração.
+ * - Estado global do módulo evita re-medir a cada montagem.
  */
+type CrossfadeQuality = "high" | "low";
+const crossfadePerf = {
+  quality: "high" as CrossfadeQuality,
+  badSamples: 0,
+};
+
+function detectReducedMotion(): boolean {
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch { return false; }
+}
+
 function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive: boolean }) {
   const [layers, setLayers] = useState<Array<{ id: number; url: string }>>(() =>
     capa ? [{ id: 0, url: capa }] : []
   );
+  const [quality, setQuality] = useState<CrossfadeQuality>(() =>
+    detectReducedMotion() ? "low" : crossfadePerf.quality
+  );
   const seqRef = useRef(0);
   const lastUrlRef = useRef<string | null>(capa || null);
+  const rafRef = useRef<number | null>(null);
+  const cleanupTimerRef = useRef<number | null>(null);
+
+  // Duração ajustada pela qualidade
+  const fadeMs = quality === "high" ? 900 : 380;
 
   useEffect(() => {
     const next = capa || null;
@@ -1659,18 +1684,59 @@ function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive:
       setLayers([]);
       return;
     }
-    // Pré-decode para começar o fade só quando a imagem estiver pronta
+    let cancelled = false;
     const img = new Image();
     img.decoding = "async";
     img.src = next;
+
+    const measure = () => {
+      if (quality === "low") return; // já degradado
+      const start = performance.now();
+      let frames = 0;
+      let last = start;
+      let longFrames = 0;
+      const tick = (t: number) => {
+        frames++;
+        const dt = t - last;
+        last = t;
+        // Frame acima de ~22ms => abaixo de ~45fps
+        if (dt > 22) longFrames++;
+        if (t - start < fadeMs + 50) {
+          rafRef.current = requestAnimationFrame(tick);
+        } else {
+          const elapsed = t - start;
+          const fps = (frames / elapsed) * 1000;
+          const dropRatio = longFrames / Math.max(1, frames);
+          if (fps < 45 || dropRatio > 0.25) {
+            crossfadePerf.badSamples += 1;
+            if (crossfadePerf.badSamples >= 2 && crossfadePerf.quality !== "low") {
+              crossfadePerf.quality = "low";
+              setQuality("low");
+              if (typeof console !== "undefined") {
+                console.info(
+                  `[NowCoverCrossfade] degradado para 'low' — fps=${fps.toFixed(1)}, drops=${(dropRatio * 100).toFixed(0)}%`
+                );
+              }
+            }
+          } else {
+            crossfadePerf.badSamples = Math.max(0, crossfadePerf.badSamples - 1);
+          }
+        }
+      };
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
     const start = () => {
+      if (cancelled) return;
       seqRef.current += 1;
       const id = seqRef.current;
       setLayers((prev) => [...prev.slice(-1), { id, url: next }]);
-      // Remove camadas antigas depois do fade concluir
-      window.setTimeout(() => {
+      if (cleanupTimerRef.current) window.clearTimeout(cleanupTimerRef.current);
+      cleanupTimerRef.current = window.setTimeout(() => {
         setLayers((prev) => prev.filter((l) => l.id === id));
-      }, 950);
+        cleanupTimerRef.current = null;
+      }, fadeMs + 60);
+      measure();
     };
     if ((img as any).decode) {
       (img as any).decode().then(start).catch(start);
@@ -1678,7 +1744,20 @@ function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive:
       img.onload = start;
       img.onerror = start;
     }
-  }, [capa]);
+    return () => {
+      cancelled = true;
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    };
+  }, [capa, quality, fadeMs]);
+
+  // Cleanup na desmontagem
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+      if (cleanupTimerRef.current) window.clearTimeout(cleanupTimerRef.current);
+    };
+  }, []);
 
   if (layers.length === 0) {
     return (
@@ -1688,11 +1767,18 @@ function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive:
     );
   }
 
+  const isLow = quality === "low";
+
   return (
     <>
       {layers.map((l, idx) => {
         const isTop = idx === layers.length - 1;
         const isFirst = layers.length === 1;
+        const transition = isFirst
+          ? "none"
+          : isLow
+            ? `opacity ${fadeMs}ms linear`
+            : `opacity ${fadeMs}ms cubic-bezier(.4,0,.2,1), transform ${fadeMs + 200}ms cubic-bezier(.22,1,.36,1), filter ${fadeMs}ms cubic-bezier(.4,0,.2,1)`;
         return (
           <div
             key={l.id}
@@ -1702,24 +1788,27 @@ function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive:
               backgroundSize: "cover",
               backgroundPosition: "center",
               opacity: isTop ? 1 : 0,
-              transform: isTop ? "scale(1)" : "scale(1.04)",
-              filter: isTop ? "blur(0px)" : "blur(2px)",
-              transition: isFirst
-                ? "none"
-                : "opacity 900ms cubic-bezier(.4,0,.2,1), transform 1100ms cubic-bezier(.22,1,.36,1), filter 900ms cubic-bezier(.4,0,.2,1)",
-              animation: isTop && !isFirst ? "nowCoverIn 900ms cubic-bezier(.22,1,.36,1) both" : undefined,
-              willChange: "opacity, transform, filter",
+              transform: isLow ? undefined : (isTop ? "scale(1)" : "scale(1.04)"),
+              filter: isLow ? undefined : (isTop ? "blur(0px)" : "blur(2px)"),
+              transition,
+              animation:
+                isTop && !isFirst && !isLow
+                  ? `nowCoverIn ${fadeMs}ms cubic-bezier(.22,1,.36,1) both`
+                  : undefined,
+              willChange: isLow ? "opacity" : "opacity, transform, filter",
             }}
           />
         );
       })}
-      <style>{`
-        @keyframes nowCoverIn {
-          0%   { opacity: 0; transform: scale(1.06); filter: blur(3px) brightness(1.1); }
-          60%  { opacity: 1; }
-          100% { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
-        }
-      `}</style>
+      {!isLow && (
+        <style>{`
+          @keyframes nowCoverIn {
+            0%   { opacity: 0; transform: scale(1.06); filter: blur(3px) brightness(1.1); }
+            60%  { opacity: 1; }
+            100% { opacity: 1; transform: scale(1); filter: blur(0) brightness(1); }
+          }
+        `}</style>
+      )}
     </>
   );
 }
