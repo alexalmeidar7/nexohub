@@ -194,7 +194,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     userSlug,
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
-
+    isVideoChannel = false,
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
