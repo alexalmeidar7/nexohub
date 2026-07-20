@@ -877,7 +877,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const scale = 1 - Math.min(abs, 5) * 0.055;
                 const translateX = -depth * 72;
                 // itens escondidos "atrás" do índice ativo têm opacidade menor
-                const opacity = depth < 0 ? 0 : Math.max(0, 0.95 - abs * 0.16);
+                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
                 const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
                 const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
                 const isActive = depth === 0;
