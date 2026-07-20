@@ -130,13 +130,14 @@ export default function PlayerHub() {
         console.warn(`${tag} nenhum programa NO AR agora — causa provável: horário ${hhmm} (${todayCode}) não bate com nenhuma janela horario_inicio/horario_fim + dias_semana. Verifique também janelas que atravessam meia-noite.`);
         return null;
       }
-      const url = current.thumb || current.capa || null;
+      const url = current.thumb || null;
       if (!url) {
-        console.warn(`${tag} programa "${current.nome}" está no ar mas NÃO tem thumb nem capa cadastrados.`);
+        console.warn(`${tag} programa "${current.nome}" está no ar mas NÃO tem THUMB cadastrada (capa é ignorada aqui — a tela de boas-vindas usa apenas thumb + artista Deezer).`);
       } else {
-        console.log(`${tag} programa no ar: "${current.nome}" → usando ${current.thumb ? "thumb" : "capa"}: ${url}`);
+        console.log(`${tag} programa no ar: "${current.nome}" → usando thumb: ${url}`);
       }
       return url;
+
     };
 
     const fetchLogo = async () => {
