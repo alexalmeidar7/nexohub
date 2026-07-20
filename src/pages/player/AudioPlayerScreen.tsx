@@ -195,6 +195,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
   const currentProgId = currentProg?.id ? String(currentProg.id) : null;
   const [programLiked, setProgramLiked] = useState<boolean>(false);
+  const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   useEffect(() => {
     if (!currentProgId) { setProgramLiked(false); return; }
     try {
