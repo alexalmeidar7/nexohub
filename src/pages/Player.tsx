@@ -3547,7 +3547,12 @@ export default function PlayerPage() {
                     onEditProfile={handleEditProfile}
                     onSwitchProfile={handleSwitchProfile}
                     onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
-                    onLogout={async () => { await signOut(); navigate("/"); }}
+                    onLogout={async () => {
+                      await signOut();
+                      const dest = userSlug && !userSlug.startsWith(":") ? `/${userSlug}/player` : "/player";
+                      navigate(dest);
+                    }}
+
                   />
                 </Suspense>
               )}
