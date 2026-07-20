@@ -1447,8 +1447,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   const targetOffset = Math.max(0, TIMESHIFT_WINDOW - dragVal);
                   const mm = Math.floor(targetOffset / 60);
                   const ss = String(Math.round(targetOffset % 60)).padStart(2, "0");
-                  return <span key="drag" className="inline-block animate-fade-in tabular-nums">-{mm}:{ss}</span>;
+                  const isLive = targetOffset < 1;
+                  return (
+                    <span key="drag" className="inline-flex items-center gap-1 animate-fade-in tabular-nums">
+                      <span>ao vivo</span>
+                      {!isLive && <span className="text-white/70">-{mm}:{ss}</span>}
+                    </span>
+                  );
                 }
+
                 return (
                   <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
                     {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}

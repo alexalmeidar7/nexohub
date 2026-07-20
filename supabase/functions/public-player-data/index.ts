@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (profileError) throw profileError;
 
-      // 2) fallback: prefix largo (slug*@...) — ex.: "interativafm" -> "interativafmgynaovivo@..."
+      // 2) prefix largo: slug*@...
       if (!data?.user_id) {
         const { data: d2 } = await supabase
           .from("profiles")
@@ -159,12 +159,34 @@ Deno.serve(async (req) => {
         if (d2?.user_id) data = d2 as any;
       }
 
-      // 3) fallback: sub-user por prefix — resolve para o pai
+      // 3) substring em qualquer parte do email
+      if (!data?.user_id) {
+        const { data: d3 } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .ilike("email", `%${slugLower}%`)
+          .limit(1)
+          .maybeSingle();
+        if (d3?.user_id) data = d3 as any;
+      }
+
+      // 4) match por nome normalizado (remove espaços/acentos)
+      if (!data?.user_id) {
+        const { data: d4 } = await supabase
+          .from("profiles")
+          .select("user_id, email, nome")
+          .ilike("nome", `%${slugLower}%`)
+          .limit(1)
+          .maybeSingle();
+        if (d4?.user_id) data = d4 as any;
+      }
+
+      // 5) sub-user por prefix — resolve para o pai
       if (!data?.user_id) {
         const { data: sub } = await supabase
           .from("sub_users")
           .select("auth_user_id, parent_user_id, ativo")
-          .ilike("email", `${slugLower}%@%`)
+          .ilike("email", `%${slugLower}%`)
           .limit(1)
           .maybeSingle();
         if (sub?.auth_user_id) {
@@ -179,11 +201,13 @@ Deno.serve(async (req) => {
     }
 
     if (!userId) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      console.log(`[public-player-data] User not found for slug="${slug}" section="${section}"`);
+      return new Response(JSON.stringify({ error: "User not found", slug }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
     if (section === "active_midrolls") {
