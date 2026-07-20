@@ -1403,18 +1403,53 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
       <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
-        {/* live pill com rewind interativo no hover (à direita) */}
+        {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
-          <button
-            onClick={() => seekLive()}
-            className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden"
-            aria-label="Voltar ao vivo"
-          >
-            <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-            <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
-              {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
-            </span>
-          </button>
+          <div className="relative group/live">
+            <button
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                const startX = e.clientX;
+                const maxBack = Math.max(1, ts.back);
+                const MAX_PX = 220;
+                const startOffset = ts.offset;
+                (e.currentTarget as any)._dragMoved = false;
+                (e.currentTarget as any)._onMove = (ev: PointerEvent) => {
+                  const dx = Math.min(0, ev.clientX - startX); // apenas para esquerda
+                  if (Math.abs(dx) > 4) (e.currentTarget as any)._dragMoved = true;
+                  const addBack = Math.min(maxBack, (-dx / MAX_PX) * maxBack);
+                  const target = Math.max(0, Math.min(maxBack, startOffset + addBack));
+                  setDragVal(TIMESHIFT_WINDOW - target);
+                };
+                window.addEventListener("pointermove", (e.currentTarget as any)._onMove);
+              }}
+              onPointerUp={(e) => {
+                window.removeEventListener("pointermove", (e.currentTarget as any)._onMove);
+                const moved = (e.currentTarget as any)._dragMoved;
+                if (moved && dragVal != null) {
+                  seekBySeconds(TIMESHIFT_WINDOW - dragVal);
+                  setDragVal(null);
+                } else {
+                  setDragVal(null);
+                  seekLive();
+                }
+              }}
+              onPointerCancel={(e) => {
+                window.removeEventListener("pointermove", (e.currentTarget as any)._onMove);
+                setDragVal(null);
+              }}
+              className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden cursor-ew-resize select-none touch-none"
+              aria-label="Voltar ao vivo (arraste para voltar no tempo)"
+            >
+              <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${ts.offset > 1 ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
+              <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
+                {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
+              </span>
+            </button>
+            <div className="pointer-events-none absolute right-0 bottom-full mb-2 px-2 py-1 rounded-md bg-black/80 backdrop-blur text-[10px] text-white/90 whitespace-nowrap opacity-0 group-hover/live:opacity-100 transition-opacity duration-200 border border-white/10">
+              {"<<"} arraste para voltar no tempo
+            </div>
+          </div>
         </div>
 
         {/* timeshift bar (janela fixa 5 min) */}
