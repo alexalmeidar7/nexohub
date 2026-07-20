@@ -185,11 +185,11 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
           style={{
             padding: "26px 26px 24px",
             borderRadius: 24,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            boxShadow: "0 30px 80px -30px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,255,255,0.08)",
+            background: "linear-gradient(180deg, rgba(20,20,22,0.90) 0%, rgba(10,10,12,0.94) 100%)",
+            border: "1px solid rgba(255,255,255,0.22)",
+            backdropFilter: "blur(28px) saturate(140%)",
+            WebkitBackdropFilter: "blur(28px) saturate(140%)",
+            boxShadow: "0 34px 90px -25px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -279,11 +279,12 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
           style={{
             height: "clamp(320px, calc(100vh - 335px), 520px)",
             borderRadius: 22,
-            background: "linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)",
-            border: "1px solid rgba(255,255,255,0.12)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
-            boxShadow: "0 24px 60px -25px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06)",
+            background: "linear-gradient(180deg, rgba(20,20,22,0.88) 0%, rgba(10,10,12,0.92) 100%)",
+            border: "1px solid rgba(255,255,255,0.22)",
+            backdropFilter: "blur(28px) saturate(140%)",
+            WebkitBackdropFilter: "blur(28px) saturate(140%)",
+            boxShadow: "0 30px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.10)",
+
           }}
         >
           {/* Header */}
