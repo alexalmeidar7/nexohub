@@ -75,6 +75,12 @@ interface HistoryTrack {
 
 const HIST_MAX = 50;
 
+function sameHistoryTrack(a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) {
+  return !!a && !!b
+    && (a.artista || "").trim().toLowerCase() === (b.artista || "").trim().toLowerCase()
+    && (a.musica || "").trim().toLowerCase() === (b.musica || "").trim().toLowerCase();
+}
+
 /**
  * Slider de volume com estado local + rAF throttling.
  * Evita re-render do player inteiro a cada movimento do drag
@@ -432,17 +438,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     };
   }, [musicData?.artista, musicData?.titulo, musicData?.horario, musicData?.capa]);
 
-  const sameTrack = (a?: Pick<HistoryTrack, "artista" | "musica"> | null, b?: Pick<HistoryTrack, "artista" | "musica"> | null) =>
-    !!a && !!b
-    && (a.artista || "").trim().toLowerCase() === (b.artista || "").trim().toLowerCase()
-    && (a.musica || "").trim().toLowerCase() === (b.musica || "").trim().toLowerCase();
-
   const ensureCurrentAtFront = useCallback((tracks: HistoryTrack[], cover?: string): HistoryTrack[] => {
     const current = currentHistoryTrack(cover);
     if (!current) return tracks;
-    const existingCurrent = tracks.find((t) => sameTrack(t, current));
+    const existingCurrent = tracks.find((t) => sameHistoryTrack(t, current));
     const mergedCurrent = { ...current, horario: existingCurrent?.horario || current.horario, capa: current.capa || existingCurrent?.capa };
-    return [mergedCurrent, ...tracks.filter((t) => !sameTrack(t, current))].slice(0, HIST_MAX);
+    return [mergedCurrent, ...tracks.filter((t) => !sameHistoryTrack(t, current))].slice(0, HIST_MAX);
   }, [currentHistoryTrack]);
 
   useEffect(() => {
