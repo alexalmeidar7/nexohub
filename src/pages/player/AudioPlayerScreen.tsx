@@ -1477,18 +1477,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div
             onPointerDown={(e) => {
               if ((e.target as HTMLElement).closest("button")) return;
-              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
-              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
-              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeX = String(e.clientX);
+              el.dataset.swipeAnchor = String(upcomingIndex);
+              el.dataset.swipeActive = "1";
+              try { el.setPointerCapture(e.pointerId); } catch {}
             }}
             onPointerMove={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               if (el.dataset.swipeActive !== "1") return;
-              const dx = e.clientX - Number(el.dataset.swipeX || 0);
-              if (Math.abs(dx) > 50) {
-                el.dataset.swipeActive = "0";
-                if (dx < 0) goNextUp(); else goPrevUp();
-              }
+              const startX = Number(el.dataset.swipeX || 0);
+              const anchor = Number(el.dataset.swipeAnchor || 0);
+              const dx = e.clientX - startX;
+              const STEP = 90;
+              const delta = Math.round(-dx / STEP);
+              const next = Math.max(0, Math.min(upcomingMax, anchor + delta));
+              if (next !== upcomingIndex) setUpcomingIndex(next);
             }}
             onPointerUp={(e) => {
               const el = e.currentTarget as HTMLDivElement;
@@ -1496,6 +1500,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               try { el.releasePointerCapture(e.pointerId); } catch {}
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("right") }}
             aria-label="Próximos programas — arraste ou use as setas para navegar"
