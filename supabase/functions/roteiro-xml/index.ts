@@ -201,7 +201,7 @@ Deno.serve(async (req) => {
           const bytes = new TextEncoder().encode(xml);
           const { error: upErr } = await supabase.storage
             .from("empresa-assets")
-            .upload(filePath, bytes, { upsert: true, contentType: "application/xml", cacheControl: "0" });
+            .upload(filePath, bytes, { upsert: true, contentType: "application/xml; charset=utf-8", cacheControl: "0" });
           if (upErr) console.warn("[roteiro-xml] persist upload error:", upErr);
         }
       } catch (e) {
