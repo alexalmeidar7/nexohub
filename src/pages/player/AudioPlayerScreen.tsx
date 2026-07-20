@@ -1433,51 +1433,27 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isActive = depth === 0;
                 const isFirst = i === 0;
                 const cover = p?.thumb || p?.capa || null;
+                const size = isActive ? 280 : 240;
                 return (
                   <div
                     key={`up-${p?.id || i}`}
-                    className="absolute left-0 rounded-[32px] overflow-hidden shadow-2xl"
+                    className="absolute left-0"
                     style={{
-                      width: isActive ? 280 : 240,
-                      height: isActive ? 280 : 240,
+                      width: size,
+                      height: size,
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
                       filter: `blur(${blur}px)`,
-                      background: "#111",
                       zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
-                      boxShadow: isFirst
-                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
-                        : isActive
-                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
-                          : undefined,
                     }}
                   >
-                    {cover ? (
-                      <NowCoverCrossfade capa={cover} isActive={isActive} />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
-                        <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
-                      </div>
-                    )}
-                    <div
-                      className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
-                      style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)" }}
+                    <UpcomingProgramCard
+                      program={p}
+                      apresentadores={apresentadores}
+                      isActive={isActive}
+                      isFirst={isFirst}
                     />
-                    {isFirst && (
-                      <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                        a seguir
-                      </div>
-                    )}
-                    <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
-                      {hhmm(p?.horario_inicio)}
-                    </div>
-                    <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-                      <div className="text-[10px] uppercase tracking-widest text-white/80">
-                        {hhmm(p?.horario_inicio)}/{hhmm(p?.horario_fim)}
-                      </div>
-                      <div className="text-sm font-bold leading-tight truncate">{p?.nome || "—"}</div>
-                    </div>
                   </div>
                 );
               })}
