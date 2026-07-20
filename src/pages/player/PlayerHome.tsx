@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { useAuth } from "@/hooks/useAuth";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { usePreloadedImages, preloadImage } from "@/hooks/usePreloadImages";
+import { preloadLocutorImages } from "@/lib/locutorImageCache";
 import { useBgPalette } from "./useBgPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
