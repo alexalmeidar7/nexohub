@@ -853,13 +853,34 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — navegação por setas */}
+          {/* HISTORY CAROUSEL — navegação por setas e swipe */}
           <div
             ref={carouselRef}
             onWheel={handleCarouselWheel}
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const startX = Number(el.dataset.swipeX || 0);
+              const dx = e.clientX - startX;
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNext(); else goPrev();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Histórico de músicas — use as setas para navegar"
+            aria-label="Histórico de músicas — arraste ou use as setas para navegar"
           >
             {/* Setas de navegação */}
             {history.length > 1 && (
