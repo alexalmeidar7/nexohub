@@ -53,6 +53,7 @@ export interface AudioPlayerScreenProps {
   userEmail?: string | null;
   signOut: () => Promise<void>;
   effectiveUserId: string | null;
+  radioUserId?: string | null;
   isPublicMode: boolean;
   userSlug: string | null | undefined;
   onBackHome: () => void;
@@ -178,7 +179,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     watchProfileOpen, setWatchProfileOpen,
     empresaLogo, empresaNome,
     user, profileAvatar, userDisplayName, userEmail, signOut,
-    effectiveUserId,
+    effectiveUserId, radioUserId,
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
   } = props;
@@ -542,16 +543,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     let cancelled = false;
     if (!user?.id || history.length === 0) return;
     (async () => {
-      const { data } = await supabase
+      let likesQuery: any = supabase
         .from("music_likes")
         .select("artista,titulo")
-        .eq("user_id", user.id)
+        .eq("user_id", user.id);
+      likesQuery = radioUserId ? likesQuery.eq("radio_user_id", radioUserId) : likesQuery.is("radio_user_id", null);
+      const { data } = await likesQuery
         .limit(500);
       if (cancelled || !data) return;
       setHistoryLikes(new Set(data.map((r: any) => likeKey(r.artista, r.titulo))));
     })();
     return () => { cancelled = true; };
-  }, [user?.id, history.length]);
+  }, [user?.id, radioUserId, history.length]);
 
   const toggleHistoryLike = async (t: HistoryTrack) => {
     if (!user?.id || !t.artista || !t.musica) return;
@@ -564,11 +567,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return next;
     });
     if (already) {
-      await supabase.from("music_likes").delete()
+      let deleteQuery: any = supabase.from("music_likes").delete()
         .eq("user_id", user.id).eq("artista", t.artista).eq("titulo", t.musica);
+      deleteQuery = radioUserId ? deleteQuery.eq("radio_user_id", radioUserId) : deleteQuery.is("radio_user_id", null);
+      await deleteQuery;
     } else {
       await supabase.from("music_likes").insert({
-        user_id: user.id, artista: t.artista, titulo: t.musica, capa: t.capa || "",
+        user_id: user.id, radio_user_id: radioUserId || null, artista: t.artista, titulo: t.musica, capa: t.capa || "",
       });
     }
   };
@@ -988,6 +993,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     userName={userDisplayName}
                     userEmail={userEmail ?? user?.email ?? null}
                     avatarUrl={profileAvatar}
+                    radioUserId={radioUserId}
                     radioName={empresaNome || undefined}
                     onClose={() => setWatchProfileOpen(false)}
                     onEditProfile={onEditProfile}
@@ -1588,7 +1594,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Chat side panel */}
       {chatOpen && (
         <Suspense fallback={null}>
-          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} shopOpen={false} />
+          <PlayerChat channelId={canal?.id || "default"} radioUserId={radioUserId} onClose={() => setChatOpen(false)} shopOpen={false} />
         </Suspense>
       )}
 
