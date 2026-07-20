@@ -626,8 +626,9 @@ function HeroBanner({
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
-            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            background: ouvirGradient,
             border: "1px solid rgba(255,255,255,0.08)",
+
           }}
         >
           {/* Presenter photo pinned right */}
