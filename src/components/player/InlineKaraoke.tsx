@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Minus, Plus, RotateCcw } from "lucide-react";
+import { Mic, Minus, Plus, RotateCcw, X } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { musicStartKey } from "@/lib/musicStorageKeys";
@@ -25,12 +26,14 @@ interface Props {
   title?: string | null;
   duration?: number;
   audioElement?: HTMLAudioElement | null;
+  onClose?: () => void;
 }
 
 const DEFAULT_LATENCY = 30; // seconds (streaming buffer)
 const OFFSET_KEY = "player_karaoke_offset_v1";
 
-export default function InlineKaraoke({ enabled, artist, title, duration, audioElement }: Props) {
+export default function InlineKaraoke({ enabled, artist, title, duration, audioElement, onClose }: Props) {
+
   const { user } = useAuth();
   const MUSIC_START_KEY = musicStartKey(user?.id) || "masterview_music_start::__none__";
 
@@ -168,8 +171,20 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
           >
             <RotateCcw size={10} />
           </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="ml-2 w-6 h-6 rounded-full flex items-center justify-center border border-white/15 hover:bg-white/10 hover:border-white/30 transition"
+              aria-label="Fechar karaokê"
+              title="Fechar karaokê"
+              data-focusable
+            >
+              <X size={11} />
+            </button>
+          )}
         </div>
       </div>
+
 
       {loading && (
         <div className="text-center text-[12px] text-white/60 italic py-6">buscando letra…</div>
