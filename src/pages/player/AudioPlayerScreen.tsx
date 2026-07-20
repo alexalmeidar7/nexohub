@@ -825,6 +825,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         filter: exiting ? "blur(6px)" : "blur(0)",
       }}
     >
+      <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
+
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {bgLayers.map((l, idx) => (

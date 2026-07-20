@@ -2018,6 +2018,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
       )}
 
+      <PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={publicUserId || user?.id || null} />
+
+
+
 
       {/* Main content */}
       <div ref={contentScrollRef} className={`flex-1 h-full relative ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-hidden"}`}>
