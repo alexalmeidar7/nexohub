@@ -498,6 +498,7 @@ function HeroBanner({
   onAssistir,
   onPlaylist,
   cardsVisible = true,
+  slugBadge,
 }: {
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
@@ -507,6 +508,7 @@ function HeroBanner({
   onAssistir: () => void;
   onPlaylist: () => void;
   cardsVisible?: boolean;
+  slugBadge?: React.ReactNode;
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
@@ -686,6 +688,7 @@ function HeroBanner({
 
       {/* Bottom-right help + nexo logo */}
       <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
+        {slugBadge}
         <div className="relative group">
           <button
             className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
@@ -2026,7 +2029,6 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         </div>
       )}
 
-      <PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={ownerUserId || user?.id || null} />
 
 
 
@@ -2077,6 +2079,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       }}
                       onPlaylist={() => goToTop10()}
                       cardsVisible={activeRow === 0}
+                      slugBadge={<PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={ownerUserId || user?.id || null} />}
                     />
                     {(() => {
                       const googleIdentity = (user?.identities || []).find((i: any) => i.provider === "google");

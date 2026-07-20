@@ -7,8 +7,9 @@ interface PlayerSlugBadgeProps {
 }
 
 /**
- * Debug/verification chip — mostra userSlug + nome da rádio de forma discreta,
- * posicionado à esquerda do botão "?" (ajuda) no canto inferior direito.
+ * Debug/verification chip — mostra userSlug + nome da rádio de forma discreta.
+ * Renderiza inline; o container pai (flex items-center) o alinha verticalmente
+ * ao centro do botão de ajuda "?".
  */
 export default function PlayerSlugBadge({ slug, radioName, radioUserId }: PlayerSlugBadgeProps) {
   const shownSlug = slug && slug !== ":userSlug" ? slug : "—";
@@ -17,10 +18,8 @@ export default function PlayerSlugBadge({ slug, radioName, radioUserId }: Player
 
   return (
     <div
-      className="fixed z-[9998] pointer-events-none select-none flex items-center gap-1.5 text-[10px] leading-none"
+      className="pointer-events-none select-none flex items-center gap-1.5 text-[10px] leading-none"
       style={{
-        bottom: "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)",
-        right: "calc(4.75rem + 2.5rem + 5rem)", // clear "?" (36px) + gap + nexo logo (~80px) + edge margin
         fontFamily: "'Lufga', 'Inter', system-ui, sans-serif",
         color: "rgba(255,255,255,0.55)",
         letterSpacing: "0.01em",

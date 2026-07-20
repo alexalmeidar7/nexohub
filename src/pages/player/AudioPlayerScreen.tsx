@@ -825,7 +825,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         filter: exiting ? "blur(6px)" : "blur(0)",
       }}
     >
-      <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -1575,6 +1574,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Help + logo */}
           <div className="flex items-center gap-3">
+            <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
             <div className="relative group">
               <button
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
