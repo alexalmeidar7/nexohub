@@ -1555,33 +1555,39 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Poll for current music data
   useEffect(() => {
+    const isSlugMode = !!(userSlug && userSlug !== ":userSlug");
+    // Reset ao trocar de slug para nunca exibir dados da rádio anterior
+    setNowPlaying(null);
+
     const fetchMusic = async () => {
-      // Em modo público/slug, sempre prioriza os dados do usuário da URL
-      if (userSlug && userSlug !== ":userSlug") {
+      // Em modo público/slug, SEMPRE usa apenas os dados do usuário da URL.
+      // Nunca faz fallback para localStorage/DB do usuário logado (evita mistura entre rádios).
+      if (isSlugMode) {
         try {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
           if (data?.musica) {
             setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
-            return;
+          } else {
+            setNowPlaying(null);
           }
-        } catch {}
+        } catch {
+          setNowPlaying(null);
+        }
+        return;
       }
 
       const userId = user?.id;
-
-      // Try localStorage first only for authenticated owner mode
-      if (userId) {
-        try {
-          const raw = localStorage.getItem("masterview_music_data");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.titulo) { setNowPlaying({ musica: formatTrackText(parsed.titulo), artista: formatTrackText(parsed.artista || ""), capa: parsed.capa || "" }); return; }
-          }
-        } catch {}
-      }
-
-      // Fallback to DB
       if (!userId) return;
+
+      // Owner autenticado sem slug: localStorage e DB do próprio usuário
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.titulo) { setNowPlaying({ musica: formatTrackText(parsed.titulo), artista: formatTrackText(parsed.artista || ""), capa: parsed.capa || "" }); return; }
+        }
+      } catch {}
+
       try {
         const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (data) setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista) });
@@ -2004,6 +2010,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Hero channel = first streaming channel
   const heroChannel = streamingChannels[0];
+  const { bgColors: top10Colors } = useBgPalette(heroChannel?.logo_url || undefined);
+  const top10Gradient = `radial-gradient(ellipse at 20% 20%, ${top10Colors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${top10Colors[1]} 0%, transparent 65%), linear-gradient(135deg, ${top10Colors[0]} 0%, ${top10Colors[1]} 100%)`;
 
 
   return (
@@ -2152,7 +2160,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             width: "260px",
                             height: "160px",
                             borderRadius: "22px",
-                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+                            background: top10Gradient,
                             border: "1px solid rgba(255,255,255,0.08)",
                             fontFamily: "'Lufga', system-ui, sans-serif",
                           }}
