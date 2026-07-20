@@ -149,6 +149,7 @@ function TopNavBar({
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
   const [musicResults, setMusicResults] = useState<{ musica: string; artista: string }[]>([]);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -157,13 +158,21 @@ function TopNavBar({
   const musicSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { bgColors, prevBgColors, fadeIn } = useBgPalette(paletteSource);
 
+  // Debounce único (400ms) — só dispara buscas após o usuário parar de digitar.
+  // Mínimo de 2 caracteres para evitar consultas ruidosas.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    const t = setTimeout(() => setDebouncedQuery(q.length >= 2 ? q : ""), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
-    const q = searchQuery.trim();
+    const q = debouncedQuery;
     const scopedMusicUserId = musicUserId || radioUserId || userId;
     if (!q || !scopedMusicUserId) { setMusicResults([]); return; }
-    musicSearchTimer.current = setTimeout(async () => {
+    let cancelled = false;
+    (async () => {
       const { data } = await supabase
         .from("musicas_tocadas")
         .select("musica, artista")
@@ -171,28 +180,28 @@ function TopNavBar({
         .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
         .order("created_at", { ascending: false })
         .limit(10);
-      if (data) {
-        const seen = new Set<string>();
-        setMusicResults(data.filter(m => {
-          const key = `${m.musica}|${m.artista}`;
-          if (seen.has(key)) return false;
-          seen.add(key);
-          return true;
-        }));
-      }
-    }, 300);
-    return () => { if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current); };
-  }, [searchQuery, userId, radioUserId, musicUserId]);
+      if (cancelled || !data) return;
+      const seen = new Set<string>();
+      setMusicResults(data.filter(m => {
+        const key = `${m.musica}|${m.artista}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }));
+    })();
+    return () => { cancelled = true; };
+  }, [debouncedQuery, userId, radioUserId, musicUserId]);
 
   const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = debouncedQuery.toLowerCase();
     if (!q) return { channels: [] as Channel[], programas: [] as Programa[] };
     return {
       channels: channels.filter(ch => ch.name.toLowerCase().includes(q) || (ch.catalog_name && ch.catalog_name.toLowerCase().includes(q))),
       programas: programas.filter(p => p.nome.toLowerCase().includes(q) || p.descricao?.toLowerCase().includes(q)),
     };
-  }, [searchQuery, channels, programas]);
+  }, [debouncedQuery, channels, programas]);
 
+  const isTyping = searchQuery.trim().length >= 2 && debouncedQuery !== searchQuery.trim();
   const hasResults = searchResults.channels.length > 0 || searchResults.programas.length > 0 || musicResults.length > 0;
   const showDropdown = searchFocused && searchQuery.trim().length > 0;
 
