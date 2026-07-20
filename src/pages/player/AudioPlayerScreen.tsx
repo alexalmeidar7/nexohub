@@ -338,11 +338,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
   const coverCacheRef = useRef<Map<string, string>>(new Map());
+  // Cache de imagens já decodificadas (warm cache) para crossfade instantâneo
+  const decodedCoversRef = useRef<Set<string>>(new Set());
+  const warmCover = (url?: string | null) => {
+    if (!url) return;
+    if (decodedCoversRef.current.has(url)) return;
+    decodedCoversRef.current.add(url);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      (img as any).fetchPriority = "high";
+      img.src = url;
+      if ((img as any).decode) {
+        (img as any).decode().catch(() => {});
+      }
+    } catch {}
+  };
   const fetchCover = async (artista: string, musica: string): Promise<string | undefined> => {
     const key = `${(artista || "").toLowerCase()}|${(musica || "").toLowerCase()}`;
     if (!key.trim() || key === "|") return undefined;
     const cached = coverCacheRef.current.get(key);
-    if (cached !== undefined) return cached || undefined;
+    if (cached !== undefined) {
+      if (cached) warmCover(cached);
+      return cached || undefined;
+    }
     try {
       const q = encodeURIComponent(`${artista} ${musica}`.trim());
       const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
@@ -350,6 +369,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       const j = await r.json();
       const url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
       coverCacheRef.current.set(key, url);
+      if (url) warmCover(url);
       return url || undefined;
     } catch {
       coverCacheRef.current.set(key, "");
@@ -386,11 +406,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         }
         return withCached;
       });
-      // Busca capas faltantes das primeiras 12 em paralelo
-      const targets = withCached.slice(0, 12).filter((t) => !t.capa);
+      // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
+      withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
+      // Busca capas faltantes das primeiras 24 em paralelo (janela navegável do carrossel)
+      const targets = withCached.slice(0, 24).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
         const cover = await fetchCover(t.artista, t.musica);
         if (!cancelled && cover) {
+          warmCover(cover);
           setHistory((prev) => prev.map((p) => (p.artista === t.artista && p.musica === t.musica ? { ...p, capa: cover } : p)));
         }
       }));
@@ -459,22 +482,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const DAY_FULL = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
     const now = new Date();
     const hhmmNow = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-    const afterTime = currentProg?.horario_fim ? String(currentProg.horario_fim).slice(0, 5) : hhmmNow;
+    // Excluir programa atual, mas não filtrar por horario_fim (pode não estar setado)
+    const currentId = currentProg?.id ? String(currentProg.id) : null;
     const inDay = (p: any, d: Date) => {
       const dias = p?.dias_semana || [];
       if (!dias.length) return true;
       return dias.includes(DAY_SHORT[d.getDay()]) || dias.includes(DAY_FULL[d.getDay()]);
     };
-    const todayList = programas
-      .filter((p) => p?.ativo && inDay(p, now) && String(p.horario_inicio || "").slice(0, 5) >= afterTime)
-      .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
-    const result: any[] = [...todayList];
-    if (result.length < 8) {
-      const t = new Date(now); t.setDate(t.getDate() + 1);
-      const tomorrowList = programas
-        .filter((p) => p?.ativo && inDay(p, t))
+    const result: any[] = [];
+    // Varre os próximos 7 dias para garantir algo sempre
+    for (let offset = 0; offset < 7 && result.length < 8; offset++) {
+      const d = new Date(now); d.setDate(d.getDate() + offset);
+      const list = programas
+        .filter((p) => {
+          if (!p?.ativo) return false;
+          if (!inDay(p, d)) return false;
+          if (currentId && String(p.id) === currentId) return false;
+          if (offset === 0) {
+            const hi = String(p.horario_inicio || "").slice(0, 5);
+            if (hi && hi < hhmmNow) return false;
+          }
+          return true;
+        })
         .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
-      result.push(...tomorrowList);
+      result.push(...list);
     }
     const seen = new Set<string>();
     return result.filter((p) => {
