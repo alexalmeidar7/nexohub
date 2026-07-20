@@ -144,7 +144,11 @@ export default function PlayerHub() {
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
             const programThumb = pickCurrentProgramThumb(data.programas);
-            setChannelBg(programThumb || pickChannelThumb(data.channels));
+            const bg = programThumb || pickChannelThumb(data.channels);
+            if (bg) {
+              preloadAsLinkTag(bg);
+              preloadImage(bg).finally(() => setChannelBg(bg));
+            }
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
