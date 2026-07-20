@@ -2642,12 +2642,27 @@ function PollDialog({
 }) {
   const [selected, setSelected] = useState<number | null>(previousVote ?? null);
   const [submitted, setSubmitted] = useState(alreadyVoted);
+  const [visible, setVisible] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  // Ativa o estado de entrada no próximo frame para disparar a transição CSS.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
+    setVisible(false);
+    window.setTimeout(() => onClose(), 220);
+  }, [closing, onClose]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   const submit = () => {
     if (selected == null) return;
@@ -2658,8 +2673,13 @@ function PollDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out] pointer-events-none"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: "opacity 220ms ease-out",
+      }}
     >
+
 
       <div
         role="dialog"
