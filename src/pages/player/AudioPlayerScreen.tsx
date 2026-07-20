@@ -2549,12 +2549,21 @@ function InteractivityMenu({
         <PollDialog
           poll={activePoll}
           alreadyVoted={alreadyVoted}
+          previousVote={(() => {
+            try {
+              const raw = localStorage.getItem(`nexo:poll:voted:${activePoll.id}`);
+              if (!raw) return null;
+              const n = parseInt(raw, 10);
+              return Number.isFinite(n) && n >= 0 ? n : null;
+            } catch { return null; }
+          })()}
           onClose={() => setPollOpen(false)}
-          onVoted={() => {
-            localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, "1");
+          onVoted={(optionIndex) => {
+            localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, String(optionIndex));
             setAlreadyVoted(true);
           }}
         />
+
       )}
 
       <style>{`
@@ -2605,14 +2614,15 @@ function MenuItem({
 }
 
 function PollDialog({
-  poll, alreadyVoted, onClose, onVoted,
+  poll, alreadyVoted, previousVote, onClose, onVoted,
 }: {
   poll: ActivePoll;
   alreadyVoted: boolean;
+  previousVote?: number | null;
   onClose: () => void;
-  onVoted: () => void;
+  onVoted: (optionIndex: number) => void;
 }) {
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(previousVote ?? null);
   const [submitted, setSubmitted] = useState(alreadyVoted);
 
   useEffect(() => {
@@ -2624,8 +2634,9 @@ function PollDialog({
   const submit = () => {
     if (selected == null) return;
     setSubmitted(true);
-    onVoted();
+    onVoted(selected);
   };
+
 
   return (
     <div
