@@ -1059,9 +1059,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </div>
 
 
-          {/* NOW PLAYING CARD */}
+          {/* NOW PLAYING CARD + Botão grade */}
+          <div className="flex flex-col items-center gap-3 flex-shrink-0">
           <div
-            className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)] flex-shrink-0"
+            className="relative rounded-[40px] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.7)]"
             style={{ width: 368, height: 384, background: gradient }}
             data-focusable
           >
@@ -1159,37 +1160,147 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </div>
           </div>
 
-          {/* UP NEXT */}
-          <div className="flex-1 pl-4">
-            <div className="max-w-[220px]">
-              <div className="text-[11px] uppercase tracking-widest text-white/50">a seguir</div>
-              <div className="text-lg font-semibold leading-snug mt-1">{nextProg?.nome || "—"}</div>
-              {nextProg && (
-                <div className="text-xs text-white/60 mt-1">
-                  {hhmm(nextProg.horario_inicio)}/{hhmm(nextProg.horario_fim)}
-                </div>
-              )}
-              <button
-                onClick={() => setGradeOpen(true)}
-                className="mt-4 w-10 h-10 rounded-full flex items-center justify-center border border-white/25 hover:bg-white/10 transition"
-                aria-label="Ver grade"
-                data-focusable
-              >
-                <Plus size={18} />
-              </button>
+          {/* Botão + centralizado abaixo do card NO AR */}
+          <button
+            onClick={() => setGradeOpen(true)}
+            className="w-11 h-11 rounded-full flex items-center justify-center border border-white/25 hover:bg-white/10 transition"
+            aria-label="Ver grade completa de programação"
+            title="Grade de programação"
+            data-focusable
+          >
+            <Plus size={20} />
+          </button>
 
-              {/* Karaokê inline — aparece abaixo do botão + quando ativado */}
-              {karaokeEnabled && (
-                <Suspense fallback={null}>
-                  <InlineKaraoke
-                    enabled={karaokeEnabled}
-                    artist={musicData?.artista}
-                    title={musicData?.titulo}
-                    duration={musicData?.duracao}
-                    audioElement={audioRef.current}
+          {/* Karaokê inline — aparece abaixo do botão + quando ativado */}
+          {karaokeEnabled && (
+            <Suspense fallback={null}>
+              <InlineKaraoke
+                enabled={karaokeEnabled}
+                artist={musicData?.artista}
+                title={musicData?.titulo}
+                duration={musicData?.duracao}
+                audioElement={audioRef.current}
+              />
+            </Suspense>
+          )}
+          </div>
+
+          {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
+          <div
+            className="relative flex-1 h-[420px]"
+            style={{ perspective: "1200px" }}
+            aria-label="Próximos programas — use as setas para navegar"
+          >
+            {upcomingProgs.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goPrevUp}
+                  disabled={upcomingIndex <= 0}
+                  aria-label="Programa anterior"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={goNextUp}
+                  disabled={upcomingIndex >= upcomingMax}
+                  aria-label="Próximo programa"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </>
+            )}
+            <div className="absolute inset-0 flex items-center justify-start pl-4">
+              {upcomingProgs.length === 0 && Array.from({ length: 4 }).map((_, i) => {
+                const depth = i;
+                const scale = 1 - Math.min(depth, 5) * 0.055;
+                const translateX = depth * 72;
+                const opacity = Math.max(0, 0.9 - depth * 0.18);
+                const size = i === 0 ? 280 : 240;
+                return (
+                  <div
+                    key={`skeleton-up-${i}`}
+                    className="absolute left-0 rounded-[32px] overflow-hidden animate-pulse"
+                    style={{
+                      width: size,
+                      height: size,
+                      transform: `translateX(${translateX}px) scale(${scale})`,
+                      opacity,
+                      background: "linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      zIndex: 20 - depth,
+                    }}
                   />
-                </Suspense>
-              )}
+                );
+              })}
+              {upcomingProgs.slice(0, UPCOMING_VISIBLE).map((p, i) => {
+                const depth = i - upcomingIndex;
+                const abs = Math.abs(depth);
+                const scale = 1 - Math.min(abs, 5) * 0.055;
+                const translateX = depth * 72;
+                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
+                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
+                const isActive = depth === 0;
+                const isFirst = i === 0;
+                const cover = p?.thumb || p?.capa || null;
+                return (
+                  <div
+                    key={`up-${p?.id || i}`}
+                    className="absolute left-0 rounded-[32px] overflow-hidden shadow-2xl"
+                    style={{
+                      width: isActive ? 280 : 240,
+                      height: isActive ? 280 : 240,
+                      transform: `translateX(${translateX}px) scale(${scale})`,
+                      opacity,
+                      filter: `blur(${blur}px)`,
+                      background: "#111",
+                      zIndex: 20 - abs,
+                      transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
+                      boxShadow: isFirst
+                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
+                        : isActive
+                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+                          : undefined,
+                    }}
+                  >
+                    {cover ? (
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `url(${cover})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+                        <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
+                      </div>
+                    )}
+                    <div
+                      className="absolute inset-x-0 bottom-0 h-1/2 pointer-events-none"
+                      style={{ background: "linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.88) 100%)" }}
+                    />
+                    {isFirst && (
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+                        a seguir
+                      </div>
+                    )}
+                    <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
+                      {hhmm(p?.horario_inicio)}
+                    </div>
+                    <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+                      <div className="text-[10px] uppercase tracking-widest text-white/80">
+                        {hhmm(p?.horario_inicio)}/{hhmm(p?.horario_fim)}
+                      </div>
+                      <div className="text-sm font-bold leading-tight truncate">{p?.nome || "—"}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
