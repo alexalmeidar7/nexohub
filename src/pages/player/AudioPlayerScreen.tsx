@@ -195,6 +195,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
   const currentProgId = currentProg?.id ? String(currentProg.id) : null;
   const [programLiked, setProgramLiked] = useState<boolean>(false);
+  const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   useEffect(() => {
     if (!currentProgId) { setProgramLiked(false); return; }
     try {
@@ -884,7 +885,54 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
             />
-            <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
+            <div className="relative">
+              <PillBtn
+                label="músicas tocadas"
+                icon={<ListMusic size={12} />}
+                onClick={() => setPlayedListOpen((v) => !v)}
+                active={playedListOpen}
+              />
+              {playedListOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60]"
+                    onClick={() => setPlayedListOpen(false)}
+                  />
+                  <div
+                    className="absolute left-0 top-[calc(100%+8px)] z-[61] w-[380px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/50 border-b border-white/10 mb-1 sticky top-0 bg-black/80 backdrop-blur-xl">
+                      Últimas {history.length} músicas
+                    </div>
+                    {history.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-[12px] text-white/50">
+                        Nenhuma música registrada ainda.
+                      </div>
+                    ) : (
+                      history.map((t, i) => (
+                        <div
+                          key={`${t.horario}-${i}`}
+                          className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-white/8 transition"
+                        >
+                          <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
+                            {(t.horario || "").slice(0, 5)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
+                              {t.musica}
+                            </div>
+                            <div className="text-[10.5px] uppercase tracking-[0.1em] text-white/55 truncate mt-0.5" title={t.artista}>
+                              {t.artista}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
         </div>
 
@@ -899,40 +947,57 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           )}
           {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
-            <button
-              onClick={() => setWatchProfileOpen(!watchProfileOpen)}
-              className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
-              data-focusable
-              aria-label="Abrir perfil"
-              aria-expanded={watchProfileOpen}
-              title={userDisplayName || "Perfil"}
-            >
-              <span
-                className="relative w-10 h-10 rounded-full p-[2px]"
-                style={{
-                  background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
-                }}
+            <div className="relative">
+              <button
+                onClick={() => setWatchProfileOpen(!watchProfileOpen)}
+                className="group relative flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/5 hover:bg-white/12 border border-white/15 hover:border-white/35 backdrop-blur-xl transition-all duration-300 hover:scale-[1.03] shadow-[0_4px_16px_rgba(0,0,0,0.35)]"
+                data-focusable
+                aria-label="Abrir perfil"
+                aria-expanded={watchProfileOpen}
+                title={userDisplayName || "Perfil"}
               >
-                <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
-                <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
-                  {profileAvatar ? (
-                    <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
-                      {(userDisplayName || "U").trim().charAt(0)}
-                    </span>
-                  )}
+                <span
+                  className="relative w-10 h-10 rounded-full p-[2px]"
+                  style={{
+                    background: "conic-gradient(from 140deg, #ffffff, rgba(255,255,255,0.25), #ffffff)",
+                  }}
+                >
+                  <span className="absolute inset-0 rounded-full opacity-60 blur-md" style={{ background: "conic-gradient(from 140deg, rgba(255,255,255,0.8), rgba(255,255,255,0.05))" }} />
+                  <span className="relative block w-full h-full rounded-full overflow-hidden bg-black">
+                    {profileAvatar ? (
+                      <img src={profileAvatar} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="w-full h-full flex items-center justify-center text-white/90 text-[13px] font-semibold uppercase">
+                        {(userDisplayName || "U").trim().charAt(0)}
+                      </span>
+                    )}
+                  </span>
                 </span>
-                
-              </span>
-              <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
-                <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
-                <span className="text-[12px] font-semibold text-white truncate max-w-[140px]">
-                  {userDisplayName || "Usuário"}
+                <span className="hidden md:flex flex-col items-start leading-tight max-w-[140px]">
+                  <span className="text-[9px] uppercase tracking-[0.18em] text-white/55">perfil</span>
+                  <span className="text-[12px] font-semibold text-white truncate max-w-[140px]">
+                    {userDisplayName || "Usuário"}
+                  </span>
                 </span>
-              </span>
-              <ChevronDown size={14} className="text-white/70 group-hover:text-white transition-transform duration-300 group-hover:translate-y-0.5" />
-            </button>
+                <ChevronDown size={14} className="text-white/70 group-hover:text-white transition-transform duration-300 group-hover:translate-y-0.5" />
+              </button>
+              {watchProfileOpen && (
+                <Suspense fallback={null}>
+                  <WatchProfilePopup
+                    userId={user.id}
+                    userName={userDisplayName}
+                    userEmail={userEmail ?? user?.email ?? null}
+                    avatarUrl={profileAvatar}
+                    radioName={empresaNome || undefined}
+                    onClose={() => setWatchProfileOpen(false)}
+                    onEditProfile={onEditProfile}
+                    onSwitchProfile={onSwitchProfile}
+                    onAvatarChange={onAvatarChange}
+                    onLogout={async () => { await signOut(); window.location.href = "/"; }}
+                  />
+                </Suspense>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -1570,23 +1635,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Profile popup */}
-      {watchProfileOpen && user && (
-        <Suspense fallback={null}>
-          <WatchProfilePopup
-            userId={user.id}
-            userName={userDisplayName}
-            userEmail={userEmail ?? user?.email ?? null}
-            avatarUrl={profileAvatar}
-            radioName={empresaNome || undefined}
-            onClose={() => setWatchProfileOpen(false)}
-            onEditProfile={onEditProfile}
-            onSwitchProfile={onSwitchProfile}
-            onAvatarChange={onAvatarChange}
-            onLogout={async () => { await signOut(); window.location.href = "/"; }}
-          />
-        </Suspense>
-      )}
 
       <style>{`
         @keyframes audioHistIn {
