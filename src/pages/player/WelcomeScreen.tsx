@@ -323,9 +323,9 @@ export default function WelcomeScreen({
   const lastArtistRef = useRef<string | null>(null);
   const alternateTimerRef = useRef<number | null>(null);
 
-  // Delay background reveal by 1.5s so text/avatar show first
+  // Small delay so text/avatar animate in first, but keep bg reveal snappy
   useEffect(() => {
-    const t = setTimeout(() => setBgVisible(true), 1500);
+    const t = setTimeout(() => setBgVisible(true), 300);
     return () => clearTimeout(t);
   }, []);
 
@@ -750,8 +750,10 @@ export default function WelcomeScreen({
         );
       })()}
 
-      {/* Left-aligned welcome layout */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-start px-8 sm:px-14 pt-10 sm:pt-14 animate-fade-in">
+      {/* Welcome layout — left when logged in, centered for guests */}
+      <div
+        className={`absolute inset-0 z-10 flex flex-col ${user ? "justify-start px-8 sm:px-14 pt-10 sm:pt-14 items-start" : "justify-center items-center px-6 sm:px-10"} animate-fade-in`}
+      >
         {/* Heading */}
         <h1
           className="font-semibold leading-tight lowercase"
@@ -759,13 +761,15 @@ export default function WelcomeScreen({
             fontSize: "clamp(22px, 2.4vw, 34px)",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 20px rgba(0,0,0,0.55)",
+            textAlign: user ? "left" : "center",
           }}
         >
           {user ? "bem vindo de volta" : "bem vindo"}
         </h1>
 
-        {/* Avatar + info row */}
-        <div className="mt-8 sm:mt-10 flex items-start gap-5">
+        {/* Avatar + info row (or centered login buttons for guests) */}
+        <div className={`mt-8 sm:mt-10 flex ${user ? "items-start gap-5" : "items-center justify-center w-full"}`}>
+
           {user ? (
             <>
               <div className="flex flex-col gap-3 shrink-0">
@@ -1011,47 +1015,65 @@ export default function WelcomeScreen({
 
             </>
           ) : (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setAuthMode("login")}
-                data-ws-focusable="true"
-                disabled={signingIn}
-                aria-busy={signingIn}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: "rgba(255,255,255,0.12)",
-                  border: "1px solid rgba(255,255,255,0.20)",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                {signingIn ? (
-                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
-                ) : (
-                  <LogIn className="w-4 h-4" />
-                )}
-                {signingIn ? "autenticando..." : "entrar"}
-              </button>
-              <button
-                onClick={() => setAuthMode("signup")}
-                data-ws-focusable="true"
-                disabled={signingIn}
-                aria-busy={signingIn}
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium lowercase transition-all hover:scale-[1.03] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.16)",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                {signingIn && (
-                  <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
-                )}
-                cadastre-se
-              </button>
+            <div className="w-full flex items-center justify-center gap-5">
+              {[
+                { key: "login", label: "entrar", icon: <LogIn className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: true },
+                { key: "signup", label: "cadastre-se", icon: <Plus className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: false },
+              ].map((btn) => (
+                <button
+                  key={btn.key}
+                  onClick={() => setAuthMode(btn.key as "login" | "signup")}
+                  data-ws-focusable="true"
+                  disabled={signingIn}
+                  aria-busy={signingIn}
+                  aria-label={btn.label}
+                  className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px] disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <div
+                    className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04] flex flex-col items-center justify-center gap-2"
+                    style={{
+                      width: "clamp(140px, 13vw, 180px)",
+                      height: "clamp(140px, 13vw, 180px)",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                    }}
+                  >
+                    {prevBgColors && (
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: btn.primary
+                            ? `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})`
+                            : `linear-gradient(145deg, ${prevBgColors[1]}, ${prevBgColors[0]})`,
+                        }}
+                      />
+                    )}
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background: btn.primary
+                          ? `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`
+                          : `linear-gradient(145deg, ${bgColors[1]}, ${bgColors[0]})`,
+                        opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                        transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                      }}
+                    />
+                    <div className="relative flex items-center justify-center w-11 h-11 rounded-full" style={{ background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.16)", backdropFilter: "blur(6px)" }}>
+                      {signingIn && btn.primary ? (
+                        <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
+                      ) : btn.icon}
+                    </div>
+                    <span className="relative text-white text-sm font-medium lowercase" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}>
+                      {signingIn && btn.primary ? "autenticando..." : btn.label}
+                    </span>
+                  </div>
+                </button>
+              ))}
             </div>
           )}
         </div>
       </div>
+
 
       {/* Logout Confirmation */}
       <Dialog open={logoutConfirmOpen} onOpenChange={(v) => { if (!loggingOut) setLogoutConfirmOpen(v); }}>
