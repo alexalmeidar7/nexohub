@@ -1705,6 +1705,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <span>você pode voltar a programação em {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
           </div>
         </div>
+        </>)}
 
         {/* play row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
