@@ -139,16 +139,40 @@ Deno.serve(async (req) => {
       // but for bootstrap we mostly need the userId.
     } else {
       const slugLower = slug.toLowerCase();
-      const { data, error: profileError } = await supabase
+      // 1) prefix exato: slug@...
+      let { data, error: profileError } = await supabase
         .from("profiles")
         .select("user_id, email")
         .ilike("email", `${slugLower}@%`)
         .limit(1)
         .maybeSingle();
-
       if (profileError) throw profileError;
-      
-      if (data?.user_id) {
+
+      // 2) fallback: prefix largo (slug*@...) — ex.: "interativafm" -> "interativafmgynaovivo@..."
+      if (!data?.user_id) {
+        const { data: d2 } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .ilike("email", `${slugLower}%@%`)
+          .limit(1)
+          .maybeSingle();
+        if (d2?.user_id) data = d2 as any;
+      }
+
+      // 3) fallback: sub-user por prefix — resolve para o pai
+      if (!data?.user_id) {
+        const { data: sub } = await supabase
+          .from("sub_users")
+          .select("auth_user_id, parent_user_id, ativo")
+          .ilike("email", `${slugLower}%@%`)
+          .limit(1)
+          .maybeSingle();
+        if (sub?.auth_user_id) {
+          userId = (sub.ativo && sub.parent_user_id) ? sub.parent_user_id : sub.auth_user_id;
+        }
+      }
+
+      if (!userId && data?.user_id) {
         userId = data.user_id;
         matchedProfile = data;
       }
