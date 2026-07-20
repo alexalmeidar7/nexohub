@@ -6,10 +6,33 @@ import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
+import { preloadImage } from "@/hooks/usePreloadImages";
 import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
+
+// Injects <link rel="preload" as="image"> for the LCP background so the
+// browser starts downloading the program cover in the highest-priority queue,
+// in parallel with the React render tree, before <WelcomeScreen /> mounts.
+function preloadAsLinkTag(url: string) {
+  if (typeof document === "undefined" || !url) return;
+  const existing = document.head.querySelector(
+    `link[rel="preload"][data-nexo-welcome-bg="1"]`,
+  ) as HTMLLinkElement | null;
+  if (existing) {
+    if (existing.href === url) return;
+    existing.remove();
+  }
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = "image";
+  link.href = url;
+  (link as any).fetchPriority = "high";
+  link.crossOrigin = "anonymous";
+  link.setAttribute("data-nexo-welcome-bg", "1");
+  document.head.appendChild(link);
+}
 
 type Step = "splash" | "access" | "welcome" | "home";
 
@@ -101,7 +124,13 @@ export default function PlayerHub() {
           setChannelName(empRes.data.nome || "");
         }
         const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null);
-        setChannelBg(programThumb || pickChannelThumb(chRes.data as any[] | null));
+        const bg = programThumb || pickChannelThumb(chRes.data as any[] | null);
+        if (bg) {
+          preloadAsLinkTag(bg);
+          preloadImage(bg).finally(() => setChannelBg(bg));
+        } else {
+          setChannelBg(null);
+        }
         setDataReady(true);
         return;
       }
@@ -115,7 +144,11 @@ export default function PlayerHub() {
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
             const programThumb = pickCurrentProgramThumb(data.programas);
-            setChannelBg(programThumb || pickChannelThumb(data.channels));
+            const bg = programThumb || pickChannelThumb(data.channels);
+            if (bg) {
+              preloadAsLinkTag(bg);
+              preloadImage(bg).finally(() => setChannelBg(bg));
+            }
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
