@@ -124,7 +124,13 @@ export default function PlayerHub() {
           setChannelName(empRes.data.nome || "");
         }
         const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null);
-        setChannelBg(programThumb || pickChannelThumb(chRes.data as any[] | null));
+        const bg = programThumb || pickChannelThumb(chRes.data as any[] | null);
+        if (bg) {
+          preloadAsLinkTag(bg);
+          preloadImage(bg).finally(() => setChannelBg(bg));
+        } else {
+          setChannelBg(null);
+        }
         setDataReady(true);
         return;
       }
