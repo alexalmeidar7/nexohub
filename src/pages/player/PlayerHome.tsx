@@ -1870,6 +1870,29 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const currentPresenterName = useMemo(() => resolvePresenter(currentProgram), [currentProgram, resolvePresenter]);
   const nextPresenterName = useMemo(() => resolvePresenter(nextProgram), [nextProgram, resolvePresenter]);
 
+  // Preload covers/thumbs/presenter photos while user is on Home,
+  // so entering /player/watch shows imagery instantly.
+  useEffect(() => {
+    const urls: string[] = [];
+    programas.forEach((p) => {
+      if (p.capa) urls.push(p.capa);
+      if (p.thumb) urls.push(p.thumb);
+    });
+    channels.forEach((c) => {
+      if (c.cover_url) urls.push(c.cover_url);
+      if (c.logo_url) urls.push(c.logo_url);
+      if (c.background_url) urls.push(c.background_url);
+    });
+    const seen = new Set<string>();
+    urls.forEach((u) => {
+      if (!u || seen.has(u)) return;
+      seen.add(u);
+      preloadImage(u).catch(() => {});
+    });
+    preloadLocutorImages(apresentadores.map((a) => a.foto));
+  }, [programas, apresentadores, channels]);
+
+
 
   const streamingChannels = channels.filter(ch => ch.type === "video_live" || ch.type === "audio_live");
   const catalogChannels = channels.filter(ch => ch.type === "catalog");
