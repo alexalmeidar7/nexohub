@@ -2549,12 +2549,21 @@ function InteractivityMenu({
         <PollDialog
           poll={activePoll}
           alreadyVoted={alreadyVoted}
+          previousVote={(() => {
+            try {
+              const raw = localStorage.getItem(`nexo:poll:voted:${activePoll.id}`);
+              if (!raw) return null;
+              const n = parseInt(raw, 10);
+              return Number.isFinite(n) && n >= 0 ? n : null;
+            } catch { return null; }
+          })()}
           onClose={() => setPollOpen(false)}
-          onVoted={() => {
-            localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, "1");
+          onVoted={(optionIndex) => {
+            localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, String(optionIndex));
             setAlreadyVoted(true);
           }}
         />
+
       )}
 
       <style>{`
