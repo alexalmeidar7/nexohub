@@ -1165,19 +1165,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onPointerDown={(e) => {
               // Ignora eventos vindos das setas/botões para não roubar o clique
               if ((e.target as HTMLElement).closest("button")) return;
-              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
-              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
-              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeX = String(e.clientX);
+              el.dataset.swipeAnchor = String(activeIndex);
+              el.dataset.swipeActive = "1";
+              try { el.setPointerCapture(e.pointerId); } catch {}
             }}
             onPointerMove={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               if (el.dataset.swipeActive !== "1") return;
               const startX = Number(el.dataset.swipeX || 0);
+              const anchor = Number(el.dataset.swipeAnchor || 0);
               const dx = e.clientX - startX;
-              if (Math.abs(dx) > 50) {
-                el.dataset.swipeActive = "0";
-                if (dx < 0) goNext(); else goPrev();
-              }
+              const STEP = 90; // px por capa
+              const delta = Math.round(-dx / STEP); // arrastar p/ esquerda avança no histórico
+              const next = Math.max(0, Math.min(carouselMax, anchor + delta));
+              if (next !== activeIndex) setActiveIndex(next);
             }}
             onPointerUp={(e) => {
               const el = e.currentTarget as HTMLDivElement;
@@ -1185,6 +1188,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               try { el.releasePointerCapture(e.pointerId); } catch {}
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("left") }}
             aria-label="Histórico de músicas — arraste ou use as setas para navegar"
@@ -1473,18 +1477,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div
             onPointerDown={(e) => {
               if ((e.target as HTMLElement).closest("button")) return;
-              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
-              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
-              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeX = String(e.clientX);
+              el.dataset.swipeAnchor = String(upcomingIndex);
+              el.dataset.swipeActive = "1";
+              try { el.setPointerCapture(e.pointerId); } catch {}
             }}
             onPointerMove={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               if (el.dataset.swipeActive !== "1") return;
-              const dx = e.clientX - Number(el.dataset.swipeX || 0);
-              if (Math.abs(dx) > 50) {
-                el.dataset.swipeActive = "0";
-                if (dx < 0) goNextUp(); else goPrevUp();
-              }
+              const startX = Number(el.dataset.swipeX || 0);
+              const anchor = Number(el.dataset.swipeAnchor || 0);
+              const dx = e.clientX - startX;
+              const STEP = 90;
+              const delta = Math.round(-dx / STEP);
+              const next = Math.max(0, Math.min(upcomingMax, anchor + delta));
+              if (next !== upcomingIndex) setUpcomingIndex(next);
             }}
             onPointerUp={(e) => {
               const el = e.currentTarget as HTMLDivElement;
@@ -1492,6 +1500,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               try { el.releasePointerCapture(e.pointerId); } catch {}
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("right") }}
             aria-label="Próximos programas — arraste ou use as setas para navegar"
@@ -2370,8 +2379,8 @@ function InteractivityMenu({
         aria-label="Interatividade"
         aria-expanded={open}
         data-focusable
-        className="relative h-7 w-7 rounded-full flex items-center justify-center outline-none group"
-        style={{ padding: 2 }}
+        className="relative h-7 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        style={{ padding: 2, transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
       >
         {/* borda animada (conic gradient girando) */}
         <span
@@ -2394,9 +2403,18 @@ function InteractivityMenu({
             animation: "interactSpin 3.6s linear infinite",
           }}
         />
-        {/* núcleo */}
-        <span className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center">
-          <Sparkles size={12} className="text-white" strokeWidth={2.2} />
+        {/* núcleo — expande no hover para revelar o texto */}
+        <span
+          className="relative z-10 h-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-1.5 px-1.5 group-hover:pl-2 group-hover:pr-3 group-focus-visible:pl-2 group-focus-visible:pr-3"
+          style={{ transition: "padding 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+        >
+          <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
+          <span
+            className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
+            style={{ transition: "max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out 60ms" }}
+          >
+            Interatividade
+          </span>
         </span>
         {/* badge de notificação (enquete ativa não votada) */}
         {hasNotif && (
@@ -2407,6 +2425,7 @@ function InteractivityMenu({
           />
         )}
       </button>
+
 
       {/* Submenu */}
       {open && (
