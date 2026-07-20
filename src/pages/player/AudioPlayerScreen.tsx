@@ -1672,95 +1672,219 @@ function detectReducedMotion(): boolean {
   } catch { return false; }
 }
 
-function UpcomingProgramCard({
+/**
+ * ProgramShowcaseCard — card unificado usado tanto para o programa NO AR
+ * quanto para os próximos programas. Layout: foto do locutor centralizada
+ * com fundo em degradê extraído das duas cores dominantes da foto.
+ */
+export function ProgramShowcaseCard({
   program,
   apresentadores,
-  isActive,
-  isFirst,
+  variant = "upcoming",
+  isActive = true,
+  isFirst = false,
+  radius = 32,
+  fallbackTitle,
+  progressPct,
+  liked,
+  onToggleLike,
+  onImageLoad,
 }: {
   program: any;
   apresentadores: any[];
-  isActive: boolean;
-  isFirst: boolean;
+  variant?: "live" | "upcoming";
+  isActive?: boolean;
+  isFirst?: boolean;
+  radius?: number;
+  fallbackTitle?: string;
+  progressPct?: number;
+  liked?: boolean;
+  onToggleLike?: () => void;
+  onImageLoad?: (url: string) => void;
 }) {
+  const isLive = variant === "live";
+
   const apresentador = useMemo(() => {
     if (!program?.apresentador_id) return null;
     return apresentadores?.find((a) => a.id === program.apresentador_id) || null;
   }, [program, apresentadores]);
 
-  const foto: string | null = apresentador?.foto || program?.thumb || program?.capa || null;
+  const foto: string | null =
+    apresentador?.foto || program?.thumb || program?.capa || null;
+
   const palette = useCoverPalette(foto);
+  const contrast = getPaletteContrast(palette);
   const gradient = palette
     ? `linear-gradient(135deg, ${palette.primary} 0%, ${palette.secondary} 100%)`
     : "linear-gradient(135deg, #1f2937 0%, #0b0f1a 100%)";
 
-  const [imgState, setImgState] = useState<"loading" | "loaded" | "error">(foto ? "loading" : "error");
+  const [imgState, setImgState] = useState<"loading" | "loaded" | "error">(
+    foto ? "loading" : "error"
+  );
   useEffect(() => { setImgState(foto ? "loading" : "error"); }, [foto]);
 
   const iniciais = useMemo(() => {
-    const nome = apresentador?.nome || program?.nome || "";
-    return String(nome).split(/\s+/).filter(Boolean).slice(0, 2).map((s: string) => s[0]?.toUpperCase() || "").join("") || "•";
-  }, [apresentador, program]);
+    const nome = apresentador?.nome || program?.nome || fallbackTitle || "";
+    return (
+      String(nome)
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((s: string) => s[0]?.toUpperCase() || "")
+        .join("") || "•"
+    );
+  }, [apresentador, program, fallbackTitle]);
+
+  const boxShadow = isLive
+    ? "0 30px 80px rgba(0,0,0,0.7)"
+    : isFirst
+      ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
+      : isActive
+        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+        : "0 20px 40px rgba(0,0,0,0.5)";
+
+  const avatarSize = isLive ? 96 : 64;
+  const avatarPt = isLive ? 56 : 32;
+  const titleClass = isLive
+    ? "text-2xl font-bold leading-tight"
+    : "text-sm font-bold leading-tight truncate";
+  const subtitleClass = isLive ? "text-[12px] opacity-80 mt-0.5" : "text-[10px] uppercase tracking-widest text-white/80";
+  const badgeLabel = isLive ? "no ar" : "a seguir";
+  const showBadge = isLive || isFirst;
+
+  const textColor = isLive ? (contrast?.textColor || "#fff") : "#fff";
+  const textShadow = isLive ? contrast?.textShadow : "0 2px 8px rgba(0,0,0,0.6)";
 
   return (
     <div
-      className="relative w-full h-full rounded-[32px] overflow-hidden"
-      style={{
-        background: gradient,
-        boxShadow: isFirst
-          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.45), 0 0 24px rgba(255,255,255,0.14)"
-          : isActive
-            ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
-            : "0 20px 40px rgba(0,0,0,0.5)",
-      }}
+      className="relative w-full h-full overflow-hidden"
+      style={{ borderRadius: radius, background: gradient, boxShadow }}
+      data-focusable={isLive || undefined}
     >
+      {/* foto locutor */}
       {foto && imgState !== "error" ? (
-        <img
-          src={foto}
-          alt={apresentador?.nome || program?.nome || ""}
-          onLoad={() => setImgState("loaded")}
-          onError={() => setImgState("error")}
-          className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
-          style={{
-            maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
-            opacity: imgState === "loaded" ? 0.95 : 0,
-          }}
-        />
+        <>
+          <img
+            src={foto}
+            alt={apresentador?.nome || program?.nome || ""}
+            onLoad={() => {
+              setImgState("loaded");
+              if (foto) onImageLoad?.(foto);
+            }}
+            onError={() => setImgState("error")}
+            className="absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500"
+            style={{
+              maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+              WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+              opacity: imgState === "loaded" ? 0.95 : 0,
+            }}
+          />
+          {imgState === "loading" && (
+            <div
+              className="absolute inset-0 animate-pulse"
+              style={{
+                background:
+                  "linear-gradient(110deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0.04) 100%)",
+                maskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+                WebkitMaskImage: "linear-gradient(180deg, #000 55%, transparent 100%)",
+              }}
+            />
+          )}
+        </>
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-start pt-8 pointer-events-none gap-2">
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-start pointer-events-none gap-3"
+          style={{ paddingTop: avatarPt }}
+        >
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white/85 text-lg font-semibold border border-white/15 backdrop-blur-md"
-            style={{ background: "rgba(255,255,255,0.08)" }}
+            className="rounded-full flex items-center justify-center text-white/85 font-semibold border border-white/15 backdrop-blur-md"
+            style={{
+              width: avatarSize,
+              height: avatarSize,
+              fontSize: isLive ? 22 : 16,
+              background: "rgba(255,255,255,0.08)",
+            }}
           >
             {iniciais}
           </div>
+          {isLive && <Music2 size={60} className="text-white/10" strokeWidth={1} />}
         </div>
       )}
 
       {/* overlay para legibilidade */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)" }}
+        style={{
+          background: isLive
+            ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.55) 100%)"
+            : "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.65) 100%)",
+        }}
       />
 
-      {isFirst && (
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-          a seguir
+      {/* badge */}
+      {showBadge && (
+        isLive ? (
+          <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-[11px] font-medium bg-black/55 backdrop-blur-md border border-white/10">
+            {badgeLabel}
+          </div>
+        ) : (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
+            {badgeLabel}
+          </div>
+        )
+      )}
+
+      {/* horário no canto (upcoming) */}
+      {!isLive && (
+        <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
+          {hhmm(program?.horario_inicio)}
         </div>
       )}
-      <div className="absolute top-3 right-3 text-[11px] px-2 py-0.5 rounded-md bg-black/60 text-white/85">
-        {hhmm(program?.horario_inicio)}
-      </div>
-      <div className="absolute bottom-3 left-3 right-3" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-        <div className="text-[10px] uppercase tracking-widest text-white/80">
-          {hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}
-        </div>
-        <div className="text-sm font-bold leading-tight truncate text-white">{program?.nome || "—"}</div>
+
+      {/* like (live) */}
+      {isLive && onToggleLike && (
+        <button
+          onClick={onToggleLike}
+          className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-black/45 hover:bg-black/70 border border-white/10 transition"
+          data-focusable
+          aria-label={liked ? "Descurtir programa" : "Curtir programa"}
+          aria-pressed={!!liked}
+          title={liked ? "Você curtiu este programa" : "Curtir este programa"}
+        >
+          <Heart size={18} fill={liked ? "#ffffff" : "none"} stroke="#ffffff" />
+        </button>
+      )}
+
+      {/* rodapé — infos do programa */}
+      <div
+        className={isLive ? "absolute bottom-4 left-5 right-5" : "absolute bottom-3 left-3 right-3"}
+        style={{ color: textColor, textShadow }}
+      >
+        {isLive && <div className="text-[11px] uppercase tracking-widest opacity-80">no ar</div>}
+        <div className={titleClass}>{program?.nome || fallbackTitle || "—"}</div>
+        {isLive ? (
+          <div className={subtitleClass}>
+            {program ? `${hhmm(program.horario_inicio)}/${hhmm(program.horario_fim)}` : ""}
+          </div>
+        ) : (
+          <div className={subtitleClass}>
+            {hhmm(program?.horario_inicio)}/{hhmm(program?.horario_fim)}
+          </div>
+        )}
+        {isLive && typeof progressPct === "number" && (
+          <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
+            <div
+              className="h-full bg-white transition-all duration-700"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+
 
 function NowCoverCrossfade({ capa, isActive }: { capa?: string | null; isActive: boolean }) {
   const [layers, setLayers] = useState<Array<{ id: number; url: string }>>(() =>
