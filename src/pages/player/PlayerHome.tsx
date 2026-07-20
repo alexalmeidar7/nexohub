@@ -542,6 +542,11 @@ function HeroBanner({
     if (backgroundUrl) preloadImage(backgroundUrl);
   }, [backgroundUrl, artistImg]);
 
+  // Palette derived from the channel background thumb for the Ouvir card
+  const { bgColors: ouvirColors } = useBgPalette(backgroundUrl || undefined);
+  const ouvirGradient = `radial-gradient(ellipse at 20% 20%, ${ouvirColors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${ouvirColors[1]} 0%, transparent 65%), linear-gradient(135deg, ${ouvirColors[0]} 0%, ${ouvirColors[1]} 100%)`;
+
+
   const [bgIdx, setBgIdx] = useState(0);
   useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
   useEffect(() => {
@@ -621,8 +626,9 @@ function HeroBanner({
           className="relative overflow-hidden text-left group transition-transform duration-300 hover:scale-[1.03]"
           style={{
             ...cardBase,
-            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+            background: ouvirGradient,
             border: "1px solid rgba(255,255,255,0.08)",
+
           }}
         >
           {/* Presenter photo pinned right */}
