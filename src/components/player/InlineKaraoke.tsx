@@ -31,6 +31,24 @@ interface Props {
 
 const DEFAULT_LATENCY = 30; // seconds (streaming buffer)
 const OFFSET_KEY = "player_karaoke_offset_v1";
+const AUTOSYNC_KEY = "player_karaoke_autosync_v1";
+const HISTORY_KEY = "player_karaoke_offset_history_v1"; // last user-confirmed offsets
+
+function loadOffsetHistory(): number[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((n) => Number.isFinite(n)).slice(-8) : [];
+  } catch { return []; }
+}
+function pushOffsetHistory(value: number) {
+  try {
+    const arr = loadOffsetHistory();
+    arr.push(value);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(-8)));
+  } catch {}
+}
 
 export default function InlineKaraoke({ enabled, artist, title, duration, audioElement, onClose }: Props) {
 
@@ -41,6 +59,9 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [idx, setIdx] = useState(-1);
+  const [autoSync, setAutoSync] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTOSYNC_KEY) !== "false"; } catch { return true; }
+  });
   const [offset, setOffset] = useState<number>(() => {
     try {
       const v = parseFloat(localStorage.getItem(OFFSET_KEY) || "");
@@ -50,9 +71,51 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   const lastKeyRef = useRef<string | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  // Drift-correction state: track manual adjustments within the current song
+  // to derive a linear drift rate (seconds of offset shift per second played).
+  const driftRef = useRef<{ points: Array<{ at: number; offset: number }>; rate: number; baseAt: number; baseOffset: number }>({
+    points: [], rate: 0, baseAt: 0, baseOffset: 0,
+  });
+  const commitTimerRef = useRef<number | null>(null);
+  const songStartMsRef = useRef<number>(Date.now());
+
   useEffect(() => {
     try { localStorage.setItem(OFFSET_KEY, String(offset)); } catch {}
+    // debounce commit into history + drift regression
+    if (commitTimerRef.current) window.clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = window.setTimeout(() => {
+      pushOffsetHistory(offset);
+      // register drift point (seconds since song start → confirmed offset)
+      const secs = Math.max(0.1, (Date.now() - songStartMsRef.current) / 1000);
+      const pts = driftRef.current.points;
+      pts.push({ at: secs, offset });
+      // keep last 6 within this song
+      while (pts.length > 6) pts.shift();
+      // linear regression rate (least squares, slope)
+      if (pts.length >= 2) {
+        const n = pts.length;
+        const sx = pts.reduce((s, p) => s + p.at, 0);
+        const sy = pts.reduce((s, p) => s + p.offset, 0);
+        const sxx = pts.reduce((s, p) => s + p.at * p.at, 0);
+        const sxy = pts.reduce((s, p) => s + p.at * p.offset, 0);
+        const denom = n * sxx - sx * sx;
+        const slope = denom !== 0 ? (n * sxy - sx * sy) / denom : 0;
+        // clamp to plausible drift (±0.5s per minute → ±0.0083/s)
+        driftRef.current.rate = Math.max(-0.01, Math.min(0.01, slope));
+        driftRef.current.baseAt = secs;
+        driftRef.current.baseOffset = offset;
+      } else {
+        driftRef.current.rate = 0;
+        driftRef.current.baseAt = secs;
+        driftRef.current.baseOffset = offset;
+      }
+    }, 700);
   }, [offset]);
+
+  useEffect(() => {
+    try { localStorage.setItem(AUTOSYNC_KEY, String(autoSync)); } catch {}
+  }, [autoSync]);
+
 
   // Fetch lyrics on song change
   useEffect(() => {
