@@ -853,13 +853,34 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — navegação por setas */}
+          {/* HISTORY CAROUSEL — navegação por setas e swipe */}
           <div
             ref={carouselRef}
             onWheel={handleCarouselWheel}
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const startX = Number(el.dataset.swipeX || 0);
+              const dx = e.clientX - startX;
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNext(); else goPrev();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Histórico de músicas — use as setas para navegar"
+            aria-label="Histórico de músicas — arraste ou use as setas para navegar"
           >
             {/* Setas de navegação */}
             {history.length > 1 && (
@@ -992,9 +1013,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
                       <>
-                        <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                          tocando
+                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
+                          <span aria-hidden className="flex items-end gap-[2px] h-3">
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: '0ms' }} />
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '100%', animationDelay: '150ms' }} />
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '65%', animationDelay: '300ms' }} />
+                          </span>
+                          <span>Tocando agora</span>
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
@@ -1187,9 +1212,29 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
           <div
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const dx = e.clientX - Number(el.dataset.swipeX || 0);
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNextUp(); else goPrevUp();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Próximos programas — use as setas para navegar"
+            aria-label="Próximos programas — arraste ou use as setas para navegar"
           >
             {upcomingProgs.length > 1 && (
               <>
