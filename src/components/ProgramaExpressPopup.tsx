@@ -581,10 +581,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         });
       });
 
-      const blob = new Blob([xmlContent], { type: "application/xml" });
+      const blob = new Blob([xmlContent], { type: "application/xml; charset=utf-8" });
       const fileName = `express_${programaId}_${Date.now()}.xml`;
       const filePath = `express/${user.id}/${fileName}`;
-      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml; charset=utf-8" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
