@@ -338,11 +338,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   // ---- Histórico (últimas 50) ----
   const [history, setHistory] = useState<HistoryTrack[]>([]);
   const coverCacheRef = useRef<Map<string, string>>(new Map());
+  // Cache de imagens já decodificadas (warm cache) para crossfade instantâneo
+  const decodedCoversRef = useRef<Set<string>>(new Set());
+  const warmCover = (url?: string | null) => {
+    if (!url) return;
+    if (decodedCoversRef.current.has(url)) return;
+    decodedCoversRef.current.add(url);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      (img as any).fetchPriority = "high";
+      img.src = url;
+      if ((img as any).decode) {
+        (img as any).decode().catch(() => {});
+      }
+    } catch {}
+  };
   const fetchCover = async (artista: string, musica: string): Promise<string | undefined> => {
     const key = `${(artista || "").toLowerCase()}|${(musica || "").toLowerCase()}`;
     if (!key.trim() || key === "|") return undefined;
     const cached = coverCacheRef.current.get(key);
-    if (cached !== undefined) return cached || undefined;
+    if (cached !== undefined) {
+      if (cached) warmCover(cached);
+      return cached || undefined;
+    }
     try {
       const q = encodeURIComponent(`${artista} ${musica}`.trim());
       const r = await fetch(`https://itunes.apple.com/search?term=${q}&media=music&limit=1`, { signal: AbortSignal.timeout(4000) });
@@ -350,6 +369,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       const j = await r.json();
       const url = j?.results?.[0]?.artworkUrl100?.replace("100x100", "600x600") || "";
       coverCacheRef.current.set(key, url);
+      if (url) warmCover(url);
       return url || undefined;
     } catch {
       coverCacheRef.current.set(key, "");
