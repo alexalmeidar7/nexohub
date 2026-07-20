@@ -2379,8 +2379,9 @@ function InteractivityMenu({
         aria-label="Interatividade"
         aria-expanded={open}
         data-focusable
-        className="relative h-7 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        className="relative h-7 w-7 hover:w-auto focus-visible:w-auto rounded-full flex items-center justify-center outline-none group overflow-hidden"
         style={{ padding: 2, transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+
       >
         {/* borda animada (conic gradient girando) */}
         <span
