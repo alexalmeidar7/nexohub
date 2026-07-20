@@ -58,7 +58,6 @@ export default function PlayerHub() {
       if (!channels || channels.length === 0) return null;
       const live = channels.filter((c) => c?.active !== false && (c?.type === "audio_live" || c?.type === "video_live"));
       const pool = live.length > 0 ? live : channels;
-      // Priority: logo_url (Thumb do Canal 1920×1080) → cover_url (Capa 1080×1920) → background_url (Logo)
       const found =
         pool.find((c) => c?.logo_url) ||
         pool.find((c) => c?.cover_url) ||
@@ -67,18 +66,42 @@ export default function PlayerHub() {
       return found?.logo_url || found?.cover_url || found?.background_url || null;
     };
 
+    const normalizeWeekday = (v: string) =>
+      v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const DAY_MAP: Record<string, string> = { "0": "dom", "1": "seg", "2": "ter", "3": "qua", "4": "qui", "5": "sex", "6": "sab" };
+    const matchesDay = (dias: string[] | null | undefined, d: Date) => {
+      if (!dias || dias.length === 0) return true;
+      const today = DAY_MAP[String(d.getDay())];
+      return dias.some((x) => normalizeWeekday(x).startsWith(today));
+    };
+    const pickCurrentProgramThumb = (programs: any[] | null | undefined): string | null => {
+      if (!programs || programs.length === 0) return null;
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const current = programs.find((p) => {
+        if (!p?.horario_inicio || !p?.horario_fim) return false;
+        const s = String(p.horario_inicio).slice(0, 5);
+        const e = String(p.horario_fim).slice(0, 5);
+        return hhmm >= s && hhmm < e && matchesDay(p.dias_semana, now);
+      });
+      if (!current) return null;
+      return current.thumb || current.capa || null;
+    };
+
     const fetchLogo = async () => {
       const userId = user?.id;
       if (userId) {
-        const [empRes, chRes] = await Promise.all([
+        const [empRes, chRes, progRes] = await Promise.all([
           supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
           supabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
+          supabase.from("programas").select("horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
         ]);
         if (empRes.data) {
           setLogoUrl(empRes.data.logo);
           setChannelName(empRes.data.nome || "");
         }
-        setChannelBg(pickChannelThumb(chRes.data as any[] | null));
+        const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null);
+        setChannelBg(programThumb || pickChannelThumb(chRes.data as any[] | null));
         setDataReady(true);
         return;
       }
@@ -91,7 +114,8 @@ export default function PlayerHub() {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
-            setChannelBg(pickChannelThumb(data.channels));
+            const programThumb = pickCurrentProgramThumb(data.programas);
+            setChannelBg(programThumb || pickChannelThumb(data.channels));
           } else {
             console.warn("public-player-data error:", error || data?.error);
           }
