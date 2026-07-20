@@ -853,13 +853,34 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — navegação por setas */}
+          {/* HISTORY CAROUSEL — navegação por setas e swipe */}
           <div
             ref={carouselRef}
             onWheel={handleCarouselWheel}
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const startX = Number(el.dataset.swipeX || 0);
+              const dx = e.clientX - startX;
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNext(); else goPrev();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Histórico de músicas — use as setas para navegar"
+            aria-label="Histórico de músicas — arraste ou use as setas para navegar"
           >
             {/* Setas de navegação */}
             {history.length > 1 && (
@@ -956,8 +977,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
-                      transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
-                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 700ms cubic-bezier(.22,1,.36,1)" : undefined,
+                      willChange: "transform, opacity, filter",
+                      transition:
+                        "transform 620ms cubic-bezier(.22,1,.36,1), " +
+                        "opacity 520ms cubic-bezier(.4,0,.2,1), " +
+                        "filter 520ms cubic-bezier(.4,0,.2,1), " +
+                        "width 520ms cubic-bezier(.22,1,.36,1), " +
+                        "height 520ms cubic-bezier(.22,1,.36,1), " +
+                        "box-shadow 620ms cubic-bezier(.22,1,.36,1)",
+                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
                       boxShadow: isNow
                         ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
                         : isActive
@@ -1191,9 +1219,29 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
           <div
-            className="relative flex-1 h-[420px]"
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
+              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
+              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerMove={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              if (el.dataset.swipeActive !== "1") return;
+              const dx = e.clientX - Number(el.dataset.swipeX || 0);
+              if (Math.abs(dx) > 50) {
+                el.dataset.swipeActive = "0";
+                if (dx < 0) goNextUp(); else goPrevUp();
+              }
+            }}
+            onPointerUp={(e) => {
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeActive = "0";
+              try { el.releasePointerCapture(e.pointerId); } catch {}
+            }}
+            onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+            className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px" }}
-            aria-label="Próximos programas — use as setas para navegar"
+            aria-label="Próximos programas — arraste ou use as setas para navegar"
           >
             {upcomingProgs.length > 1 && (
               <>
@@ -1479,8 +1527,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       <style>{`
         @keyframes audioHistIn {
-          from { transform: translateX(140px) scale(1.08); opacity: 0; filter: blur(6px) grayscale(0%); }
-          to   { transform: translateX(0) scale(1);        opacity: 0.85; filter: blur(0) grayscale(60%); }
+          0%   { transform: translateX(180px) scale(1.12) rotate(1.5deg); opacity: 0; filter: blur(10px) grayscale(0%) brightness(1.15); box-shadow: 0 40px 80px rgba(0,0,0,0.8), 0 0 0 2px rgba(255,255,255,0.7), 0 0 60px rgba(255,255,255,0.35); }
+          55%  { transform: translateX(-8px) scale(1.03) rotate(-0.3deg); opacity: 1;  filter: blur(1.5px) grayscale(0%) brightness(1.06); }
+          100% { transform: translateX(0) scale(1) rotate(0deg);           opacity: 1;  filter: blur(0) grayscale(0%) brightness(1); box-shadow: 0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18); }
         }
       `}</style>
     </div>
