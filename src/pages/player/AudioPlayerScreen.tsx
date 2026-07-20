@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import {
@@ -459,22 +459,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const DAY_FULL = ["domingo", "segunda", "terca", "quarta", "quinta", "sexta", "sabado"];
     const now = new Date();
     const hhmmNow = String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
-    const afterTime = currentProg?.horario_fim ? String(currentProg.horario_fim).slice(0, 5) : hhmmNow;
+    // Excluir programa atual, mas não filtrar por horario_fim (pode não estar setado)
+    const currentId = currentProg?.id ? String(currentProg.id) : null;
     const inDay = (p: any, d: Date) => {
       const dias = p?.dias_semana || [];
       if (!dias.length) return true;
       return dias.includes(DAY_SHORT[d.getDay()]) || dias.includes(DAY_FULL[d.getDay()]);
     };
-    const todayList = programas
-      .filter((p) => p?.ativo && inDay(p, now) && String(p.horario_inicio || "").slice(0, 5) >= afterTime)
-      .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
-    const result: any[] = [...todayList];
-    if (result.length < 8) {
-      const t = new Date(now); t.setDate(t.getDate() + 1);
-      const tomorrowList = programas
-        .filter((p) => p?.ativo && inDay(p, t))
+    const result: any[] = [];
+    // Varre os próximos 7 dias para garantir algo sempre
+    for (let offset = 0; offset < 7 && result.length < 8; offset++) {
+      const d = new Date(now); d.setDate(d.getDate() + offset);
+      const list = programas
+        .filter((p) => {
+          if (!p?.ativo) return false;
+          if (!inDay(p, d)) return false;
+          if (currentId && String(p.id) === currentId) return false;
+          if (offset === 0) {
+            const hi = String(p.horario_inicio || "").slice(0, 5);
+            if (hi && hi < hhmmNow) return false;
+          }
+          return true;
+        })
         .sort((a, b) => String(a.horario_inicio).localeCompare(String(b.horario_inicio)));
-      result.push(...tomorrowList);
+      result.push(...list);
     }
     const seen = new Set<string>();
     return result.filter((p) => {
@@ -835,8 +843,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               voltar
             </button>
             <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
-            <PillBtn label="chat" icon={<MessageSquare size={12} />} onClick={() => setChatOpen(!chatOpen)} />
-            <PillBtn active={karaokeEnabled} label="karaoke" icon={<Mic size={12} />} onClick={() => setKaraokeEnabled(!karaokeEnabled)} />
+            <InteractivityMenu
+              userId={effectiveUserId}
+              chatOpen={chatOpen}
+              onToggleChat={() => setChatOpen(!chatOpen)}
+              karaokeEnabled={karaokeEnabled}
+              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+            />
             <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
           </nav>
         </div>
@@ -1730,3 +1743,352 @@ function BgFadeLayer({ gradient, initialOpacity }: { gradient: string; initialOp
     />
   );
 }
+
+/* =========================================================================
+   Interatividade — botão especial (borda animada) com submenu
+   Contém: Chat, Karaoke e Enquete. Sinaliza quando há enquete ativa.
+   ========================================================================= */
+type ActivePoll = {
+  id: string;
+  pergunta: string;
+  respostas: string[];
+  horario_inicio: string;
+  horario_fim: string;
+};
+
+function InteractivityMenu({
+  userId,
+  chatOpen,
+  onToggleChat,
+  karaokeEnabled,
+  onToggleKaraoke,
+}: {
+  userId: string | null;
+  chatOpen: boolean;
+  onToggleChat: () => void;
+  karaokeEnabled: boolean;
+  onToggleKaraoke: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pollOpen, setPollOpen] = useState(false);
+  const [activePoll, setActivePoll] = useState<ActivePoll | null>(null);
+  const [alreadyVoted, setAlreadyVoted] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const hasNotif = !!activePoll && !alreadyVoted;
+
+  // Busca enquete ativa (data = hoje, horário dentro do intervalo)
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const fetchActive = async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const now = new Date();
+        const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const { data, error } = await supabase
+          .from("enquetes_agendadas")
+          .select("id,pergunta,resposta1,resposta2,resposta3,resposta4,horario_inicio,horario_fim")
+          .eq("user_id", userId)
+          .eq("data_enquete", today)
+          .lte("horario_inicio", hhmm)
+          .gte("horario_fim", hhmm)
+          .order("horario_inicio", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (cancelled || error) return;
+        if (!data) { setActivePoll(null); return; }
+        const respostas = [data.resposta1, data.resposta2, data.resposta3, data.resposta4].filter(Boolean) as string[];
+        setActivePoll({
+          id: data.id,
+          pergunta: data.pergunta,
+          respostas,
+          horario_inicio: data.horario_inicio,
+          horario_fim: data.horario_fim,
+        });
+        const votedKey = `nexo:poll:voted:${data.id}`;
+        setAlreadyVoted(!!localStorage.getItem(votedKey));
+      } catch { /* silencioso */ }
+    };
+    fetchActive();
+    const id = window.setInterval(fetchActive, 60_000);
+    return () => { cancelled = true; window.clearInterval(id); };
+  }, [userId]);
+
+  // Fecha submenu ao clicar fora
+  useEffect(() => {
+    if (!open) return;
+    const onDoc = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {/* Botão principal — icon-only com borda animada */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Interatividade"
+        aria-expanded={open}
+        data-focusable
+        className="relative h-7 w-7 rounded-full flex items-center justify-center outline-none group"
+        style={{ padding: 2 }}
+      >
+        {/* borda animada (conic gradient girando) */}
+        <span
+          aria-hidden
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
+            animation: "interactSpin 3.6s linear infinite",
+            filter: "saturate(1.15)",
+          }}
+        />
+        {/* halo suave */}
+        <span
+          aria-hidden
+          className="absolute -inset-[3px] rounded-full opacity-70 blur-[6px] group-hover:opacity-100 transition-opacity"
+          style={{
+            background:
+              "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
+            animation: "interactSpin 3.6s linear infinite",
+          }}
+        />
+        {/* núcleo */}
+        <span className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center">
+          <Sparkles size={12} className="text-white" strokeWidth={2.2} />
+        </span>
+        {/* badge de notificação (enquete ativa não votada) */}
+        {hasNotif && (
+          <span
+            aria-hidden
+            className="absolute -top-0.5 -right-0.5 z-20 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0b0b10]"
+            style={{ boxShadow: "0 0 0 0 rgba(239,68,68,0.7)", animation: "interactPulse 1.6s ease-out infinite" }}
+          />
+        )}
+      </button>
+
+      {/* Submenu */}
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-[calc(100%+8px)] z-50 min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/85 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeIn_140ms_ease-out]"
+        >
+          <MenuItem
+            active={chatOpen}
+            icon={<MessageSquare size={14} />}
+            label="Chat"
+            onClick={() => { onToggleChat(); setOpen(false); }}
+          />
+          <MenuItem
+            active={karaokeEnabled}
+            icon={<Mic size={14} />}
+            label="Karaokê"
+            onClick={() => { onToggleKaraoke(); setOpen(false); }}
+          />
+          <MenuItem
+            active={false}
+            icon={<BarChart3 size={14} />}
+            label="Enquete"
+            hint={activePoll ? (alreadyVoted ? "respondida" : "ativa agora") : "sem enquete"}
+            dot={hasNotif}
+            disabled={!activePoll}
+            onClick={() => { setPollOpen(true); setOpen(false); }}
+          />
+        </div>
+      )}
+
+      {/* Popup da enquete */}
+      {pollOpen && activePoll && (
+        <PollDialog
+          poll={activePoll}
+          alreadyVoted={alreadyVoted}
+          onClose={() => setPollOpen(false)}
+          onVoted={() => {
+            localStorage.setItem(`nexo:poll:voted:${activePoll.id}`, "1");
+            setAlreadyVoted(true);
+          }}
+        />
+      )}
+
+      <style>{`
+        @keyframes interactSpin { to { transform: rotate(360deg); } }
+        @keyframes interactPulse {
+          0%   { box-shadow: 0 0 0 0 rgba(239,68,68,0.55); }
+          70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+          100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+      `}</style>
+    </div>
+  );
+}
+
+function MenuItem({
+  icon, label, hint, active, disabled, dot, onClick,
+}: {
+  icon: React.ReactNode; label: string; hint?: string;
+  active?: boolean; disabled?: boolean; dot?: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={
+        "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[12px] transition text-left " +
+        (disabled
+          ? "text-white/35 cursor-not-allowed"
+          : active
+            ? "bg-white/12 text-white"
+            : "text-white/85 hover:bg-white/10 hover:text-white")
+      }
+    >
+      <span className="relative flex items-center justify-center w-5 h-5">
+        {icon}
+        {dot && (
+          <span className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+        )}
+      </span>
+      <span className="flex-1 leading-none">{label}</span>
+      {hint && (
+        <span className={"text-[10px] uppercase tracking-wider " + (dot ? "text-red-400" : "text-white/40")}>{hint}</span>
+      )}
+    </button>
+  );
+}
+
+function PollDialog({
+  poll, alreadyVoted, onClose, onVoted,
+}: {
+  poll: ActivePoll;
+  alreadyVoted: boolean;
+  onClose: () => void;
+  onVoted: () => void;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const [submitted, setSubmitted] = useState(alreadyVoted);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const submit = () => {
+    if (selected == null) return;
+    setSubmitted(true);
+    onVoted();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out]"
+      onClick={onClose}
+    >
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md rounded-2xl border border-white/12 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden"
+      >
+        {/* Cabeçalho com faixa animada */}
+        <div className="relative px-5 pt-5 pb-3">
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-[3px]"
+            style={{
+              background: "linear-gradient(90deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
+              backgroundSize: "200% 100%",
+              animation: "interactStripe 3s linear infinite",
+            }}
+          />
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.2em] text-white/50 flex items-center gap-1.5">
+                <BarChart3 size={11} /> Enquete ao vivo
+              </div>
+              <h3 className="mt-1.5 text-[16px] font-semibold text-white leading-snug">{poll.pergunta}</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition"
+              aria-label="Fechar"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        {/* Opções */}
+        <div className="px-5 pb-4 space-y-2">
+          {poll.respostas.map((r, i) => {
+            const isSel = selected === i;
+            return (
+              <button
+                key={i}
+                disabled={submitted}
+                onClick={() => setSelected(i)}
+                className={
+                  "w-full text-left px-3.5 py-2.5 rounded-xl border text-[13px] transition " +
+                  (submitted
+                    ? isSel
+                      ? "border-white/40 bg-white/10 text-white"
+                      : "border-white/8 bg-white/3 text-white/55"
+                    : isSel
+                      ? "border-white/45 bg-white/12 text-white"
+                      : "border-white/10 bg-white/4 text-white/85 hover:bg-white/10 hover:border-white/25")
+                }
+              >
+                <span className="inline-flex items-center gap-2">
+                  <span className={
+                    "inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold " +
+                    (isSel ? "bg-white text-black" : "bg-white/10 text-white/70")
+                  }>
+                    {isSel ? <Check size={12} /> : String.fromCharCode(65 + i)}
+                  </span>
+                  {r}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Rodapé */}
+        <div className="px-5 pb-5 flex items-center justify-between gap-3">
+          <div className="text-[10px] text-white/45 uppercase tracking-wider">
+            Ativa {poll.horario_inicio} – {poll.horario_fim}
+          </div>
+          {submitted ? (
+            <div className="text-[12px] text-emerald-300 flex items-center gap-1.5">
+              <Check size={14} /> Voto registrado
+            </div>
+          ) : (
+            <button
+              onClick={submit}
+              disabled={selected == null}
+              className={
+                "px-4 h-9 rounded-full text-[12px] font-semibold transition " +
+                (selected == null
+                  ? "bg-white/10 text-white/40 cursor-not-allowed"
+                  : "bg-white text-black hover:bg-white/90")
+              }
+            >
+              Enviar voto
+            </button>
+          )}
+        </div>
+
+        <style>{`
+          @keyframes interactStripe { to { background-position: -200% 0; } }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+
