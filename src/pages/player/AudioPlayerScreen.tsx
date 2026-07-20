@@ -2714,7 +2714,7 @@ function PollDialog({
               <h3 className="mt-1.5 text-[16px] font-semibold text-white leading-snug">{poll.pergunta}</h3>
             </div>
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition"
               aria-label="Fechar"
             >
