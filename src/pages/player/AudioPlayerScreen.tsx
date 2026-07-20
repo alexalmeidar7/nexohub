@@ -1258,25 +1258,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-3 h-[3px] w-full rounded-full bg-white/20 overflow-hidden">
                 <div className="h-full bg-white transition-all duration-700" style={{ width: `${progPct}%` }} />
               </div>
-              {/* música atual */}
-              {musicData?.titulo && (
-                <div className="mt-3 flex flex-col gap-0.5">
-                  <div
-                    className="text-[15px] font-semibold leading-tight truncate tracking-tight"
-                    title={musicData.titulo}
-                  >
-                    {musicData.titulo}
-                  </div>
-                  {musicData.artista && (
-                    <div
-                      className="text-[11px] uppercase tracking-[0.14em] opacity-70 truncate"
-                      title={musicData.artista}
-                    >
-                      {musicData.artista}
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
