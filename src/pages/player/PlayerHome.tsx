@@ -743,6 +743,19 @@ function HeroBanner({
                   <span className="text-white/80">Voltar</span>
                 </div>
               </div>
+
+              <div className="mt-4 pt-3 border-t border-white/10">
+                <p className="text-white text-[11px] font-semibold mb-1.5" style={{ fontFamily: "'Lufga', sans-serif" }}>
+                  Indicador ao lado
+                </p>
+                <p className="text-white/60 text-[10px] leading-relaxed">
+                  Mostra qual rádio está carregada agora:
+                  <span className="text-white/80"> slug</span> da URL ·
+                  <span className="text-white/80"> nome</span> da rádio ·
+                  <span className="text-white/80"> ID</span> do dono. Serve para confirmar que os dados
+                  (programação, música ao vivo, curtidas) pertencem à estação correta.
+                </p>
+              </div>
             </div>
             <div
               className="absolute -bottom-1.5 right-4 w-3 h-3 rotate-45"
