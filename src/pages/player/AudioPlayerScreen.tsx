@@ -1186,7 +1186,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
-            style={{ perspective: "1200px" }}
+            style={{ perspective: "1200px", ...sideEnterStyle("left") }}
             aria-label="Histórico de músicas — arraste ou use as setas para navegar"
           >
             {/* Setas de navegação */}
