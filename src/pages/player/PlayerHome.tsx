@@ -686,6 +686,7 @@ function HeroBanner({
 
       {/* Bottom-right help + nexo logo */}
       <div className="absolute bottom-4 sm:bottom-10 right-4 sm:right-10 z-10 flex items-center gap-3 sm:gap-4">
+        <PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={ownerUserId || user?.id || null} />
         <div className="relative group">
           <button
             className="w-9 h-9 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
