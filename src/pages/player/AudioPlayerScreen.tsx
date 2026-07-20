@@ -2399,9 +2399,17 @@ function InteractivityMenu({
         aria-label="Interatividade"
         aria-expanded={open}
         data-focusable
-        className="relative h-7 w-7 hover:w-auto focus-visible:w-auto rounded-full flex items-center justify-center outline-none group overflow-hidden"
-        style={{ padding: 2, transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
-
+        className="relative h-7 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        style={{
+          padding: 2,
+          width: "28px",
+          maxWidth: "28px",
+          transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "168px"; e.currentTarget.style.width = "168px"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "28px"; e.currentTarget.style.width = "28px"; }}
+        onFocus={(e) => { e.currentTarget.style.maxWidth = "168px"; e.currentTarget.style.width = "168px"; }}
+        onBlur={(e) => { e.currentTarget.style.maxWidth = "28px"; e.currentTarget.style.width = "28px"; }}
       >
         {/* borda animada (conic gradient girando) */}
         <span
@@ -2417,7 +2425,7 @@ function InteractivityMenu({
         {/* halo suave */}
         <span
           aria-hidden
-          className="absolute -inset-[3px] rounded-full opacity-70 blur-[6px] group-hover:opacity-100 transition-opacity"
+          className="absolute -inset-[3px] rounded-full opacity-70 blur-[6px] group-hover:opacity-100 transition-opacity duration-300"
           style={{
             background:
               "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
@@ -2426,14 +2434,13 @@ function InteractivityMenu({
         />
         {/* núcleo — expande no hover para revelar o texto */}
         <span
-          className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-1.5 group-hover:pl-2 group-hover:pr-3 group-focus-visible:pl-2 group-focus-visible:pr-3"
-          style={{ transition: "padding 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
-
+          className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-1.5 px-0 group-hover:px-2.5 group-focus-visible:px-2.5"
+          style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         >
           <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
           <span
             className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
-            style={{ transition: "max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out 60ms" }}
+            style={{ transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease-out 100ms" }}
           >
             Interatividade
           </span>
