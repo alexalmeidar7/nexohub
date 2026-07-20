@@ -195,6 +195,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
   const currentProgId = currentProg?.id ? String(currentProg.id) : null;
   const [programLiked, setProgramLiked] = useState<boolean>(false);
+  const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   useEffect(() => {
     if (!currentProgId) { setProgramLiked(false); return; }
     try {
@@ -884,7 +885,54 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
             />
-            <PillBtn label="músicas tocadas" icon={<ListMusic size={12} />} onClick={() => setGradeOpen(false)} />
+            <div className="relative">
+              <PillBtn
+                label="músicas tocadas"
+                icon={<ListMusic size={12} />}
+                onClick={() => setPlayedListOpen((v) => !v)}
+                active={playedListOpen}
+              />
+              {playedListOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60]"
+                    onClick={() => setPlayedListOpen(false)}
+                  />
+                  <div
+                    className="absolute left-0 top-[calc(100%+8px)] z-[61] w-[380px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/50 border-b border-white/10 mb-1 sticky top-0 bg-black/80 backdrop-blur-xl">
+                      Últimas {history.length} músicas
+                    </div>
+                    {history.length === 0 ? (
+                      <div className="px-3 py-6 text-center text-[12px] text-white/50">
+                        Nenhuma música registrada ainda.
+                      </div>
+                    ) : (
+                      history.map((t, i) => (
+                        <div
+                          key={`${t.horario}-${i}`}
+                          className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-white/8 transition"
+                        >
+                          <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
+                            {(t.horario || "").slice(0, 5)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
+                              {t.musica}
+                            </div>
+                            <div className="text-[10.5px] uppercase tracking-[0.1em] text-white/55 truncate mt-0.5" title={t.artista}>
+                              {t.artista}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
           </nav>
         </div>
 
