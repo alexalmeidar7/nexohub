@@ -108,23 +108,26 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [enabled, lines, audioElement, MUSIC_START_KEY, offset]);
 
-  // Show 2 previous, current, 2 upcoming for a rich centered view
+  // Render fixed 5 slots (-2..+2) with stable keys so lines animate between positions
   const window5 = useMemo(() => {
-    if (lines.length === 0) return [] as { line: LrcLine; rel: number }[];
+    if (lines.length === 0) return [] as { line: LrcLine; rel: number; key: string }[];
     const cur = Math.max(0, idx);
-    const out: { line: LrcLine; rel: number }[] = [];
+    const out: { line: LrcLine; rel: number; key: string }[] = [];
     for (let d = -2; d <= 2; d++) {
       const i = cur + d;
-      if (i >= 0 && i < lines.length) out.push({ line: lines[i], rel: d });
+      if (i >= 0 && i < lines.length) out.push({ line: lines[i], rel: d, key: `${lines[i].time}-${i}` });
     }
     return out;
   }, [lines, idx]);
 
   if (!enabled) return null;
 
+  const SLOT_PX = 34;      // vertical distance between slots
+  const CONTAINER_H = 168; // fixed container height → no page layout shift
+
   return (
     <div
-      className="mt-3 w-full max-w-[520px] mx-auto animate-fade-in"
+      className="mt-3 w-full max-w-[560px] mx-auto animate-fade-in"
       aria-live="polite"
       style={{
         padding: "18px 22px 16px",
@@ -141,23 +144,23 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-white/60">
           <Mic size={11} /> karaokê
         </div>
-        {/* Offset adjuster */}
+        {/* Offset adjuster — finer 0.25s steps */}
         <div className="flex items-center gap-1 text-white/70" title="Ajuste o atraso da letra para casar com o áudio">
           <button
-            onClick={() => setOffset((o) => Math.round((o + 0.5) * 10) / 10)}
+            onClick={() => setOffset((o) => Math.round((o + 0.25) * 100) / 100)}
             className="w-6 h-6 rounded-full flex items-center justify-center border border-white/15 hover:bg-white/10 transition"
-            aria-label="Atrasar letra 0,5s"
+            aria-label="Atrasar letra 0,25s"
             data-focusable
           >
             <Minus size={11} />
           </button>
           <div className="min-w-[54px] text-center text-[10px] tabular-nums text-white/80">
-            {offset > 0 ? `+${offset.toFixed(1)}s` : `${offset.toFixed(1)}s`}
+            {offset > 0 ? `+${offset.toFixed(2)}s` : `${offset.toFixed(2)}s`}
           </div>
           <button
-            onClick={() => setOffset((o) => Math.round((o - 0.5) * 10) / 10)}
+            onClick={() => setOffset((o) => Math.round((o - 0.25) * 100) / 100)}
             className="w-6 h-6 rounded-full flex items-center justify-center border border-white/15 hover:bg-white/10 transition"
-            aria-label="Adiantar letra 0,5s"
+            aria-label="Adiantar letra 0,25s"
             data-focusable
           >
             <Plus size={11} />
@@ -187,37 +190,53 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
 
 
       {loading && (
-        <div className="text-center text-[12px] text-white/60 italic py-6">buscando letra…</div>
+        <div className="text-center text-[12px] text-white/60 italic" style={{ height: CONTAINER_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          buscando letra…
+        </div>
       )}
 
       {!loading && notFound && (
-        <div className="text-center text-[13px] text-white/75 leading-snug italic py-6">
+        <div className="text-center text-[13px] text-white/75 leading-snug italic" style={{ height: CONTAINER_H, display: "flex", alignItems: "center", justifyContent: "center" }}>
           Ihh essa letra eu não aprendi ainda …
         </div>
       )}
 
-      {!loading && !notFound && window5.length > 0 && (
-        <div className="flex flex-col items-center justify-center gap-2 text-center" style={{ minHeight: 132 }}>
-          {window5.map(({ line, rel }, i) => {
+      {!loading && !notFound && lines.length > 0 && (
+        <div
+          className="relative overflow-hidden"
+          style={{
+            height: CONTAINER_H,
+            maskImage: "linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(180deg, transparent 0%, #000 22%, #000 78%, transparent 100%)",
+          }}
+        >
+          {window5.map(({ line, rel, key }) => {
             const isCurrent = rel === 0;
             const dist = Math.abs(rel);
-            const opacity = isCurrent ? 1 : Math.max(0.28, 0.6 - dist * 0.18);
-            const scale = isCurrent ? 1 : 1 - dist * 0.06;
+            const opacity = isCurrent ? 1 : Math.max(0.25, 0.55 - dist * 0.15);
+            const scale = isCurrent ? 1 : 1 - dist * 0.05;
             return (
               <div
-                key={`${line.time}-${i}`}
-                className="transition-all duration-500 ease-out w-full"
+                key={key}
+                className="absolute left-0 right-0 px-4 text-center will-change-transform"
                 style={{
-                  fontSize: isCurrent ? 20 : 13,
+                  top: "50%",
+                  transform: `translate3d(0, calc(-50% + ${rel * SLOT_PX}px), 0) scale(${scale})`,
+                  transition:
+                    "transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1), opacity 420ms ease-out, filter 420ms ease-out, color 300ms ease-out",
+                  fontSize: isCurrent ? 20 : 14,
                   fontWeight: isCurrent ? 800 : 500,
                   letterSpacing: isCurrent ? "0.005em" : 0,
                   color: isCurrent ? "#fff" : `rgba(255,255,255,${opacity})`,
-                  lineHeight: 1.25,
-                  transform: `scale(${scale})`,
+                  opacity,
+                  lineHeight: 1.2,
                   textShadow: isCurrent
                     ? "0 2px 18px rgba(0,0,0,0.55), 0 0 22px rgba(255,255,255,0.18)"
                     : undefined,
-                  filter: isCurrent ? "none" : `blur(${dist * 0.4}px)`,
+                  filter: isCurrent ? "none" : `blur(${dist * 0.35}px)`,
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {line.text}
@@ -226,6 +245,4 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
           })}
         </div>
       )}
-    </div>
-  );
-}
+
