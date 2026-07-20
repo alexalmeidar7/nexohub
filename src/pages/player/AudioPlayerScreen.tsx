@@ -1441,6 +1441,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   title={musicData?.titulo}
                   duration={musicData?.duracao}
                   audioElement={audioRef.current}
+                  onClose={() => setKaraokeEnabled(false)}
+
                 />
               </Suspense>
             )}
