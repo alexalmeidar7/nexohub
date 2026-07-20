@@ -11,7 +11,7 @@ import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import ElegantLoader from "@/components/player/ElegantLoader";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
