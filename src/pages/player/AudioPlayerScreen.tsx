@@ -1201,7 +1201,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {isVideoChannel && (
         <video
           ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover z-0 bg-black"
+          className="absolute inset-0 w-full h-full object-contain z-0 bg-black"
+          style={{ objectPosition: "center center" }}
           muted={muted}
           playsInline
           autoPlay={false}
