@@ -891,7 +891,6 @@ export default function PlayerPage() {
       if (data?.results?.[0]?.videoId) {
         supabase.from("music_likes_youtube_cache" as any).upsert({
           user_id: user.id,
-          radio_user_id: profileRadioUserId,
           artista: musicData.artista,
           titulo: musicData.titulo,
           video_id: data.results[0].videoId,
