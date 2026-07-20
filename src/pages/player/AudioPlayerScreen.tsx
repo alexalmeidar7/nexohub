@@ -1574,6 +1574,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Help + logo */}
           <div className="flex items-center gap-3">
+            <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
             <div className="relative group">
               <button
                 className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
