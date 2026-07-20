@@ -1572,6 +1572,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     </div>
   );
 }
+function VolumeEqBars({ volume, muted, playing }: { volume: number; muted: boolean; playing: boolean }) {
+  // Nível efetivo (0..1): silencia quando mudo ou pausado
+  const level = muted || !playing ? 0 : Math.min(1, Math.max(0, volume));
+  // Amplitude mínima para não sumir totalmente quando ativo
+  const amp = level <= 0 ? 0 : 0.25 + level * 0.75;
+  // Velocidade da animação acompanha o volume: mais alto = mais rápido
+  const dur = level <= 0 ? 0 : (1.15 - level * 0.55).toFixed(2);
+  const barBase = "w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 transition-[height,opacity] duration-200 ease-out";
+  const heights = [40, 100, 65];
+  const delays = [0, 150, 300];
+  return (
+    <span
+      aria-hidden
+      className="flex items-end gap-[2px] h-3"
+      style={{ ["--vol" as any]: amp, opacity: level <= 0 ? 0.4 : 1 }}
+    >
+      {heights.map((h, i) => (
+        <span
+          key={i}
+          className={barBase}
+          style={{
+            height: level <= 0 ? "18%" : `calc(${h}% * var(--vol))`,
+            animation: level <= 0 ? "none" : `eqbar ${dur}s ease-in-out ${delays[i]}ms infinite`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
 
 function PillBtn({ label, icon, active, onClick }: { label: string; icon: React.ReactNode; active?: boolean; onClick?: () => void }) {
   const base =
