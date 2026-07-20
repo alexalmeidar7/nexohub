@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 
@@ -202,6 +202,25 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const currentProgId = currentProg?.id ? String(currentProg.id) : null;
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (e) {
+      console.warn("[fullscreen] toggle failed", e);
+    }
+  }, []);
   useEffect(() => {
     if (!currentProgId) { setProgramLiked(false); return; }
     try {
@@ -949,6 +968,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </>
               )}
             </div>
+            <PillBtn
+              label={isFullscreen ? "sair fullscreen" : "fullscreen"}
+              icon={isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              onClick={toggleFullscreen}
+              active={isFullscreen}
+            />
           </nav>
         </div>
 
