@@ -2636,7 +2636,7 @@ function PollDialog({
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md rounded-2xl border border-white/12 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden"
+        className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden pointer-events-auto"
       >
         {/* Cabeçalho com faixa animada */}
         <div className="relative px-5 pt-5 pb-3">
