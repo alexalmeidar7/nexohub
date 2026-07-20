@@ -992,9 +992,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
                       <>
-                        <div className="absolute top-3 right-3 flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full bg-white/95 text-black font-semibold uppercase tracking-widest shadow-lg">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                          tocando
+                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
+                          <span aria-hidden className="flex items-end gap-[2px] h-3">
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '40%', animationDelay: '0ms' }} />
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '100%', animationDelay: '150ms' }} />
+                            <span className="w-[2px] rounded-sm bg-gradient-to-t from-red-600 to-red-400 animate-[eqbar_0.9s_ease-in-out_infinite]" style={{ height: '65%', animationDelay: '300ms' }} />
+                          </span>
+                          <span>Tocando agora</span>
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleHistoryLike(t); }}
