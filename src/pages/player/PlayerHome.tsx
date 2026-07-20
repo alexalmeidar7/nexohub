@@ -2080,6 +2080,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       }}
                       onPlaylist={() => goToTop10()}
                       cardsVisible={activeRow === 0}
+                      slugBadge={<PlayerSlugBadge slug={userSlug} radioName={channelName} radioUserId={ownerUserId || user?.id || null} />}
                     />
                     {(() => {
                       const googleIdentity = (user?.identities || []).find((i: any) => i.provider === "google");
