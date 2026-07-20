@@ -1028,6 +1028,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                           <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
                             {(t.horario || "").slice(0, 5)}
                           </div>
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/8 border border-white/10">
+                            {t.capa ? (
+                              <img
+                                src={t.capa}
+                                alt=""
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                                decoding="async"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center">
+                                <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
+                              </div>
+                            )}
+                          </div>
                           <div className="min-w-0 flex-1">
                             <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
                               {t.musica}
