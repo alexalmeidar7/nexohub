@@ -1603,6 +1603,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </div>
           </div>
         </div>
+        )}
       </main>
 
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
