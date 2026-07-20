@@ -1679,12 +1679,29 @@ export function ProgramShowcaseCard({
   const isLive = variant === "live";
 
   const apresentador = useMemo(() => {
-    if (!program?.apresentador_id) return null;
-    return apresentadores?.find((a) => a.id === program.apresentador_id) || null;
+    if (!program) return null;
+    const ids: string[] = Array.isArray(program.apresentadores_ids) && program.apresentadores_ids.length
+      ? program.apresentadores_ids
+      : program.apresentador_id
+        ? [program.apresentador_id]
+        : [];
+    for (const id of ids) {
+      const a = apresentadores?.find((x) => x.id === id);
+      if (a?.foto) return a;
+    }
+    // fallback: primeiro apresentador encontrado, mesmo sem foto
+    for (const id of ids) {
+      const a = apresentadores?.find((x) => x.id === id);
+      if (a) return a;
+    }
+    return null;
   }, [program, apresentadores]);
 
   const foto: string | null =
-    apresentador?.foto || program?.thumb || program?.capa || null;
+    (apresentador?.foto && String(apresentador.foto).trim()) ||
+    (program?.thumb && String(program.thumb).trim()) ||
+    (program?.capa && String(program.capa).trim()) ||
+    null;
 
   const palette = useCoverPalette(foto);
   const contrast = getPaletteContrast(palette);
