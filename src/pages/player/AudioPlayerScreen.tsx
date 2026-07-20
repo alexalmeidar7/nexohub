@@ -977,8 +977,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
-                      transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
-                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 700ms cubic-bezier(.22,1,.36,1)" : undefined,
+                      willChange: "transform, opacity, filter",
+                      transition:
+                        "transform 620ms cubic-bezier(.22,1,.36,1), " +
+                        "opacity 520ms cubic-bezier(.4,0,.2,1), " +
+                        "filter 520ms cubic-bezier(.4,0,.2,1), " +
+                        "width 520ms cubic-bezier(.22,1,.36,1), " +
+                        "height 520ms cubic-bezier(.22,1,.36,1), " +
+                        "box-shadow 620ms cubic-bezier(.22,1,.36,1)",
+                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
                       boxShadow: isNow
                         ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
                         : isActive
