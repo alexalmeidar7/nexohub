@@ -1010,7 +1010,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onToggleChat={() => setChatOpen(!chatOpen)}
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              showKaraoke={!isVideoChannel}
             />
+            {!isVideoChannel && (
             <div className="relative">
               <PillBtn
                 label="músicas tocadas"
