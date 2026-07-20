@@ -1647,7 +1647,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       </main>
 
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
-      <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
+      {isVideoChannel && (
+        <div
+          aria-hidden
+          className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none"
+          style={{
+            height: 200,
+            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 55%, rgba(0,0,0,0) 100%)",
+            opacity: controlsVisible ? 1 : 0,
+            transition: "opacity 450ms ease",
+          }}
+        />
+      )}
+      <footer
+        className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
+        style={isVideoChannel ? controlsStyle : undefined}
+      >
         {!isVideoChannel && (<>
         {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
