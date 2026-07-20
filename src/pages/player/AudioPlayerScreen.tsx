@@ -536,22 +536,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     let cancelled = false;
     const load = async () => {
       if (!effectiveUserId) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("musicas_tocadas")
         .select("musica, artista, horario")
         .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false })
         .limit(HIST_MAX);
-      if (cancelled || !data) return;
+      if (cancelled) return;
+      // Se der erro OU vier vazio, NÃO limpa o histórico existente — evita colapso do carrossel
+      // por hiccups transitórios de RLS/rede/realtime.
+      if (error || !data || data.length === 0) {
+        setHistory((prev) => (prev.length > 0 ? ensureCurrentAtFront(prev) : prev));
+        return;
+      }
       // Hidrata com capas já em cache imediatamente
       const withCached = (data as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
-          ((musicData?.capa || resolvedMusicCover) &&
-            (t.musica || "").trim().toLowerCase() === (musicData?.titulo || "").trim().toLowerCase() &&
-            (t.artista || "").trim().toLowerCase() === (musicData?.artista || "").trim().toLowerCase()
-            ? (musicData?.capa || resolvedMusicCover)
-            : undefined) ||
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
           getArtistImageSync(t.artista) ||
           undefined,
@@ -564,14 +565,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           prev[0]?.artista === withCached[0]?.artista &&
           prev[0]?.horario === withCached[0]?.horario
         ) {
-          // Ainda assim, mescla capas que possam ter sido descobertas
           return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
         }
-        return ensureCurrentAtFront(withCached, musicData?.capa || resolvedMusicCover);
+        return ensureCurrentAtFront(withCached);
       });
-      // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
       withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
-      // Busca capas faltantes das primeiras 24 em paralelo (janela navegável do carrossel)
       const targets = withCached.slice(0, 24).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
         const cover = await fetchCover(t.artista, t.musica);
@@ -596,10 +594,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       )
       .subscribe();
 
-    // Reforço: quando a música ao vivo muda, o INSERT pode chegar milissegundos depois — refaz o load com pequeno atraso
-    const kickTimer = window.setTimeout(load, 800);
-    const kickTimer2 = window.setTimeout(load, 2500);
-
     // Refetch ao voltar para a aba
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVis);
@@ -607,12 +601,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => {
       cancelled = true;
       clearInterval(id);
-      clearTimeout(kickTimer);
-      clearTimeout(kickTimer2);
       document.removeEventListener("visibilitychange", onVis);
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
+    // Depende SOMENTE de effectiveUserId — antes reagia a cada troca de música, o que derrubava e recriava
+    // a subscription do realtime (janela em que INSERTs podiam ser perdidos) e permitia que um load()
+    // concorrente sobrescrevesse o histórico com uma resposta vazia transitória.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserId]);
+
+  // Quando a música ao vivo muda, apenas garante que ela apareça no topo — sem refazer subscription/load.
+  useEffect(() => {
+    setHistory((prev) => ensureCurrentAtFront(prev));
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
 
 
   // ---- Navegação do carrossel de histórico ----
