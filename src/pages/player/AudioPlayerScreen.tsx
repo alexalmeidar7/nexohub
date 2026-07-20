@@ -182,8 +182,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     empresaLogo, empresaNome,
     user, profileAvatar, userDisplayName, userEmail, signOut,
     effectiveUserId, radioUserId,
+    userSlug,
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
+
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
