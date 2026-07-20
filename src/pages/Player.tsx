@@ -2907,6 +2907,7 @@ export default function PlayerPage() {
           onSwitchProfile={handleSwitchProfile}
           radioUserId={profileRadioUserId}
           onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
+          isVideoChannel={isVideo}
         />
       </Suspense>
     );
