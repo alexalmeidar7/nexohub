@@ -2447,12 +2447,14 @@ function InteractivityMenu({
             label="Chat"
             onClick={() => { onToggleChat(); setOpen(false); }}
           />
+          {showKaraoke && (
           <MenuItem
             active={karaokeEnabled}
             icon={<Mic size={14} />}
             label="Karaokê"
             onClick={() => { onToggleKaraoke(); setOpen(false); }}
           />
+          )}
           <MenuItem
             active={false}
             icon={<BarChart3 size={14} />}
