@@ -211,6 +211,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Auto-hide controls (video channel): fade out after 3s of inactivity
+  const [controlsVisible, setControlsVisible] = useState<boolean>(true);
+  useEffect(() => {
+    if (!isVideoChannel) { setControlsVisible(true); return; }
+    let t: number | undefined;
+    const show = () => {
+      setControlsVisible(true);
+      if (t) window.clearTimeout(t);
+      t = window.setTimeout(() => setControlsVisible(false), 3000);
+    };
+    show();
+    const evs: (keyof WindowEventMap)[] = ["mousemove", "mousedown", "keydown", "wheel", "touchstart", "pointermove"];
+    evs.forEach(e => window.addEventListener(e, show, { passive: true }));
+    return () => {
+      if (t) window.clearTimeout(t);
+      evs.forEach(e => window.removeEventListener(e, show));
+    };
+  }, [isVideoChannel]);
+  const controlsStyle: React.CSSProperties = {
+    opacity: controlsVisible ? 1 : 0,
+    transform: controlsVisible ? "translateY(0)" : undefined,
+    transition: "opacity 450ms ease, transform 450ms ease",
+    pointerEvents: controlsVisible ? "auto" : "none",
+  };
   // Animação de entrada: carrosséis laterais deslizam para fora "de trás" do card central
   const [entered, setEntered] = useState<boolean>(false);
   useEffect(() => {
