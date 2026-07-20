@@ -1646,10 +1646,29 @@ export default function PlayerPage() {
       };
 
       const playLabel = isAudioType ? "Audio play blocked:" : "Video play blocked:";
+      const fadeInMedia = (media: HTMLMediaElement) => {
+        if (media.muted) return;
+        const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+        if (target <= 0) return;
+        const duration = 500;
+        const start = performance.now();
+        media.volume = 0;
+        const step = (now: number) => {
+          if (playbackSessionRef.current !== sessionId) return;
+          const t = Math.min(1, (now - start) / duration);
+          try { media.volume = target * t; } catch {}
+          if (t < 1) requestAnimationFrame(step);
+          else { try { media.volume = target; } catch {} }
+        };
+        requestAnimationFrame(step);
+      };
       const requestPlay = (media: HTMLMediaElement) => {
-        media.volume = volumeRef.current / 100;
         media.muted = shouldStartMuted;
-        return media.play().then(handlePlayStarted).catch((e) => handlePlayBlocked(playLabel, e));
+        media.volume = shouldStartMuted ? volumeRef.current / 100 : 0;
+        return media.play().then(() => {
+          fadeInMedia(media);
+          handlePlayStarted();
+        }).catch((e) => handlePlayBlocked(playLabel, e));
       };
 
       const normalizedUrl = normalizeLivePlaylistUrl(url, type);
