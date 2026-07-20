@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
+import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
@@ -197,13 +198,29 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isVideoChannel = false,
   } = props;
 
-  // ---- Transição de saída ao voltar para Home ----
+  // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
   const [exiting, setExiting] = useState(false);
   const handleBackHome = useCallback(() => {
     if (exiting) return;
     setExiting(true);
-    setTimeout(() => onBackHome(), 480);
-  }, [exiting, onBackHome]);
+    const media: HTMLMediaElement | null = (videoRef.current as HTMLMediaElement | null) || (audioRef.current as HTMLMediaElement | null);
+    const FADE_MS = 600;
+    if (media && !media.paused) {
+      const startVol = media.volume;
+      const t0 = performance.now();
+      const step = () => {
+        const p = Math.min(1, (performance.now() - t0) / FADE_MS);
+        try { media.volume = Math.max(0, startVol * (1 - p)); } catch {}
+        if (p < 1) requestAnimationFrame(step);
+        else {
+          try { media.pause(); media.volume = startVol; } catch {}
+        }
+      };
+      requestAnimationFrame(step);
+    }
+    setTimeout(() => onBackHome(), FADE_MS);
+  }, [exiting, onBackHome, audioRef, videoRef]);
+
 
   // ---- Curtir PROGRAMA (independente do like da música) ----
   const programLikeStorageKey = `program_likes_${effectiveUserId || "anon"}`;
@@ -2638,7 +2655,7 @@ function PollDialog({
   };
 
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out] pointer-events-none"
     >
@@ -2740,7 +2757,8 @@ function PollDialog({
           @keyframes interactStripe { to { background-position: -200% 0; } }
         `}</style>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
