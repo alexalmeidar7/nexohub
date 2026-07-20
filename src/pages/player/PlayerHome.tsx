@@ -1555,33 +1555,39 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // Poll for current music data
   useEffect(() => {
+    const isSlugMode = !!(userSlug && userSlug !== ":userSlug");
+    // Reset ao trocar de slug para nunca exibir dados da rádio anterior
+    setNowPlaying(null);
+
     const fetchMusic = async () => {
-      // Em modo público/slug, sempre prioriza os dados do usuário da URL
-      if (userSlug && userSlug !== ":userSlug") {
+      // Em modo público/slug, SEMPRE usa apenas os dados do usuário da URL.
+      // Nunca faz fallback para localStorage/DB do usuário logado (evita mistura entre rádios).
+      if (isSlugMode) {
         try {
           const { data } = await supabase.functions.invoke("public-player-data", { body: { slug: userSlug, section: "now_playing" } });
           if (data?.musica) {
             setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista || ""), capa: data.capa || "" });
-            return;
+          } else {
+            setNowPlaying(null);
           }
-        } catch {}
+        } catch {
+          setNowPlaying(null);
+        }
+        return;
       }
 
       const userId = user?.id;
-
-      // Try localStorage first only for authenticated owner mode
-      if (userId) {
-        try {
-          const raw = localStorage.getItem("masterview_music_data");
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed.titulo) { setNowPlaying({ musica: formatTrackText(parsed.titulo), artista: formatTrackText(parsed.artista || ""), capa: parsed.capa || "" }); return; }
-          }
-        } catch {}
-      }
-
-      // Fallback to DB
       if (!userId) return;
+
+      // Owner autenticado sem slug: localStorage e DB do próprio usuário
+      try {
+        const raw = localStorage.getItem("masterview_music_data");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed.titulo) { setNowPlaying({ musica: formatTrackText(parsed.titulo), artista: formatTrackText(parsed.artista || ""), capa: parsed.capa || "" }); return; }
+        }
+      } catch {}
+
       try {
         const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
         if (data) setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista) });
