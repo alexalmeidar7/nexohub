@@ -536,22 +536,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     let cancelled = false;
     const load = async () => {
       if (!effectiveUserId) return;
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("musicas_tocadas")
         .select("musica, artista, horario")
         .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false })
         .limit(HIST_MAX);
-      if (cancelled || !data) return;
+      if (cancelled) return;
+      // Se der erro OU vier vazio, NÃO limpa o histórico existente — evita colapso do carrossel
+      // por hiccups transitórios de RLS/rede/realtime.
+      if (error || !data || data.length === 0) {
+        setHistory((prev) => (prev.length > 0 ? ensureCurrentAtFront(prev) : prev));
+        return;
+      }
       // Hidrata com capas já em cache imediatamente
       const withCached = (data as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
-          ((musicData?.capa || resolvedMusicCover) &&
-            (t.musica || "").trim().toLowerCase() === (musicData?.titulo || "").trim().toLowerCase() &&
-            (t.artista || "").trim().toLowerCase() === (musicData?.artista || "").trim().toLowerCase()
-            ? (musicData?.capa || resolvedMusicCover)
-            : undefined) ||
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
           getArtistImageSync(t.artista) ||
           undefined,
@@ -564,14 +565,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           prev[0]?.artista === withCached[0]?.artista &&
           prev[0]?.horario === withCached[0]?.horario
         ) {
-          // Ainda assim, mescla capas que possam ter sido descobertas
           return prev.map((p, idx) => ({ ...p, capa: p.capa || withCached[idx]?.capa }));
         }
-        return ensureCurrentAtFront(withCached, musicData?.capa || resolvedMusicCover);
+        return ensureCurrentAtFront(withCached);
       });
-      // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
       withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
-      // Busca capas faltantes das primeiras 24 em paralelo (janela navegável do carrossel)
       const targets = withCached.slice(0, 24).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
         const cover = await fetchCover(t.artista, t.musica);
@@ -596,10 +594,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       )
       .subscribe();
 
-    // Reforço: quando a música ao vivo muda, o INSERT pode chegar milissegundos depois — refaz o load com pequeno atraso
-    const kickTimer = window.setTimeout(load, 800);
-    const kickTimer2 = window.setTimeout(load, 2500);
-
     // Refetch ao voltar para a aba
     const onVis = () => { if (!document.hidden) load(); };
     document.addEventListener("visibilitychange", onVis);
@@ -607,12 +601,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => {
       cancelled = true;
       clearInterval(id);
-      clearTimeout(kickTimer);
-      clearTimeout(kickTimer2);
       document.removeEventListener("visibilitychange", onVis);
       try { supabase.removeChannel(channel); } catch {}
     };
-  }, [effectiveUserId, musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
+    // Depende SOMENTE de effectiveUserId — antes reagia a cada troca de música, o que derrubava e recriava
+    // a subscription do realtime (janela em que INSERTs podiam ser perdidos) e permitia que um load()
+    // concorrente sobrescrevesse o histórico com uma resposta vazia transitória.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveUserId]);
+
+  // Quando a música ao vivo muda, apenas garante que ela apareça no topo — sem refazer subscription/load.
+  useEffect(() => {
+    setHistory((prev) => ensureCurrentAtFront(prev));
+  }, [musicData?.titulo, musicData?.artista, musicData?.capa, resolvedMusicCover, ensureCurrentAtFront]);
 
 
   // ---- Navegação do carrossel de histórico ----
@@ -2641,12 +2642,27 @@ function PollDialog({
 }) {
   const [selected, setSelected] = useState<number | null>(previousVote ?? null);
   const [submitted, setSubmitted] = useState(alreadyVoted);
+  const [visible, setVisible] = useState(false);
+  const [closing, setClosing] = useState(false);
+
+  // Ativa o estado de entrada no próximo frame para disparar a transição CSS.
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
+    setVisible(false);
+    window.setTimeout(() => onClose(), 220);
+  }, [closing, onClose]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [requestClose]);
 
   const submit = () => {
     if (selected == null) return;
@@ -2657,15 +2673,28 @@ function PollDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out] pointer-events-none"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: "opacity 220ms ease-out",
+      }}
     >
+
 
       <div
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden pointer-events-auto"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(8px)",
+          transformOrigin: "center center",
+          transition: "opacity 220ms ease-out, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+          willChange: "opacity, transform",
+        }}
       >
+
         {/* Cabeçalho com faixa animada */}
         <div className="relative px-5 pt-5 pb-3">
           <div
@@ -2685,7 +2714,7 @@ function PollDialog({
               <h3 className="mt-1.5 text-[16px] font-semibold text-white leading-snug">{poll.pergunta}</h3>
             </div>
             <button
-              onClick={onClose}
+              onClick={requestClose}
               className="w-8 h-8 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition"
               aria-label="Fechar"
             >
