@@ -542,6 +542,11 @@ function HeroBanner({
     if (backgroundUrl) preloadImage(backgroundUrl);
   }, [backgroundUrl, artistImg]);
 
+  // Palette derived from the channel background thumb for the Ouvir card
+  const { bgColors: ouvirColors } = useBgPalette(backgroundUrl || undefined);
+  const ouvirGradient = `radial-gradient(ellipse at 20% 20%, ${ouvirColors[0]} 0%, transparent 60%), radial-gradient(ellipse at 85% 90%, ${ouvirColors[1]} 0%, transparent 65%), linear-gradient(135deg, ${ouvirColors[0]} 0%, ${ouvirColors[1]} 100%)`;
+
+
   const [bgIdx, setBgIdx] = useState(0);
   useEffect(() => { setBgIdx(0); }, [bgSources.join("|")]);
   useEffect(() => {
