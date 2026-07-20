@@ -2655,7 +2655,7 @@ function PollDialog({
   };
 
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center p-4 animate-[fadeIn_180ms_ease-out] pointer-events-none"
     >
