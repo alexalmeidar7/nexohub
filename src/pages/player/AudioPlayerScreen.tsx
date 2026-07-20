@@ -2370,8 +2370,8 @@ function InteractivityMenu({
         aria-label="Interatividade"
         aria-expanded={open}
         data-focusable
-        className="relative h-7 w-7 rounded-full flex items-center justify-center outline-none group"
-        style={{ padding: 2 }}
+        className="relative h-7 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        style={{ padding: 2, transition: "width 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
       >
         {/* borda animada (conic gradient girando) */}
         <span
@@ -2394,9 +2394,18 @@ function InteractivityMenu({
             animation: "interactSpin 3.6s linear infinite",
           }}
         />
-        {/* núcleo */}
-        <span className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center">
-          <Sparkles size={12} className="text-white" strokeWidth={2.2} />
+        {/* núcleo — expande no hover para revelar o texto */}
+        <span
+          className="relative z-10 h-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-1.5 px-1.5 group-hover:pl-2 group-hover:pr-3 group-focus-visible:pl-2 group-focus-visible:pr-3"
+          style={{ transition: "padding 260ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+        >
+          <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
+          <span
+            className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
+            style={{ transition: "max-width 260ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease-out 60ms" }}
+          >
+            Interatividade
+          </span>
         </span>
         {/* badge de notificação (enquete ativa não votada) */}
         {hasNotif && (
@@ -2407,6 +2416,7 @@ function InteractivityMenu({
           />
         )}
       </button>
+
 
       {/* Submenu */}
       {open && (
