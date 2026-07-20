@@ -2013,9 +2013,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       {/* Top loading bar */}
       {!dataLoaded && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
-          <LoadingSpinner size={24} />
+          <ElegantLoader size={24} />
         </div>
       )}
+
 
       {/* Main content */}
       <div ref={contentScrollRef} className={`flex-1 h-full relative ${(visibleSection === "catalog-detail" || visibleSection === "top10") ? "overflow-hidden" : "overflow-hidden"}`}>
