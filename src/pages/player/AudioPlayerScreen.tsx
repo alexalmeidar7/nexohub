@@ -1402,14 +1402,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     }}
                   >
                     {cover ? (
-                      <div
-                        className="absolute inset-0"
-                        style={{
-                          backgroundImage: `url(${cover})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                      />
+                      <NowCoverCrossfade capa={cover} isActive={isActive} />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
                         <Radio size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
