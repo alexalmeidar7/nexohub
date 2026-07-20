@@ -2311,12 +2311,14 @@ function InteractivityMenu({
   onToggleChat,
   karaokeEnabled,
   onToggleKaraoke,
+  showKaraoke = true,
 }: {
   userId: string | null;
   chatOpen: boolean;
   onToggleChat: () => void;
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
+  showKaraoke?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
