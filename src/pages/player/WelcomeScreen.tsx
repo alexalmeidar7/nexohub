@@ -750,8 +750,10 @@ export default function WelcomeScreen({
         );
       })()}
 
-      {/* Left-aligned welcome layout */}
-      <div className="absolute inset-0 z-10 flex flex-col justify-start px-8 sm:px-14 pt-10 sm:pt-14 animate-fade-in">
+      {/* Welcome layout — left when logged in, centered for guests */}
+      <div
+        className={`absolute inset-0 z-10 flex flex-col ${user ? "justify-start px-8 sm:px-14 pt-10 sm:pt-14 items-start" : "justify-center items-center px-6 sm:px-10"} animate-fade-in`}
+      >
         {/* Heading */}
         <h1
           className="font-semibold leading-tight lowercase"
@@ -759,13 +761,15 @@ export default function WelcomeScreen({
             fontSize: "clamp(22px, 2.4vw, 34px)",
             letterSpacing: "-0.01em",
             textShadow: "0 2px 20px rgba(0,0,0,0.55)",
+            textAlign: user ? "left" : "center",
           }}
         >
           {user ? "bem vindo de volta" : "bem vindo"}
         </h1>
 
-        {/* Avatar + info row */}
-        <div className="mt-8 sm:mt-10 flex items-start gap-5">
+        {/* Avatar + info row (or centered login buttons for guests) */}
+        <div className={`mt-8 sm:mt-10 flex ${user ? "items-start gap-5" : "items-center justify-center w-full"}`}>
+
           {user ? (
             <>
               <div className="flex flex-col gap-3 shrink-0">
