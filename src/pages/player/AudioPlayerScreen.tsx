@@ -813,16 +813,37 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — atrás e à esquerda, navegável pelo mouse */}
+          {/* HISTORY CAROUSEL — navegação por setas */}
           <div
             ref={carouselRef}
-            onMouseMove={handleCarouselMouseMove}
-            onMouseLeave={() => setActiveIndex(0)}
             onWheel={handleCarouselWheel}
-            className="relative flex-1 h-[420px] cursor-ew-resize"
+            className="relative flex-1 h-[420px]"
             style={{ perspective: "1200px" }}
-            aria-label="Histórico de músicas — mova o mouse para navegar"
+            aria-label="Histórico de músicas — use as setas para navegar"
           >
+            {/* Setas de navegação */}
+            {history.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={activeIndex >= carouselMax}
+                  aria-label="Música anterior no histórico"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  disabled={activeIndex <= 0}
+                  aria-label="Próxima música do histórico"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </>
+            )}
             {/* Dica visual da zona de navegação */}
             {/* zona de navegação (sem gradiente visual) */}
             <div className="absolute inset-0 flex items-center justify-end pr-4">
