@@ -210,6 +210,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Animação de entrada: carrosséis laterais deslizam para fora "de trás" do card central
+  const [entered, setEntered] = useState<boolean>(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const sideEnterStyle = (side: "left" | "right"): React.CSSProperties => ({
+    transform: entered
+      ? "translateX(0) scale(1)"
+      : `translateX(${side === "left" ? "40%" : "-40%"}) scale(0.7)`,
+    opacity: entered ? 1 : 0,
+    transition:
+      "transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out",
+    willChange: "transform, opacity",
+  });
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
