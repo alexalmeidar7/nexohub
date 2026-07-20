@@ -1076,6 +1076,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </>
               )}
             </div>
+            )}
             <PillBtn
               label={isFullscreen ? "sair fullscreen" : "fullscreen"}
               icon={isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
