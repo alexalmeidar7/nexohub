@@ -97,18 +97,46 @@ export default function PlayerHub() {
       const today = DAY_MAP[String(d.getDay())];
       return dias.some((x) => normalizeWeekday(x).startsWith(today));
     };
-    const pickCurrentProgramThumb = (programs: any[] | null | undefined): string | null => {
-      if (!programs || programs.length === 0) return null;
+    const pickCurrentProgramThumb = (programs: any[] | null | undefined, source: string): string | null => {
+      const tag = `[WelcomeBG:${source}]`;
+      if (!programs || programs.length === 0) {
+        console.warn(`${tag} nenhum programa retornado — possíveis causas: (1) tabela "programas" vazia; (2) filtro ativo=true excluiu todos; (3) filtro estudio ilike "%fm%" excluiu todos; (4) para slug público, o Edge Function não retornou "programas".`);
+        return null;
+      }
       const now = new Date();
       const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const todayCode = DAY_MAP[String(now.getDay())];
+      const debug = programs.map((p) => ({
+        nome: p?.nome,
+        ini: String(p?.horario_inicio || "").slice(0, 5),
+        fim: String(p?.horario_fim || "").slice(0, 5),
+        dias: p?.dias_semana,
+        thumb: !!p?.thumb,
+        capa: !!p?.capa,
+      }));
+      console.log(`${tag} agora=${hhmm} (${todayCode}) — ${programs.length} programa(s) considerados`, debug);
+
+      const inWindow = (s: string, e: string) => {
+        // Suporta janelas que atravessam meia-noite (ex.: 23:00 → 02:00)
+        return e > s ? hhmm >= s && hhmm < e : hhmm >= s || hhmm < e;
+      };
       const current = programs.find((p) => {
         if (!p?.horario_inicio || !p?.horario_fim) return false;
         const s = String(p.horario_inicio).slice(0, 5);
         const e = String(p.horario_fim).slice(0, 5);
-        return hhmm >= s && hhmm < e && matchesDay(p.dias_semana, now);
+        return inWindow(s, e) && matchesDay(p.dias_semana, now);
       });
-      if (!current) return null;
-      return current.thumb || current.capa || null;
+      if (!current) {
+        console.warn(`${tag} nenhum programa NO AR agora — causa provável: horário ${hhmm} (${todayCode}) não bate com nenhuma janela horario_inicio/horario_fim + dias_semana. Verifique também janelas que atravessam meia-noite.`);
+        return null;
+      }
+      const url = current.thumb || current.capa || null;
+      if (!url) {
+        console.warn(`${tag} programa "${current.nome}" está no ar mas NÃO tem thumb nem capa cadastrados.`);
+      } else {
+        console.log(`${tag} programa no ar: "${current.nome}" → usando ${current.thumb ? "thumb" : "capa"}: ${url}`);
+      }
+      return url;
     };
 
     const fetchLogo = async () => {
@@ -117,14 +145,17 @@ export default function PlayerHub() {
         const [empRes, chRes, progRes] = await Promise.all([
           supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
           supabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
-          supabase.from("programas").select("horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
+          supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
         ]);
+        if (progRes.error) console.warn("[WelcomeBG:auth] erro ao buscar programas:", progRes.error);
         if (empRes.data) {
           setLogoUrl(empRes.data.logo);
           setChannelName(empRes.data.nome || "");
         }
-        const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null);
-        const bg = programThumb || pickChannelThumb(chRes.data as any[] | null);
+        const programThumb = pickCurrentProgramThumb(progRes.data as any[] | null, "auth");
+        const channelThumb = pickChannelThumb(chRes.data as any[] | null);
+        const bg = programThumb || channelThumb;
+        console.log("[WelcomeBG:auth] resultado final →", { programThumb, channelThumb, escolhido: bg });
         if (bg) {
           preloadAsLinkTag(bg);
           preloadImage(bg).finally(() => setChannelBg(bg));
@@ -143,8 +174,13 @@ export default function PlayerHub() {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
             if (data.empresa?.nome) setChannelName(data.empresa.nome);
-            const programThumb = pickCurrentProgramThumb(data.programas);
-            const bg = programThumb || pickChannelThumb(data.channels);
+            if (!data.programas) {
+              console.warn("[WelcomeBG:public] Edge Function public-player-data não retornou a lista de programas — verifique se a função está atualizada.");
+            }
+            const programThumb = pickCurrentProgramThumb(data.programas, "public");
+            const channelThumb = pickChannelThumb(data.channels);
+            const bg = programThumb || channelThumb;
+            console.log("[WelcomeBG:public] resultado final →", { programThumb, channelThumb, escolhido: bg });
             if (bg) {
               preloadAsLinkTag(bg);
               preloadImage(bg).finally(() => setChannelBg(bg));
