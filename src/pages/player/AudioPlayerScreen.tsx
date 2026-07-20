@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
-import { ChevronUp, ChevronDown, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import {
@@ -398,19 +398,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   useEffect(() => { setActiveIndex(0); }, [history[0]?.musica, history[0]?.artista]);
 
-  const handleCarouselMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const el = carouselRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const rel = (e.clientX - rect.left) / rect.width; // 0 esquerda .. 1 direita
-    // Direita (rel≈1) => índice 0 (mais recente). Esquerda (rel≈0) => índice maior.
-    const idx = Math.round((1 - Math.max(0, Math.min(1, rel))) * Math.min(maxIndex, CAROUSEL_VISIBLE - 1));
-    setActiveIndex(idx);
-  };
+  const carouselMax = Math.min(maxIndex, CAROUSEL_VISIBLE - 1);
+  const goPrev = () => setActiveIndex((i) => Math.max(0, i - 1)); // mais recente
+  const goNext = () => setActiveIndex((i) => Math.min(carouselMax, i + 1)); // mais antigo
   const handleCarouselWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (Math.abs(e.deltaY) < 4 && Math.abs(e.deltaX) < 4) return;
     const dir = (e.deltaY + e.deltaX) > 0 ? 1 : -1;
-    setActiveIndex((i) => Math.max(0, Math.min(maxIndex, i + dir)));
+    setActiveIndex((i) => Math.max(0, Math.min(carouselMax, i + dir)));
   };
 
   // Chave para animar entrada de nova música
@@ -819,16 +813,37 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
-          {/* HISTORY CAROUSEL — atrás e à esquerda, navegável pelo mouse */}
+          {/* HISTORY CAROUSEL — navegação por setas */}
           <div
             ref={carouselRef}
-            onMouseMove={handleCarouselMouseMove}
-            onMouseLeave={() => setActiveIndex(0)}
             onWheel={handleCarouselWheel}
-            className="relative flex-1 h-[420px] cursor-ew-resize"
+            className="relative flex-1 h-[420px]"
             style={{ perspective: "1200px" }}
-            aria-label="Histórico de músicas — mova o mouse para navegar"
+            aria-label="Histórico de músicas — use as setas para navegar"
           >
+            {/* Setas de navegação */}
+            {history.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={goNext}
+                  disabled={activeIndex >= carouselMax}
+                  aria-label="Música anterior no histórico"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+                <button
+                  type="button"
+                  onClick={goPrev}
+                  disabled={activeIndex <= 0}
+                  aria-label="Próxima música do histórico"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </>
+            )}
             {/* Dica visual da zona de navegação */}
             {/* zona de navegação (sem gradiente visual) */}
             <div className="absolute inset-0 flex items-center justify-end pr-4">
@@ -862,7 +877,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const scale = 1 - Math.min(abs, 5) * 0.055;
                 const translateX = -depth * 72;
                 // itens escondidos "atrás" do índice ativo têm opacidade menor
-                const opacity = depth < 0 ? 0 : Math.max(0, 0.95 - abs * 0.16);
+                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
                 const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
                 const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
                 const isActive = depth === 0;
@@ -897,7 +912,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       width: isActive ? 280 : 240,
                       height: isActive ? 280 : 240,
                       transform: `translateX(${translateX}px) scale(${scale})`,
-                      opacity: isExpired ? Math.max(0.35, opacity * 0.55) : opacity,
+                      opacity: isActive ? 1 : (isExpired ? Math.max(0.35, opacity * 0.55) : opacity),
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
                       zIndex: 20 - abs,
