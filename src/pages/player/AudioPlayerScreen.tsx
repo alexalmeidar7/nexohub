@@ -1308,6 +1308,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
           <div
             onPointerDown={(e) => {
+              if ((e.target as HTMLElement).closest("button")) return;
               (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
               (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
               try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
