@@ -210,6 +210,21 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const [programLiked, setProgramLiked] = useState<boolean>(false);
   const [playedListOpen, setPlayedListOpen] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  // Animação de entrada: carrosséis laterais deslizam para fora "de trás" do card central
+  const [entered, setEntered] = useState<boolean>(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  const sideEnterStyle = (side: "left" | "right"): React.CSSProperties => ({
+    transform: entered
+      ? "translateX(0) scale(1)"
+      : `translateX(${side === "left" ? "40%" : "-40%"}) scale(0.7)`,
+    opacity: entered ? 1 : 0,
+    transition:
+      "transform 700ms cubic-bezier(0.22, 1, 0.36, 1), opacity 500ms ease-out",
+    willChange: "transform, opacity",
+  });
 
   useEffect(() => {
     const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -1171,7 +1186,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
-            style={{ perspective: "1200px" }}
+            style={{ perspective: "1200px", ...sideEnterStyle("left") }}
             aria-label="Histórico de músicas — arraste ou use as setas para navegar"
           >
             {/* Setas de navegação */}
@@ -1478,7 +1493,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
-            style={{ perspective: "1200px" }}
+            style={{ perspective: "1200px", ...sideEnterStyle("right") }}
             aria-label="Próximos programas — arraste ou use as setas para navegar"
           >
             {upcomingProgs.length > 1 && (
