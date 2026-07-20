@@ -302,12 +302,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .map((w) => w[0]?.toUpperCase())
     .join("") || "•";
 
-  // ---- Background dinâmico com base na CAPA DA MÚSICA (crossfade elegante) ----
+  // ---- Background dinâmico ----
+  // Preferência: capa da música (Deezer/artista). Fallback: thumb do canal.
   const musicCover: string | null = musicData?.capa || null;
+  const channelThumb: string | null = canal?.background_url || canal?.logo_url || null;
   const musicPalette = useCoverPalette(musicCover);
-  const musicGradient = musicPalette
-    ? `radial-gradient(ellipse at 20% 20%, ${musicPalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${musicPalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${musicPalette.primary} 0%, ${musicPalette.secondary} 100%)`
-    : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
+  const channelPalette = useCoverPalette(!musicCover ? channelThumb : null);
+  const activePalette = musicCover ? musicPalette : channelPalette;
+  const musicGradient = activePalette
+    ? `radial-gradient(ellipse at 20% 20%, ${activePalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${activePalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${activePalette.primary} 0%, ${activePalette.secondary} 100%)`
+    : (!musicCover && channelThumb
+        ? `url(${channelThumb}) center/cover no-repeat, linear-gradient(135deg, #1a1f2e 0%, #050810 100%)`
+        : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)");
   const [bgLayers, setBgLayers] = useState<{ id: number; g: string }[]>([{ id: 0, g: musicGradient }]);
   const bgIdRef = useRef(1);
   useEffect(() => {
