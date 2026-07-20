@@ -2757,7 +2757,8 @@ function PollDialog({
           @keyframes interactStripe { to { background-position: -200% 0; } }
         `}</style>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
