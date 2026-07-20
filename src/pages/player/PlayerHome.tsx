@@ -262,7 +262,7 @@ function TopNavBar({
             onFocus={() => setSearchFocused(true)}
             placeholder="buscar"
             data-tv-focusable
-            className="flex-1 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
+            className="flex-1 min-w-0 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
             style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
             onKeyDown={(e) => {
               const el = e.currentTarget;
