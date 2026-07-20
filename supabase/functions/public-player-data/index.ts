@@ -138,55 +138,29 @@ Deno.serve(async (req) => {
       // We still need the email for prefix matching logic if we want to be fully backward compatible, 
       // but for bootstrap we mostly need the userId.
     } else {
-      const slugLower = slug.toLowerCase();
-      // 1) prefix exato: slug@...
+      const slugLower = slug.toLowerCase().trim();
+
+      // Regra de resolução ESTRITA e DETERMINÍSTICA — nunca mistura donos.
+      // A ordem de precedência garante que o mesmo slug sempre resolve o mesmo user_id.
+      //
+      // 1) Match exato do local-part do email em profiles: "slug@..."
+      //    Ex.: slug "positivafm" -> "positivafm@positivafm.com.br"
       let { data, error: profileError } = await supabase
         .from("profiles")
         .select("user_id, email")
         .ilike("email", `${slugLower}@%`)
+        .order("email", { ascending: true })
         .limit(1)
         .maybeSingle();
       if (profileError) throw profileError;
 
-      // 2) prefix largo: slug*@...
-      if (!data?.user_id) {
-        const { data: d2 } = await supabase
-          .from("profiles")
-          .select("user_id, email")
-          .ilike("email", `${slugLower}%@%`)
-          .limit(1)
-          .maybeSingle();
-        if (d2?.user_id) data = d2 as any;
-      }
-
-      // 3) substring em qualquer parte do email
-      if (!data?.user_id) {
-        const { data: d3 } = await supabase
-          .from("profiles")
-          .select("user_id, email")
-          .ilike("email", `%${slugLower}%`)
-          .limit(1)
-          .maybeSingle();
-        if (d3?.user_id) data = d3 as any;
-      }
-
-      // 4) match por nome normalizado (remove espaços/acentos)
-      if (!data?.user_id) {
-        const { data: d4 } = await supabase
-          .from("profiles")
-          .select("user_id, email, nome")
-          .ilike("nome", `%${slugLower}%`)
-          .limit(1)
-          .maybeSingle();
-        if (d4?.user_id) data = d4 as any;
-      }
-
-      // 5) sub-user por prefix — resolve para o pai
+      // 2) Match exato do local-part em sub_users: resolve para o pai (herança)
       if (!data?.user_id) {
         const { data: sub } = await supabase
           .from("sub_users")
           .select("auth_user_id, parent_user_id, ativo")
-          .ilike("email", `%${slugLower}%`)
+          .ilike("email", `${slugLower}@%`)
+          .order("email", { ascending: true })
           .limit(1)
           .maybeSingle();
         if (sub?.auth_user_id) {
@@ -194,11 +168,43 @@ Deno.serve(async (req) => {
         }
       }
 
+      // 3) Prefix largo em profiles: "slug*@..." — ordenado por email para determinismo
+      //    Ex.: slug "interativafm" -> "interativafmgynaovivo@gmail.com"
+      //    IMPORTANTE: NÃO usar substring livre (%slug%) — isso já causou
+      //    o slug "interativafm" resolver para "opec@interativafm.net" (dono errado).
+      if (!userId && !data?.user_id) {
+        const { data: d3 } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .ilike("email", `${slugLower}%@%`)
+          .order("email", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (d3?.user_id) data = d3 as any;
+      }
+
+      // 4) Prefix largo em sub_users
+      if (!userId && !data?.user_id) {
+        const { data: sub2 } = await supabase
+          .from("sub_users")
+          .select("auth_user_id, parent_user_id, ativo, email")
+          .ilike("email", `${slugLower}%@%`)
+          .order("email", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (sub2?.auth_user_id) {
+          userId = (sub2.ativo && sub2.parent_user_id) ? sub2.parent_user_id : sub2.auth_user_id;
+        }
+      }
+
       if (!userId && data?.user_id) {
         userId = data.user_id;
         matchedProfile = data;
       }
+
+      console.log(`[public-player-data] slug="${slugLower}" -> userId=${userId ?? "null"}`);
     }
+
 
     if (!userId) {
       console.log(`[public-player-data] User not found for slug="${slug}" section="${section}"`);
