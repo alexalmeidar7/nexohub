@@ -15,6 +15,7 @@ interface PlayerChatProps {
   channelId: string;
   onClose: () => void;
   shopOpen?: boolean;
+  radioUserId?: string | null;
 }
 
 function formatMsgTime(iso: string): string {
@@ -30,7 +31,7 @@ function formatMsgTime(iso: string): string {
   }
 }
 
-export default function PlayerChat({ channelId, onClose, shopOpen = false }: PlayerChatProps) {
+export default function PlayerChat({ channelId, onClose, shopOpen = false, radioUserId }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
@@ -48,11 +49,18 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const { data: profile } = await supabase
+        const { data: scopedProfile } = radioUserId ? await supabase
+          .from("player_listener_profiles")
+          .select("nome, cidade, avatar_url")
+          .eq("auth_user_id", session.user.id)
+          .eq("radio_user_id", radioUserId)
+          .maybeSingle() : { data: null } as any;
+        const { data: fallbackProfile } = !scopedProfile ? await supabase
           .from("profiles")
           .select("nome, cidade, avatar_url")
           .eq("user_id", session.user.id)
-          .maybeSingle();
+          .maybeSingle() : { data: null } as any;
+        const profile = scopedProfile || fallbackProfile;
         if (profile?.nome) {
           setNome(profile.nome);
           setCidade(profile.cidade || "");
@@ -63,7 +71,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false }: Pla
       }
     };
     checkAuth();
-  }, []);
+  }, [radioUserId]);
 
   // Load messages + realtime + polling fallback
   useEffect(() => {

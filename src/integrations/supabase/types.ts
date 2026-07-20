@@ -964,6 +964,7 @@ export type Database = {
           capa: string | null
           created_at: string
           id: string
+          radio_user_id: string | null
           titulo: string
           user_id: string
         }
@@ -972,6 +973,7 @@ export type Database = {
           capa?: string | null
           created_at?: string
           id?: string
+          radio_user_id?: string | null
           titulo: string
           user_id: string
         }
@@ -980,6 +982,7 @@ export type Database = {
           capa?: string | null
           created_at?: string
           id?: string
+          radio_user_id?: string | null
           titulo?: string
           user_id?: string
         }
@@ -1209,6 +1212,63 @@ export type Database = {
           last_seen?: string
           master_user_id?: string
           session_id?: string
+        }
+        Relationships: []
+      }
+      player_listener_profiles: {
+        Row: {
+          auth_user_id: string
+          avatar_url: string | null
+          cidade: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          estado: string | null
+          id: string
+          nome: string | null
+          radio_user_id: string
+          setor: string | null
+          sexo: string | null
+          sub_profiles: Json
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          avatar_url?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          radio_user_id: string
+          setor?: string | null
+          sexo?: string | null
+          sub_profiles?: Json
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          avatar_url?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          radio_user_id?: string
+          setor?: string | null
+          sexo?: string | null
+          sub_profiles?: Json
+          updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
@@ -2661,6 +2721,7 @@ export type Database = {
           channel_name: string
           channel_type: string
           id: string
+          radio_user_id: string | null
           user_id: string
           watched_at: string
         }
@@ -2671,6 +2732,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id: string
           watched_at?: string
         }
@@ -2681,6 +2743,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id?: string
           watched_at?: string
         }

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { X, Save, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as AuthUser } from "@supabase/supabase-js";
+import { upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 interface ProfileDialogProps {
   user: AuthUser;
@@ -10,6 +11,7 @@ interface ProfileDialogProps {
   profileEmail: string;
   profileCity: string;
   profileAvatar: string | null;
+  radioUserId?: string | null;
   onClose: () => void;
   onSaved: (data: { nome: string; email: string; cidade: string; estado: string; avatar_url: string }) => void;
 }
@@ -20,6 +22,7 @@ export default function ProfileDialog({
   profileEmail,
   profileCity,
   profileAvatar,
+  radioUserId,
   onClose,
   onSaved,
 }: ProfileDialogProps) {
@@ -32,10 +35,14 @@ export default function ProfileDialog({
 
   const handleSave = async () => {
     setSaving(true);
-    await supabase
-      .from("profiles")
-      .update({ nome, email, cidade, estado })
-      .eq("user_id", user.id);
+    if (radioUserId) {
+      await upsertPlayerListenerProfile(user.id, radioUserId, { nome, email, cidade, estado, avatar_url: profileAvatar || "" });
+    } else {
+      await supabase
+        .from("profiles")
+        .update({ nome, email, cidade, estado })
+        .eq("user_id", user.id);
+    }
     setSaving(false);
     onSaved({ nome, email, cidade, estado, avatar_url: profileAvatar || "" });
   };

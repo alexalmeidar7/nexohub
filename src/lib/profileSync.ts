@@ -6,6 +6,7 @@
 
 export type ProfileChangedDetail = {
   userId?: string | null;
+  radioUserId?: string | null;
   nome?: string | null;
   email?: string | null;
   avatar_url?: string | null;

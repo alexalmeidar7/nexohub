@@ -61,6 +61,7 @@ const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"))
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 function toTitleCase(str: string): string {
   return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
@@ -442,6 +443,7 @@ export default function PlayerPage() {
   const [empresaNome, setEmpresaNome] = useState<string | null>(null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const profileRadioUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
 
 
   // Spectrum style preference
@@ -458,28 +460,25 @@ export default function PlayerPage() {
   }, [user]);
 
   const refreshProfileFromDb = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("nome, avatar_url")
-      .eq("user_id", user.id)
-      .single();
-    if (data?.nome) setProfileName(data.nome);
-    if (data?.avatar_url) setProfileAvatar(data.avatar_url);
-  }, [user]);
+    if (!user || !profileRadioUserId) return;
+    const data = await fetchPlayerListenerProfile(user, profileRadioUserId);
+    if (data.nome) setProfileName(data.nome);
+    if (data.avatar_url) setProfileAvatar(data.avatar_url);
+  }, [user, profileRadioUserId]);
 
   useEffect(() => { void refreshProfileFromDb(); }, [refreshProfileFromDb]);
 
   // Sincroniza nome/avatar em qualquer aba/tela do player sem recarregar.
   useEffect(() => {
     return onProfileChanged((detail) => {
+      if (detail.radioUserId && profileRadioUserId && detail.radioUserId !== profileRadioUserId) return;
       if (detail.nome != null) setProfileName(detail.nome);
       if (detail.avatar_url != null) setProfileAvatar(detail.avatar_url);
       if (detail.reason === "switch" || detail.reason === "edit") {
         void refreshProfileFromDb();
       }
     });
-  }, [refreshProfileFromDb]);
+  }, [profileRadioUserId, refreshProfileFromDb]);
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
