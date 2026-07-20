@@ -61,6 +61,7 @@ const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"))
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 function toTitleCase(str: string): string {
   return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
@@ -442,6 +443,7 @@ export default function PlayerPage() {
   const [empresaNome, setEmpresaNome] = useState<string | null>(null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const profileRadioUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
 
 
   // Spectrum style preference
@@ -458,28 +460,25 @@ export default function PlayerPage() {
   }, [user]);
 
   const refreshProfileFromDb = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from("profiles")
-      .select("nome, avatar_url")
-      .eq("user_id", user.id)
-      .single();
-    if (data?.nome) setProfileName(data.nome);
-    if (data?.avatar_url) setProfileAvatar(data.avatar_url);
-  }, [user]);
+    if (!user || !profileRadioUserId) return;
+    const data = await fetchPlayerListenerProfile(user, profileRadioUserId);
+    if (data.nome) setProfileName(data.nome);
+    if (data.avatar_url) setProfileAvatar(data.avatar_url);
+  }, [user, profileRadioUserId]);
 
   useEffect(() => { void refreshProfileFromDb(); }, [refreshProfileFromDb]);
 
   // Sincroniza nome/avatar em qualquer aba/tela do player sem recarregar.
   useEffect(() => {
     return onProfileChanged((detail) => {
+      if (detail.radioUserId && profileRadioUserId && detail.radioUserId !== profileRadioUserId) return;
       if (detail.nome != null) setProfileName(detail.nome);
       if (detail.avatar_url != null) setProfileAvatar(detail.avatar_url);
       if (detail.reason === "switch" || detail.reason === "edit") {
         void refreshProfileFromDb();
       }
     });
-  }, [refreshProfileFromDb]);
+  }, [profileRadioUserId, refreshProfileFromDb]);
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
@@ -587,12 +586,12 @@ export default function PlayerPage() {
   // Record watch history when channel changes
   const watchHistoryRecordedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!canal || !userId || canal.id === watchHistoryRecordedRef.current) return;
+    if (!canal || !userId || !profileRadioUserId || canal.id === watchHistoryRecordedRef.current) return;
     watchHistoryRecordedRef.current = canal.id;
 
     // Persist last audio channel for auto-resume on PlayerHome "OUVIR"
     if (canal.type === "audio_live" || canal.type === "audio") {
-      try { localStorage.setItem(`nexo_last_audio_channel_${userId}`, canal.id); } catch {}
+      try { localStorage.setItem(`nexo_last_audio_channel_${profileRadioUserId}`, canal.id); } catch {}
     }
 
     
@@ -604,6 +603,7 @@ export default function PlayerPage() {
         channel_cover_url: canal.cover_url || "",
         channel_logo_url: canal.logo_url || "",
         channel_type: canal.type,
+        radio_user_id: profileRadioUserId,
       });
       if (error) {
         console.error("[WATCH-HISTORY] Insert error:", error);
@@ -612,7 +612,7 @@ export default function PlayerPage() {
       }
     };
     recordHistory();
-  }, [canal?.id, userId]);
+  }, [canal?.id, userId, profileRadioUserId]);
 
   // Shopping & Pre-Roll state
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
@@ -876,8 +876,8 @@ export default function PlayerPage() {
   }, [musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
-    if (!user || !musicData?.titulo || !musicData?.artista || liked) return;
-    await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
+    if (!user || !profileRadioUserId || !musicData?.titulo || !musicData?.artista || liked) return;
+    await supabase.from("music_likes").insert({ user_id: user.id, radio_user_id: profileRadioUserId, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
     setLiked(true);
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
@@ -898,7 +898,7 @@ export default function PlayerPage() {
         }, { onConflict: "user_id,artista,titulo" }).then(() => {});
       }
     }).catch(() => {});
-  }, [user, musicData, liked]);
+  }, [user, profileRadioUserId, musicData, liked]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
@@ -2881,7 +2881,8 @@ export default function PlayerPage() {
           onBackHome={handleHomeClick}
           onEditProfile={handleEditProfile}
           onSwitchProfile={handleSwitchProfile}
-          onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, avatar_url: url, reason: "avatar" }); }}
+          radioUserId={profileRadioUserId}
+          onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
         />
       </Suspense>
     );
@@ -3540,11 +3541,12 @@ export default function PlayerPage() {
                     userName={userDisplayName}
                     userEmail={user?.email ?? null}
                     avatarUrl={profileAvatar}
+                    radioUserId={profileRadioUserId}
                     radioName={empresaNome || undefined}
                     onClose={() => setWatchProfileOpen(false)}
                     onEditProfile={handleEditProfile}
                     onSwitchProfile={handleSwitchProfile}
-                    onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, avatar_url: url, reason: "avatar" }); }}
+                    onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
                     onLogout={async () => { await signOut(); navigate("/"); }}
                   />
                 </Suspense>
@@ -4094,7 +4096,7 @@ export default function PlayerPage() {
 
       {chatOpen && (
         <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><ElegantLoader size={32} /></div>}>
-          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
+          <PlayerChat channelId={canal?.id || "default"} radioUserId={profileRadioUserId} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
         </Suspense>
       )}
 

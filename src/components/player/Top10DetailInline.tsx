@@ -15,9 +15,10 @@ interface Top10DetailInlineProps {
   avatarUrl: string | null;
   onBack: () => void;
   onPlayVideo?: (videoId: string, playlist: PlaylistVideo[]) => void;
+  radioUserId?: string | null;
 }
 
-export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo }: Top10DetailInlineProps) {
+export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radioUserId }: Top10DetailInlineProps) {
   const { user } = useAuth();
   const [videos, setVideos] = useState<PlaylistVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,10 +29,12 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo }: To
     let cancelled = false;
 
     const fetchAndSearch = async () => {
-      const { data: likes } = await supabase
+      let likesQuery: any = supabase
         .from("music_likes")
         .select("titulo, artista, capa")
-        .eq("user_id", user.id)
+        .eq("user_id", user.id);
+      likesQuery = radioUserId ? likesQuery.eq("radio_user_id", radioUserId) : likesQuery.is("radio_user_id", null);
+      const { data: likes } = await likesQuery
         .order("created_at", { ascending: false })
         .limit(10);
 
@@ -143,7 +146,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo }: To
 
     fetchAndSearch();
     return () => { cancelled = true; };
-  }, [user]);
+  }, [user, radioUserId]);
 
   const handlePlay = (idx: number) => {
     const video = videos[idx];

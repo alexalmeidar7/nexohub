@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
 import { toast } from "sonner";
 import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 const AVATARS = [
   "/avatars/usr-default.png",
@@ -28,6 +29,7 @@ interface WatchProfilePopupProps {
   userEmail?: string | null;
   avatarUrl: string | null;
   radioName?: string;
+  radioUserId?: string | null;
   onClose: () => void;
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
@@ -61,6 +63,7 @@ export default function WatchProfilePopup({
   userEmail,
   avatarUrl,
   radioName,
+  radioUserId,
   onClose,
   onEditProfile,
   onSwitchProfile,
@@ -109,10 +112,13 @@ export default function WatchProfilePopup({
         .from("profiles")
         .update({ avatar_url: url })
         .eq("user_id", userId);
-      if (error) throw error;
+      if (radioUserId) {
+        const { error: scopedError } = await upsertPlayerListenerProfile(userId, radioUserId, { avatar_url: url });
+        if (scopedError) throw scopedError;
+      } else if (error) throw error;
       setCurrentAvatar(url);
       onAvatarChange?.(url);
-      emitProfileChanged({ userId, avatar_url: url, reason: "avatar" });
+      emitProfileChanged({ userId, radioUserId, avatar_url: url, reason: "avatar" });
       toast.success("Avatar atualizado");
       setPickerOpen(false);
     } catch (err: any) {
@@ -135,34 +141,37 @@ export default function WatchProfilePopup({
 
     const fetchAll = async () => {
       // Liked songs — last 10
-      const likesP = supabase
+      let likesP: any = supabase
         .from("music_likes")
         .select("titulo, artista, capa")
-        .eq("user_id", userId)
+        .eq("user_id", userId);
+      likesP = radioUserId ? likesP.eq("radio_user_id", radioUserId) : likesP.is("radio_user_id", null);
+      likesP = likesP
         .order("created_at", { ascending: false })
         .limit(10);
 
       // Last VOD watched
-      const vodP = supabase
+      let vodP: any = supabase
         .from("watch_history")
         .select("channel_name, channel_logo_url")
-        .eq("user_id", userId)
+        .eq("user_id", userId);
+      vodP = radioUserId ? vodP.eq("radio_user_id", radioUserId) : vodP.is("radio_user_id", null);
+      vodP = vodP
         .order("watched_at", { ascending: false })
         .limit(1);
 
       // Total watch history entries (estimate hours — 1 entry ≈ 30 min)
-      const hoursP = supabase
+      let hoursP: any = supabase
         .from("watch_history")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId);
+      hoursP = radioUserId ? hoursP.eq("radio_user_id", radioUserId) : hoursP.is("radio_user_id", null);
 
       // Chat message count
       // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
-      const profileP = supabase
-        .from("profiles")
-        .select("nome, avatar_url")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const profileP = radioUserId
+        ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
+        : supabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
 
       const [likesRes, vodRes, hoursRes, profileRes] = await Promise.all([likesP, vodP, hoursP, profileP]);
 
@@ -183,23 +192,23 @@ export default function WatchProfilePopup({
 
       // Mantém nome/avatar exibidos sincronizados com o que está no banco,
       // caso tenham mudado em outra aba/tela.
-      if (profileRes.data?.nome) {
-        setDisplayName(profileRes.data.nome);
+      if ((profileRes as any)?.nome) {
+        setDisplayName((profileRes as any).nome);
         const chatRes = await supabase
           .from("player_chat_messages")
           .select("id", { count: "exact", head: true })
-          .eq("nome", profileRes.data.nome);
+          .eq("nome", (profileRes as any).nome);
         setChatCount(chatRes.count ?? 0);
       }
-      if (profileRes.data?.avatar_url) {
-        setCurrentAvatar(profileRes.data.avatar_url);
+      if ((profileRes as any)?.avatar_url) {
+        setCurrentAvatar((profileRes as any).avatar_url);
       }
 
       setLoading(false);
     };
 
     fetchAll();
-  }, [userId, refreshTick]);
+  }, [userId, radioUserId, refreshTick]);
 
   const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
   const label = fanLabel(stars);

@@ -6,6 +6,7 @@ import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { usePreloadedImages, preloadImage } from "@/hooks/usePreloadImages";
 import { useBgPalette } from "./useBgPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 import { supabase } from "@/integrations/supabase/client";
 import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, ChevronRight, Play, LayoutGrid, Flame, TrendingUp, Tag, Shield, Search, Bell, User, Mic, Disc, Plus, Maximize, Loader2 } from "lucide-react";
@@ -114,6 +115,8 @@ function TopNavBar({
   programas = [],
   onPlayChannel,
   userId,
+  radioUserId,
+  musicUserId,
   radioName,
   stationLogoUrl,
   paletteSource,
@@ -135,6 +138,8 @@ function TopNavBar({
   programas?: Programa[];
   onPlayChannel?: (ch: Channel) => void;
   userId?: string | null;
+  radioUserId?: string | null;
+  musicUserId?: string | null;
   radioName?: string;
   stationLogoUrl?: string | null;
   paletteSource?: string | null;
@@ -154,12 +159,13 @@ function TopNavBar({
   useEffect(() => {
     if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current);
     const q = searchQuery.trim();
-    if (!q || !userId) { setMusicResults([]); return; }
+    const scopedMusicUserId = musicUserId || radioUserId || userId;
+    if (!q || !scopedMusicUserId) { setMusicResults([]); return; }
     musicSearchTimer.current = setTimeout(async () => {
       const { data } = await supabase
         .from("musicas_tocadas")
         .select("musica, artista")
-        .eq("user_id", userId)
+        .eq("user_id", scopedMusicUserId)
         .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
         .order("created_at", { ascending: false })
         .limit(10);
@@ -174,7 +180,7 @@ function TopNavBar({
       }
     }, 300);
     return () => { if (musicSearchTimer.current) clearTimeout(musicSearchTimer.current); };
-  }, [searchQuery, userId]);
+  }, [searchQuery, userId, radioUserId, musicUserId]);
 
   const searchResults = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -404,6 +410,7 @@ function TopNavBar({
                 userName={userName || "Visitante"}
                 userEmail={userEmail || null}
                 avatarUrl={googleAvatarUrl || avatarUrl || null}
+                radioUserId={radioUserId}
                 radioName={radioName}
                 onClose={() => setProfileOpen(false)}
                 onEditProfile={onEditProfile}
@@ -1599,7 +1606,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
         supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
-        supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).order("watched_at", { ascending: false }).limit(10),
+        supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).eq("radio_user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
         supabase.from("user_settings").select("shopping_active").eq("user_id", userId).maybeSingle(),
         supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
@@ -1702,7 +1709,18 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return () => { cancelled = true; if (retryTimer) clearTimeout(retryTimer); };
   }, [authLoading, user?.id, userSlug]);
 
-  // Profile is now fetched inside the main data Promise.all above
+  useEffect(() => {
+    if (!user || !ownerUserId) return;
+    let cancelled = false;
+    fetchPlayerListenerProfile(user, ownerUserId, userName).then((profile) => {
+      if (cancelled) return;
+      if (profile.nome) setProfileName(profile.nome);
+      if (profile.email) setProfileEmail(profile.email);
+      setProfileCity([profile.cidade, profile.estado].filter(Boolean).join(", "));
+      setProfileAvatar(profile.avatar_url || null);
+    });
+    return () => { cancelled = true; };
+  }, [user, ownerUserId, userName]);
 
   const normalizeWeekday = (value: string) =>
     value
@@ -2023,7 +2041,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       onOuvir={() => {
                         const audioChannels = streamingChannels.filter(c => c.type === "audio_live" || c.type === "audio");
                         let lastId: string | null = null;
-                        try { lastId = user?.id ? localStorage.getItem(`nexo_last_audio_channel_${user.id}`) : null; } catch {}
+                        try { lastId = ownerUserId ? localStorage.getItem(`nexo_last_audio_channel_${ownerUserId}`) : null; } catch {}
                         const audio =
                           (lastId && audioChannels.find(c => c.id === lastId)) ||
                           audioChannels[0] ||
@@ -2065,6 +2083,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       programas={programas}
                       onPlayChannel={(ch) => goToPlayer(ch.id)}
                       userId={user?.id}
+                      radioUserId={ownerUserId}
+                      musicUserId={ownerUserId}
                       radioName={channelName}
                       stationLogoUrl={logoUrl || heroChannel?.logo_url}
                       paletteSource={heroChannel?.logo_url || null}
@@ -2184,6 +2204,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
             }>
               <Top10DetailInline
                 avatarUrl={profileAvatar}
+                radioUserId={ownerUserId}
                 onBack={goBackFromTop10}
                 onPlayVideo={(videoId, playlist) => {
                   setFadeOut(true);
@@ -2230,6 +2251,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
           profileEmail={profileEmail}
           profileCity={profileCity}
           profileAvatar={profileAvatar}
+          radioUserId={ownerUserId}
           onClose={() => setProfileDialogOpen(false)}
           onSaved={(data) => {
             if (data.nome) setProfileName(data.nome);
