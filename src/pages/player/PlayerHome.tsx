@@ -498,6 +498,7 @@ function HeroBanner({
   onAssistir,
   onPlaylist,
   cardsVisible = true,
+  slugBadge,
 }: {
   currentProgram?: Programa;
   nowPlaying?: { musica: string; artista: string; capa?: string } | null;
@@ -507,6 +508,7 @@ function HeroBanner({
   onAssistir: () => void;
   onPlaylist: () => void;
   cardsVisible?: boolean;
+  slugBadge?: React.ReactNode;
 }) {
   const cardBase: React.CSSProperties = {
     borderRadius: "22px",
