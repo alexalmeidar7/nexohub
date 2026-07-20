@@ -166,12 +166,20 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   useEffect(() => {
     if (!enabled || lines.length === 0) return;
     const tick = () => {
+      // apply drift compensation: extra shift accumulated since last confirmed point
+      let effectiveOffset = offset;
+      if (autoSync && driftRef.current.rate !== 0) {
+        const secs = (Date.now() - songStartMsRef.current) / 1000;
+        const extra = (secs - driftRef.current.baseAt) * driftRef.current.rate;
+        // clamp extra correction to ±1.5s to avoid runaway
+        effectiveOffset = offset + Math.max(-1.5, Math.min(1.5, extra));
+      }
       let elapsed: number | null = null;
       if (audioElement && Number.isFinite(audioElement.currentTime) && audioElement.currentTime > 0) {
-        elapsed = audioElement.currentTime - offset;
+        elapsed = audioElement.currentTime - effectiveOffset;
       } else {
         const startStr = localStorage.getItem(MUSIC_START_KEY);
-        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - offset;
+        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - effectiveOffset;
       }
       if (elapsed !== null) {
         let cur = -1;
