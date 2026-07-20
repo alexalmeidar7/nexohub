@@ -323,9 +323,9 @@ export default function WelcomeScreen({
   const lastArtistRef = useRef<string | null>(null);
   const alternateTimerRef = useRef<number | null>(null);
 
-  // Delay background reveal by 1.5s so text/avatar show first
+  // Small delay so text/avatar animate in first, but keep bg reveal snappy
   useEffect(() => {
-    const t = setTimeout(() => setBgVisible(true), 1500);
+    const t = setTimeout(() => setBgVisible(true), 300);
     return () => clearTimeout(t);
   }, []);
 
