@@ -64,6 +64,7 @@ export interface AudioPlayerScreenProps {
   onEditProfile?: () => void;
   onSwitchProfile?: () => void;
   onAvatarChange?: (url: string) => void;
+  isVideoChannel?: boolean;
 }
 
 interface HistoryTrack {
@@ -193,7 +194,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     userSlug,
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
-
+    isVideoChannel = false,
   } = props;
 
   // ---- Transição de saída ao voltar para Home ----
@@ -1009,7 +1010,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onToggleChat={() => setChatOpen(!chatOpen)}
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              showKaraoke={!isVideoChannel}
             />
+            {!isVideoChannel && (
             <div className="relative">
               <PillBtn
                 label="músicas tocadas"
@@ -1073,6 +1076,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </>
               )}
             </div>
+            )}
             <PillBtn
               label={isFullscreen ? "sair fullscreen" : "fullscreen"}
               icon={isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
@@ -1156,6 +1160,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* ============== CENTER STAGE ============== */}
       <main className="absolute inset-0 flex items-center justify-center pt-28 pb-40">
+        {isVideoChannel ? (
+          <div className="relative w-full max-w-[1400px] px-8">
+            <video
+              ref={videoRef}
+              className="w-full aspect-video bg-black rounded-3xl shadow-[0_30px_80px_rgba(0,0,0,0.6)] object-contain border border-white/10"
+              muted={muted}
+              playsInline
+              autoPlay={false}
+            />
+          </div>
+        ) : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
           {/* HISTORY CAROUSEL — navegação por setas e swipe */}
@@ -1588,10 +1603,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             </div>
           </div>
         </div>
+        )}
       </main>
 
       {/* ============== BOTTOM — TIMESHIFT + PLAY ============== */}
       <footer className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6">
+        {!isVideoChannel && (<>
         {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
           <div className="relative group/live">
@@ -1688,6 +1705,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <span>você pode voltar a programação em {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
           </div>
         </div>
+        </>)}
 
         {/* play row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
@@ -2307,12 +2325,14 @@ function InteractivityMenu({
   onToggleChat,
   karaokeEnabled,
   onToggleKaraoke,
+  showKaraoke = true,
 }: {
   userId: string | null;
   chatOpen: boolean;
   onToggleChat: () => void;
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
+  showKaraoke?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
@@ -2441,12 +2461,14 @@ function InteractivityMenu({
             label="Chat"
             onClick={() => { onToggleChat(); setOpen(false); }}
           />
+          {showKaraoke && (
           <MenuItem
             active={karaokeEnabled}
             icon={<Mic size={14} />}
             label="Karaokê"
             onClick={() => { onToggleKaraoke(); setOpen(false); }}
           />
+          )}
           <MenuItem
             active={false}
             icon={<BarChart3 size={14} />}
