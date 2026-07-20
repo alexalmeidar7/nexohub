@@ -2165,7 +2165,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             fontFamily: "'Lufga', system-ui, sans-serif",
                           }}
                         >
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-[88px] h-[88px] rounded-full overflow-hidden border-2 shadow-lg" style={{ borderColor: "hsla(var(--player-accent) / 0.5)" }}>
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 w-[88px] h-[88px] rounded-full overflow-hidden shadow-lg">
                             <img src={profileAvatar || "/avatars/usr-default.png"} alt="" className="w-full h-full object-cover" />
                           </div>
                           <div className="relative z-[1] p-4 flex flex-col h-full">
