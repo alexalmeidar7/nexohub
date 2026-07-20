@@ -2160,7 +2160,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                             width: "260px",
                             height: "160px",
                             borderRadius: "22px",
-                            background: "linear-gradient(135deg, hsla(var(--player-accent) / 0.55) 0%, hsla(var(--player-accent) / 0.15) 100%)",
+                            background: top10Gradient,
                             border: "1px solid rgba(255,255,255,0.08)",
                             fontFamily: "'Lufga', system-ui, sans-serif",
                           }}
