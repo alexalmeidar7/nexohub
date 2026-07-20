@@ -7,48 +7,38 @@ interface PlayerSlugBadgeProps {
 }
 
 /**
- * Debug/verification badge — shows current userSlug and radio name
- * so it's easy to visually confirm which station the Player is bound to.
- * Fixed bottom-left, low-profile glassmorphism.
+ * Debug/verification chip — mostra userSlug + nome da rádio de forma discreta,
+ * posicionado à esquerda do botão "?" (ajuda) no canto inferior direito.
  */
 export default function PlayerSlugBadge({ slug, radioName, radioUserId }: PlayerSlugBadgeProps) {
   const shownSlug = slug && slug !== ":userSlug" ? slug : "—";
   const shownName = radioName?.trim() || "—";
-  const shortId = radioUserId ? `${radioUserId.slice(0, 8)}…` : null;
+  const shortId = radioUserId ? `${radioUserId.slice(0, 6)}…` : null;
 
   return (
     <div
-      className="fixed bottom-3 left-3 z-[9999] pointer-events-none select-none"
+      className="fixed z-[9998] pointer-events-none select-none flex items-center gap-1.5 text-[10px] leading-none"
       style={{
+        bottom: "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)",
+        right: "calc(4.75rem + 2.5rem + 5rem)", // clear "?" (36px) + gap + nexo logo (~80px) + edge margin
         fontFamily: "'Lufga', 'Inter', system-ui, sans-serif",
+        color: "rgba(255,255,255,0.55)",
+        letterSpacing: "0.01em",
       }}
     >
-      <div
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] leading-none"
-        style={{
-          background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          border: "1px solid rgba(255,255,255,0.12)",
-          color: "rgba(255,255,255,0.92)",
-        }}
-      >
-        <span
-          className="inline-block w-1.5 h-1.5 rounded-full"
-          style={{ background: "#22d3ee", boxShadow: "0 0 6px #22d3ee" }}
-        />
-        <span style={{ opacity: 0.65 }}>slug</span>
-        <span style={{ fontWeight: 600 }}>{shownSlug}</span>
-        <span style={{ opacity: 0.35 }}>·</span>
-        <span style={{ opacity: 0.65 }}>rádio</span>
-        <span style={{ fontWeight: 600 }}>{shownName}</span>
-        {shortId && (
-          <>
-            <span style={{ opacity: 0.35 }}>·</span>
-            <span style={{ opacity: 0.55, fontVariantNumeric: "tabular-nums" }}>{shortId}</span>
-          </>
-        )}
-      </div>
+      <span
+        className="inline-block w-1 h-1 rounded-full"
+        style={{ background: "#22d3ee", boxShadow: "0 0 4px rgba(34,211,238,0.7)" }}
+      />
+      <span style={{ opacity: 0.55 }}>{shownSlug}</span>
+      <span style={{ opacity: 0.25 }}>·</span>
+      <span style={{ opacity: 0.75 }}>{shownName}</span>
+      {shortId && (
+        <>
+          <span style={{ opacity: 0.25 }}>·</span>
+          <span style={{ opacity: 0.4, fontVariantNumeric: "tabular-nums" }}>{shortId}</span>
+        </>
+      )}
     </div>
   );
 }
