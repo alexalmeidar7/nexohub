@@ -406,11 +406,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         }
         return withCached;
       });
-      // Busca capas faltantes das primeiras 12 em paralelo
-      const targets = withCached.slice(0, 12).filter((t) => !t.capa);
+      // Pré-aquece decode das capas já conhecidas (crossfade instantâneo)
+      withCached.forEach((t) => { if (t.capa) warmCover(t.capa); });
+      // Busca capas faltantes das primeiras 24 em paralelo (janela navegável do carrossel)
+      const targets = withCached.slice(0, 24).filter((t) => !t.capa);
       await Promise.all(targets.map(async (t) => {
         const cover = await fetchCover(t.artista, t.musica);
         if (!cancelled && cover) {
+          warmCover(cover);
           setHistory((prev) => prev.map((p) => (p.artista === t.artista && p.musica === t.musica ? { ...p, capa: cover } : p)));
         }
       }));
