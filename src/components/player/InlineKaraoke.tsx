@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { Mic, Minus, Plus, RotateCcw, X, Zap } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,6 +31,24 @@ interface Props {
 
 const DEFAULT_LATENCY = 30; // seconds (streaming buffer)
 const OFFSET_KEY = "player_karaoke_offset_v1";
+const AUTOSYNC_KEY = "player_karaoke_autosync_v1";
+const HISTORY_KEY = "player_karaoke_offset_history_v1"; // last user-confirmed offsets
+
+function loadOffsetHistory(): number[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((n) => Number.isFinite(n)).slice(-8) : [];
+  } catch { return []; }
+}
+function pushOffsetHistory(value: number) {
+  try {
+    const arr = loadOffsetHistory();
+    arr.push(value);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(arr.slice(-8)));
+  } catch {}
+}
 
 export default function InlineKaraoke({ enabled, artist, title, duration, audioElement, onClose }: Props) {
 
@@ -41,6 +59,9 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   const [loading, setLoading] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [idx, setIdx] = useState(-1);
+  const [autoSync, setAutoSync] = useState<boolean>(() => {
+    try { return localStorage.getItem(AUTOSYNC_KEY) !== "false"; } catch { return true; }
+  });
   const [offset, setOffset] = useState<number>(() => {
     try {
       const v = parseFloat(localStorage.getItem(OFFSET_KEY) || "");
@@ -50,9 +71,51 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   const lastKeyRef = useRef<string | null>(null);
   const rafRef = useRef<number | null>(null);
 
+  // Drift-correction state: track manual adjustments within the current song
+  // to derive a linear drift rate (seconds of offset shift per second played).
+  const driftRef = useRef<{ points: Array<{ at: number; offset: number }>; rate: number; baseAt: number; baseOffset: number }>({
+    points: [], rate: 0, baseAt: 0, baseOffset: 0,
+  });
+  const commitTimerRef = useRef<number | null>(null);
+  const songStartMsRef = useRef<number>(Date.now());
+
   useEffect(() => {
     try { localStorage.setItem(OFFSET_KEY, String(offset)); } catch {}
+    // debounce commit into history + drift regression
+    if (commitTimerRef.current) window.clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = window.setTimeout(() => {
+      pushOffsetHistory(offset);
+      // register drift point (seconds since song start → confirmed offset)
+      const secs = Math.max(0.1, (Date.now() - songStartMsRef.current) / 1000);
+      const pts = driftRef.current.points;
+      pts.push({ at: secs, offset });
+      // keep last 6 within this song
+      while (pts.length > 6) pts.shift();
+      // linear regression rate (least squares, slope)
+      if (pts.length >= 2) {
+        const n = pts.length;
+        const sx = pts.reduce((s, p) => s + p.at, 0);
+        const sy = pts.reduce((s, p) => s + p.offset, 0);
+        const sxx = pts.reduce((s, p) => s + p.at * p.at, 0);
+        const sxy = pts.reduce((s, p) => s + p.at * p.offset, 0);
+        const denom = n * sxx - sx * sx;
+        const slope = denom !== 0 ? (n * sxy - sx * sy) / denom : 0;
+        // clamp to plausible drift (±0.5s per minute → ±0.0083/s)
+        driftRef.current.rate = Math.max(-0.01, Math.min(0.01, slope));
+        driftRef.current.baseAt = secs;
+        driftRef.current.baseOffset = offset;
+      } else {
+        driftRef.current.rate = 0;
+        driftRef.current.baseAt = secs;
+        driftRef.current.baseOffset = offset;
+      }
+    }, 700);
   }, [offset]);
+
+  useEffect(() => {
+    try { localStorage.setItem(AUTOSYNC_KEY, String(autoSync)); } catch {}
+  }, [autoSync]);
+
 
   // Fetch lyrics on song change
   useEffect(() => {
@@ -63,6 +126,21 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     }
     if (key === lastKeyRef.current) return;
     lastKeyRef.current = key;
+
+    // reset drift tracking for the new song
+    songStartMsRef.current = Date.now();
+    driftRef.current = { points: [], rate: 0, baseAt: 0, baseOffset: offset };
+    // auto-sync: warm start from user's recent offset history (median)
+    if (autoSync) {
+      const hist = loadOffsetHistory();
+      if (hist.length >= 2) {
+        const sorted = [...hist].sort((a, b) => a - b);
+        const median = sorted[Math.floor(sorted.length / 2)];
+        if (Number.isFinite(median) && Math.abs(median - offset) > 0.24) {
+          setOffset(Math.round(median * 100) / 100);
+        }
+      }
+    }
 
     setLines([]); setIdx(-1); setNotFound(false); setLoading(true);
     let cancelled = false;
@@ -88,12 +166,20 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
   useEffect(() => {
     if (!enabled || lines.length === 0) return;
     const tick = () => {
+      // apply drift compensation: extra shift accumulated since last confirmed point
+      let effectiveOffset = offset;
+      if (autoSync && driftRef.current.rate !== 0) {
+        const secs = (Date.now() - songStartMsRef.current) / 1000;
+        const extra = (secs - driftRef.current.baseAt) * driftRef.current.rate;
+        // clamp extra correction to ±1.5s to avoid runaway
+        effectiveOffset = offset + Math.max(-1.5, Math.min(1.5, extra));
+      }
       let elapsed: number | null = null;
       if (audioElement && Number.isFinite(audioElement.currentTime) && audioElement.currentTime > 0) {
-        elapsed = audioElement.currentTime - offset;
+        elapsed = audioElement.currentTime - effectiveOffset;
       } else {
         const startStr = localStorage.getItem(MUSIC_START_KEY);
-        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - offset;
+        if (startStr) elapsed = (Date.now() - parseInt(startStr, 10)) / 1000 - effectiveOffset;
       }
       if (elapsed !== null) {
         let cur = -1;
@@ -106,7 +192,7 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, [enabled, lines, audioElement, MUSIC_START_KEY, offset]);
+  }, [enabled, lines, audioElement, MUSIC_START_KEY, offset, autoSync]);
 
   // Render fixed 5 slots (-2..+2) with stable keys so lines animate between positions
   const window5 = useMemo(() => {
@@ -143,9 +229,26 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.22em] text-white/60">
           <Mic size={11} /> karaokê
+          {autoSync && driftRef.current.rate !== 0 && (
+            <span className="normal-case tracking-normal text-[9px] text-white/45 ml-1">· auto ativo</span>
+          )}
         </div>
         {/* Offset adjuster — finer 0.25s steps */}
         <div className="flex items-center gap-1 text-white/70" title="Ajuste o atraso da letra para casar com o áudio">
+          <button
+            onClick={() => setAutoSync((v) => !v)}
+            className={
+              "mr-1 w-6 h-6 rounded-full flex items-center justify-center border transition " +
+              (autoSync
+                ? "border-emerald-400/60 bg-emerald-400/15 text-emerald-200 hover:bg-emerald-400/25"
+                : "border-white/15 hover:bg-white/10 text-white/70")
+            }
+            aria-label={autoSync ? "Desativar auto-ajuste" : "Ativar auto-ajuste"}
+            title={autoSync ? "Auto-ajuste de sincronia: ligado" : "Auto-ajuste de sincronia: desligado"}
+            data-focusable
+          >
+            <Zap size={11} />
+          </button>
           <button
             onClick={() => setOffset((o) => Math.round((o + 0.25) * 100) / 100)}
             className="w-6 h-6 rounded-full flex items-center justify-center border border-white/15 hover:bg-white/10 transition"
