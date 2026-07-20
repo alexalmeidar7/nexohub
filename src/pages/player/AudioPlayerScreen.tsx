@@ -1165,19 +1165,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onPointerDown={(e) => {
               // Ignora eventos vindos das setas/botões para não roubar o clique
               if ((e.target as HTMLElement).closest("button")) return;
-              (e.currentTarget as HTMLDivElement).dataset.swipeX = String(e.clientX);
-              (e.currentTarget as HTMLDivElement).dataset.swipeActive = "1";
-              try { (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId); } catch {}
+              const el = e.currentTarget as HTMLDivElement;
+              el.dataset.swipeX = String(e.clientX);
+              el.dataset.swipeAnchor = String(activeIndex);
+              el.dataset.swipeActive = "1";
+              try { el.setPointerCapture(e.pointerId); } catch {}
             }}
             onPointerMove={(e) => {
               const el = e.currentTarget as HTMLDivElement;
               if (el.dataset.swipeActive !== "1") return;
               const startX = Number(el.dataset.swipeX || 0);
+              const anchor = Number(el.dataset.swipeAnchor || 0);
               const dx = e.clientX - startX;
-              if (Math.abs(dx) > 50) {
-                el.dataset.swipeActive = "0";
-                if (dx < 0) goNext(); else goPrev();
-              }
+              const STEP = 90; // px por capa
+              const delta = Math.round(-dx / STEP); // arrastar p/ esquerda avança no histórico
+              const next = Math.max(0, Math.min(carouselMax, anchor + delta));
+              if (next !== activeIndex) setActiveIndex(next);
             }}
             onPointerUp={(e) => {
               const el = e.currentTarget as HTMLDivElement;
@@ -1185,6 +1188,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               try { el.releasePointerCapture(e.pointerId); } catch {}
             }}
             onPointerCancel={(e) => { (e.currentTarget as HTMLDivElement).dataset.swipeActive = "0"; }}
+
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("left") }}
             aria-label="Histórico de músicas — arraste ou use as setas para navegar"
