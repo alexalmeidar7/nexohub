@@ -2434,8 +2434,8 @@ function InteractivityMenu({
         />
         {/* núcleo — expande no hover para revelar o texto */}
         <span
-          className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-1.5 px-0 group-hover:px-2.5 group-focus-visible:px-2.5"
-          style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+          className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
+          style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         >
           <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
           <span
