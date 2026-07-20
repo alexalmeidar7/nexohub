@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { Mic, Minus, Plus, RotateCcw, X, Zap } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
