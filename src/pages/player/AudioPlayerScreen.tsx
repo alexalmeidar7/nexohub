@@ -1582,11 +1582,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               </div>
             </div>
             <img
-              src="/nexo-player-logo.png"
+              src={nexoPlayerLogo.url}
               alt="Nexo Player"
-              className="h-6 opacity-80"
+              className="h-6"
+              style={{ opacity: 0.6 }}
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
             />
+
           </div>
         </div>
       </footer>
