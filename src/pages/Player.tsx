@@ -594,6 +594,11 @@ export default function PlayerPage() {
       try { localStorage.setItem(`nexo_last_audio_channel_${profileRadioUserId}`, canal.id); } catch {}
     }
 
+    // Ao entrar em um canal de áudio, força o volume inicial em 40%
+    if (canal.type === "audio_live" || canal.type === "audio") {
+      handleVolumeChange(40);
+    }
+
     
     const recordHistory = async () => {
       const { error } = await supabase.from("watch_history").insert({
