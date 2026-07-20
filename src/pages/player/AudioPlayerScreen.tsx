@@ -2686,7 +2686,15 @@ function PollDialog({
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden pointer-events-auto"
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(8px)",
+          transformOrigin: "center center",
+          transition: "opacity 220ms ease-out, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+          willChange: "opacity, transform",
+        }}
       >
+
         {/* Cabeçalho com faixa animada */}
         <div className="relative px-5 pt-5 pb-3">
           <div
