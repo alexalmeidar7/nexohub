@@ -7,7 +7,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 const LoginScreen = lazy(() => import("@/components/LoginScreen"));
 
 export default function Index() {
-  const { user, loading, role } = useAuth();
+  const { user, loading } = useAuth();
   usePageTitle("Login");
 
   if (loading) {
@@ -20,11 +20,6 @@ export default function Index() {
         <LoginScreen />
       </Suspense>
     );
-  }
-
-  // Redirect based on role
-  if (role === "admin") {
-    return <Navigate to="/admin/dashboard" replace />;
   }
 
   return <Navigate to="/user/nexohub/home" replace />;

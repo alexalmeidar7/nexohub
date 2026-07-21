@@ -45,13 +45,7 @@ const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazyRetry(() => import("./pages/Player"));
 const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazyRetry(() => import("./pages/Promocoes"));
-const AdminDashboard = lazyRetry(() => import("./pages/admin/AdminDashboard"));
-const AdminUsers = lazyRetry(() => import("./pages/admin/AdminUsers"));
-const AdminModules = lazyRetry(() => import("./pages/admin/AdminModules"));
-const AdminPlans = lazyRetry(() => import("./pages/admin/AdminPlans"));
-const AdminMessages = lazyRetry(() => import("./pages/admin/AdminMessages"));
 const MasterViewHome = lazyRetry(() => import("./pages/masterview/MasterViewHome"));
-const AdminLogin = lazyRetry(() => import("./pages/admin/AdminLogin"));
 const JornalExport = lazyRetry(() => import("./pages/JornalExport"));
 const RoteiroExport = lazyRetry(() => import("./pages/RoteiroExport"));
 const RoteiroApresentadorEdit = lazyRetry(() => import("./pages/RoteiroApresentadorEdit"));
@@ -202,14 +196,8 @@ const App = () => (
             <Route path="/:userSlug/player/app" element={<PlayerApp />} />
             <Route path="/:userSlug/telainterativatelao" element={<TelaInterativa />} />
 
-            {/* Admin routes */}
-            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/modules" element={<AdminModules />} />
-            <Route path="/admin/plans" element={<AdminPlans />} />
-            <Route path="/admin/messages" element={<AdminMessages />} />
+
+
 
             {/* User / NexoHub legacy redirects */}
             <Route path="/user" element={<Navigate to="/home" replace />} />
