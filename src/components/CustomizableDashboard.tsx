@@ -299,6 +299,12 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
     if (!user) return;
+    const DEFAULT_ITEMS: DashboardItem[] = [
+      { id: "default-player", type: "widget", widgetType: "player" },
+      { id: "default-agenda", type: "widget", widgetType: "agenda" },
+      { id: "default-musica", type: "widget", widgetType: "musica" },
+      { id: "default-weather", type: "widget", widgetType: "weather" },
+    ];
     const loadItems = async () => {
       // Try DB first
       const { data, error } = await supabase
@@ -321,21 +327,26 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       // Migrate from localStorage if exists
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return;
-
-        const parsed = JSON.parse(saved);
-        if (!Array.isArray(parsed) || parsed.length === 0) return;
-
-        setItems(parsed as DashboardItem[]);
-        await mergeUserDashboardItems(user.id, {
-          items: parsed as unknown[],
-        });
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setItems(parsed as DashboardItem[]);
+            await mergeUserDashboardItems(user.id, { items: parsed as unknown[] });
+            return;
+          }
+        }
       } catch {
         // ignore invalid local data
       }
+
+      // No items anywhere → seed defaults so player/audience/agenda appear out-of-the-box
+      setItems(DEFAULT_ITEMS);
+      try {
+        await mergeUserDashboardItems(user.id, { items: DEFAULT_ITEMS as unknown[] });
+      } catch {}
     };
     loadItems();
-  }, [user]);
+  }, [user, dataUserId]);
 
   const saveItems = useCallback(async (newItems: DashboardItem[]) => {
     setItems(newItems);
