@@ -31,6 +31,7 @@ interface Props {
 
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
+  const [enabled, setEnabled] = useState<boolean[]>([true, true, true]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [rotationSec, setRotationSec] = useState<number>(7);
   const [bgColor, setBgColor] = useState<string>("#ffffff");
