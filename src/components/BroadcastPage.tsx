@@ -639,6 +639,8 @@ export default function BroadcastPage() {
                 sponsorLogos={sponsorLogos}
                 assuntoBgUrl={effectiveAssuntoBgUrl}
                 insertLiveArt={insertLiveArt}
+                programaAssuntos={programaAssuntos}
+                programaAssuntoRotation={programaAssuntoRotation}
               />
             </div>
           </div>
