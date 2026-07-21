@@ -118,9 +118,9 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
     if (previewIdx >= visibleMensagens.length) setPreviewIdx(0);
   }, [visibleMensagens.length, previewIdx]);
 
-  // Load current program assuntos
+  // Load selected program assuntos
   useEffect(() => {
-    if (!userId || !activeProgramaId) {
+    if (!userId || !selectedProgramaId) {
       setMensagens(["", "", ""]);
       setEnabled([true, true, true]);
       setFontFamily("Inter");
@@ -132,7 +132,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
         .from("broadcast_assuntos")
         .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
-        .eq("programa_id", activeProgramaId)
+        .eq("programa_id", selectedProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
@@ -147,7 +147,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setTextColor(((data as any)?.text_color as string) || "#000000");
       setLoading(false);
     })();
-  }, [userId, activeProgramaId]);
+  }, [userId, selectedProgramaId]);
 
   const publicUrl = useMemo(() => {
     if (!userId) return "";
