@@ -91,13 +91,13 @@ export default function VmixAssunto() {
     let cancelled = false;
     const load = async () => {
       const programaId = await loadActiveProgramId(userId);
-      if (!programaId || cancelled) { if (!cancelled) setMensagens([]); return; }
-      const { data } = await supabase
+      let query = supabase
         .from("broadcast_assuntos")
-        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
-        .eq("user_id", userId)
-        .eq("programa_id", programaId)
-        .maybeSingle();
+        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color, updated_at")
+        .eq("user_id", userId);
+      const { data } = programaId
+        ? await query.eq("programa_id", programaId).maybeSingle()
+        : await query.order("updated_at", { ascending: false }).limit(1).maybeSingle();
       if (cancelled) return;
       const raw = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       const en = Array.isArray((data as any)?.mensagens_enabled)
@@ -111,6 +111,7 @@ export default function VmixAssunto() {
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
+      // Defaults: fundo branco, texto preto
       setBgColor(((data as any)?.bg_color as string) || "#ffffff");
       setTextColor(((data as any)?.text_color as string) || "#000000");
     };
