@@ -143,7 +143,20 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       }
       return true;
     });
-    return hasExplicit;
+    if (hasExplicit) return true;
+    const DAY_INDEX_TO_NAME = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const dayNameNorm = norm(DAY_INDEX_TO_NAME[d.getDay()]);
+    return programasAll.some((p) => {
+      if (p.ativo === false || !p.horario_inicio) return false;
+      const dias = (p.dias_semana || []).map((x) => norm(x || ""));
+      if (!dias.includes(dayNameNorm)) return false;
+      if (isSameDay(d, nowD)) {
+        const refT = p.horario_fim || p.horario_inicio;
+        if (refT && refT.slice(0, 5) < nowHM) return false;
+      }
+      return true;
+    });
   };
 
 
