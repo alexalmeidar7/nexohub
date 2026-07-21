@@ -1,0 +1,1 @@
+ALTER TABLE public.broadcast_assuntos ADD COLUMN IF NOT EXISTS mensagens_enabled boolean[] NOT NULL DEFAULT ARRAY[true, true, true];
