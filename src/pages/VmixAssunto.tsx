@@ -2,13 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-// 5 fontes suportadas (uma delas SINK) — cada uma com seu peso ótimo
+// 5 fontes suportadas — cada uma com seu peso ótimo.
+// "Sink" é servida via Google Fonts (Alfa Slab One) por confiabilidade em CEF/vMix;
+// o cdnfonts.com estava fora do ar e a família não era aplicada.
 const FONT_CDN: Record<string, string> = {
-  Sink: "https://fonts.cdnfonts.com/css/sink",
+  Sink: "https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap",
   "Bebas Neue": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap",
   Anton: "https://fonts.googleapis.com/css2?family=Anton&display=swap",
   "Playfair Display": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap",
   Montserrat: "https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap",
+};
+
+// Nome real da família CSS (para os casos onde o rótulo salvo difere do family name servido)
+const FONT_CSS_FAMILY: Record<string, string> = {
+  Sink: "Alfa Slab One",
 };
 
 // Peso ideal por família (algumas só têm 400)
@@ -20,6 +27,7 @@ const FONT_WEIGHT: Record<string, number> = {
   Montserrat: 900,
   Inter: 800,
 };
+
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
 
