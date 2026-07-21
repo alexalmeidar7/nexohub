@@ -85,6 +85,7 @@ export default function VmixAssunto() {
   const [bgColor, setBgColor] = useState<string>("#ffffff");
   const [textColor, setTextColor] = useState<string>("#000000");
   const [idx, setIdx] = useState(0);
+  const [fontsTick, setFontsTick] = useState(0);
 
   // Injeta as fontes uma vez
   useEffect(() => {
@@ -105,6 +106,18 @@ export default function VmixAssunto() {
     document.body.style.color = textColor;
     return () => { created.forEach((l) => l.remove()); };
   }, [bgColor, textColor]);
+
+  // Aguarda fontes específicas carregarem e força re-fit
+  useEffect(() => {
+    const resolved = FONT_CSS_FAMILY[fontFamily] || fontFamily;
+    const weight = FONT_WEIGHT[fontFamily] ?? 800;
+    const fonts = (document as any).fonts;
+    if (!fonts?.load) return;
+    Promise.all([
+      fonts.load(`${weight} 100px "${resolved}"`).catch(() => null),
+      fonts.load(`400 100px "Noto Color Emoji"`).catch(() => null),
+    ]).then(() => setFontsTick((n) => n + 1));
+  }, [fontFamily]);
 
   // Carrega e recarrega a cada 8s (troca de programa / mensagens editadas)
   useEffect(() => {
@@ -161,6 +174,9 @@ export default function VmixAssunto() {
   // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
   const tokens = useMemo(() => Array.from(texto), [texto]);
 
+  // Detecta emoji / símbolos pictográficos para normalizar tamanho vs. glifos alfanuméricos
+  const isEmoji = (ch: string) => /\p{Extended_Pictographic}/u.test(ch);
+
   // Auto-fit: reduz o font-size até o texto caber em UMA linha na largura disponível.
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -173,23 +189,27 @@ export default function VmixAssunto() {
       if (!container || !el) return;
       const available = container.clientWidth;
       if (available <= 0) return;
-      // Começa grande e reduz até caber; teto proporcional à altura para não estourar verticalmente.
+      // Margem de segurança para evitar corte por sub-pixel/kerning.
+      const safe = Math.floor(available * 0.995);
       const maxByHeight = Math.floor(container.clientHeight * 0.7);
       let size = Math.min(240, maxByHeight);
       el.style.fontSize = `${size}px`;
-      // Reduz em passos até caber (guard 60 iterações).
-      let guard = 60;
-      while (el.scrollWidth > available && size > 16 && guard-- > 0) {
-        size -= Math.max(2, Math.floor(size * 0.06));
+      let guard = 80;
+      while (el.scrollWidth > safe && size > 16 && guard-- > 0) {
+        size -= Math.max(2, Math.floor(size * 0.05));
         el.style.fontSize = `${size}px`;
       }
       setFitFontPx(size);
     };
     fit();
+    // Refit tardio caso a fonte carregue depois do primeiro layout
+    const t1 = setTimeout(fit, 150);
+    const t2 = setTimeout(fit, 600);
+    const t3 = setTimeout(fit, 1500);
     const ro = new ResizeObserver(fit);
     if (containerRef.current) ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, [texto, fontStack, fontWeight]);
+    return () => { ro.disconnect(); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, [texto, fontStack, fontWeight, fontsTick]);
 
   return (
     <div
@@ -203,7 +223,7 @@ export default function VmixAssunto() {
         display: "flex",
         alignItems: "center",
         justifyContent: "flex-start",
-        padding: "4vh 6vw",
+        padding: "4vh 5vw",
         overflow: "hidden",
       }}
     >
@@ -223,21 +243,30 @@ export default function VmixAssunto() {
           maxWidth: "100%",
         }}
       >
-        {tokens.map((ch, i) => (
-          <span
-            key={`${idx}-${i}`}
-            style={{
-              display: "inline-block",
-              whiteSpace: "pre",
-              animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
-              animationDelay: `${i * 28}ms`,
-              transformOrigin: "50% 100%",
-            }}
-          >
-            {ch === " " ? "\u00A0" : ch}
-          </span>
-        ))}
+        {tokens.map((ch, i) => {
+          const emoji = isEmoji(ch);
+          return (
+            <span
+              key={`${idx}-${i}`}
+              style={{
+                display: "inline-block",
+                whiteSpace: "pre",
+                animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
+                animationDelay: `${i * 28}ms`,
+                transformOrigin: "50% 100%",
+                // Emojis tendem a renderizar maiores que letras — normaliza altura visual
+                fontSize: emoji ? "0.78em" : undefined,
+                lineHeight: emoji ? 1 : undefined,
+                verticalAlign: emoji ? "baseline" : undefined,
+                fontFamily: emoji ? '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif' : undefined,
+              }}
+            >
+              {ch === " " ? "\u00A0" : ch}
+            </span>
+          );
+        })}
       </div>
+
       <style>{`
         @keyframes assuntoCharIn {
           0%   { opacity: 0; transform: translateY(0.6em) rotate(-6deg) scale(0.85); filter: blur(6px); }
