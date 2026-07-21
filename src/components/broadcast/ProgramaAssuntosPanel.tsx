@@ -37,6 +37,42 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  // Load required web fonts once for preview
+  useEffect(() => {
+    const id = "assunto-preview-fonts";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Playfair+Display:wght@700&family=Montserrat:wght@700&family=Noto+Color+Emoji&display=swap";
+    document.head.appendChild(link);
+    const sink = document.createElement("link");
+    sink.rel = "stylesheet";
+    sink.href = "https://fonts.cdnfonts.com/css/sink";
+    document.head.appendChild(sink);
+  }, []);
+
+  // Rotate preview messages every 7s
+  const visibleMensagens = useMemo(
+    () => mensagens.map((m) => m.trim()).filter((m) => m.length > 0),
+    [mensagens],
+  );
+  useEffect(() => {
+    if (visibleMensagens.length <= 1) {
+      setPreviewIdx(0);
+      return;
+    }
+    const t = setInterval(() => {
+      setPreviewIdx((i) => (i + 1) % visibleMensagens.length);
+    }, 7000);
+    return () => clearInterval(t);
+  }, [visibleMensagens.length]);
+  useEffect(() => {
+    if (previewIdx >= visibleMensagens.length) setPreviewIdx(0);
+  }, [visibleMensagens.length, previewIdx]);
 
   // Load current program assuntos
   useEffect(() => {
