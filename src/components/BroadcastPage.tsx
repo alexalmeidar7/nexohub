@@ -1000,14 +1000,14 @@ export default function BroadcastPage() {
 
           {/* Insert Live */}
           {insertLiveArt && (
-            <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: "#f97316" }} />
-                  <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Insert Live (30s)</h2>
-                </div>
-                <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>
-              </div>
+            <div className="p-4 rounded-2xl" style={cardStyle}>
+              <SectionHeader
+                n="03"
+                label="Insert Live · 30s"
+                color="#f97316"
+                right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>}
+              />
+
 
               {insertLiveSchedule.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2 mb-3">
