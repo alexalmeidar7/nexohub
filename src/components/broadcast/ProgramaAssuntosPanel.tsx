@@ -33,6 +33,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [rotationSec, setRotationSec] = useState<number>(7);
+  const [bgColor, setBgColor] = useState<string>("#ffffff");
+  const [textColor, setTextColor] = useState<string>("#000000");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
@@ -87,7 +89,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds")
+        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
@@ -96,6 +98,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
+      setBgColor(((data as any)?.bg_color as string) || "#ffffff");
+      setTextColor(((data as any)?.text_color as string) || "#000000");
       setLoading(false);
     })();
   }, [userId, activeProgramaId]);
@@ -151,6 +155,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           mensagens: payload,
           font_family: fontFamily,
           rotation_seconds: Math.max(1, Math.min(120, Math.round(rotationSec))),
+          bg_color: bgColor,
+          text_color: textColor,
         } as any,
         { onConflict: "user_id,programa_id" },
       );
@@ -303,13 +309,13 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           <div
             className="w-full rounded overflow-hidden relative flex items-center justify-center"
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: bgColor,
               border: `1px solid ${NAVY_BORDER}`,
               aspectRatio: "16 / 9",
             }}
           >
             {visibleMensagens.length === 0 ? (
-              <span style={{ color: "#00000040", fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+              <span style={{ color: textColor, opacity: 0.4, fontSize: 12, fontFamily: "Inter, sans-serif" }}>
                 Nenhuma mensagem para pré-visualizar
               </span>
             ) : (
@@ -317,7 +323,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
                 key={previewIdx}
                 className="px-6 text-center leading-tight"
                 style={{
-                  color: "#000",
+                  color: textColor,
                   fontFamily: `"${fontFamily}", "Noto Color Emoji", sans-serif`,
                   fontSize: "clamp(18px, 4.5vw, 44px)",
                   fontWeight: 700,
@@ -337,7 +343,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
                       width: 6,
                       height: 6,
                       borderRadius: 999,
-                      backgroundColor: i === previewIdx ? "#000" : "#00000030",
+                      backgroundColor: i === previewIdx ? textColor : `${textColor}30`,
                     }}
                   />
                 ))}
@@ -345,6 +351,75 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
             )}
           </div>
           <style>{`@keyframes assuntoFade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none;} }`}</style>
+        </div>
+
+        <div className="pt-2 grid grid-cols-2 gap-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <div>
+            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+              Cor de fundo
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="w-9 h-8 rounded cursor-pointer bg-transparent"
+                style={{ border: `1px solid ${NAVY_BORDER}` }}
+              />
+              <input
+                type="text"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="flex-1 px-2 py-1 rounded text-[10px] uppercase"
+                style={inputStyle}
+              />
+            </div>
+            <div className="flex gap-1 mt-1">
+              {["#ffffff", "#000000", "#00BFF0", "#C6F03C", "#FF3B30", "#111827"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setBgColor(c)}
+                  className="w-5 h-5 rounded"
+                  style={{ backgroundColor: c, border: `1px solid ${NAVY_BORDER}` }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+              Cor do texto
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="w-9 h-8 rounded cursor-pointer bg-transparent"
+                style={{ border: `1px solid ${NAVY_BORDER}` }}
+              />
+              <input
+                type="text"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="flex-1 px-2 py-1 rounded text-[10px] uppercase"
+                style={inputStyle}
+              />
+            </div>
+            <div className="flex gap-1 mt-1">
+              {["#000000", "#ffffff", "#00BFF0", "#C6F03C", "#FF3B30", "#f59e0b"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTextColor(c)}
+                  className="w-5 h-5 rounded"
+                  style={{ backgroundColor: c, border: `1px solid ${NAVY_BORDER}` }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
