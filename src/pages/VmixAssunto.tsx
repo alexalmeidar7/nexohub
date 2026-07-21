@@ -190,6 +190,17 @@ export default function VmixAssunto() {
   }, [fontFamily]);
 
   const fontWeight = FONT_WEIGHT[fontFamily] ?? 800;
+  const emojiScale = FONT_CAP_RATIO[fontFamily] ?? 0.72;
+  const emojiShiftEm = FONT_EMOJI_SHIFT[fontFamily] ?? 0.08;
+  const emojiStyle: React.CSSProperties = {
+    fontSize: `${emojiScale}em`,
+    lineHeight: 0,
+    verticalAlign: "baseline",
+    transform: `translateY(${emojiShiftEm}em)`,
+    display: "inline-block",
+    fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+    fontVariantEmoji: "emoji" as any,
+  };
 
   // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
   const tokens = useMemo(() => Array.from(texto), [texto]);
