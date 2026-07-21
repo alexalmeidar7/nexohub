@@ -2,13 +2,20 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-// 5 fontes suportadas (uma delas SINK) — cada uma com seu peso ótimo
+// 5 fontes suportadas — cada uma com seu peso ótimo.
+// "Sink" é servida via Google Fonts (Alfa Slab One) por confiabilidade em CEF/vMix;
+// o cdnfonts.com estava fora do ar e a família não era aplicada.
 const FONT_CDN: Record<string, string> = {
-  Sink: "https://fonts.cdnfonts.com/css/sink",
+  Sink: "https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap",
   "Bebas Neue": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap",
   Anton: "https://fonts.googleapis.com/css2?family=Anton&display=swap",
   "Playfair Display": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap",
   Montserrat: "https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap",
+};
+
+// Nome real da família CSS (para os casos onde o rótulo salvo difere do family name servido)
+const FONT_CSS_FAMILY: Record<string, string> = {
+  Sink: "Alfa Slab One",
 };
 
 // Peso ideal por família (algumas só têm 400)
@@ -20,6 +27,7 @@ const FONT_WEIGHT: Record<string, number> = {
   Montserrat: 900,
   Inter: 800,
 };
+
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
 
@@ -144,11 +152,14 @@ export default function VmixAssunto() {
   const texto = mensagens[idx] || "";
 
   const fontStack = useMemo(() => {
-    // Emojis renderizam via Noto Color Emoji como fallback
-    return `"${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
+    const resolved = FONT_CSS_FAMILY[fontFamily] || fontFamily;
+    return `"${resolved}", "${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
   }, [fontFamily]);
 
   const fontWeight = FONT_WEIGHT[fontFamily] ?? 800;
+
+  // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
+  const tokens = useMemo(() => Array.from(texto), [texto]);
 
   return (
     <div
@@ -160,7 +171,7 @@ export default function VmixAssunto() {
         fontFamily: fontStack,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         padding: "4vh 6vw",
         overflow: "hidden",
       }}
@@ -171,22 +182,39 @@ export default function VmixAssunto() {
           fontFamily: fontStack,
           fontWeight,
           color: textColor,
-          fontSize: "clamp(48px, 9vw, 220px)",
-          lineHeight: 1.05,
-          textAlign: "center",
+          fontSize: "clamp(32px, 6vw, 140px)",
+          lineHeight: 1.1,
+          textAlign: "left",
           letterSpacing: "-0.01em",
-          animation: "assuntoFade 500ms ease-out",
           maxWidth: "100%",
+          display: "flex",
+          flexWrap: "wrap",
+          rowGap: "0.15em",
         }}
       >
-        {texto}
+        {tokens.map((ch, i) => (
+          <span
+            key={`${idx}-${i}`}
+            style={{
+              display: "inline-block",
+              whiteSpace: "pre",
+              animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
+              animationDelay: `${i * 28}ms`,
+              transformOrigin: "50% 100%",
+            }}
+          >
+            {ch === " " ? "\u00A0" : ch}
+          </span>
+        ))}
       </div>
       <style>{`
-        @keyframes assuntoFade {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes assuntoCharIn {
+          0%   { opacity: 0; transform: translateY(0.6em) rotate(-6deg) scale(0.85); filter: blur(6px); }
+          60%  { opacity: 1; filter: blur(0); }
+          100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); filter: blur(0); }
         }
       `}</style>
     </div>
   );
 }
+
