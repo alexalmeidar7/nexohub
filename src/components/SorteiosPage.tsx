@@ -132,23 +132,30 @@ export default function SorteiosPage() {
   const [premios, setPremios] = useState<Premio[]>([]);
   const [sorteios, setSorteios] = useState<Sorteio[]>([]);
   const [ouvintes, setOuvintes] = useState<Ouvinte[]>([]);
+  const [programas, setProgramas] = useState<ProgramaLite[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const [p, s, o] = await Promise.all([
+    // Expire overdue drawings before fetching
+    if (user?.id) {
+      await supabase.rpc("expire_overdue_sorteios", { _user_id: user.id });
+    }
+    const [p, s, o, pr] = await Promise.all([
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
+      supabase.from("programas").select("id, nome").ilike("estudio", "%fm%").order("nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
     if (s.error) toast({ title: "Erro ao carregar sorteios", description: s.error.message, variant: "destructive" });
     else setSorteios((s.data as any) || []);
     if (!o.error) setOuvintes((o.data as any) || []);
+    if (!pr.error) setProgramas((pr.data as any) || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.id]);
 
   if (loading) return <ModulePageSkeleton />;
 
@@ -169,6 +176,7 @@ export default function SorteiosPage() {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { k: "premios", label: "Prêmios & Estoque", icon: Package },
+          { k: "lista", label: "Lista de Prêmios", icon: Radio },
           { k: "sorteio", label: "Realizar Sorteio", icon: Dice5 },
           { k: "entrega", label: "Entregas", icon: Truck },
         ] as const).map(({ k, label, icon: Icon }) => (
@@ -188,12 +196,14 @@ export default function SorteiosPage() {
         ))}
       </div>
 
-      {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
+      {tab === "premios" && <PremiosTab premios={premios} programas={programas} userId={user?.id} onReload={load} />}
+      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} onReload={load} />}
       {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} userId={user?.id} onReload={load} onGoTo={setTab} />}
       {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
     </div>
   );
 }
+
 
 /* ═════════════════════ PRÊMIOS ═════════════════════ */
 function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?: string; onReload: () => void }) {
