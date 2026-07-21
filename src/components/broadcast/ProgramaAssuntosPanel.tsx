@@ -260,6 +260,57 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
           <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+            Pré-visualização ao vivo (navegador do vMix)
+          </label>
+          <div
+            className="w-full rounded overflow-hidden relative flex items-center justify-center"
+            style={{
+              backgroundColor: "#ffffff",
+              border: `1px solid ${NAVY_BORDER}`,
+              aspectRatio: "16 / 9",
+            }}
+          >
+            {visibleMensagens.length === 0 ? (
+              <span style={{ color: "#00000040", fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+                Nenhuma mensagem para pré-visualizar
+              </span>
+            ) : (
+              <div
+                key={previewIdx}
+                className="px-6 text-center leading-tight"
+                style={{
+                  color: "#000",
+                  fontFamily: `"${fontFamily}", "Noto Color Emoji", sans-serif`,
+                  fontSize: "clamp(18px, 4.5vw, 44px)",
+                  fontWeight: 700,
+                  animation: "assuntoFade 500ms ease-out",
+                  wordBreak: "break-word",
+                }}
+              >
+                {visibleMensagens[previewIdx]}
+              </div>
+            )}
+            {visibleMensagens.length > 1 && (
+              <div className="absolute bottom-1 right-2 flex gap-1">
+                {visibleMensagens.map((_, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 999,
+                      backgroundColor: i === previewIdx ? "#000" : "#00000030",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <style>{`@keyframes assuntoFade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none;} }`}</style>
+        </div>
+
+        <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
             URL para o navegador do vMix
           </label>
           <div className="flex items-center gap-1">
