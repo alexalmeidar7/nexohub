@@ -84,12 +84,19 @@ export default function VmixAssunto() {
       if (!programaId || cancelled) { if (!cancelled) setMensagens([]); return; }
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
+        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", programaId)
         .maybeSingle();
       if (cancelled) return;
-      const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]).filter((s) => (s || "").trim().length > 0) : [];
+      const raw = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
+      const en = Array.isArray((data as any)?.mensagens_enabled)
+        ? ((data as any).mensagens_enabled as boolean[])
+        : [];
+      const arr = raw
+        .map((s, i) => ({ s: (s || "").trim(), on: en[i] ?? true }))
+        .filter((x) => x.on && x.s.length > 0)
+        .map((x) => x.s);
       setMensagens(arr);
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
