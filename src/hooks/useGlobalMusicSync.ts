@@ -19,6 +19,14 @@ function isBreakTrack(data: { titulo?: string; artista?: string }) {
   return BREAK_LABELS.has(t) || BREAK_LABELS.has(a);
 }
 
+function isStandbyTrack(data: { titulo?: string; artista?: string }) {
+  const s = "standby musical";
+  const t = (data.titulo || "").trim().toLowerCase();
+  const a = (data.artista || "").trim().toLowerCase();
+  return t === s || a === s;
+}
+
+
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   const titulo = (data.titulo || "").trim().toLowerCase();
   const artista = (data.artista || "").trim().toLowerCase();
@@ -101,12 +109,66 @@ export function useGlobalMusicSync(enabled: boolean = true) {
   const fetchCountRef = useRef(0);
   const lastLocalSyncAtRef = useRef(0);
   const onlineStoppedRef = useRef(false);
+  const standbyPresenterRef = useRef<{ photo: string; ts: number }>({ photo: "", ts: 0 });
 
   useEffect(() => {
     if (!user || !enabled) return;
     const MUSIC_DATA_KEY = musicDataKey(user.id)!;
     const MUSIC_START_KEY = musicStartKey(user.id)!;
     const BOT_XML_LAST_RUN_KEY = botXmlLastRunKey(user.id)!;
+
+    // Quando o XML devolve "STANDBY MUSICAL" (título ou artista), usamos a
+    // foto do locutor do programa que está no ar como capa/imagem do artista.
+    const getOnAirPresenterPhoto = async (): Promise<string> => {
+      const now = Date.now();
+      if (standbyPresenterRef.current.photo && now - standbyPresenterRef.current.ts < 30_000) {
+        return standbyPresenterRef.current.photo;
+      }
+      try {
+        const { data } = await supabase
+          .from("programas")
+          .select("horario_inicio, horario_fim, dias_semana, ativo, variavel, data_variavel, apresentadores(foto)")
+          .eq("user_id", user.id)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%");
+        const d = new Date();
+        const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+        const diaAtual = dias[d.getDay()];
+        const horaAtual = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        const todayStr = d.toISOString().slice(0, 10);
+        const match = (data || []).find((p: any) => {
+          if (!p.ativo) return false;
+          if (p.variavel) return p.data_variavel === todayStr && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim;
+          return p.dias_semana?.includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim;
+        });
+        const photo = (match as any)?.apresentadores?.foto || "";
+        standbyPresenterRef.current = { photo, ts: now };
+        return photo;
+      } catch {
+        return "";
+      }
+    };
+
+    const processTrackData = async (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
+      if (isStandbyTrack(data)) {
+        const photo = await getOnAirPresenterPhoto();
+        if (photo) data.capa = photo;
+        applyMusicData(data);
+        if (photo && user?.id) {
+          void mergeUserDashboardItems(user.id, {
+            music_current_title: data.titulo,
+            music_current_artist: data.artista,
+            music_current_cover: photo,
+            music_deezer_artist_img: photo,
+          }).catch(() => {});
+        }
+        return;
+      }
+      fetchCoverAndArtistImg(data);
+      applyMusicData(data);
+    };
+
+
 
     const recordToHistory = async (titulo: string, artista: string) => {
       const now = new Date();
@@ -350,8 +412,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             if (!data) continue;
             if (isPlaceholderTrack(data)) return "stopped";
             lastLocalSyncAtRef.current = Date.now();
-            fetchCoverAndArtistImg(data);
-            applyMusicData(data);
+            void processTrackData(data);
+
             localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
             return true;
           } catch {
@@ -384,8 +446,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         if (!data) return "skip";
 
         onlineStoppedRef.current = false;
-        fetchCoverAndArtistImg(data);
-        applyMusicData(data);
+        void processTrackData(data);
+
         localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
         return "ok";
       };
