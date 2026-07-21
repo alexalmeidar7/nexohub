@@ -1044,11 +1044,13 @@ export default function BroadcastPage() {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 /* ─── Mockup Preview component with animations ─── */
 function MockupPreview({
