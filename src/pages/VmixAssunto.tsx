@@ -152,11 +152,14 @@ export default function VmixAssunto() {
   const texto = mensagens[idx] || "";
 
   const fontStack = useMemo(() => {
-    // Emojis renderizam via Noto Color Emoji como fallback
-    return `"${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
+    const resolved = FONT_CSS_FAMILY[fontFamily] || fontFamily;
+    return `"${resolved}", "${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
   }, [fontFamily]);
 
   const fontWeight = FONT_WEIGHT[fontFamily] ?? 800;
+
+  // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
+  const tokens = useMemo(() => Array.from(texto), [texto]);
 
   return (
     <div
@@ -168,7 +171,7 @@ export default function VmixAssunto() {
         fontFamily: fontStack,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         padding: "4vh 6vw",
         overflow: "hidden",
       }}
@@ -179,22 +182,39 @@ export default function VmixAssunto() {
           fontFamily: fontStack,
           fontWeight,
           color: textColor,
-          fontSize: "clamp(48px, 9vw, 220px)",
-          lineHeight: 1.05,
-          textAlign: "center",
+          fontSize: "clamp(32px, 6vw, 140px)",
+          lineHeight: 1.1,
+          textAlign: "left",
           letterSpacing: "-0.01em",
-          animation: "assuntoFade 500ms ease-out",
           maxWidth: "100%",
+          display: "flex",
+          flexWrap: "wrap",
+          rowGap: "0.15em",
         }}
       >
-        {texto}
+        {tokens.map((ch, i) => (
+          <span
+            key={`${idx}-${i}`}
+            style={{
+              display: "inline-block",
+              whiteSpace: "pre",
+              animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
+              animationDelay: `${i * 28}ms`,
+              transformOrigin: "50% 100%",
+            }}
+          >
+            {ch === " " ? "\u00A0" : ch}
+          </span>
+        ))}
       </div>
       <style>{`
-        @keyframes assuntoFade {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
+        @keyframes assuntoCharIn {
+          0%   { opacity: 0; transform: translateY(0.6em) rotate(-6deg) scale(0.85); filter: blur(6px); }
+          60%  { opacity: 1; filter: blur(0); }
+          100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); filter: blur(0); }
         }
       `}</style>
     </div>
   );
 }
+
