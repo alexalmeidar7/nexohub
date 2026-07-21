@@ -1117,6 +1117,26 @@ function MockupPreview({
   const currentSocial = empresaSocials[socialIdx] || null;
   const currentSponsor = sponsorLogos[sponsorIdx] || null;
 
+  // Programa assunto rotation
+  const [assuntoIdx, setAssuntoIdx] = useState(0);
+  const [assuntoVisible, setAssuntoVisible] = useState(true);
+  useEffect(() => {
+    setAssuntoIdx(0);
+  }, [programaAssuntos.join("|")]);
+  useEffect(() => {
+    if (programaAssuntos.length <= 1) return;
+    const ms = Math.max(1, programaAssuntoRotation) * 1000;
+    const interval = setInterval(() => {
+      setAssuntoVisible(false);
+      setTimeout(() => {
+        setAssuntoIdx(prev => (prev + 1) % programaAssuntos.length);
+        setAssuntoVisible(true);
+      }, 350);
+    }, ms);
+    return () => clearInterval(interval);
+  }, [programaAssuntos.length, programaAssuntoRotation]);
+  const currentProgramaAssunto = programaAssuntos[assuntoIdx] || null;
+
   return (
     <div
       className="relative w-full h-full rounded-2xl overflow-hidden"
