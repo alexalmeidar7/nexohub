@@ -412,8 +412,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             if (!data) continue;
             if (isPlaceholderTrack(data)) return "stopped";
             lastLocalSyncAtRef.current = Date.now();
-            fetchCoverAndArtistImg(data);
-            applyMusicData(data);
+            void processTrackData(data);
+
             localStorage.setItem(BOT_XML_LAST_RUN_KEY, Date.now().toString());
             return true;
           } catch {
