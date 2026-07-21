@@ -33,6 +33,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [rotationSec, setRotationSec] = useState<number>(7);
+  const [bgColor, setBgColor] = useState<string>("#ffffff");
+  const [textColor, setTextColor] = useState<string>("#000000");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
