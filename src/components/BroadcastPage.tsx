@@ -577,6 +577,7 @@ export default function BroadcastPage() {
 
   const NAVY = "#0A2540";
   const NAVY_DEEP = "#07192b";
+  const NAVY_SOFT = "#0d2a45";
   const NAVY_BORDER = "#1a3a5a";
   const CYAN = "#00BFF0";
   const LIME = "#C6F03C";
@@ -586,28 +587,126 @@ export default function BroadcastPage() {
     border: `1px solid ${NAVY_BORDER}`,
     color: "#fff",
     outline: "none",
+    fontFamily: "'Manrope', sans-serif",
   };
 
+  const cardStyle: React.CSSProperties = {
+    backgroundColor: NAVY_DEEP,
+    border: `1px solid ${NAVY_BORDER}`,
+    borderRadius: 16,
+  };
+
+  const sectionHeaderStyle: React.CSSProperties = {
+    fontFamily: "'Sora', sans-serif",
+    fontWeight: 700,
+    letterSpacing: "0.14em",
+  };
+
+  // Load Sora + Manrope once
+  useEffect(() => {
+    const id = "broadcast-fonts-sora-manrope";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap";
+    document.head.appendChild(link);
+  }, []);
+
+  // Live clock
+  const [nowClock, setNowClock] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNowClock(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const clockStr = `${String(nowClock.getHours()).padStart(2, "0")}:${String(nowClock.getMinutes()).padStart(2, "0")}:${String(nowClock.getSeconds()).padStart(2, "0")}`;
+
+  const SectionHeader = ({ n, label, color = CYAN, right }: { n: string; label: string; color?: string; right?: React.ReactNode }) => (
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center gap-2.5">
+        <span
+          className="inline-flex items-center justify-center rounded-md text-[10px] font-black"
+          style={{ width: 22, height: 22, backgroundColor: color, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+        >
+          {n}
+        </span>
+        <h2 className="text-white text-[11px] uppercase" style={sectionHeaderStyle}>{label}</h2>
+      </div>
+      {right}
+    </div>
+  );
+
   return (
-    <div className="px-3 pt-3 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div
+      className="px-3 pt-3 pb-4 h-full min-h-0"
+      style={{ fontFamily: "'Manrope', sans-serif", backgroundColor: "transparent" }}
+    >
       <div className="w-full h-full min-h-0 flex flex-col gap-4">
 
-        {/* ── Top toolbar: title + status badges ── */}
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-white text-base font-bold tracking-tight uppercase">
-            Vmix <span style={{ color: CYAN }}>→</span> Broadcast
+        {/* ── Top toolbar: brand lockup + status console ── */}
+        <div
+          className="flex items-center justify-between gap-4 px-4 py-3"
+          style={{
+            ...cardStyle,
+            background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
+          }}
+        >
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-2">
+              <span
+                className="text-white text-[10px] font-black tracking-widest px-2 py-1 rounded"
+                style={{ backgroundColor: CYAN, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+              >
+                VMIX
+              </span>
+              <span className="text-white/50 text-[10px] font-bold tracking-widest">/</span>
+              <h2
+                className="text-white text-sm uppercase tracking-tight"
+                style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700 }}
+              >
+                Broadcast
+              </h2>
+            </div>
             {programaNome && (
-              <span className="ml-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#ffffff60" }}>
-                / {programaNome}
+              <div
+                className="hidden md:flex items-center gap-2 pl-4 min-w-0"
+                style={{ borderLeft: `1px solid ${NAVY_BORDER}` }}
+              >
+                {programaLogo && (
+                  <img src={programaLogo} alt="" className="w-7 h-7 rounded-md object-cover" style={{ border: `1px solid ${NAVY_BORDER}` }} />
+                )}
+                <div className="min-w-0">
+                  <div className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60" }}>Programa no ar</div>
+                  <div className="text-[12px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>{programaNome}</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {saving && (
+              <span className="flex items-center gap-1.5 text-[10px] font-semibold" style={{ color: "#ffffff70" }}>
+                <Loader2 size={11} className="animate-spin" /> Salvando
               </span>
             )}
-          </h2>
-          <div className="flex items-center gap-2">
-            {saving && <Loader2 size={12} className="animate-spin text-white/60" />}
-            <span className="px-3 py-1 text-[10px] font-bold rounded flex items-center gap-1.5 uppercase" style={{ backgroundColor: "#dc2626", color: "#fff" }}>
-              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} /> Live
+            <span
+              className="hidden sm:inline-block px-3 py-1.5 text-[11px] font-bold rounded-md font-mono"
+              style={{ backgroundColor: NAVY_DEEP, color: LIME, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              {clockStr}
             </span>
-            <span className="px-3 py-1 text-[10px] font-bold rounded uppercase" style={{ backgroundColor: CYAN, color: NAVY }}>vMix Active</span>
+            <span
+              className="px-3 py-1.5 text-[10px] font-black rounded-md flex items-center gap-1.5 uppercase tracking-widest"
+              style={{ backgroundColor: "#dc2626", color: "#fff", fontFamily: "'Sora', sans-serif" }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} /> LIVE
+            </span>
+            <span
+              className="px-3 py-1.5 text-[10px] font-black rounded-md uppercase tracking-widest"
+              style={{ backgroundColor: CYAN, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+            >
+              vMix · ON
+            </span>
           </div>
         </div>
 
@@ -641,63 +740,46 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Status strip — 4 KPI tiles */}
+            {/* Status strip — 4 KPI tiles (clean, no duplicated toggles) */}
             <div className="grid grid-cols-4 gap-3 flex-none">
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Locutor</span>
-                <span className="text-xs font-bold truncate" style={{ color: LIME }}>{displayLocutor}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Locutor</span>
+                <span className="text-[13px] font-bold truncate" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{displayLocutor}</span>
               </div>
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Assunto</span>
-                <span className="text-xs font-bold text-white truncate" title={data.assunto}>{data.assunto || "—"}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Assunto</span>
+                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }} title={data.assunto}>{data.assunto || "—"}</span>
               </div>
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Patrocínios</span>
-                <span className="text-xs font-bold" style={{ color: CYAN }}>{sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Patrocínios</span>
+                <span className="text-[13px] font-bold" style={{ color: CYAN, fontFamily: "'Sora', sans-serif" }}>
+                  {sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}
+                </span>
               </div>
               <div
-                className="p-4 rounded-xl flex flex-col gap-1"
+                className="p-3.5 rounded-2xl flex flex-col gap-1"
                 style={{
-                  backgroundColor: NAVY_DEEP,
-                  border: `1px solid ${NAVY_BORDER}`,
-                  borderBottom: `2px solid ${insertLiveArt ? LIME : NAVY_BORDER}`,
+                  ...cardStyle,
+                  boxShadow: insertLiveArt ? `inset 0 -3px 0 ${LIME}` : undefined,
                 }}
               >
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Insert Live</span>
-                <span className="text-xs font-bold text-white truncate">
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Insert Live</span>
+                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>
                   {insertLiveArt ? `${insertLiveSchedule.length || 0} slots` : "off"}
                 </span>
               </div>
-
-              {/* Overlay toggles */}
-              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Identidade</span>
-                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: LIME }}>
-                  <div className="absolute right-1 top-1 w-3 h-3 rounded-full" style={{ backgroundColor: NAVY }} />
-                </div>
-              </div>
-              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Ticker</span>
-                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: composedTicker ? LIME : "rgba(255,255,255,0.1)" }}>
-                  <div
-                    className={`absolute top-1 w-3 h-3 rounded-full ${composedTicker ? "right-1" : "left-1"}`}
-                    style={{ backgroundColor: composedTicker ? NAVY : "rgba(255,255,255,0.4)" }}
-                  />
-                </div>
-              </div>
             </div>
           </div>
+
 
           {/* ── Right: settings column ── */}
           <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1" style={{ maxHeight: "100%" }}>
 
 
           {/* Identidade */}
-          <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: CYAN }} />
-              <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Identidade</h2>
-            </div>
+          <div className="p-4 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="01" label="Identidade" color={CYAN} />
+
 
             <div className="space-y-3">
               <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
@@ -873,14 +955,14 @@ export default function BroadcastPage() {
           </div>
 
           {/* Redes Sociais */}
-          <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: LIME }} />
-                <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Redes Sociais</h2>
-              </div>
-              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>
-            </div>
+          <div className="p-4 rounded-2xl" style={cardStyle}>
+            <SectionHeader
+              n="02"
+              label="Redes Sociais"
+              color={LIME}
+              right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>}
+            />
+
 
             {empresaSocials.length === 0 ? (
               <p className="text-[10px]" style={{ color: "#ffffff60" }}>Nenhuma rede social cadastrada.</p>
@@ -918,14 +1000,14 @@ export default function BroadcastPage() {
 
           {/* Insert Live */}
           {insertLiveArt && (
-            <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: "#f97316" }} />
-                  <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Insert Live (30s)</h2>
-                </div>
-                <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>
-              </div>
+            <div className="p-4 rounded-2xl" style={cardStyle}>
+              <SectionHeader
+                n="03"
+                label="Insert Live · 30s"
+                color="#f97316"
+                right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>}
+              />
+
 
               {insertLiveSchedule.length > 0 ? (
                 <div className="grid grid-cols-4 gap-2 mb-3">
@@ -955,11 +1037,9 @@ export default function BroadcastPage() {
           )}
 
           {/* Ticker */}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: CYAN }} />
-              <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Ticker System</h2>
-            </div>
+          <div className="p-4 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="04" label="Ticker System" color={CYAN} />
+
 
             <div className="space-y-2">
               {([
