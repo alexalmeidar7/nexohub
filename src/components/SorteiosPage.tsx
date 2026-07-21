@@ -206,14 +206,15 @@ export default function SorteiosPage() {
 
 
 /* ═════════════════════ PRÊMIOS ═════════════════════ */
-function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?: string; onReload: () => void }) {
+function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string; onReload: () => void }) {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1" });
+  const [form, setForm] = useState({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1", dias_validade: "7", programa_id: "" });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const reset = () => { setForm({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1" }); setEditingId(null); };
+  const reset = () => { setForm({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1", dias_validade: "7", programa_id: "" }); setEditingId(null); };
+
 
   const save = async () => {
     if (!userId) return;
