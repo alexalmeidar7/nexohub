@@ -85,6 +85,7 @@ export default function VmixAssunto() {
   const [bgColor, setBgColor] = useState<string>("#ffffff");
   const [textColor, setTextColor] = useState<string>("#000000");
   const [idx, setIdx] = useState(0);
+  const [fontsTick, setFontsTick] = useState(0);
 
   // Injeta as fontes uma vez
   useEffect(() => {
@@ -105,6 +106,18 @@ export default function VmixAssunto() {
     document.body.style.color = textColor;
     return () => { created.forEach((l) => l.remove()); };
   }, [bgColor, textColor]);
+
+  // Aguarda fontes específicas carregarem e força re-fit
+  useEffect(() => {
+    const resolved = FONT_CSS_FAMILY[fontFamily] || fontFamily;
+    const weight = FONT_WEIGHT[fontFamily] ?? 800;
+    const fonts = (document as any).fonts;
+    if (!fonts?.load) return;
+    Promise.all([
+      fonts.load(`${weight} 100px "${resolved}"`).catch(() => null),
+      fonts.load(`400 100px "Noto Color Emoji"`).catch(() => null),
+    ]).then(() => setFontsTick((n) => n + 1));
+  }, [fontFamily]);
 
   // Carrega e recarrega a cada 8s (troca de programa / mensagens editadas)
   useEffect(() => {
