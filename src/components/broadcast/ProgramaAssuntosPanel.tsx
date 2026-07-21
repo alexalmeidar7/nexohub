@@ -89,7 +89,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds")
+        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
