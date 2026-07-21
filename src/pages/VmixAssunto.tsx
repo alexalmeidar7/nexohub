@@ -2,13 +2,23 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-// 5 fontes suportadas (uma delas SINK)
+// 5 fontes suportadas (uma delas SINK) — cada uma com seu peso ótimo
 const FONT_CDN: Record<string, string> = {
   Sink: "https://fonts.cdnfonts.com/css/sink",
   "Bebas Neue": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap",
   Anton: "https://fonts.googleapis.com/css2?family=Anton&display=swap",
   "Playfair Display": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap",
   Montserrat: "https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap",
+};
+
+// Peso ideal por família (algumas só têm 400)
+const FONT_WEIGHT: Record<string, number> = {
+  Sink: 400,
+  "Bebas Neue": 400,
+  Anton: 400,
+  "Playfair Display": 900,
+  Montserrat: 900,
+  Inter: 800,
 };
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
