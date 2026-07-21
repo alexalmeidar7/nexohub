@@ -292,10 +292,23 @@ function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[
               onChange={e => setForm({ ...form, descricao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade em estoque">
-            <input type="number" min={0} style={pillInput} value={form.quantidade_estoque}
-              onChange={e => setForm({ ...form, quantidade_estoque: e.target.value })} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Quantidade em estoque">
+              <input type="number" min={0} style={pillInput} value={form.quantidade_estoque}
+                onChange={e => setForm({ ...form, quantidade_estoque: e.target.value })} />
+            </Field>
+            <Field label="Validade para entregar (dias)">
+              <input type="number" min={1} style={pillInput} value={form.dias_validade}
+                onChange={e => setForm({ ...form, dias_validade: e.target.value })} />
+            </Field>
+          </div>
+          <Field label="Programa vinculado (opcional)">
+            <select style={pillSelect} value={form.programa_id} onChange={e => setForm({ ...form, programa_id: e.target.value })}>
+              <option value="">— SEM PROGRAMA —</option>
+              {programas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </select>
           </Field>
+
           <Field label="Imagem do prêmio">
             <div className="flex items-center gap-3">
               {form.imagem_url && (
