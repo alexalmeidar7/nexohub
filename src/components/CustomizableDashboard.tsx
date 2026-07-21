@@ -1104,17 +1104,77 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    supabase
-      .from("agenda_eventos")
-      .select("*, programa:programas(horario_inicio, horario_fim)")
-      .eq("user_id", uid!)
-      .gte("data", today)
-      .not("status", "in", '("cancelado","concluido")')
-      .order("data", { ascending: true })
-      .limit(10) // Buscamos mais para filtrar os expirados do dia no cliente
-      .then(({ data }) => { if (data) setEvents(data); });
+    if (!user || !uid) return;
+    let cancelled = false;
+    const load = async () => {
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const [evtsRes, progsRes] = await Promise.all([
+        supabase
+          .from("agenda_eventos")
+          .select("*, programa:programas(horario_inicio, horario_fim)")
+          .eq("user_id", uid)
+          .gte("data", todayStr)
+          .not("status", "in", '("cancelado","concluido")')
+          .order("data", { ascending: true })
+          .limit(20),
+        supabase
+          .from("programas")
+          .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo")
+          .eq("user_id", uid)
+          .eq("ativo", true),
+      ]);
+      if (cancelled) return;
+
+      const evts: any[] = evtsRes.data || [];
+      const progs: any[] = progsRes.data || [];
+
+      // Synthesize upcoming events from programs (next 7 days) so that a
+      // freshly-configured account with programs but no manual events still
+      // shows something in the dashboard agenda widget.
+      const DAY_INDEX: Record<string, number> = {
+        domingo: 0, segunda: 1, terca: 2, "terça": 2,
+        quarta: 3, quinta: 4, sexta: 5, sabado: 6, "sábado": 6,
+      };
+      const synthetic: any[] = [];
+      for (let offset = 0; offset < 7; offset++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+        const dow = d.getDay();
+        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        for (const p of progs) {
+          const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+          const matches = dias.some((s: string) => DAY_INDEX[String(s).trim().toLowerCase()] === dow);
+          if (!matches) continue;
+          synthetic.push({
+            id: `prog-${p.id}-${dStr}`,
+            data: dStr,
+            descricao: p.nome,
+            tipo_evento: "live",
+            programa: { horario_inicio: p.horario_inicio, horario_fim: p.horario_fim },
+            _synthetic: true,
+            _sortKey: `${dStr} ${p.horario_inicio || "99:99"}`,
+          });
+        }
+      }
+
+      // Merge: prefer real events; only add synthetic if no real event covers same program+date
+      const seen = new Set(evts.map((e: any) => `${e.data}|${e.programa_id || ""}`));
+      const merged = [
+        ...evts,
+        ...synthetic.filter(s => {
+          const progId = s.id.split("-")[1];
+          return !seen.has(`${s.data}|${progId}`);
+        }),
+      ].sort((a, b) => {
+        const ka = `${a.data} ${a.programa?.horario_inicio || a.horario_gravacao || "99:99"}`;
+        const kb = `${b.data} ${b.programa?.horario_inicio || b.horario_gravacao || "99:99"}`;
+        return ka.localeCompare(kb);
+      });
+
+      setEvents(merged);
+    };
+    load();
+    return () => { cancelled = true; };
   }, [user, uid]);
 
   const todayStr = format(now, "yyyy-MM-dd");
