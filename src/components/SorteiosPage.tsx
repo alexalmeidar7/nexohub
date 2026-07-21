@@ -768,18 +768,20 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
 /* ═════════════════════ ENTREGA ═════════════════════ */
 function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; premios: Premio[]; onReload: () => void }) {
   const { toast } = useToast();
-  const [filter, setFilter] = useState<"pendentes" | "entregues" | "todos">("pendentes");
+  const [filter, setFilter] = useState<"pendentes" | "entregues" | "expirados" | "todos">("pendentes");
   const [search, setSearch] = useState("");
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
   const rows = sorteios.filter(s => {
-    if (filter === "pendentes" && s.entregue) return false;
+    if (filter === "pendentes" && (s.entregue || s.expirado)) return false;
     if (filter === "entregues" && !s.entregue) return false;
+    if (filter === "expirados" && !s.expirado) return false;
     const q = search.trim().toLowerCase();
     if (q && !s.nome_ganhador.toLowerCase().includes(q) && !(premioMap[s.premio_id]?.nome || "").toLowerCase().includes(q)) return false;
     return true;
   });
+
 
   const marcarEntregue = async (s: Sorteio, entregue: boolean) => {
     const { error } = await supabase.from("sorteio_sorteios")
