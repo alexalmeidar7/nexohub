@@ -315,7 +315,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
             }}
           >
             {visibleMensagens.length === 0 ? (
-              <span style={{ color: "#00000040", fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+              <span style={{ color: textColor, opacity: 0.4, fontSize: 12, fontFamily: "Inter, sans-serif" }}>
                 Nenhuma mensagem para pré-visualizar
               </span>
             ) : (
