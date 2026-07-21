@@ -54,6 +54,8 @@ export default function VmixAssunto() {
   const [mensagens, setMensagens] = useState<string[]>([]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [rotationSec, setRotationSec] = useState<number>(7);
+  const [bgColor, setBgColor] = useState<string>("#ffffff");
+  const [textColor, setTextColor] = useState<string>("#000000");
   const [idx, setIdx] = useState(0);
 
   // Injeta as fontes uma vez
