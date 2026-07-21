@@ -343,7 +343,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
                       width: 6,
                       height: 6,
                       borderRadius: 999,
-                      backgroundColor: i === previewIdx ? "#000" : "#00000030",
+                      backgroundColor: i === previewIdx ? textColor : `${textColor}30`,
                     }}
                   />
                 ))}
