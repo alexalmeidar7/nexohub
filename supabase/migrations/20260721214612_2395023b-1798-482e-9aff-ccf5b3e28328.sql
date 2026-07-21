@@ -1,0 +1,1 @@
+GRANT SELECT ON public.broadcast_assuntos TO anon; GRANT SELECT, INSERT, UPDATE, DELETE ON public.broadcast_assuntos TO authenticated; GRANT ALL ON public.broadcast_assuntos TO service_role; GRANT SELECT ON public.programas TO anon;
