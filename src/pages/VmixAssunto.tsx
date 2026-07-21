@@ -23,6 +23,16 @@ const DAY_MAP: Record<number, string> = {
   0: "domingo", 1: "segunda", 2: "terca", 3: "quarta", 4: "quinta", 5: "sexta", 6: "sabado",
 };
 
+const normDay = (s: string) =>
+  (s || "")
+    .toString()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/-feira$/, "")
+    .trim();
+
 async function loadActiveProgramId(userId: string): Promise<string | null> {
   const now = new Date();
   const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
@@ -40,7 +50,7 @@ async function loadActiveProgramId(userId: string): Promise<string | null> {
     if (start < 0 || end < 0) continue;
     const runsToday = p.variavel
       ? String(p.data_variavel || "").slice(0, 10) === today
-      : (p.dias_semana || []).includes(dayName);
+      : (p.dias_semana || []).some((d: string) => normDay(d) === dayName);
     if (!runsToday) continue;
     if (end > start ? nowSec >= start && nowSec < end : nowSec >= start || nowSec < end) {
       return p.id;
