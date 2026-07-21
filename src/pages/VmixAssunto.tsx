@@ -53,6 +53,7 @@ export default function VmixAssunto() {
   const { userId } = useParams<{ userId: string }>();
   const [mensagens, setMensagens] = useState<string[]>([]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
+  const [rotationSec, setRotationSec] = useState<number>(7);
   const [idx, setIdx] = useState(0);
 
   // Injeta as fontes uma vez
@@ -81,7 +82,7 @@ export default function VmixAssunto() {
       if (!programaId || cancelled) { if (!cancelled) setMensagens([]); return; }
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family")
+        .select("mensagens, font_family, rotation_seconds")
         .eq("user_id", userId)
         .eq("programa_id", programaId)
         .maybeSingle();
@@ -89,18 +90,21 @@ export default function VmixAssunto() {
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]).filter((s) => (s || "").trim().length > 0) : [];
       setMensagens(arr);
       setFontFamily(data?.font_family || "Inter");
+      const rs = Number((data as any)?.rotation_seconds);
+      setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
     };
     load();
     const t = setInterval(load, 8000);
     return () => { cancelled = true; clearInterval(t); };
   }, [userId]);
 
-  // Rotaciona mensagens a cada 7s
+  // Rotaciona mensagens
   useEffect(() => {
     if (mensagens.length <= 1) { setIdx(0); return; }
-    const t = setInterval(() => setIdx((i) => (i + 1) % mensagens.length), 7000);
+    const ms = Math.max(1, rotationSec) * 1000;
+    const t = setInterval(() => setIdx((i) => (i + 1) % mensagens.length), ms);
     return () => clearInterval(t);
-  }, [mensagens.length]);
+  }, [mensagens.length, rotationSec]);
 
   const texto = mensagens[idx] || "";
 
