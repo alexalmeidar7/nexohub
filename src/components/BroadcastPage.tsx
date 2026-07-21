@@ -1237,6 +1237,28 @@ function MockupPreview({
               </div>
             </div>
 
+            {/* Programa Assunto (broadcast_assuntos) — abaixo do box do locutor */}
+            {currentProgramaAssunto && (
+              <div
+                className="mt-1.5 backdrop-blur-sm"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.97)",
+                  padding: "8px 16px",
+                  borderRadius: 6,
+                  borderLeft: `3px solid ${accentColor}`,
+                  transition: "opacity 350ms ease",
+                  opacity: assuntoVisible ? 1 : 0,
+                }}
+              >
+                <div className="text-[8px] font-bold uppercase tracking-wider mb-0.5" style={{ color: accentColor }}>
+                  Assunto do Programa {programaAssuntos.length > 1 && <span style={{ color: "#00000050" }}>· {assuntoIdx + 1}/{programaAssuntos.length}</span>}
+                </div>
+                <div className="text-[11px] font-bold leading-snug" style={{ color: "#111" }}>
+                  {currentProgramaAssunto}
+                </div>
+              </div>
+            )}
+
             {/* Subject bar – separated from ticker */}
             <div
               style={{
