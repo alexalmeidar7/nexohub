@@ -251,12 +251,12 @@ export default function VmixAssunto() {
       <span
         key={`m-${i}`}
         style={{
-          fontSize: "0.78em",
+          fontSize: `${emojiScale}em`,
           fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
         }}
       >{ch}</span>
     );
-  }), [tokens]);
+  }), [tokens, emojiScale]);
 
   return (
     <div
