@@ -120,12 +120,12 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
 ];
 
 const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
-  { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
-  { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
   { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
-  { label: "Previsão do Tempo", type: "weather", description: "Temperatura e previsão para os próximos dias" },
   { label: "Player", type: "player", description: "Ouça ou assista seus canais cadastrados" },
 ];
+
+// Widgets descontinuados — removidos automaticamente ao carregar
+const DEPRECATED_WIDGETS = new Set(["agenda", "musica", "weather"]);
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   Mic2, PlaySquare, Newspaper, Music, CalendarDays, Settings, MonitorPlay, MessageSquareQuote,
