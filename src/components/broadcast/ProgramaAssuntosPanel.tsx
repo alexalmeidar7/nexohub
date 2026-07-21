@@ -213,12 +213,39 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
         {loading && (
           <div className="text-[10px]" style={{ color: "#ffffff60" }}>Carregando...</div>
         )}
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2].map((i) => {
+          const isOn = !!enabled[i];
+          return (
           <div key={i} className="relative">
-            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
-              Mensagem {i + 1}
-            </label>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>
+                Mensagem {i + 1}
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const arr = [...enabled];
+                  arr[i] = !arr[i];
+                  setEnabled(arr);
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: isOn ? CYAN : "transparent",
+                  color: isOn ? "#001018" : "#ffffff60",
+                  border: `1px solid ${isOn ? CYAN : NAVY_BORDER}`,
+                }}
+                title={isOn ? "Ativa (clique para desativar)" : "Inativa (clique para ativar)"}
+              >
+                <span
+                  style={{
+                    width: 6, height: 6, borderRadius: 999,
+                    backgroundColor: isOn ? "#001018" : "#ffffff40",
+                  }}
+                />
+                {isOn ? "Ativa" : "Inativa"}
+              </button>
+            </div>
+            <div className="flex items-center gap-1" style={{ opacity: isOn ? 1 : 0.5 }}>
               <input
                 ref={(el) => (inputRefs.current[i] = el)}
                 type="text"
