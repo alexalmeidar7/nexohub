@@ -589,123 +589,108 @@ export default function BroadcastPage() {
   };
 
   return (
-    <div className="px-2 pt-2 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-      <div
-        className="w-full flex flex-col lg:flex-row overflow-hidden rounded-2xl shadow-2xl h-full min-h-0"
-        style={{ backgroundColor: NAVY, border: `4px solid ${NAVY}` }}
-      >
-        {/* ── Left: Preview + tactical strip ── */}
-        <div className="flex-1 min-w-0 flex flex-col" style={{ backgroundColor: NAVY_DEEP, borderRight: `1px solid ${NAVY_BORDER}` }}>
-          {/* Preview header */}
-          <div className="px-4 py-3 flex justify-between items-center" style={{ backgroundColor: NAVY }}>
-            <div className="flex items-center gap-3">
-              <div
-                className="w-3 h-3 rounded-full animate-pulse"
-                style={{ backgroundColor: "#dc2626", boxShadow: "0 0 10px rgba(220,38,38,0.8)" }}
-              />
-              <span className="text-white font-extrabold tracking-tight text-sm uppercase">Program Preview</span>
-              {programaNome && (
-                <span className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#ffffff80" }}>
-                  / {programaNome}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2 items-center">
-              {saving && <Loader2 size={12} className="animate-spin text-white/60" />}
-              <span className="px-3 py-1 text-[10px] font-bold rounded-full" style={{ backgroundColor: "#dc2626", color: "#fff" }}>LIVE</span>
-              <span className="px-3 py-1 text-[10px] font-bold rounded-full" style={{ backgroundColor: CYAN, color: NAVY }}>vMix</span>
-            </div>
-          </div>
+    <div className="px-3 pt-3 pb-4 h-full min-h-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      <div className="w-full h-full min-h-0 flex flex-col gap-4">
 
-          {/* 16:9 canvas — responsivo, ocupa espaço disponível sem cortar */}
-          <div className="flex-1 min-h-0 w-full flex items-center justify-center p-3">
-            <div
-              className="relative"
-              style={{ height: "100%", aspectRatio: "16/9", maxWidth: "100%" }}
-            >
-              <MockupPreview
-                empresaLogo={empresaLogo}
-                programaNome={programaNome}
-                programaLogo={programaLogo}
-                displayLocutor={displayLocutor}
-                locutorInstagram={locutorInstagram}
-                locutorFoto={locutorFoto}
-                accentColor={accentColor}
-                assunto={data.assunto}
-                showQrCode={data.showQrCode}
-                whatsappNumber={whatsappNumber}
-                empresaSocials={empresaSocials}
-                composedTicker={composedTicker}
-                sponsorLogos={sponsorLogos}
-                assuntoBgUrl={effectiveAssuntoBgUrl}
-                insertLiveArt={insertLiveArt}
-                programaAssuntos={programaAssuntos}
-                programaAssuntoRotation={programaAssuntoRotation}
-              />
-            </div>
-          </div>
-
-          {/* Tactical status grid (real telemetry, no fake controls) */}
-          <div className="flex-none p-5 grid grid-cols-4 gap-3 content-start" style={{ backgroundColor: NAVY_DEEP }}>
-            <div className="col-span-4 flex justify-between items-center mb-1">
-              <h3 className="text-xs font-bold uppercase tracking-widest" style={{ color: CYAN }}>Status do Broadcast</h3>
-              <span className="text-[9px] font-mono uppercase" style={{ color: "#ffffff40" }}>Live · XML sync</span>
-            </div>
-
-            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
-              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Locutor</span>
-              <span className="text-xs font-black text-white truncate">{displayLocutor}</span>
-            </div>
-
-            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
-              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Assunto</span>
-              <span className="text-xs font-black text-white truncate" title={data.assunto}>
-                {data.assunto || "—"}
+        {/* ── Top toolbar: title + status badges ── */}
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-white text-base font-bold tracking-tight uppercase">
+            Vmix <span style={{ color: CYAN }}>→</span> Broadcast
+            {programaNome && (
+              <span className="ml-3 text-[10px] font-semibold uppercase tracking-widest" style={{ color: "#ffffff60" }}>
+                / {programaNome}
               </span>
-            </div>
-
-            <div className="rounded-xl border-2 p-3 flex flex-col justify-between h-16" style={{ backgroundColor: NAVY, borderColor: NAVY_BORDER }}>
-              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>Patrocínios</span>
-              <span className="text-xs font-black" style={{ color: CYAN }}>{sponsorLogos.length}</span>
-            </div>
-
-            <div
-              className="rounded-xl border-2 p-3 flex flex-col justify-between h-16"
-              style={{
-                backgroundColor: insertLiveArt ? "rgba(198,240,60,0.08)" : NAVY,
-                borderColor: insertLiveArt ? "rgba(198,240,60,0.4)" : NAVY_BORDER,
-              }}
-            >
-              <span className="text-[9px] font-bold uppercase" style={{ color: insertLiveArt ? LIME : "#ffffff60" }}>Insert Live</span>
-              <span className="text-xs font-black" style={{ color: insertLiveArt ? LIME : "#fff" }}>
-                {insertLiveArt ? `${insertLiveSchedule.length} slots` : "off"}
-              </span>
-            </div>
-
-            {/* Overlay indicators */}
-            <div className="col-span-2 p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY, border: `1px solid ${NAVY_BORDER}` }}>
-              <span className="text-white text-xs font-bold uppercase tracking-wide">Overlay · Identidade</span>
-              <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: LIME }}>
-                <div className="absolute right-1 top-1 w-3 h-3 rounded-full" style={{ backgroundColor: NAVY }} />
-              </div>
-            </div>
-            <div className="col-span-2 p-4 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY, border: `1px solid ${NAVY_BORDER}` }}>
-              <span className="text-white text-xs font-bold uppercase tracking-wide">Overlay · Ticker</span>
-              <div
-                className="w-10 h-5 rounded-full relative"
-                style={{ backgroundColor: composedTicker ? LIME : "rgba(255,255,255,0.1)" }}
-              >
-                <div
-                  className={`absolute top-1 w-3 h-3 rounded-full ${composedTicker ? "right-1" : "left-1"}`}
-                  style={{ backgroundColor: composedTicker ? NAVY : "rgba(255,255,255,0.4)" }}
-                />
-              </div>
-            </div>
+            )}
+          </h2>
+          <div className="flex items-center gap-2">
+            {saving && <Loader2 size={12} className="animate-spin text-white/60" />}
+            <span className="px-3 py-1 text-[10px] font-bold rounded flex items-center gap-1.5 uppercase" style={{ backgroundColor: "#dc2626", color: "#fff" }}>
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} /> Live
+            </span>
+            <span className="px-3 py-1 text-[10px] font-bold rounded uppercase" style={{ backgroundColor: CYAN, color: NAVY }}>vMix Active</span>
           </div>
         </div>
 
-        {/* ── Right: dark sidebar with parameter panels ── */}
-        <div className="w-full lg:w-[360px] shrink-0 overflow-y-auto" style={{ backgroundColor: NAVY, maxHeight: "calc(100vh - 180px)" }}>
+        {/* ── Two-column console ── */}
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+
+          {/* ── Left: Preview stage + status strip ── */}
+          <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-hidden">
+            {/* 16:9 preview stage */}
+            <div className="w-full flex items-center justify-center min-h-0">
+              <div className="relative" style={{ width: "100%", aspectRatio: "16/9", maxHeight: "100%" }}>
+                <MockupPreview
+                  empresaLogo={empresaLogo}
+                  programaNome={programaNome}
+                  programaLogo={programaLogo}
+                  displayLocutor={displayLocutor}
+                  locutorInstagram={locutorInstagram}
+                  locutorFoto={locutorFoto}
+                  accentColor={accentColor}
+                  assunto={data.assunto}
+                  showQrCode={data.showQrCode}
+                  whatsappNumber={whatsappNumber}
+                  empresaSocials={empresaSocials}
+                  composedTicker={composedTicker}
+                  sponsorLogos={sponsorLogos}
+                  assuntoBgUrl={effectiveAssuntoBgUrl}
+                  insertLiveArt={insertLiveArt}
+                  programaAssuntos={programaAssuntos}
+                  programaAssuntoRotation={programaAssuntoRotation}
+                />
+              </div>
+            </div>
+
+            {/* Status strip — 4 KPI tiles */}
+            <div className="grid grid-cols-4 gap-3 flex-none">
+              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Locutor</span>
+                <span className="text-xs font-bold truncate" style={{ color: LIME }}>{displayLocutor}</span>
+              </div>
+              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Assunto</span>
+                <span className="text-xs font-bold text-white truncate" title={data.assunto}>{data.assunto || "—"}</span>
+              </div>
+              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Patrocínios</span>
+                <span className="text-xs font-bold" style={{ color: CYAN }}>{sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}</span>
+              </div>
+              <div
+                className="p-4 rounded-xl flex flex-col gap-1"
+                style={{
+                  backgroundColor: NAVY_DEEP,
+                  border: `1px solid ${NAVY_BORDER}`,
+                  borderBottom: `2px solid ${insertLiveArt ? LIME : NAVY_BORDER}`,
+                }}
+              >
+                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Insert Live</span>
+                <span className="text-xs font-bold text-white truncate">
+                  {insertLiveArt ? `${insertLiveSchedule.length || 0} slots` : "off"}
+                </span>
+              </div>
+
+              {/* Overlay toggles */}
+              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Identidade</span>
+                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: LIME }}>
+                  <div className="absolute right-1 top-1 w-3 h-3 rounded-full" style={{ backgroundColor: NAVY }} />
+                </div>
+              </div>
+              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Ticker</span>
+                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: composedTicker ? LIME : "rgba(255,255,255,0.1)" }}>
+                  <div
+                    className={`absolute top-1 w-3 h-3 rounded-full ${composedTicker ? "right-1" : "left-1"}`}
+                    style={{ backgroundColor: composedTicker ? NAVY : "rgba(255,255,255,0.4)" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right: settings column ── */}
+          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1" style={{ maxHeight: "100%" }}>
+
 
           {/* Identidade */}
           <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
@@ -1059,11 +1044,13 @@ export default function BroadcastPage() {
             </div>
           </div>
 
+          </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 /* ─── Mockup Preview component with animations ─── */
 function MockupPreview({
