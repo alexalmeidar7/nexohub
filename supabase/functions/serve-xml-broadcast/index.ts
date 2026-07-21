@@ -684,6 +684,19 @@ serve(async (req) => {
     const musicaAtual = musicData.musica || dashboard.music_current_title || "";
     const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
     const musicaTexto = musicaAtual && artistaAtual ? `${musicaAtual} - ${artistaAtual}` : (musicaAtual || artistaAtual || "");
+    const musicaCapaRaw = (musicData.capa || dashboard.music_current_cover || "").toString().trim();
+    let musicaCapa = "";
+    if (musicaCapaRaw) {
+      const capaSlug = `${(artistaAtual || "unknown")}_${(musicaAtual || "track")}`.replace(/[^a-z0-9]/gi, "_").toLowerCase().slice(0, 60);
+      const sourceVersion = musicaCapaRaw.replace(/[^a-z0-9]/gi, "").slice(-16) || String(Date.now());
+      musicaCapa = await ensurePngImageUrl(
+        supabase,
+        musicaCapaRaw,
+        `broadcast/${dataOwnerId}/music-cover-${capaSlug}.png`,
+        512,
+        sourceVersion,
+      );
+    }
 
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
