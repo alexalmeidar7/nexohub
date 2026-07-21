@@ -355,11 +355,18 @@ function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[
                 <div className="flex-1 min-w-0">
                   <div style={{ fontWeight: 700, color: DARK, fontSize: 14 }}>{p.nome}</div>
                   {p.descricao && <div style={{ fontSize: 12, color: "#64748B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.descricao}</div>}
+                  <div style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>
+                    <b>Validade:</b> {p.dias_validade ?? 7}d
+                    {p.programa_id && programas.find(pg => pg.id === p.programa_id) && (
+                      <> · <b>Programa:</b> {programas.find(pg => pg.id === p.programa_id)?.nome}</>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center px-3">
                   <div style={{ fontSize: 20, fontWeight: 800, color: p.quantidade_estoque > 0 ? DARK : "#ef4444" }}>{p.quantidade_estoque}</div>
                   <div style={{ fontSize: 9, color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Estoque</div>
                 </div>
+
                 <div className="flex gap-1">
                   <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(p)}><Pencil size={14} /></button>
                   <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(p.id)}><Trash2 size={14} /></button>
