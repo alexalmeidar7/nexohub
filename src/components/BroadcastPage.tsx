@@ -98,6 +98,10 @@ export default function BroadcastPage() {
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
 
+  // Broadcast assuntos (from broadcast_assuntos table, per programa)
+  const [programaAssuntos, setProgramaAssuntos] = useState<string[]>([]);
+  const [programaAssuntoRotation, setProgramaAssuntoRotation] = useState<number>(7);
+
   useEffect(() => {
     latestDataRef.current = data;
   }, [data]);
@@ -203,6 +207,32 @@ export default function BroadcastPage() {
       if (logos && logos.length > 0) setSponsorLogos(logos);
     }
   }, [user]);
+
+  // Load programa_assuntos (broadcast_assuntos) for active program
+  useEffect(() => {
+    if (!user || !activeProgramaId) {
+      setProgramaAssuntos([]);
+      return;
+    }
+    (async () => {
+      const { data: row } = await supabase
+        .from("broadcast_assuntos")
+        .select("mensagens, mensagens_enabled, rotation_seconds")
+        .eq("user_id", user.id)
+        .eq("programa_id", activeProgramaId)
+        .maybeSingle();
+      if (row) {
+        const msgs = (row.mensagens as string[] | null) || [];
+        const enabled = (row.mensagens_enabled as boolean[] | null) || [true, true, true];
+        const active = msgs.filter((m, i) => m && m.trim() && (enabled[i] ?? true));
+        setProgramaAssuntos(active);
+        setProgramaAssuntoRotation(row.rotation_seconds || 7);
+      } else {
+        setProgramaAssuntos([]);
+      }
+    })();
+  }, [user, activeProgramaId]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -609,6 +639,8 @@ export default function BroadcastPage() {
                 sponsorLogos={sponsorLogos}
                 assuntoBgUrl={effectiveAssuntoBgUrl}
                 insertLiveArt={insertLiveArt}
+                programaAssuntos={programaAssuntos}
+                programaAssuntoRotation={programaAssuntoRotation}
               />
             </div>
           </div>
@@ -1038,6 +1070,7 @@ function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
   empresaSocials, composedTicker, sponsorLogos, assuntoBgUrl, insertLiveArt,
+  programaAssuntos = [], programaAssuntoRotation = 7,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
@@ -1046,6 +1079,8 @@ function MockupPreview({
   sponsorLogos: {nome: string; logo_url: string}[];
   assuntoBgUrl?: string;
   insertLiveArt?: string;
+  programaAssuntos?: string[];
+  programaAssuntoRotation?: number;
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
@@ -1081,6 +1116,26 @@ function MockupPreview({
 
   const currentSocial = empresaSocials[socialIdx] || null;
   const currentSponsor = sponsorLogos[sponsorIdx] || null;
+
+  // Programa assunto rotation
+  const [assuntoIdx, setAssuntoIdx] = useState(0);
+  const [assuntoVisible, setAssuntoVisible] = useState(true);
+  useEffect(() => {
+    setAssuntoIdx(0);
+  }, [programaAssuntos.join("|")]);
+  useEffect(() => {
+    if (programaAssuntos.length <= 1) return;
+    const ms = Math.max(1, programaAssuntoRotation) * 1000;
+    const interval = setInterval(() => {
+      setAssuntoVisible(false);
+      setTimeout(() => {
+        setAssuntoIdx(prev => (prev + 1) % programaAssuntos.length);
+        setAssuntoVisible(true);
+      }, 350);
+    }, ms);
+    return () => clearInterval(interval);
+  }, [programaAssuntos.length, programaAssuntoRotation]);
+  const currentProgramaAssunto = programaAssuntos[assuntoIdx] || null;
 
   return (
     <div
@@ -1181,6 +1236,28 @@ function MockupPreview({
                 )}
               </div>
             </div>
+
+            {/* Programa Assunto (broadcast_assuntos) — abaixo do box do locutor */}
+            {currentProgramaAssunto && (
+              <div
+                className="mt-1.5 backdrop-blur-sm"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.97)",
+                  padding: "8px 16px",
+                  borderRadius: 6,
+                  borderLeft: `3px solid ${accentColor}`,
+                  transition: "opacity 350ms ease",
+                  opacity: assuntoVisible ? 1 : 0,
+                }}
+              >
+                <div className="text-[8px] font-bold uppercase tracking-wider mb-0.5" style={{ color: accentColor }}>
+                  Assunto do Programa {programaAssuntos.length > 1 && <span style={{ color: "#00000050" }}>· {assuntoIdx + 1}/{programaAssuntos.length}</span>}
+                </div>
+                <div className="text-[11px] font-bold leading-snug" style={{ color: "#111" }}>
+                  {currentProgramaAssunto}
+                </div>
+              </div>
+            )}
 
             {/* Subject bar – separated from ticker */}
             <div
