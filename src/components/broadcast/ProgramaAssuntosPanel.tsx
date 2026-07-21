@@ -87,13 +87,15 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family")
+        .select("mensagens, font_family, rotation_seconds")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
       setFontFamily(data?.font_family || "Inter");
+      const rs = Number((data as any)?.rotation_seconds);
+      setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
       setLoading(false);
     })();
   }, [userId, activeProgramaId]);
