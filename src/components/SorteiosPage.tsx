@@ -93,6 +93,8 @@ interface Premio {
   quantidade_estoque: number;
   ativo: boolean;
   created_at: string;
+  programa_id: string | null;
+  dias_validade: number;
 }
 
 interface Sorteio {
@@ -105,6 +107,8 @@ interface Sorteio {
   entregue: boolean;
   data_entrega: string | null;
   observacoes: string | null;
+  expirado?: boolean;
+  data_expiracao?: string | null;
 }
 
 interface Ouvinte {
@@ -115,8 +119,10 @@ interface Ouvinte {
   pontuacao: number | null;
 }
 
+interface ProgramaLite { id: string; nome: string; }
 
-type Tab = "premios" | "sorteio" | "entrega";
+type Tab = "premios" | "lista" | "sorteio" | "entrega";
+
 
 export default function SorteiosPage() {
   const { user } = useAuth();
@@ -126,23 +132,30 @@ export default function SorteiosPage() {
   const [premios, setPremios] = useState<Premio[]>([]);
   const [sorteios, setSorteios] = useState<Sorteio[]>([]);
   const [ouvintes, setOuvintes] = useState<Ouvinte[]>([]);
+  const [programas, setProgramas] = useState<ProgramaLite[]>([]);
 
   const load = async () => {
     setLoading(true);
-    const [p, s, o] = await Promise.all([
+    // Expire overdue drawings before fetching
+    if (user?.id) {
+      await supabase.rpc("expire_overdue_sorteios", { _user_id: user.id });
+    }
+    const [p, s, o, pr] = await Promise.all([
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
+      supabase.from("programas").select("id, nome").ilike("estudio", "%fm%").order("nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
     if (s.error) toast({ title: "Erro ao carregar sorteios", description: s.error.message, variant: "destructive" });
     else setSorteios((s.data as any) || []);
     if (!o.error) setOuvintes((o.data as any) || []);
+    if (!pr.error) setProgramas((pr.data as any) || []);
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [user?.id]);
 
   if (loading) return <ModulePageSkeleton />;
 
@@ -163,6 +176,7 @@ export default function SorteiosPage() {
       <div className="flex gap-2 mb-6 flex-wrap">
         {([
           { k: "premios", label: "Prêmios & Estoque", icon: Package },
+          { k: "lista", label: "Lista de Prêmios", icon: Radio },
           { k: "sorteio", label: "Realizar Sorteio", icon: Dice5 },
           { k: "entrega", label: "Entregas", icon: Truck },
         ] as const).map(({ k, label, icon: Icon }) => (
@@ -182,22 +196,25 @@ export default function SorteiosPage() {
         ))}
       </div>
 
-      {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
+      {tab === "premios" && <PremiosTab premios={premios} programas={programas} userId={user?.id} onReload={load} />}
+      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} onReload={load} />}
       {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} userId={user?.id} onReload={load} onGoTo={setTab} />}
       {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
     </div>
   );
 }
 
+
 /* ═════════════════════ PRÊMIOS ═════════════════════ */
-function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?: string; onReload: () => void }) {
+function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string; onReload: () => void }) {
   const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1" });
+  const [form, setForm] = useState({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1", dias_validade: "7", programa_id: "" });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const reset = () => { setForm({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1" }); setEditingId(null); };
+  const reset = () => { setForm({ nome: "", descricao: "", imagem_url: "", quantidade_estoque: "1", dias_validade: "7", programa_id: "" }); setEditingId(null); };
+
 
   const save = async () => {
     if (!userId) return;
@@ -209,7 +226,10 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
       descricao: form.descricao.trim() || null,
       imagem_url: form.imagem_url || null,
       quantidade_estoque: parseInt(form.quantidade_estoque || "0", 10) || 0,
+      dias_validade: Math.max(1, parseInt(form.dias_validade || "7", 10) || 7),
+      programa_id: form.programa_id || null,
     };
+
     const q = editingId
       ? supabase.from("sorteio_premios").update(payload).eq("id", editingId)
       : supabase.from("sorteio_premios").insert(payload);
@@ -243,8 +263,16 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 
   const edit = (p: Premio) => {
     setEditingId(p.id);
-    setForm({ nome: p.nome, descricao: p.descricao || "", imagem_url: p.imagem_url || "", quantidade_estoque: String(p.quantidade_estoque) });
+    setForm({
+      nome: p.nome,
+      descricao: p.descricao || "",
+      imagem_url: p.imagem_url || "",
+      quantidade_estoque: String(p.quantidade_estoque),
+      dias_validade: String(p.dias_validade ?? 7),
+      programa_id: p.programa_id || "",
+    });
   };
+
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1.4fr" }}>
@@ -264,10 +292,23 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
               onChange={e => setForm({ ...form, descricao: e.target.value })}
             />
           </Field>
-          <Field label="Quantidade em estoque">
-            <input type="number" min={0} style={pillInput} value={form.quantidade_estoque}
-              onChange={e => setForm({ ...form, quantidade_estoque: e.target.value })} />
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Quantidade em estoque">
+              <input type="number" min={0} style={pillInput} value={form.quantidade_estoque}
+                onChange={e => setForm({ ...form, quantidade_estoque: e.target.value })} />
+            </Field>
+            <Field label="Validade para entregar (dias)">
+              <input type="number" min={1} style={pillInput} value={form.dias_validade}
+                onChange={e => setForm({ ...form, dias_validade: e.target.value })} />
+            </Field>
+          </div>
+          <Field label="Programa vinculado (opcional)">
+            <select style={pillSelect} value={form.programa_id} onChange={e => setForm({ ...form, programa_id: e.target.value })}>
+              <option value="">— SEM PROGRAMA —</option>
+              {programas.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+            </select>
           </Field>
+
           <Field label="Imagem do prêmio">
             <div className="flex items-center gap-3">
               {form.imagem_url && (
@@ -314,11 +355,18 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
                 <div className="flex-1 min-w-0">
                   <div style={{ fontWeight: 700, color: DARK, fontSize: 14 }}>{p.nome}</div>
                   {p.descricao && <div style={{ fontSize: 12, color: "#64748B", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.descricao}</div>}
+                  <div style={{ fontSize: 10, color: "#64748B", marginTop: 3 }}>
+                    <b>Validade:</b> {p.dias_validade ?? 7}d
+                    {p.programa_id && programas.find(pg => pg.id === p.programa_id) && (
+                      <> · <b>Programa:</b> {programas.find(pg => pg.id === p.programa_id)?.nome}</>
+                    )}
+                  </div>
                 </div>
                 <div className="text-center px-3">
                   <div style={{ fontSize: 20, fontWeight: 800, color: p.quantidade_estoque > 0 ? DARK : "#ef4444" }}>{p.quantidade_estoque}</div>
                   <div style={{ fontSize: 9, color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>Estoque</div>
                 </div>
+
                 <div className="flex gap-1">
                   <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(p)}><Pencil size={14} /></button>
                   <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(p.id)}><Trash2 size={14} /></button>
@@ -332,7 +380,117 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
   );
 }
 
+/* ═════════════════════ LISTA DE PRÊMIOS ═════════════════════ */
+function ListaPremiosTab({ premios, programas, onReload }: { premios: Premio[]; programas: ProgramaLite[]; onReload: () => void }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, { programa_id: string; dias_validade: string }>>({});
+
+  const getDraft = (p: Premio) =>
+    drafts[p.id] ?? { programa_id: p.programa_id || "", dias_validade: String(p.dias_validade ?? 7) };
+
+  const setDraft = (id: string, patch: Partial<{ programa_id: string; dias_validade: string }>) =>
+    setDrafts(d => ({ ...d, [id]: { ...(d[id] ?? { programa_id: "", dias_validade: "7" }), ...patch } }));
+
+  const save = async (p: Premio) => {
+    const d = getDraft(p);
+    setSaving(p.id);
+    const { error } = await supabase.from("sorteio_premios").update({
+      programa_id: d.programa_id || null,
+      dias_validade: Math.max(1, parseInt(d.dias_validade || "7", 10) || 7),
+    }).eq("id", p.id);
+    setSaving(null);
+    if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Prêmio atualizado" });
+    setDrafts(dr => { const { [p.id]: _, ...rest } = dr; return rest; });
+    onReload();
+  };
+
+  // Group by programa
+  const grouped = useMemo(() => {
+    const map = new Map<string, { programa: ProgramaLite | null; items: Premio[] }>();
+    const noneKey = "__none__";
+    for (const p of premios) {
+      const key = p.programa_id || noneKey;
+      if (!map.has(key)) {
+        map.set(key, { programa: p.programa_id ? programas.find(pg => pg.id === p.programa_id) || null : null, items: [] });
+      }
+      map.get(key)!.items.push(p);
+    }
+    return Array.from(map.entries());
+  }, [premios, programas]);
+
+  return (
+    <div style={cardStyle}>
+      <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
+        Lista de Prêmios por Programa
+      </h2>
+      {premios.length === 0 ? (
+        <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum prêmio cadastrado.</p>
+      ) : (
+        <div className="grid gap-5">
+          {grouped.map(([key, group]) => (
+            <div key={key}>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: CYAN, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                <Radio size={13} />
+                {group.programa ? group.programa.nome : "— SEM PROGRAMA —"}
+                <span style={{ color: "#64748B", fontWeight: 600 }}>· {group.items.length} prêmio(s)</span>
+              </div>
+              <div className="grid gap-2">
+                {group.items.map(p => {
+                  const d = getDraft(p);
+                  const dirty = d.programa_id !== (p.programa_id || "") || d.dias_validade !== String(p.dias_validade ?? 7);
+                  return (
+                    <div key={p.id} className="flex items-center gap-3" style={{ background: "#fff", borderRadius: 16, padding: 10, border: `1px solid ${CYAN}33` }}>
+                      {p.imagem_url ? (
+                        <img src={p.imagem_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 10, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Gift size={18} color={CYAN} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div style={{ fontWeight: 700, color: DARK, fontSize: 13 }}>{p.nome}</div>
+                        <div style={{ fontSize: 10, color: "#64748B" }}>Estoque: {p.quantidade_estoque}</div>
+                      </div>
+                      <select
+                        style={{ ...pillSelect, height: 36, fontSize: 11, minWidth: 180 }}
+                        value={d.programa_id}
+                        onChange={e => setDraft(p.id, { programa_id: e.target.value })}
+                      >
+                        <option value="">— SEM PROGRAMA —</option>
+                        {programas.map(pg => <option key={pg.id} value={pg.id}>{pg.nome}</option>)}
+                      </select>
+                      <input
+                        type="number"
+                        min={1}
+                        style={{ ...pillInput, height: 36, fontSize: 11, width: 90, textAlign: "center" }}
+                        value={d.dias_validade}
+                        onChange={e => setDraft(p.id, { dias_validade: e.target.value })}
+                        title="Dias para retirar"
+                      />
+                      <button
+                        style={{ ...limeBtn, height: 36, padding: "0 14px", opacity: dirty ? 1 : 0.4, cursor: dirty ? "pointer" : "not-allowed" }}
+                        disabled={!dirty || saving === p.id}
+                        onClick={() => save(p)}
+                      >
+                        {saving === p.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                        Salvar
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═════════════════════ SORTEIO ═════════════════════ */
+
 function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
   premios: Premio[]; ouvintes: Ouvinte[]; sorteios: Sorteio[]; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
 }) {
@@ -610,18 +768,20 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
 /* ═════════════════════ ENTREGA ═════════════════════ */
 function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; premios: Premio[]; onReload: () => void }) {
   const { toast } = useToast();
-  const [filter, setFilter] = useState<"pendentes" | "entregues" | "todos">("pendentes");
+  const [filter, setFilter] = useState<"pendentes" | "entregues" | "expirados" | "todos">("pendentes");
   const [search, setSearch] = useState("");
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
   const rows = sorteios.filter(s => {
-    if (filter === "pendentes" && s.entregue) return false;
+    if (filter === "pendentes" && (s.entregue || s.expirado)) return false;
     if (filter === "entregues" && !s.entregue) return false;
+    if (filter === "expirados" && !s.expirado) return false;
     const q = search.trim().toLowerCase();
     if (q && !s.nome_ganhador.toLowerCase().includes(q) && !(premioMap[s.premio_id]?.nome || "").toLowerCase().includes(q)) return false;
     return true;
   });
+
 
   const marcarEntregue = async (s: Sorteio, entregue: boolean) => {
     const { error } = await supabase.from("sorteio_sorteios")
@@ -642,12 +802,13 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   return (
     <div style={cardStyle}>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        {(["pendentes", "entregues", "todos"] as const).map(k => (
+        {(["pendentes", "entregues", "expirados", "todos"] as const).map(k => (
           <button key={k} onClick={() => setFilter(k)}
             style={{ ...primaryBtn, height: 36, background: filter === k ? CYAN : "#fff", color: filter === k ? "#fff" : DARK, border: filter === k ? "none" : `2px solid ${CYAN}` }}>
-            {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : "Todos"}
+            {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : k === "expirados" ? "Não retirados" : "Todos"}
           </button>
         ))}
+
         <div className="flex-1" />
         <div style={{ position: "relative", minWidth: 240 }}>
           <Search size={16} style={{ position: "absolute", top: 14, left: 14, color: CYAN }} />
@@ -686,11 +847,19 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                     {s.data_entrega && <div style={{ fontSize: 10, color: "#64748B" }}>{new Date(s.data_entrega).toLocaleString("pt-BR")}</div>}
                     <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
                   </div>
+                ) : s.expirado ? (
+                  <div className="flex flex-col items-end gap-1">
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "#FEE2E2", color: "#991B1B", borderRadius: 999, padding: "6px 12px", fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1 }}>
+                      <AlertTriangle size={14} /> Não retirado
+                    </div>
+                    {s.data_expiracao && <div style={{ fontSize: 10, color: "#64748B" }}>Expirou em {new Date(s.data_expiracao).toLocaleString("pt-BR")}</div>}
+                  </div>
                 ) : (
                   <button style={limeBtn} onClick={() => marcarEntregue(s, true)}>
                     <Truck size={16} /> Marcar Entregue
                   </button>
                 )}
+
                 <button style={{ ...ghostBtn, height: 36, padding: "0 10px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => excluir(s.id)}>
                   <Trash2 size={14} />
                 </button>

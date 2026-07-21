@@ -2062,9 +2062,11 @@ export type Database = {
           ativo: boolean
           created_at: string
           descricao: string | null
+          dias_validade: number
           id: string
           imagem_url: string | null
           nome: string
+          programa_id: string | null
           quantidade_estoque: number
           updated_at: string
           user_id: string
@@ -2073,9 +2075,11 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          dias_validade?: number
           id?: string
           imagem_url?: string | null
           nome: string
+          programa_id?: string | null
           quantidade_estoque?: number
           updated_at?: string
           user_id: string
@@ -2084,21 +2088,33 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           descricao?: string | null
+          dias_validade?: number
           id?: string
           imagem_url?: string | null
           nome?: string
+          programa_id?: string | null
           quantidade_estoque?: number
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_premios_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sorteio_sorteios: {
         Row: {
           created_at: string
           data_entrega: string | null
+          data_expiracao: string | null
           data_sorteio: string
           entregue: boolean
+          expirado: boolean
           id: string
           nome_ganhador: string
           observacoes: string | null
@@ -2111,8 +2127,10 @@ export type Database = {
         Insert: {
           created_at?: string
           data_entrega?: string | null
+          data_expiracao?: string | null
           data_sorteio?: string
           entregue?: boolean
+          expirado?: boolean
           id?: string
           nome_ganhador: string
           observacoes?: string | null
@@ -2125,8 +2143,10 @@ export type Database = {
         Update: {
           created_at?: string
           data_entrega?: string | null
+          data_expiracao?: string | null
           data_sorteio?: string
           entregue?: boolean
+          expirado?: boolean
           id?: string
           nome_ganhador?: string
           observacoes?: string | null
@@ -2794,6 +2814,7 @@ export type Database = {
       cleanup_infomusic: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
+      expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
       get_roteiro_by_share_token: {
         Args: { _token: string }
         Returns: {
