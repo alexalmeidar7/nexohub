@@ -86,6 +86,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   useEffect(() => {
     if (!userId || !activeProgramaId) {
       setMensagens(["", "", ""]);
+      setEnabled([true, true, true]);
       setFontFamily("Inter");
       return;
     }
@@ -93,12 +94,16 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
+        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
+      const en = Array.isArray((data as any)?.mensagens_enabled)
+        ? ((data as any).mensagens_enabled as boolean[])
+        : [];
+      setEnabled([en[0] ?? true, en[1] ?? true, en[2] ?? true]);
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
