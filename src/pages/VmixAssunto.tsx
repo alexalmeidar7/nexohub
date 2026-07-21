@@ -71,9 +71,9 @@ export default function VmixAssunto() {
       created.push(l);
     });
     document.body.style.margin = "0";
-    document.body.style.background = "#fff";
+    document.body.style.background = bgColor;
     return () => { created.forEach((l) => l.remove()); };
-  }, []);
+  }, [bgColor]);
 
   // Carrega e recarrega a cada 8s (troca de programa / mensagens editadas)
   useEffect(() => {
@@ -84,7 +84,7 @@ export default function VmixAssunto() {
       if (!programaId || cancelled) { if (!cancelled) setMensagens([]); return; }
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds")
+        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", programaId)
         .maybeSingle();
@@ -94,6 +94,8 @@ export default function VmixAssunto() {
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
+      setBgColor(((data as any)?.bg_color as string) || "#ffffff");
+      setTextColor(((data as any)?.text_color as string) || "#000000");
     };
     load();
     const t = setInterval(load, 8000);
