@@ -148,6 +148,8 @@ export default function VmixAssunto() {
     return `"${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
   }, [fontFamily]);
 
+  const fontWeight = FONT_WEIGHT[fontFamily] ?? 800;
+
   return (
     <div
       style={{
@@ -155,6 +157,7 @@ export default function VmixAssunto() {
         inset: 0,
         background: bgColor,
         color: textColor,
+        fontFamily: fontStack,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -166,7 +169,8 @@ export default function VmixAssunto() {
         key={idx + texto}
         style={{
           fontFamily: fontStack,
-          fontWeight: 800,
+          fontWeight,
+          color: textColor,
           fontSize: "clamp(48px, 9vw, 220px)",
           lineHeight: 1.05,
           textAlign: "center",
