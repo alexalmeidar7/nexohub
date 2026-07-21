@@ -122,8 +122,8 @@ export default function VmixAssunto() {
       style={{
         position: "fixed",
         inset: 0,
-        background: "#ffffff",
-        color: "#000000",
+        background: bgColor,
+        color: textColor,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
