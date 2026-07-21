@@ -31,6 +31,9 @@ interface Props {
 }
 
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
+  const [programasList, setProgramasList] = useState<Array<{ id: string; nome: string }>>([]);
+  const [selectedProgramaId, setSelectedProgramaId] = useState<string | null>(activeProgramaId);
+  const [selectedProgramaNome, setSelectedProgramaNome] = useState<string>(programaNome || "");
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [enabled, setEnabled] = useState<boolean[]>([true, true, true]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
@@ -41,8 +44,40 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [configuredIds, setConfiguredIds] = useState<Set<string>>(new Set());
   const inputRefs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
   const [previewIdx, setPreviewIdx] = useState(0);
+
+  // Sync default selection with on-air program when it changes
+  useEffect(() => {
+    if (activeProgramaId && !selectedProgramaId) {
+      setSelectedProgramaId(activeProgramaId);
+      setSelectedProgramaNome(programaNome || "");
+    }
+  }, [activeProgramaId, programaNome, selectedProgramaId]);
+
+  // Load all user programs for the selector
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("id, nome")
+        .eq("user_id", userId)
+        .order("nome", { ascending: true });
+      setProgramasList((data as any) || []);
+      const { data: cfg } = await supabase
+        .from("broadcast_assuntos")
+        .select("programa_id, mensagens")
+        .eq("user_id", userId);
+      const ids = new Set<string>();
+      (cfg || []).forEach((row: any) => {
+        const arr = Array.isArray(row.mensagens) ? row.mensagens : [];
+        if (arr.some((m: string) => (m || "").trim().length > 0)) ids.add(row.programa_id);
+      });
+      setConfiguredIds(ids);
+    })();
+  }, [userId]);
 
   // Load required web fonts once for preview
   useEffect(() => {
