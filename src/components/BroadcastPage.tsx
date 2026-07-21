@@ -955,14 +955,14 @@ export default function BroadcastPage() {
           </div>
 
           {/* Redes Sociais */}
-          <div className="p-4 border-b" style={{ borderColor: NAVY_BORDER }}>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: LIME }} />
-                <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Redes Sociais</h2>
-              </div>
-              <span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>
-            </div>
+          <div className="p-4 rounded-2xl" style={cardStyle}>
+            <SectionHeader
+              n="02"
+              label="Redes Sociais"
+              color={LIME}
+              right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>}
+            />
+
 
             {empresaSocials.length === 0 ? (
               <p className="text-[10px]" style={{ color: "#ffffff60" }}>Nenhuma rede social cadastrada.</p>
