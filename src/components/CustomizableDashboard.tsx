@@ -1860,6 +1860,30 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   useEffect(() => {
     const effectiveUid = dataUserId || uid;
     const targetKey = musicDataKey(effectiveUid);
+    let cancelled = false;
+
+    const fetchFromDb = async () => {
+      if (!effectiveUid) return;
+      try {
+        const { data } = await supabase
+          .from("user_settings")
+          .select("dashboard_items")
+          .eq("user_id", effectiveUid)
+          .maybeSingle();
+        if (cancelled) return;
+        const di = (data?.dashboard_items || {}) as any;
+        const titulo = (di.music_current_title || "").toString().trim();
+        const artista = (di.music_current_artist || "").toString().trim();
+        const capa = (di.music_current_cover || "").toString();
+        if (titulo) {
+          setCurrentMusic(prev => {
+            if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa) return prev;
+            return { titulo, artista, capa };
+          });
+        }
+      } catch {}
+    };
+
     const poll = () => {
       try {
         const d = readMusicData(effectiveUid) as any;
@@ -1871,7 +1895,8 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           return;
         }
       } catch {}
-      setCurrentMusic(null);
+      // localStorage empty → try DB (mirrored fields written by MusicaNoAr / useGlobalMusicSync)
+      void fetchFromDb();
     };
     poll();
     // Cross-tab: fires when another tab writes to localStorage
@@ -1887,12 +1912,18 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
     // Keep a slow poll as safety net for writers that bypass the helper
     const iv = setInterval(poll, 3000);
+    // Periodic DB refresh so the widget catches updates written while the user
+    // isn't on the MúsicaNoAr page (which is the only writer of localStorage).
+    const dbIv = setInterval(fetchFromDb, 8000);
     return () => {
+      cancelled = true;
       window.removeEventListener("storage", onStorage);
       window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
       clearInterval(iv);
+      clearInterval(dbIv);
     };
   }, [dataUserId, uid]);
+
 
   useEffect(() => {
     if (!audioRef.current) {
