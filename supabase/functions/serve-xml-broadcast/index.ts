@@ -805,6 +805,7 @@ serve(async (req) => {
     lines.push(`    <insert_live>${esc(insertLiveUrl)}</insert_live>`);
     lines.push(`    <curiosidade>${esc(curiosidade)}</curiosidade>`);
     lines.push(`    <musica_atual>${esc(musicaTexto)}</musica_atual>`);
+    lines.push(`    <musica_capa>${esc(musicaCapa)}</musica_capa>`);
     lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push(`    <banner_l>${esc(bannerLUrl)}</banner_l>`);
     lines.push("  </dados>");
