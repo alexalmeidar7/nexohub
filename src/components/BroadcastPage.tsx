@@ -98,6 +98,10 @@ export default function BroadcastPage() {
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
 
+  // Broadcast assuntos (from broadcast_assuntos table, per programa)
+  const [programaAssuntos, setProgramaAssuntos] = useState<string[]>([]);
+  const [programaAssuntoRotation, setProgramaAssuntoRotation] = useState<number>(7);
+
   useEffect(() => {
     latestDataRef.current = data;
   }, [data]);
