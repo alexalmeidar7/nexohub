@@ -263,8 +263,16 @@ function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[
 
   const edit = (p: Premio) => {
     setEditingId(p.id);
-    setForm({ nome: p.nome, descricao: p.descricao || "", imagem_url: p.imagem_url || "", quantidade_estoque: String(p.quantidade_estoque) });
+    setForm({
+      nome: p.nome,
+      descricao: p.descricao || "",
+      imagem_url: p.imagem_url || "",
+      quantidade_estoque: String(p.quantidade_estoque),
+      dias_validade: String(p.dias_validade ?? 7),
+      programa_id: p.programa_id || "",
+    });
   };
+
 
   return (
     <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1.4fr" }}>
