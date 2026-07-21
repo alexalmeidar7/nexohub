@@ -208,6 +208,32 @@ export default function BroadcastPage() {
     }
   }, [user]);
 
+  // Load programa_assuntos (broadcast_assuntos) for active program
+  useEffect(() => {
+    if (!user || !activeProgramaId) {
+      setProgramaAssuntos([]);
+      return;
+    }
+    (async () => {
+      const { data: row } = await supabase
+        .from("broadcast_assuntos")
+        .select("mensagens, mensagens_enabled, rotation_seconds")
+        .eq("user_id", user.id)
+        .eq("programa_id", activeProgramaId)
+        .maybeSingle();
+      if (row) {
+        const msgs = (row.mensagens as string[] | null) || [];
+        const enabled = (row.mensagens_enabled as boolean[] | null) || [true, true, true];
+        const active = msgs.filter((m, i) => m && m.trim() && (enabled[i] ?? true));
+        setProgramaAssuntos(active);
+        setProgramaAssuntoRotation(row.rotation_seconds || 7);
+      } else {
+        setProgramaAssuntos([]);
+      }
+    })();
+  }, [user, activeProgramaId]);
+
+
   useEffect(() => {
     if (!user) return;
     (async () => {
