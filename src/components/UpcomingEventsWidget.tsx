@@ -194,41 +194,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         }
         out.push({ date: d, evt });
       }
+      // Somente eventos cadastrados na agenda são exibidos.
 
-      const dayNameNorm = norm(DAY_INDEX_TO_NAME[d.getDay()]);
-      for (const p of programasAll) {
-        if (p.ativo === false) continue;
-        if (!p.horario_inicio) continue;
-        if (semanalCoveredProgIds.has(p.id)) continue;
-        const dias = (p.dias_semana || []).map((x) => norm(x || ""));
-        if (!dias.includes(dayNameNorm)) continue;
-        if (isTodayD) {
-          const refT = p.horario_fim || p.horario_inicio;
-          if (refT && refT.slice(0, 5) < nowHM) continue;
-        }
-        out.push({
-          date: d,
-          evt: {
-            id: `prog-${p.id}-${format(d, "yyyy-MM-dd")}`,
-            data: format(d, "yyyy-MM-dd"),
-            recorrencia: "programa_semanal",
-            prioridade: "normal",
-            tipo_evento: "live",
-            horario_gravacao: p.horario_inicio || undefined,
-            horario_gravacao_fim: p.horario_fim || undefined,
-            status: "ativo",
-            programa_id: p.id,
-            programa: {
-              id: p.id,
-              nome: p.nome,
-              horario_inicio: p.horario_inicio || undefined,
-              horario_fim: p.horario_fim || undefined,
-            },
-            descricao: p.nome,
-            synthetic: true,
-          } as Evt,
-        });
-      }
 
       if (out.length >= 40) break;
     }
