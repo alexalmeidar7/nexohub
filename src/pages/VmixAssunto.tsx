@@ -28,6 +28,26 @@ const FONT_WEIGHT: Record<string, number> = {
   Inter: 800,
 };
 
+// Razão cap-height / em-box de cada família (medido empiricamente).
+// Emojis são desenhados no em-box inteiro; escalamos para casar com a altura das letras maiúsculas.
+const FONT_CAP_RATIO: Record<string, number> = {
+  Sink: 0.72,             // Alfa Slab One
+  "Bebas Neue": 0.74,
+  Anton: 0.72,
+  "Playfair Display": 0.68,
+  Montserrat: 0.70,
+  Inter: 0.72,
+};
+// Deslocamento vertical do emoji (em unidades em) para alinhar ao meio da cap-height.
+const FONT_EMOJI_SHIFT: Record<string, number> = {
+  Sink: 0.08,
+  "Bebas Neue": 0.06,
+  Anton: 0.08,
+  "Playfair Display": 0.10,
+  Montserrat: 0.08,
+  Inter: 0.08,
+};
+
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
 
@@ -170,6 +190,8 @@ export default function VmixAssunto() {
   }, [fontFamily]);
 
   const fontWeight = FONT_WEIGHT[fontFamily] ?? 800;
+  const emojiScale = FONT_CAP_RATIO[fontFamily] ?? 0.72;
+  const emojiShiftEm = FONT_EMOJI_SHIFT[fontFamily] ?? 0.08;
 
   // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
   const tokens = useMemo(() => Array.from(texto), [texto]);
@@ -220,12 +242,12 @@ export default function VmixAssunto() {
       <span
         key={`m-${i}`}
         style={{
-          fontSize: "0.78em",
+          fontSize: `${emojiScale}em`,
           fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
         }}
       >{ch}</span>
     );
-  }), [tokens]);
+  }), [tokens, emojiScale]);
 
   return (
     <div
@@ -290,13 +312,26 @@ export default function VmixAssunto() {
                 animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
                 animationDelay: `${i * 28}ms`,
                 transformOrigin: "50% 100%",
-                fontSize: emoji ? "0.78em" : undefined,
-                lineHeight: emoji ? 1 : undefined,
-                verticalAlign: emoji ? "baseline" : undefined,
-                fontFamily: emoji ? '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif' : undefined,
               }}
             >
-              {ch === " " ? "\u00A0" : ch}
+              {emoji ? (
+                // Span interno faz o dimensionamento e deslocamento do emoji
+                // sem conflitar com o transform da animação do span externo.
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: `${emojiScale}em`,
+                    lineHeight: 0,
+                    verticalAlign: "baseline",
+                    transform: `translateY(${emojiShiftEm}em)`,
+                    fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+                  }}
+                >
+                  {ch}
+                </span>
+              ) : (
+                ch === " " ? "\u00A0" : ch
+              )}
             </span>
           );
         })}

@@ -18,9 +18,10 @@ export const ASSUNTO_FONTS = [
 
 // Emojis coloridos rápidos
 const QUICK_EMOJIS = [
-  "🔥", "🎧", "🎙️", "📻", "📢", "🚨", "⚡", "⭐", "✨", "🎉",
-  "❤️", "💚", "💙", "💛", "🧡", "💜", "🎵", "🎶", "🏆", "🥇",
-  "😂", "😍", "🤩", "🙌", "👏", "👍", "🙏", "💯", "☀️", "🌧️",
+  "💚", // WhatsApp (verde característico)
+  "📱", "🔥", "🎧", "🎙️", "📻", "📢", "🚨", "⚡", "⭐",
+  "✨", "🎉", "❤️", "💙", "💛", "🧡", "💜", "🎵", "🎶", "🏆",
+  "🥇", "😂", "😍", "🤩", "🙌", "👏", "👍", "🙏", "💯", "☀️",
 ];
 
 interface Props {
@@ -30,6 +31,9 @@ interface Props {
 }
 
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
+  const [programasList, setProgramasList] = useState<Array<{ id: string; nome: string }>>([]);
+  const [selectedProgramaId, setSelectedProgramaId] = useState<string | null>(activeProgramaId);
+  const [selectedProgramaNome, setSelectedProgramaNome] = useState<string>(programaNome || "");
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [enabled, setEnabled] = useState<boolean[]>([true, true, true]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
@@ -40,8 +44,40 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [configuredIds, setConfiguredIds] = useState<Set<string>>(new Set());
   const inputRefs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
   const [previewIdx, setPreviewIdx] = useState(0);
+
+  // Sync default selection with on-air program when it changes
+  useEffect(() => {
+    if (activeProgramaId && !selectedProgramaId) {
+      setSelectedProgramaId(activeProgramaId);
+      setSelectedProgramaNome(programaNome || "");
+    }
+  }, [activeProgramaId, programaNome, selectedProgramaId]);
+
+  // Load all user programs for the selector
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("programas")
+        .select("id, nome")
+        .eq("user_id", userId)
+        .order("nome", { ascending: true });
+      setProgramasList((data as any) || []);
+      const { data: cfg } = await supabase
+        .from("broadcast_assuntos")
+        .select("programa_id, mensagens")
+        .eq("user_id", userId);
+      const ids = new Set<string>();
+      (cfg || []).forEach((row: any) => {
+        const arr = Array.isArray(row.mensagens) ? row.mensagens : [];
+        if (arr.some((m: string) => (m || "").trim().length > 0)) ids.add(row.programa_id);
+      });
+      setConfiguredIds(ids);
+    })();
+  }, [userId]);
 
   // Load required web fonts once for preview
   useEffect(() => {
@@ -82,9 +118,9 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
     if (previewIdx >= visibleMensagens.length) setPreviewIdx(0);
   }, [visibleMensagens.length, previewIdx]);
 
-  // Load current program assuntos
+  // Load selected program assuntos
   useEffect(() => {
-    if (!userId || !activeProgramaId) {
+    if (!userId || !selectedProgramaId) {
       setMensagens(["", "", ""]);
       setEnabled([true, true, true]);
       setFontFamily("Inter");
@@ -96,7 +132,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
         .from("broadcast_assuntos")
         .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
-        .eq("programa_id", activeProgramaId)
+        .eq("programa_id", selectedProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
@@ -111,7 +147,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setTextColor(((data as any)?.text_color as string) || "#000000");
       setLoading(false);
     })();
-  }, [userId, activeProgramaId]);
+  }, [userId, selectedProgramaId]);
 
   const publicUrl = useMemo(() => {
     if (!userId) return "";
@@ -149,8 +185,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   };
 
   const handleSave = async () => {
-    if (!userId || !activeProgramaId) {
-      toast.error("Nenhum programa no ar. Cadastre/programe um programa ativo.");
+    if (!userId || !selectedProgramaId) {
+      toast.error("Selecione um programa para salvar os assuntos.");
       return;
     }
     setSaving(true);
@@ -160,7 +196,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       .upsert(
         {
           user_id: userId,
-          programa_id: activeProgramaId,
+          programa_id: selectedProgramaId,
           mensagens: payload,
           mensagens_enabled: enabled,
           font_family: fontFamily,
@@ -175,7 +211,10 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       toast.error("Erro ao salvar assuntos");
       console.error(error);
     } else {
-      toast.success("Assuntos salvos");
+      toast.success(`Assuntos salvos para ${selectedProgramaNome || "programa"}`);
+      if (payload.some((m) => m.length > 0)) {
+        setConfiguredIds((prev) => new Set(prev).add(selectedProgramaId));
+      }
     }
   };
 
@@ -187,21 +226,39 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   return (
     <div className="rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${NAVY_BORDER}` }}>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff80" }}>
-            Assuntos do Programa
+      <div className="px-3 py-2 flex items-center justify-between gap-2" style={{ borderBottom: `1px solid ${NAVY_BORDER}` }}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: "#ffffff80" }}>
+            Assuntos
           </span>
-          {programaNome && (
-            <span className="text-[10px] font-bold truncate" style={{ color: CYAN }}>
-              · {programaNome}
-            </span>
-          )}
+          <select
+            value={selectedProgramaId || ""}
+            onChange={(e) => {
+              const id = e.target.value || null;
+              setSelectedProgramaId(id);
+              const p = programasList.find((x) => x.id === id);
+              setSelectedProgramaNome(p?.nome || "");
+            }}
+            className="flex-1 min-w-0 px-2 py-1 rounded text-[11px] font-bold"
+            style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#fff" }}
+            title="Selecione o programa para editar seus assuntos"
+          >
+            <option value="">— Selecione um programa —</option>
+            {programasList.map((p) => {
+              const isActive = p.id === activeProgramaId;
+              const isConfigured = configuredIds.has(p.id);
+              return (
+                <option key={p.id} value={p.id}>
+                  {isActive ? "🔴 NO AR · " : ""}{isConfigured ? "✓ " : ""}{p.nome}
+                </option>
+              );
+            })}
+          </select>
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || !activeProgramaId}
-          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider disabled:opacity-40"
+          disabled={saving || !selectedProgramaId}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 whitespace-nowrap"
           style={{ backgroundColor: CYAN, color: "#001018" }}
         >
           {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
@@ -210,6 +267,11 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       </div>
 
       <div className="p-3 space-y-2">
+        {activeProgramaId && selectedProgramaId && selectedProgramaId !== activeProgramaId && (
+          <div className="text-[9px] px-2 py-1 rounded" style={{ backgroundColor: "#00BFF015", color: CYAN, border: `1px solid ${CYAN}40` }}>
+            Editando um programa que não está no ar. Os assuntos vão entrar automaticamente quando este programa começar.
+          </div>
+        )}
         {loading && (
           <div className="text-[10px]" style={{ color: "#ffffff60" }}>Carregando...</div>
         )}
