@@ -98,6 +98,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
+      setBgColor(((data as any)?.bg_color as string) || "#ffffff");
+      setTextColor(((data as any)?.text_color as string) || "#000000");
       setLoading(false);
     })();
   }, [userId, activeProgramaId]);
