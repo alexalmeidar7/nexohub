@@ -161,8 +161,39 @@ export default function VmixAssunto() {
   // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
   const tokens = useMemo(() => Array.from(texto), [texto]);
 
+  // Auto-fit: reduz o font-size até o texto caber em UMA linha na largura disponível.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const [fitFontPx, setFitFontPx] = useState<number>(140);
+
+  useLayoutEffect(() => {
+    const fit = () => {
+      const container = containerRef.current;
+      const el = textRef.current;
+      if (!container || !el) return;
+      const available = container.clientWidth;
+      if (available <= 0) return;
+      // Começa grande e reduz até caber; teto proporcional à altura para não estourar verticalmente.
+      const maxByHeight = Math.floor(container.clientHeight * 0.7);
+      let size = Math.min(240, maxByHeight);
+      el.style.fontSize = `${size}px`;
+      // Reduz em passos até caber (guard 60 iterações).
+      let guard = 60;
+      while (el.scrollWidth > available && size > 16 && guard-- > 0) {
+        size -= Math.max(2, Math.floor(size * 0.06));
+        el.style.fontSize = `${size}px`;
+      }
+      setFitFontPx(size);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [texto, fontStack, fontWeight]);
+
   return (
     <div
+      ref={containerRef}
       style={{
         position: "fixed",
         inset: 0,
@@ -178,18 +209,18 @@ export default function VmixAssunto() {
     >
       <div
         key={idx + texto}
+        ref={textRef}
         style={{
           fontFamily: fontStack,
           fontWeight,
           color: textColor,
-          fontSize: "clamp(32px, 6vw, 140px)",
+          fontSize: `${fitFontPx}px`,
           lineHeight: 1.1,
           textAlign: "left",
           letterSpacing: "-0.01em",
+          whiteSpace: "nowrap",
+          display: "block",
           maxWidth: "100%",
-          display: "flex",
-          flexWrap: "wrap",
-          rowGap: "0.15em",
         }}
       >
         {tokens.map((ch, i) => (
@@ -217,4 +248,5 @@ export default function VmixAssunto() {
     </div>
   );
 }
+
 
