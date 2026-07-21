@@ -1070,6 +1070,7 @@ function MockupPreview({
   empresaLogo, programaNome, programaLogo, displayLocutor, locutorInstagram,
   locutorFoto, accentColor, assunto, showQrCode, whatsappNumber,
   empresaSocials, composedTicker, sponsorLogos, assuntoBgUrl, insertLiveArt,
+  programaAssuntos = [], programaAssuntoRotation = 7,
 }: {
   empresaLogo: string; programaNome: string; programaLogo: string;
   displayLocutor: string; locutorInstagram: string; locutorFoto: string;
@@ -1078,6 +1079,8 @@ function MockupPreview({
   sponsorLogos: {nome: string; logo_url: string}[];
   assuntoBgUrl?: string;
   insertLiveArt?: string;
+  programaAssuntos?: string[];
+  programaAssuntoRotation?: number;
 }) {
   // Social cycling animation
   const [socialIdx, setSocialIdx] = useState(0);
