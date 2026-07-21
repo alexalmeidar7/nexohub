@@ -19,6 +19,14 @@ function isBreakTrack(data: { titulo?: string; artista?: string }) {
   return BREAK_LABELS.has(t) || BREAK_LABELS.has(a);
 }
 
+function isStandbyTrack(data: { titulo?: string; artista?: string }) {
+  const s = "standby musical";
+  const t = (data.titulo || "").trim().toLowerCase();
+  const a = (data.artista || "").trim().toLowerCase();
+  return t === s || a === s;
+}
+
+
 function isPlaceholderTrack(data: { titulo?: string; artista?: string }) {
   const titulo = (data.titulo || "").trim().toLowerCase();
   const artista = (data.artista || "").trim().toLowerCase();
