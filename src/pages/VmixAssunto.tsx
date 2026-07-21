@@ -28,6 +28,26 @@ const FONT_WEIGHT: Record<string, number> = {
   Inter: 800,
 };
 
+// Razão cap-height / em-box de cada família (medido empiricamente).
+// Emojis são desenhados no em-box inteiro; escalamos para casar com a altura das letras maiúsculas.
+const FONT_CAP_RATIO: Record<string, number> = {
+  Sink: 0.72,             // Alfa Slab One
+  "Bebas Neue": 0.74,
+  Anton: 0.72,
+  "Playfair Display": 0.68,
+  Montserrat: 0.70,
+  Inter: 0.72,
+};
+// Deslocamento vertical do emoji (em unidades em) para alinhar ao meio da cap-height.
+const FONT_EMOJI_SHIFT: Record<string, number> = {
+  Sink: 0.08,
+  "Bebas Neue": 0.06,
+  Anton: 0.08,
+  "Playfair Display": 0.10,
+  Montserrat: 0.08,
+  Inter: 0.08,
+};
+
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
 
