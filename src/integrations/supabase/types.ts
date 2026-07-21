@@ -311,32 +311,38 @@ export type Database = {
       }
       broadcast_assuntos: {
         Row: {
+          bg_color: string
           created_at: string
           font_family: string
           id: string
           mensagens: Json
           programa_id: string
           rotation_seconds: number
+          text_color: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          bg_color?: string
           created_at?: string
           font_family?: string
           id?: string
           mensagens?: Json
           programa_id: string
           rotation_seconds?: number
+          text_color?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          bg_color?: string
           created_at?: string
           font_family?: string
           id?: string
           mensagens?: Json
           programa_id?: string
           rotation_seconds?: number
+          text_color?: string
           updated_at?: string
           user_id?: string
         }
