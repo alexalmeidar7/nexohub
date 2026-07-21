@@ -770,7 +770,7 @@ export default function BroadcastPage() {
               </div>
             </div>
           </div>
-          </div>
+
 
           {/* ── Right: settings column ── */}
           <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1" style={{ maxHeight: "100%" }}>
