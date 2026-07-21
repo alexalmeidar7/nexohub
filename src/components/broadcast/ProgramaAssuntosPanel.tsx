@@ -61,8 +61,11 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   // Rotate preview messages every 7s
   const visibleMensagens = useMemo(
-    () => mensagens.map((m) => m.trim()).filter((m) => m.length > 0),
-    [mensagens],
+    () => mensagens
+      .map((m, i) => ({ text: m.trim(), on: !!enabled[i] }))
+      .filter((x) => x.on && x.text.length > 0)
+      .map((x) => x.text),
+    [mensagens, enabled],
   );
   useEffect(() => {
     if (visibleMensagens.length <= 1) {
