@@ -226,21 +226,39 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   return (
     <div className="rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: `1px solid ${NAVY_BORDER}` }}>
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff80" }}>
-            Assuntos do Programa
+      <div className="px-3 py-2 flex items-center justify-between gap-2" style={{ borderBottom: `1px solid ${NAVY_BORDER}` }}>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <span className="text-[10px] font-bold uppercase tracking-widest whitespace-nowrap" style={{ color: "#ffffff80" }}>
+            Assuntos
           </span>
-          {programaNome && (
-            <span className="text-[10px] font-bold truncate" style={{ color: CYAN }}>
-              · {programaNome}
-            </span>
-          )}
+          <select
+            value={selectedProgramaId || ""}
+            onChange={(e) => {
+              const id = e.target.value || null;
+              setSelectedProgramaId(id);
+              const p = programasList.find((x) => x.id === id);
+              setSelectedProgramaNome(p?.nome || "");
+            }}
+            className="flex-1 min-w-0 px-2 py-1 rounded text-[11px] font-bold"
+            style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#fff" }}
+            title="Selecione o programa para editar seus assuntos"
+          >
+            <option value="">— Selecione um programa —</option>
+            {programasList.map((p) => {
+              const isActive = p.id === activeProgramaId;
+              const isConfigured = configuredIds.has(p.id);
+              return (
+                <option key={p.id} value={p.id}>
+                  {isActive ? "🔴 NO AR · " : ""}{isConfigured ? "✓ " : ""}{p.nome}
+                </option>
+              );
+            })}
+          </select>
         </div>
         <button
           onClick={handleSave}
-          disabled={saving || !activeProgramaId}
-          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider disabled:opacity-40"
+          disabled={saving || !selectedProgramaId}
+          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider disabled:opacity-40 whitespace-nowrap"
           style={{ backgroundColor: CYAN, color: "#001018" }}
         >
           {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
@@ -249,6 +267,11 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       </div>
 
       <div className="p-3 space-y-2">
+        {activeProgramaId && selectedProgramaId && selectedProgramaId !== activeProgramaId && (
+          <div className="text-[9px] px-2 py-1 rounded" style={{ backgroundColor: "#00BFF015", color: CYAN, border: `1px solid ${CYAN}40` }}>
+            Editando um programa que não está no ar. Os assuntos vão entrar automaticamente quando este programa começar.
+          </div>
+        )}
         {loading && (
           <div className="text-[10px]" style={{ color: "#ffffff60" }}>Carregando...</div>
         )}
