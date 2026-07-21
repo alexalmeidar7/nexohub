@@ -1,0 +1,149 @@
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+
+// 5 fontes suportadas (uma delas SINK)
+const FONT_CDN: Record<string, string> = {
+  Sink: "https://fonts.cdnfonts.com/css/sink",
+  "Bebas Neue": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap",
+  Anton: "https://fonts.googleapis.com/css2?family=Anton&display=swap",
+  "Playfair Display": "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap",
+  Montserrat: "https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap",
+};
+
+const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
+
+const timeToSec = (v: string | null | undefined) => {
+  if (!v) return -1;
+  const [h = "0", m = "0", s = "0"] = v.split(":");
+  return Number(h) * 3600 + Number(m) * 60 + Number(s);
+};
+
+const DAY_MAP: Record<number, string> = {
+  0: "domingo", 1: "segunda", 2: "terca", 3: "quarta", 4: "quinta", 5: "sexta", 6: "sabado",
+};
+
+async function loadActiveProgramId(userId: string): Promise<string | null> {
+  const now = new Date();
+  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const dayName = DAY_MAP[now.getDay()];
+  const { data: progs } = await supabase
+    .from("programas")
+    .select("id, horario_inicio, horario_fim, dias_semana, variavel, data_variavel")
+    .eq("user_id", userId)
+    .eq("ativo", true);
+  if (!progs) return null;
+  const today = now.toISOString().slice(0, 10);
+  for (const p of progs) {
+    const start = timeToSec(p.horario_inicio);
+    const end = timeToSec(p.horario_fim);
+    if (start < 0 || end < 0) continue;
+    const runsToday = p.variavel
+      ? String(p.data_variavel || "").slice(0, 10) === today
+      : (p.dias_semana || []).includes(dayName);
+    if (!runsToday) continue;
+    if (end > start ? nowSec >= start && nowSec < end : nowSec >= start || nowSec < end) {
+      return p.id;
+    }
+  }
+  return null;
+}
+
+export default function VmixAssunto() {
+  const { userId } = useParams<{ userId: string }>();
+  const [mensagens, setMensagens] = useState<string[]>([]);
+  const [fontFamily, setFontFamily] = useState<string>("Inter");
+  const [idx, setIdx] = useState(0);
+
+  // Injeta as fontes uma vez
+  useEffect(() => {
+    const hrefs = [...Object.values(FONT_CDN), NOTO_EMOJI_HREF];
+    const created: HTMLLinkElement[] = [];
+    hrefs.forEach((href) => {
+      if (document.querySelector(`link[href="${href}"]`)) return;
+      const l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = href;
+      document.head.appendChild(l);
+      created.push(l);
+    });
+    document.body.style.margin = "0";
+    document.body.style.background = "#fff";
+    return () => { created.forEach((l) => l.remove()); };
+  }, []);
+
+  // Carrega e recarrega a cada 8s (troca de programa / mensagens editadas)
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const load = async () => {
+      const programaId = await loadActiveProgramId(userId);
+      if (!programaId || cancelled) { if (!cancelled) setMensagens([]); return; }
+      const { data } = await supabase
+        .from("broadcast_assuntos")
+        .select("mensagens, font_family")
+        .eq("user_id", userId)
+        .eq("programa_id", programaId)
+        .maybeSingle();
+      if (cancelled) return;
+      const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]).filter((s) => (s || "").trim().length > 0) : [];
+      setMensagens(arr);
+      setFontFamily(data?.font_family || "Inter");
+    };
+    load();
+    const t = setInterval(load, 8000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, [userId]);
+
+  // Rotaciona mensagens a cada 7s
+  useEffect(() => {
+    if (mensagens.length <= 1) { setIdx(0); return; }
+    const t = setInterval(() => setIdx((i) => (i + 1) % mensagens.length), 7000);
+    return () => clearInterval(t);
+  }, [mensagens.length]);
+
+  const texto = mensagens[idx] || "";
+
+  const fontStack = useMemo(() => {
+    // Emojis renderizam via Noto Color Emoji como fallback
+    return `"${fontFamily}", "Noto Color Emoji", system-ui, sans-serif`;
+  }, [fontFamily]);
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "#ffffff",
+        color: "#000000",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "4vh 6vw",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        key={idx + texto}
+        style={{
+          fontFamily: fontStack,
+          fontWeight: 800,
+          fontSize: "clamp(48px, 9vw, 220px)",
+          lineHeight: 1.05,
+          textAlign: "center",
+          letterSpacing: "-0.01em",
+          animation: "assuntoFade 500ms ease-out",
+          maxWidth: "100%",
+        }}
+      >
+        {texto}
+      </div>
+      <style>{`
+        @keyframes assuntoFade {
+          from { opacity: 0; transform: translateY(12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
