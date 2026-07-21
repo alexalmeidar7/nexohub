@@ -58,6 +58,7 @@ const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 const SitePreview = lazyRetry(() => import("./pages/SitePreview"));
 const DesignSystemDemo = lazyRetry(() => import("./pages/DesignSystemDemo"));
+const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
 
 interface ErrorBoundaryState {
   hasError: boolean;
