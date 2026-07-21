@@ -178,31 +178,32 @@ export default function VmixAssunto() {
   const isEmoji = (ch: string) => /\p{Extended_Pictographic}/u.test(ch);
 
   // Auto-fit: reduz o font-size até o texto caber em UMA linha na largura disponível.
+  // Medimos a partir de um "mirror" oculto (texto plano, sem animação/spans) para evitar
+  // que transforms de entrada dos caracteres distorçam a largura durante o fit.
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const mirrorRef = useRef<HTMLSpanElement>(null);
   const [fitFontPx, setFitFontPx] = useState<number>(140);
 
   useLayoutEffect(() => {
     const fit = () => {
       const container = containerRef.current;
-      const el = textRef.current;
-      if (!container || !el) return;
+      const mirror = mirrorRef.current;
+      if (!container || !mirror) return;
       const available = container.clientWidth;
       if (available <= 0) return;
-      // Margem de segurança para evitar corte por sub-pixel/kerning.
-      const safe = Math.floor(available * 0.995);
+      const safe = Math.floor(available * 0.99);
       const maxByHeight = Math.floor(container.clientHeight * 0.7);
       let size = Math.min(240, maxByHeight);
-      el.style.fontSize = `${size}px`;
+      mirror.style.fontSize = `${size}px`;
       let guard = 80;
-      while (el.scrollWidth > safe && size > 16 && guard-- > 0) {
+      while (mirror.scrollWidth > safe && size > 16 && guard-- > 0) {
         size -= Math.max(2, Math.floor(size * 0.05));
-        el.style.fontSize = `${size}px`;
+        mirror.style.fontSize = `${size}px`;
       }
       setFitFontPx(size);
     };
     fit();
-    // Refit tardio caso a fonte carregue depois do primeiro layout
     const t1 = setTimeout(fit, 150);
     const t2 = setTimeout(fit, 600);
     const t3 = setTimeout(fit, 1500);
@@ -210,6 +211,21 @@ export default function VmixAssunto() {
     if (containerRef.current) ro.observe(containerRef.current);
     return () => { ro.disconnect(); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [texto, fontStack, fontWeight, fontsTick]);
+
+  // Constrói o texto para o mirror já com emojis reduzidos (mesma escala do visível)
+  const mirrorNodes = useMemo(() => tokens.map((ch, i) => {
+    const emoji = isEmoji(ch);
+    if (!emoji) return ch === " " ? "\u00A0" : ch;
+    return (
+      <span
+        key={`m-${i}`}
+        style={{
+          fontSize: "0.78em",
+          fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+        }}
+      >{ch}</span>
+    );
+  }), [tokens]);
 
   return (
     <div
@@ -227,6 +243,26 @@ export default function VmixAssunto() {
         overflow: "hidden",
       }}
     >
+      {/* Mirror invisível usado apenas para medir a largura real do texto */}
+      <span
+        ref={mirrorRef}
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: -99999,
+          top: 0,
+          visibility: "hidden",
+          whiteSpace: "nowrap",
+          fontFamily: fontStack,
+          fontWeight,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.1,
+          pointerEvents: "none",
+        }}
+      >
+        {mirrorNodes}
+      </span>
+
       <div
         key={idx + texto}
         ref={textRef}
@@ -254,7 +290,6 @@ export default function VmixAssunto() {
                 animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
                 animationDelay: `${i * 28}ms`,
                 transformOrigin: "50% 100%",
-                // Emojis tendem a renderizar maiores que letras — normaliza altura visual
                 fontSize: emoji ? "0.78em" : undefined,
                 lineHeight: emoji ? 1 : undefined,
                 verticalAlign: emoji ? "baseline" : undefined,
@@ -266,6 +301,7 @@ export default function VmixAssunto() {
           );
         })}
       </div>
+
 
       <style>{`
         @keyframes assuntoCharIn {
