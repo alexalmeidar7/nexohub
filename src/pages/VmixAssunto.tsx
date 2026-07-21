@@ -321,13 +321,26 @@ export default function VmixAssunto() {
                 animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
                 animationDelay: `${i * 28}ms`,
                 transformOrigin: "50% 100%",
-                fontSize: emoji ? "0.78em" : undefined,
-                lineHeight: emoji ? 1 : undefined,
-                verticalAlign: emoji ? "baseline" : undefined,
-                fontFamily: emoji ? '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif' : undefined,
               }}
             >
-              {ch === " " ? "\u00A0" : ch}
+              {emoji ? (
+                // Span interno faz o dimensionamento e deslocamento do emoji
+                // sem conflitar com o transform da animação do span externo.
+                <span
+                  style={{
+                    display: "inline-block",
+                    fontSize: `${emojiScale}em`,
+                    lineHeight: 0,
+                    verticalAlign: "baseline",
+                    transform: `translateY(${emojiShiftEm}em)`,
+                    fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
+                  }}
+                >
+                  {ch}
+                </span>
+              ) : (
+                ch === " " ? "\u00A0" : ch
+              )}
             </span>
           );
         })}
