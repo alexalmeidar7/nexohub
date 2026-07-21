@@ -51,6 +51,32 @@ const FONT_EMOJI_SHIFT: Record<string, number> = {
 
 const NOTO_EMOJI_HREF = "https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap";
 
+const formatPhoneRun = (value: string) => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length < 8) return value;
+
+  const local = digits.startsWith("55") && (digits.length === 12 || digits.length === 13)
+    ? digits.slice(2)
+    : digits;
+
+  if (local.length === 10) {
+    return `${digits.startsWith("55") ? "+55 " : ""}(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+
+  if (local.length === 11) {
+    return `${digits.startsWith("55") ? "+55 " : ""}(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+
+  return value
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/\)(?=\d)/g, ") ")
+    .replace(/\s*-\s*/g, "-");
+};
+
+const normalizePhoneSpacing = (value: string) =>
+  value.replace(/(?:\+?\d|\(\s*\d)[\d\s().-]{6,}\d/g, (match) => formatPhoneRun(match));
+
 const timeToSec = (v: string | null | undefined) => {
   if (!v) return -1;
   const [h = "0", m = "0", s = "0"] = v.split(":");
@@ -183,6 +209,7 @@ export default function VmixAssunto() {
   }, [mensagens.length, rotationSec]);
 
   const texto = mensagens[idx] || "";
+  const displayText = useMemo(() => normalizePhoneSpacing(texto), [texto]);
 
   const fontStack = useMemo(() => {
     const resolved = FONT_CSS_FAMILY[fontFamily] || fontFamily;
@@ -193,11 +220,26 @@ export default function VmixAssunto() {
   const emojiScale = FONT_CAP_RATIO[fontFamily] ?? 0.72;
   const emojiShiftEm = FONT_EMOJI_SHIFT[fontFamily] ?? 0.08;
 
-  // Quebra o texto em "tokens" preservando emojis e espaços para animar caractere-a-caractere
-  const tokens = useMemo(() => Array.from(texto), [texto]);
-
   // Detecta emoji / símbolos pictográficos para normalizar tamanho vs. glifos alfanuméricos
   const isEmoji = (ch: string) => /\p{Extended_Pictographic}/u.test(ch);
+
+  // Browser do vMix V115/CEF é sensível a texto quebrado caractere-a-caractere.
+  // Segmentamos apenas emojis; números/telefones ficam em um único texto contínuo.
+  const segments = useMemo(() => {
+    const out: Array<{ type: "text" | "emoji"; value: string }> = [];
+    let buffer = "";
+    Array.from(displayText).forEach((ch) => {
+      if (isEmoji(ch)) {
+        if (buffer) out.push({ type: "text", value: buffer });
+        buffer = "";
+        out.push({ type: "emoji", value: ch });
+      } else {
+        buffer += ch;
+      }
+    });
+    if (buffer) out.push({ type: "text", value: buffer });
+    return out;
+  }, [displayText]);
 
   // Auto-fit: reduz o font-size até o texto caber em UMA linha na largura disponível.
   // Medimos a partir de um "mirror" oculto (texto plano, sem animação/spans) para evitar
@@ -212,10 +254,13 @@ export default function VmixAssunto() {
       const container = containerRef.current;
       const mirror = mirrorRef.current;
       if (!container || !mirror) return;
-      const available = container.clientWidth;
+      const styles = window.getComputedStyle(container);
+      const horizontalPadding = parseFloat(styles.paddingLeft || "0") + parseFloat(styles.paddingRight || "0");
+      const verticalPadding = parseFloat(styles.paddingTop || "0") + parseFloat(styles.paddingBottom || "0");
+      const available = container.clientWidth - horizontalPadding;
       if (available <= 0) return;
-      const safe = Math.floor(available * 0.99);
-      const maxByHeight = Math.floor(container.clientHeight * 0.7);
+      const safe = Math.floor(available * 0.985);
+      const maxByHeight = Math.floor((container.clientHeight - verticalPadding) * 0.7);
       let size = Math.min(240, maxByHeight);
       mirror.style.fontSize = `${size}px`;
       let guard = 80;
@@ -232,12 +277,11 @@ export default function VmixAssunto() {
     const ro = new ResizeObserver(fit);
     if (containerRef.current) ro.observe(containerRef.current);
     return () => { ro.disconnect(); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [texto, fontStack, fontWeight, fontsTick]);
+  }, [displayText, fontStack, fontWeight, fontsTick]);
 
   // Constrói o texto para o mirror já com emojis reduzidos (mesma escala do visível)
-  const mirrorNodes = useMemo(() => tokens.map((ch, i) => {
-    const emoji = isEmoji(ch);
-    if (!emoji) return ch === " " ? "\u00A0" : ch;
+  const mirrorNodes = useMemo(() => segments.map((segment, i) => {
+    if (segment.type === "text") return segment.value.replace(/ /g, "\u00A0");
     return (
       <span
         key={`m-${i}`}
@@ -245,9 +289,9 @@ export default function VmixAssunto() {
           fontSize: `${emojiScale}em`,
           fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
         }}
-      >{ch}</span>
+      >{segment.value}</span>
     );
-  }), [tokens, emojiScale]);
+  }), [segments, emojiScale]);
 
   return (
     <div
@@ -263,6 +307,7 @@ export default function VmixAssunto() {
         justifyContent: "flex-start",
         padding: "4vh 5vw",
         overflow: "hidden",
+        boxSizing: "border-box",
       }}
     >
       {/* Mirror invisível usado apenas para medir a largura real do texto */}
@@ -277,8 +322,11 @@ export default function VmixAssunto() {
           whiteSpace: "nowrap",
           fontFamily: fontStack,
           fontWeight,
-          letterSpacing: "-0.01em",
-          lineHeight: 1.1,
+          letterSpacing: 0,
+          lineHeight: 1,
+          fontKerning: "normal",
+          fontVariantNumeric: "tabular-nums",
+          fontFeatureSettings: '"kern" 1, "tnum" 1',
           pointerEvents: "none",
         }}
       >
@@ -293,28 +341,32 @@ export default function VmixAssunto() {
           fontWeight,
           color: textColor,
           fontSize: `${fitFontPx}px`,
-          lineHeight: 1.1,
+          lineHeight: 1,
           textAlign: "left",
-          letterSpacing: "-0.01em",
+          letterSpacing: 0,
           whiteSpace: "nowrap",
           display: "block",
           maxWidth: "100%",
+          fontKerning: "normal",
+          fontVariantNumeric: "tabular-nums",
+          fontFeatureSettings: '"kern" 1, "tnum" 1',
+          WebkitFontSmoothing: "antialiased",
         }}
       >
-        {tokens.map((ch, i) => {
-          const emoji = isEmoji(ch);
+        {segments.map((segment, i) => {
           return (
             <span
               key={`${idx}-${i}`}
               style={{
                 display: "inline-block",
                 whiteSpace: "pre",
-                animation: `assuntoCharIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
-                animationDelay: `${i * 28}ms`,
+                animation: `assuntoSegmentIn 520ms cubic-bezier(0.22, 1, 0.36, 1) both`,
+                animationDelay: `${i * 70}ms`,
                 transformOrigin: "50% 100%",
+                letterSpacing: 0,
               }}
             >
-              {emoji ? (
+              {segment.type === "emoji" ? (
                 // Span interno faz o dimensionamento e deslocamento do emoji
                 // sem conflitar com o transform da animação do span externo.
                 <span
@@ -327,10 +379,10 @@ export default function VmixAssunto() {
                     fontFamily: '"Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif',
                   }}
                 >
-                  {ch}
+                  {segment.value}
                 </span>
               ) : (
-                ch === " " ? "\u00A0" : ch
+                segment.value.replace(/ /g, "\u00A0")
               )}
             </span>
           );
@@ -339,10 +391,9 @@ export default function VmixAssunto() {
 
 
       <style>{`
-        @keyframes assuntoCharIn {
-          0%   { opacity: 0; transform: translateY(0.6em) rotate(-6deg) scale(0.85); filter: blur(6px); }
-          60%  { opacity: 1; filter: blur(0); }
-          100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); filter: blur(0); }
+        @keyframes assuntoSegmentIn {
+          0%   { opacity: 0; transform: translateY(0.28em) scale(0.96); }
+          100% { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
     </div>
