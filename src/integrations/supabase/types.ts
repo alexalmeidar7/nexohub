@@ -316,6 +316,7 @@ export type Database = {
           font_family: string
           id: string
           mensagens: Json
+          mensagens_enabled: boolean[]
           programa_id: string
           rotation_seconds: number
           text_color: string
@@ -328,6 +329,7 @@ export type Database = {
           font_family?: string
           id?: string
           mensagens?: Json
+          mensagens_enabled?: boolean[]
           programa_id: string
           rotation_seconds?: number
           text_color?: string
@@ -340,6 +342,7 @@ export type Database = {
           font_family?: string
           id?: string
           mensagens?: Json
+          mensagens_enabled?: boolean[]
           programa_id?: string
           rotation_seconds?: number
           text_color?: string

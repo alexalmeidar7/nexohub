@@ -31,6 +31,7 @@ interface Props {
 
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
+  const [enabled, setEnabled] = useState<boolean[]>([true, true, true]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
   const [rotationSec, setRotationSec] = useState<number>(7);
   const [bgColor, setBgColor] = useState<string>("#ffffff");
@@ -60,8 +61,11 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
 
   // Rotate preview messages every 7s
   const visibleMensagens = useMemo(
-    () => mensagens.map((m) => m.trim()).filter((m) => m.length > 0),
-    [mensagens],
+    () => mensagens
+      .map((m, i) => ({ text: m.trim(), on: !!enabled[i] }))
+      .filter((x) => x.on && x.text.length > 0)
+      .map((x) => x.text),
+    [mensagens, enabled],
   );
   useEffect(() => {
     if (visibleMensagens.length <= 1) {
@@ -82,6 +86,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   useEffect(() => {
     if (!userId || !activeProgramaId) {
       setMensagens(["", "", ""]);
+      setEnabled([true, true, true]);
       setFontFamily("Inter");
       return;
     }
@@ -89,12 +94,16 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family, rotation_seconds, bg_color, text_color")
+        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
+      const en = Array.isArray((data as any)?.mensagens_enabled)
+        ? ((data as any).mensagens_enabled as boolean[])
+        : [];
+      setEnabled([en[0] ?? true, en[1] ?? true, en[2] ?? true]);
       setFontFamily(data?.font_family || "Inter");
       const rs = Number((data as any)?.rotation_seconds);
       setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
@@ -153,6 +162,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           user_id: userId,
           programa_id: activeProgramaId,
           mensagens: payload,
+          mensagens_enabled: enabled,
           font_family: fontFamily,
           rotation_seconds: Math.max(1, Math.min(120, Math.round(rotationSec))),
           bg_color: bgColor,
@@ -203,12 +213,39 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
         {loading && (
           <div className="text-[10px]" style={{ color: "#ffffff60" }}>Carregando...</div>
         )}
-        {[0, 1, 2].map((i) => (
+        {[0, 1, 2].map((i) => {
+          const isOn = !!enabled[i];
+          return (
           <div key={i} className="relative">
-            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
-              Mensagem {i + 1}
-            </label>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>
+                Mensagem {i + 1}
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  const arr = [...enabled];
+                  arr[i] = !arr[i];
+                  setEnabled(arr);
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: isOn ? CYAN : "transparent",
+                  color: isOn ? "#001018" : "#ffffff60",
+                  border: `1px solid ${isOn ? CYAN : NAVY_BORDER}`,
+                }}
+                title={isOn ? "Ativa (clique para desativar)" : "Inativa (clique para ativar)"}
+              >
+                <span
+                  style={{
+                    width: 6, height: 6, borderRadius: 999,
+                    backgroundColor: isOn ? "#001018" : "#ffffff40",
+                  }}
+                />
+                {isOn ? "Ativa" : "Inativa"}
+              </button>
+            </div>
+            <div className="flex items-center gap-1" style={{ opacity: isOn ? 1 : 0.5 }}>
               <input
                 ref={(el) => (inputRefs.current[i] = el)}
                 type="text"
@@ -251,7 +288,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
           <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
