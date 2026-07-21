@@ -380,7 +380,117 @@ function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[
   );
 }
 
+/* ═════════════════════ LISTA DE PRÊMIOS ═════════════════════ */
+function ListaPremiosTab({ premios, programas, onReload }: { premios: Premio[]; programas: ProgramaLite[]; onReload: () => void }) {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, { programa_id: string; dias_validade: string }>>({});
+
+  const getDraft = (p: Premio) =>
+    drafts[p.id] ?? { programa_id: p.programa_id || "", dias_validade: String(p.dias_validade ?? 7) };
+
+  const setDraft = (id: string, patch: Partial<{ programa_id: string; dias_validade: string }>) =>
+    setDrafts(d => ({ ...d, [id]: { ...(d[id] ?? { programa_id: "", dias_validade: "7" }), ...patch } }));
+
+  const save = async (p: Premio) => {
+    const d = getDraft(p);
+    setSaving(p.id);
+    const { error } = await supabase.from("sorteio_premios").update({
+      programa_id: d.programa_id || null,
+      dias_validade: Math.max(1, parseInt(d.dias_validade || "7", 10) || 7),
+    }).eq("id", p.id);
+    setSaving(null);
+    if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Prêmio atualizado" });
+    setDrafts(dr => { const { [p.id]: _, ...rest } = dr; return rest; });
+    onReload();
+  };
+
+  // Group by programa
+  const grouped = useMemo(() => {
+    const map = new Map<string, { programa: ProgramaLite | null; items: Premio[] }>();
+    const noneKey = "__none__";
+    for (const p of premios) {
+      const key = p.programa_id || noneKey;
+      if (!map.has(key)) {
+        map.set(key, { programa: p.programa_id ? programas.find(pg => pg.id === p.programa_id) || null : null, items: [] });
+      }
+      map.get(key)!.items.push(p);
+    }
+    return Array.from(map.entries());
+  }, [premios, programas]);
+
+  return (
+    <div style={cardStyle}>
+      <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
+        Lista de Prêmios por Programa
+      </h2>
+      {premios.length === 0 ? (
+        <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum prêmio cadastrado.</p>
+      ) : (
+        <div className="grid gap-5">
+          {grouped.map(([key, group]) => (
+            <div key={key}>
+              <div style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: CYAN, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                <Radio size={13} />
+                {group.programa ? group.programa.nome : "— SEM PROGRAMA —"}
+                <span style={{ color: "#64748B", fontWeight: 600 }}>· {group.items.length} prêmio(s)</span>
+              </div>
+              <div className="grid gap-2">
+                {group.items.map(p => {
+                  const d = getDraft(p);
+                  const dirty = d.programa_id !== (p.programa_id || "") || d.dias_validade !== String(p.dias_validade ?? 7);
+                  return (
+                    <div key={p.id} className="flex items-center gap-3" style={{ background: "#fff", borderRadius: 16, padding: 10, border: `1px solid ${CYAN}33` }}>
+                      {p.imagem_url ? (
+                        <img src={p.imagem_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: 44, height: 44, borderRadius: 10, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Gift size={18} color={CYAN} />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div style={{ fontWeight: 700, color: DARK, fontSize: 13 }}>{p.nome}</div>
+                        <div style={{ fontSize: 10, color: "#64748B" }}>Estoque: {p.quantidade_estoque}</div>
+                      </div>
+                      <select
+                        style={{ ...pillSelect, height: 36, fontSize: 11, minWidth: 180 }}
+                        value={d.programa_id}
+                        onChange={e => setDraft(p.id, { programa_id: e.target.value })}
+                      >
+                        <option value="">— SEM PROGRAMA —</option>
+                        {programas.map(pg => <option key={pg.id} value={pg.id}>{pg.nome}</option>)}
+                      </select>
+                      <input
+                        type="number"
+                        min={1}
+                        style={{ ...pillInput, height: 36, fontSize: 11, width: 90, textAlign: "center" }}
+                        value={d.dias_validade}
+                        onChange={e => setDraft(p.id, { dias_validade: e.target.value })}
+                        title="Dias para retirar"
+                      />
+                      <button
+                        style={{ ...limeBtn, height: 36, padding: "0 14px", opacity: dirty ? 1 : 0.4, cursor: dirty ? "pointer" : "not-allowed" }}
+                        disabled={!dirty || saving === p.id}
+                        onClick={() => save(p)}
+                      >
+                        {saving === p.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                        Salvar
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═════════════════════ SORTEIO ═════════════════════ */
+
 function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
   premios: Premio[]; ouvintes: Ouvinte[]; sorteios: Sorteio[]; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
 }) {
