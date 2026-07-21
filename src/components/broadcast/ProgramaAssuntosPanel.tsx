@@ -155,6 +155,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           mensagens: payload,
           font_family: fontFamily,
           rotation_seconds: Math.max(1, Math.min(120, Math.round(rotationSec))),
+          bg_color: bgColor,
+          text_color: textColor,
         } as any,
         { onConflict: "user_id,programa_id" },
       );
