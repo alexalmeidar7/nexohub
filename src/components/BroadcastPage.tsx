@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
+import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
 
 
 /** Extract @username from a URL or handle string */
@@ -682,18 +683,9 @@ export default function BroadcastPage() {
             </div>
 
             <div className="space-y-3">
-              <div>
-                <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Assunto / Título</label>
-                <input
-                  type="text"
-                  value={data.assunto}
-                  onChange={e => setData({ ...data, assunto: e.target.value })}
-                  onBlur={onFieldBlur}
-                  placeholder="Base para assunto"
-                  className="w-full px-3 py-2 rounded-lg text-xs focus:border-[#00BFF0]"
-                  style={inputStyle}
-                />
-              </div>
+              <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+
+
 
               <div className="relative">
                 <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Locutor (override)</label>
