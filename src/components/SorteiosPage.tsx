@@ -93,6 +93,8 @@ interface Premio {
   quantidade_estoque: number;
   ativo: boolean;
   created_at: string;
+  programa_id: string | null;
+  dias_validade: number;
 }
 
 interface Sorteio {
@@ -105,6 +107,8 @@ interface Sorteio {
   entregue: boolean;
   data_entrega: string | null;
   observacoes: string | null;
+  expirado?: boolean;
+  data_expiracao?: string | null;
 }
 
 interface Ouvinte {
@@ -115,8 +119,10 @@ interface Ouvinte {
   pontuacao: number | null;
 }
 
+interface ProgramaLite { id: string; nome: string; }
 
-type Tab = "premios" | "sorteio" | "entrega";
+type Tab = "premios" | "lista" | "sorteio" | "entrega";
+
 
 export default function SorteiosPage() {
   const { user } = useAuth();
