@@ -802,12 +802,13 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   return (
     <div style={cardStyle}>
       <div className="flex items-center gap-3 mb-4 flex-wrap">
-        {(["pendentes", "entregues", "todos"] as const).map(k => (
+        {(["pendentes", "entregues", "expirados", "todos"] as const).map(k => (
           <button key={k} onClick={() => setFilter(k)}
             style={{ ...primaryBtn, height: 36, background: filter === k ? CYAN : "#fff", color: filter === k ? "#fff" : DARK, border: filter === k ? "none" : `2px solid ${CYAN}` }}>
-            {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : "Todos"}
+            {k === "pendentes" ? "Pendentes" : k === "entregues" ? "Entregues" : k === "expirados" ? "Não retirados" : "Todos"}
           </button>
         ))}
+
         <div className="flex-1" />
         <div style={{ position: "relative", minWidth: 240 }}>
           <Search size={16} style={{ position: "absolute", top: 14, left: 14, color: CYAN }} />
