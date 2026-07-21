@@ -323,7 +323,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
                 key={previewIdx}
                 className="px-6 text-center leading-tight"
                 style={{
-                  color: "#000",
+                  color: textColor,
                   fontFamily: `"${fontFamily}", "Noto Color Emoji", sans-serif`,
                   fontSize: "clamp(18px, 4.5vw, 44px)",
                   fontWeight: 700,
