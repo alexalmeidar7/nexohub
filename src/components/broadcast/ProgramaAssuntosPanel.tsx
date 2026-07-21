@@ -309,7 +309,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           <div
             className="w-full rounded overflow-hidden relative flex items-center justify-center"
             style={{
-              backgroundColor: "#ffffff",
+              backgroundColor: bgColor,
               border: `1px solid ${NAVY_BORDER}`,
               aspectRatio: "16 / 9",
             }}
