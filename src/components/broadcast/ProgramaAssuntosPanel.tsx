@@ -185,8 +185,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
   };
 
   const handleSave = async () => {
-    if (!userId || !activeProgramaId) {
-      toast.error("Nenhum programa no ar. Cadastre/programe um programa ativo.");
+    if (!userId || !selectedProgramaId) {
+      toast.error("Selecione um programa para salvar os assuntos.");
       return;
     }
     setSaving(true);
@@ -196,7 +196,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       .upsert(
         {
           user_id: userId,
-          programa_id: activeProgramaId,
+          programa_id: selectedProgramaId,
           mensagens: payload,
           mensagens_enabled: enabled,
           font_family: fontFamily,
@@ -211,7 +211,10 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       toast.error("Erro ao salvar assuntos");
       console.error(error);
     } else {
-      toast.success("Assuntos salvos");
+      toast.success(`Assuntos salvos para ${selectedProgramaNome || "programa"}`);
+      if (payload.some((m) => m.length > 0)) {
+        setConfiguredIds((prev) => new Set(prev).add(selectedProgramaId));
+      }
     }
   };
 
