@@ -301,10 +301,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     if (!user) return;
     const DEFAULT_ITEMS: DashboardItem[] = [
       { id: "default-player", type: "widget", widgetType: "player" },
-      { id: "default-agenda", type: "widget", widgetType: "agenda" },
-      { id: "default-musica", type: "widget", widgetType: "musica" },
-      { id: "default-weather", type: "widget", widgetType: "weather" },
     ];
+    const stripDeprecated = (arr: DashboardItem[]) =>
+      arr.filter(i => !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
+
     const loadItems = async () => {
       // Try DB first
       const { data, error } = await supabase
@@ -320,7 +320,12 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       const normalized = normalizeDashboardSettings(data?.dashboard_items);
 
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
-        setItems(normalized.items);
+        const cleaned = stripDeprecated(normalized.items);
+        setItems(cleaned);
+        // Persist cleanup if we actually removed something
+        if (cleaned.length !== normalized.items.length && user) {
+          try { await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] }); } catch {}
+        }
         return;
       }
 
@@ -330,8 +335,9 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setItems(parsed as DashboardItem[]);
-            await mergeUserDashboardItems(user.id, { items: parsed as unknown[] });
+            const cleaned = stripDeprecated(parsed as DashboardItem[]);
+            setItems(cleaned);
+            await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] });
             return;
           }
         }
@@ -339,7 +345,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
         // ignore invalid local data
       }
 
-      // No items anywhere → seed defaults so player/audience/agenda appear out-of-the-box
+      // No items anywhere → seed defaults
       setItems(DEFAULT_ITEMS);
       try {
         await mergeUserDashboardItems(user.id, { items: DEFAULT_ITEMS as unknown[] });
