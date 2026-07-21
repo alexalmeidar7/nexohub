@@ -32,6 +32,7 @@ interface Props {
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
+  const [rotationSec, setRotationSec] = useState<number>(7);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
