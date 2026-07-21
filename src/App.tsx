@@ -196,14 +196,8 @@ const App = () => (
             <Route path="/:userSlug/player/app" element={<PlayerApp />} />
             <Route path="/:userSlug/telainterativatelao" element={<TelaInterativa />} />
 
-            {/* Admin routes */}
-            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/modules" element={<AdminModules />} />
-            <Route path="/admin/plans" element={<AdminPlans />} />
-            <Route path="/admin/messages" element={<AdminMessages />} />
+
+
 
             {/* User / NexoHub legacy redirects */}
             <Route path="/user" element={<Navigate to="/home" replace />} />
