@@ -66,11 +66,12 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setPreviewIdx(0);
       return;
     }
+    const ms = Math.max(1, rotationSec) * 1000;
     const t = setInterval(() => {
       setPreviewIdx((i) => (i + 1) % visibleMensagens.length);
-    }, 7000);
+    }, ms);
     return () => clearInterval(t);
-  }, [visibleMensagens.length]);
+  }, [visibleMensagens.length, rotationSec]);
   useEffect(() => {
     if (previewIdx >= visibleMensagens.length) setPreviewIdx(0);
   }, [visibleMensagens.length, previewIdx]);
