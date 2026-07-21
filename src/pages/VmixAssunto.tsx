@@ -90,10 +90,13 @@ export default function VmixAssunto() {
       document.head.appendChild(l);
       created.push(l);
     });
+    document.documentElement.style.background = bgColor;
+    document.documentElement.style.color = textColor;
     document.body.style.margin = "0";
     document.body.style.background = bgColor;
+    document.body.style.color = textColor;
     return () => { created.forEach((l) => l.remove()); };
-  }, [bgColor]);
+  }, [bgColor, textColor]);
 
   // Carrega e recarrega a cada 8s (troca de programa / mensagens editadas)
   useEffect(() => {
