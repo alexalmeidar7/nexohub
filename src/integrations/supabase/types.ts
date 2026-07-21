@@ -316,6 +316,7 @@ export type Database = {
           id: string
           mensagens: Json
           programa_id: string
+          rotation_seconds: number
           updated_at: string
           user_id: string
         }
@@ -325,6 +326,7 @@ export type Database = {
           id?: string
           mensagens?: Json
           programa_id: string
+          rotation_seconds?: number
           updated_at?: string
           user_id: string
         }
@@ -334,6 +336,7 @@ export type Database = {
           id?: string
           mensagens?: Json
           programa_id?: string
+          rotation_seconds?: number
           updated_at?: string
           user_id?: string
         }
