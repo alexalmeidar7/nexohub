@@ -264,6 +264,39 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
         </div>
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <label className="text-[9px] font-bold uppercase mb-1 flex items-center justify-between" style={{ color: "#ffffff60" }}>
+            <span>Intervalo de rotação</span>
+            <span style={{ color: CYAN }}>{rotationSec}s</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={rotationSec}
+              onChange={(e) => setRotationSec(Number(e.target.value))}
+              className="flex-1 accent-cyan-400"
+            />
+            <input
+              type="number"
+              min={1}
+              max={120}
+              value={rotationSec}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n)) setRotationSec(Math.max(1, Math.min(120, Math.round(n))));
+              }}
+              className="w-16 px-2 py-1 rounded text-xs text-center"
+              style={inputStyle}
+            />
+          </div>
+          <p className="text-[9px] mt-1" style={{ color: "#ffffff40" }}>
+            Tempo (segundos) que cada mensagem fica na tela antes de trocar.
+          </p>
+        </div>
+
+        <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
           <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
             Pré-visualização ao vivo (navegador do vMix)
           </label>
