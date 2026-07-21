@@ -353,6 +353,75 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           <style>{`@keyframes assuntoFade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none;} }`}</style>
         </div>
 
+        <div className="pt-2 grid grid-cols-2 gap-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <div>
+            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+              Cor de fundo
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="w-9 h-8 rounded cursor-pointer bg-transparent"
+                style={{ border: `1px solid ${NAVY_BORDER}` }}
+              />
+              <input
+                type="text"
+                value={bgColor}
+                onChange={(e) => setBgColor(e.target.value)}
+                className="flex-1 px-2 py-1 rounded text-[10px] uppercase"
+                style={inputStyle}
+              />
+            </div>
+            <div className="flex gap-1 mt-1">
+              {["#ffffff", "#000000", "#00BFF0", "#C6F03C", "#FF3B30", "#111827"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setBgColor(c)}
+                  className="w-5 h-5 rounded"
+                  style={{ backgroundColor: c, border: `1px solid ${NAVY_BORDER}` }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+              Cor do texto
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                type="color"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="w-9 h-8 rounded cursor-pointer bg-transparent"
+                style={{ border: `1px solid ${NAVY_BORDER}` }}
+              />
+              <input
+                type="text"
+                value={textColor}
+                onChange={(e) => setTextColor(e.target.value)}
+                className="flex-1 px-2 py-1 rounded text-[10px] uppercase"
+                style={inputStyle}
+              />
+            </div>
+            <div className="flex gap-1 mt-1">
+              {["#000000", "#ffffff", "#00BFF0", "#C6F03C", "#FF3B30", "#f59e0b"].map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setTextColor(c)}
+                  className="w-5 h-5 rounded"
+                  style={{ backgroundColor: c, border: `1px solid ${NAVY_BORDER}` }}
+                  title={c}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
           <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
             URL para o navegador do vMix
