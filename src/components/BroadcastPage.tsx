@@ -1037,11 +1037,9 @@ export default function BroadcastPage() {
           )}
 
           {/* Ticker */}
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-4 rounded-full" style={{ backgroundColor: CYAN }} />
-              <h2 className="text-white text-xs font-extrabold uppercase tracking-widest">Ticker System</h2>
-            </div>
+          <div className="p-4 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="04" label="Ticker System" color={CYAN} />
+
 
             <div className="space-y-2">
               {([
