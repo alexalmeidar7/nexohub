@@ -32,11 +32,49 @@ interface Props {
 export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, userId }: Props) {
   const [mensagens, setMensagens] = useState<string[]>(["", "", ""]);
   const [fontFamily, setFontFamily] = useState<string>("Inter");
+  const [rotationSec, setRotationSec] = useState<number>(7);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [emojiOpenIdx, setEmojiOpenIdx] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
+  const [previewIdx, setPreviewIdx] = useState(0);
+
+  // Load required web fonts once for preview
+  useEffect(() => {
+    const id = "assunto-preview-fonts";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Anton&family=Playfair+Display:wght@700&family=Montserrat:wght@700&family=Noto+Color+Emoji&display=swap";
+    document.head.appendChild(link);
+    const sink = document.createElement("link");
+    sink.rel = "stylesheet";
+    sink.href = "https://fonts.cdnfonts.com/css/sink";
+    document.head.appendChild(sink);
+  }, []);
+
+  // Rotate preview messages every 7s
+  const visibleMensagens = useMemo(
+    () => mensagens.map((m) => m.trim()).filter((m) => m.length > 0),
+    [mensagens],
+  );
+  useEffect(() => {
+    if (visibleMensagens.length <= 1) {
+      setPreviewIdx(0);
+      return;
+    }
+    const ms = Math.max(1, rotationSec) * 1000;
+    const t = setInterval(() => {
+      setPreviewIdx((i) => (i + 1) % visibleMensagens.length);
+    }, ms);
+    return () => clearInterval(t);
+  }, [visibleMensagens.length, rotationSec]);
+  useEffect(() => {
+    if (previewIdx >= visibleMensagens.length) setPreviewIdx(0);
+  }, [visibleMensagens.length, previewIdx]);
 
   // Load current program assuntos
   useEffect(() => {
@@ -49,13 +87,15 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
       setLoading(true);
       const { data } = await supabase
         .from("broadcast_assuntos")
-        .select("mensagens, font_family")
+        .select("mensagens, font_family, rotation_seconds")
         .eq("user_id", userId)
         .eq("programa_id", activeProgramaId)
         .maybeSingle();
       const arr = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       setMensagens([arr[0] || "", arr[1] || "", arr[2] || ""]);
       setFontFamily(data?.font_family || "Inter");
+      const rs = Number((data as any)?.rotation_seconds);
+      setRotationSec(Number.isFinite(rs) && rs >= 1 ? rs : 7);
       setLoading(false);
     })();
   }, [userId, activeProgramaId]);
@@ -110,6 +150,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           programa_id: activeProgramaId,
           mensagens: payload,
           font_family: fontFamily,
+          rotation_seconds: Math.max(1, Math.min(120, Math.round(rotationSec))),
         } as any,
         { onConflict: "user_id,programa_id" },
       );
@@ -220,6 +261,90 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
               <option key={f} value={f}>{f}</option>
             ))}
           </select>
+        </div>
+
+        <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <label className="text-[9px] font-bold uppercase mb-1 flex items-center justify-between" style={{ color: "#ffffff60" }}>
+            <span>Intervalo de rotação</span>
+            <span style={{ color: CYAN }}>{rotationSec}s</span>
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={1}
+              max={60}
+              step={1}
+              value={rotationSec}
+              onChange={(e) => setRotationSec(Number(e.target.value))}
+              className="flex-1 accent-cyan-400"
+            />
+            <input
+              type="number"
+              min={1}
+              max={120}
+              value={rotationSec}
+              onChange={(e) => {
+                const n = Number(e.target.value);
+                if (Number.isFinite(n)) setRotationSec(Math.max(1, Math.min(120, Math.round(n))));
+              }}
+              className="w-16 px-2 py-1 rounded text-xs text-center"
+              style={inputStyle}
+            />
+          </div>
+          <p className="text-[9px] mt-1" style={{ color: "#ffffff40" }}>
+            Tempo (segundos) que cada mensagem fica na tela antes de trocar.
+          </p>
+        </div>
+
+        <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
+          <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
+            Pré-visualização ao vivo (navegador do vMix)
+          </label>
+          <div
+            className="w-full rounded overflow-hidden relative flex items-center justify-center"
+            style={{
+              backgroundColor: "#ffffff",
+              border: `1px solid ${NAVY_BORDER}`,
+              aspectRatio: "16 / 9",
+            }}
+          >
+            {visibleMensagens.length === 0 ? (
+              <span style={{ color: "#00000040", fontSize: 12, fontFamily: "Inter, sans-serif" }}>
+                Nenhuma mensagem para pré-visualizar
+              </span>
+            ) : (
+              <div
+                key={previewIdx}
+                className="px-6 text-center leading-tight"
+                style={{
+                  color: "#000",
+                  fontFamily: `"${fontFamily}", "Noto Color Emoji", sans-serif`,
+                  fontSize: "clamp(18px, 4.5vw, 44px)",
+                  fontWeight: 700,
+                  animation: "assuntoFade 500ms ease-out",
+                  wordBreak: "break-word",
+                }}
+              >
+                {visibleMensagens[previewIdx]}
+              </div>
+            )}
+            {visibleMensagens.length > 1 && (
+              <div className="absolute bottom-1 right-2 flex gap-1">
+                {visibleMensagens.map((_, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 999,
+                      backgroundColor: i === previewIdx ? "#000" : "#00000030",
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <style>{`@keyframes assuntoFade { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: none;} }`}</style>
         </div>
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
