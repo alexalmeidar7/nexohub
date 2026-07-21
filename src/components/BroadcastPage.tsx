@@ -740,51 +740,36 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Status strip — 4 KPI tiles */}
+            {/* Status strip — 4 KPI tiles (clean, no duplicated toggles) */}
             <div className="grid grid-cols-4 gap-3 flex-none">
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Locutor</span>
-                <span className="text-xs font-bold truncate" style={{ color: LIME }}>{displayLocutor}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Locutor</span>
+                <span className="text-[13px] font-bold truncate" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{displayLocutor}</span>
               </div>
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Assunto</span>
-                <span className="text-xs font-bold text-white truncate" title={data.assunto}>{data.assunto || "—"}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Assunto</span>
+                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }} title={data.assunto}>{data.assunto || "—"}</span>
               </div>
-              <div className="p-4 rounded-xl flex flex-col gap-1" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Patrocínios</span>
-                <span className="text-xs font-bold" style={{ color: CYAN }}>{sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}</span>
+              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Patrocínios</span>
+                <span className="text-[13px] font-bold" style={{ color: CYAN, fontFamily: "'Sora', sans-serif" }}>
+                  {sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}
+                </span>
               </div>
               <div
-                className="p-4 rounded-xl flex flex-col gap-1"
+                className="p-3.5 rounded-2xl flex flex-col gap-1"
                 style={{
-                  backgroundColor: NAVY_DEEP,
-                  border: `1px solid ${NAVY_BORDER}`,
-                  borderBottom: `2px solid ${insertLiveArt ? LIME : NAVY_BORDER}`,
+                  ...cardStyle,
+                  boxShadow: insertLiveArt ? `inset 0 -3px 0 ${LIME}` : undefined,
                 }}
               >
-                <span className="text-[10px] uppercase font-bold tracking-widest" style={{ color: "#ffffff60" }}>Insert Live</span>
-                <span className="text-xs font-bold text-white truncate">
+                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Insert Live</span>
+                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>
                   {insertLiveArt ? `${insertLiveSchedule.length || 0} slots` : "off"}
                 </span>
               </div>
-
-              {/* Overlay toggles */}
-              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Identidade</span>
-                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: LIME }}>
-                  <div className="absolute right-1 top-1 w-3 h-3 rounded-full" style={{ backgroundColor: NAVY }} />
-                </div>
-              </div>
-              <div className="col-span-2 px-4 py-3 rounded-xl flex items-center justify-between" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <span className="text-white text-[11px] font-bold uppercase tracking-wide">Overlay · Ticker</span>
-                <div className="w-10 h-5 rounded-full relative" style={{ backgroundColor: composedTicker ? LIME : "rgba(255,255,255,0.1)" }}>
-                  <div
-                    className={`absolute top-1 w-3 h-3 rounded-full ${composedTicker ? "right-1" : "left-1"}`}
-                    style={{ backgroundColor: composedTicker ? NAVY : "rgba(255,255,255,0.4)" }}
-                  />
-                </div>
-              </div>
             </div>
+          </div>
           </div>
 
           {/* ── Right: settings column ── */}
