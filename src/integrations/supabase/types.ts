@@ -309,6 +309,36 @@ export type Database = {
         }
         Relationships: []
       }
+      broadcast_assuntos: {
+        Row: {
+          created_at: string
+          font_family: string
+          id: string
+          mensagens: Json
+          programa_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          font_family?: string
+          id?: string
+          mensagens?: Json
+          programa_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          font_family?: string
+          id?: string
+          mensagens?: Json
+          programa_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cenario_estudio_grupos: {
         Row: {
           cols: number
