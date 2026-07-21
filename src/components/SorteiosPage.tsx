@@ -226,7 +226,10 @@ function PremiosTab({ premios, programas, userId, onReload }: { premios: Premio[
       descricao: form.descricao.trim() || null,
       imagem_url: form.imagem_url || null,
       quantidade_estoque: parseInt(form.quantidade_estoque || "0", 10) || 0,
+      dias_validade: Math.max(1, parseInt(form.dias_validade || "7", 10) || 7),
+      programa_id: form.programa_id || null,
     };
+
     const q = editingId
       ? supabase.from("sorteio_premios").update(payload).eq("id", editingId)
       : supabase.from("sorteio_premios").insert(payload);
