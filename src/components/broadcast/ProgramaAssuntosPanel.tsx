@@ -150,6 +150,7 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
           programa_id: activeProgramaId,
           mensagens: payload,
           font_family: fontFamily,
+          rotation_seconds: Math.max(1, Math.min(120, Math.round(rotationSec))),
         } as any,
         { onConflict: "user_id,programa_id" },
       );
