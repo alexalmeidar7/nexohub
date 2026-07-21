@@ -288,7 +288,8 @@ export default function ProgramaAssuntosPanel({ activeProgramaId, programaNome, 
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
 
         <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
           <label className="text-[9px] font-bold uppercase mb-1 block" style={{ color: "#ffffff60" }}>
