@@ -1708,7 +1708,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                           {stopped ? "Automação sem música no ar." : "Não foi possível extrair Título/Artista deste arquivo."}
                         </p>
                       )}
+                      {dataUserId === CULTURA_FM_USER_ID && (
+                        <div className="mt-2 pt-2 flex items-center justify-between text-[9px] font-semibold" style={{ borderTop: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                          <span className="uppercase tracking-wider">Última sincronia Cultura FM</span>
+                          <span className="font-mono" style={{ color: culturaLastSync ? "#16a34a" : "#a16207" }}>
+                            {culturaLastSync
+                              ? `${new Date(culturaLastSync).toLocaleTimeString("pt-BR")} · ${formatAgo(culturaLastSync) || "agora"}`
+                              : "nunca"}
+                          </span>
+                        </div>
+                      )}
                     </div>
+
                   );
                 })()}
 
