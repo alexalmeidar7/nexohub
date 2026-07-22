@@ -261,7 +261,7 @@ export default function PlayerHub() {
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
   // which then collapse to the wrapper's 0px height and become invisible.
-  const wrapperClass = `player-scope transition-opacity duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
+  const wrapperClass = `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
   if (step === "splash") {
     return (
