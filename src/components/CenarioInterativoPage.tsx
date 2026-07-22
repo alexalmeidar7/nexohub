@@ -1329,6 +1329,35 @@ export default function CenarioInterativoPage() {
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
 
+  /* ─── Fetch live traffic incidents (HERE API) ─── */
+  useEffect(() => {
+    if (!config.traffic.enabled || !trafficCity) { setTrafficJams([]); return; }
+    let cancelled = false;
+    const load = async () => {
+      setTrafficJamsLoading(true);
+      try {
+        const { data } = await supabase.functions.invoke("fetch-traffic", { body: { city: trafficCity } });
+        if (cancelled) return;
+        if (data?.ok) {
+          setTrafficJams(Array.isArray(data.jams) ? data.jams : []);
+          setTrafficJamsUpdatedAt(data.updatedAt || null);
+          setTrafficJamIdx(0);
+        }
+      } catch { /* silent */ }
+      finally { if (!cancelled) setTrafficJamsLoading(false); }
+    };
+    load();
+    const iv = setInterval(load, 3 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [config.traffic.enabled, trafficCity]);
+
+  useEffect(() => {
+    if (trafficJams.length <= 1) return;
+    const iv = setInterval(() => setTrafficJamIdx(v => (v + 1) % trafficJams.length), 5000);
+    return () => clearInterval(iv);
+  }, [trafficJams.length]);
+
+
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
   const pendingSaveRef = useRef<(() => Promise<void>) | null>(null);
