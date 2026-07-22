@@ -79,9 +79,7 @@ export default function PromocoesKiosk() {
   usePageTitle(isPublicMode ? "" : "Promoções");
   usePublicHead(isPublicMode ? validSlug : null, "Promoções");
   useLayoutColors();
-  if (userSlug === ":userSlug") {
-    return <Navigate to="/telapromo" replace />;
-  }
+
   const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
@@ -824,9 +822,13 @@ export default function PromocoesKiosk() {
     </div>
   );
 
+  if (userSlug === ":userSlug") {
+    return <Navigate to="/telapromo" replace />;
+  }
   if (loading) {
     return <PromoSkeleton />;
   }
+
 
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
