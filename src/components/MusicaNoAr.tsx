@@ -355,6 +355,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [editingDeviceName, setEditingDeviceName] = useState(false);
   const [deviceNameInput, setDeviceNameInput] = useState(() => getDeviceName());
   const [currentDeviceName, setCurrentDeviceName] = useState(() => getDeviceName());
+  const [culturaLastSync, setCulturaLastSync] = useState<number | null>(() => {
+    try {
+      const raw = localStorage.getItem("cultura-fm-last-sync");
+      return raw ? Number(raw) : null;
+    } catch { return null; }
+  });
+  const culturaLastSignatureRef = useRef<string>("");
+  const [, forceCulturaTick] = useState(0);
+  useEffect(() => {
+    if (dataUserId !== CULTURA_FM_USER_ID) return;
+    const t = setInterval(() => forceCulturaTick(n => n + 1), 15000);
+    return () => clearInterval(t);
+  }, [dataUserId]);
+  useEffect(() => {
+    if (dataUserId !== CULTURA_FM_USER_ID || !localFileContent) return;
+    if (!isCulturaFmXml(dataUserId, localFileContent)) return;
+    const parsed = parseXmlString(localFileContent);
+    if (!parsed?.titulo && !parsed?.artista) return;
+    const sig = `${parsed.titulo}::${parsed.artista}`;
+    if (sig === culturaLastSignatureRef.current) return;
+    culturaLastSignatureRef.current = sig;
+    const now = Date.now();
+    setCulturaLastSync(now);
+    try { localStorage.setItem("cultura-fm-last-sync", String(now)); } catch { /* noop */ }
+  }, [dataUserId, localFileContent]);
+
 
   // Unified tracking: which source provided the last update
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
