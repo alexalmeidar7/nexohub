@@ -843,104 +843,84 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
           <div style={{ fontSize: 11, color: MUTED }}>
             Sem congestionamentos em <b style={{ color: TEXT }}>{city}</b>.
           </div>
-        ) : j ? (
+        ) : topJams.length ? (
           <>
-            <div className="flex items-center gap-3">
-              <div
-                className="rounded-md flex flex-col items-center justify-center shrink-0"
-                style={{ width: 44, height: 44, background: `linear-gradient(135deg, ${levelColor}, rgba(0,0,0,0.7))` }}
-                title={`Nível ${j.level || 1} de 5`}
-              >
-                <span style={{ fontSize: 15, fontWeight: 900, lineHeight: 1, color: "#000" }}>{delayMin}</span>
-                <span style={{ fontSize: 7, fontWeight: 800, textTransform: "uppercase", color: "#000", letterSpacing: 0.5 }}>min</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <div
-                  style={{
-                    fontSize: 12, fontWeight: 800, lineHeight: 1.25,
-                    color: "#ffffff",
-                    textShadow: "0 1px 2px rgba(0,0,0,0.85)",
-                    display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                    letterSpacing: 0.2,
-                    wordBreak: "break-word",
-                  }}
-                  title={j.street}
-                >
-                  {j.street}
-                </div>
-                {j.description && (
+            <div style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.8, color: MUTED, marginBottom: 4 }}>
+              Top {topJams.length} pontos críticos · {city}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {topJams.map((tj, i) => {
+                const dMin = Math.round((tj.delaySec || 0) / 60);
+                const lc = levelColorOf(tj.level || 1);
+                return (
                   <div
+                    key={i}
+                    className="flex items-center gap-2"
                     style={{
-                      fontSize: 10, color: PROMO_MUTED, marginTop: 2, lineHeight: 1.3,
-                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                      padding: "4px 6px",
+                      borderRadius: 6,
+                      background: "rgba(255,255,255,0.04)",
+                      borderLeft: `3px solid ${lc}`,
                     }}
-                    title={j.description}
+                    title={tj.description || tj.street}
                   >
-                    {j.description}
-                  </div>
-                )}
-                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-                  {j.type && (
                     <span
                       style={{
-                        fontSize: 8, fontWeight: 900, letterSpacing: 0.4, textTransform: "uppercase",
-                        padding: "2px 6px", borderRadius: 4,
-                        background: "rgba(255,255,255,0.12)", color: TEXT,
+                        fontSize: 9, fontWeight: 900, color: MUTED,
+                        width: 14, textAlign: "center", flexShrink: 0,
                       }}
                     >
-                      {j.type}
+                      {i + 1}
                     </span>
-                  )}
-                  <span
-                    style={{
-                      fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
-                      padding: "2px 7px", borderRadius: 999,
-                      background: levelColor, color: "#000",
-                    }}
-                  >
-                    {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
-                  </span>
-                  {j.startTime && (
-                    <span style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 0.5, fontWeight: 700 }}>
-                      desde {format(new Date(j.startTime), "HH:mm", { locale: ptBR })}
+                    <div className="min-w-0 flex-1">
+                      <div
+                        style={{
+                          fontSize: 11, fontWeight: 800, lineHeight: 1.2,
+                          color: "#fff",
+                          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                        }}
+                      >
+                        {tj.street}
+                      </div>
+                      <div className="flex items-center gap-1.5" style={{ marginTop: 1 }}>
+                        {tj.type && (
+                          <span style={{ fontSize: 8, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.3, textTransform: "uppercase" }}>
+                            {tj.type}
+                          </span>
+                        )}
+                        {tj.lengthM ? (
+                          <span style={{ fontSize: 8, color: PROMO_MUTED, fontWeight: 700 }}>
+                            · {(tj.lengthM / 1000).toFixed(1)} km
+                          </span>
+                        ) : null}
+                        {dMin > 0 && (
+                          <span style={{ fontSize: 8, color: lc, fontWeight: 900, letterSpacing: 0.3 }}>
+                            · {dMin} min
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: 7, fontWeight: 900, letterSpacing: 0.4, textTransform: "uppercase",
+                        padding: "2px 5px", borderRadius: 999,
+                        background: lc, color: "#000", flexShrink: 0,
+                      }}
+                    >
+                      {tj.level >= 4 ? "Crít" : tj.level >= 3 ? "Int" : tj.level >= 2 ? "Mod" : "Leve"}
                     </span>
-                  )}
-                  <span style={{ fontSize: 9, color: PROMO_MUTED, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 700 }}>
-                    {j.lengthM ? `· ${(j.lengthM / 1000).toFixed(1)} km` : ""}
-                    {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
-                  </span>
-                </div>
-              </div>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="flex items-center justify-between mt-auto gap-2">
+            <div className="flex items-center justify-between mt-auto gap-2" style={{ paddingTop: 6 }}>
               <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
-                {updatedAt ? format(new Date(updatedAt), "dd/MM HH:mm", { locale: ptBR }) : "—"}
+                {updatedAt ? `Atual. ${format(new Date(updatedAt), "HH:mm", { locale: ptBR })}` : "—"}
               </span>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setIdx((v) => (v - 1 + jams.length) % jams.length)}
-                  className="w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                  title="Anterior"
-                >
-                  <ChevronLeft size={11} />
-                </button>
-                <span style={{ fontSize: 9, fontWeight: 800, color: MUTED, minWidth: 26, textAlign: "center" }}>
-                  {idx + 1}/{jams.length}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIdx((v) => (v + 1) % jams.length)}
-                  className="w-5 h-5 rounded-full flex items-center justify-center"
-                  style={{ background: "rgba(255,255,255,0.08)", color: TEXT }}
-                  title="Próximo"
-                >
-                  <ChevronRight size={11} />
-                </button>
-              </div>
+              <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+                {jams.length} ocorrência{jams.length !== 1 ? "s" : ""}
+              </span>
             </div>
           </>
         ) : null
