@@ -831,7 +831,10 @@ serve(async (req) => {
           const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
           const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
           const tRes = await fetch(tUrl);
-          if (tRes.ok) {
+          if (!tRes.ok) {
+            const errBody = await tRes.text().catch(() => "");
+            console.warn(`[serve-xml-broadcast] TomTom traffic API error status=${tRes.status} body=${errBody.slice(0, 200)}`);
+          } else {
             const tData = await tRes.json();
             const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
             const pontos = incidents
@@ -858,7 +861,7 @@ serve(async (req) => {
             }
           }
         }
-      } catch { /* silent */ }
+      } catch (e) { console.warn("[serve-xml-broadcast] TomTom fetch exception", e); }
     } else if (cantoSlot === 3) {
       // Cotação
       infoCantoTitulo = "cotação";

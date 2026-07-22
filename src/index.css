@@ -1,13 +1,15 @@
+/* Lufga (via Fontshare) — scoped to the Player experience.
+   @import must precede all other statements per CSS spec. */
+@import url("https://api.fontshare.com/v2/css?f[]=lufga@300,400,500,600,700,800&display=swap");
+
 #lovable-badge {
   display: none !important;
 }
 
-/* Lufga (via Fontshare) — scoped to the Player experience */
-@import url("https://api.fontshare.com/v2/css?f[]=lufga@300,400,500,600,700,800&display=swap");
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 /* Player scope — Apple TV aesthetic. Font is confined to `.player-scope`
    so the rest of the app keeps its existing typography. */
