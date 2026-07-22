@@ -728,7 +728,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
 
   useEffect(() => {
     fetchIt();
-    const iv = setInterval(fetchIt, 3 * 60 * 1000);
+    const iv = setInterval(fetchIt, 60 * 1000);
     return () => clearInterval(iv);
   }, [fetchIt]);
 
