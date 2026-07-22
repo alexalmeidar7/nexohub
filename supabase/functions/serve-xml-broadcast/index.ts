@@ -784,6 +784,120 @@ serve(async (req) => {
       );
       if (converted) insertLiveUrl = converted;
     }
+    // ── INFOS CANTO (rotating info tile) ──
+    // 5 slots × 5s = 25s cycle:
+    //  0-2: Trânsito (3 critical GPS points, 5s each)
+    //  3  : Cotação (dólar + euro)
+    //  4  : Tempo agora (temperatura + ícone)
+    const ICO_CANTO = {
+      car:    "https://img.icons8.com/ios-filled/200/ffffff/car.png",
+      dollar: "https://img.icons8.com/ios-filled/200/ffffff/us-dollar-circled.png",
+      cloud:  "https://img.icons8.com/ios-filled/200/ffffff/cloud.png",
+    };
+    const BLANK_PNG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+    const wmoIcon = (code: number): string => {
+      const base = "https://img.icons8.com/ios-filled/200/ffffff/";
+      if (code === 0 || code === 1) return `${base}sun.png`;
+      if (code === 2) return `${base}partly-cloudy-day.png`;
+      if (code === 3) return `${base}cloud.png`;
+      if (code === 45 || code === 48) return `${base}fog-day.png`;
+      if (code >= 51 && code <= 55) return `${base}light-rain.png`;
+      if (code >= 61 && code <= 65) return `${base}rain.png`;
+      if (code >= 71 && code <= 75) return `${base}snow.png`;
+      if (code >= 80 && code <= 82) return `${base}heavy-rain.png`;
+      if (code >= 95) return `${base}storm.png`;
+      return `${base}cloud.png`;
+    };
+
+    const cantoSlot = Math.floor(Date.now() / 5000) % 5;
+    let infoCantoTitulo = "";
+    let infoCantoDescricao = "";
+    let infoCantoIcoCategoria = "";
+    let infoCantoTempAtual = "";
+    let infoCantoIcoTemp = BLANK_PNG;
+
+    if (cantoSlot <= 2) {
+      // Trânsito
+      infoCantoTitulo = "trânsito";
+      infoCantoIcoCategoria = ICO_CANTO.car;
+      infoCantoIcoTemp = BLANK_PNG;
+      try {
+        const lat = settingsRes.data?.weather_lat;
+        const lon = settingsRes.data?.weather_lon;
+        const tomKey = Deno.env.get("TOMTOM_API_KEY") || "";
+        if (lat != null && lon != null && tomKey) {
+          const d = 0.22;
+          const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
+          const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
+          const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
+          const tRes = await fetch(tUrl);
+          if (tRes.ok) {
+            const tData = await tRes.json();
+            const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
+            const pontos = incidents
+              .map((it) => {
+                const p = it?.properties || {};
+                const road = Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : "";
+                const evd = Array.isArray(p.events) && p.events[0]?.description ? p.events[0].description : "";
+                let via = road || p.from || p.to || evd || "";
+                if (p.from && p.to && !road) via = `${p.from} → ${p.to}`;
+                return {
+                  via,
+                  evd,
+                  delay: typeof p.delay === "number" ? p.delay : 0,
+                  mag: typeof p.magnitudeOfDelay === "number" ? p.magnitudeOfDelay : 0,
+                  len: typeof p.length === "number" ? p.length : 0,
+                };
+              })
+              .filter((j) => j.via)
+              .sort((a, b) => (b.delay - a.delay) || (b.mag - a.mag) || (b.len - a.len))
+              .slice(0, 3);
+            const p = pontos[cantoSlot];
+            if (p) {
+              infoCantoDescricao = p.evd ? `${p.via} — ${p.evd}` : p.via;
+            }
+          }
+        }
+      } catch { /* silent */ }
+    } else if (cantoSlot === 3) {
+      // Cotação
+      infoCantoTitulo = "cotação";
+      infoCantoIcoCategoria = ICO_CANTO.dollar;
+      infoCantoIcoTemp = BLANK_PNG;
+      try {
+        const cRes = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+        if (cRes.ok) {
+          const cd = await cRes.json();
+          const fmt = (v: string) => parseFloat(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const linhas: string[] = [];
+          if (cd.USDBRL) linhas.push(`Dólar R$ ${fmt(cd.USDBRL.bid)}`);
+          if (cd.EURBRL) linhas.push(`Euro R$ ${fmt(cd.EURBRL.bid)}`);
+          infoCantoDescricao = linhas.join("\n");
+        }
+      } catch { /* silent */ }
+    } else {
+      // Tempo agora
+      infoCantoTitulo = "tempo agora";
+      infoCantoIcoCategoria = ICO_CANTO.cloud;
+      infoCantoDescricao = "";
+      try {
+        const lat = settingsRes.data?.weather_lat;
+        const lon = settingsRes.data?.weather_lon;
+        if (lat != null && lon != null) {
+          const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo`;
+          const wxRes = await fetch(wxUrl);
+          if (wxRes.ok) {
+            const wd = await wxRes.json();
+            const t = wd.current?.temperature_2m;
+            const code = wd.current?.weather_code;
+            if (t != null) infoCantoTempAtual = `${Math.round(t)}°`;
+            if (typeof code === "number") infoCantoIcoTemp = wmoIcon(code);
+          }
+        }
+      } catch { /* silent */ }
+      if (!infoCantoTempAtual) infoCantoIcoTemp = BLANK_PNG;
+    }
+
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
     lines.push("<items>");
@@ -808,8 +922,16 @@ serve(async (req) => {
     lines.push(`    <musica_capa>${esc(musicaCapa)}</musica_capa>`);
     lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push(`    <banner_l>${esc(bannerLUrl)}</banner_l>`);
+    lines.push("    <infos_canto>");
+    lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
+    lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
+    lines.push(`      <ico_categoria>${esc(infoCantoIcoCategoria)}</ico_categoria>`);
+    lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
+    lines.push(`      <ico_temp_atual>${esc(infoCantoIcoTemp)}</ico_temp_atual>`);
+    lines.push("    </infos_canto>");
     lines.push("  </dados>");
     lines.push("</items>");
+
 
     return new Response(lines.join("\n"), {
       headers: {
