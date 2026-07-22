@@ -914,7 +914,29 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                     >
                       {tj.level >= 4 ? "Crít" : tj.level >= 3 ? "Int" : tj.level >= 2 ? "Mod" : "Leve"}
                     </span>
+                    <a
+                      href={
+                        tj.lat != null && tj.lon != null
+                          ? `https://www.google.com/maps/search/?api=1&query=${tj.lat},${tj.lon}`
+                          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${tj.street}, ${tj.city || city}`)}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center justify-center rounded-full transition-colors"
+                      style={{
+                        width: 20, height: 20, flexShrink: 0,
+                        background: ACCENT, color: "#fff",
+                        boxShadow: "0 0 6px rgba(215,13,14,0.4)",
+                      }}
+                      title="Abrir no Google Maps"
+                    >
+                      <MapIcon size={11} />
+                    </a>
                   </div>
+                );
+              })}
+            </div>
                 );
               })}
             </div>
