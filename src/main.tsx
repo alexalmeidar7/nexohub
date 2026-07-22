@@ -1,39 +1,22 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import {
+  LAYOUT_VERSION,
+  LAYOUT_VERSION_KEY,
+  purgeStaleLayoutKeys,
+} from "@/lib/layoutVersion";
 
-// Layout cache-bust: bump this version to force all clients to drop stale layout caches
-const LAYOUT_VERSION = "2026-07-11-v1";
-const LAYOUT_VERSION_KEY = "__layout_version__";
+// Layout cache-bust: single source of truth is src/lib/layoutVersion.ts.
+// On version bump, purge stale layout caches once and reload one time.
 try {
   const stored = localStorage.getItem(LAYOUT_VERSION_KEY);
   if (stored !== LAYOUT_VERSION) {
-    // Clear any cached layout/theme keys from previous versions
-    const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      if (
-        k.startsWith("layout_") ||
-        k.startsWith("layout-") ||
-        k.startsWith("dashboard_") ||
-        k.startsWith("dashboard-") ||
-        k.includes("layout_colors") ||
-        k.includes("theme_cache") ||
-        k.startsWith("player_layout") ||
-        k.startsWith("player-layout")
-      ) {
-        keysToRemove.push(k);
-      }
-    }
-    keysToRemove.forEach((k) => localStorage.removeItem(k));
-    try {
-      sessionStorage.clear();
-    } catch {}
+    purgeStaleLayoutKeys();
     localStorage.setItem(LAYOUT_VERSION_KEY, LAYOUT_VERSION);
-    // Force a fresh chunk fetch on first load after version bump
-    if (!sessionStorage.getItem("__layout_version_reloaded__")) {
-      sessionStorage.setItem("__layout_version_reloaded__", "1");
+    const RELOAD_FLAG = "__layout_version_reloaded_" + LAYOUT_VERSION;
+    if (stored && !sessionStorage.getItem(RELOAD_FLAG)) {
+      sessionStorage.setItem(RELOAD_FLAG, "1");
       window.location.reload();
     }
   }
