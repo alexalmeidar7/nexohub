@@ -694,8 +694,9 @@ function TrafficMapModal({
 }
 
 function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
+  const defaultCity = fallbackCity || "Goiânia, GO";
   const [city, setCity] = useState<string>(() => {
-    try { return localStorage.getItem(LS_TRAFFIC_CITY) || fallbackCity || ""; } catch { return fallbackCity || ""; }
+    try { return localStorage.getItem(LS_TRAFFIC_CITY) || defaultCity; } catch { return defaultCity; }
   });
   const [tmpCity, setTmpCity] = useState(city);
   const [open, setOpen] = useState(false);
@@ -707,8 +708,9 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!city && fallbackCity) setCity(fallbackCity);
-  }, [fallbackCity, city]);
+    if (!city && defaultCity) setCity(defaultCity);
+  }, [defaultCity, city]);
+
 
   const fetchIt = useCallback(async () => {
     if (!city) return;
