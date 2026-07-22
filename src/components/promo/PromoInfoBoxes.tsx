@@ -738,9 +738,10 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
     return () => clearInterval(iv);
   }, [jams.length]);
 
+  const topJams = jams.slice(0, 5);
   const j = jams[idx];
   const delayMin = j ? Math.round((j.delaySec || 0) / 60) : 0;
-  const levelColor = j ? (j.level >= 4 ? "#ff2d2d" : j.level >= 3 ? "#ff8a1f" : "#ffd23d") : MUTED;
+  const levelColorOf = (lv: number) => lv >= 4 ? "#ff2d2d" : lv >= 3 ? "#ff8a1f" : lv >= 2 ? "#ffd23d" : "#9be36a";
 
   const [collapsed, toggleCollapsed] = useCollapsed("transito");
 
