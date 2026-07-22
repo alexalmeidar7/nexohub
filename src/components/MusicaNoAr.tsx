@@ -173,6 +173,11 @@ import {
   isJornalFmTxtPayload as isJornalFmTxt,
   jornalFmTxtToPseudoXml as txtToPseudoXml,
 } from "@/lib/jornalFmTxt";
+import {
+  CULTURA_FM_USER_ID,
+  isCulturaFmXmlPayload as isCulturaFmXml,
+  culturaFmXmlToPseudoXml as culturaXmlToPseudoXml,
+} from "@/lib/culturaFmXml";
 
 
 

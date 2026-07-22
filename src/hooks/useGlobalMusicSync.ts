@@ -6,6 +6,7 @@ import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { musicDataKey, musicStartKey, botXmlLastRunKey, writeMusicData } from "@/lib/musicStorageKeys";
 import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
+import { isCulturaFmXmlPayload, culturaFmXmlToPseudoXml } from "@/lib/culturaFmXml";
 import { fetchArtistImageCached } from "@/lib/artistImageCache";
 
 
@@ -401,6 +402,8 @@ export function useGlobalMusicSync(enabled: boolean = true) {
             // convertemos on-the-fly para o pseudo-XML antes de parsear.
             const text = isJornalFmTxtPayload(user.id, rawText)
               ? (jornalFmTxtToPseudoXml(rawText) ?? rawText)
+              : isCulturaFmXmlPayload(user.id, rawText)
+              ? (culturaFmXmlToPseudoXml(rawText) ?? rawText)
               : rawText;
             const data = parseXml(text);
 
