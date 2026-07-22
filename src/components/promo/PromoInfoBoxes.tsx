@@ -728,7 +728,7 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
 
   useEffect(() => {
     fetchIt();
-    const iv = setInterval(fetchIt, 3 * 60 * 1000);
+    const iv = setInterval(fetchIt, 60 * 1000);
     return () => clearInterval(iv);
   }, [fetchIt]);
 
@@ -868,7 +868,29 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                 >
                   {j.street}
                 </div>
+                {j.description && (
+                  <div
+                    style={{
+                      fontSize: 10, color: PROMO_MUTED, marginTop: 2, lineHeight: 1.3,
+                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
+                    }}
+                    title={j.description}
+                  >
+                    {j.description}
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  {j.type && (
+                    <span
+                      style={{
+                        fontSize: 8, fontWeight: 900, letterSpacing: 0.4, textTransform: "uppercase",
+                        padding: "2px 6px", borderRadius: 4,
+                        background: "rgba(255,255,255,0.12)", color: TEXT,
+                      }}
+                    >
+                      {j.type}
+                    </span>
+                  )}
                   <span
                     style={{
                       fontSize: 8, fontWeight: 900, letterSpacing: 0.5, textTransform: "uppercase",
@@ -878,8 +900,13 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                   >
                     {j.level >= 4 ? "Crítico" : j.level >= 3 ? "Intenso" : j.level >= 2 ? "Moderado" : "Leve"}
                   </span>
+                  {j.startTime && (
+                    <span style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 0.5, fontWeight: 700 }}>
+                      desde {format(new Date(j.startTime), "HH:mm", { locale: ptBR })}
+                    </span>
+                  )}
                   <span style={{ fontSize: 9, color: PROMO_MUTED, textTransform: "uppercase", letterSpacing: 0.8, fontWeight: 700 }}>
-                    {j.lengthM ? `${(j.lengthM / 1000).toFixed(1)} km` : ""}
+                    {j.lengthM ? `· ${(j.lengthM / 1000).toFixed(1)} km` : ""}
                     {j.speedKmh != null ? ` · ${j.speedKmh} km/h` : ""}
                   </span>
                 </div>

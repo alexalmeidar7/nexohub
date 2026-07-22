@@ -116,7 +116,10 @@ serve(async (req) => {
               speedKmh: null as number | null,
               level: critToLevel[criticality] ?? 2,
               type: typeLabels[type] || "Incidente",
+              typeCode: type,
               description: summary,
+              startTime: inc?.startTime || null,
+              endTime: inc?.endTime || null,
               lat: jLat,
               lon: jLon,
             };
@@ -200,7 +203,10 @@ serve(async (req) => {
           speedKmh: null as number | null,
           level: magToLevel(typeof p.magnitudeOfDelay === "number" ? p.magnitudeOfDelay : 0),
           type: iconCategoryLabel(iconCat),
+          typeCode: String(iconCat),
           description: eventDesc,
+          startTime: p.startTime || null,
+          endTime: p.endTime || null,
           lat: jLat,
           lon: jLon,
         };
