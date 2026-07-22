@@ -55,11 +55,13 @@ function iconCategoryLabel(cat: number): string {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    if (!TOMTOM_KEY) {
-      return new Response(JSON.stringify({ ok: false, error: "TOMTOM_API_KEY not configured", jams: [] }), {
+    if (!TOMTOM_KEY && !HERE_KEY) {
+      return new Response(JSON.stringify({ ok: false, error: "No traffic API key configured", jams: [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+
 
     const body = await req.json().catch(() => ({}));
     let { city, lat, lon } = body || {};
