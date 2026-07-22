@@ -875,8 +875,9 @@ serve(async (req) => {
 
 
 
-          // 1) Waze Live Map (gratuito, sem chave) — usado pelo mapa público do Waze
-          try {
+          // 1) Waze Live Map (fallback gratuito, sem chave)
+          if (pontos.length === 0) try {
+
             const d = 0.18;
             const top = lat + d, bottom = lat - d, left = lon - d, right = lon + d;
             const wUrl = `https://www.waze.com/live-map/api/georss?top=${top}&bottom=${bottom}&left=${left}&right=${right}&env=row&types=alerts,traffic`;
