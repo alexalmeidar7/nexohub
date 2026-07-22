@@ -927,6 +927,10 @@ export default function CenarioInterativoPage() {
   const [currencyLoading, setCurrencyLoading] = useState(false);
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
   const [stocksLoading, setStocksLoading] = useState(false);
+  const [trafficJams, setTrafficJams] = useState<any[]>([]);
+  const [trafficJamsLoading, setTrafficJamsLoading] = useState(false);
+  const [trafficJamsUpdatedAt, setTrafficJamsUpdatedAt] = useState<string | null>(null);
+  const [trafficJamIdx, setTrafficJamIdx] = useState(0);
 
   /* ─── Fetch artist background from Deezer ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
