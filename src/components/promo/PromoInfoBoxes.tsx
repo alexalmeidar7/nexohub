@@ -898,6 +898,11 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                             · {dMin} min
                           </span>
                         )}
+                        {tj.startTime && (
+                          <span style={{ fontSize: 8, color: PROMO_MUTED, fontWeight: 700, letterSpacing: 0.3 }}>
+                            · desde {format(new Date(tj.startTime), "HH:mm", { locale: ptBR })}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <span
