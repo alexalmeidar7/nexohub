@@ -937,9 +937,6 @@ function TrafficBox({ fallbackCity }: { fallbackCity: string | null }) {
                 );
               })}
             </div>
-                );
-              })}
-            </div>
 
             <div className="flex items-center justify-between mt-auto gap-2" style={{ paddingTop: 6 }}>
               <span style={{ fontSize: 8, color: MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
