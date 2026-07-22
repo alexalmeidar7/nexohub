@@ -1653,6 +1653,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </div>
                 )}
 
+                {/* Live parse preview — shows what Title/Artist were extracted
+                    from the current file BEFORE it enters the music pipeline. */}
+                {localFileContent && (() => {
+                  const preview = parseXmlString(localFileContent);
+                  const stopped = !preview && isStoppedXmlPayload(localFileContent);
+                  return (
+                    <div className="rounded-lg p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Prévia da leitura</span>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: preview ? "rgba(34,197,94,0.12)" : "rgba(234,179,8,0.15)", color: preview ? "#16a34a" : "#a16207" }}>
+                          {preview ? "OK" : stopped ? "STANDBY" : "SEM DADOS"}
+                        </span>
+                      </div>
+                      {preview ? (
+                        <div className="space-y-1">
+                          <div className="flex gap-2 text-[11px]">
+                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Música</span>
+                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.titulo || "—"}</span>
+                          </div>
+                          <div className="flex gap-2 text-[11px]">
+                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista</span>
+                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.artista || "—"}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                          {stopped ? "Automação sem música no ar." : "Não foi possível extrair Título/Artista deste arquivo."}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* Remote device warning */}
                 {!localFileName && (() => {
                   const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
