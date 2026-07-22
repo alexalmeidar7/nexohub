@@ -825,20 +825,18 @@ serve(async (req) => {
         const lat = settingsRes.data?.weather_lat;
         const lon = settingsRes.data?.weather_lon;
         const tomKey = Deno.env.get("TOMTOM_API_KEY") || "";
-        console.log(`[tomtom-debug] lat=${lat} lon=${lon} hasKey=${!!tomKey} keyLen=${tomKey.length}`);
         if (lat != null && lon != null && tomKey) {
           const d = 0.22;
           const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
           const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
           const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
           const tRes = await fetch(tUrl);
-          const bodyText = await tRes.text();
-          console.log(`[tomtom-debug] status=${tRes.status} bodyLen=${bodyText.length} preview=${bodyText.slice(0, 300)}`);
-          if (tRes.ok) {
-            let tData: any = null;
-            try { tData = JSON.parse(bodyText); } catch (e) { console.log("[tomtom-debug] parse-err", e); }
+          if (!tRes.ok) {
+            const errBody = await tRes.text().catch(() => "");
+            console.warn(`[serve-xml-broadcast] TomTom traffic API error status=${tRes.status} body=${errBody.slice(0, 200)}`);
+          } else {
+            const tData = await tRes.json();
             const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
-            console.log(`[tomtom-debug] incidents.count=${incidents.length}`);
             const pontos = incidents
               .map((it) => {
                 const p = it?.properties || {};
@@ -857,14 +855,13 @@ serve(async (req) => {
               .filter((j) => j.via)
               .sort((a, b) => (b.delay - a.delay) || (b.mag - a.mag) || (b.len - a.len))
               .slice(0, 3);
-            console.log(`[tomtom-debug] pontos.count=${pontos.length}`);
             const p = pontos[cantoSlot];
             if (p) {
               infoCantoDescricao = p.evd ? `${p.via} — ${p.evd}` : p.via;
             }
           }
         }
-      } catch (e) { console.log("[tomtom-debug] exception", e); }
+      } catch (e) { console.warn("[serve-xml-broadcast] TomTom fetch exception", e); }
     } else if (cantoSlot === 3) {
       // Cotação
       infoCantoTitulo = "cotação";
