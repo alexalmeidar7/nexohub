@@ -468,4 +468,27 @@ function DatasBox() {
 
       <style>{`
         @keyframes promo-datas-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 10px*
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes promo-datas-swap {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+
+export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon }: Props) {
+  return (
+    <div
+      className="grid gap-3 mb-3"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
+    >
+      <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
+      <DatasBox />
+    </div>
+  );
+}

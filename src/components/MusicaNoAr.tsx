@@ -173,6 +173,11 @@ import {
   isJornalFmTxtPayload as isJornalFmTxt,
   jornalFmTxtToPseudoXml as txtToPseudoXml,
 } from "@/lib/jornalFmTxt";
+import {
+  CULTURA_FM_USER_ID,
+  isCulturaFmXmlPayload as isCulturaFmXml,
+  culturaFmXmlToPseudoXml as culturaXmlToPseudoXml,
+} from "@/lib/culturaFmXml";
 
 
 
@@ -819,6 +824,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       // para reaproveitar todo o pipeline downstream (parser, storage sync).
       const text = isJornalFmTxt(dataUserIdRef.current, rawText)
         ? (txtToPseudoXml(rawText) ?? rawText)
+        : isCulturaFmXml(dataUserIdRef.current, rawText)
+        ? (culturaXmlToPseudoXml(rawText) ?? rawText)
         : rawText;
 
       // Success — reset health trackers
@@ -888,6 +895,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     const rawText = await readFileWithEncoding(file);
     const text = isJornalFmTxt(dataUserId, rawText)
       ? (txtToPseudoXml(rawText) ?? rawText)
+      : isCulturaFmXml(dataUserId, rawText)
+      ? (culturaXmlToPseudoXml(rawText) ?? rawText)
       : rawText;
     localFileContentRef.current = text;
     setLocalFileContent(text);
