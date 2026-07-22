@@ -468,4 +468,15 @@ function DatasBox() {
 
       <style>{`
         @keyframes promo-datas-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 10px*
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        @keyframes promo-datas-swap {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
