@@ -1,7 +1,7 @@
 // Single source of truth for the current layout version.
 // Bump this string whenever you ship a layout/theme change that must
 // invalidate previously cached layout data on every client.
-export const LAYOUT_VERSION = "2026-07-11-v1";
+export const LAYOUT_VERSION = "2026-07-22-broadcast-bento-v1";
 export const LAYOUT_VERSION_KEY = "__layout_version__";
 
 const STALE_KEY_MATCHERS = [
