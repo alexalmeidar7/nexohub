@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const TOMTOM_KEY = Deno.env.get("TOMTOM_API_KEY") || "";
+const HERE_KEY = Deno.env.get("HERE_API_KEY") || "";
+
 
 async function geocode(city: string): Promise<{ lat: number; lon: number; name: string } | null> {
   try {
