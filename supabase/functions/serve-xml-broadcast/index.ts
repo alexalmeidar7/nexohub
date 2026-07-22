@@ -862,6 +862,9 @@ serve(async (req) => {
           }
         }
       } catch (e) { console.warn("[serve-xml-broadcast] TomTom fetch exception", e); }
+      if (!infoCantoDescricao) {
+        infoCantoDescricao = "trânsito tá de boa agora .... use cinto de segurança!";
+      }
     } else if (cantoSlot === 3) {
       // Cotação
       infoCantoTitulo = "cotação";
