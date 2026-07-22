@@ -864,17 +864,37 @@ serve(async (req) => {
       infoCantoTitulo = "cotação";
       infoCantoIcoCategoria = ICO_CANTO.dollar;
       infoCantoIcoTemp = BLANK_PNG;
+      const fmt = (v: number) => v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      let usdBrl: number | null = null;
+      let eurBrl: number | null = null;
       try {
         const cRes = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
         if (cRes.ok) {
           const cd = await cRes.json();
-          const fmt = (v: string) => parseFloat(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          const linhas: string[] = [];
-          if (cd.USDBRL) linhas.push(`Dólar R$ ${fmt(cd.USDBRL.bid)}`);
-          if (cd.EURBRL) linhas.push(`Euro R$ ${fmt(cd.EURBRL.bid)}`);
-          infoCantoDescricao = linhas.join("\n");
+          if (cd?.USDBRL?.bid) usdBrl = parseFloat(cd.USDBRL.bid);
+          if (cd?.EURBRL?.bid) eurBrl = parseFloat(cd.EURBRL.bid);
         }
       } catch { /* silent */ }
+      // Fallback: open.er-api.com (no key, no quota)
+      if (usdBrl == null || eurBrl == null) {
+        try {
+          const r = await fetch("https://open.er-api.com/v6/latest/USD");
+          if (r.ok) {
+            const j = await r.json();
+            const brl = j?.rates?.BRL;
+            const eur = j?.rates?.EUR;
+            if (usdBrl == null && typeof brl === "number") usdBrl = brl;
+            if (eurBrl == null && typeof brl === "number" && typeof eur === "number" && eur > 0) {
+              eurBrl = brl / eur;
+            }
+          }
+        } catch { /* silent */ }
+      }
+      const linhas: string[] = [];
+      if (usdBrl != null) linhas.push(`Dólar R$ ${fmt(usdBrl)}`);
+      if (eurBrl != null) linhas.push(`Euro R$ ${fmt(eurBrl)}`);
+      infoCantoDescricao = linhas.join("\n");
+
     } else {
       // Tempo agora
       infoCantoTitulo = "tempo agora";
