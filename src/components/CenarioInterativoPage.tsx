@@ -927,6 +927,10 @@ export default function CenarioInterativoPage() {
   const [currencyLoading, setCurrencyLoading] = useState(false);
   const [liveStocks, setLiveStocks] = useState<LiveStock[]>([]);
   const [stocksLoading, setStocksLoading] = useState(false);
+  const [trafficJams, setTrafficJams] = useState<any[]>([]);
+  const [trafficJamsLoading, setTrafficJamsLoading] = useState(false);
+  const [trafficJamsUpdatedAt, setTrafficJamsUpdatedAt] = useState<string | null>(null);
+  const [trafficJamIdx, setTrafficJamIdx] = useState(0);
 
   /* ─── Fetch artist background from Deezer ─── */
   const exceptionWordsList = (config.home.exceptionWords || "break,vinhetas,hora certa").split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
@@ -1324,6 +1328,35 @@ export default function CenarioInterativoPage() {
     }, 1000);
     return () => { if (trafficGeoRef.current) clearTimeout(trafficGeoRef.current); };
   }, [config.traffic.enabled, trafficCity, config.traffic.lat, config.traffic.lon]);
+
+  /* ─── Fetch live traffic incidents (HERE API) ─── */
+  useEffect(() => {
+    if (!config.traffic.enabled || !trafficCity) { setTrafficJams([]); return; }
+    let cancelled = false;
+    const load = async () => {
+      setTrafficJamsLoading(true);
+      try {
+        const { data } = await supabase.functions.invoke("fetch-traffic", { body: { city: trafficCity } });
+        if (cancelled) return;
+        if (data?.ok) {
+          setTrafficJams(Array.isArray(data.jams) ? data.jams : []);
+          setTrafficJamsUpdatedAt(data.updatedAt || null);
+          setTrafficJamIdx(0);
+        }
+      } catch { /* silent */ }
+      finally { if (!cancelled) setTrafficJamsLoading(false); }
+    };
+    load();
+    const iv = setInterval(load, 3 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [config.traffic.enabled, trafficCity]);
+
+  useEffect(() => {
+    if (trafficJams.length <= 1) return;
+    const iv = setInterval(() => setTrafficJamIdx(v => (v + 1) % trafficJams.length), 5000);
+    return () => clearInterval(iv);
+  }, [trafficJams.length]);
+
 
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevSaveRef = useRef<string>("");
@@ -2471,6 +2504,73 @@ export default function CenarioInterativoPage() {
                       <Car size={16} className="mx-auto mb-1 opacity-60" />
                       O mapa de trânsito é exibido no Preview ao lado →
                     </div>
+
+                    {/* Live traffic incidents (HERE API) */}
+                    <div
+                      className="rounded-lg border p-3 space-y-2"
+                      style={{ background: subTabBg, borderColor: "var(--layout-border-color, rgba(0,0,0,0.08))", color: textColor }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] opacity-70 font-bold uppercase flex items-center gap-1.5">
+                          <Car size={12} /> Trânsito ao vivo · {trafficCity || "—"}
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          {trafficJamsUpdatedAt && (
+                            <span className="text-[9px] opacity-50 font-mono">
+                              {new Date(trafficJamsUpdatedAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          )}
+                          {trafficJamsLoading && <Loader2 size={12} className="animate-spin opacity-60" />}
+                        </div>
+                      </div>
+
+                      {!config.traffic.enabled || !trafficCity ? (
+                        <div className="text-[11px] opacity-60 text-center py-2">Ative o trânsito e defina uma cidade.</div>
+                      ) : trafficJams.length === 0 ? (
+                        <div className="text-[11px] opacity-70 text-center py-2">
+                          {trafficJamsLoading ? "Buscando incidentes…" : "Trânsito tá de boa agora · use cinto de segurança!"}
+                        </div>
+                      ) : (
+                        <>
+                          {(() => {
+                            const j = trafficJams[trafficJamIdx] || trafficJams[0];
+                            const delayMin = Math.round((j?.delaySec || 0) / 60);
+                            const lvlColor = j?.level >= 4 ? "#ff2d2d" : j?.level >= 3 ? "#ff8a1f" : "#ffd23d";
+                            return (
+                              <div className="flex items-start gap-2">
+                                <div className="w-1.5 rounded-full self-stretch" style={{ background: lvlColor, minHeight: 32 }} />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs font-bold truncate">{j?.street || j?.title || "Incidente"}</div>
+                                  {j?.description && <div className="text-[10px] opacity-70 truncate">{j.description}</div>}
+                                  <div className="text-[10px] opacity-60 mt-0.5">
+                                    {delayMin > 0 ? `+${delayMin} min de atraso` : "Ocorrência ativa"}
+                                    {typeof j?.lengthKm === "number" && ` · ${j.lengthKm.toFixed(1)} km`}
+                                  </div>
+                                </div>
+                                <span className="text-[9px] font-mono opacity-50 flex-shrink-0">{trafficJamIdx + 1}/{trafficJams.length}</span>
+                              </div>
+                            );
+                          })()}
+                          {trafficJams.length > 1 && (
+                            <div className="flex gap-1 justify-center pt-1">
+                              {trafficJams.slice(0, 8).map((_, i) => (
+                                <span
+                                  key={i}
+                                  className="rounded-full transition-all"
+                                  style={{
+                                    width: i === trafficJamIdx ? 12 : 4,
+                                    height: 4,
+                                    background: i === trafficJamIdx ? "var(--layout-accent-color, #3b82f6)" : "rgba(0,0,0,0.2)",
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+
 
                     {/* Lat / Lon / Zoom controls */}
                     {trafficCoords && (
