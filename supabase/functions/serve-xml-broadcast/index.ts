@@ -824,44 +824,106 @@ serve(async (req) => {
       try {
         const lat = settingsRes.data?.weather_lat;
         const lon = settingsRes.data?.weather_lon;
-        const tomKey = Deno.env.get("TOMTOM_API_KEY") || "";
-        if (lat != null && lon != null && tomKey) {
-          const d = 0.22;
-          const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
-          const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
-          const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
-          const tRes = await fetch(tUrl);
-          if (!tRes.ok) {
-            const errBody = await tRes.text().catch(() => "");
-            console.warn(`[serve-xml-broadcast] TomTom traffic API error status=${tRes.status} body=${errBody.slice(0, 200)}`);
-          } else {
-            const tData = await tRes.json();
-            const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
-            const pontos = incidents
-              .map((it) => {
-                const p = it?.properties || {};
-                const road = Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : "";
-                const evd = Array.isArray(p.events) && p.events[0]?.description ? p.events[0].description : "";
-                let via = road || p.from || p.to || evd || "";
-                if (p.from && p.to && !road) via = `${p.from} → ${p.to}`;
-                return {
-                  via,
-                  evd,
-                  delay: typeof p.delay === "number" ? p.delay : 0,
-                  mag: typeof p.magnitudeOfDelay === "number" ? p.magnitudeOfDelay : 0,
-                  len: typeof p.length === "number" ? p.length : 0,
-                };
-              })
-              .filter((j) => j.via)
-              .sort((a, b) => (b.delay - a.delay) || (b.mag - a.mag) || (b.len - a.len))
-              .slice(0, 3);
-            const p = pontos[cantoSlot];
-            if (p) {
-              infoCantoDescricao = p.evd ? `${p.via} — ${p.evd}` : p.via;
+        if (lat != null && lon != null) {
+          const pontos: { via: string; desc: string; score: number }[] = [];
+
+          // 1) Waze Live Map (gratuito, sem chave) — usado pelo mapa público do Waze
+          try {
+            const d = 0.18;
+            const top = lat + d, bottom = lat - d, left = lon - d, right = lon + d;
+            const wUrl = `https://www.waze.com/live-map/api/georss?top=${top}&bottom=${bottom}&left=${left}&right=${right}&env=row&types=alerts,traffic`;
+            const wRes = await fetch(wUrl, {
+              headers: {
+                "User-Agent": "Mozilla/5.0 (compatible; NexoHub/1.0)",
+                "Referer": "https://www.waze.com/live-map",
+                "Accept": "application/json",
+              },
+            });
+            if (wRes.ok) {
+              const wData = await wRes.json();
+              const jams: any[] = Array.isArray(wData?.jams) ? wData.jams : [];
+              const alerts: any[] = Array.isArray(wData?.alerts) ? wData.alerts : [];
+
+              const alertTypeMap: Record<string, string> = {
+                ACCIDENT: "acidente",
+                JAM: "congestionamento",
+                HAZARD: "risco na via",
+                ROAD_CLOSED: "via fechada",
+                CONSTRUCTION: "obras",
+                POLICE: "blitz",
+                WEATHERHAZARD: "risco climático",
+              };
+
+              for (const j of jams) {
+                const via = (j?.street || j?.city || "").toString().trim();
+                if (!via) continue;
+                const delay = typeof j?.delay === "number" ? j.delay : 0;
+                const length = typeof j?.length === "number" ? j.length : 0;
+                const speed = typeof j?.speedKMH === "number" ? j.speedKMH : 999;
+                // considerar crítico: atraso >= 3min OU extensão >= 800m OU velocidade < 15 km/h
+                if (delay >= 180 || length >= 800 || speed < 15) {
+                  const mins = Math.round(delay / 60);
+                  const km = length >= 1000 ? `${(length / 1000).toFixed(1)} km` : `${length} m`;
+                  const desc = `congestionamento — ${km}${mins > 0 ? ` • ~${mins} min de atraso` : ""}`;
+                  pontos.push({ via, desc, score: delay * 10 + length });
+                }
+              }
+              for (const a of alerts) {
+                const via = (a?.street || a?.city || "").toString().trim();
+                if (!via) continue;
+                const type = (a?.type || "").toString().toUpperCase();
+                const label = alertTypeMap[type] || (a?.subtype ? a.subtype.toString().toLowerCase().replace(/_/g, " ") : "ocorrência");
+                // priorizar acidentes/vias fechadas/riscos
+                const priority = type === "ACCIDENT" ? 100000 : type === "ROAD_CLOSED" ? 90000 : type === "HAZARD" ? 50000 : type === "CONSTRUCTION" ? 20000 : 0;
+                if (priority > 0) {
+                  pontos.push({ via, desc: label, score: priority });
+                }
+              }
+              pontos.sort((a, b) => b.score - a.score);
+            } else {
+              console.warn(`[serve-xml-broadcast] Waze status=${wRes.status}`);
+            }
+          } catch (e) {
+            console.warn("[serve-xml-broadcast] Waze fetch exception", e);
+          }
+
+          // 2) TomTom como fallback (se ainda houver crédito na conta)
+          if (pontos.length === 0) {
+            const tomKey = Deno.env.get("TOMTOM_API_KEY") || "";
+            if (tomKey) {
+              try {
+                const d = 0.22;
+                const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
+                const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
+                const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
+                const tRes = await fetch(tUrl);
+                if (tRes.ok) {
+                  const tData = await tRes.json();
+                  const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
+                  for (const it of incidents) {
+                    const p = it?.properties || {};
+                    const road = Array.isArray(p.roadNumbers) && p.roadNumbers.length ? p.roadNumbers.join(", ") : "";
+                    const evd = Array.isArray(p.events) && p.events[0]?.description ? p.events[0].description : "";
+                    let via = road || p.from || p.to || evd || "";
+                    if (p.from && p.to && !road) via = `${p.from} → ${p.to}`;
+                    if (!via) continue;
+                    const delay = typeof p.delay === "number" ? p.delay : 0;
+                    pontos.push({ via, desc: evd || "trânsito lento", score: delay });
+                  }
+                  pontos.sort((a, b) => b.score - a.score);
+                }
+              } catch (e) {
+                console.warn("[serve-xml-broadcast] TomTom fetch exception", e);
+              }
             }
           }
+
+          const chosen = pontos[cantoSlot];
+          if (chosen) {
+            infoCantoDescricao = `${chosen.via} — ${chosen.desc}`;
+          }
         }
-      } catch (e) { console.warn("[serve-xml-broadcast] TomTom fetch exception", e); }
+      } catch (e) { console.warn("[serve-xml-broadcast] traffic block exception", e); }
       if (!infoCantoDescricao) {
         infoCantoDescricao = "trânsito tá de boa agora .... use cinto de segurança!";
       }
