@@ -79,9 +79,7 @@ export default function PromocoesKiosk() {
   usePageTitle(isPublicMode ? "" : "Promoções");
   usePublicHead(isPublicMode ? validSlug : null, "Promoções");
   useLayoutColors();
-  if (userSlug === ":userSlug") {
-    return <Navigate to="/telapromo" replace />;
-  }
+
   const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
