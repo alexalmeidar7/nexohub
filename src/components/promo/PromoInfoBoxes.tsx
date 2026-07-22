@@ -480,3 +480,15 @@ function DatasBox() {
   );
 }
 
+
+export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon }: Props) {
+  return (
+    <div
+      className="grid gap-3 mb-3"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
+    >
+      <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
+      <DatasBox />
+    </div>
+  );
+}
