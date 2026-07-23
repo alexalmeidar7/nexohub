@@ -2235,6 +2235,7 @@ export type Database = {
       }
       sorteio_sorteios: {
         Row: {
+          apresentador_nome: string | null
           created_at: string
           data_entrega: string | null
           data_expiracao: string | null
@@ -2246,11 +2247,14 @@ export type Database = {
           observacoes: string | null
           ouvinte_id: string | null
           premio_id: string
+          programa_id: string | null
+          programa_nome: string | null
           telefone_ganhador: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          apresentador_nome?: string | null
           created_at?: string
           data_entrega?: string | null
           data_expiracao?: string | null
@@ -2262,11 +2266,14 @@ export type Database = {
           observacoes?: string | null
           ouvinte_id?: string | null
           premio_id: string
+          programa_id?: string | null
+          programa_nome?: string | null
           telefone_ganhador?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          apresentador_nome?: string | null
           created_at?: string
           data_entrega?: string | null
           data_expiracao?: string | null
@@ -2278,6 +2285,8 @@ export type Database = {
           observacoes?: string | null
           ouvinte_id?: string | null
           premio_id?: string
+          programa_id?: string | null
+          programa_nome?: string | null
           telefone_ganhador?: string | null
           updated_at?: string
           user_id?: string
