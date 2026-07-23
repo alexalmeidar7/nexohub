@@ -1451,7 +1451,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: `${NEXO_CYAN}22`, color: NEXO_CYAN }}>SUB</span>}
                             {s.name}
                           </p>
-                          <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+                          
                         </div>
                       )}
                       {isEditing ? (
