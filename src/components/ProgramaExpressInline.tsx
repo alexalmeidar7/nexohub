@@ -509,8 +509,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           conteudo_html: html, 
           participantes: blocosJson, 
           tickertitulos: autoTickerTitulos,
-          configuracoes: configuracoes as any
+          configuracoes: configuracoes as any,
+          updated_at: new Date().toISOString(),
         } as any).eq("id", editingId);
+
         setLastAutoSaved(Date.now());
       } catch (e) { console.error("Auto-save error:", e); }
       setAutoSaving(false);
