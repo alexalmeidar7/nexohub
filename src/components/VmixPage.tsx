@@ -2518,6 +2518,57 @@ export default function VmixPage() {
   const activeTitle = activeInputObj?.title || "Sem programa";
   const previewTitle = previewInputObj?.title || "Sem preview";
 
+  const connStatus: "online" | "connecting" | "offline" = connecting
+    ? "connecting"
+    : connected
+    ? "online"
+    : "offline";
+  const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
+  const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
+  const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
+
+  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+    <div
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+      style={{ backgroundColor: "#0c0c0e", border: `1px solid ${statusColor}30` }}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${connStatus === "connecting" ? "animate-pulse" : ""}`}
+        style={{ backgroundColor: statusColor, boxShadow: `0 0 10px ${statusColor}b0` }}
+      />
+      <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: statusColor }}>
+        {statusLabel}
+      </span>
+      {!compact && (
+        <>
+          <span className="w-px h-3 bg-white/10" />
+          <span
+            className="text-[9px] font-mono text-white/50 truncate max-w-[220px]"
+            title={savedUrl || undefined}
+          >
+            {endpointLabel}
+          </span>
+          {connectionRouteLabel && (
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">
+              · {connectionRouteLabel}
+            </span>
+          )}
+        </>
+      )}
+      {connStatus !== "online" && (savedUrl || vmixUrl) && (
+        <button
+          onClick={connectToVmix}
+          disabled={connecting}
+          className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
+          style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
+          title="Tentar reconectar ao vMix"
+        >
+          {connStatus === "connecting" ? "…" : "Reconectar"}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
