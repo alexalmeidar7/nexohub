@@ -1354,6 +1354,17 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                 </button>
               </div>
               <div className="flex items-center gap-2 pl-11">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder="Nome da fonte (opcional — ex.: G1, Metrópoles)"
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                />
+
+              <div className="flex items-center gap-2 pl-11">
                 <select
                   value={newParentId}
                   onChange={(e) => setNewParentId(e.target.value)}
