@@ -974,7 +974,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
     const handler = (e: MessageEvent) => { if (e.data.id === "localPoll") readLocalFile(); };
     worker.addEventListener("message", handler);
-    worker.postMessage({ cmd: "start", id: "localPoll", interval: 3000 });
+    worker.postMessage({ cmd: "start", id: "localPoll", interval: 1500 });
     return () => {
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "localPoll" });
