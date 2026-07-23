@@ -392,7 +392,7 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 /* ═════════════════════ LISTA DE PRÊMIOS (drag & drop) ═════════════════════ */
 interface PremioPrograma { id: string; premio_id: string; programa_id: string; quantidade: number; }
 
-function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string }) {
+function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string; onStockChanged?: () => void }) {
   const { toast } = useToast();
   const [links, setLinks] = useState<PremioPrograma[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
