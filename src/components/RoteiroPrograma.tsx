@@ -21,6 +21,22 @@ const CARD_BG = "#D6F4FB";
 const DARK = "#0A2540";
 const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
+// Formata timestamp UTC do banco no fuso local do usuário (respeita DST automaticamente).
+const LOCAL_TZ = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined;
+function formatLocal(iso: string | null | undefined, pattern: "full" | "short" = "full"): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const opts: Intl.DateTimeFormatOptions =
+    pattern === "full"
+      ? { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: LOCAL_TZ }
+      : { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: LOCAL_TZ };
+  const parts = new Intl.DateTimeFormat("pt-BR", opts).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  if (pattern === "short") return `${get("day")}/${get("month")} às ${get("hour")}:${get("minute")}`;
+  return `${get("day")}/${get("month")}/${get("year")} · ${get("hour")}:${get("minute")}`;
+}
+
 interface Programa {
   id: string;
   nome: string;
