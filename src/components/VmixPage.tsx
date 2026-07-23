@@ -3150,6 +3150,7 @@ export default function VmixPage() {
               )}
             </div>
           </div>
+          </div>
         )}
 
         {/* ══ NDI TAB ══ */}
