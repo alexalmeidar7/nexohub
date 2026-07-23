@@ -102,6 +102,7 @@ const sidebarMenu: MenuItem[] = [
     ]
   },
   { icon: Gift, label: "sorteio", page: "sorteios" },
+  { icon: Siren, label: "blitz", page: "blitz" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
