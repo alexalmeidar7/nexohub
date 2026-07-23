@@ -1316,11 +1316,22 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                 Cancelar
               </button>
               <button
-                onClick={() => {
-                  setBlocos(prev => prev.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] })));
+                onClick={async () => {
+                  const clearedBlocos = blocos.map(b => ({ ...b, noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }));
+                  setBlocos(clearedBlocos);
                   setEscaladaList([]);
-                  toast.success("Notícias e manchetes removidas");
                   setShowLimparConfirm(false);
+                  // Persist cleared state directly since autosave short-circuits when there are no news
+                  if (editingId) {
+                    try {
+                      const blocosJson = JSON.stringify({ blocos: clearedBlocos, participantes, escaladaList: [] });
+                      await supabase.from("roteiros").update({
+                        participantes: blocosJson,
+                        tickertitulos: "",
+                      } as any).eq("id", editingId);
+                    } catch (e) { console.error("Erro ao limpar notícias:", e); }
+                  }
+                  toast.success("Notícias e manchetes removidas");
                 }}
                 className="px-4 py-2 rounded-md text-sm font-semibold text-white"
                 style={{ background: "#dc2626" }}
