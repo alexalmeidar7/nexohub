@@ -200,41 +200,56 @@ function UpdateNewsLinksSection({ blocos, inputStyle, onUpdateBloco, fetchFromLi
     setUpdating(false);
   };
 
+  const [collapsed, setCollapsed] = useState(true);
+
   return (
     <div className="rounded-2xl p-5" style={{ border: `1px solid ${NEXO_CYAN}33`, backgroundColor: "#FFFFFF", fontFamily: "'Montserrat', sans-serif" }}>
-      <p className="text-xs font-bold flex items-center gap-1.5 mb-1" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
-        <Link2 size={14} style={{ color: NEXO_CYAN }} />
-        Atualizar Notícias por Links
-      </p>
-      <p className="text-[10px] mb-3" style={{ color: `${NEXO_DARK}99` }}>
-        Cole um link por linha em cada bloco. Ao clicar em "Atualizar notícias", as notícias serão substituídas e o XML será atualizado.
-      </p>
-      <div className="space-y-2">
-        {blocos.map((_, bi) => (
-          <div key={bi}>
-            <label className="text-[10px] font-bold mb-1 block" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
-              BLOCO {bi + 1} — links
-            </label>
-            <textarea
-              value={linksText[bi] || ""}
-              onChange={e => setLinksText(prev => { const c = [...prev]; c[bi] = e.target.value; return c; })}
-              placeholder="https://...&#10;https://..."
-              rows={3}
-              className="w-full px-3 py-2 text-[11px] outline-none resize-y"
-              style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 14 }}
-            />
-          </div>
-        ))}
-      </div>
       <button
-        onClick={handleUpdate}
-        disabled={updating}
-        className="w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-40 hover:opacity-90"
-        style={{ ...nexoPillPrimary, padding: "12px 20px", fontSize: 12, width: "100%" }}
+        type="button"
+        onClick={() => setCollapsed(c => !c)}
+        className="w-full flex items-center gap-1.5 hover:opacity-80 transition"
       >
-        {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={14} />}
-        Atualizar Notícias
+        <Link2 size={14} style={{ color: NEXO_CYAN }} />
+        <span className="text-xs font-bold" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+          Atualizar Notícias por Links
+        </span>
+        <span className="ml-auto">
+          {collapsed ? <ChevronDown size={14} style={{ color: NEXO_CYAN }} /> : <ChevronUp size={14} style={{ color: NEXO_CYAN }} />}
+        </span>
       </button>
+      {!collapsed && (
+        <>
+          <p className="text-[10px] mt-2 mb-3" style={{ color: `${NEXO_DARK}99` }}>
+            Cole um link por linha em cada bloco. Ao clicar em "Atualizar notícias", as notícias serão substituídas e o XML será atualizado.
+          </p>
+          <div className="space-y-2">
+            {blocos.map((_, bi) => (
+              <div key={bi}>
+                <label className="text-[10px] font-bold mb-1 block" style={{ color: NEXO_DARK, letterSpacing: 1, textTransform: "uppercase" }}>
+                  BLOCO {bi + 1} — links
+                </label>
+                <textarea
+                  value={linksText[bi] || ""}
+                  onChange={e => setLinksText(prev => { const c = [...prev]; c[bi] = e.target.value; return c; })}
+                  placeholder="https://...&#10;https://..."
+                  rows={3}
+                  className="w-full px-3 py-2 text-[11px] outline-none resize-y"
+                  style={{ ...inputStyle, backgroundColor: "#FFFFFF", border: `2px solid ${NEXO_CYAN}`, color: NEXO_DARK, borderRadius: 14 }}
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={handleUpdate}
+            disabled={updating}
+            className="w-full mt-4 flex items-center justify-center gap-1.5 disabled:opacity-40 hover:opacity-90"
+            style={{ ...nexoPillPrimary, padding: "12px 20px", fontSize: 12, width: "100%" }}
+          >
+            {updating ? <Loader2 size={12} className="animate-spin" /> : <Check size={14} />}
+            Atualizar Notícias
+          </button>
+        </>
+      )}
     </div>
   );
 }
