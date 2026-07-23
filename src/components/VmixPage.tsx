@@ -1046,7 +1046,7 @@ export default function VmixPage() {
   // Proxy fetch via Edge Function (browser → cloud → vMix)
   const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
-      body: { path },
+      body: { path, connectionId: selectedConnectionId },
     });
 
     if (error) {
@@ -1066,7 +1066,7 @@ export default function VmixPage() {
     if (data instanceof Blob) return await data.text();
     if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
     return typeof data === "object" ? JSON.stringify(data) : String(data);
-  }, []);
+  }, [selectedConnectionId]);
 
   // Unified fetch that uses the selected mode (or an explicit override)
   const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
