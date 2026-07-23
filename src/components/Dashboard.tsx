@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +26,7 @@ import { AnimatedFlyout } from "@/components/AnimatedFlyout";
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
 const OuvintesPage = lazy(() => import("./OuvintesPage"));
 const SorteiosPage = lazy(() => import("./SorteiosPage"));
+const BlitzPage = lazy(() => import("./BlitzPage"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
@@ -72,7 +73,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -101,6 +102,7 @@ const sidebarMenu: MenuItem[] = [
     ]
   },
   { icon: Gift, label: "sorteio", page: "sorteios" },
+  { icon: Siren, label: "blitz", page: "blitz" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
@@ -186,6 +188,7 @@ const pageTitle: Record<Page, string> = {
   quiz: "vMix — Quiz",
   site: "Site",
   sorteios: "Sorteios",
+  blitz: "Blitz Promocionais",
 };
 
 interface DashboardProps {
@@ -1458,6 +1461,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "apresentadores" && <ApresentadorForm />}
               {currentPage === "ouvintes" && <OuvintesPage />}
               {currentPage === "sorteios" && <SorteiosPage />}
+              {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
               <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
