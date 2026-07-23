@@ -309,6 +309,48 @@ export type Database = {
         }
         Relationships: []
       }
+      blitz_promocionais: {
+        Row: {
+          cliente: string
+          created_at: string
+          data_realizacao: string | null
+          dia: string
+          equipe: string | null
+          horario: string
+          id: string
+          observacoes: string | null
+          realizada: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente: string
+          created_at?: string
+          data_realizacao?: string | null
+          dia: string
+          equipe?: string | null
+          horario: string
+          id?: string
+          observacoes?: string | null
+          realizada?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente?: string
+          created_at?: string
+          data_realizacao?: string | null
+          dia?: string
+          equipe?: string | null
+          horario?: string
+          id?: string
+          observacoes?: string | null
+          realizada?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       broadcast_assuntos: {
         Row: {
           bg_color: string
