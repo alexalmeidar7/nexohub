@@ -1071,10 +1071,20 @@ export default function BroadcastPage() {
             </div>
           )}
 
-          {/* Ticker */}
-          <div className="p-4 rounded-2xl" style={cardStyle}>
-            <SectionHeader n="04" label="Ticker System" color={CYAN} />
+          </div>
+        </div>
+        )}
 
+        {activeTab === "assuntos" && (
+          <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="01" label="Assuntos do Programa" color={CYAN} />
+            <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+          </div>
+        )}
+
+        {activeTab === "ticker" && (
+          <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="02" label="Ticker System" color={CYAN} />
 
             <div className="space-y-2">
               {([
@@ -1087,7 +1097,7 @@ export default function BroadcastPage() {
                 return (
                   <label
                     key={key}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer"
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer"
                     style={{
                       backgroundColor: active ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
                       border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
@@ -1104,9 +1114,9 @@ export default function BroadcastPage() {
                       style={{ accentColor: CYAN }}
                     />
                     <span style={{ color: active ? CYAN : "#ffffff60" }}>{icon}</span>
-                    <div className="min-w-0">
-                      <span className="text-[11px] font-semibold text-white block">{label}</span>
-                      <p className="text-[9px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[12px] font-semibold text-white block">{label}</span>
+                      <p className="text-[10px] truncate" style={{ color: "#ffffff60" }}>{desc}</p>
                     </div>
                   </label>
                 );
@@ -1118,13 +1128,13 @@ export default function BroadcastPage() {
               onChange={e => setData({ ...data, ticker: e.target.value })}
               onBlur={onFieldBlur}
               placeholder="Texto adicional (opcional)..."
-              rows={2}
-              className="w-full px-3 py-2 rounded-lg text-[11px] resize-none mt-3"
+              rows={3}
+              className="w-full px-3 py-2 rounded-xl text-[12px] resize-none mt-4"
               style={inputStyle}
             />
 
             <label
-              className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-3"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
               style={{
                 backgroundColor: data.tickerUnitario ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
                 border: `1px solid ${data.tickerUnitario ? CYAN : NAVY_BORDER}`,
@@ -1142,25 +1152,29 @@ export default function BroadcastPage() {
                 style={{ accentColor: CYAN }}
               />
               <div className="min-w-0">
-                <span className="text-[11px] font-semibold text-white block">Envio Unitário</span>
-                <p className="text-[9px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
+                <span className="text-[12px] font-semibold text-white block">Envio Unitário</span>
+                <p className="text-[10px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
               </div>
             </label>
+          </div>
+        )}
 
-            <div className="mt-4 space-y-2">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <div className="text-[9px] font-bold uppercase mb-1" style={{ color: "#ffffff60" }}>Endpoint: Broadcast XML</div>
-                <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
-              </div>
-              <div className="p-3 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                <div className="text-[9px] font-bold uppercase mb-1" style={{ color: "#ffffff60" }}>Endpoint: TClock Shows</div>
-                <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
-              </div>
+        {activeTab === "xml" && (
+          <div className="max-w-3xl mx-auto p-6 rounded-2xl space-y-3" style={cardStyle}>
+            <SectionHeader n="03" label="Endpoints XML" color={CYAN} />
+            <div className="p-4 rounded-xl" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+              <div className="text-[10px] font-bold uppercase mb-2 tracking-widest" style={{ color: "#ffffff70" }}>Broadcast XML</div>
+              <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
+            </div>
+            <div className="p-4 rounded-xl" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+              <div className="text-[10px] font-bold uppercase mb-2 tracking-widest" style={{ color: "#ffffff70" }}>TClock Shows</div>
+              <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
             </div>
           </div>
+        )}
 
-          </div>
         </div>
+
       </div>
     </div>
   );
