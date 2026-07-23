@@ -1193,13 +1193,8 @@ export default function VmixPage() {
       const xmlText = await vmixFetch("/api/", effectiveMode);
       const vmixState = parseVmixXml(xmlText);
       const parsedInputs = vmixState.inputs;
-      setInputs(parsedInputs);
-
-      if (vmixState.active) setActiveInput(vmixState.active);
-      if (vmixState.preview) setPreviewInput(vmixState.preview);
-      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
-      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
-      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
 
       setConnected(true);
       const inputCount = parsedInputs.length;
@@ -1231,7 +1226,7 @@ export default function VmixPage() {
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
@@ -1242,13 +1237,8 @@ export default function VmixPage() {
     try {
       const xmlText = await vmixFetch("/api/");
       const vmixState = parseVmixXml(xmlText);
-      setInputs(vmixState.inputs);
-
-      if (vmixState.active) setActiveInput(vmixState.active);
-      if (vmixState.preview) setPreviewInput(vmixState.preview);
-      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
-      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
-      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
       // Reset fail counter and ensure status is connected on success
       if (!connected) setConnected(true);
       silentFailCountRef.current = 0;
@@ -1260,7 +1250,7 @@ export default function VmixPage() {
         silentFailCountRef.current = 0;
       }
     }
-  }, [savedUrl, vmixFetch]);
+  }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot]);
 
   // Update input mapping whenever inputs change
   useEffect(() => {
