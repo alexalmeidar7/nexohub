@@ -1416,7 +1416,7 @@ export default function CenarioTela() {
                       src={prevArtistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)" }}
+                      style={{ opacity: artistVisible && !artistBgReady ? 1 : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 900ms ease-in-out", willChange: "opacity" }}
                     />
                   )}
                   {isHomeOrChat && artistBgUrl && (
@@ -1424,7 +1424,7 @@ export default function CenarioTela() {
                       src={artistBgUrl}
                       alt=""
                       className="absolute inset-0 w-full h-full object-cover"
-                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)" }}
+                      style={{ opacity: artistVisible ? (artistBgReady ? 1 : 0) : 0, filter: "saturate(1.2) brightness(0.7)", transition: "opacity 900ms ease-in-out", willChange: "opacity" }}
                       onLoad={() => setArtistBgReady(true)}
                     />
                   )}
@@ -1433,7 +1433,8 @@ export default function CenarioTela() {
                       className="absolute inset-0" 
                       style={{ 
                         opacity: artistVisible ? (config.home.artistOverlayOpacity ?? 60) / 100 : 0,
-                        background: config.home.artistOverlayColor || "#000000"
+                        background: config.home.artistOverlayColor || "#000000",
+                        transition: "opacity 900ms ease-in-out"
                       }} 
                     />
                   )}
@@ -1442,7 +1443,7 @@ export default function CenarioTela() {
                 {/* Camada 3: Thumb do programa (fica por cima da camada 1 e 2) */}
                 <div className="absolute inset-0" style={{ zIndex: 3 }}>
                   {hasThumb && (activeTab === "home" || activeTab === "weather" || activeTab === "currency" || activeTab === "chat") && (
-                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0 }}>
+                    <div className="absolute inset-0" style={{ opacity: thumbVisible ? 1 : 0, transition: "opacity 900ms ease-in-out", willChange: "opacity" }}>
                       <img src={thumbUrl as string} alt="" className="absolute inset-0 w-full h-full object-cover" style={altMode ? { filter: "brightness(0.7)", objectPosition: config.programThumbPosition || "center" } : { filter: "blur(22px) brightness(0.7)", transform: "scale(1.1)", objectPosition: config.programThumbPosition || "center" }} />
                       {config.thumbOverlayEnabled && (
                         <div 
@@ -1459,11 +1460,11 @@ export default function CenarioTela() {
 
                 {/* Fundo de imagem padrão se nada estiver ativo */}
                 <div className="absolute inset-0" style={{ zIndex: 0 }}>
-                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
-                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
+                  {isHomeOrChat && !artistVisible && !thumbVisible && !config.home.bgGradient && config.home.bgImage && <img src={config.home.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover animate-fade-in" style={{ filter: "brightness(0.7)" }} />}
+                  {activeTab === "weather" && config.weather.bgImage && <img src={config.weather.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover animate-fade-in" style={{ filter: "brightness(0.7)" }} />}
                   
-                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
-                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "brightness(0.7)" }} />}
+                  {activeTab === "currency" && config.currency.bgImage && <img src={config.currency.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover animate-fade-in" style={{ filter: "brightness(0.7)" }} />}
+                  {activeTab === "chat" && config.chat.bgImage && <img src={config.chat.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover animate-fade-in" style={{ filter: "brightness(0.7)" }} />}
                 </div>
               </div>
             );
