@@ -1576,20 +1576,7 @@ export default function VmixPage() {
   }, [connected, savedUrl, user, sendCommand]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
-  const detectedMachines = useMemo(() => {
-    const machines = new Set<string>();
-    inputs.forEach(inp => {
-      if (isNdiInput(inp)) {
-        // Match machine name: NDI (MACHINE (Source)) or NDI - MACHINE
-        const title = inp.title || "";
-        const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
-        if (match && match[1] && match[1].length > 2) {
-          machines.add(match[1]);
-        }
-      }
-    });
-    return Array.from(machines);
-  }, [inputs]);
+  const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
 
   const scanNdiSources = useCallback(async (customHost?: string) => {
     if (!savedUrl || !connected) {
@@ -1604,22 +1591,7 @@ export default function VmixPage() {
       if (customHost) machineList.add(customHost);
       if (manualNdiHost) machineList.add(manualNdiHost);
 
-      const suggestions: string[] = [];
-      for (const machine of Array.from(machineList)) {
-        suggestions.push(
-          `${machine} (vMix - Output 1)`,
-          `${machine} (vMix - Output 2)`,
-          `${machine} (vMix - Output 3)`,
-          `${machine} (vMix - Output 4)`,
-          `${machine} (vMix Video)`,
-          `${machine} (vMix Audio - Master)`,
-          `${machine} (vMix Audio - Headphones)`,
-          `${machine} (Screen 1)`,
-          `${machine} (Screen 2)`,
-        );
-      }
-
-      const uniqueSuggestions = Array.from(new Set(suggestions));
+      const uniqueSuggestions = buildNdiSuggestions(Array.from(machineList));
       setNdiSources(uniqueSuggestions);
 
       if (uniqueSuggestions.length === 0 && (customHost || manualNdiHost)) {
