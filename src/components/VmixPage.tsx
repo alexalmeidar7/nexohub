@@ -1262,9 +1262,9 @@ export default function VmixPage() {
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
-      
-      // Auto-scan NDI sources from network patterns
-      setTimeout(() => scanNdiSources(), 1000);
+
+      // Auto-reload inputs + NDI sources with retry/fallback
+      setTimeout(() => reloadInputsAndSources(), 400);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
