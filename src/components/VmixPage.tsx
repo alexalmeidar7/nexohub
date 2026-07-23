@@ -864,6 +864,21 @@ export default function VmixPage() {
     if (data) setVmixConnections(data);
   };
 
+  // Persist the active connection so it auto-applies on every future visit
+  const persistActiveConnection = useCallback(async (connId: string) => {
+    if (!user || !connId) return;
+    try { localStorage.setItem(`vmix_active_conn_${user.id}`, connId); } catch {}
+    try {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: false })
+        .eq("user_id", user.id)
+        .neq("id", connId);
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: true })
+        .eq("id", connId);
+    } catch {}
+  }, [user]);
+
   const handleSelectConnection = (conn: any) => {
     setSelectedConnectionId(conn.id);
     setVmixUrl(conn.url);
@@ -878,6 +893,7 @@ export default function VmixPage() {
       if (Array.isArray(conn.ndi_sources)) setNdiSources(conn.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
     }
     setConnected(false);
+    persistActiveConnection(conn.id);
     // Auto connect when switching
     setTimeout(() => connectToVmix(), 300);
   };
