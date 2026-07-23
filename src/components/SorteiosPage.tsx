@@ -404,6 +404,37 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
+  // On-air detection + ordering (on-air first). Refresh every 60s.
+  const [onAirId, setOnAirId] = useState<string | null>(null);
+  useEffect(() => {
+    const compute = () => {
+      try {
+        const cur = findCurrentProgram(programas.map(p => ({
+          id: p.id,
+          nome: p.nome,
+          apresentadorId: p.apresentadorId || "",
+          selo: p.selo || "",
+          diasSemana: p.diasSemana || [],
+          horarioInicio: p.horarioInicio,
+          horarioFim: p.horarioFim,
+          estudio: p.estudio || "",
+          classificacaoEtaria: p.classificacaoEtaria || "",
+        }) as any));
+        setOnAirId(cur?.programa?.id || null);
+      } catch { setOnAirId(null); }
+    };
+    compute();
+    const i = setInterval(compute, 60000);
+    return () => clearInterval(i);
+  }, [programas]);
+
+  const orderedProgramas = useMemo(() => {
+    if (!onAirId) return programas;
+    const first = programas.find(p => p.id === onAirId);
+    if (!first) return programas;
+    return [first, ...programas.filter(p => p.id !== onAirId)];
+  }, [programas, onAirId]);
+
   const loadLinks = async () => {
     if (!userId) return;
     setLoadingLinks(true);
