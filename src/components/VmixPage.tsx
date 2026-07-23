@@ -807,8 +807,13 @@ export default function VmixPage() {
       if (connections && connections.length > 0) {
         setVmixConnections(connections);
         
-        // Try to find default or most recent
-        const def = (connections as any[]).find((c: any) => c.is_default) || connections[0];
+        // Prefer last-active connection from localStorage, then is_default, then most recent
+        let lastActiveId: string | null = null;
+        try { lastActiveId = localStorage.getItem(`vmix_active_conn_${user.id}`); } catch {}
+        const def =
+          (lastActiveId && (connections as any[]).find((c: any) => c.id === lastActiveId)) ||
+          (connections as any[]).find((c: any) => c.is_default) ||
+          connections[0];
         setSelectedConnectionId(def.id);
         setVmixUrl(def.url);
         setSavedUrl(def.url);
