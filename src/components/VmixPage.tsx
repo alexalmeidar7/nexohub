@@ -188,6 +188,36 @@ function validateVmixParts(protocol: string, host: string, port: string): string
   return null;
 }
 
+function buildNdiSuggestions(machines: string[]): string[] {
+  const suggestions: string[] = [];
+  for (const machine of machines.map(m => m.trim()).filter(Boolean)) {
+    suggestions.push(
+      `${machine} (vMix - Output 1)`,
+      `${machine} (vMix - Output 2)`,
+      `${machine} (vMix - Output 3)`,
+      `${machine} (vMix - Output 4)`,
+      `${machine} (vMix Video)`,
+      `${machine} (vMix Audio - Master)`,
+      `${machine} (vMix Audio - Headphones)`,
+      `${machine} (Screen 1)`,
+      `${machine} (Screen 2)`,
+    );
+  }
+  return Array.from(new Set(suggestions));
+}
+
+function extractNdiMachinesFromInputs(vmixInputs: VmixInput[]): string[] {
+  const machines = new Set<string>();
+  vmixInputs.forEach(inp => {
+    if (isNdiInput(inp)) {
+      const title = inp.title || "";
+      const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
+      if (match?.[1] && match[1].length > 2) machines.add(match[1]);
+    }
+  });
+  return Array.from(machines);
+}
+
 function vmixTagText(xml: Document, tagName: string): string | null {
   return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
 }
