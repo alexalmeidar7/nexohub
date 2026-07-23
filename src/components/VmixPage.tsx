@@ -536,6 +536,8 @@ export default function VmixPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  const [reloadingInputs, setReloadingInputs] = useState(false);
+  const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [previewInput, setPreviewInput] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -1260,9 +1262,9 @@ export default function VmixPage() {
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
-      
-      // Auto-scan NDI sources from network patterns
-      setTimeout(() => scanNdiSources(), 1000);
+
+      // Auto-reload inputs + NDI sources with retry/fallback
+      setTimeout(() => reloadInputsAndSources(), 400);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
@@ -1640,6 +1642,40 @@ export default function VmixPage() {
   }, [savedUrl, connected, detectedMachines, manualNdiHost, toast]);
 
   // NDI auto-scan removed (NDI tab removed)
+
+  // Auto-reload inputs + NDI sources on connection with retry/fallback
+  const reloadInputsAndSources = useCallback(async () => {
+    if (!savedUrl) return;
+    setReloadingInputs(true);
+    setReloadFallback(null);
+    const attempt = async () => {
+      const xmlText = await vmixFetch("/api/", connectionMode);
+      const vmixState = parseVmixXml(xmlText);
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
+      return vmixState.inputs.length;
+    };
+    try {
+      let count = 0;
+      try {
+        count = await attempt();
+      } catch {
+        await new Promise(r => setTimeout(r, 1200));
+        count = await attempt();
+      }
+      // Scan NDI sources after inputs are up to date
+      try { await scanNdiSources(); } catch {}
+      if (count === 0) {
+        setReloadFallback("Nenhum input encontrado — usando último snapshot salvo.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao recarregar inputs.";
+      setReloadFallback(`${msg} Exibindo último snapshot salvo.`);
+      toast({ title: "Recarga parcial", description: msg, variant: "destructive" });
+    } finally {
+      setReloadingInputs(false);
+    }
+  }, [savedUrl, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, scanNdiSources, toast]);
 
   const addNdiInput = async (source?: string) => {
     const ndiName = source || ndiUrl.trim();
@@ -2482,25 +2518,67 @@ export default function VmixPage() {
   const activeTitle = activeInputObj?.title || "Sem programa";
   const previewTitle = previewInputObj?.title || "Sem preview";
 
+  const connStatus: "online" | "connecting" | "offline" = connecting
+    ? "connecting"
+    : connected
+    ? "online"
+    : "offline";
+  const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
+  const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
+  const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
+
+  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+    <div
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+      style={{ backgroundColor: "#0c0c0e", border: `1px solid ${statusColor}30` }}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${connStatus === "connecting" ? "animate-pulse" : ""}`}
+        style={{ backgroundColor: statusColor, boxShadow: `0 0 10px ${statusColor}b0` }}
+      />
+      <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: statusColor }}>
+        {statusLabel}
+      </span>
+      {!compact && (
+        <>
+          <span className="w-px h-3 bg-white/10" />
+          <span
+            className="text-[9px] font-mono text-white/50 truncate max-w-[220px]"
+            title={savedUrl || undefined}
+          >
+            {endpointLabel}
+          </span>
+          {connectionRouteLabel && (
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">
+              · {connectionRouteLabel}
+            </span>
+          )}
+        </>
+      )}
+      {connStatus !== "online" && (savedUrl || vmixUrl) && (
+        <button
+          onClick={connectToVmix}
+          disabled={connecting}
+          className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
+          style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
+          title="Tentar reconectar ao vMix"
+        >
+          {connStatus === "connecting" ? "…" : "Reconectar"}
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="h-11 px-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
+            <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
               <div className="w-px h-5 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    backgroundColor: connected ? "#22c55e" : "#ef4444",
-                    boxShadow: connected ? "0 0 12px rgba(34,197,94,0.7)" : "0 0 12px rgba(239,68,68,0.55)",
-                  }}
-                />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">{connected ? "Online" : "Offline"}</span>
-              </div>
+              <StatusPill />
             </div>
 
             {connected && selectedConnectionId ? (
@@ -2628,16 +2706,21 @@ export default function VmixPage() {
 
       {/* ── Preview / Transitions / Output ── */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
-        <button
-          onClick={() => setMonitorsCollapsed(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-2 transition-colors hover:brightness-110"
+        <div
+          className="w-full flex items-center justify-between gap-3 px-4 py-2"
           style={{ backgroundColor: "#18181c", borderBottom: monitorsCollapsed ? "none" : "1px solid #ffffff08" }}
         >
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-            🖥 Monitores Preview / Output
-          </span>
-          <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
-        </button>
+          <button
+            onClick={() => setMonitorsCollapsed(prev => !prev)}
+            className="flex items-center gap-2 transition-colors hover:brightness-110"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
+              🖥 Monitores Preview / Output
+            </span>
+            <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
+          </button>
+          <StatusPill />
+        </div>
         {!monitorsCollapsed && (
         <div className="flex items-stretch gap-[1px]">
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
@@ -2915,7 +2998,38 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="flex flex-wrap gap-2 items-start">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher</span>
+              <StatusPill />
+            </div>
+            {(reloadingInputs || reloadFallback) && (
+              <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                reloadingInputs
+                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              }`}>
+                <div className="flex items-center gap-2">
+                  {reloadingInputs ? (
+                    <>
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-cyan-300 border-t-transparent animate-spin" />
+                      Recarregando inputs e fontes NDI…
+                    </>
+                  ) : (
+                    <>⚠ {reloadFallback}</>
+                  )}
+                </div>
+                {!reloadingInputs && (
+                  <button
+                    onClick={() => reloadInputsAndSources()}
+                    className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 text-[9px]"
+                  >
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 items-start">
             {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
@@ -3086,6 +3200,7 @@ export default function VmixPage() {
                 </div>
               )}
             </div>
+          </div>
           </div>
         )}
 
