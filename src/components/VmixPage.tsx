@@ -536,6 +536,8 @@ export default function VmixPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  const [reloadingInputs, setReloadingInputs] = useState(false);
+  const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [previewInput, setPreviewInput] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
