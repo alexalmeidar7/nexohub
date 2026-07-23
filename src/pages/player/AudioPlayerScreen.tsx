@@ -1317,8 +1317,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               })}
               {history.slice(0, CAROUSEL_VISIBLE).map((t, i) => {
 
+                const isNow = i === 0;
                 // depth relativa ao activeIndex: 0 = destacada (na frente)
-                const depth = i - activeIndex;
+                // Para a música tocando agora (i=0) forçamos depth=0 visual,
+                // garantindo que a capa atual SEMPRE fique na frente das capas
+                // das músicas já tocadas, independente da navegação do carrossel.
+                const depth = isNow ? 0 : i - activeIndex;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
                 const translateX = -depth * 72;
@@ -1327,13 +1331,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
                 const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
                 const isActive = depth === 0;
-                const isNow = i === 0;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
                 const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 const rewindKey = `${i}-${t.horario}-${t.musica}`;
                 const isPreparing = preparingRewind === rewindKey;
+                // A capa "tocando agora" tem o z-index mais alto de todos,
+                // acima de qualquer capa histórica (que usa 20 - abs, máx 20).
+                const zIndex = isNow ? 40 : 20 - abs;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
@@ -1361,7 +1367,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       opacity: isActive ? 1 : (isExpired ? Math.max(0.35, opacity * 0.55) : opacity),
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
                       background: "#111",
-                      zIndex: 20 - abs,
+                      zIndex,
                       willChange: "transform, opacity, filter",
                       transition:
                         "transform 620ms cubic-bezier(.22,1,.36,1), " +
@@ -1370,7 +1376,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         "width 520ms cubic-bezier(.22,1,.36,1), " +
                         "height 520ms cubic-bezier(.22,1,.36,1), " +
                         "box-shadow 620ms cubic-bezier(.22,1,.36,1)",
-                      animation: (i === 0 && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
+                      animation: (isNow && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
                       boxShadow: isNow
                         ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
                         : isActive
