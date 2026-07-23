@@ -1202,19 +1202,25 @@ export default function VmixPage() {
     const isEmbeddedPreview = window.self !== window.top;
     const effectiveMode = connectionMode;
 
+    // In the embedded preview iframe, mixed content blocks HTTP to local IPs.
+    // Open a real tab so the user can connect there — it will land straight on the Nexo Control panel.
+    if (isEmbeddedPreview && isLocal) {
+      window.open("/vmix-control", "_blank", "noopener,noreferrer");
+      toast({
+        title: "Abrindo em nova aba",
+        description: "O preview interno bloqueia HTTP local. A conexão será feita na nova aba e você já cai direto no painel do Nexo Control.",
+      });
+      return;
+    }
+
     if (effectiveMode === "proxy" && isLocal) {
       setConnected(false);
       setConnectionMode("direct");
       toast({
         title: "IP Local detectado",
-        description: isEmbeddedPreview
-          ? "No preview interno do Lovable, abra /vmix-control em nova aba para conectar ao seu vMix local."
-          : "IP local não é acessível pelo proxy em nuvem. Mudamos para o modo Direto automaticamente.",
+        description: "IP local não é acessível pelo proxy em nuvem. Mudamos para o modo Direto automaticamente.",
         variant: "destructive",
       });
-      if (isEmbeddedPreview) {
-        window.open("/vmix-control", "_blank", "noopener,noreferrer");
-      }
       return;
     }
 
@@ -1227,6 +1233,9 @@ export default function VmixPage() {
       persistVmixSnapshot(vmixState);
 
       setConnected(true);
+      // Auto-navigate to main Nexo Control panel (switcher) once connected
+      setActiveTab("controls");
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
       
