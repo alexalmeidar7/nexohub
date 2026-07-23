@@ -144,6 +144,11 @@ export default function SorteiosPage() {
   const [ouvintes, setOuvintes] = useState<Ouvinte[]>([]);
   const [programas, setProgramas] = useState<ProgramaLite[]>([]);
 
+  const refreshPremios = async () => {
+    const { data, error } = await supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false });
+    if (!error) setPremios((data as any) || []);
+  };
+
   const load = async () => {
     setLoading(true);
     // Expire overdue drawings before fetching
@@ -174,6 +179,7 @@ export default function SorteiosPage() {
     })));
     setLoading(false);
   };
+
 
   useEffect(() => { load(); }, [user?.id]);
 
