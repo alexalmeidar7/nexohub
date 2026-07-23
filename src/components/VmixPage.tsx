@@ -1287,7 +1287,7 @@ export default function VmixPage() {
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, selectedConnectionId, persistActiveConnection]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
