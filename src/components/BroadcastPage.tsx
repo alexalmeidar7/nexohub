@@ -711,8 +711,42 @@ export default function BroadcastPage() {
           </div>
         </div>
 
-        {/* ── Two-column console ── */}
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 gap-4 overflow-hidden">
+        {/* ── Tab bar ── */}
+        <div
+          className="flex flex-wrap items-center gap-1 p-1 rounded-2xl flex-none"
+          style={cardStyle}
+        >
+          {([
+            { id: "preview", label: "Preview" },
+            { id: "assuntos", label: "Assuntos" },
+            { id: "ticker", label: "Ticker" },
+            { id: "xml", label: "XML" },
+          ] as const).map(t => {
+            const active = activeTab === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className="px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
+                style={{
+                  backgroundColor: active ? CYAN : "transparent",
+                  color: active ? NAVY : "#ffffff70",
+                  fontFamily: "'Sora', sans-serif",
+                  boxShadow: active ? "0 4px 10px rgba(0,191,240,0.25)" : "none",
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── Tab panels ── */}
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1">
+
+        {activeTab === "preview" && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
 
           {/* ── Left: Preview stage + status strip ── */}
           <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-hidden">
