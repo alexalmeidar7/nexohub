@@ -1643,6 +1643,40 @@ export default function VmixPage() {
 
   // NDI auto-scan removed (NDI tab removed)
 
+  // Auto-reload inputs + NDI sources on connection with retry/fallback
+  const reloadInputsAndSources = useCallback(async () => {
+    if (!savedUrl) return;
+    setReloadingInputs(true);
+    setReloadFallback(null);
+    const attempt = async () => {
+      const xmlText = await vmixFetch("/api/", connectionMode);
+      const vmixState = parseVmixXml(xmlText);
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
+      return vmixState.inputs.length;
+    };
+    try {
+      let count = 0;
+      try {
+        count = await attempt();
+      } catch {
+        await new Promise(r => setTimeout(r, 1200));
+        count = await attempt();
+      }
+      // Scan NDI sources after inputs are up to date
+      try { await scanNdiSources(); } catch {}
+      if (count === 0) {
+        setReloadFallback("Nenhum input encontrado — usando último snapshot salvo.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao recarregar inputs.";
+      setReloadFallback(`${msg} Exibindo último snapshot salvo.`);
+      toast({ title: "Recarga parcial", description: msg, variant: "destructive" });
+    } finally {
+      setReloadingInputs(false);
+    }
+  }, [savedUrl, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, scanNdiSources, toast]);
+
   const addNdiInput = async (source?: string) => {
     const ndiName = source || ndiUrl.trim();
     if (!savedUrl || !ndiName) return;
