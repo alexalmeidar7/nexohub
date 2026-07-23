@@ -536,6 +536,8 @@ export default function VmixPage() {
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  const [reloadingInputs, setReloadingInputs] = useState(false);
+  const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [previewInput, setPreviewInput] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
@@ -1260,9 +1262,9 @@ export default function VmixPage() {
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
-      
-      // Auto-scan NDI sources from network patterns
-      setTimeout(() => scanNdiSources(), 1000);
+
+      // Auto-reload inputs + NDI sources with retry/fallback
+      setTimeout(() => reloadInputsAndSources(), 400);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
@@ -1640,6 +1642,40 @@ export default function VmixPage() {
   }, [savedUrl, connected, detectedMachines, manualNdiHost, toast]);
 
   // NDI auto-scan removed (NDI tab removed)
+
+  // Auto-reload inputs + NDI sources on connection with retry/fallback
+  const reloadInputsAndSources = useCallback(async () => {
+    if (!savedUrl) return;
+    setReloadingInputs(true);
+    setReloadFallback(null);
+    const attempt = async () => {
+      const xmlText = await vmixFetch("/api/", connectionMode);
+      const vmixState = parseVmixXml(xmlText);
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
+      return vmixState.inputs.length;
+    };
+    try {
+      let count = 0;
+      try {
+        count = await attempt();
+      } catch {
+        await new Promise(r => setTimeout(r, 1200));
+        count = await attempt();
+      }
+      // Scan NDI sources after inputs are up to date
+      try { await scanNdiSources(); } catch {}
+      if (count === 0) {
+        setReloadFallback("Nenhum input encontrado — usando último snapshot salvo.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao recarregar inputs.";
+      setReloadFallback(`${msg} Exibindo último snapshot salvo.`);
+      toast({ title: "Recarga parcial", description: msg, variant: "destructive" });
+    } finally {
+      setReloadingInputs(false);
+    }
+  }, [savedUrl, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, scanNdiSources, toast]);
 
   const addNdiInput = async (source?: string) => {
     const ndiName = source || ndiUrl.trim();
@@ -2915,7 +2951,34 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="flex flex-wrap gap-2 items-start">
+          <div className="space-y-3">
+            {(reloadingInputs || reloadFallback) && (
+              <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                reloadingInputs
+                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              }`}>
+                <div className="flex items-center gap-2">
+                  {reloadingInputs ? (
+                    <>
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-cyan-300 border-t-transparent animate-spin" />
+                      Recarregando inputs e fontes NDI…
+                    </>
+                  ) : (
+                    <>⚠ {reloadFallback}</>
+                  )}
+                </div>
+                {!reloadingInputs && (
+                  <button
+                    onClick={() => reloadInputsAndSources()}
+                    className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 text-[9px]"
+                  >
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 items-start">
             {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
@@ -3086,6 +3149,7 @@ export default function VmixPage() {
                 </div>
               )}
             </div>
+          </div>
           </div>
         )}
 
