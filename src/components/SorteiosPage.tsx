@@ -857,22 +857,25 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
 
 /* ═════════════════════ SORTEIO ═════════════════════ */
 
-function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
-  premios: Premio[]; ouvintes: Ouvinte[]; sorteios: Sorteio[]; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
+function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, userId, onReload, onGoTo }: {
+  premios: Premio[]; ouvintes: Ouvinte[]; sorteios: Sorteio[]; programas: ProgramaLite[]; apresentadores: Array<{ id: string; nome: string }>; userId?: string; onReload: () => void; onGoTo: (t: Tab) => void;
 }) {
   const { toast } = useToast();
   const [premioId, setPremioId] = useState<string>("");
-  const [filtroCidade, setFiltroCidade] = useState("");
   const [ganhador, setGanhador] = useState<Ouvinte | null>(null);
   const [manual, setManual] = useState({ nome: "", telefone: "" });
   const [saving, setSaving] = useState(false);
   const [obs, setObs] = useState("");
   const [now, setNow] = useState<Date>(new Date());
-  const [programaNoAr, setProgramaNoAr] = useState<{ nome: string; horarioInicio: string; horarioFim: string } | null>(null);
+  const [programaNoAr, setProgramaNoAr] = useState<ProgramaLite | null>(null);
+  const [links, setLinks] = useState<Array<{ id: string; premio_id: string; programa_id: string; quantidade: number }>>([]);
 
   const premioSelecionado = premios.find(p => p.id === premioId);
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
-  const disponivel = premios.filter(p => p.ativo && p.quantidade_estoque > 0);
+  const apresentadorMap = useMemo(() => Object.fromEntries(apresentadores.map(a => [a.id, a.nome])), [apresentadores]);
+  const programaMap = useMemo(() => Object.fromEntries(programas.map(p => [p.id, p])), [programas]);
+
+  const apresentadorNoAr = programaNoAr?.apresentadorId ? (apresentadorMap[programaNoAr.apresentadorId] || "") : "";
 
   // Relógio ao vivo
   useEffect(() => {
@@ -882,35 +885,52 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
 
   // Programa no ar (Estúdio FM)
   useEffect(() => {
-    let cancelled = false;
-    const fetchNoAr = async () => {
-      const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
-      if (!data || cancelled) return;
-      const programas = data.map((p: any) => ({
-        id: p.id,
-        nome: p.nome,
-        apresentadorId: p.apresentador_id || "",
-        selo: p.selo || "",
-        diasSemana: p.dias_semana || [],
-        horarioInicio: p.horario_inicio,
-        horarioFim: p.horario_fim,
-        estudio: p.estudio || "",
-        classificacaoEtaria: p.classificacao_etaria || "",
-      }));
-      const cur = findCurrentProgram(programas);
-      setProgramaNoAr(cur ? { nome: cur.programa.nome, horarioInicio: cur.programa.horarioInicio, horarioFim: cur.programa.horarioFim } : null);
+    const compute = () => {
+      try {
+        const cur = findCurrentProgram(programas.map(p => ({
+          id: p.id,
+          nome: p.nome,
+          apresentadorId: p.apresentadorId || "",
+          selo: p.selo || "",
+          diasSemana: p.diasSemana || [],
+          horarioInicio: p.horarioInicio,
+          horarioFim: p.horarioFim,
+          estudio: p.estudio || "",
+          classificacaoEtaria: p.classificacaoEtaria || "",
+        }) as any));
+        setProgramaNoAr(cur ? programas.find(p => p.id === cur.programa.id) || null : null);
+      } catch { setProgramaNoAr(null); }
     };
-    fetchNoAr();
-    const i = setInterval(fetchNoAr, 60000);
-    return () => { cancelled = true; clearInterval(i); };
-  }, []);
+    compute();
+    const i = setInterval(compute, 60000);
+    return () => clearInterval(i);
+  }, [programas]);
+
+  // Carrega prêmios vinculados ao programa
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase.from("sorteio_premio_programas").select("*").eq("user_id", userId);
+      setLinks((data as any) || []);
+    })();
+  }, [userId, programaNoAr?.id]);
+
+  const premiosDoPrograma = useMemo(() => {
+    if (!programaNoAr) return [];
+    return links
+      .filter(l => l.programa_id === programaNoAr.id)
+      .map(l => ({ link: l, premio: premioMap[l.premio_id] as Premio | undefined }))
+      .filter(x => x.premio && x.premio.ativo);
+  }, [links, programaNoAr, premioMap]);
+
+  // Se prêmio selecionado deixa de fazer parte da lista do programa, limpa seleção
+  useEffect(() => {
+    if (premioId && !premiosDoPrograma.some(x => x.premio!.id === premioId)) setPremioId("");
+  }, [premioId, premiosDoPrograma]);
 
   const pool = useMemo(() => {
-    const cidadeQ = filtroCidade.trim().toLowerCase();
-    return ouvintes
-      .filter(o => !cidadeQ || (o.cidade || "").toLowerCase().includes(cidadeQ))
-      .sort((a, b) => (b.pontuacao ?? 0) - (a.pontuacao ?? 0));
-  }, [ouvintes, filtroCidade]);
+    return [...ouvintes].sort((a, b) => (b.pontuacao ?? 0) - (a.pontuacao ?? 0));
+  }, [ouvintes]);
 
   const sortear = () => {
     if (!premioId) { toast({ title: "Selecione um prêmio", variant: "destructive" }); return; }
@@ -947,53 +967,116 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
       nome_ganhador: nome,
       telefone_ganhador: tel,
       observacoes: obsFinal || null,
-    });
+      programa_id: programaNoAr?.id || null,
+      programa_nome: programaNoAr?.nome || null,
+      apresentador_nome: apresentadorNoAr || null,
+    } as any);
     setSaving(false);
     if (error) { toast({ title: "Erro ao registrar", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Sorteio registrado", description: "Acompanhe a entrega na aba Entregas." });
     setGanhador(null); setManual({ nome: "", telefone: "" }); setObs("");
     onReload();
-    onGoTo("entrega");
+  };
+
+  // Relatório dos últimos 6 meses
+  const relatorio = useMemo(() => {
+    const seisMesesMs = 1000 * 60 * 60 * 24 * 30 * 6;
+    const cutoff = Date.now() - seisMesesMs;
+    return sorteios
+      .filter(s => new Date(s.data_sorteio).getTime() >= cutoff)
+      .sort((a, b) => new Date(b.data_sorteio).getTime() - new Date(a.data_sorteio).getTime());
+  }, [sorteios]);
+
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString("pt-BR");
+  const fmtTime = (d: string) => new Date(d).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+  const getProgramaNome = (s: any): string => {
+    if (s.programa_nome) return s.programa_nome;
+    if (s.programa_id && programaMap[s.programa_id]) return programaMap[s.programa_id].nome;
+    const m = /Programa no ar:\s*([^(·\n]+)/.exec(s.observacoes || "");
+    return m ? m[1].trim() : "—";
+  };
+  const getLocutorNome = (s: any): string => {
+    if (s.apresentador_nome) return s.apresentador_nome;
+    if (s.programa_id && programaMap[s.programa_id]?.apresentadorId) {
+      return apresentadorMap[programaMap[s.programa_id].apresentadorId!] || "—";
+    }
+    return "—";
   };
 
   return (
-    <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
-      <div style={cardStyle}>
-        <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
-          Configurar Sorteio
-        </h2>
+    <div className="grid gap-6">
+      <div className="grid gap-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
+            Configurar Sorteio
+          </h2>
 
-        {/* Contexto: data/hora + programa no ar */}
-        <div style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33`, marginBottom: 16 }}>
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={14} color={CYAN} />
-            <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>Momento do sorteio</span>
+          {/* Contexto: data/hora + programa no ar */}
+          <div style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33`, marginBottom: 16 }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Clock size={14} color={CYAN} />
+              <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>Momento do sorteio</span>
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 800, color: DARK }}>{now.toLocaleString("pt-BR")}</div>
+            <div className="flex items-center gap-2 mt-3">
+              <Radio size={14} color={CYAN} />
+              {programaNoAr ? (
+                <div style={{ fontSize: 12, color: DARK }}>
+                  <b>{programaNoAr.nome}</b> <span style={{ color: "#64748B" }}>· {programaNoAr.horarioInicio}—{programaNoAr.horarioFim}</span>
+                  {apresentadorNoAr && <span style={{ color: "#64748B" }}> · Locutor: <b style={{ color: DARK }}>{apresentadorNoAr}</b></span>}
+                </div>
+              ) : (
+                <span style={{ fontSize: 12, color: "#64748B" }}>Nenhum programa no ar</span>
+              )}
+            </div>
           </div>
-          <div style={{ fontSize: 16, fontWeight: 800, color: DARK }}>{now.toLocaleString("pt-BR")}</div>
-          <div className="flex items-center gap-2 mt-3">
-            <Radio size={14} color={CYAN} />
-            {programaNoAr ? (
-              <div style={{ fontSize: 12, color: DARK }}>
-                <b>{programaNoAr.nome}</b> <span style={{ color: "#64748B" }}>· {programaNoAr.horarioInicio}—{programaNoAr.horarioFim}</span>
+
+          {/* Lista de prêmios vinculados ao programa */}
+          <div style={{ marginBottom: 16 }}>
+            <label style={labelStyle}>Prêmios do programa no ar</label>
+            {!programaNoAr ? (
+              <div style={{ background: "#fff", borderRadius: 16, padding: 20, border: `1px dashed ${CYAN}55`, textAlign: "center", fontSize: 12, color: "#64748B" }}>
+                Nenhum programa no ar no momento.
+              </div>
+            ) : premiosDoPrograma.length === 0 ? (
+              <div style={{ background: "#fff", borderRadius: 16, padding: 20, border: `1px dashed ${CYAN}55`, textAlign: "center", fontSize: 12, color: "#64748B" }}>
+                Nenhum prêmio vinculado a <b style={{ color: DARK }}>{programaNoAr.nome}</b>. Vá em <b>Lista de Prêmios</b> para vincular.
               </div>
             ) : (
-              <span style={{ fontSize: 12, color: "#64748B" }}>Nenhum programa no ar</span>
+              <div className="grid gap-2" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))" }}>
+                {premiosDoPrograma.map(({ premio, link }) => {
+                  const sel = premioId === premio!.id;
+                  return (
+                    <button
+                      key={link.id}
+                      onClick={() => setPremioId(premio!.id)}
+                      style={{
+                        background: sel ? LIME : "#fff",
+                        borderRadius: 16,
+                        padding: 12,
+                        border: `2px solid ${sel ? DARK : CYAN}55`,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        fontFamily: FONT,
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        {premio!.imagem_url && (
+                          <img src={premio!.imagem_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
+                        )}
+                        <div style={{ fontSize: 12, fontWeight: 800, color: DARK, lineHeight: 1.2 }}>{premio!.nome}</div>
+                      </div>
+                      <div style={{ fontSize: 10, color: DARK, opacity: 0.7 }}>
+                        Reservado: <b>{link.quantidade}</b> · Estoque: <b>{premio!.quantidade_estoque}</b>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
-        </div>
-
-        <div className="grid gap-4">
-          <Field label="Prêmio (com estoque)">
-            <select style={pillSelect} value={premioId} onChange={e => setPremioId(e.target.value)}>
-              <option value="">Selecione...</option>
-              {disponivel.map(p => (
-                <option key={p.id} value={p.id}>{p.nome} — estoque: {p.quantidade_estoque}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Filtrar ouvintes por cidade (opcional)">
-            <input style={pillInput} value={filtroCidade} onChange={e => setFiltroCidade(e.target.value)} placeholder="Ex: São Paulo" />
-          </Field>
 
           {/* Pool com tabela */}
           <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
@@ -1004,13 +1087,12 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
             {pool.length === 0 ? (
               <p style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", padding: 12 }}>Sem participantes</p>
             ) : (
-              <div style={{ maxHeight: 260, overflowY: "auto", borderRadius: 12 }}>
+              <div style={{ maxHeight: 220, overflowY: "auto", borderRadius: 12 }}>
                 <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
                   <thead style={{ position: "sticky", top: 0, background: CARD_BG }}>
                     <tr>
                       <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>#</th>
                       <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Nome</th>
-                      <th style={{ textAlign: "left", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Cidade</th>
                       <th style={{ textAlign: "right", padding: "8px 10px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Pontos</th>
                     </tr>
                   </thead>
@@ -1019,7 +1101,6 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
                       <tr key={o.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
                         <td style={{ padding: "6px 10px", color: "#64748B" }}>{idx + 1}</td>
                         <td style={{ padding: "6px 10px", color: DARK, fontWeight: 600 }}>{o.nome}</td>
-                        <td style={{ padding: "6px 10px", color: "#64748B" }}>{o.cidade || "—"}</td>
                         <td style={{ padding: "6px 10px", color: DARK, fontWeight: 800, textAlign: "right" }}>{o.pontuacao ?? 0}</td>
                       </tr>
                     ))}
@@ -1029,106 +1110,162 @@ function SorteioTab({ premios, ouvintes, sorteios, userId, onReload, onGoTo }: {
             )}
           </div>
 
-          <button style={limeBtn} onClick={sortear} disabled={!premioId || pool.length === 0}>
+          <button style={{ ...limeBtn, marginTop: 16 }} onClick={sortear} disabled={!premioId || pool.length === 0}>
             <Shuffle size={16} /> Sortear Ganhador
           </button>
         </div>
-      </div>
 
-      <div style={cardStyle}>
-        <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
-          Ganhador
-        </h2>
-        {ganhador ? (
-          <div className="grid gap-3">
-            <div style={{ background: LIME, borderRadius: 16, padding: 16 }}>
-              <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK, fontWeight: 700 }}>Sorteado</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>{ganhador.nome}</div>
-              {ganhador.telefone && <div style={{ fontSize: 13, color: DARK }}>{ganhador.telefone}</div>}
-              {ganhador.cidade && <div style={{ fontSize: 12, color: DARK, opacity: 0.7 }}>{ganhador.cidade}</div>}
-              <div style={{ fontSize: 12, color: DARK, marginTop: 6 }}><b>Pontos:</b> {ganhador.pontuacao ?? 0}</div>
-            </div>
-            {premioSelecionado && (
-              <div style={{ background: "#fff", borderRadius: 16, padding: 12, fontSize: 13, color: DARK }}>
-                <b>Prêmio:</b> {premioSelecionado.nome}
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
+            Ganhador
+          </h2>
+          {ganhador ? (
+            <div className="grid gap-3">
+              <div style={{ background: LIME, borderRadius: 16, padding: 16 }}>
+                <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK, fontWeight: 700 }}>Sorteado</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: DARK }}>{ganhador.nome}</div>
+                {ganhador.telefone && <div style={{ fontSize: 13, color: DARK }}>{ganhador.telefone}</div>}
+                <div style={{ fontSize: 12, color: DARK, marginTop: 6 }}><b>Pontos:</b> {ganhador.pontuacao ?? 0}</div>
               </div>
-            )}
-
-            {/* Alerta se já ganhou este prêmio */}
-            {jaGanhouEstePremio && (
-              <div style={{ background: "#FEF3C7", border: "2px solid #F59E0B", borderRadius: 16, padding: 12, color: "#92400E", fontSize: 12, display: "flex", alignItems: "center", gap: 8 }}>
-                <AlertTriangle size={16} />
-                <span><b>Atenção:</b> este ouvinte já ganhou o prêmio <b>{premioSelecionado?.nome}</b> anteriormente.</span>
-              </div>
-            )}
-
-            {/* Histórico do ouvinte */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
-              <div className="flex items-center gap-2 mb-2">
-                <History size={14} color={CYAN} />
-                <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>
-                  Histórico de prêmios ({historicoGanhador.length})
-                </span>
-              </div>
-              {historicoGanhador.length === 0 ? (
-                <p style={{ fontSize: 12, color: "#94a3b8" }}>Nenhum prêmio anterior.</p>
-              ) : (
-                <div style={{ maxHeight: 180, overflowY: "auto" }}>
-                  <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Prêmio</th>
-                        <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Data</th>
-                        <th style={{ textAlign: "center", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historicoGanhador.map(h => (
-                        <tr key={h.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
-                          <td style={{ padding: "6px 8px", color: DARK, fontWeight: 600 }}>{premioMap[h.premio_id]?.nome || "—"}</td>
-                          <td style={{ padding: "6px 8px", color: "#64748B" }}>{new Date(h.data_sorteio).toLocaleDateString("pt-BR")}</td>
-                          <td style={{ padding: "6px 8px", textAlign: "center" }}>
-                            {h.entregue ? (
-                              <span style={{ background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Retirado</span>
-                            ) : (
-                              <span style={{ background: "#FEF3C7", color: "#92400E", borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Pendente</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {premioSelecionado && (
+                <div style={{ background: "#fff", borderRadius: 16, padding: 12, fontSize: 13, color: DARK }}>
+                  <b>Prêmio:</b> {premioSelecionado.nome}
                 </div>
               )}
+
+              {jaGanhouEstePremio && (
+                <div style={{ background: "#FEF3C7", border: "2px solid #F59E0B", borderRadius: 16, padding: 12, color: "#92400E", fontSize: 12, display: "flex", alignItems: "center", gap: 8 }}>
+                  <AlertTriangle size={16} />
+                  <span><b>Atenção:</b> este ouvinte já ganhou o prêmio <b>{premioSelecionado?.nome}</b> anteriormente.</span>
+                </div>
+              )}
+
+              <div style={{ background: "#fff", borderRadius: 16, padding: 12, border: `1px solid ${CYAN}33` }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <History size={14} color={CYAN} />
+                  <span style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: 1, fontWeight: 700, color: DARK }}>
+                    Histórico de prêmios ({historicoGanhador.length})
+                  </span>
+                </div>
+                {historicoGanhador.length === 0 ? (
+                  <p style={{ fontSize: 12, color: "#94a3b8" }}>Nenhum prêmio anterior.</p>
+                ) : (
+                  <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                    <table style={{ width: "100%", fontSize: 11, borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Prêmio</th>
+                          <th style={{ textAlign: "left", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Data</th>
+                          <th style={{ textAlign: "center", padding: "6px 8px", fontSize: 9, textTransform: "uppercase", color: "#64748B" }}>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historicoGanhador.map(h => (
+                          <tr key={h.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
+                            <td style={{ padding: "6px 8px", color: DARK, fontWeight: 600 }}>{premioMap[h.premio_id]?.nome || "—"}</td>
+                            <td style={{ padding: "6px 8px", color: "#64748B" }}>{new Date(h.data_sorteio).toLocaleDateString("pt-BR")}</td>
+                            <td style={{ padding: "6px 8px", textAlign: "center" }}>
+                              {h.entregue ? (
+                                <span style={{ background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Retirado</span>
+                              ) : (
+                                <span style={{ background: "#FEF3C7", color: "#92400E", borderRadius: 999, padding: "2px 8px", fontSize: 9, fontWeight: 800 }}>Pendente</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="grid gap-3">
-            <p style={{ fontSize: 12, color: "#64748B" }}>Sorteie automaticamente ou informe manualmente:</p>
-            <Field label="Nome do ganhador (manual)">
-              <input style={pillInput} value={manual.nome} onChange={e => setManual({ ...manual, nome: e.target.value })} />
+          ) : (
+            <div className="grid gap-3">
+              <p style={{ fontSize: 12, color: "#64748B" }}>Sorteie automaticamente ou informe manualmente:</p>
+              <Field label="Nome do ganhador (manual)">
+                <input style={pillInput} value={manual.nome} onChange={e => setManual({ ...manual, nome: e.target.value })} />
+              </Field>
+              <Field label="Telefone">
+                <input style={pillInput} value={manual.telefone} onChange={e => setManual({ ...manual, telefone: e.target.value })} />
+              </Field>
+            </div>
+          )}
+          <div className="mt-4">
+            <Field label="Observações">
+              <textarea style={{ ...pillInput, height: 72, borderRadius: 22, padding: 14, resize: "none" }} value={obs} onChange={e => setObs(e.target.value)} />
             </Field>
-            <Field label="Telefone">
-              <input style={pillInput} value={manual.telefone} onChange={e => setManual({ ...manual, telefone: e.target.value })} />
-            </Field>
           </div>
-        )}
-        <div className="mt-4">
-          <Field label="Observações">
-            <textarea style={{ ...pillInput, height: 72, borderRadius: 22, padding: 14, resize: "none" }} value={obs} onChange={e => setObs(e.target.value)} />
-          </Field>
+          <div className="flex gap-2 mt-4">
+            <button style={primaryBtn} onClick={registrar} disabled={saving || !premioId || (!ganhador && !manual.nome.trim())}>
+              {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+              Registrar Sorteio
+            </button>
+            {ganhador && <button style={ghostBtn} onClick={sortear}><Shuffle size={16} /> Sortear outro</button>}
+          </div>
         </div>
-        <div className="flex gap-2 mt-4">
-          <button style={primaryBtn} onClick={registrar} disabled={saving || !premioId || (!ganhador && !manual.nome.trim())}>
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Registrar Sorteio
-          </button>
-          {ganhador && <button style={ghostBtn} onClick={sortear}><Shuffle size={16} /> Sortear outro</button>}
+      </div>
+
+      {/* Relatório: últimos 6 meses */}
+      <div style={cardStyle}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, margin: 0 }}>
+            Sorteios realizados
+          </h2>
+          <span style={{ fontSize: 11, color: "#64748B", fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>
+            Últimos 6 meses · {relatorio.length}
+          </span>
+        </div>
+        <div style={{ background: "#fff", borderRadius: 16, border: `1px solid ${CYAN}33`, overflow: "hidden" }}>
+          {relatorio.length === 0 ? (
+            <p style={{ fontSize: 12, color: "#94a3b8", textAlign: "center", padding: 24 }}>Nenhum sorteio nos últimos 6 meses.</p>
+          ) : (
+            <div style={{ maxHeight: 360, overflowY: "auto" }}>
+              <table style={{ width: "100%", fontSize: 12, borderCollapse: "collapse" }}>
+                <thead style={{ position: "sticky", top: 0, background: CARD_BG, zIndex: 1 }}>
+                  <tr>
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Data</th>
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Horário</th>
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Programa</th>
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Locutor</th>
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Prêmio</th>
+                    <th style={{ textAlign: "center", padding: "10px 12px", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {relatorio.map((s: any) => {
+                    const isEntregue = !!s.entregue;
+                    const isExpirado = !!s.expirado;
+                    return (
+                      <tr key={s.id} style={{ borderTop: `1px solid ${CYAN}22` }}>
+                        <td style={{ padding: "8px 12px", color: DARK, fontWeight: 600 }}>{fmtDate(s.data_sorteio)}</td>
+                        <td style={{ padding: "8px 12px", color: "#64748B" }}>{fmtTime(s.data_sorteio)}</td>
+                        <td style={{ padding: "8px 12px", color: DARK }}>{getProgramaNome(s)}</td>
+                        <td style={{ padding: "8px 12px", color: DARK }}>{getLocutorNome(s)}</td>
+                        <td style={{ padding: "8px 12px", color: DARK, fontWeight: 600 }}>{premioMap[s.premio_id]?.nome || "—"}</td>
+                        <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                          {isEntregue ? (
+                            <span style={{ background: LIME, color: DARK, borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <Check size={11} /> Entregue
+                            </span>
+                          ) : isExpirado ? (
+                            <span style={{ background: "#FECACA", color: "#991B1B", borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 800 }}>Expirado</span>
+                          ) : (
+                            <span style={{ background: "#FEF3C7", color: "#92400E", borderRadius: 999, padding: "3px 10px", fontSize: 10, fontWeight: 800 }}>Pendente</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 
 
 /* ═════════════════════ ENTREGA ═════════════════════ */
