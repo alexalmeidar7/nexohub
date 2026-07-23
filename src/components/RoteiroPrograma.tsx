@@ -669,23 +669,24 @@ export default function RoteiroPrograma() {
                                     </p>
                                   )}
                                   {(() => {
-                                    const pushed = (r as any).xml_pushed_at ? new Date((r as any).xml_pushed_at) : null;
+                                    const pushedStr = formatLocal((r as any).xml_pushed_at, "full");
+                                    const hasPushed = !!pushedStr;
                                     return (
                                       <div className="flex items-center gap-1.5 flex-wrap" style={{ ...MONT, fontSize: 10, fontWeight: 700 }}>
-                                        <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }} title="Última edição">
-                                          Editado: {upd ? format(upd, "dd/MM/yyyy · HH:mm") : "—"}
+                                        <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }} title="Última edição (fuso local)">
+                                          Editado: {updFull || "—"}
                                         </span>
                                         <span
                                           style={{
                                             padding: "3px 8px",
                                             borderRadius: 999,
-                                            background: pushed ? "#d9ff65" : CARD_BG,
-                                            color: pushed ? "#0f172a" : "#94a3b8",
-                                            border: `1px solid ${pushed ? "#a3e635" : "#cbd5e1"}`,
+                                            background: hasPushed ? "#d9ff65" : CARD_BG,
+                                            color: hasPushed ? "#0f172a" : "#94a3b8",
+                                            border: `1px solid ${hasPushed ? "#a3e635" : "#cbd5e1"}`,
                                           }}
-                                          title="Envio ao XML"
+                                          title="Envio ao XML (fuso local)"
                                         >
-                                          XML: {pushed ? format(pushed, "dd/MM/yyyy · HH:mm") : "não enviado"}
+                                          XML: {hasPushed ? pushedStr : "não enviado"}
                                         </span>
                                       </div>
                                     );
