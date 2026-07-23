@@ -1227,6 +1227,9 @@ export default function VmixPage() {
       persistVmixSnapshot(vmixState);
 
       setConnected(true);
+      // Auto-navigate to main Nexo Control panel (switcher) once connected
+      setActiveTab("controls");
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
       toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
       
