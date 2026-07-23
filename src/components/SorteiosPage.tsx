@@ -217,7 +217,7 @@ export default function SorteiosPage() {
       </div>
 
       {tab === "premios" && <PremiosTab premios={premios} userId={user?.id} onReload={load} />}
-      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} userId={user?.id} />}
+      {tab === "lista" && <ListaPremiosTab premios={premios} programas={programas} userId={user?.id} onStockChanged={load} />}
       {tab === "sorteio" && <SorteioTab premios={premios} ouvintes={ouvintes} sorteios={sorteios} userId={user?.id} onReload={load} onGoTo={setTab} />}
       {tab === "entrega" && <EntregaTab sorteios={sorteios} premios={premios} onReload={load} />}
     </div>
@@ -392,7 +392,7 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
 /* ═════════════════════ LISTA DE PRÊMIOS (drag & drop) ═════════════════════ */
 interface PremioPrograma { id: string; premio_id: string; programa_id: string; quantidade: number; }
 
-function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string }) {
+function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premios: Premio[]; programas: ProgramaLite[]; userId?: string; onStockChanged?: () => void }) {
   const { toast } = useToast();
   const [links, setLinks] = useState<PremioPrograma[]>([]);
   const [loadingLinks, setLoadingLinks] = useState(true);
@@ -467,38 +467,82 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
   const confirmQty = async () => {
     if (!pendingDrop || !userId) return;
     const qty = Math.max(1, parseInt(qtyInput || "1", 10) || 1);
-    setSavingQty(true);
     const { premio, programa, existing } = pendingDrop;
+    const prevQty = existing?.quantidade ?? 0;
+    const delta = qty - prevQty; // >0 debita, <0 devolve
+    if (delta > 0 && (premio.quantidade_estoque ?? 0) < delta) {
+      toast({ title: "Estoque insuficiente", description: `Disponível: ${premio.quantidade_estoque}. Necessário: ${delta}.`, variant: "destructive" });
+      return;
+    }
+    setSavingQty(true);
     const q = existing
       ? supabase.from("sorteio_premio_programas").update({ quantidade: qty }).eq("id", existing.id)
       : supabase.from("sorteio_premio_programas").insert({ user_id: userId, premio_id: premio.id, programa_id: programa.id, quantidade: qty });
     const { error } = await q;
+    if (error) { setSavingQty(false); toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" }); return; }
+    if (delta !== 0) {
+      const novoEstoque = Math.max(0, (premio.quantidade_estoque ?? 0) - delta);
+      const { error: eStock } = await supabase.from("sorteio_premios").update({ quantidade_estoque: novoEstoque }).eq("id", premio.id);
+      if (eStock) { setSavingQty(false); toast({ title: "Erro no estoque", description: eStock.message, variant: "destructive" }); return; }
+    }
     setSavingQty(false);
-    if (error) { toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" }); return; }
-    toast({ title: existing ? "Quantidade atualizada" : "Prêmio vinculado ao programa" });
+    toast({ title: existing ? "Quantidade atualizada" : "Prêmio vinculado ao programa", description: delta > 0 ? `Baixa de ${delta} unidade(s) no estoque` : delta < 0 ? `Devolvido ${Math.abs(delta)} ao estoque` : undefined });
     setPendingDrop(null);
     loadLinks();
+    onStockChanged?.();
   };
 
   const removeLink = async (linkId: string) => {
+    const link = links.find(l => l.id === linkId);
     const { error } = await supabase.from("sorteio_premio_programas").delete().eq("id", linkId);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (link) {
+      const premio = premios.find(p => p.id === link.premio_id);
+      if (premio) {
+        await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + link.quantidade }).eq("id", premio.id);
+      }
+    }
+    toast({ title: "Prêmio removido", description: link ? `Devolvido ${link.quantidade} ao estoque` : undefined });
     loadLinks();
+    onStockChanged?.();
   };
 
   const clearPrograma = async (programa: ProgramaLite) => {
     if (!userId) return;
-    if (!confirm(`Limpar todos os prêmios de "${programa.nome}"?`)) return;
+    if (!confirm(`Limpar todos os prêmios de "${programa.nome}"? As quantidades voltarão ao estoque.`)) return;
+    const toReturn = links.filter(l => l.programa_id === programa.id);
     const { error } = await supabase.from("sorteio_premio_programas").delete().eq("user_id", userId).eq("programa_id", programa.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Lista limpa" });
+    // devolve estoque agregando por prêmio
+    const agg = new Map<string, number>();
+    for (const l of toReturn) agg.set(l.premio_id, (agg.get(l.premio_id) || 0) + l.quantidade);
+    for (const [premioId, qty] of agg) {
+      const premio = premios.find(p => p.id === premioId);
+      if (premio) await supabase.from("sorteio_premios").update({ quantidade_estoque: (premio.quantidade_estoque ?? 0) + qty }).eq("id", premioId);
+    }
+    toast({ title: "Lista limpa", description: toReturn.length ? "Quantidades devolvidas ao estoque" : undefined });
     loadLinks();
+    onStockChanged?.();
   };
 
   const updateQty = async (linkId: string, qty: number) => {
-    const { error } = await supabase.from("sorteio_premio_programas").update({ quantidade: Math.max(1, qty) }).eq("id", linkId);
+    const newQty = Math.max(1, qty);
+    const link = links.find(l => l.id === linkId);
+    if (!link) return;
+    const delta = newQty - link.quantidade;
+    const premio = premios.find(p => p.id === link.premio_id);
+    if (delta > 0 && premio && (premio.quantidade_estoque ?? 0) < delta) {
+      toast({ title: "Estoque insuficiente", description: `Disponível: ${premio.quantidade_estoque}.`, variant: "destructive" });
+      loadLinks();
+      return;
+    }
+    const { error } = await supabase.from("sorteio_premio_programas").update({ quantidade: newQty }).eq("id", linkId);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (delta !== 0 && premio) {
+      await supabase.from("sorteio_premios").update({ quantidade_estoque: Math.max(0, (premio.quantidade_estoque ?? 0) - delta) }).eq("id", premio.id);
+    }
     loadLinks();
+    onStockChanged?.();
   };
 
   return (
