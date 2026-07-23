@@ -817,7 +817,7 @@ export default function BroadcastPage() {
 
 
             <div className="space-y-3">
-              <ProgramaAssuntosPanel activeProgramaId={activeProgramaId} programaNome={programaNome} userId={user?.id} />
+
 
 
 
