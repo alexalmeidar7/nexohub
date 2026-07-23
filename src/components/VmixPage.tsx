@@ -557,6 +557,41 @@ export default function VmixPage() {
     setVmixLogs(prev => [entry, ...prev].slice(0, 200));
   }, []);
 
+  const applyVmixState = useCallback((vmixState: ReturnType<typeof parseVmixXml>) => {
+    setInputs(vmixState.inputs);
+    if (vmixState.active) setActiveInput(vmixState.active);
+    if (vmixState.preview) setPreviewInput(vmixState.preview);
+    if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
+    if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
+    if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+  }, []);
+
+  const persistVmixSnapshot = useCallback(async (vmixState: ReturnType<typeof parseVmixXml>) => {
+    if (!selectedConnectionId) return;
+    const ndiSnapshot = vmixState.inputs.filter(isNdiInput).map(inp => ({
+      key: inp.key,
+      number: inp.number,
+      title: inp.title,
+      type: inp.type,
+      state: inp.state,
+    }));
+
+    await (supabase.from("vmix_connections" as any) as any)
+      .update({
+        last_inputs: vmixState.inputs as any,
+        last_state: {
+          active: vmixState.active,
+          preview: vmixState.preview,
+          streaming: vmixState.streaming,
+          recording: vmixState.recording,
+          overlays: vmixState.overlays,
+        },
+        ndi_sources: ndiSnapshot as any,
+        last_synced_at: new Date().toISOString(),
+      })
+      .eq("id", selectedConnectionId);
+  }, [selectedConnectionId]);
+
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
 
