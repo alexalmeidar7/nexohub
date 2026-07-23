@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, Plus, Shuffle, Check, Radio, Clock, AlertTriangle, History } from "lucide-react";
@@ -428,12 +428,32 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
     return () => clearInterval(i);
   }, [programas]);
 
-  const orderedProgramas = useMemo(() => {
-    if (!onAirId) return programas;
-    const first = programas.find(p => p.id === onAirId);
-    if (!first) return programas;
-    return [first, ...programas.filter(p => p.id !== onAirId)];
-  }, [programas, onAirId]);
+  const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+  const WEEKEND = ["Sábado", "Domingo"];
+  const isWeekend = (p: ProgramaLite) => {
+    const d = p.diasSemana || [];
+    return d.some(x => WEEKEND.includes(x)) && !d.some(x => WEEKDAYS.includes(x));
+  };
+  const groupedProgramas = useMemo(() => {
+    const byTime = (a: ProgramaLite, b: ProgramaLite) => (a.horarioInicio || "").localeCompare(b.horarioInicio || "");
+    const semana = programas.filter(p => !isWeekend(p)).sort(byTime);
+    const fds = programas.filter(p => isWeekend(p)).sort(byTime);
+    return { semana, fds };
+  }, [programas]);
+
+  const onAirRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!onAirId) return;
+    const t = setTimeout(() => {
+      const el = onAirRef.current;
+      const container = scrollContainerRef.current;
+      if (el && container) {
+        container.scrollTo({ top: Math.max(0, el.offsetTop - container.offsetTop - 4), behavior: "smooth" });
+      }
+    }, 120);
+    return () => clearTimeout(t);
+  }, [onAirId, programas.length]);
 
   const loadLinks = async () => {
     if (!userId) return;
@@ -560,89 +580,121 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
             <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum programa cadastrado.</p>
           ) : (
             <div
+              ref={scrollContainerRef}
               className="grid gap-3"
               style={{
                 maxHeight: 3 * 132 + 2 * 12, // ~3 boxes + gaps
                 overflowY: "auto",
-                scrollSnapType: "y mandatory",
                 paddingRight: 6,
               }}
             >
-              {orderedProgramas.map(pg => {
-                const items = linksByPrograma.get(pg.id) || [];
-                const active = dropTarget === pg.id;
-                const isOnAir = pg.id === onAirId;
-                return (
-                  <div
-                    key={pg.id}
-                    onDragOver={e => { e.preventDefault(); setDropTarget(pg.id); }}
-                    onDragLeave={() => setDropTarget(t => (t === pg.id ? null : t))}
-                    onDrop={e => onDropPremio(pg, e)}
-                    style={{
-                      background: "#fff",
-                      borderRadius: 16,
-                      padding: 12,
-                      border: active ? `2px dashed ${LIME}` : isOnAir ? `2px solid ${LIME}` : `1px solid ${CYAN}33`,
-                      boxShadow: active ? `0 0 0 4px ${LIME}55` : isOnAir ? `0 0 0 3px ${LIME}44` : "none",
-                      transition: "all .15s",
-                      scrollSnapAlign: "start",
-                    }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <Radio size={13} color={isOnAir ? LIME : CYAN} />
-                      <div style={{ fontWeight: 800, color: DARK, fontSize: 13, flex: 1 }}>{pg.nome}</div>
-                      {isOnAir && (
-                        <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px" }}>
-                          No ar
-                        </span>
-                      )}
-                      <span style={{ fontSize: 10, color: "#64748B", fontWeight: 700 }}>{items.length} prêmio(s)</span>
+              {(() => {
+                const renderCard = (pg: ProgramaLite) => {
+                  const items = linksByPrograma.get(pg.id) || [];
+                  const active = dropTarget === pg.id;
+                  const isOnAir = pg.id === onAirId;
+                  const horario = (pg.horarioInicio && pg.horarioFim) ? `${pg.horarioInicio}–${pg.horarioFim}` : "";
+                  return (
+                    <div
+                      key={pg.id}
+                      ref={isOnAir ? onAirRef : undefined}
+                      onDragOver={e => { e.preventDefault(); setDropTarget(pg.id); }}
+                      onDragLeave={() => setDropTarget(t => (t === pg.id ? null : t))}
+                      onDrop={e => onDropPremio(pg, e)}
+                      style={{
+                        background: "#fff",
+                        borderRadius: 16,
+                        padding: 12,
+                        border: active ? `2px dashed ${LIME}` : isOnAir ? `2px solid ${LIME}` : `1px solid ${CYAN}33`,
+                        boxShadow: active ? `0 0 0 4px ${LIME}55` : isOnAir ? `0 0 0 3px ${LIME}44` : "none",
+                        transition: "all .15s",
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Radio size={13} color={isOnAir ? LIME : CYAN} />
+                        <div style={{ fontWeight: 800, color: DARK, fontSize: 13, flex: 1, display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pg.nome}</span>
+                          {horario && (
+                            <span style={{ fontSize: 10, fontWeight: 700, color: "#64748B", background: `${CYAN}14`, borderRadius: 999, padding: "2px 8px" }}>
+                              {horario}
+                            </span>
+                          )}
+                        </div>
+                        {isOnAir && (
+                          <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px" }}>
+                            No ar
+                          </span>
+                        )}
+                        <span style={{ fontSize: 10, color: "#64748B", fontWeight: 700 }}>{items.length} prêmio(s)</span>
 
-                      {items.length > 0 && (
-                        <>
-                          <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => setEditingPrograma(pg)}>
-                            <Pencil size={12} /> Editar
-                          </button>
-                          <button
-                            style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
-                            onClick={() => clearPrograma(pg)}
-                          >
-                            <Trash2 size={12} /> Limpar
-                          </button>
-                        </>
+                        {items.length > 0 && (
+                          <>
+                            <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => setEditingPrograma(pg)}>
+                              <Pencil size={12} /> Editar
+                            </button>
+                            <button
+                              style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
+                              onClick={() => clearPrograma(pg)}
+                            >
+                              <Trash2 size={12} /> Limpar
+                            </button>
+                          </>
+                        )}
+                      </div>
+                      {items.length === 0 ? (
+                        <div style={{ fontSize: 11, color: "#94a3b8", padding: "18px 0", textAlign: "center", fontStyle: "italic" }}>
+                          Solte um prêmio aqui
+                        </div>
+                      ) : (
+                        <div className="grid gap-2">
+                          {items.map(l => {
+                            const pr = premioMap[l.premio_id];
+                            if (!pr) return null;
+                            return (
+                              <div key={l.id} className="flex items-center gap-2" style={{ background: CARD_BG, borderRadius: 12, padding: "8px 10px" }}>
+                                {pr.imagem_url ? (
+                                  <img src={pr.imagem_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
+                                ) : (
+                                  <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <Gift size={14} color={CYAN} />
+                                  </div>
+                                )}
+                                <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: DARK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.nome}</div>
+                                <div style={{ background: LIME, color: DARK, borderRadius: 999, padding: "3px 10px", fontSize: 11, fontWeight: 800 }}>×{l.quantidade}</div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-                    {items.length === 0 ? (
-                      <div style={{ fontSize: 11, color: "#94a3b8", padding: "18px 0", textAlign: "center", fontStyle: "italic" }}>
-                        Solte um prêmio aqui
-                      </div>
-                    ) : (
-                      <div className="grid gap-2">
-                        {items.map(l => {
-                          const pr = premioMap[l.premio_id];
-                          if (!pr) return null;
-                          return (
-                            <div key={l.id} className="flex items-center gap-2" style={{ background: CARD_BG, borderRadius: 12, padding: "8px 10px" }}>
-                              {pr.imagem_url ? (
-                                <img src={pr.imagem_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
-                              ) : (
-                                <div style={{ width: 32, height: 32, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                  <Gift size={14} color={CYAN} />
-                                </div>
-                              )}
-                              <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: DARK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.nome}</div>
-                              <div style={{ background: LIME, color: DARK, borderRadius: 999, padding: "3px 10px", fontSize: 11, fontWeight: 800 }}>×{l.quantidade}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
+                  );
+                };
+                const sectionHeader = (label: string) => (
+                  <div style={{ fontSize: 10, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase", color: "#64748B", padding: "4px 2px", position: "sticky", top: 0, background: "#fff", zIndex: 1 }}>
+                    {label}
                   </div>
                 );
-              })}
+                return (
+                  <>
+                    {groupedProgramas.semana.length > 0 && (
+                      <>
+                        {sectionHeader("Segunda a Sexta")}
+                        {groupedProgramas.semana.map(renderCard)}
+                      </>
+                    )}
+                    {groupedProgramas.fds.length > 0 && (
+                      <>
+                        {sectionHeader("Fim de Semana")}
+                        {groupedProgramas.fds.map(renderCard)}
+                      </>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>
+
 
         {/* RIGHT — Prêmios (drag sources) */}
         <div style={cardStyle}>

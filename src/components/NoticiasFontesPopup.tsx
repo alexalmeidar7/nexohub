@@ -875,8 +875,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
   const [loadingSite, setLoadingSite] = useState<Record<string, boolean>>({});
   const [newUrl, setNewUrl] = useState("");
+  const [newName, setNewName] = useState("");
   const [newParentId, setNewParentId] = useState<string>("");
   const [newCategory, setNewCategory] = useState("");
+
   const [adding, setAdding] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -1016,8 +1018,11 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     const parentId = newParentId || null;
     const category = newCategory.trim() || null;
+    const customName = newName.trim();
     let displayName = "";
-    if (parentId) {
+    if (customName) {
+      displayName = customName;
+    } else if (parentId) {
       const parent = sites.find((x) => x.id === parentId);
       displayName = category || (parent ? parent.name : url);
     } else {
@@ -1027,8 +1032,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setAdding(false);
     if (error || !data) { toast.error("Não foi possível adicionar a fonte"); return; }
     setNewUrl("");
+    setNewName("");
     setNewParentId("");
     setNewCategory("");
+
     const s = data as Site;
     setSites((prev) => [...prev, s]);
     if (!activeTab) setActiveTab(s.id);
@@ -1347,6 +1354,18 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                 </button>
               </div>
               <div className="flex items-center gap-2 pl-11">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") addSite(); }}
+                  placeholder="Nome da fonte (opcional — ex.: G1, Metrópoles)"
+                  className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none"
+                  style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
+                />
+              </div>
+              <div className="flex items-center gap-2 pl-11">
+
                 <select
                   value={newParentId}
                   onChange={(e) => setNewParentId(e.target.value)}
@@ -1432,7 +1451,7 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                             {depth > 0 && <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase mr-1.5" style={{ background: `${NEXO_CYAN}22`, color: NEXO_CYAN }}>SUB</span>}
                             {s.name}
                           </p>
-                          <p className="text-[10px] truncate" style={{ color: "rgba(10,37,64,0.55)" }}>{s.rss_url}</p>
+                          
                         </div>
                       )}
                       {isEditing ? (
