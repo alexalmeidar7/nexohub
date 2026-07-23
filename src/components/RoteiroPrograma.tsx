@@ -633,8 +633,8 @@ export default function RoteiroPrograma() {
                               )}
                             </div>
                             {(() => {
-                              const upd = r.updated_at ? new Date(r.updated_at) : null;
-                              const updStr = upd ? format(upd, "dd/MM 'às' HH:mm") : "";
+                              const updStr = formatLocal(r.updated_at, "short");
+                              const updFull = formatLocal(r.updated_at, "full");
                               let parts: any = null;
                               try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
                               const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
