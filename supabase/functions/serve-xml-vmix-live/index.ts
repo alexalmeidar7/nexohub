@@ -186,24 +186,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Capa via iTunes (se ainda não veio do snapshot)
-    if (!capa && titulo && artista) {
-      try {
-        const q = encodeURIComponent(`${artista} ${titulo}`);
-        const r = await fetch(`https://itunes.apple.com/search?term=${q}&limit=1&media=music`);
-        if (r.ok) {
-          const j = await r.json();
-          const art = j?.results?.[0]?.artworkUrl100 || "";
-          if (art) capa = art.replace("100x100", "600x600");
-        }
-      } catch {
-        // ignore
-      }
-    }
+    // Capa via iTunes (se ainda não veio do snapshot) — paralelizado com
+    // Deezer para reduzir latência total do endpoint. vMix pode consultar
+    // este XML a cada 1-2s; qualquer await sequencial extra atrasa a
+    // atualização de "música no ar".
+    const itunesCoverPromise: Promise<string> = (!capa && titulo && artista)
+      ? (async () => {
+          try {
+            const q = encodeURIComponent(`${artista} ${titulo}`);
+            const r = await fetch(`https://itunes.apple.com/search?term=${q}&limit=1&media=music`, {
+              signal: AbortSignal.timeout(2500),
+            });
+            if (!r.ok) return "";
+            const j = await r.json();
+            const art = j?.results?.[0]?.artworkUrl100 || "";
+            return art ? art.replace("100x100", "600x600") : "";
+          } catch {
+            return "";
+          }
+        })()
+      : Promise.resolve("");
 
-
-    // Imagem do artista no Deezer
-    const artistaImg = await fetchDeezerArtistImage(artista);
+    const [itunesCover, artistaImg] = await Promise.all([
+      itunesCoverPromise,
+      fetchDeezerArtistImage(artista),
+    ]);
+    if (!capa && itunesCover) capa = itunesCover;
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <vmix_live>
