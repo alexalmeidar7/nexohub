@@ -512,7 +512,7 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
   const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
@@ -544,7 +544,7 @@ export default function VmixPage() {
   const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
-  const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+  const [monitorsCollapsed, setMonitorsCollapsed] = useState(false);
   const [showStudioSelector, setShowStudioSelector] = useState(false);
 
   // Command log panel
@@ -1928,6 +1928,16 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={hlsUrl} className={className} />;
     }
+
+    // vMix already renders NDI inputs in its own MJPEG endpoint, so the control
+    // panel can show NDI sources in motion without a separate HLS bridge.
+    if (isNdi && savedUrl) {
+      const ndiStreamUrl = `${normalizeVmixBaseUrl(savedUrl)}/mjpeg?Input=${encodeURIComponent(inputNumber)}`;
+      if (!isMixedContentBlockedByPage(ndiStreamUrl)) {
+        return <MjpegPlayer src={ndiStreamUrl} className={className} />;
+      }
+    }
+
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
@@ -2393,9 +2403,14 @@ export default function VmixPage() {
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   const tabs = [
-    { key: "controls" as const, label: "Inputs", icon: <Layers size={13} /> },
-    { key: "scenes" as const, label: "Cenas", icon: <Wand2 size={13} /> },
+    { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
+    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
+    { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
+
+  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
+  const activeTitle = activeInputObj?.title || "Sem programa";
+  const previewTitle = previewInputObj?.title || "Sem preview";
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
