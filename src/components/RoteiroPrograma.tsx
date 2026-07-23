@@ -21,6 +21,22 @@ const CARD_BG = "#D6F4FB";
 const DARK = "#0A2540";
 const MONT: React.CSSProperties = { fontFamily: "'Montserrat', sans-serif" };
 
+// Formata timestamp UTC do banco no fuso local do usuário (respeita DST automaticamente).
+const LOCAL_TZ = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : undefined;
+function formatLocal(iso: string | null | undefined, pattern: "full" | "short" = "full"): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const opts: Intl.DateTimeFormatOptions =
+    pattern === "full"
+      ? { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: LOCAL_TZ }
+      : { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false, timeZone: LOCAL_TZ };
+  const parts = new Intl.DateTimeFormat("pt-BR", opts).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  if (pattern === "short") return `${get("day")}/${get("month")} às ${get("hour")}:${get("minute")}`;
+  return `${get("day")}/${get("month")}/${get("year")} · ${get("hour")}:${get("minute")}`;
+}
+
 interface Programa {
   id: string;
   nome: string;
@@ -617,8 +633,8 @@ export default function RoteiroPrograma() {
                               )}
                             </div>
                             {(() => {
-                              const upd = r.updated_at ? new Date(r.updated_at) : null;
-                              const updStr = upd ? format(upd, "dd/MM 'às' HH:mm") : "";
+                              const updStr = formatLocal(r.updated_at, "short");
+                              const updFull = formatLocal(r.updated_at, "full");
                               let parts: any = null;
                               try { let raw = r.participantes; if (typeof raw === "string") raw = JSON.parse(raw); if (typeof raw === "string") raw = JSON.parse(raw); parts = raw; } catch { parts = {}; }
                               const parsed = Array.isArray(parts) ? { blocos: [], participantes: parts } : (parts || {});
@@ -653,23 +669,24 @@ export default function RoteiroPrograma() {
                                     </p>
                                   )}
                                   {(() => {
-                                    const pushed = (r as any).xml_pushed_at ? new Date((r as any).xml_pushed_at) : null;
+                                    const pushedStr = formatLocal((r as any).xml_pushed_at, "full");
+                                    const hasPushed = !!pushedStr;
                                     return (
                                       <div className="flex items-center gap-1.5 flex-wrap" style={{ ...MONT, fontSize: 10, fontWeight: 700 }}>
-                                        <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }} title="Última edição">
-                                          Editado: {upd ? format(upd, "dd/MM/yyyy · HH:mm") : "—"}
+                                        <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }} title="Última edição (fuso local)">
+                                          Editado: {updFull || "—"}
                                         </span>
                                         <span
                                           style={{
                                             padding: "3px 8px",
                                             borderRadius: 999,
-                                            background: pushed ? "#d9ff65" : CARD_BG,
-                                            color: pushed ? "#0f172a" : "#94a3b8",
-                                            border: `1px solid ${pushed ? "#a3e635" : "#cbd5e1"}`,
+                                            background: hasPushed ? "#d9ff65" : CARD_BG,
+                                            color: hasPushed ? "#0f172a" : "#94a3b8",
+                                            border: `1px solid ${hasPushed ? "#a3e635" : "#cbd5e1"}`,
                                           }}
-                                          title="Envio ao XML"
+                                          title="Envio ao XML (fuso local)"
                                         >
-                                          XML: {pushed ? format(pushed, "dd/MM/yyyy · HH:mm") : "não enviado"}
+                                          XML: {hasPushed ? pushedStr : "não enviado"}
                                         </span>
                                       </div>
                                     );
