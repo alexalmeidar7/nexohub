@@ -91,6 +91,7 @@ export default function BroadcastPage() {
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
+  const [activeTab, setActiveTab] = useState<"preview" | "ticker" | "assuntos" | "xml">("preview");
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
   // Ticker auto-content
