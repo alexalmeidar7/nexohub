@@ -1345,7 +1345,9 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
                       await supabase.from("roteiros").update({
                         participantes: blocosJson,
                         tickertitulos: "",
+                        updated_at: new Date().toISOString(),
                       } as any).eq("id", editingId);
+
                     } catch (e) { console.error("Erro ao limpar notícias:", e); }
                   }
                   toast.success("Notícias e manchetes removidas");
