@@ -770,7 +770,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
     fetchXml();
-    fetchIntervalRef.current = setInterval(fetchXml, 5000);
+    fetchIntervalRef.current = setInterval(fetchXml, 2500);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, hasValidOnlineUrl, isOnlineSelected]);
 
