@@ -770,7 +770,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   useEffect(() => {
     if (!isOnlineSelected || !hasValidOnlineUrl) return;
     fetchXml();
-    fetchIntervalRef.current = setInterval(fetchXml, 5000);
+    fetchIntervalRef.current = setInterval(fetchXml, 2500);
     return () => { if (fetchIntervalRef.current) clearInterval(fetchIntervalRef.current); };
   }, [fetchXml, hasValidOnlineUrl, isOnlineSelected]);
 
@@ -974,7 +974,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
     const handler = (e: MessageEvent) => { if (e.data.id === "localPoll") readLocalFile(); };
     worker.addEventListener("message", handler);
-    worker.postMessage({ cmd: "start", id: "localPoll", interval: 3000 });
+    worker.postMessage({ cmd: "start", id: "localPoll", interval: 1500 });
     return () => {
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "localPoll" });
@@ -1023,7 +1023,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
     const handler = (e: MessageEvent) => { if (e.data.id === "storagePoll") pollStorage(); };
     worker.addEventListener("message", handler);
-    worker.postMessage({ cmd: "start", id: "storagePoll", interval: 3000 });
+    worker.postMessage({ cmd: "start", id: "storagePoll", interval: 2000 });
     return () => {
       worker.removeEventListener("message", handler);
       worker.postMessage({ cmd: "stop", id: "storagePoll" });
