@@ -188,6 +188,7 @@ const pageTitle: Record<Page, string> = {
   quiz: "vMix — Quiz",
   site: "Site",
   sorteios: "Sorteios",
+  blitz: "Blitz Promocionais",
 };
 
 interface DashboardProps {
