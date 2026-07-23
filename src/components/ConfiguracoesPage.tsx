@@ -271,6 +271,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         facebook_subs: toBigInt(newConfig.facebookSubs),
         youtube_subs: toBigInt(newConfig.youtubeSubs),
         video_stream_api_url: newConfig.videoStreamApiUrl || "",
+        timezone: newConfig.timezone || "America/Sao_Paulo",
         updated_at: new Date().toISOString(),
       } as any, { onConflict: "user_id" });
     }, 500);
