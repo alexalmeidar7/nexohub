@@ -490,18 +490,27 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
     const { premio, programa, existing } = pendingDrop;
     const prevQty = existing?.quantidade ?? 0;
     const delta = qty - prevQty; // >0 debita, <0 devolve
-    if (delta > 0 && (premio.quantidade_estoque ?? 0) < delta) {
-      toast({ title: "Estoque insuficiente", description: `Disponível: ${premio.quantidade_estoque}. Necessário: ${delta}.`, variant: "destructive" });
+    setSavingQty(true);
+    // Ler estoque atual do banco para evitar estado obsoleto
+    const { data: fresh, error: eRead } = await supabase
+      .from("sorteio_premios")
+      .select("quantidade_estoque")
+      .eq("id", premio.id)
+      .maybeSingle();
+    if (eRead) { setSavingQty(false); toast({ title: "Erro ao ler estoque", description: eRead.message, variant: "destructive" }); return; }
+    const estoqueAtual = fresh?.quantidade_estoque ?? 0;
+    if (delta > 0 && estoqueAtual < delta) {
+      setSavingQty(false);
+      toast({ title: "Estoque insuficiente", description: `Disponível: ${estoqueAtual}. Necessário: ${delta}.`, variant: "destructive" });
       return;
     }
-    setSavingQty(true);
     const q = existing
       ? supabase.from("sorteio_premio_programas").update({ quantidade: qty }).eq("id", existing.id)
       : supabase.from("sorteio_premio_programas").insert({ user_id: userId, premio_id: premio.id, programa_id: programa.id, quantidade: qty });
     const { error } = await q;
     if (error) { setSavingQty(false); toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" }); return; }
     if (delta !== 0) {
-      const novoEstoque = Math.max(0, (premio.quantidade_estoque ?? 0) - delta);
+      const novoEstoque = Math.max(0, estoqueAtual - delta);
       const { error: eStock } = await supabase.from("sorteio_premios").update({ quantidade_estoque: novoEstoque }).eq("id", premio.id);
       if (eStock) { setSavingQty(false); toast({ title: "Erro no estoque", description: eStock.message, variant: "destructive" }); return; }
     }
