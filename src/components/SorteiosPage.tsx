@@ -119,7 +119,17 @@ interface Ouvinte {
   pontuacao: number | null;
 }
 
-interface ProgramaLite { id: string; nome: string; }
+interface ProgramaLite {
+  id: string;
+  nome: string;
+  apresentadorId?: string;
+  selo?: string;
+  diasSemana?: string[];
+  horarioInicio?: string;
+  horarioFim?: string;
+  estudio?: string;
+  classificacaoEtaria?: string;
+}
 
 type Tab = "premios" | "lista" | "sorteio" | "entrega";
 
@@ -144,14 +154,24 @@ export default function SorteiosPage() {
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
-      supabase.from("programas").select("id, nome").ilike("estudio", "%fm%").order("nome"),
+      supabase.from("programas").select("*").ilike("estudio", "%fm%").order("nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
     if (s.error) toast({ title: "Erro ao carregar sorteios", description: s.error.message, variant: "destructive" });
     else setSorteios((s.data as any) || []);
     if (!o.error) setOuvintes((o.data as any) || []);
-    if (!pr.error) setProgramas((pr.data as any) || []);
+    if (!pr.error) setProgramas(((pr.data as any) || []).map((x: any) => ({
+      id: x.id,
+      nome: x.nome,
+      apresentadorId: x.apresentador_id || "",
+      selo: x.selo || "",
+      diasSemana: x.dias_semana || [],
+      horarioInicio: x.horario_inicio,
+      horarioFim: x.horario_fim,
+      estudio: x.estudio || "",
+      classificacaoEtaria: x.classificacao_etaria || "",
+    })));
     setLoading(false);
   };
 
@@ -384,6 +404,37 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
+  // On-air detection + ordering (on-air first). Refresh every 60s.
+  const [onAirId, setOnAirId] = useState<string | null>(null);
+  useEffect(() => {
+    const compute = () => {
+      try {
+        const cur = findCurrentProgram(programas.map(p => ({
+          id: p.id,
+          nome: p.nome,
+          apresentadorId: p.apresentadorId || "",
+          selo: p.selo || "",
+          diasSemana: p.diasSemana || [],
+          horarioInicio: p.horarioInicio,
+          horarioFim: p.horarioFim,
+          estudio: p.estudio || "",
+          classificacaoEtaria: p.classificacaoEtaria || "",
+        }) as any));
+        setOnAirId(cur?.programa?.id || null);
+      } catch { setOnAirId(null); }
+    };
+    compute();
+    const i = setInterval(compute, 60000);
+    return () => clearInterval(i);
+  }, [programas]);
+
+  const orderedProgramas = useMemo(() => {
+    if (!onAirId) return programas;
+    const first = programas.find(p => p.id === onAirId);
+    if (!first) return programas;
+    return [first, ...programas.filter(p => p.id !== onAirId)];
+  }, [programas, onAirId]);
+
   const loadLinks = async () => {
     if (!userId) return;
     setLoadingLinks(true);
@@ -458,14 +509,25 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
           <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 4 }}>
             Programas
           </h2>
-          <p style={{ fontSize: 11, color: "#64748B", marginBottom: 16 }}>Arraste um prêmio para dentro do programa.</p>
+          <p style={{ fontSize: 11, color: "#64748B", marginBottom: 16 }}>
+            Arraste um prêmio para dentro do programa. Use o scroll do mouse para navegar.
+          </p>
           {programas.length === 0 ? (
             <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum programa cadastrado.</p>
           ) : (
-            <div className="grid gap-3">
-              {programas.map(pg => {
+            <div
+              className="grid gap-3"
+              style={{
+                maxHeight: 3 * 132 + 2 * 12, // ~3 boxes + gaps
+                overflowY: "auto",
+                scrollSnapType: "y mandatory",
+                paddingRight: 6,
+              }}
+            >
+              {orderedProgramas.map(pg => {
                 const items = linksByPrograma.get(pg.id) || [];
                 const active = dropTarget === pg.id;
+                const isOnAir = pg.id === onAirId;
                 return (
                   <div
                     key={pg.id}
@@ -476,15 +538,22 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
                       background: "#fff",
                       borderRadius: 16,
                       padding: 12,
-                      border: active ? `2px dashed ${LIME}` : `1px solid ${CYAN}33`,
-                      boxShadow: active ? `0 0 0 4px ${LIME}55` : "none",
+                      border: active ? `2px dashed ${LIME}` : isOnAir ? `2px solid ${LIME}` : `1px solid ${CYAN}33`,
+                      boxShadow: active ? `0 0 0 4px ${LIME}55` : isOnAir ? `0 0 0 3px ${LIME}44` : "none",
                       transition: "all .15s",
+                      scrollSnapAlign: "start",
                     }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <Radio size={13} color={CYAN} />
+                      <Radio size={13} color={isOnAir ? LIME : CYAN} />
                       <div style={{ fontWeight: 800, color: DARK, fontSize: 13, flex: 1 }}>{pg.nome}</div>
+                      {isOnAir && (
+                        <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px" }}>
+                          No ar
+                        </span>
+                      )}
                       <span style={{ fontSize: 10, color: "#64748B", fontWeight: 700 }}>{items.length} prêmio(s)</span>
+
                       {items.length > 0 && (
                         <>
                           <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => setEditingPrograma(pg)}>
