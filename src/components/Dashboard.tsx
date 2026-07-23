@@ -26,6 +26,7 @@ import { AnimatedFlyout } from "@/components/AnimatedFlyout";
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
 const OuvintesPage = lazy(() => import("./OuvintesPage"));
 const SorteiosPage = lazy(() => import("./SorteiosPage"));
+const BlitzPage = lazy(() => import("./BlitzPage"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
