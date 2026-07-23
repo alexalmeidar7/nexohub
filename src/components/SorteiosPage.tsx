@@ -635,20 +635,6 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                           </span>
                         )}
                         <span style={{ fontSize: 10, color: "#64748B", fontWeight: 700 }}>{items.length} prêmio(s)</span>
-
-                        {items.length > 0 && (
-                          <>
-                            <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => setEditingPrograma(pg)}>
-                              <Pencil size={12} /> Editar
-                            </button>
-                            <button
-                              style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
-                              onClick={() => clearPrograma(pg)}
-                            >
-                              <Trash2 size={12} /> Limpar
-                            </button>
-                          </>
-                        )}
                       </div>
                       {items.length === 0 ? (
                         <div style={{ fontSize: 11, color: "#94a3b8", padding: "18px 0", textAlign: "center", fontStyle: "italic" }}>
@@ -670,6 +656,29 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                                 )}
                                 <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: DARK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{pr.nome}</div>
                                 <div style={{ background: LIME, color: DARK, borderRadius: 999, padding: "3px 10px", fontSize: 11, fontWeight: 800 }}>×{l.quantidade}</div>
+                                <button
+                                  title="Editar quantidade"
+                                  style={{ ...ghostBtn, height: 26, padding: "0 8px", fontSize: 10 }}
+                                  onClick={() => {
+                                    const raw = window.prompt(`Nova quantidade para "${pr.nome}":`, String(l.quantidade));
+                                    if (raw == null) return;
+                                    const n = parseInt(raw, 10);
+                                    if (!Number.isFinite(n) || n < 1) { toast({ title: "Quantidade inválida", variant: "destructive" }); return; }
+                                    updateQty(l.id, n);
+                                  }}
+                                >
+                                  <Pencil size={11} /> Editar
+                                </button>
+                                <button
+                                  title="Remover prêmio"
+                                  style={{ ...ghostBtn, height: 26, padding: "0 8px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
+                                  onClick={() => {
+                                    if (!confirm(`Remover "${pr.nome}" deste programa? A quantidade voltará ao estoque.`)) return;
+                                    removeLink(l.id);
+                                  }}
+                                >
+                                  <Trash2 size={11} /> Limpar
+                                </button>
                               </div>
                             );
                           })}
