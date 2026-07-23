@@ -1018,8 +1018,11 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
     const parentId = newParentId || null;
     const category = newCategory.trim() || null;
+    const customName = newName.trim();
     let displayName = "";
-    if (parentId) {
+    if (customName) {
+      displayName = customName;
+    } else if (parentId) {
       const parent = sites.find((x) => x.id === parentId);
       displayName = category || (parent ? parent.name : url);
     } else {
@@ -1029,8 +1032,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
     setAdding(false);
     if (error || !data) { toast.error("Não foi possível adicionar a fonte"); return; }
     setNewUrl("");
+    setNewName("");
     setNewParentId("");
     setNewCategory("");
+
     const s = data as Site;
     setSites((prev) => [...prev, s]);
     if (!activeTab) setActiveTab(s.id);
