@@ -1363,8 +1363,9 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
                   className="flex-1 h-9 px-3 rounded-lg text-[11px] outline-none"
                   style={{ background: "#F5FAFC", border: `1px solid ${NEXO_CYAN}44`, color: NEXO_DARK }}
                 />
-
+              </div>
               <div className="flex items-center gap-2 pl-11">
+
                 <select
                   value={newParentId}
                   onChange={(e) => setNewParentId(e.target.value)}
