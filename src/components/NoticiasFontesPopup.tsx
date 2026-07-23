@@ -875,8 +875,10 @@ export default function NoticiasFontesPopup({ open, onOpenChange, blocosCount = 
   const [newsBySite, setNewsBySite] = useState<Record<string, NewsItem[]>>({});
   const [loadingSite, setLoadingSite] = useState<Record<string, boolean>>({});
   const [newUrl, setNewUrl] = useState("");
+  const [newName, setNewName] = useState("");
   const [newParentId, setNewParentId] = useState<string>("");
   const [newCategory, setNewCategory] = useState("");
+
   const [adding, setAdding] = useState(false);
   const [initialLoading, setInitialLoading] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
