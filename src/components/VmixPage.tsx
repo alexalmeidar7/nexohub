@@ -2706,16 +2706,21 @@ export default function VmixPage() {
 
       {/* ── Preview / Transitions / Output ── */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
-        <button
-          onClick={() => setMonitorsCollapsed(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-2 transition-colors hover:brightness-110"
+        <div
+          className="w-full flex items-center justify-between gap-3 px-4 py-2"
           style={{ backgroundColor: "#18181c", borderBottom: monitorsCollapsed ? "none" : "1px solid #ffffff08" }}
         >
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-            🖥 Monitores Preview / Output
-          </span>
-          <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
-        </button>
+          <button
+            onClick={() => setMonitorsCollapsed(prev => !prev)}
+            className="flex items-center gap-2 transition-colors hover:brightness-110"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
+              🖥 Monitores Preview / Output
+            </span>
+            <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
+          </button>
+          <StatusPill />
+        </div>
         {!monitorsCollapsed && (
         <div className="flex items-stretch gap-[1px]">
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
