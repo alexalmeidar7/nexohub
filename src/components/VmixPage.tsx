@@ -807,8 +807,13 @@ export default function VmixPage() {
       if (connections && connections.length > 0) {
         setVmixConnections(connections);
         
-        // Try to find default or most recent
-        const def = (connections as any[]).find((c: any) => c.is_default) || connections[0];
+        // Prefer last-active connection from localStorage, then is_default, then most recent
+        let lastActiveId: string | null = null;
+        try { lastActiveId = localStorage.getItem(`vmix_active_conn_${user.id}`); } catch {}
+        const def =
+          (lastActiveId && (connections as any[]).find((c: any) => c.id === lastActiveId)) ||
+          (connections as any[]).find((c: any) => c.is_default) ||
+          connections[0];
         setSelectedConnectionId(def.id);
         setVmixUrl(def.url);
         setSavedUrl(def.url);
@@ -859,6 +864,21 @@ export default function VmixPage() {
     if (data) setVmixConnections(data);
   };
 
+  // Persist the active connection so it auto-applies on every future visit
+  const persistActiveConnection = useCallback(async (connId: string) => {
+    if (!user || !connId) return;
+    try { localStorage.setItem(`vmix_active_conn_${user.id}`, connId); } catch {}
+    try {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: false })
+        .eq("user_id", user.id)
+        .neq("id", connId);
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: true })
+        .eq("id", connId);
+    } catch {}
+  }, [user]);
+
   const handleSelectConnection = (conn: any) => {
     setSelectedConnectionId(conn.id);
     setVmixUrl(conn.url);
@@ -873,6 +893,7 @@ export default function VmixPage() {
       if (Array.isArray(conn.ndi_sources)) setNdiSources(conn.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
     }
     setConnected(false);
+    persistActiveConnection(conn.id);
     // Auto connect when switching
     setTimeout(() => connectToVmix(), 300);
   };
@@ -1233,6 +1254,7 @@ export default function VmixPage() {
       persistVmixSnapshot(vmixState);
 
       setConnected(true);
+      if (selectedConnectionId) persistActiveConnection(selectedConnectionId);
       // Auto-navigate to main Nexo Control panel (switcher) once connected
       setActiveTab("controls");
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
@@ -1265,7 +1287,7 @@ export default function VmixPage() {
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, selectedConnectionId, persistActiveConnection]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
