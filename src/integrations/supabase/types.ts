@@ -2099,6 +2099,48 @@ export type Database = {
           },
         ]
       }
+      sorteio_premio_programas: {
+        Row: {
+          created_at: string
+          id: string
+          premio_id: string
+          programa_id: string
+          quantidade: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          premio_id: string
+          programa_id: string
+          quantidade?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          premio_id?: string
+          programa_id?: string
+          quantidade?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_premio_programas_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_premios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_premio_programas_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sorteio_premios: {
         Row: {
           ativo: boolean
