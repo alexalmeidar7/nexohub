@@ -111,7 +111,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Globe, label: "site", page: "site" },
       { icon: MonitorPlay, label: "player", page: undefined as unknown as Page, children: [
         { icon: Settings, label: "configurações", page: "playerconfig" },
-        { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+        { icon: ExternalLink, label: "módulo player", page: undefined as unknown as Page },
       ] },
     ]
   },
