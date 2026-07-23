@@ -715,13 +715,19 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
             <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum prêmio cadastrado.</p>
           ) : (
             <div className="grid gap-2">
-              {premios.map(p => (
+              {premios.map(p => {
+                const semEstoque = (p.quantidade_estoque ?? 0) <= 0;
+                return (
                 <div
                   key={p.id}
-                  draggable
-                  onDragStart={e => { e.dataTransfer.setData("text/premio-id", p.id); e.dataTransfer.effectAllowed = "copy"; }}
+                  draggable={!semEstoque}
+                  onDragStart={e => {
+                    if (semEstoque) { e.preventDefault(); return; }
+                    e.dataTransfer.setData("text/premio-id", p.id);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
                   className="flex items-center gap-3"
-                  style={{ background: "#fff", borderRadius: 14, padding: 10, border: `1px solid ${CYAN}33`, cursor: "grab" }}
+                  style={{ background: "#fff", borderRadius: 14, padding: 10, border: `1px solid ${CYAN}33`, cursor: semEstoque ? "not-allowed" : "grab", position: "relative", overflow: "hidden", opacity: semEstoque ? 0.55 : 1 }}
                 >
                   {p.imagem_url ? (
                     <img src={p.imagem_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
@@ -735,8 +741,14 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                     <div style={{ fontSize: 10, color: "#64748B" }}>Estoque: {p.quantidade_estoque} · Validade: {p.dias_validade ?? 7}d</div>
                   </div>
                   <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>arraste</div>
+                  {semEstoque && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(239,68,68,0.92)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", borderRadius: 14 }}>
+                      Sem estoque no momento
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {loadingLinks && <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 12 }}>Carregando vínculos…</p>}
