@@ -143,6 +143,7 @@ export default function SorteiosPage() {
   const [sorteios, setSorteios] = useState<Sorteio[]>([]);
   const [ouvintes, setOuvintes] = useState<Ouvinte[]>([]);
   const [programas, setProgramas] = useState<ProgramaLite[]>([]);
+  const [apresentadores, setApresentadores] = useState<Array<{ id: string; nome: string }>>([]);
 
   const refreshPremios = async () => {
     const { data, error } = await supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false });
@@ -155,11 +156,12 @@ export default function SorteiosPage() {
     if (user?.id) {
       await supabase.rpc("expire_overdue_sorteios", { _user_id: user.id });
     }
-    const [p, s, o, pr] = await Promise.all([
+    const [p, s, o, pr, ap] = await Promise.all([
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
       supabase.from("programas").select("*").ilike("estudio", "%fm%").order("nome"),
+      supabase.from("apresentadores").select("id, nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
@@ -177,6 +179,7 @@ export default function SorteiosPage() {
       estudio: x.estudio || "",
       classificacaoEtaria: x.classificacao_etaria || "",
     })));
+    if (!ap.error) setApresentadores((ap.data as any) || []);
     setLoading(false);
   };
 
