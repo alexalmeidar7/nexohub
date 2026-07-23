@@ -2575,19 +2575,10 @@ export default function VmixPage() {
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="h-11 px-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
+            <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
               <div className="w-px h-5 bg-white/10" />
-              <div className="flex items-center gap-2">
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    backgroundColor: connected ? "#22c55e" : "#ef4444",
-                    boxShadow: connected ? "0 0 12px rgba(34,197,94,0.7)" : "0 0 12px rgba(239,68,68,0.55)",
-                  }}
-                />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">{connected ? "Online" : "Offline"}</span>
-              </div>
+              <StatusPill />
             </div>
 
             {connected && selectedConnectionId ? (
