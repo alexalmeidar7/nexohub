@@ -505,7 +505,7 @@ export default function RoteiroPrograma() {
             >
               <History size={14} style={{ color: CYAN }} />
               <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
-                Últimos Roteiros
+                Roteiros cadastrados
               </span>
               {historicoOpen
                 ? <ChevronUp size={14} style={{ color: CYAN }} />
@@ -654,7 +654,7 @@ export default function RoteiroPrograma() {
                                   )}
                                   <div className="flex items-center gap-1.5" style={{ ...MONT, fontSize: 10, fontWeight: 700 }}>
                                     <span style={{ padding: "3px 8px", borderRadius: 999, background: CARD_BG, color: DARK, border: `1px solid ${CYAN}` }}>
-                                      XML: {dataFormatada}{r.horario ? ` · ${r.horario}` : ""}
+                                      XML: {upd ? format(upd, "dd/MM/yyyy · HH:mm") : "—"}
                                     </span>
                                   </div>
                                 </>
