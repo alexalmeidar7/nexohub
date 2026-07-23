@@ -2877,27 +2877,8 @@ export default function VmixPage() {
         )}
       </div>
 
-
-      {/* ── Tab Bar ── */}
-      <div className="flex rounded-t-xl overflow-hidden" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff06" }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
-            style={{
-              color: activeTab === tab.key ? "#fff" : "#555",
-              backgroundColor: activeTab === tab.key ? "#222228" : "transparent",
-            }}
-          >
-            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: "#dc2626" }} />}
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-5 space-y-4" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
+      <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
