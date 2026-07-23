@@ -111,7 +111,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Globe, label: "site", page: "site" },
       { icon: MonitorPlay, label: "player", page: undefined as unknown as Page, children: [
         { icon: Settings, label: "configurações", page: "playerconfig" },
-        { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+        { icon: ExternalLink, label: "módulo player", page: undefined as unknown as Page },
       ] },
     ]
   },
@@ -625,7 +625,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
     const masterEmail = parentEmail || user?.email || "";
     const masterSlug = masterEmail.includes("@") ? masterEmail.split("@")[0].toLowerCase() : (effectiveUserId || user?.id || "");
-    if (parentLabel === "player" && child.label === "módulo externo") {
+    if (parentLabel === "player" && child.label === "módulo player") {
       const url = masterSlug ? `/${masterSlug}/player` : "/player";
       window.open(url, "_blank");
       setHoveredMenu(null);
