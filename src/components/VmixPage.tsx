@@ -188,6 +188,36 @@ function validateVmixParts(protocol: string, host: string, port: string): string
   return null;
 }
 
+function buildNdiSuggestions(machines: string[]): string[] {
+  const suggestions: string[] = [];
+  for (const machine of machines.map(m => m.trim()).filter(Boolean)) {
+    suggestions.push(
+      `${machine} (vMix - Output 1)`,
+      `${machine} (vMix - Output 2)`,
+      `${machine} (vMix - Output 3)`,
+      `${machine} (vMix - Output 4)`,
+      `${machine} (vMix Video)`,
+      `${machine} (vMix Audio - Master)`,
+      `${machine} (vMix Audio - Headphones)`,
+      `${machine} (Screen 1)`,
+      `${machine} (Screen 2)`,
+    );
+  }
+  return Array.from(new Set(suggestions));
+}
+
+function extractNdiMachinesFromInputs(vmixInputs: VmixInput[]): string[] {
+  const machines = new Set<string>();
+  vmixInputs.forEach(inp => {
+    if (isNdiInput(inp)) {
+      const title = inp.title || "";
+      const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
+      if (match?.[1] && match[1].length > 2) machines.add(match[1]);
+    }
+  });
+  return Array.from(machines);
+}
+
 function vmixTagText(xml: Document, tagName: string): string | null {
   return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
 }
@@ -512,7 +542,7 @@ export default function VmixPage() {
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
   const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
@@ -544,7 +574,7 @@ export default function VmixPage() {
   const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
-  const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+  const [monitorsCollapsed, setMonitorsCollapsed] = useState(false);
   const [showStudioSelector, setShowStudioSelector] = useState(false);
 
   // Command log panel
@@ -556,6 +586,41 @@ export default function VmixPage() {
     const entry: VmixLogEntry = { id: ++logIdRef.current, time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }), command, status, detail, source };
     setVmixLogs(prev => [entry, ...prev].slice(0, 200));
   }, []);
+
+  const applyVmixState = useCallback((vmixState: ReturnType<typeof parseVmixXml>) => {
+    setInputs(vmixState.inputs);
+    if (vmixState.active) setActiveInput(vmixState.active);
+    if (vmixState.preview) setPreviewInput(vmixState.preview);
+    if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
+    if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
+    if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+  }, []);
+
+  const persistVmixSnapshot = useCallback(async (vmixState: ReturnType<typeof parseVmixXml>) => {
+    if (!selectedConnectionId) return;
+    const ndiSnapshot = vmixState.inputs.filter(isNdiInput).map(inp => ({
+      key: inp.key,
+      number: inp.number,
+      title: inp.title,
+      type: inp.type,
+      state: inp.state,
+    }));
+
+    await (supabase.from("vmix_connections" as any) as any)
+      .update({
+        last_inputs: vmixState.inputs as any,
+        last_state: {
+          active: vmixState.active,
+          preview: vmixState.preview,
+          streaming: vmixState.streaming,
+          recording: vmixState.recording,
+          overlays: vmixState.overlays,
+        },
+        ndi_sources: ndiSnapshot as any,
+        last_synced_at: new Date().toISOString(),
+      })
+      .eq("id", selectedConnectionId);
+  }, [selectedConnectionId]);
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -750,6 +815,12 @@ export default function VmixPage() {
         setVmixUser(def.username || "");
         setVmixPass(def.password || "");
         setStudioName(def.name);
+        if (Array.isArray(def.last_inputs) && def.last_inputs.length > 0) {
+          setInputs(def.last_inputs as VmixInput[]);
+          if (def.last_state?.active) setActiveInput(def.last_state.active);
+          if (def.last_state?.preview) setPreviewInput(def.last_state.preview);
+          if (Array.isArray(def.ndi_sources)) setNdiSources(def.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+        }
         
         setLoading(false);
         
@@ -795,6 +866,12 @@ export default function VmixPage() {
     setVmixUser(conn.username || "");
     setVmixPass(conn.password || "");
     setStudioName(conn.name);
+    if (Array.isArray(conn.last_inputs) && conn.last_inputs.length > 0) {
+      setInputs(conn.last_inputs as VmixInput[]);
+      if (conn.last_state?.active) setActiveInput(conn.last_state.active);
+      if (conn.last_state?.preview) setPreviewInput(conn.last_state.preview);
+      if (Array.isArray(conn.ndi_sources)) setNdiSources(conn.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+    }
     setConnected(false);
     // Auto connect when switching
     setTimeout(() => connectToVmix(), 300);
@@ -969,7 +1046,7 @@ export default function VmixPage() {
   // Proxy fetch via Edge Function (browser → cloud → vMix)
   const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
-      body: { path },
+      body: { path, connectionId: selectedConnectionId },
     });
 
     if (error) {
@@ -989,7 +1066,7 @@ export default function VmixPage() {
     if (data instanceof Blob) return await data.text();
     if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
     return typeof data === "object" ? JSON.stringify(data) : String(data);
-  }, []);
+  }, [selectedConnectionId]);
 
   // Unified fetch that uses the selected mode (or an explicit override)
   const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
@@ -1146,13 +1223,8 @@ export default function VmixPage() {
       const xmlText = await vmixFetch("/api/", effectiveMode);
       const vmixState = parseVmixXml(xmlText);
       const parsedInputs = vmixState.inputs;
-      setInputs(parsedInputs);
-
-      if (vmixState.active) setActiveInput(vmixState.active);
-      if (vmixState.preview) setPreviewInput(vmixState.preview);
-      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
-      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
-      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
 
       setConnected(true);
       const inputCount = parsedInputs.length;
@@ -1184,7 +1256,7 @@ export default function VmixPage() {
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
@@ -1195,13 +1267,8 @@ export default function VmixPage() {
     try {
       const xmlText = await vmixFetch("/api/");
       const vmixState = parseVmixXml(xmlText);
-      setInputs(vmixState.inputs);
-
-      if (vmixState.active) setActiveInput(vmixState.active);
-      if (vmixState.preview) setPreviewInput(vmixState.preview);
-      if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
-      if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
-      if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
       // Reset fail counter and ensure status is connected on success
       if (!connected) setConnected(true);
       silentFailCountRef.current = 0;
@@ -1213,7 +1280,7 @@ export default function VmixPage() {
         silentFailCountRef.current = 0;
       }
     }
-  }, [savedUrl, vmixFetch]);
+  }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot]);
 
   // Update input mapping whenever inputs change
   useEffect(() => {
@@ -1339,7 +1406,7 @@ export default function VmixPage() {
     addLog(batchLabel, "pending", "Enviando via servidor...", "server");
 
     try {
-      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
+      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized, connectionId: selectedConnectionId } });
       if (res.error) throw res.error;
 
       const results = Array.isArray((res.data as { results?: Array<{ ok?: boolean }> } | null)?.results)
@@ -1362,7 +1429,7 @@ export default function VmixPage() {
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
@@ -1509,20 +1576,7 @@ export default function VmixPage() {
   }, [connected, savedUrl, user, sendCommand]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
-  const detectedMachines = useMemo(() => {
-    const machines = new Set<string>();
-    inputs.forEach(inp => {
-      if (isNdiInput(inp)) {
-        // Match machine name: NDI (MACHINE (Source)) or NDI - MACHINE
-        const title = inp.title || "";
-        const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
-        if (match && match[1] && match[1].length > 2) {
-          machines.add(match[1]);
-        }
-      }
-    });
-    return Array.from(machines);
-  }, [inputs]);
+  const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
 
   const scanNdiSources = useCallback(async (customHost?: string) => {
     if (!savedUrl || !connected) {
@@ -1537,22 +1591,7 @@ export default function VmixPage() {
       if (customHost) machineList.add(customHost);
       if (manualNdiHost) machineList.add(manualNdiHost);
 
-      const suggestions: string[] = [];
-      for (const machine of Array.from(machineList)) {
-        suggestions.push(
-          `${machine} (vMix - Output 1)`,
-          `${machine} (vMix - Output 2)`,
-          `${machine} (vMix - Output 3)`,
-          `${machine} (vMix - Output 4)`,
-          `${machine} (vMix Video)`,
-          `${machine} (vMix Audio - Master)`,
-          `${machine} (vMix Audio - Headphones)`,
-          `${machine} (Screen 1)`,
-          `${machine} (Screen 2)`,
-        );
-      }
-
-      const uniqueSuggestions = Array.from(new Set(suggestions));
+      const uniqueSuggestions = buildNdiSuggestions(Array.from(machineList));
       setNdiSources(uniqueSuggestions);
 
       if (uniqueSuggestions.length === 0 && (customHost || manualNdiHost)) {
@@ -1928,6 +1967,16 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={hlsUrl} className={className} />;
     }
+
+    // vMix already renders NDI inputs in its own MJPEG endpoint, so the control
+    // panel can show NDI sources in motion without a separate HLS bridge.
+    if (isNdi && savedUrl) {
+      const ndiStreamUrl = `${normalizeVmixBaseUrl(savedUrl)}/mjpeg?Input=${encodeURIComponent(inputNumber)}`;
+      if (!isMixedContentBlockedByPage(ndiStreamUrl)) {
+        return <MjpegPlayer src={ndiStreamUrl} className={className} />;
+      }
+    }
+
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
@@ -2393,108 +2442,154 @@ export default function VmixPage() {
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   const tabs = [
-    { key: "controls" as const, label: "Inputs", icon: <Layers size={13} /> },
-    { key: "scenes" as const, label: "Cenas", icon: <Wand2 size={13} /> },
+    { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
+    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
+    { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
 
-  return (
-    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e0e0e0" }}>
-      {/* ── Header Toolbar (Connection & Actions) ── */}
-      <div className="flex items-center justify-between gap-4 flex-wrap bg-[#1a1a1f] p-2 rounded-xl border border-white/5 shadow-2xl">
-        {/* Left: Studio Connection Status */}
-        <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#111115] border border-[#ffffff08] shadow-inner">
-          <img src={logoMixControl} alt="Mix Control" className="h-5" />
-          <div className="flex items-center gap-2">
-            <div 
-              className="w-2 h-2 rounded-full animate-pulse" 
-              style={{ 
-                backgroundColor: connected ? "#22c55e" : "#ef4444", 
-                boxShadow: connected ? "0 0 10px rgba(34,197,94,0.6)" : "0 0 10px rgba(239,68,68,0.6)" 
-              }} 
-            />
-            <span className="text-[10px] font-black uppercase tracking-[0.1em] text-white/40">Estúdio</span>
-          </div>
-          
-          {connected && selectedConnectionId ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white uppercase tracking-wider">{studioName}</span>
-              <div className="w-px h-3 bg-white/10 mx-1" />
-              <button 
-                onClick={() => setShowStudioSelector(true)}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-blue-400 hover:text-blue-300 transition-all hover:bg-blue-500/10 border border-blue-500/20"
-              >
-                TROCAR
-              </button>
-              <button 
-                onClick={() => {
-                  setConnected(false);
-                  setSelectedConnectionId(null);
-                  setVmixUrl("");
-                  setStudioName("");
-                  setSavedUrl("");
-                }}
-                className="flex items-center gap-1 px-2 py-1 rounded text-[9px] font-bold text-red-500/70 hover:text-red-500 transition-all hover:bg-red-500/10 border border-red-500/20"
-                title="Desconectar"
-              >
-                SAIR
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={vmixUrl}
-                onChange={e => setVmixUrl(e.target.value)}
-                placeholder="IP vMix"
-                className="w-32 px-2 py-1 rounded text-[10px] outline-none bg-[#0a0a0d] text-white border border-white/5 font-mono"
-              />
-              <button 
-                onClick={connectToVmix}
-                disabled={connecting}
-                className="px-3 py-1 rounded text-[9px] font-black bg-blue-600 hover:bg-blue-500 text-white transition-all uppercase tracking-widest disabled:opacity-50"
-              >
-                {connecting ? "..." : "Conectar"}
-              </button>
-            </div>
-          )}
-        </div>
+  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
+  const activeTitle = activeInputObj?.title || "Sem programa";
+  const previewTitle = previewInputObj?.title || "Sem preview";
 
-        {/* Right: Global Actions (Live, Rec, Refresh) */}
-        <div className="flex items-center gap-2">
-          {/* STREAMING STATUS BUTTONS */}
-          <div className="flex items-center gap-1 bg-[#111115] p-1 rounded-lg border border-white/5 shadow-inner">
+  return (
+    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
+      {/* ── Operator Header ── */}
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="h-11 px-4 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
+              <img src={logoMixControl} alt="Mix Control" className="h-5" />
+              <div className="w-px h-5 bg-white/10" />
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{
+                    backgroundColor: connected ? "#22c55e" : "#ef4444",
+                    boxShadow: connected ? "0 0 12px rgba(34,197,94,0.7)" : "0 0 12px rgba(239,68,68,0.55)",
+                  }}
+                />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/45">{connected ? "Online" : "Offline"}</span>
+              </div>
+            </div>
+
+            {connected && selectedConnectionId ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
+                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{studioName || "vMix Studio"}</p>
+                </div>
+                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Rota</p>
+                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{connectionRouteLabel}</p>
+                </div>
+                <button
+                  onClick={() => setShowStudioSelector(true)}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12" }}
+                >
+                  Trocar
+                </button>
+                <button
+                  onClick={() => {
+                    setConnected(false);
+                    setSelectedConnectionId(null);
+                    setVmixUrl("");
+                    setStudioName("");
+                    setSavedUrl("");
+                  }}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#dc26261a", color: "#f87171", border: "1px solid #dc262640" }}
+                  title="Desconectar"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={vmixUrl}
+                  onChange={e => setVmixUrl(e.target.value)}
+                  placeholder="IP vMix"
+                  className="h-10 w-44 px-3 rounded-xl text-[11px] outline-none bg-[#0a0a0d] text-white border border-white/10 font-mono"
+                />
+                <button
+                  onClick={connectToVmix}
+                  disabled={connecting}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#dc2626", color: "#fff" }}
+                >
+                  {connecting ? "Conectando" : "Conectar"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Program</p>
+              <p className="text-xs font-black uppercase text-white truncate">{activeTitle}</p>
+            </div>
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Preview</p>
+              <p className="text-xs font-black uppercase text-white truncate">{previewTitle}</p>
+            </div>
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
-                streaming 
-                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
-                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
-              }`}
+              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
+              style={{ backgroundColor: streaming ? "#dc2626" : "#0f0f12", border: streaming ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
             >
-              <div className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/20"}`} />
-              {streaming ? "ON AIR" : "GO LIVE"}
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Stream</p>
+              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><span className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/25"}`} />{streaming ? "On Air" : "Go Live"}</p>
             </button>
-            
             <button
               onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-              className={`px-4 py-1.5 rounded text-[10px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-2 ${
-                recording 
-                  ? "bg-[#dc2626] text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-[#ff4444]" 
-                  : "bg-[#2a2a30] text-white/40 border border-white/5 hover:text-white/70"
-              }`}
+              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
+              style={{ backgroundColor: recording ? "#dc2626" : "#0f0f12", border: recording ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
             >
-              <Disc size={12} className={recording ? "animate-spin" : ""} />
-              {recording ? "REC" : "RECORD"}
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Gravação</p>
+              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><Disc size={12} className={recording ? "animate-spin" : "opacity-40"} />{recording ? "REC" : "Standby"}</p>
             </button>
+          </div>
+        </div>
 
-            <div className="w-px h-6 bg-white/5 mx-1" />
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ backgroundColor: "#111114" }}>
+          <div className="flex flex-wrap items-center gap-2">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
+                style={{
+                  color: activeTab === tab.key ? "#fff" : "#777",
+                  backgroundColor: activeTab === tab.key ? "#2a2a30" : "#18181c",
+                  border: activeTab === tab.key ? "1px solid #dc262655" : "1px solid #ffffff0a",
+                  boxShadow: activeTab === tab.key ? "inset 0 1px 0 #ffffff14, 0 0 20px rgba(220,38,38,0.14)" : "none",
+                }}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
 
-            <button 
-              onClick={() => connectToVmix()} 
-              className="p-1.5 rounded-lg text-white/30 hover:text-white transition-colors hover:bg-white/5" 
-              title="Refresh vMix State"
+          <div className="flex items-center gap-2">
+            <button
+              onClick={runDiagnostic}
+              disabled={diagRunning}
+              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b35" }}
             >
-              <RefreshCw size={14} className={connecting ? "animate-spin" : ""} />
+              {diagRunning ? <Loader2 size={13} className="animate-spin" /> : <Activity size={13} />}
+              Diagnóstico
+            </button>
+            <button
+              onClick={() => connectToVmix()}
+              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
+              style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}
+              title="Atualizar estado do vMix"
+            >
+              <RefreshCw size={13} className={connecting ? "animate-spin" : ""} />
+              Sync
             </button>
           </div>
         </div>
@@ -2784,27 +2879,8 @@ export default function VmixPage() {
         )}
       </div>
 
-
-      {/* ── Tab Bar ── */}
-      <div className="flex rounded-t-xl overflow-hidden" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff06" }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
-            style={{
-              color: activeTab === tab.key ? "#fff" : "#555",
-              backgroundColor: activeTab === tab.key ? "#222228" : "transparent",
-            }}
-          >
-            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: "#dc2626" }} />}
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-5 space-y-4" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
+      <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
@@ -2978,6 +3054,165 @@ export default function VmixPage() {
                    </p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ══ NDI TAB ══ */}
+        {activeTab === "ndi" && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+              <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                <div className="flex items-center gap-2">
+                  <Network size={16} style={{ color: "#22c55e" }} />
+                  <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: "#22c55e" }}>Fontes NDI</span>
+                </div>
+                <p className="text-[10px] text-white/35 mt-1 leading-relaxed">
+                  O painel lê os inputs NDI que o próprio vMix já reconheceu e permite cadastrar novas fontes pelo nome NDI da rede.
+                </p>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2">Busca manual</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="DESKTOP-123 ou NDI Source"
+                      className="flex-1 bg-[#111115] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      value={manualNdiHost}
+                      onChange={e => setManualNdiHost(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                      onClick={() => scanNdiSources()}
+                      disabled={ndiScanning}
+                    >
+                      {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      Buscar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">NDI no vMix</p>
+                    <p className="text-2xl font-black text-white">{ndiInputs.length}</p>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Sugestões</p>
+                    <p className="text-2xl font-black text-white">{ndiSources.length}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b25" }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "#fbbf24" }}>
+                    Navegadores não conseguem descobrir NDI puro via mDNS/Bonjour diretamente. O fluxo confiável é: vMix detecta/adiciona NDI → o painel sincroniza os inputs pela API → o vídeo aparece pelo MJPEG do vMix.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">NDI reconhecidos no vMix</p>
+                    <p className="text-[10px] text-white/30 mt-1">Inputs NDI já carregados e exibidos com vídeo via MJPEG quando o navegador permitir acesso local.</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-9 px-3 text-[10px] font-black gap-2 border-white/10" onClick={() => connectToVmix()}>
+                    <RefreshCw size={12} className={connecting ? "animate-spin" : ""} /> Sincronizar
+                  </Button>
+                </div>
+
+                <div className="p-5">
+                  {ndiInputs.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {ndiInputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        const isPreview = previewInput === input.number;
+                        return (
+                          <div key={input.key || input.number} className="group rounded-xl overflow-hidden" style={{ backgroundColor: "#0c0c0e", border: isActive ? "1px solid #dc2626" : isPreview ? "1px solid #3b82f6" : "1px solid #ffffff0d" }}>
+                            <div className="relative aspect-video bg-black">
+                              <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover" alt={input.title} />
+                              <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                                <span className="text-[8px] font-black uppercase tracking-widest text-green-400">NDI</span>
+                              </div>
+                              {(isActive || isPreview) && (
+                                <div className="absolute top-2 right-2 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest" style={{ backgroundColor: isActive ? "#dc2626" : "#3b82f6", color: "#fff" }}>
+                                  {isActive ? "PGM" : "PVW"}
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3 space-y-3">
+                              <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">Input {input.number}</p>
+                                <p className="text-sm font-black text-white truncate">{input.title}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#3b82f61a", color: "#93c5fd", border: "1px solid #3b82f640" }}>Preview</button>
+                                <button onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#dc26261a", color: "#fca5a5", border: "1px solid #dc262640" }}>Take</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 rounded-2xl" style={{ backgroundColor: "#0c0c0e", border: "1px dashed #ffffff14" }}>
+                      <Radio size={30} className="text-white/15 mb-3" />
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">Nenhum input NDI sincronizado</p>
+                      <p className="text-[10px] text-white/25 mt-1">Adicione uma fonte no vMix ou use a busca manual abaixo.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Adicionar novas fontes</p>
+                  <p className="text-[10px] text-white/30 mt-1">Use o nome exato NDI ou escolha uma sugestão gerada a partir dos hosts conhecidos.</p>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ndiUrl}
+                      onChange={e => setNdiUrl(e.target.value)}
+                      placeholder="Ex: STUDIO-PC (Camera 1)"
+                      className="flex-1 bg-[#0c0c0e] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      onKeyDown={e => e.key === "Enter" && addNdiInput()}
+                    />
+                    <Button size="sm" className="h-10 px-4 text-[10px] font-black gap-2" onClick={() => addNdiInput()} disabled={!ndiUrl.trim()}>
+                      <Plus size={12} /> Adicionar
+                    </Button>
+                  </div>
+
+                  {ndiSources.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                      {ndiSources.map(source => (
+                        <button
+                          key={source}
+                          onClick={() => addNdiInput(source)}
+                          className="group flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:brightness-110"
+                          style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0d" }}
+                          title={`Adicionar ${source} ao vMix`}
+                        >
+                          <Radio size={15} className="text-green-500" />
+                          <span className="text-[10px] font-black text-white/55 group-hover:text-white uppercase tracking-tight line-clamp-2">{source}</span>
+                          <Plus size={12} className="ml-auto text-white/20 group-hover:text-green-500" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/25 py-3 text-center">Nenhuma sugestão gerada ainda.</p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         )}

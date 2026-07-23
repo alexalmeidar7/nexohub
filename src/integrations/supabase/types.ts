@@ -2599,7 +2599,11 @@ export type Database = {
           created_at: string
           id: string
           is_default: boolean | null
+          last_inputs: Json
+          last_state: Json
+          last_synced_at: string | null
           name: string
+          ndi_sources: Json
           password: string | null
           updated_at: string
           url: string
@@ -2610,7 +2614,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_default?: boolean | null
+          last_inputs?: Json
+          last_state?: Json
+          last_synced_at?: string | null
           name: string
+          ndi_sources?: Json
           password?: string | null
           updated_at?: string
           url: string
@@ -2621,7 +2629,11 @@ export type Database = {
           created_at?: string
           id?: string
           is_default?: boolean | null
+          last_inputs?: Json
+          last_state?: Json
+          last_synced_at?: string | null
           name?: string
+          ndi_sources?: Json
           password?: string | null
           updated_at?: string
           url?: string

@@ -1,17 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { isPrivateOrLocalUrl } from "../_shared/auth.ts";
-
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -38,12 +31,35 @@ Deno.serve(async (req) => {
     }
 
     const userId = userData.user.id;
+    const { commands, connectionId } = await req.json();
 
-    const { data: settings } = await supabase
-      .from("user_settings")
-      .select("vmix_url, vmix_user, vmix_pass")
-      .eq("user_id", userId)
-      .maybeSingle();
+    let settings: { vmix_url?: string | null; vmix_user?: string | null; vmix_pass?: string | null } | null = null;
+
+    if (typeof connectionId === "string" && connectionId) {
+      const { data: connection } = await supabase
+        .from("vmix_connections")
+        .select("url, username, password")
+        .eq("user_id", userId)
+        .eq("id", connectionId)
+        .maybeSingle();
+
+      if (connection) {
+        settings = {
+          vmix_url: connection.url,
+          vmix_user: connection.username,
+          vmix_pass: connection.password,
+        };
+      }
+    }
+
+    if (!settings) {
+      const { data: fallbackSettings } = await supabase
+        .from("user_settings")
+        .select("vmix_url, vmix_user, vmix_pass")
+        .eq("user_id", userId)
+        .maybeSingle();
+      settings = fallbackSettings;
+    }
 
     const vmixBaseUrl = settings?.vmix_url;
     if (!vmixBaseUrl) {
@@ -58,10 +74,6 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-
-
-    const { commands } = await req.json();
-
     if (!commands || !Array.isArray(commands) || commands.length === 0) {
       return new Response(
         JSON.stringify({ error: "Missing 'commands' array" }),
