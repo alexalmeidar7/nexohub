@@ -28,7 +28,27 @@ export interface EmpresaConfig {
   youtubeSubs?: string;
   videoStreamApiUrl?: string;
   plano: string;
+  timezone?: string;
 }
+
+export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
+  { value: "America/Noronha", label: "Fernando de Noronha (Brasília +1h / UTC-2)" },
+  { value: "America/Sao_Paulo", label: "Brasília — horário oficial (UTC-3)" },
+  { value: "America/Belem", label: "Belém / PA (UTC-3)" },
+  { value: "America/Fortaleza", label: "Fortaleza / CE (UTC-3)" },
+  { value: "America/Recife", label: "Recife / PE (UTC-3)" },
+  { value: "America/Araguaina", label: "Araguaína / TO (UTC-3)" },
+  { value: "America/Maceio", label: "Maceió / AL (UTC-3)" },
+  { value: "America/Bahia", label: "Salvador / BA (UTC-3)" },
+  { value: "America/Santarem", label: "Santarém / PA (UTC-3)" },
+  { value: "America/Campo_Grande", label: "Campo Grande / MS (Brasília -1h / UTC-4)" },
+  { value: "America/Cuiaba", label: "Cuiabá / MT (Brasília -1h / UTC-4)" },
+  { value: "America/Manaus", label: "Manaus / AM (Brasília -1h / UTC-4)" },
+  { value: "America/Porto_Velho", label: "Porto Velho / RO (Brasília -1h / UTC-4)" },
+  { value: "America/Boa_Vista", label: "Boa Vista / RR (Brasília -1h / UTC-4)" },
+  { value: "America/Rio_Branco", label: "Rio Branco / AC (Brasília -2h / UTC-5)" },
+  { value: "America/Eirunepe", label: "Eirunepé / AM (Brasília -2h / UTC-5)" },
+];
 
 export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
   let query = supabase.from("empresa_config").select("*");
