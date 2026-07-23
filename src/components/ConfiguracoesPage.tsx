@@ -28,7 +28,27 @@ export interface EmpresaConfig {
   youtubeSubs?: string;
   videoStreamApiUrl?: string;
   plano: string;
+  timezone?: string;
 }
+
+export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
+  { value: "America/Noronha", label: "Fernando de Noronha (Brasília +1h / UTC-2)" },
+  { value: "America/Sao_Paulo", label: "Brasília — horário oficial (UTC-3)" },
+  { value: "America/Belem", label: "Belém / PA (UTC-3)" },
+  { value: "America/Fortaleza", label: "Fortaleza / CE (UTC-3)" },
+  { value: "America/Recife", label: "Recife / PE (UTC-3)" },
+  { value: "America/Araguaina", label: "Araguaína / TO (UTC-3)" },
+  { value: "America/Maceio", label: "Maceió / AL (UTC-3)" },
+  { value: "America/Bahia", label: "Salvador / BA (UTC-3)" },
+  { value: "America/Santarem", label: "Santarém / PA (UTC-3)" },
+  { value: "America/Campo_Grande", label: "Campo Grande / MS (Brasília -1h / UTC-4)" },
+  { value: "America/Cuiaba", label: "Cuiabá / MT (Brasília -1h / UTC-4)" },
+  { value: "America/Manaus", label: "Manaus / AM (Brasília -1h / UTC-4)" },
+  { value: "America/Porto_Velho", label: "Porto Velho / RO (Brasília -1h / UTC-4)" },
+  { value: "America/Boa_Vista", label: "Boa Vista / RR (Brasília -1h / UTC-4)" },
+  { value: "America/Rio_Branco", label: "Rio Branco / AC (Brasília -2h / UTC-5)" },
+  { value: "America/Eirunepe", label: "Eirunepé / AM (Brasília -2h / UTC-5)" },
+];
 
 export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
   let query = supabase.from("empresa_config").select("*");
@@ -51,6 +71,7 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
     videoStreamApiUrl: (data as any).video_stream_api_url || "",
     plano: data.plano || "",
+    timezone: (data as any).timezone || "America/Sao_Paulo",
   };
 }
 
@@ -250,6 +271,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         facebook_subs: toBigInt(newConfig.facebookSubs),
         youtube_subs: toBigInt(newConfig.youtubeSubs),
         video_stream_api_url: newConfig.videoStreamApiUrl || "",
+        timezone: newConfig.timezone || "America/Sao_Paulo",
         updated_at: new Date().toISOString(),
       } as any, { onConflict: "user_id" });
     }, 500);
@@ -461,6 +483,23 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("YouTube", "youtube", "https://youtube.com/empresa")}
           </div>
           {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
+          <div className="space-y-1">
+            <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+              Fuso horário do sistema
+            </label>
+            <select
+              value={config.timezone || "America/Sao_Paulo"}
+              onChange={(e) => saveConfig({ ...config, timezone: e.target.value })}
+              style={{ ...inputStyle, width: "100%", paddingLeft: 16, paddingRight: 16, appearance: "none" }}
+            >
+              {BRAZIL_TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <p className="text-[11px] mt-1" style={{ color: "var(--layout-page-text, #1a1a1a)", opacity: 0.65 }}>
+              Define o fuso horário usado em toda a grade de programação e horários do sistema.
+            </p>
+          </div>
         </div>
 
         {/* Credenciais */}

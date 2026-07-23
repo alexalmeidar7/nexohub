@@ -797,6 +797,7 @@ export type Database = {
           site: string | null
           telefone_comercial: string | null
           telefone_participacao: string | null
+          timezone: string
           updated_at: string
           user_id: string
           video_stream_api_url: string | null
@@ -821,6 +822,7 @@ export type Database = {
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
+          timezone?: string
           updated_at?: string
           user_id: string
           video_stream_api_url?: string | null
@@ -845,6 +847,7 @@ export type Database = {
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
           video_stream_api_url?: string | null
