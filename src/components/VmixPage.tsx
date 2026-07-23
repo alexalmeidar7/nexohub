@@ -3056,6 +3056,165 @@ export default function VmixPage() {
           </div>
         )}
 
+        {/* ══ NDI TAB ══ */}
+        {activeTab === "ndi" && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+              <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                <div className="flex items-center gap-2">
+                  <Network size={16} style={{ color: "#22c55e" }} />
+                  <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: "#22c55e" }}>Fontes NDI</span>
+                </div>
+                <p className="text-[10px] text-white/35 mt-1 leading-relaxed">
+                  O painel lê os inputs NDI que o próprio vMix já reconheceu e permite cadastrar novas fontes pelo nome NDI da rede.
+                </p>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2">Busca manual</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="DESKTOP-123 ou NDI Source"
+                      className="flex-1 bg-[#111115] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      value={manualNdiHost}
+                      onChange={e => setManualNdiHost(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                      onClick={() => scanNdiSources()}
+                      disabled={ndiScanning}
+                    >
+                      {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      Buscar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">NDI no vMix</p>
+                    <p className="text-2xl font-black text-white">{ndiInputs.length}</p>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Sugestões</p>
+                    <p className="text-2xl font-black text-white">{ndiSources.length}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b25" }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "#fbbf24" }}>
+                    Navegadores não conseguem descobrir NDI puro via mDNS/Bonjour diretamente. O fluxo confiável é: vMix detecta/adiciona NDI → o painel sincroniza os inputs pela API → o vídeo aparece pelo MJPEG do vMix.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">NDI reconhecidos no vMix</p>
+                    <p className="text-[10px] text-white/30 mt-1">Inputs NDI já carregados e exibidos com vídeo via MJPEG quando o navegador permitir acesso local.</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-9 px-3 text-[10px] font-black gap-2 border-white/10" onClick={() => connectToVmix()}>
+                    <RefreshCw size={12} className={connecting ? "animate-spin" : ""} /> Sincronizar
+                  </Button>
+                </div>
+
+                <div className="p-5">
+                  {ndiInputs.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {ndiInputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        const isPreview = previewInput === input.number;
+                        return (
+                          <div key={input.key || input.number} className="group rounded-xl overflow-hidden" style={{ backgroundColor: "#0c0c0e", border: isActive ? "1px solid #dc2626" : isPreview ? "1px solid #3b82f6" : "1px solid #ffffff0d" }}>
+                            <div className="relative aspect-video bg-black">
+                              <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover" alt={input.title} />
+                              <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                                <span className="text-[8px] font-black uppercase tracking-widest text-green-400">NDI</span>
+                              </div>
+                              {(isActive || isPreview) && (
+                                <div className="absolute top-2 right-2 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest" style={{ backgroundColor: isActive ? "#dc2626" : "#3b82f6", color: "#fff" }}>
+                                  {isActive ? "PGM" : "PVW"}
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3 space-y-3">
+                              <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">Input {input.number}</p>
+                                <p className="text-sm font-black text-white truncate">{input.title}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#3b82f61a", color: "#93c5fd", border: "1px solid #3b82f640" }}>Preview</button>
+                                <button onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#dc26261a", color: "#fca5a5", border: "1px solid #dc262640" }}>Take</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 rounded-2xl" style={{ backgroundColor: "#0c0c0e", border: "1px dashed #ffffff14" }}>
+                      <Radio size={30} className="text-white/15 mb-3" />
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">Nenhum input NDI sincronizado</p>
+                      <p className="text-[10px] text-white/25 mt-1">Adicione uma fonte no vMix ou use a busca manual abaixo.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Adicionar novas fontes</p>
+                  <p className="text-[10px] text-white/30 mt-1">Use o nome exato NDI ou escolha uma sugestão gerada a partir dos hosts conhecidos.</p>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ndiUrl}
+                      onChange={e => setNdiUrl(e.target.value)}
+                      placeholder="Ex: STUDIO-PC (Camera 1)"
+                      className="flex-1 bg-[#0c0c0e] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      onKeyDown={e => e.key === "Enter" && addNdiInput()}
+                    />
+                    <Button size="sm" className="h-10 px-4 text-[10px] font-black gap-2" onClick={() => addNdiInput()} disabled={!ndiUrl.trim()}>
+                      <Plus size={12} /> Adicionar
+                    </Button>
+                  </div>
+
+                  {ndiSources.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                      {ndiSources.map(source => (
+                        <button
+                          key={source}
+                          onClick={() => addNdiInput(source)}
+                          className="group flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:brightness-110"
+                          style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0d" }}
+                          title={`Adicionar ${source} ao vMix`}
+                        >
+                          <Radio size={15} className="text-green-500" />
+                          <span className="text-[10px] font-black text-white/55 group-hover:text-white uppercase tracking-tight line-clamp-2">{source}</span>
+                          <Plus size={12} className="ml-auto text-white/20 group-hover:text-green-500" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/25 py-3 text-center">Nenhuma sugestão gerada ainda.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ══ SCENES TAB ══ */}
         {activeTab === "scenes" && (() => {
           const normalizeWeekday = (value: string) =>
