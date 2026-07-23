@@ -600,7 +600,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           subtitulo: `express_xml::${xmlUrl}`,
           conteudo_html: html,
           participantes: blocosJson,
+          updated_at: new Date().toISOString(),
         }).eq("id", editingId);
+
         if (error) throw error;
       } else {
         // Insert new
