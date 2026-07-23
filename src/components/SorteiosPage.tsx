@@ -509,14 +509,25 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
           <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 4 }}>
             Programas
           </h2>
-          <p style={{ fontSize: 11, color: "#64748B", marginBottom: 16 }}>Arraste um prêmio para dentro do programa.</p>
+          <p style={{ fontSize: 11, color: "#64748B", marginBottom: 16 }}>
+            Arraste um prêmio para dentro do programa. Use o scroll do mouse para navegar.
+          </p>
           {programas.length === 0 ? (
             <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum programa cadastrado.</p>
           ) : (
-            <div className="grid gap-3">
-              {programas.map(pg => {
+            <div
+              className="grid gap-3"
+              style={{
+                maxHeight: 3 * 132 + 2 * 12, // ~3 boxes + gaps
+                overflowY: "auto",
+                scrollSnapType: "y mandatory",
+                paddingRight: 6,
+              }}
+            >
+              {orderedProgramas.map(pg => {
                 const items = linksByPrograma.get(pg.id) || [];
                 const active = dropTarget === pg.id;
+                const isOnAir = pg.id === onAirId;
                 return (
                   <div
                     key={pg.id}
@@ -527,15 +538,22 @@ function ListaPremiosTab({ premios, programas, userId }: { premios: Premio[]; pr
                       background: "#fff",
                       borderRadius: 16,
                       padding: 12,
-                      border: active ? `2px dashed ${LIME}` : `1px solid ${CYAN}33`,
-                      boxShadow: active ? `0 0 0 4px ${LIME}55` : "none",
+                      border: active ? `2px dashed ${LIME}` : isOnAir ? `2px solid ${LIME}` : `1px solid ${CYAN}33`,
+                      boxShadow: active ? `0 0 0 4px ${LIME}55` : isOnAir ? `0 0 0 3px ${LIME}44` : "none",
                       transition: "all .15s",
+                      scrollSnapAlign: "start",
                     }}
                   >
                     <div className="flex items-center gap-2 mb-2">
-                      <Radio size={13} color={CYAN} />
+                      <Radio size={13} color={isOnAir ? LIME : CYAN} />
                       <div style={{ fontWeight: 800, color: DARK, fontSize: 13, flex: 1 }}>{pg.nome}</div>
+                      {isOnAir && (
+                        <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: 1, textTransform: "uppercase", background: LIME, color: DARK, borderRadius: 999, padding: "2px 8px" }}>
+                          No ar
+                        </span>
+                      )}
                       <span style={{ fontSize: 10, color: "#64748B", fontWeight: 700 }}>{items.length} prêmio(s)</span>
+
                       {items.length > 0 && (
                         <>
                           <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => setEditingPrograma(pg)}>
