@@ -1678,3 +1678,11 @@ img, video, canvas, svg { max-width: 100%; }
   .nexo-volume-slider::-moz-range-thumb { transition: none; }
 }
 
+
+/* Ensure Sonner toasts stack above any Radix Dialog/portal */
+[data-sonner-toaster] {
+  z-index: 2147483647 !important;
+}
+[data-sonner-toaster] [data-sonner-toast] {
+  z-index: 2147483647 !important;
+}
