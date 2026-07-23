@@ -483,6 +483,23 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("YouTube", "youtube", "https://youtube.com/empresa")}
           </div>
           {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
+          <div className="space-y-1">
+            <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+              Fuso horário do sistema
+            </label>
+            <select
+              value={config.timezone || "America/Sao_Paulo"}
+              onChange={(e) => saveConfig({ ...config, timezone: e.target.value })}
+              style={{ ...inputStyle, width: "100%", paddingLeft: 16, paddingRight: 16, appearance: "none" }}
+            >
+              {BRAZIL_TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <p className="text-[11px] mt-1" style={{ color: "var(--layout-page-text, #1a1a1a)", opacity: 0.65 }}>
+              Define o fuso horário usado em toda a grade de programação e horários do sistema.
+            </p>
+          </div>
         </div>
 
         {/* Credenciais */}
