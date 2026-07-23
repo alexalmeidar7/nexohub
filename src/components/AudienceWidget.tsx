@@ -816,90 +816,158 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           setConfigOpen(open);
         }}
       >
-        <DialogContent className="max-w-lg" style={{ background: "#D6F4FB", borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif" }}>
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "#00BFF0" }}>
-                <Settings size={18} color="#fff" />
+        <DialogContent
+          className="max-w-xl w-[95vw] p-0 overflow-hidden max-h-[90vh] flex flex-col"
+          style={{ background: "#F4FBFD", borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif" }}
+        >
+          {/* Header */}
+          <div style={{ background: "linear-gradient(135deg, #00BFF0 0%, #00A9D6 100%)", padding: "20px 24px" }}>
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.22)" }}>
+                  <Settings size={20} color="#fff" />
+                </div>
+                <div className="flex flex-col">
+                  <DialogTitle className="text-base font-black uppercase tracking-wider text-white">
+                    Fontes da Audiência
+                  </DialogTitle>
+                  <DialogDescription className="text-[11px] text-white/85">
+                    Configure de onde vêm seus números. Validado ao salvar.
+                  </DialogDescription>
+                </div>
               </div>
-              <div className="flex flex-col">
-                <DialogTitle className="text-base font-black uppercase tracking-wider" style={{ color: "#0A2540" }}>
-                  Fontes da Audiência
-                </DialogTitle>
-                <DialogDescription className="text-xs" style={{ color: "#0A2540", opacity: 0.6 }}>
-                  Validado ao salvar.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
+            </DialogHeader>
+          </div>
 
-          <div className="flex flex-col gap-3 mt-2">
-            <SourceField
-              icon={<Instagram size={14} />}
-              label="Instagram"
-              placeholder="https://instagram.com/seu_perfil"
-              value={sources.instagram}
-              onChange={(v) => setSources((s) => ({ ...s, instagram: v }))}
-            />
-            <SourceField
-              icon={<Facebook size={14} />}
-              label="Facebook"
-              placeholder="https://facebook.com/sua_pagina"
-              value={sources.facebook}
-              onChange={(v) => setSources((s) => ({ ...s, facebook: v }))}
-            />
-            <SourceField
-              icon={<Youtube size={14} />}
-              label="YouTube"
-              placeholder="https://youtube.com/@seu_canal"
-              value={sources.youtube}
-              onChange={(v) => setSources((s) => ({ ...s, youtube: v }))}
-            />
-            <SourceField
-              icon={<Radio size={14} />}
-              label="Source Audio"
-              placeholder="https://seu-servidor:8000/stream"
-              value={sources.audio_stream_api_url}
-              onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
-            />
-            <SourceField
-              label="XPath (nódulo XML do Source Audio)"
-              placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
-              value={sources.audio_stream_xpath}
-              onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
-              error={audioXPathError}
-              actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
-              onAction={() => probeXPath("audio")}
-              actionDisabled={probing !== null}
-              suggestions={audioSuggestions}
-              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
-              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de ouvintes."
-            />
-            <SourceField
-              icon={<MonitorPlay size={14} />}
-              label="Source Video"
-              placeholder="https://video.logicahost.com.br/api/..."
-              value={sources.video_stream_api_url}
-              onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
-            />
-            <SourceField
-              label="XPath (nódulo XML do Source Video)"
-              placeholder="//info/espectadores_conectados"
-              value={sources.video_stream_xpath}
-              onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
-              error={videoXPathError}
-              actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
-              onAction={() => probeXPath("video")}
-              actionDisabled={probing !== null}
-              suggestions={videoSuggestions}
-              onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
-              helperText="Clique em Sugerir XPath para detectar automaticamente o campo com o número de espectadores."
-            />
+          {/* Body */}
+          <div className="flex-1 overflow-auto px-5 py-5 flex flex-col gap-5">
+            {/* Redes sociais */}
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <div className="h-[2px] flex-1" style={{ background: "linear-gradient(90deg, #00BFF0, transparent)" }} />
+                <span className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: "#0A2540", opacity: 0.7 }}>
+                  Redes sociais
+                </span>
+                <div className="h-[2px] flex-1" style={{ background: "linear-gradient(90deg, transparent, #00BFF0)" }} />
+              </div>
+              <SourceField
+                icon={<Instagram size={14} />}
+                label="Instagram"
+                placeholder="https://instagram.com/seu_perfil"
+                value={sources.instagram}
+                onChange={(v) => setSources((s) => ({ ...s, instagram: v }))}
+              />
+              <SourceField
+                icon={<Facebook size={14} />}
+                label="Facebook"
+                placeholder="https://facebook.com/sua_pagina"
+                value={sources.facebook}
+                onChange={(v) => setSources((s) => ({ ...s, facebook: v }))}
+              />
+              <SourceField
+                icon={<Youtube size={14} />}
+                label="YouTube"
+                placeholder="https://youtube.com/@seu_canal"
+                value={sources.youtube}
+                onChange={(v) => setSources((s) => ({ ...s, youtube: v }))}
+              />
+            </section>
+
+            {/* Streaming Áudio */}
+            <section
+              className="flex flex-col gap-3 rounded-2xl p-4"
+              style={{ background: "#fff", border: "1px solid rgba(0,191,240,0.25)" }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#00BFF0" }}>
+                  <Radio size={14} color="#fff" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#0A2540" }}>
+                    Streaming de áudio
+                  </span>
+                  <span className="text-[10px]" style={{ color: "#0A2540", opacity: 0.55 }}>
+                    URL do XML do servidor + caminho do campo de ouvintes.
+                  </span>
+                </div>
+              </div>
+              <SourceField
+                label="URL do stream"
+                placeholder="https://seu-servidor:8000/stream"
+                value={sources.audio_stream_api_url}
+                onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
+              />
+              <SourceField
+                label="XPath do nódulo de ouvintes"
+                placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
+                value={sources.audio_stream_xpath}
+                onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
+                error={audioXPathError}
+                actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
+                onAction={() => probeXPath("audio")}
+                actionDisabled={probing !== null}
+                suggestions={audioSuggestions}
+                onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
+                helperText="Detecta automaticamente o campo com o número de ouvintes."
+              />
+            </section>
+
+            {/* Streaming Vídeo */}
+            <section
+              className="flex flex-col gap-3 rounded-2xl p-4"
+              style={{ background: "#fff", border: "1px solid rgba(10,37,64,0.15)" }}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#0A2540" }}>
+                  <MonitorPlay size={14} color="#fff" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#0A2540" }}>
+                    Streaming de vídeo
+                  </span>
+                  <span className="text-[10px]" style={{ color: "#0A2540", opacity: 0.55 }}>
+                    URL do XML do servidor + caminho do campo de espectadores.
+                  </span>
+                </div>
+              </div>
+              <SourceField
+                label="URL do stream"
+                placeholder="https://video.logicahost.com.br/api/..."
+                value={sources.video_stream_api_url}
+                onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
+              />
+              <SourceField
+                label="XPath do nódulo de espectadores"
+                placeholder="//info/espectadores_conectados"
+                value={sources.video_stream_xpath}
+                onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
+                error={videoXPathError}
+                actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
+                onAction={() => probeXPath("video")}
+                actionDisabled={probing !== null}
+                suggestions={videoSuggestions}
+                onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
+                helperText="Detecta automaticamente o campo com o número de espectadores."
+              />
+            </section>
+
             {probeError && (
-              <span className="text-[10px] font-semibold px-3" style={{ color: "#E11D48" }}>{probeError}</span>
+              <span className="text-[11px] font-semibold px-3 py-2 rounded-lg text-center" style={{ color: "#E11D48", background: "rgba(225,29,72,0.08)" }}>
+                {probeError}
+              </span>
             )}
+          </div>
 
-
+          {/* Footer */}
+          <div className="px-5 py-4 flex items-center justify-end gap-2" style={{ background: "#fff", borderTop: "1px solid rgba(0,191,240,0.2)" }}>
+            <button
+              type="button"
+              onClick={() => setConfigOpen(false)}
+              className="px-5 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-full transition-colors"
+              style={{ background: "rgba(10,37,64,0.08)", color: "#0A2540", fontFamily: "Montserrat, sans-serif" }}
+            >
+              Cancelar
+            </button>
             <button
               type="button"
               disabled={validating}
@@ -909,7 +977,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                 await persistIfChanged();
                 setConfigOpen(false);
               }}
-              className="mt-2 w-full py-3 text-sm font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-6 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-full transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ background: "#C6F03C", color: "#0A2540", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px rgba(198,240,60,0.4)" }}
             >
               {validating ? "Validando..." : "Salvar"}
@@ -917,6 +985,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           </div>
         </DialogContent>
       </Dialog>
+
 
       <AudienceReportDialog
         open={reportOpen}
