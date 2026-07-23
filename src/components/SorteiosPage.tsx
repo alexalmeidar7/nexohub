@@ -154,14 +154,24 @@ export default function SorteiosPage() {
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
-      supabase.from("programas").select("id, nome").ilike("estudio", "%fm%").order("nome"),
+      supabase.from("programas").select("*").ilike("estudio", "%fm%").order("nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
     else setPremios((p.data as any) || []);
     if (s.error) toast({ title: "Erro ao carregar sorteios", description: s.error.message, variant: "destructive" });
     else setSorteios((s.data as any) || []);
     if (!o.error) setOuvintes((o.data as any) || []);
-    if (!pr.error) setProgramas((pr.data as any) || []);
+    if (!pr.error) setProgramas(((pr.data as any) || []).map((x: any) => ({
+      id: x.id,
+      nome: x.nome,
+      apresentadorId: x.apresentador_id || "",
+      selo: x.selo || "",
+      diasSemana: x.dias_semana || [],
+      horarioInicio: x.horario_inicio,
+      horarioFim: x.horario_fim,
+      estudio: x.estudio || "",
+      classificacaoEtaria: x.classificacao_etaria || "",
+    })));
     setLoading(false);
   };
 
