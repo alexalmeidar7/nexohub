@@ -2951,7 +2951,34 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="flex flex-wrap gap-2 items-start">
+          <div className="space-y-3">
+            {(reloadingInputs || reloadFallback) && (
+              <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                reloadingInputs
+                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              }`}>
+                <div className="flex items-center gap-2">
+                  {reloadingInputs ? (
+                    <>
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-cyan-300 border-t-transparent animate-spin" />
+                      Recarregando inputs e fontes NDI…
+                    </>
+                  ) : (
+                    <>⚠ {reloadFallback}</>
+                  )}
+                </div>
+                {!reloadingInputs && (
+                  <button
+                    onClick={() => reloadInputsAndSources()}
+                    className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 text-[9px]"
+                  >
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 items-start">
             {inputs.map(input => {
               const isActive = activeInput === input.number;
               const isPreview = previewInput === input.number;
