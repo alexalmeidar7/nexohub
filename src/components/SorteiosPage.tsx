@@ -428,12 +428,32 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
     return () => clearInterval(i);
   }, [programas]);
 
-  const orderedProgramas = useMemo(() => {
-    if (!onAirId) return programas;
-    const first = programas.find(p => p.id === onAirId);
-    if (!first) return programas;
-    return [first, ...programas.filter(p => p.id !== onAirId)];
-  }, [programas, onAirId]);
+  const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+  const WEEKEND = ["Sábado", "Domingo"];
+  const isWeekend = (p: ProgramaLite) => {
+    const d = p.diasSemana || [];
+    return d.some(x => WEEKEND.includes(x)) && !d.some(x => WEEKDAYS.includes(x));
+  };
+  const groupedProgramas = useMemo(() => {
+    const byTime = (a: ProgramaLite, b: ProgramaLite) => (a.horarioInicio || "").localeCompare(b.horarioInicio || "");
+    const semana = programas.filter(p => !isWeekend(p)).sort(byTime);
+    const fds = programas.filter(p => isWeekend(p)).sort(byTime);
+    return { semana, fds };
+  }, [programas]);
+
+  const onAirRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!onAirId) return;
+    const t = setTimeout(() => {
+      const el = onAirRef.current;
+      const container = scrollContainerRef.current;
+      if (el && container) {
+        container.scrollTo({ top: Math.max(0, el.offsetTop - container.offsetTop - 4), behavior: "smooth" });
+      }
+    }, 120);
+    return () => clearTimeout(t);
+  }, [onAirId, programas.length]);
 
   const loadLinks = async () => {
     if (!userId) return;
