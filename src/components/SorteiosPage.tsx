@@ -490,18 +490,27 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
     const { premio, programa, existing } = pendingDrop;
     const prevQty = existing?.quantidade ?? 0;
     const delta = qty - prevQty; // >0 debita, <0 devolve
-    if (delta > 0 && (premio.quantidade_estoque ?? 0) < delta) {
-      toast({ title: "Estoque insuficiente", description: `Disponível: ${premio.quantidade_estoque}. Necessário: ${delta}.`, variant: "destructive" });
+    setSavingQty(true);
+    // Ler estoque atual do banco para evitar estado obsoleto
+    const { data: fresh, error: eRead } = await supabase
+      .from("sorteio_premios")
+      .select("quantidade_estoque")
+      .eq("id", premio.id)
+      .maybeSingle();
+    if (eRead) { setSavingQty(false); toast({ title: "Erro ao ler estoque", description: eRead.message, variant: "destructive" }); return; }
+    const estoqueAtual = fresh?.quantidade_estoque ?? 0;
+    if (delta > 0 && estoqueAtual < delta) {
+      setSavingQty(false);
+      toast({ title: "Estoque insuficiente", description: `Disponível: ${estoqueAtual}. Necessário: ${delta}.`, variant: "destructive" });
       return;
     }
-    setSavingQty(true);
     const q = existing
       ? supabase.from("sorteio_premio_programas").update({ quantidade: qty }).eq("id", existing.id)
       : supabase.from("sorteio_premio_programas").insert({ user_id: userId, premio_id: premio.id, programa_id: programa.id, quantidade: qty });
     const { error } = await q;
     if (error) { setSavingQty(false); toast({ title: "Erro ao vincular", description: error.message, variant: "destructive" }); return; }
     if (delta !== 0) {
-      const novoEstoque = Math.max(0, (premio.quantidade_estoque ?? 0) - delta);
+      const novoEstoque = Math.max(0, estoqueAtual - delta);
       const { error: eStock } = await supabase.from("sorteio_premios").update({ quantidade_estoque: novoEstoque }).eq("id", premio.id);
       if (eStock) { setSavingQty(false); toast({ title: "Erro no estoque", description: eStock.message, variant: "destructive" }); return; }
     }
@@ -706,13 +715,19 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
             <p style={{ color: "#64748B", fontSize: 13 }}>Nenhum prêmio cadastrado.</p>
           ) : (
             <div className="grid gap-2">
-              {premios.map(p => (
+              {premios.map(p => {
+                const semEstoque = (p.quantidade_estoque ?? 0) <= 0;
+                return (
                 <div
                   key={p.id}
-                  draggable
-                  onDragStart={e => { e.dataTransfer.setData("text/premio-id", p.id); e.dataTransfer.effectAllowed = "copy"; }}
+                  draggable={!semEstoque}
+                  onDragStart={e => {
+                    if (semEstoque) { e.preventDefault(); return; }
+                    e.dataTransfer.setData("text/premio-id", p.id);
+                    e.dataTransfer.effectAllowed = "copy";
+                  }}
                   className="flex items-center gap-3"
-                  style={{ background: "#fff", borderRadius: 14, padding: 10, border: `1px solid ${CYAN}33`, cursor: "grab" }}
+                  style={{ background: "#fff", borderRadius: 14, padding: 10, border: `1px solid ${CYAN}33`, cursor: semEstoque ? "not-allowed" : "grab", position: "relative", overflow: "hidden", opacity: semEstoque ? 0.55 : 1 }}
                 >
                   {p.imagem_url ? (
                     <img src={p.imagem_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover" }} />
@@ -726,8 +741,14 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                     <div style={{ fontSize: 10, color: "#64748B" }}>Estoque: {p.quantidade_estoque} · Validade: {p.dias_validade ?? 7}d</div>
                   </div>
                   <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: 1, fontWeight: 700 }}>arraste</div>
+                  {semEstoque && (
+                    <div style={{ position: "absolute", inset: 0, background: "rgba(239,68,68,0.92)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", borderRadius: 14 }}>
+                      Sem estoque no momento
+                    </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {loadingLinks && <p style={{ fontSize: 11, color: "#94a3b8", marginTop: 12 }}>Carregando vínculos…</p>}
