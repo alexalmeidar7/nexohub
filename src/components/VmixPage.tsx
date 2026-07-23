@@ -1429,7 +1429,7 @@ export default function VmixPage() {
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
