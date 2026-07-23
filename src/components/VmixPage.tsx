@@ -785,6 +785,12 @@ export default function VmixPage() {
         setVmixUser(def.username || "");
         setVmixPass(def.password || "");
         setStudioName(def.name);
+        if (Array.isArray(def.last_inputs) && def.last_inputs.length > 0) {
+          setInputs(def.last_inputs as VmixInput[]);
+          if (def.last_state?.active) setActiveInput(def.last_state.active);
+          if (def.last_state?.preview) setPreviewInput(def.last_state.preview);
+          if (Array.isArray(def.ndi_sources)) setNdiSources(def.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+        }
         
         setLoading(false);
         
@@ -830,6 +836,12 @@ export default function VmixPage() {
     setVmixUser(conn.username || "");
     setVmixPass(conn.password || "");
     setStudioName(conn.name);
+    if (Array.isArray(conn.last_inputs) && conn.last_inputs.length > 0) {
+      setInputs(conn.last_inputs as VmixInput[]);
+      if (conn.last_state?.active) setActiveInput(conn.last_state.active);
+      if (conn.last_state?.preview) setPreviewInput(conn.last_state.preview);
+      if (Array.isArray(conn.ndi_sources)) setNdiSources(conn.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+    }
     setConnected(false);
     // Auto connect when switching
     setTimeout(() => connectToVmix(), 300);
