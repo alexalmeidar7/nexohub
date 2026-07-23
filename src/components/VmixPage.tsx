@@ -1406,7 +1406,7 @@ export default function VmixPage() {
     addLog(batchLabel, "pending", "Enviando via servidor...", "server");
 
     try {
-      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
+      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized, connectionId: selectedConnectionId } });
       if (res.error) throw res.error;
 
       const results = Array.isArray((res.data as { results?: Array<{ ok?: boolean }> } | null)?.results)
