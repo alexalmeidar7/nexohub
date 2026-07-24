@@ -685,6 +685,24 @@ export default function OuvintesPage() {
                           </span>
                         );
                       })()}
+                      {o.origem_cadastro === "chatbot" && o.whatsapp_message_id ? (
+                        <span
+                          title={`ID mensagem WhatsApp: ${o.whatsapp_message_id}\n(clique para copiar)`}
+                          onClick={() => { navigator.clipboard?.writeText(o.whatsapp_message_id || ""); }}
+                          style={{
+                            marginLeft: 6,
+                            display: "inline-flex", alignItems: "center",
+                            padding: "3px 8px", borderRadius: 999,
+                            background: "#0F172A", color: "#25D366",
+                            fontSize: 9, fontWeight: 800, letterSpacing: 0.4,
+                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                            cursor: "pointer", maxWidth: 120, overflow: "hidden",
+                            textOverflow: "ellipsis", whiteSpace: "nowrap",
+                          }}
+                        >
+                          #{String(o.whatsapp_message_id).slice(-8)}
+                        </span>
+                      ) : null}
                     </td>
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
