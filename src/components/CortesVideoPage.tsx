@@ -939,6 +939,31 @@ export default function CortesVideoPage() {
     return { url: URL.createObjectURL(data), fileName };
   };
 
+  const requestDownloadClipWithRetry = async (
+    res: CutResult,
+    idx: number,
+    maxAttempts = 3,
+  ): Promise<{ url: string; fileName: string } | null> => {
+    let lastErr: any = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const out = await requestDownloadClip(res);
+        if (out?.url) return out;
+        lastErr = new Error("Servidor não retornou o arquivo do trecho.");
+      } catch (err: any) {
+        lastErr = err;
+        const msg = err?.message || "";
+        // Rate limit → longer backoff. Others → linear.
+        const isRate = /429|too many|rate/i.test(msg);
+        const wait = isRate ? 2500 * attempt : 800 * attempt;
+        setStatusMsg(`Trecho ${idx + 1} — nova tentativa ${attempt + 1}/${maxAttempts}${isRate ? " (limite temporário)" : ""}...`);
+        if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, wait));
+      }
+    }
+    throw lastErr || new Error("Falha ao gerar arquivo.");
+  };
+
+
   const tryGenerateDownload = async (res: CutResult, idx: number, attempt = 1): Promise<void> => {
     const MAX_ATTEMPTS = 3;
     setRetryingIdx(idx);
