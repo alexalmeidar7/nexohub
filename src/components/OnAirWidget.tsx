@@ -366,7 +366,7 @@ export default function OnAirWidget() {
           <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center z-10">
+        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in" style={{ animationDuration: "500ms" }}>
           <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
             <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
             {programa.classificacaoEtaria && (
