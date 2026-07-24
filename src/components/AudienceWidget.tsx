@@ -1333,7 +1333,7 @@ function AudienceReportDialog({
   const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
   const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
-  const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+  const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; youtube: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
 
   // Totais no período selecionado (por fonte), respeita filtro de programa
   useEffect(() => {
@@ -1345,23 +1345,23 @@ function AudienceReportDialog({
       start.setHours(0, 0, 0, 0);
       let q = supabase
         .from("audiencia_historico")
-        .select("audio, video, programa")
+        .select("audio, video, youtube, programa")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString());
       if (programaFilter !== "__ALL__") q = q.eq("programa", programaFilter);
       const { data } = await q;
       if (cancelled) return;
       const rows = (data as any[]) || [];
-      let a = 0, v = 0, pa = 0, pv = 0;
+      let a = 0, v = 0, y = 0, pa = 0, pv = 0;
       for (const r of rows) {
-        const ra = r.audio || 0, rv = r.video || 0;
-        a += ra; v += rv;
+        const ra = r.audio || 0, rv = r.video || 0, ry = r.youtube || 0;
+        a += ra; v += rv; y += ry;
         if (ra > pa) pa = ra;
         if (rv > pv) pv = rv;
       }
       const n = Math.max(1, rows.length);
       setTotalsPeriod({
-        audio: a, video: v, peakAudio: pa, peakVideo: pv, samples: rows.length,
+        audio: a, video: v, youtube: y, peakAudio: pa, peakVideo: pv, samples: rows.length,
         avgAudio: Math.round(a / n), avgVideo: Math.round(v / n),
       });
     };
