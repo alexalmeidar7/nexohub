@@ -979,6 +979,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                     onChange={(v) => setSources((s) => ({ ...s, youtube_channel_id: v }))}
                     helperText="Opcional, mas recomendado. Cole o Channel ID (começa com 'UC…') encontrado em youtube.com/account_advanced. Evita falha na detecção quando a URL usa @handle."
                   />
+                </div>
               </div>
             </section>
 
