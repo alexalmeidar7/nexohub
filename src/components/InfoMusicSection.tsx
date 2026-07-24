@@ -244,9 +244,16 @@ export default function InfoMusicSection() {
   };
 
   const filteredRows = useMemo(() => {
+    // Ocultar da tabela Tocadas qualquer artista/música que esteja na lista de Exceções
+    const excLower = excecaoList.map(w => w.toLowerCase()).filter(Boolean);
+    const notExcepted = rows.filter(r => {
+      const artista = (r.artista || "").toLowerCase();
+      const musica = (r.musica || "").toLowerCase();
+      return !excLower.some(w => artista.includes(w) || musica.includes(w));
+    });
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r => {
+    if (!q) return notExcepted;
+    return notExcepted.filter(r => {
       const artista = (r.artista || "").toLowerCase();
       const musica = (r.musica || "").toLowerCase();
       const curiosidade = (r.curiosidade || "").toLowerCase();
@@ -255,7 +262,7 @@ export default function InfoMusicSection() {
       if (filterField === "curiosidade") return curiosidade.includes(q);
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
-  }, [rows, search, filterField]);
+  }, [rows, search, filterField, excecaoList]);
 
   const load = async () => {
     setLoading(true);
