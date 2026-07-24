@@ -143,6 +143,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const youtubeRef = useRef<number | null>(null);
   useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
   useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
+  useEffect(() => { youtubeRef.current = youtubeLiveCount; }, [youtubeLiveCount]);
 
   // Delta de seguidores (vs último valor conhecido, persistido em localStorage)
   const [socialDelta, setSocialDelta] = useState<{ youtube: number | null; instagram: number | null; facebook: number | null }>({ youtube: null, instagram: null, facebook: null });
