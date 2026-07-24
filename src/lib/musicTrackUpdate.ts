@@ -5,6 +5,10 @@
  *  1. Immediately merges the new track fields (title/artist/cover) and clears
  *     `music_current_curiosity` so downstream consumers (XML feed, telemetry
  *     card) never observe the previous curiosity paired with the new track.
+ *     A short-lived `music_current_curiosity_track` signature and
+ *     `music_current_curiosity_expires_at` timestamp are also written so the
+ *     XML endpoint can self-invalidate curiosity without waiting for the
+ *     next client write.
  *  2. Kicks off the curiosity fetch in the background.
  *  3. Only writes the fetched curiosity if `isStillCurrent()` is true — i.e.
  *     the track hasn't changed again while the request was in flight. This
@@ -20,8 +24,17 @@ export interface ApplyTrackChangeOptions {
   onError?: (err: unknown) => void;
 }
 
+/** Curiosity TTL — how long a fresh curiosity remains valid in the XML. */
+export const CURIOSITY_TTL_MS = 20000;
+
+/** Stable signature used to bind curiosity to the exact track it was fetched for. */
+export function trackSignature(titulo: string, artista: string): string {
+  return `${(artista || "").trim().toLowerCase()}|${(titulo || "").trim().toLowerCase()}`;
+}
+
 export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeOptions): Promise<void> {
   const { userId, now, data, merge, fetchCuriosity, isStillCurrent, onError } = opts;
+  const sig = trackSignature(data.titulo, data.artista);
 
   // Step 1: immediate merge — clears old curiosity, publishes new track.
   const basePatch = {
@@ -30,6 +43,8 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
     music_current_artist: data.artista,
     music_current_cover: data.capa || "",
     music_current_curiosity: "",
+    music_current_curiosity_track: sig,
+    music_current_curiosity_expires_at: null,
   };
   await merge(userId, basePatch);
 
@@ -45,13 +60,21 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
       const curData = await fetchCuriosity();
       if (!isStillCurrent()) return;
       if (curData?.curiosidade) {
-        await merge(userId, { music_current_curiosity: curData.curiosidade });
-        // Step 3: curiosity lives in XML for 20s only, then clears.
+        const expiresAt = Date.now() + CURIOSITY_TTL_MS;
+        await merge(userId, {
+          music_current_curiosity: curData.curiosidade,
+          music_current_curiosity_track: sig,
+          music_current_curiosity_expires_at: new Date(expiresAt).toISOString(),
+        });
+        // Step 3: curiosity lives in XML for CURIOSITY_TTL_MS only, then clears.
         setTimeout(() => {
           if (isStillCurrent()) {
-            void merge(userId, { music_current_curiosity: "" }).catch((e) => onError?.(e));
+            void merge(userId, {
+              music_current_curiosity: "",
+              music_current_curiosity_expires_at: null,
+            }).catch((e) => onError?.(e));
           }
-        }, 20000);
+        }, CURIOSITY_TTL_MS);
         return;
       }
     } catch (e) {
