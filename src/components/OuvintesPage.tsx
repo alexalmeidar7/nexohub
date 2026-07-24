@@ -164,7 +164,6 @@ export default function OuvintesPage() {
     ),
     [form, rulesCadastro],
   );
-  const cidadeWrapRef = useRef<HTMLDivElement>(null);
 
   // Load IBGE cities whenever UF changes
   useEffect(() => {
