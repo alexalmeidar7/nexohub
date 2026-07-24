@@ -875,7 +875,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         />
         <StatCell
           icon={<Radio size={14} />}
-          label="Streaming de áudio"
+          label="Rádio (áudio)"
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
@@ -883,7 +883,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
-          label="Streaming de vídeo"
+          label="TV (vídeo)"
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
@@ -1800,50 +1800,76 @@ function AudienceReportDialog({
                     </span>
                   </div>
                 </div>
-                <div className={`grid ${totalsPeriod.youtube > 0 ? "grid-cols-4" : "grid-cols-3"} divide-x`} style={{ borderColor: `${CYAN}33` }}>
-                  <div className="p-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5" style={{ color: AUDIO_COLOR }}>
-                      <Radio size={13} />
-                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Áudio</span>
-                    </div>
-                    <span className="text-2xl font-black leading-none tabular-nums" style={{ color: AUDIO_COLOR }}>
-                      {totalsPeriod.audio.toLocaleString("pt-BR")}
-                    </span>
-                    <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
-                  </div>
-                  <div className="p-4 flex flex-col gap-2">
-                    <div className="flex items-center gap-1.5" style={{ color: VIDEO_COLOR }}>
-                      <MonitorPlay size={13} />
-                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Vídeo</span>
-                    </div>
-                    <span className="text-2xl font-black leading-none tabular-nums" style={{ color: VIDEO_COLOR }}>
-                      {totalsPeriod.video.toLocaleString("pt-BR")}
-                    </span>
-                    <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
-                  </div>
-                  {totalsPeriod.youtube > 0 && (
-                    <div className="p-4 flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5" style={{ color: "#FF0000" }}>
-                        <Youtube size={13} />
-                        <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>YouTube</span>
+                {(() => {
+                  const tp = totalsPeriod;
+                  const totalAll = tp.audio + tp.video + tp.youtube;
+                  const pct = (n: number) => (totalAll > 0 ? Math.round((n / totalAll) * 1000) / 10 : 0);
+                  const pctRadio = pct(tp.audio);
+                  const pctTv = pct(tp.video);
+                  const pctYt = pct(tp.youtube);
+                  const hasYt = tp.youtube > 0;
+                  return (
+                    <>
+                      {(() => {
+                        const Cell = ({ label, icon, color, value, share }: { label: string; icon: React.ReactNode; color: string; value: number; share: number }) => (
+                          <div className="p-4 flex flex-col gap-2">
+                            <div className="flex items-center gap-1.5" style={{ color }}>
+                              {icon}
+                              <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>{label}</span>
+                            </div>
+                            <span className="text-2xl font-black leading-none tabular-nums" style={{ color }}>
+                              {value.toLocaleString("pt-BR")}
+                            </span>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
+                              <span className="text-[9px] font-black tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: `${color}18`, color }}>{share}%</span>
+                            </div>
+                          </div>
+                        );
+                        return (
+                          <div className={`grid ${hasYt ? "grid-cols-4" : "grid-cols-3"} divide-x`} style={{ borderColor: `${CYAN}33` }}>
+                            <Cell label="Rádio" icon={<Radio size={13} />} color={AUDIO_COLOR} value={tp.audio} share={pctRadio} />
+                            <Cell label="TV" icon={<MonitorPlay size={13} />} color={VIDEO_COLOR} value={tp.video} share={pctTv} />
+                            {hasYt && (
+                              <Cell label="YouTube" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} />
+                            )}
+                        <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
+                          <div className="flex items-center gap-1.5" style={{ color: DARK }}>
+                            <Trophy size={13} />
+                            <span className="text-[9px] font-black uppercase tracking-widest" style={{ opacity: 0.6 }}>Total impressões</span>
+                          </div>
+                          <span className="text-2xl font-black leading-none tabular-nums" style={{ color: DARK }}>
+                            {totalAll.toLocaleString("pt-BR")}
+                          </span>
+                          <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>soma Rádio + TV{hasYt ? " + YouTube" : ""}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {/* Comparação · share % por fonte */}
+                      <div className="px-4 pt-3 pb-4" style={{ borderTop: `1px solid ${CYAN}22` }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Comparação · participação (%)</span>
+                          <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>100% = total impressões</span>
+                        </div>
+                        <div className="flex h-3 w-full rounded-full overflow-hidden" style={{ background: `${DARK}0d` }}>
+                          {totalAll > 0 && (
+                            <>
+                              <div style={{ width: `${pctRadio}%`, background: AUDIO_COLOR }} title={`Rádio ${pctRadio}%`} />
+                              <div style={{ width: `${pctTv}%`, background: VIDEO_COLOR }} title={`TV ${pctTv}%`} />
+                              {hasYt && <div style={{ width: `${pctYt}%`, background: "#FF0000" }} title={`YouTube ${pctYt}%`} />}
+                            </>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[10px] font-bold" style={{ color: DARK }}>
+                          <span className="inline-flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Rádio · {pctRadio}%</span>
+                          <span className="inline-flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />TV · {pctTv}%</span>
+                          {hasYt && <span className="inline-flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: "#FF0000" }} />YouTube · {pctYt}%</span>}
+                        </div>
                       </div>
-                      <span className="text-2xl font-black leading-none tabular-nums" style={{ color: "#FF0000" }}>
-                        {totalsPeriod.youtube.toLocaleString("pt-BR")}
-                      </span>
-                      <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
-                    </div>
-                  )}
-                  <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
-                    <div className="flex items-center gap-1.5" style={{ color: DARK }}>
-                      <Trophy size={13} />
-                      <span className="text-[9px] font-black uppercase tracking-widest" style={{ opacity: 0.6 }}>Total impressões</span>
-                    </div>
-                    <span className="text-2xl font-black leading-none tabular-nums" style={{ color: DARK }}>
-                      {(totalsPeriod.audio + totalsPeriod.video + totalsPeriod.youtube).toLocaleString("pt-BR")}
-                    </span>
-                    <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>soma de todas as fontes</span>
-                  </div>
-                </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Pico do dia — áudio & vídeo com média */}
@@ -1894,7 +1920,7 @@ function AudienceReportDialog({
                 {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
                 <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
-                    <span style={{ opacity: 0.7 }}>Curva do dia · Áudio vs Vídeo</span>
+                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio vs TV</span>
                     <span className="flex items-center gap-3">
                       <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Áudio</span>
                       <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />Vídeo</span>
@@ -2448,10 +2474,10 @@ function TrendPanel({
     <div className="flex flex-col gap-4 overflow-auto pr-1" style={{ maxHeight: "60vh" }}>
       {/* Resumo */}
       <div className="grid grid-cols-4 gap-3">
-        <MiniStat label="Pico Áudio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Pico Vídeo · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Média Áudio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Média Vídeo" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico Rádio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico TV · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Rádio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média TV" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
       </div>
 
       {/* Dominância */}
@@ -2471,7 +2497,7 @@ function TrendPanel({
       {/* Tendência diária */}
       <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
         <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
-          Tendência diária · Áudio vs Vídeo
+          Tendência diária · Rádio vs TV
         </div>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={data.map((r) => ({ day: fmtDay(r.day), audio: r.audio, video: r.video }))}>
