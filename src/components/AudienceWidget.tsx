@@ -526,12 +526,12 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     const logNow = async () => {
       const audio = streamingRef.current ?? 0;
       const video = videoRef.current ?? 0;
-      if (audio === 0 && video === 0) return;
+      const youtube = youtubeRef.current ?? 0;
+      if (audio === 0 && video === 0 && youtube === 0) return;
       // Descobre programa atual
       const now = new Date();
       const dia = DIAS[now.getDay()];
       const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      let programa: string | null = null;
       try {
         const { data: progs } = await supabase
           .from("programas")
