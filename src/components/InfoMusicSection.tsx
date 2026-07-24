@@ -701,22 +701,8 @@ export default function InfoMusicSection() {
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
-                  <button
-                    onClick={() => setShowManualForm(true)}
-                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:opacity-90"
-                    style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                  >
-                    Cadastrar manualmente agora
-                  </button>
-                  <button
-                    onClick={() => { curiosityFetchKeyRef.current = ""; }}
-                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide opacity-70 hover:opacity-100"
-                    style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
-                  >
-                    Tentar buscar novamente
-                  </button>
-                </div>
+              </div>
+
               </div>
             ) : (
               <div
