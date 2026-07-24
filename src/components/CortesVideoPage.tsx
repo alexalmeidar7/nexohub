@@ -233,6 +233,7 @@ export default function CortesVideoPage() {
   const [crop, setCrop] = useState<CropLevel>("none");
   const [fade, setFade] = useState<FadeMode>("none");
   const [sharpness, setSharpness] = useState<SharpLevel>("none");
+  const [activeFx, setActiveFx] = useState<"crop" | "fade" | "sharp">("crop");
   const cropZoom: Record<CropLevel, number> = { none: 1, soft: 1.05, medium: 1.15, strong: 1.3 };
   const sharpFilter: Record<SharpLevel, string> = {
     none: "none",
