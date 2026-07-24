@@ -1831,7 +1831,7 @@ function AudienceReportDialog({
 
 
               {/* Gráfico + Tabela lado a lado */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 flex-1 min-h-0">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-[420px]">
                 {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
                 <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
