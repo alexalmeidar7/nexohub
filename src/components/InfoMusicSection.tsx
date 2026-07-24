@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -478,7 +479,14 @@ export default function InfoMusicSection() {
   const quotaExhausted = monthlyQuota.count >= monthlyQuota.limit;
 
   return (
-    <div className="space-y-5">
+    <div
+      className="space-y-5 rounded-2xl p-5"
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
+        boxShadow: "0 8px 28px -14px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent)",
+      }}
+    >
       {/* ── Header row: status crédito IA + botão "?" ── */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         <button
@@ -631,8 +639,9 @@ export default function InfoMusicSection() {
       <div className={nowPlaying ? "grid md:grid-cols-2 gap-4 items-start" : ""}>
         {nowPlaying && (
           <div className="rounded-2xl overflow-hidden relative" style={{
-            backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
-            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+            backgroundColor: "var(--layout-page-bg, #fff)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)",
+            boxShadow: "0 10px 24px -14px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
           }}>
             <div className="p-4 flex items-center gap-4 relative z-10 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
               <div className="relative shrink-0">
@@ -730,80 +739,100 @@ export default function InfoMusicSection() {
           </div>
         )}
 
-        <div className="rounded-xl p-4 space-y-3" style={{
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+        <div className="rounded-2xl overflow-hidden" style={{
+          backgroundColor: "var(--layout-page-bg, #fff)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 22%, transparent)",
+          boxShadow: "0 10px 24px -16px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
         }}>
-          <div className="flex items-center gap-2">
-            <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Exceções ({excecaoList.length})
-            </h4>
-          </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-            Quando o artista ou música contiver qualquer palavra abaixo, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Adicionar palavra (ex.: jingle)"
-              value={newExcecao}
-              onChange={(e) => setNewExcecao(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
-              className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
-              style={{
-                backgroundColor: "var(--layout-page-bg, #fff)",
-                color: "var(--layout-page-text, #1a1a1a)",
-                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-              }}
-            />
-            <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
-              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-              Adicionar
-            </Button>
-          </div>
           <div
-            className="rounded-lg overflow-hidden"
+            className="px-4 py-3 flex items-center gap-2 border-b"
             style={{
-              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
-              backgroundColor: "var(--layout-page-bg, #fff)",
-              maxHeight: 220,
-              overflowY: "auto",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent), color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent))",
+              borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)",
             }}
           >
-            {excecaoList.length === 0 ? (
-              <div className="text-center py-6 text-[11px] opacity-55" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Nenhuma palavra cadastrada.
-              </div>
-            ) : (
-              <table className="w-full text-xs">
-                <tbody>
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 18%, transparent)" }}
+            >
+              <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            </div>
+            <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Exceções
+            </h4>
+            <span
+              className="ml-auto text-[10px] font-black tabular-nums px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)",
+                color: "var(--layout-accent-color, #2563eb)",
+              }}
+            >
+              {excecaoList.length}
+            </span>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
+              Quando o artista ou música contiver qualquer palavra abaixo, a tag <code className="px-1 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", fontFamily: "ui-monospace, monospace" }}>&lt;curiosidade&gt;</code> fica vazia.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Adicionar palavra (ex.: jingle)"
+                value={newExcecao}
+                onChange={(e) => setNewExcecao(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
+                className="flex-1 px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 transition-shadow"
+                style={{
+                  backgroundColor: "var(--layout-page-bg, #fff)",
+                  color: "var(--layout-page-text, #1a1a1a)",
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                }}
+              />
+              <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
+                {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                Adicionar
+              </Button>
+            </div>
+            <div
+              className="rounded-xl p-2"
+              style={{
+                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+                backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 60%, color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent))",
+                maxHeight: 220,
+                overflowY: "auto",
+              }}
+            >
+              {excecaoList.length === 0 ? (
+                <div className="text-center py-6 text-[11px] opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Nenhuma palavra cadastrada.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
                   {excecaoList.map((w, i) => (
-                    <tr
+                    <span
                       key={w + i}
+                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold group transition-all hover:shadow-sm"
                       style={{
-                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                        backgroundColor: "var(--layout-page-bg, #fff)",
+                        color: "var(--layout-page-text, #1a1a1a)",
+                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
                       }}
                     >
-                      <td className="px-3 py-2 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                        {w}
-                      </td>
-                      <td className="px-3 py-2 text-right w-10">
-                        <button
-                          onClick={() => removeExcecao(w)}
-                          className="opacity-50 hover:opacity-100 transition-opacity"
-                          style={{ color: "#dc2626" }}
-                          title="Remover"
-                          disabled={savingExcecoes}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
+                      <span className="truncate max-w-[180px]">{w}</span>
+                      <button
+                        onClick={() => removeExcecao(w)}
+                        className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+                        style={{ backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)", color: "#dc2626" }}
+                        title="Remover"
+                        disabled={savingExcecoes}
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
                   ))}
-                </tbody>
-              </table>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -955,11 +984,26 @@ export default function InfoMusicSection() {
 
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Tocadas ({search ? `${filteredRows.length} de ${rows.length}` : `${rows.length}${totalCount > rows.length ? ` de ${totalCount}` : ""}`})
-          </h4>
-          <button onClick={load} className="text-xs opacity-60 hover:opacity-100 inline-flex items-center gap-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div
+              className="w-1 h-5 rounded-full"
+              style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
+            />
+            <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Tocadas
+            </h4>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)",
+                color: "var(--layout-accent-color, #2563eb)",
+              }}
+            >
+              {search ? `${filteredRows.length} de ${rows.length}` : `${rows.length}${totalCount > rows.length ? ` de ${totalCount}` : ""}`}
+            </span>
+          </div>
+          <button onClick={load} className="text-[11px] font-semibold opacity-70 hover:opacity-100 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors hover:bg-black/5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             <RefreshCw size={11} /> Atualizar
           </button>
         </div>
@@ -1005,7 +1049,11 @@ export default function InfoMusicSection() {
             <option value="sem_curiosidade">Músicas sem curiosidades</option>
           </select>
         </div>
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+          backgroundColor: "var(--layout-page-bg, #fff)",
+          boxShadow: "0 8px 24px -18px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
+        }}>
           {filterField === "sem_curiosidade" ? (
             loadingMissing ? (
               <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
@@ -1106,24 +1154,29 @@ export default function InfoMusicSection() {
           ) : (
             <div className="max-h-[420px] overflow-auto">
               <table className="w-full text-xs">
-                <thead className="sticky top-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+                <thead className="sticky top-0 z-10" style={{
+                  background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, var(--layout-page-bg, #fff)), color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff)))",
+                  boxShadow: "0 1px 0 0 color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)",
+                }}>
                   <tr>
-                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Artista</th>
-                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Música</th>
-                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Curiosidade</th>
-                    <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Data/Hora</th>
-                    <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Enviar</th>
-                    <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Exceções</th>
-                    <th className="px-3 py-2"></th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Artista</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Música</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Curiosidade</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data/Hora</th>
+                    <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Enviar</th>
+                    <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Exceções</th>
+                    <th className="px-3 py-2.5"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRows.map((r, i) => {
                     const isLastManual = r.id === lastManualId;
                     return (
-                      <tr key={r.id} style={{ 
-                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
-                        backgroundColor: isLastManual ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.1)" : undefined
+                      <tr key={r.id} className="transition-colors hover:brightness-[0.98]" style={{ 
+                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 7%, transparent)" : undefined,
+                        backgroundColor: isLastManual
+                          ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.10)"
+                          : (i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined),
                       }}>
                         <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-1">
@@ -1210,48 +1263,31 @@ export default function InfoMusicSection() {
                        <td className="px-3 py-2 align-top text-center">
                          {(() => {
                            const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           const handleToggle = async () => {
+                             const nameRaw = r.artista.trim();
+                             if (!nameRaw) return;
+                             const prevList = excecaoList.slice();
+                             if (isEx) {
+                               const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
+                               await saveExcecoesValue(next);
+                               toast.success(`"${nameRaw}" removido das exceções`, {
+                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
+                               });
+                             } else {
+                               const next = [nameRaw, ...excecaoList].join(", ");
+                               await saveExcecoesValue(next);
+                               toast.success(`"${nameRaw}" adicionado às exceções`, {
+                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
+                               });
+                             }
+                           };
                            return (
-                             <label
-                               className="inline-flex items-center justify-center cursor-pointer rounded-md px-2 py-1 transition-colors hover:bg-black/5"
+                             <div
+                               className="inline-flex items-center justify-center"
                                title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções (oculta desta tabela)"}
                              >
-                               <input
-                                 type="checkbox"
-                                 checked={isEx}
-                                 onChange={async () => {
-                                   const nameRaw = r.artista.trim();
-                                   if (!nameRaw) return;
-                                   const prevList = excecaoList.slice();
-                                   if (isEx) {
-                                     const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
-                                     await saveExcecoesValue(next);
-                                     toast.success(`"${nameRaw}" removido das exceções`, {
-                                       action: {
-                                         label: "Desfazer",
-                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
-                                       },
-                                     });
-                                   } else {
-                                     // Adiciona no TOPO da lista
-                                     const next = [nameRaw, ...excecaoList].join(", ");
-                                     await saveExcecoesValue(next);
-                                     toast.success(`"${nameRaw}" adicionado às exceções`, {
-                                       action: {
-                                         label: "Desfazer",
-                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
-                                       },
-                                     });
-                                   }
-                                 }}
-                                 className="w-[18px] h-[18px] cursor-pointer"
-                                 style={{
-                                   accentColor: "var(--layout-accent-color, #2563eb)",
-                                   outline: "2px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)",
-                                   outlineOffset: 1,
-                                   borderRadius: 4,
-                                 }}
-                               />
-                             </label>
+                               <Switch checked={isEx} onCheckedChange={handleToggle} />
+                             </div>
                            );
                          })()}
                        </td>
