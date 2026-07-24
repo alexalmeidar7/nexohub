@@ -235,8 +235,13 @@ export default function OuvintesPage() {
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
       sexo: form.sexo || null,
-      // pontuacao NÃO é editada manualmente — é calculada pela participação do ouvinte
+      // Pontuação AUTOMÁTICA: recalculada a partir das REGRAS DE PONTUAÇÃO
+      // (aba "Formulário de Cadastro") sempre que o admin salva. Ao criar,
+      // marca a origem como manual — os cadastros vindos do player/site/app
+      // são gravados via upsertOuvinteRecord com origem própria.
+      pontuacao: pontuacaoAuto,
     };
+    if (!editingId) payload.origem_cadastro = "manual";
 
     let error;
     if (editingId) {
