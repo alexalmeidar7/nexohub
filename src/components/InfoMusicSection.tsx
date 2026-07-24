@@ -280,32 +280,60 @@ export default function InfoMusicSection() {
         byKey.set(`${norm(row.artista || "")}::${norm(row.musica || "")}`, { id: row.id, curiosidade: row.curiosidade });
       }
 
+      // Also load Tocadas so we can fill items that only exist in musicas_tocadas
+      const { data: playedRows } = await supabase
+        .from("musicas_tocadas")
+        .select("artista, musica")
+        .limit(5000);
+      const playedKeys = new Set<string>();
+      for (const p of playedRows || []) {
+        playedKeys.add(`${norm(p.artista || "")}::${norm(p.musica || "")}`);
+      }
+
       let filled = 0;
+      let inserted = 0;
       let overwritten = 0;
       const notFound: string[] = [];
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + 6);
 
       for (const item of parsed) {
-        const match = byKey.get(`${norm(item.artista)}::${norm(item.musica)}`);
-        if (!match) {
-          notFound.push(`${item.artista} — ${item.musica}`);
+        const key = `${norm(item.artista)}::${norm(item.musica)}`;
+        const match = byKey.get(key);
+        if (match) {
+          const wasEmpty = !match.curiosidade || !match.curiosidade.trim();
+          const { error } = await supabase
+            .from("infomusic")
+            .update({ curiosidade: item.curiosidade, expires_at: expiresAt.toISOString() })
+            .eq("id", match.id);
+          if (!error) {
+            if (wasEmpty) filled++; else overwritten++;
+          }
           continue;
         }
-        const wasEmpty = !match.curiosidade || !match.curiosidade.trim();
-        const { error } = await supabase
-          .from("infomusic")
-          .update({ curiosidade: item.curiosidade, expires_at: expiresAt.toISOString() })
-          .eq("id", match.id);
-        if (!error) {
-          if (wasEmpty) filled++; else overwritten++;
+        // No infomusic row — insert only if the track is in Tocadas (musicas_tocadas)
+        if (playedKeys.has(key)) {
+          const { error } = await supabase.from("infomusic").insert({
+            user_id: user.id,
+            artista: item.artista,
+            musica: item.musica,
+            curiosidade: item.curiosidade,
+            deezer_artist_img: null,
+            expires_at: expiresAt.toISOString(),
+          });
+          if (!error) inserted++;
+          else notFound.push(`${item.artista} — ${item.musica}`);
+        } else {
+          notFound.push(`${item.artista} — ${item.musica}`);
         }
       }
 
-      const parts = [`${filled} curiosidade(s) preenchida(s)`];
+      const parts: string[] = [];
+      if (filled) parts.push(`${filled} preenchida(s)`);
+      if (inserted) parts.push(`${inserted} inserida(s)`);
       if (overwritten) parts.push(`${overwritten} sobrescrita(s)`);
-      if (notFound.length) parts.push(`${notFound.length} não encontrada(s) na tabela Tocadas`);
-      toast.success(parts.join(" · "));
+      if (notFound.length) parts.push(`${notFound.length} não encontrada(s) em Tocadas`);
+      toast.success(parts.join(" · ") || "Nada a importar");
       await Promise.all([load(), loadMissing()]);
     } catch (err) {
       toast.error("Erro ao importar: " + ((err as Error).message || "desconhecido"));
