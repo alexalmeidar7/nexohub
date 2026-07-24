@@ -799,7 +799,23 @@ export default function OuvintesPage() {
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
                     <td style={{ padding: "12px 14px", minWidth: 200, fontWeight: 700, fontSize: 13 }}>
-                      {o.nome}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ textDecoration: o.banido ? "line-through" : "none" }}>{o.nome}</span>
+                        {o.banido ? (
+                          <span
+                            title={o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido"}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "3px 8px", borderRadius: 999,
+                              background: "#DC2626", color: "#fff",
+                              fontSize: 9, fontWeight: 900, letterSpacing: 0.6,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            <Ban size={10} /> Banido
+                          </span>
+                        ) : null}
+                      </span>
                     </td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{formatPhone(o.telefone) || "—"}</td>
