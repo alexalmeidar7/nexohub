@@ -517,9 +517,9 @@ export default function OuvintesPage() {
               }}
               title="Calculada automaticamente conforme a participação do ouvinte"
             >
-              <span style={{ fontSize: 16, color: CYAN, fontWeight: 800 }}>{editingId ? (form.pontuacao || "0") : "0"}</span>
+              <span style={{ fontSize: 16, color: CYAN, fontWeight: 800 }}>{pontuacaoAuto}</span>
               <span style={{ fontSize: 10, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>
-                gerado pela participação
+                calculado pelas regras
               </span>
             </div>
           </Field>
