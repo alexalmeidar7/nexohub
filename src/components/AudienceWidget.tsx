@@ -96,6 +96,7 @@ function extractByPath(text: string, rawPath: string): number | null {
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [youtubeLiveCount, setYoutubeLiveCount] = useState<number | null>(null);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
@@ -142,6 +143,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const youtubeRef = useRef<number | null>(null);
   useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
   useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
+  useEffect(() => { youtubeRef.current = youtubeLiveCount; }, [youtubeLiveCount]);
 
   // Delta de seguidores (vs último valor conhecido, persistido em localStorage)
   const [socialDelta, setSocialDelta] = useState<{ youtube: number | null; instagram: number | null; facebook: number | null }>({ youtube: null, instagram: null, facebook: null });
@@ -480,34 +482,37 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       .filter((x) => x.url);
 
     const tick = async () => {
-      const calls: Array<Promise<number | null>> = [];
       // Primary call (always runs — enables YouTube Live viewers via config).
-      calls.push((async () => {
+      const primary: { viewers: number | null; youtubeLive: number | null } = await (async () => {
         const body: Record<string, unknown> = { userId: dataUserId };
         if (primaryUrl) body.urls = [primaryUrl];
         if (primaryXp) body.xpath = primaryXp;
+        try {
+          const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+          const d = data as any;
+          if (!d?.ok) return { viewers: null, youtubeLive: null };
+          return {
+            viewers: typeof d.viewers === "number" ? d.viewers : null,
+            youtubeLive: typeof d.youtubeLive === "number" ? d.youtubeLive : null,
+          };
+        } catch { return { viewers: null, youtubeLive: null }; }
+      })();
+      const extraCalls = extras.map(({ url, xpath }) => (async () => {
+        const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
+        if (xpath) body.xpath = xpath;
         try {
           const { data } = await supabase.functions.invoke("count-video-viewers", { body });
           const raw = (data as any)?.ok ? (data as any).viewers : null;
           return typeof raw === "number" ? raw : null;
         } catch { return null; }
       })());
-      for (const { url, xpath } of extras) {
-        calls.push((async () => {
-          const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
-          if (xpath) body.xpath = xpath;
-          try {
-            const { data } = await supabase.functions.invoke("count-video-viewers", { body });
-            const raw = (data as any)?.ok ? (data as any).viewers : null;
-            return typeof raw === "number" ? raw : null;
-          } catch { return null; }
-        })());
-      }
-      const results = await Promise.all(calls);
+      const extraResults = await Promise.all(extraCalls);
       if (cancelled) return;
-      const anyOk = results.some((n) => n !== null);
-      const total = results.reduce((a, n) => a + (n ?? 0), 0);
+      const all = [primary.viewers, ...extraResults];
+      const anyOk = all.some((n) => n !== null);
+      const total = all.reduce((a, n) => a + (n ?? 0), 0);
       setVideoCount(anyOk ? total : null);
+      setYoutubeLiveCount(primary.youtubeLive);
       setLoadingVideo(false);
     };
     tick();
@@ -882,7 +887,20 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+          badge={
+            youtubeLiveCount && youtubeLiveCount > 0 ? (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                style={{ background: "#ef4444", color: "#fff" }}
+                title="YouTube ao vivo"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                AO VIVO {youtubeLiveCount.toLocaleString("pt-BR")}
+              </span>
+            ) : (
+              <PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />
+            )
+          }
         />
         <StatCell
           icon={<Globe size={14} />}
