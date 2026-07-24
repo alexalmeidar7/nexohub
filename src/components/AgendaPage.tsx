@@ -40,6 +40,7 @@ import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCid
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 function ParticipanteSearchPicker({
   apresentadores,
@@ -808,7 +809,7 @@ export default function AgendaPage() {
   const requestDelete = (evt: Evento, occurrenceDateStr?: string) => {
     const isRecorrente = evt.recorrencia && evt.recorrencia !== "unico";
     if (!isRecorrente) {
-      if (confirm("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
+      if (await confirmDialog("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
       return;
     }
     const dateStr = occurrenceDateStr || evt.data;

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface Banner {
   id: string;
@@ -138,7 +139,7 @@ export default function AdsSitePage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Remover este banner?")) return;
+    if (!(await confirmDialog("Remover este banner?"))) return;
     await supabase.from("site_banners").delete().eq("id", id);
     toast({ title: "Banner removido" }); load();
   }
