@@ -298,7 +298,32 @@ export default function InfoMusicSection() {
         });
         if (cancelled) return;
         const txt = (data as { curiosidade?: string })?.curiosidade;
-        if (!txt) return;
+        if (!txt) {
+          // Nothing found — still register a blank row in infomusic so the user
+          // can fill the curiosidade manually later from the saved list.
+          try {
+            const { data: existing } = await supabase
+              .from("infomusic")
+              .select("id")
+              .eq("user_id", user.id)
+              .ilike("artista", nowPlaying.artista)
+              .ilike("musica", nowPlaying.musica)
+              .maybeSingle();
+            if (!existing) {
+              await supabase.from("infomusic").insert({
+                user_id: user.id,
+                artista: nowPlaying.artista,
+                musica: nowPlaying.musica,
+                curiosidade: "",
+              });
+              // Refresh the saved list so the new blank entry appears immediately
+              load();
+            }
+          } catch (err) {
+            console.warn("[InfoMusicSection] blank infomusic insert failed", err);
+          }
+          return;
+        }
         // Reflect immediately in UI
         setNowPlaying(prev => prev && prev.musica === nowPlaying.musica && prev.artista === nowPlaying.artista
           ? { ...prev, curiosity: txt } : prev);
@@ -307,6 +332,7 @@ export default function InfoMusicSection() {
         await supabase.from("user_settings").update({
           dashboard_items: { ...currentDashboard, music_current_curiosity: txt },
         }).eq("user_id", user.id);
+
       } catch (e) {
         console.warn("[InfoMusicSection] curiosity fetch failed", e);
       }
