@@ -36,10 +36,10 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       style={{
-        // Standardize: every popup starts right below the "No Ar" box on Home.
-        // Falls back to a sensible default when the widget isn't mounted.
-        top: "calc(var(--onair-bottom, 20vh) + 12px)",
-        maxHeight: "calc(100vh - var(--onair-bottom, 20vh) - 32px)",
+        // Standardize: every popup starts at 80px from the top of the viewport,
+        // aligned with the app header (matches the Audience Report popup).
+        top: "80px",
+        maxHeight: "calc(100vh - 100px)",
         overflowY: "auto",
         ...(style || {}),
       }}
