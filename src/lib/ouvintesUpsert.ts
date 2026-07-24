@@ -214,3 +214,25 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
+
+/**
+ * Verifica se um ouvinte está banido pelo dono da rádio.
+ * Aceita e-mail, CPF ou telefone. Retorna `false` em qualquer erro (fail-open
+ * apenas para não travar o app; a UI de admin ainda protege).
+ */
+export async function isOuvinteBanido(
+  radioUserId: string | null | undefined,
+  identifier: string | null | undefined,
+): Promise<boolean> {
+  const id = (identifier || "").trim();
+  if (!radioUserId || !id) return false;
+  try {
+    const { data } = await (supabase as any).rpc("is_ouvinte_banido", {
+      _radio_user_id: radioUserId,
+      _identifier: id,
+    });
+    return data === true;
+  } catch {
+    return false;
+  }
+}
