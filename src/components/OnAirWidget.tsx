@@ -398,7 +398,7 @@ export default function OnAirWidget() {
         </div>
 
 
-        <div className="z-10 mb-4 flex items-center gap-1.5">
+        <div key={`ap-${apresentadorNome}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "500ms" }}>
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
           <button
