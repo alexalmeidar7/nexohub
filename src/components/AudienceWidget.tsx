@@ -457,37 +457,54 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   }, [dataUserId]);
 
   // Poll video streaming stats via edge function.
-  // Runs URL+XPath, generic viewer-tag auto-detect and provider probes
-  // (YouTube Live "watching now") in parallel — fastest wins.
+  // Primary call may run without a URL (edge function will still return YouTube
+  // Live viewers from empresa_config). Each extra source runs its own call and
+  // the widget shows the sum of all numeric results.
+  const videoSourcesKey = JSON.stringify(
+    [
+      { url: sources.video_stream_api_url?.trim(), xpath: sources.video_stream_xpath?.trim() },
+      ...sources.video_extras.map((e) => ({ url: e.url?.trim(), xpath: e.xpath?.trim() })),
+    ],
+  );
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const overrideUrl = sources.video_stream_api_url?.trim();
-    const xpath = sources.video_stream_xpath?.trim();
-    const ck = audKey("v", overrideUrl || `user:${dataUserId}`, xpath);
-    const cached = getAudCache(ck);
-    if (cached !== undefined) {
-      setVideoCount(cached);
-      setLoadingVideo(false);
-    }
+    const primaryUrl = sources.video_stream_api_url?.trim() || "";
+    const primaryXp = sources.video_stream_xpath?.trim() || "";
+    const extras = sources.video_extras
+      .map((e) => ({ url: e.url?.trim() || "", xpath: e.xpath?.trim() || "" }))
+      .filter((x) => x.url);
+
     const tick = async () => {
-      try {
+      const calls: Array<Promise<number | null>> = [];
+      // Primary call (always runs — enables YouTube Live viewers via config).
+      calls.push((async () => {
         const body: Record<string, unknown> = { userId: dataUserId };
-        if (overrideUrl) body.urls = [overrideUrl];
-        if (xpath) body.xpath = xpath;
-        const { data } = await supabase.functions.invoke("count-video-viewers", { body });
-        if (cancelled) return;
-        let n: number | null = null;
-        if ((data as any)?.ok) {
-          const raw = (data as any).viewers;
-          n = typeof raw === "number" ? raw : null;
-        }
-        setVideoCount(n);
-        setAudCache(ck, n, VIDEO_MS);
-      } catch {
-        if (!cancelled) setVideoCount(null);
+        if (primaryUrl) body.urls = [primaryUrl];
+        if (primaryXp) body.xpath = primaryXp;
+        try {
+          const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+          const raw = (data as any)?.ok ? (data as any).viewers : null;
+          return typeof raw === "number" ? raw : null;
+        } catch { return null; }
+      })());
+      for (const { url, xpath } of extras) {
+        calls.push((async () => {
+          const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
+          if (xpath) body.xpath = xpath;
+          try {
+            const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+            const raw = (data as any)?.ok ? (data as any).viewers : null;
+            return typeof raw === "number" ? raw : null;
+          } catch { return null; }
+        })());
       }
-      if (!cancelled) setLoadingVideo(false);
+      const results = await Promise.all(calls);
+      if (cancelled) return;
+      const anyOk = results.some((n) => n !== null);
+      const total = results.reduce((a, n) => a + (n ?? 0), 0);
+      setVideoCount(anyOk ? total : null);
+      setLoadingVideo(false);
     };
     tick();
     const iv = setInterval(tick, VIDEO_MS);
@@ -495,7 +512,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataUserId, videoSourcesKey]);
 
   // Log audiência a cada 5 minutos para o relatório histórico
   useEffect(() => {
