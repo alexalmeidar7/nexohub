@@ -359,30 +359,106 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
         </button>
       </div>
 
-      {/* Upcoming descriptive list */}
+      {/* Upcoming timeline feed (grouped by day) */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-1 scrollbar-hide">
-        {upcoming.length === 0 ? (
+        {!hasAnyUpcoming ? (
           <div className="h-full flex flex-col items-center justify-center opacity-40">
             <CalendarDays size={18} className="mb-1" style={{ color: textColor }} />
             <p className="text-[11px] font-semibold" style={{ color: textColor }}>Sem eventos próximos</p>
           </div>
         ) : (
           <>
-            {!eventos.some((e) => matches(e, selected) && e.status !== "cancelado" && e.status !== "concluido") && (
-              <div
-                className="rounded-lg p-2 flex items-center gap-2"
-                style={{
-                  background: "#ffffff",
-                  border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)",
-                }}
-              >
-                <CalendarDays size={12} style={{ color: accent, opacity: 0.9 }} />
-                <p className="text-[10px] leading-tight m-0" style={{ color: "#111111", opacity: 0.85 }}>
-                  Nenhum evento em <span className="font-bold">{format(selected, "dd 'de' MMM", { locale: ptBR })}</span>. Próximos abaixo:
-                </p>
-              </div>
-            )}
-            {upcoming.map(({ date, evt }) => {
+            {timeline.map(({ date: dayDate, events: dayEvents }) => {
+              const dow = dayDate.getDay();
+              const isWeekend = dow === 0 || dow === 6;
+              const isTodayD = isSameDay(dayDate, new Date());
+              const weekendLabel = dow === 6 ? "Sábado" : "Domingo";
+              const dayNodes: JSX.Element[] = [];
+
+              // Weekend divider box (Sábado / Domingo)
+              if (isWeekend) {
+                dayNodes.push(
+                  <div
+                    key={`weekend-${dayDate.toISOString()}`}
+                    className="relative rounded-lg px-2.5 py-1.5 flex items-center gap-2 overflow-hidden"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(0,191,240,0.16) 0%, rgba(198,240,60,0.14) 100%)",
+                      border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 22%, transparent)",
+                    }}
+                  >
+                    <span
+                      className="inline-block w-1 h-6 rounded-full shrink-0"
+                      style={{ background: dow === 6 ? "#00BFF0" : "#C6F03C" }}
+                    />
+                    <div className="flex-1 min-w-0 flex items-baseline gap-2">
+                      <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: textColor }}>
+                        {weekendLabel}
+                      </span>
+                      <span className="text-[10px] font-semibold tabular-nums" style={{ color: textColor, opacity: 0.65 }}>
+                        {format(dayDate, "dd 'de' MMM", { locale: ptBR })}
+                      </span>
+                    </div>
+                    {isTodayD && (
+                      <span className="text-[8.5px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded-full" style={{ background: accent, color: "var(--layout-header-text, #ffffff)" }}>
+                        hoje
+                      </span>
+                    )}
+                  </div>
+                );
+              }
+
+              // Empty-day placeholder ("Sem evento neste dia")
+              if (dayEvents.length === 0) {
+                dayNodes.push(
+                  <div
+                    key={`empty-${dayDate.toISOString()}`}
+                    className="rounded-lg px-2.5 py-1.5 flex items-center gap-2"
+                    style={{
+                      background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 25%, transparent)",
+                      border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)",
+                    }}
+                  >
+                    <div
+                      className="flex flex-col items-center justify-center rounded-md shrink-0"
+                      style={{
+                        minWidth: 34,
+                        padding: "2px 6px",
+                        background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 45%, transparent)",
+                        color: textColor,
+                        opacity: 0.65,
+                      }}
+                    >
+                      <span className="text-[8px] uppercase font-bold leading-none">{format(dayDate, "MMM", { locale: ptBR })}</span>
+                      <span className="text-[13px] font-black leading-none tabular-nums mt-0.5">{dayDate.getDate()}</span>
+                      <span className="text-[7.5px] uppercase font-bold leading-none mt-0.5">{format(dayDate, "EEE", { locale: ptBR }).replace(".", "")}</span>
+                    </div>
+                    <p className="text-[10.5px] italic font-medium m-0" style={{ color: textColor, opacity: 0.55 }}>
+                      Sem evento neste dia
+                    </p>
+                  </div>
+                );
+              }
+
+              // Events of the day
+              dayEvents.forEach((evt) => {
+                const date = dayDate;
+                dayNodes.push(renderEventCard(evt, date));
+              });
+
+              return (
+                <div key={`day-${dayDate.toISOString()}`} className="space-y-1">
+                  {dayNodes}
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+      {/* --- LEGACY BLOCK BELOW (kept as helper via renderEventCard) --- */}
+      {false && (
+          <>
+            {timeline.map(({ date: dayDate, events: dayEvents }) => dayEvents.map((evt) => {
+            const date = dayDate;
             const type = typeColors[(evt.tipo_evento || "live") as keyof typeof typeColors] || typeColors.live;
             const hora = evt.horario_gravacao || evt.programa?.horario_inicio || "";
             const horaFim = evt.horario_gravacao_fim || evt.programa?.horario_fim || "";
