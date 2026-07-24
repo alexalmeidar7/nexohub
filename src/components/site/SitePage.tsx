@@ -118,7 +118,7 @@ export default function SitePage({ effectiveUserId }: Props) {
     update({ cidade_clima: c.name, cidade_lat: c.latitude, cidade_lon: c.longitude });
     setCityResults([]); setCityQuery("");
   };
-  const openPreview = () => window.open(`/site-preview?user=${effectiveUserId}`, "_blank", "noopener");
+  
 
   const accent = "var(--layout-accent-color, #268ffa)";
   const textColor = "var(--layout-page-text, #1a1a1a)";
