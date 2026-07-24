@@ -17,6 +17,11 @@ interface SocialCounts {
   facebook: number | null;
 }
 
+interface StreamSource {
+  url: string;
+  xpath: string;
+}
+
 interface SourcesConfig {
   instagram: string;
   facebook: string;
@@ -25,6 +30,8 @@ interface SourcesConfig {
   audio_stream_xpath: string;
   video_stream_api_url: string;
   video_stream_xpath: string;
+  audio_extras: StreamSource[];
+  video_extras: StreamSource[];
   youtube_api_key: string;
   youtube_channel_id: string;
 }
@@ -111,6 +118,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     audio_stream_xpath: "",
     video_stream_api_url: "",
     video_stream_xpath: "",
+    audio_extras: [],
+    video_extras: [],
     youtube_api_key: "",
     youtube_channel_id: "",
   });
@@ -123,6 +132,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [probeError, setProbeError] = useState<string | null>(null);
+  // Show/hide XPath field per source row. Key: -1 = primary, >=0 = extras[idx].
+  const [audioXpOpen, setAudioXpOpen] = useState<Record<number, boolean>>({});
+  const [videoXpOpen, setVideoXpOpen] = useState<Record<number, boolean>>({});
 
   // Refs to keep latest counts for the periodic history logger
   const streamingRef = useRef<number | null>(null);
@@ -281,7 +293,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         // populate the rotation labels immediately.
         const { data } = await supabase
           .from("empresa_config")
-          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id")
+          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id, audio_sources, video_sources")
           .eq("user_id", dataUserId as any)
           .maybeSingle();
         if (!cancelled && data) {
@@ -291,14 +303,34 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             facebook: (data as any).facebook || undefined,
           };
           videoApiUrlRef.current = (data as any).video_stream_api_url || null;
+
+          const asList = Array.isArray((data as any).audio_sources) ? (data as any).audio_sources : [];
+          const vsList = Array.isArray((data as any).video_sources) ? (data as any).video_sources : [];
+          const normList = (arr: any[]): StreamSource[] =>
+            arr
+              .map((x) => ({ url: String(x?.url ?? "").trim(), xpath: String(x?.xpath ?? "").trim() }))
+              .filter((x) => x.url.length > 0);
+          const audioAll = normList(asList);
+          const videoAll = normList(vsList);
+          // Primary comes from legacy columns; if empty, seed from first jsonb entry.
+          const primaryAudioUrl = ((data as any).audio_stream_api_url || audioAll[0]?.url || "") as string;
+          const primaryAudioXp = ((data as any).audio_stream_xpath || audioAll[0]?.xpath || "") as string;
+          const primaryVideoUrl = ((data as any).video_stream_api_url || videoAll[0]?.url || "") as string;
+          const primaryVideoXp = ((data as any).video_stream_xpath || videoAll[0]?.xpath || "") as string;
+          // Extras = jsonb entries whose URL differs from primary.
+          const audioExtras = audioAll.filter((x) => x.url && x.url !== primaryAudioUrl);
+          const videoExtras = videoAll.filter((x) => x.url && x.url !== primaryVideoUrl);
+
           const s: SourcesConfig = {
             instagram: (data as any).instagram || "",
             facebook: (data as any).facebook || "",
             youtube: (data as any).youtube || "",
-            audio_stream_api_url: (data as any).audio_stream_api_url || "",
-            audio_stream_xpath: (data as any).audio_stream_xpath || "",
-            video_stream_api_url: (data as any).video_stream_api_url || "",
-            video_stream_xpath: (data as any).video_stream_xpath || "",
+            audio_stream_api_url: primaryAudioUrl,
+            audio_stream_xpath: primaryAudioXp,
+            video_stream_api_url: primaryVideoUrl,
+            video_stream_xpath: primaryVideoXp,
+            audio_extras: audioExtras,
+            video_extras: videoExtras,
             youtube_api_key: (data as any).youtube_api_key || "",
             youtube_channel_id: (data as any).youtube_channel_id || "",
           };
@@ -346,38 +378,50 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll audio stream stats using the URL (and optionally the XPath) configured
-  // in the popup. If no XPath is provided, the edge function tries to detect a
-  // common listeners tag/field automatically.
+  // Poll audio stream stats. Sums the primary URL plus each extra source
+  // configured. When any of them returns a number, the widget shows the sum.
+  const audioSourcesKey = JSON.stringify(
+    [
+      { url: sources.audio_stream_api_url?.trim(), xpath: sources.audio_stream_xpath?.trim() },
+      ...sources.audio_extras.map((e) => ({ url: e.url?.trim(), xpath: e.xpath?.trim() })),
+    ].filter((x) => x.url),
+  );
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const overrideUrl = sources.audio_stream_api_url?.trim();
-    const xpath = sources.audio_stream_xpath?.trim();
-    if (!overrideUrl) {
+    const list: Array<{ url: string; xpath: string }> = [];
+    const pUrl = sources.audio_stream_api_url?.trim();
+    if (pUrl) list.push({ url: pUrl, xpath: sources.audio_stream_xpath?.trim() || "" });
+    for (const e of sources.audio_extras) {
+      const u = e.url?.trim();
+      if (u) list.push({ url: u, xpath: e.xpath?.trim() || "" });
+    }
+    if (list.length === 0) {
       setStreamingCount(null);
       setLoadingStreaming(false);
       return;
     }
-    // Hydrate instantly from client cache when a fresh value exists.
-    const ck = audKey("a", overrideUrl, xpath);
-    const cached = getAudCache(ck);
-    if (cached !== undefined) {
-      setStreamingCount(cached);
-      setLoadingStreaming(false);
-    }
     const tick = async () => {
-      const body: Record<string, unknown> = { userId: dataUserId, urls: [overrideUrl] };
-      if (xpath) body.xpath = xpath;
-      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+      const results = await Promise.all(
+        list.map(async ({ url, xpath }) => {
+          const ck = audKey("a", url, xpath);
+          const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
+          if (xpath) body.xpath = xpath;
+          try {
+            const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+            const raw = (data as any)?.ok ? (data as any).listeners : null;
+            const n = typeof raw === "number" ? raw : null;
+            setAudCache(ck, n, LISTENERS_MS);
+            return n;
+          } catch {
+            return null;
+          }
+        }),
+      );
       if (cancelled) return;
-      let n: number | null = null;
-      if (data && (data as any).ok) {
-        const raw = (data as any).listeners;
-        n = typeof raw === "number" ? raw : null;
-      }
-      setStreamingCount(n);
-      setAudCache(ck, n, LISTENERS_MS);
+      const anyOk = results.some((n) => n !== null);
+      const total = results.reduce((a, n) => a + (n ?? 0), 0);
+      setStreamingCount(anyOk ? total : null);
       setLoadingStreaming(false);
     };
     tick();
@@ -386,7 +430,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataUserId, audioSourcesKey]);
 
 
 
@@ -415,37 +460,54 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   }, [dataUserId]);
 
   // Poll video streaming stats via edge function.
-  // Runs URL+XPath, generic viewer-tag auto-detect and provider probes
-  // (YouTube Live "watching now") in parallel — fastest wins.
+  // Primary call may run without a URL (edge function will still return YouTube
+  // Live viewers from empresa_config). Each extra source runs its own call and
+  // the widget shows the sum of all numeric results.
+  const videoSourcesKey = JSON.stringify(
+    [
+      { url: sources.video_stream_api_url?.trim(), xpath: sources.video_stream_xpath?.trim() },
+      ...sources.video_extras.map((e) => ({ url: e.url?.trim(), xpath: e.xpath?.trim() })),
+    ],
+  );
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const overrideUrl = sources.video_stream_api_url?.trim();
-    const xpath = sources.video_stream_xpath?.trim();
-    const ck = audKey("v", overrideUrl || `user:${dataUserId}`, xpath);
-    const cached = getAudCache(ck);
-    if (cached !== undefined) {
-      setVideoCount(cached);
-      setLoadingVideo(false);
-    }
+    const primaryUrl = sources.video_stream_api_url?.trim() || "";
+    const primaryXp = sources.video_stream_xpath?.trim() || "";
+    const extras = sources.video_extras
+      .map((e) => ({ url: e.url?.trim() || "", xpath: e.xpath?.trim() || "" }))
+      .filter((x) => x.url);
+
     const tick = async () => {
-      try {
+      const calls: Array<Promise<number | null>> = [];
+      // Primary call (always runs — enables YouTube Live viewers via config).
+      calls.push((async () => {
         const body: Record<string, unknown> = { userId: dataUserId };
-        if (overrideUrl) body.urls = [overrideUrl];
-        if (xpath) body.xpath = xpath;
-        const { data } = await supabase.functions.invoke("count-video-viewers", { body });
-        if (cancelled) return;
-        let n: number | null = null;
-        if ((data as any)?.ok) {
-          const raw = (data as any).viewers;
-          n = typeof raw === "number" ? raw : null;
-        }
-        setVideoCount(n);
-        setAudCache(ck, n, VIDEO_MS);
-      } catch {
-        if (!cancelled) setVideoCount(null);
+        if (primaryUrl) body.urls = [primaryUrl];
+        if (primaryXp) body.xpath = primaryXp;
+        try {
+          const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+          const raw = (data as any)?.ok ? (data as any).viewers : null;
+          return typeof raw === "number" ? raw : null;
+        } catch { return null; }
+      })());
+      for (const { url, xpath } of extras) {
+        calls.push((async () => {
+          const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
+          if (xpath) body.xpath = xpath;
+          try {
+            const { data } = await supabase.functions.invoke("count-video-viewers", { body });
+            const raw = (data as any)?.ok ? (data as any).viewers : null;
+            return typeof raw === "number" ? raw : null;
+          } catch { return null; }
+        })());
       }
-      if (!cancelled) setLoadingVideo(false);
+      const results = await Promise.all(calls);
+      if (cancelled) return;
+      const anyOk = results.some((n) => n !== null);
+      const total = results.reduce((a, n) => a + (n ?? 0), 0);
+      setVideoCount(anyOk ? total : null);
+      setLoadingVideo(false);
     };
     tick();
     const iv = setInterval(tick, VIDEO_MS);
@@ -453,7 +515,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId, sources.video_stream_api_url, sources.video_stream_xpath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataUserId, videoSourcesKey]);
 
   // Log audiência a cada 5 minutos para o relatório histórico
   useEffect(() => {
@@ -534,6 +597,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     const initial = initialSourcesRef.current;
     if (!initial) return;
+    const extrasKey = (arr: StreamSource[]) =>
+      JSON.stringify(arr.map((e) => ({ url: e.url.trim(), xpath: e.xpath.trim() })));
     const changed =
       initial.instagram !== sources.instagram ||
       initial.facebook !== sources.facebook ||
@@ -542,9 +607,23 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url ||
       initial.video_stream_xpath !== sources.video_stream_xpath ||
+      extrasKey(initial.audio_extras) !== extrasKey(sources.audio_extras) ||
+      extrasKey(initial.video_extras) !== extrasKey(sources.video_extras) ||
       initial.youtube_api_key !== sources.youtube_api_key ||
       initial.youtube_channel_id !== sources.youtube_channel_id;
     if (!changed) return;
+
+    const buildList = (primaryUrl: string, primaryXp: string, extras: StreamSource[]) => {
+      const list: StreamSource[] = [];
+      if (primaryUrl.trim()) list.push({ url: primaryUrl.trim(), xpath: primaryXp.trim() });
+      for (const e of extras) {
+        const u = e.url.trim();
+        if (u) list.push({ url: u, xpath: e.xpath.trim() });
+      }
+      return list;
+    };
+    const audioList = buildList(sources.audio_stream_api_url, sources.audio_stream_xpath, sources.audio_extras);
+    const videoList = buildList(sources.video_stream_api_url, sources.video_stream_xpath, sources.video_extras);
 
     const payload = {
       user_id: dataUserId,
@@ -555,6 +634,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
       video_stream_xpath: sources.video_stream_xpath.trim() || null,
+      audio_sources: audioList,
+      video_sources: videoList,
       youtube_api_key: sources.youtube_api_key.trim() || null,
       youtube_channel_id: sources.youtube_channel_id.trim() || null,
     };
@@ -899,25 +980,56 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   </span>
                 </div>
               </div>
-              <SourceField
-                label="URL do stream"
-                placeholder="https://seu-servidor:8000/stream"
-                value={sources.audio_stream_api_url}
-                onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
-              />
-              <SourceField
-                label="XPath do nódulo de ouvintes"
-                placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
-                value={sources.audio_stream_xpath}
-                onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
-                error={audioXPathError}
-                actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
-                onAction={() => probeXPath("audio")}
-                actionDisabled={probing !== null}
+              <StreamSourceRow
+                kind="audio"
+                index={-1}
+                url={sources.audio_stream_api_url}
+                xpath={sources.audio_stream_xpath}
+                showXpath={!!sources.audio_stream_xpath || audioXpOpen[-1]}
+                onUrlChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
+                onXpathChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
+                onToggleXpath={() => setAudioXpOpen((o) => ({ ...o, [-1]: !o[-1] }))}
+                onAddExtra={() =>
+                  setSources((s) => ({ ...s, audio_extras: [...s.audio_extras, { url: "", xpath: "" }] }))
+                }
+                xpathError={audioXPathError}
+                probing={probing === "audio"}
+                onProbe={() => probeXPath("audio")}
                 suggestions={audioSuggestions}
                 onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
-                helperText="Detecta automaticamente o campo com o número de ouvintes."
               />
+              {sources.audio_extras.map((extra, i) => (
+                <StreamSourceRow
+                  key={`ax-${i}`}
+                  kind="audio"
+                  index={i}
+                  isExtra
+                  url={extra.url}
+                  xpath={extra.xpath}
+                  showXpath={!!extra.xpath || audioXpOpen[i]}
+                  onUrlChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.audio_extras];
+                      next[i] = { ...next[i], url: v };
+                      return { ...s, audio_extras: next };
+                    })
+                  }
+                  onXpathChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.audio_extras];
+                      next[i] = { ...next[i], xpath: v };
+                      return { ...s, audio_extras: next };
+                    })
+                  }
+                  onToggleXpath={() => setAudioXpOpen((o) => ({ ...o, [i]: !o[i] }))}
+                  onRemove={() =>
+                    setSources((s) => ({
+                      ...s,
+                      audio_extras: s.audio_extras.filter((_, j) => j !== i),
+                    }))
+                  }
+                />
+              ))}
             </section>
 
             {/* Streaming Vídeo */}
@@ -938,25 +1050,56 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   </span>
                 </div>
               </div>
-              <SourceField
-                label="URL do stream"
-                placeholder="https://video.logicahost.com.br/api/..."
-                value={sources.video_stream_api_url}
-                onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
-              />
-              <SourceField
-                label="XPath do nódulo de espectadores"
-                placeholder="//info/espectadores_conectados"
-                value={sources.video_stream_xpath}
-                onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
-                error={videoXPathError}
-                actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
-                onAction={() => probeXPath("video")}
-                actionDisabled={probing !== null}
+              <StreamSourceRow
+                kind="video"
+                index={-1}
+                url={sources.video_stream_api_url}
+                xpath={sources.video_stream_xpath}
+                showXpath={!!sources.video_stream_xpath || videoXpOpen[-1]}
+                onUrlChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
+                onXpathChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
+                onToggleXpath={() => setVideoXpOpen((o) => ({ ...o, [-1]: !o[-1] }))}
+                onAddExtra={() =>
+                  setSources((s) => ({ ...s, video_extras: [...s.video_extras, { url: "", xpath: "" }] }))
+                }
+                xpathError={videoXPathError}
+                probing={probing === "video"}
+                onProbe={() => probeXPath("video")}
                 suggestions={videoSuggestions}
                 onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
-                helperText="Detecta automaticamente o campo com o número de espectadores."
               />
+              {sources.video_extras.map((extra, i) => (
+                <StreamSourceRow
+                  key={`vx-${i}`}
+                  kind="video"
+                  index={i}
+                  isExtra
+                  url={extra.url}
+                  xpath={extra.xpath}
+                  showXpath={!!extra.xpath || videoXpOpen[i]}
+                  onUrlChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.video_extras];
+                      next[i] = { ...next[i], url: v };
+                      return { ...s, video_extras: next };
+                    })
+                  }
+                  onXpathChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.video_extras];
+                      next[i] = { ...next[i], xpath: v };
+                      return { ...s, video_extras: next };
+                    })
+                  }
+                  onToggleXpath={() => setVideoXpOpen((o) => ({ ...o, [i]: !o[i] }))}
+                  onRemove={() =>
+                    setSources((s) => ({
+                      ...s,
+                      video_extras: s.video_extras.filter((_, j) => j !== i),
+                    }))
+                  }
+                />
+              ))}
               <div className="mt-1 pt-3" style={{ borderTop: "1px dashed rgba(10,37,64,0.15)" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Youtube size={14} color="#FF0000" />
@@ -1676,6 +1819,133 @@ function SourceField({
         </div>
       )}
     </label>
+  );
+}
+
+function StreamSourceRow({
+  kind,
+  index,
+  isExtra,
+  url,
+  xpath,
+  showXpath,
+  onUrlChange,
+  onXpathChange,
+  onToggleXpath,
+  onAddExtra,
+  onRemove,
+  xpathError,
+  probing,
+  onProbe,
+  suggestions,
+  onPickSuggestion,
+}: {
+  kind: "audio" | "video";
+  index: number;
+  isExtra?: boolean;
+  url: string;
+  xpath: string;
+  showXpath: boolean;
+  onUrlChange: (v: string) => void;
+  onXpathChange: (v: string) => void;
+  onToggleXpath: () => void;
+  onAddExtra?: () => void;
+  onRemove?: () => void;
+  xpathError?: string | null;
+  probing?: boolean;
+  onProbe?: () => void;
+  suggestions?: Array<{ xpath: string; value: number }>;
+  onPickSuggestion?: (xpath: string) => void;
+}) {
+  const isAudio = kind === "audio";
+  const label = isExtra
+    ? `Fonte adicional #${(index ?? 0) + 1}`
+    : "URL do stream";
+  const xpathLabel = isAudio
+    ? "XPath do nódulo de ouvintes"
+    : "XPath do nódulo de espectadores";
+  const xpathPh = isAudio
+    ? "//SHOUTCASTSERVER/CURRENTLISTENERS"
+    : "//info/espectadores_conectados";
+  const urlPh = isAudio
+    ? "https://seu-servidor:8000/stream"
+    : "https://video.logicahost.com.br/api/...";
+  return (
+    <div
+      className={isExtra ? "flex flex-col gap-2 rounded-xl p-3" : "flex flex-col gap-2"}
+      style={isExtra ? { background: "rgba(0,191,240,0.06)", border: "1px dashed rgba(0,191,240,0.35)" } : undefined}
+    >
+      <SourceField
+        label={label}
+        placeholder={urlPh}
+        value={url}
+        onChange={onUrlChange}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleXpath}
+          className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+          style={{
+            background: showXpath ? "#0A2540" : "transparent",
+            border: `1.5px solid ${showXpath ? "#0A2540" : "#00BFF0"}`,
+            color: showXpath ? "#fff" : "#0A2540",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
+          {showXpath ? "− Ocultar XPath" : "+ Inserir XPath"}
+        </button>
+        {onAddExtra && (
+          <button
+            type="button"
+            onClick={onAddExtra}
+            className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+            style={{
+              background: "#C6F03C",
+              border: "1.5px solid #8FBB1F",
+              color: "#0A2540",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            + Adicionar outra fonte
+          </button>
+        )}
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="ml-auto text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+            style={{
+              background: "transparent",
+              border: "1.5px solid #E11D48",
+              color: "#E11D48",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            Remover
+          </button>
+        )}
+      </div>
+      {showXpath && (
+        <SourceField
+          label={xpathLabel}
+          placeholder={xpathPh}
+          value={xpath}
+          onChange={onXpathChange}
+          error={xpathError}
+          actionLabel={onProbe ? (probing ? "Analisando..." : "Sugerir XPath") : undefined}
+          onAction={onProbe}
+          actionDisabled={probing}
+          suggestions={suggestions}
+          onPickSuggestion={onPickSuggestion}
+          helperText={
+            isAudio
+              ? "Detecta automaticamente o campo com o número de ouvintes."
+              : "Detecta automaticamente o campo com o número de espectadores."
+          }
+        />
+      )}
+    </div>
   );
 }
 
