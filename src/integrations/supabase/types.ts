@@ -2976,7 +2976,6 @@ export type Database = {
     Functions: {
       cleanup_audiencia_historico: { Args: never; Returns: undefined }
       cleanup_comercial: { Args: never; Returns: undefined }
-      cleanup_infomusic: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }

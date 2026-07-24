@@ -156,7 +156,7 @@ export default function InfoMusicSection() {
 
 
   const PAGE_SIZE = 50;
-  const HARD_CAP = 1000;
+  const HARD_CAP = Number.POSITIVE_INFINITY;
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
@@ -693,11 +693,6 @@ export default function InfoMusicSection() {
                       <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                         Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
                       </p>
-                      {quotaExhausted && (
-                        <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                          Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -1093,6 +1088,7 @@ export default function InfoMusicSection() {
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Curiosidade</th>
                     <th className="text-left px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Data/Hora</th>
                     <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Enviar</th>
+                    <th className="text-center px-3 py-2 font-bold uppercase text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>Exceções</th>
                     <th className="px-3 py-2"></th>
                   </tr>
                 </thead>
@@ -1185,6 +1181,34 @@ export default function InfoMusicSection() {
                         >
                           <Send size={14} />
                          </button>
+                       </td>
+                       <td className="px-3 py-2 align-top text-center">
+                         {(() => {
+                           const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           return (
+                             <label className="inline-flex items-center justify-center cursor-pointer" title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}>
+                               <input
+                                 type="checkbox"
+                                 checked={isEx}
+                                 onChange={async () => {
+                                   const nameRaw = r.artista.trim();
+                                   if (!nameRaw) return;
+                                   if (isEx) {
+                                     const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
+                                     await saveExcecoesValue(next);
+                                     toast.success("Removido das exceções");
+                                   } else {
+                                     const next = [...excecaoList, nameRaw].join(", ");
+                                     await saveExcecoesValue(next);
+                                     toast.success("Adicionado às exceções");
+                                   }
+                                 }}
+                                 className="w-4 h-4 cursor-pointer"
+                                 style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
+                               />
+                             </label>
+                           );
+                         })()}
                        </td>
                        <td className="px-3 py-2 align-top text-right">
                          <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
