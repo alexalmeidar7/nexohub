@@ -1371,6 +1371,125 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
           })}
         </div>
       )}
+
+      <RelatorioEntregas sorteios={sorteios} premios={premios} />
+    </div>
+  );
+}
+
+function RelatorioEntregas({ sorteios, premios }: { sorteios: Sorteio[]; premios: Premio[] }) {
+  const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const DAY = 86400000;
+    const entregues = sorteios.filter(s => s.entregue && s.data_entrega);
+    const total = entregues.length;
+    const totalSorteios = sorteios.length;
+    const expirados = sorteios.filter(s => s.expirado).length;
+    const pendentes = sorteios.filter(s => !s.entregue && !s.expirado).length;
+
+    const inWindow = (s: Sorteio, days: number) =>
+      s.data_entrega && (now - new Date(s.data_entrega).getTime()) <= days * DAY;
+
+    const hoje = entregues.filter(s => {
+      if (!s.data_entrega) return false;
+      const d = new Date(s.data_entrega);
+      const n = new Date();
+      return d.toDateString() === n.toDateString();
+    }).length;
+    const semana = entregues.filter(s => inWindow(s, 7)).length;
+    const mes = entregues.filter(s => inWindow(s, 30)).length;
+
+    const taxa = totalSorteios > 0 ? Math.round((total / totalSorteios) * 100) : 0;
+
+    // Ranking prêmios mais entregues
+    const rank = new Map<string, number>();
+    entregues.forEach(s => rank.set(s.premio_id, (rank.get(s.premio_id) || 0) + 1));
+    const ranking = Array.from(rank.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([id, count]) => ({ premio: premioMap[id], count }));
+
+    // Tempo médio de retirada (data_sorteio -> data_entrega) em horas
+    const tempos = entregues
+      .map(s => {
+        if (!s.data_entrega) return null;
+        return (new Date(s.data_entrega).getTime() - new Date(s.data_sorteio).getTime()) / 3600000;
+      })
+      .filter((v): v is number => v !== null && v >= 0);
+    const tempoMedioH = tempos.length ? Math.round(tempos.reduce((a, b) => a + b, 0) / tempos.length) : 0;
+
+    return { total, totalSorteios, expirados, pendentes, hoje, semana, mes, taxa, ranking, tempoMedioH };
+  }, [sorteios, premioMap]);
+
+  const kpi = (label: string, value: string | number, color: string, sub?: string) => (
+    <div style={{ background: "#fff", borderRadius: 14, padding: 14, border: `1px solid ${CYAN}22` }}>
+      <div style={{ fontSize: 10, fontWeight: 800, color: "#64748B", textTransform: "uppercase", letterSpacing: 1 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 800, color, marginTop: 4, fontFamily: "'Sora', system-ui, sans-serif" }}>{value}</div>
+      {sub && <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>{sub}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ marginTop: 24, background: CARD_BG, borderRadius: 18, padding: 20, border: `1px solid ${CYAN}22` }}>
+      <div className="flex items-center gap-2 mb-4">
+        <div style={{ width: 32, height: 32, borderRadius: 10, background: LIME, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Check size={18} color={DARK} strokeWidth={2.6} />
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: DARK, fontFamily: "'Sora', system-ui, sans-serif" }}>Relatório de Entregas</div>
+          <div style={{ fontSize: 11, color: "#64748B" }}>Prêmios efetivamente entregues aos ganhadores</div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))" }}>
+        {kpi("Total entregues", stats.total, DARK, `${stats.taxa}% dos ${stats.totalSorteios} sorteios`)}
+        {kpi("Entregues hoje", stats.hoje, CYAN)}
+        {kpi("Últimos 7 dias", stats.semana, CYAN)}
+        {kpi("Últimos 30 dias", stats.mes, CYAN)}
+        {kpi("Tempo médio de retirada", stats.tempoMedioH > 48 ? `${Math.round(stats.tempoMedioH / 24)}d` : `${stats.tempoMedioH}h`, DARK)}
+        {kpi("Não retirados", stats.expirados, "#ef4444")}
+      </div>
+
+      <div style={{ background: "#fff", borderRadius: 14, padding: 16, border: `1px solid ${CYAN}22` }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: DARK, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Top prêmios entregues</div>
+        {stats.ranking.length === 0 ? (
+          <div style={{ fontSize: 12, color: "#94a3b8", padding: 12, textAlign: "center" }}>Nenhum prêmio entregue ainda.</div>
+        ) : (
+          <div className="grid gap-2">
+            {stats.ranking.map((r, i) => {
+              const max = stats.ranking[0].count;
+              const pct = Math.round((r.count / max) * 100);
+              return (
+                <div key={r.premio?.id || i} className="flex items-center gap-3">
+                  <div style={{ width: 22, height: 22, borderRadius: 999, background: i === 0 ? LIME : `${CYAN}22`, color: DARK, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>
+                    {i + 1}
+                  </div>
+                  {r.premio?.imagem_url ? (
+                    <img src={r.premio.imagem_url} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ width: 32, height: 32, borderRadius: 8, background: CARD_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Gift size={14} color={CYAN} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div style={{ fontSize: 12, fontWeight: 700, color: DARK, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.premio?.nome || "Prêmio removido"}
+                    </div>
+                    <div style={{ height: 6, background: `${CYAN}15`, borderRadius: 999, overflow: "hidden", marginTop: 4 }}>
+                      <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg, ${CYAN}, ${LIME})`, borderRadius: 999 }} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: DARK, fontFamily: "'Sora', system-ui, sans-serif", minWidth: 32, textAlign: "right" }}>
+                    {r.count}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
