@@ -189,6 +189,10 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
       renda: merged.renda,
       pontuacao,
       origem_cadastro: existing?.origem_cadastro || origem,
+      whatsapp_message_id:
+        origem === "chatbot"
+          ? (whatsappMessageId || (existing as any)?.whatsapp_message_id || null)
+          : ((existing as any)?.whatsapp_message_id ?? null),
     };
 
     if (existing) {
