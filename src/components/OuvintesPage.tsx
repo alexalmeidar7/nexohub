@@ -6,6 +6,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { promptDialog } from "@/lib/promptDialog";
 import { DEFAULT_CADASTRO_RULES, computePontuacaoFromRules } from "@/lib/ouvintesUpsert";
 
 interface Ouvinte {
