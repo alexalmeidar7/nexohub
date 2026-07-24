@@ -209,6 +209,7 @@ export type Database = {
           programa: string | null
           user_id: string
           video: number
+          youtube: number
         }
         Insert: {
           audio?: number
@@ -217,6 +218,7 @@ export type Database = {
           programa?: string | null
           user_id: string
           video?: number
+          youtube?: number
         }
         Update: {
           audio?: number
@@ -225,6 +227,7 @@ export type Database = {
           programa?: string | null
           user_id?: string
           video?: number
+          youtube?: number
         }
         Relationships: []
       }

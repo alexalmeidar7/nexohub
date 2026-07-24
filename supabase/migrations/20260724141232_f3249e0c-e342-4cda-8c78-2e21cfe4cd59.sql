@@ -1,0 +1,1 @@
+ALTER TABLE public.audiencia_historico ADD COLUMN IF NOT EXISTS youtube INTEGER NOT NULL DEFAULT 0;
