@@ -22,12 +22,30 @@ try {
   }
 } catch {}
 
+// Chunk-error recovery.
+//
+// When a dynamically imported chunk fails (typically because a new deploy has
+// replaced the hashed asset while the tab was idle), we used to blindly call
+// `window.location.reload()`. That is destructive for this app: the Dashboard
+// loads its inner panels via internal state, not via routes, so a reload
+// sends the user back to the current URL ("/" = Home) and loses the click
+// that was in flight. Users report "clicked a page, it reloaded Home".
+//
+// Instead we:
+//   1. let the lazy-retry wrapper in App.tsx retry the import in-place (fast
+//      path, no reload, keeps user on the intended panel);
+//   2. only fall back to a hard reload after several failures in a short
+//      window, and only when the tab is *not* currently visible/interacting,
+//      to avoid interrupting a click.
+let chunkErrorCount = 0;
+let chunkErrorWindowStart = 0;
+const CHUNK_ERROR_WINDOW_MS = 30000;
+const CHUNK_ERROR_THRESHOLD = 4;
 const CHUNK_RELOAD_FLAG = "__chunk_reload_at__";
-const CHUNK_RELOAD_COOLDOWN_MS = 15000;
+const CHUNK_RELOAD_COOLDOWN_MS = 60000;
 
 const shouldReloadForChunkError = (errorText: string, source?: string) => {
   const fromBuiltAsset = (source || "").includes("/assets/");
-
   return (
     errorText.includes("Failed to fetch dynamically imported module") ||
     errorText.includes("Importing a module script failed") ||
@@ -37,8 +55,20 @@ const shouldReloadForChunkError = (errorText: string, source?: string) => {
   );
 };
 
-const reloadOnce = () => {
+const handleChunkError = () => {
   const now = Date.now();
+  if (now - chunkErrorWindowStart > CHUNK_ERROR_WINDOW_MS) {
+    chunkErrorWindowStart = now;
+    chunkErrorCount = 0;
+  }
+  chunkErrorCount += 1;
+
+  // Only hard-reload if we've hit the threshold AND the tab is hidden — this
+  // avoids interrupting an in-flight click that would land the user back on
+  // Home.
+  if (chunkErrorCount < CHUNK_ERROR_THRESHOLD) return;
+  if (document.visibilityState === "visible") return;
+
   const lastReloadAt = Number(sessionStorage.getItem(CHUNK_RELOAD_FLAG) || "0");
   if (now - lastReloadAt < CHUNK_RELOAD_COOLDOWN_MS) return;
   sessionStorage.setItem(CHUNK_RELOAD_FLAG, String(now));
@@ -47,7 +77,7 @@ const reloadOnce = () => {
 
 window.addEventListener("vite:preloadError", (event) => {
   event.preventDefault();
-  reloadOnce();
+  handleChunkError();
 });
 
 window.addEventListener("error", (event) => {
@@ -55,7 +85,7 @@ window.addEventListener("error", (event) => {
   const source = String(event.filename || "");
   if (shouldReloadForChunkError(message, source)) {
     event.preventDefault();
-    reloadOnce();
+    handleChunkError();
   }
 });
 
@@ -63,9 +93,10 @@ window.addEventListener("unhandledrejection", (event) => {
   const reason = String((event.reason as Error | string | undefined) ?? "");
   if (shouldReloadForChunkError(reason)) {
     event.preventDefault();
-    reloadOnce();
+    handleChunkError();
   }
 });
+
 
 createRoot(document.getElementById("root")!).render(<App />);
 
