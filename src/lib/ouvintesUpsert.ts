@@ -122,7 +122,7 @@ export interface UpsertOuvinteInput {
  * Nunca lança — retorna { ok, id?, error? } para não interromper login/registro.
  */
 export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const { radioUserId, origem, fields } = input;
+  const { radioUserId, origem, fields, whatsappMessageId } = input;
   if (!radioUserId) return { ok: false, error: "missing radioUserId" };
   const nome = (fields.nome || "").trim();
   const email = (fields.email || "").trim();
