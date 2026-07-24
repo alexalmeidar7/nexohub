@@ -137,6 +137,33 @@ export default function OuvintesPage() {
   const [search, setSearch] = useState("");
   const [cidadesUF, setCidadesUF] = useState<string[]>([]);
   const [showCidadeSug, setShowCidadeSug] = useState(false);
+  const [rulesCadastro, setRulesCadastro] = useState<Record<string, number>>(DEFAULT_CADASTRO_RULES);
+  const cidadeWrapRef = useRef<HTMLDivElement>(null);
+
+  // Load Pontuação rules (Cadastro tab) from localStorage — kept in sync by PontuacaoRulesSection.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`nexohub_pontuacao_rules_cadastro_${user?.id || "anon"}`);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && typeof p === "object") setRulesCadastro({ ...DEFAULT_CADASTRO_RULES, ...p });
+      }
+    } catch { /* ignore */ }
+  }, [user?.id]);
+
+  // Live pontuação: calculada em tempo real conforme os campos preenchidos.
+  const pontuacaoAuto = useMemo(
+    () => computePontuacaoFromRules(
+      {
+        nome: form.nome, cpf: form.cpf, telefone: form.telefone, email: form.email,
+        sexo: form.sexo, data_nascimento: form.data_nascimento, uf: form.uf,
+        cidade: form.cidade, setor: form.setor, escolaridade: form.escolaridade,
+        renda: form.renda,
+      },
+      rulesCadastro,
+    ),
+    [form, rulesCadastro],
+  );
   const cidadeWrapRef = useRef<HTMLDivElement>(null);
 
   // Load IBGE cities whenever UF changes
