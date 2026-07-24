@@ -219,6 +219,7 @@ export default function InfoMusicSection() {
   const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
   const [importingXlsx, setImportingXlsx] = useState(false);
+  const [importSummary, setImportSummary] = useState<{ filled: number; inserted: number; overwritten: number; notFound: string[] } | null>(null);
   const importFileRef = useRef<HTMLInputElement | null>(null);
 
   const handleExportMissing = () => {
