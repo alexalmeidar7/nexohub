@@ -1174,14 +1174,38 @@ export default function CortesVideoPage() {
               </div>
             </div>
           )}
-          {hasSource && (
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              PREVIEW
+          {hasSource && format !== "original" && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4 py-5">
+              <div
+                className="relative"
+                style={{
+                  aspectRatio: format === "reel" ? "9 / 16" : "16 / 9",
+                  height: format === "reel" ? "100%" : "auto",
+                  width: format === "reel" ? "auto" : "min(100%, 48rem)",
+                  maxHeight: "100%",
+                  maxWidth: "100%",
+                  boxShadow: "0 0 0 9999px rgba(0,0,0,0.55)",
+                  border: "1.5px dashed rgba(255,255,255,0.85)",
+                  borderRadius: 6,
+                }}
+              >
+                <div
+                  className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[9px] font-black tracking-widest uppercase"
+                  style={{ background: "var(--layout-accent-color, #2563eb)", color: "#fff", whiteSpace: "nowrap" }}
+                >
+                  {format === "reel" ? "9:16 · Reels/TikTok" : "16:9 · YouTube/TV"}
+                </div>
+              </div>
             </div>
           )}
           {hasSource && (
-            <div className="absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono z-10" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              PREVIEW · {format === "reel" ? "9:16" : format === "fullhd" ? "16:9" : "AUTO"}
+            </div>
+          )}
+          {hasSource && (
+            <div className="absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-mono z-10" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
               {currentTimeStr}
             </div>
           )}
