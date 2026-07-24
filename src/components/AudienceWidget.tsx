@@ -1332,13 +1332,13 @@ function AudienceReportDialog({
   const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
   const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
 
-  // Totais dos últimos 30 dias (por fonte: áudio/vídeo), respeita filtro de programa
+  // Totais no período selecionado (por fonte), respeita filtro de programa
   useEffect(() => {
     if (!open || !userId) return;
     let cancelled = false;
     const load = async () => {
       const start = new Date();
-      start.setDate(start.getDate() - 30);
+      start.setDate(start.getDate() - periodDays);
       start.setHours(0, 0, 0, 0);
       let q = supabase
         .from("audiencia_historico")
@@ -1357,14 +1357,15 @@ function AudienceReportDialog({
         if (rv > pv) pv = rv;
       }
       const n = Math.max(1, rows.length);
-      setTotals30d({
+      setTotalsPeriod({
         audio: a, video: v, peakAudio: pa, peakVideo: pv, samples: rows.length,
         avgAudio: Math.round(a / n), avgVideo: Math.round(v / n),
       });
     };
     load();
     return () => { cancelled = true; };
-  }, [open, userId, programaFilter]);
+  }, [open, userId, programaFilter, periodDays]);
+
 
   useEffect(() => {
     if (!open || !userId) return;
