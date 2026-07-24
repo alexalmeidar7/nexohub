@@ -389,8 +389,38 @@ export default function InfoMusicSection() {
 
   return (
     <div className="space-y-5">
-      {/* ── Header row: título compacto + botão "?" ── */}
-      <div className="flex items-center justify-end">
+      {/* ── Header row: status crédito IA + botão "?" ── */}
+      <div className="flex items-center justify-end gap-2 flex-wrap">
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold"
+          title={`Créditos de geração por IA usados este mês (${monthlyQuota.count} de ${monthlyQuota.limit})`}
+          style={{
+            backgroundColor: quotaExhausted
+              ? "color-mix(in srgb, #ef4444 12%, transparent)"
+              : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)",
+            color: quotaExhausted ? "#ef4444" : "var(--layout-accent-color, #2563eb)",
+            border: `1px solid ${quotaExhausted
+              ? "color-mix(in srgb, #ef4444 30%, transparent)"
+              : "color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)"}`,
+          }}
+        >
+          <Sparkles size={13} />
+          <span className="uppercase tracking-wider opacity-75">Créditos IA</span>
+          <span className="tabular-nums font-black">
+            {Math.max(0, monthlyQuota.limit - monthlyQuota.count)}
+            <span className="opacity-50 font-normal"> / {monthlyQuota.limit}</span>
+          </span>
+          <span
+            className={`ml-1 inline-block w-1.5 h-1.5 rounded-full ${aiEnabled ? "animate-pulse" : ""}`}
+            style={{
+              backgroundColor: !aiEnabled
+                ? "#9ca3af"
+                : quotaExhausted
+                  ? "#ef4444"
+                  : "#10b981",
+            }}
+          />
+        </div>
         <button
           type="button"
           onClick={() => setShowHowTo(true)}
@@ -406,6 +436,7 @@ export default function InfoMusicSection() {
           Como funciona?
         </button>
       </div>
+
 
       {showHowTo && (
         <div
