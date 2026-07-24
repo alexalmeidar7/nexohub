@@ -1471,9 +1471,19 @@ export default function ProgramaForm() {
                         ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
                         : (
                           <div className="flex flex-wrap gap-1">
-                            {p.diasSemana.map(d => (
-                              <span key={d} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>{d.slice(0, 3)}</span>
-                            ))}
+                            {(() => {
+                              const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+                              const days = p.diasSemana || [];
+                              const isMonFri = WEEKDAYS.every(d => days.includes(d)) && !days.includes("Sábado") && !days.includes("Domingo");
+                              if (isMonFri) {
+                                return (
+                                  <span style={{ padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>Seg → Sex</span>
+                                );
+                              }
+                              return days.map(d => (
+                                <span key={d} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>{d.slice(0, 3)}</span>
+                              ));
+                            })()}
                           </div>
                         )}
                     </td>
