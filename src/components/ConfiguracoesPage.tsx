@@ -536,11 +536,23 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: "var(--layout-button-text, #ffffff)" }}>
-          <h3 className="text-sm font-bold">Configurações do Player</h3>
+      {(section === "all" || section === "player") && <div className="space-y-6">
+        {/* Bento admin header */}
+        <div className="w-full rounded-2xl px-6 py-5 flex items-center justify-between" style={{ backgroundColor: "#1a1a1a", borderBottom: "4px solid #00BFF0", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#00BFF0" }}>
+              <Tv size={18} className="text-white" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-white">
+              Player <span className="font-light" style={{ color: "#00BFF0" }}>— Configurações</span>
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "#C6F03C" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Admin Panel</span>
+          </div>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="space-y-6">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
@@ -594,12 +606,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 1: Informações do Canal ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <Settings size={12} />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</span>
+          <div className="rounded-3xl p-6 space-y-4 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#00BFF0" }} />
+              <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</h4>
+              <Settings size={14} className="ml-1 opacity-40" />
             </div>
 
             {canalMode === "live" ? (
@@ -878,12 +889,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 2: Imagens ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <ImageIcon size={12} />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
+          <div className="rounded-3xl p-6 space-y-4 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#C6F03C" }} />
+              <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</h4>
+              <ImageIcon size={14} className="ml-1 opacity-40" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
@@ -964,11 +974,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
           </div>
         ) : (
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Tv size={16} style={{ color: "var(--layout-icon-color, #888888)" }} />
-              <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais Cadastrados</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
+          <div className="rounded-3xl p-6 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 rounded-full bg-gray-800" />
+                <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais cadastrados</h4>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{String(canais.length).padStart(2, "0")} cadastrados</span>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
