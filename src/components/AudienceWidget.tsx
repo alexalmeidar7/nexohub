@@ -281,7 +281,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         // populate the rotation labels immediately.
         const { data } = await supabase
           .from("empresa_config")
-          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key")
+          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id")
           .eq("user_id", dataUserId as any)
           .maybeSingle();
         if (!cancelled && data) {
@@ -300,6 +300,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             video_stream_api_url: (data as any).video_stream_api_url || "",
             video_stream_xpath: (data as any).video_stream_xpath || "",
             youtube_api_key: (data as any).youtube_api_key || "",
+            youtube_channel_id: (data as any).youtube_channel_id || "",
           };
           setSources(s);
         }
