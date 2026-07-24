@@ -739,80 +739,100 @@ export default function InfoMusicSection() {
           </div>
         )}
 
-        <div className="rounded-xl p-4 space-y-3" style={{
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+        <div className="rounded-2xl overflow-hidden" style={{
+          backgroundColor: "var(--layout-page-bg, #fff)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 22%, transparent)",
+          boxShadow: "0 10px 24px -16px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
         }}>
-          <div className="flex items-center gap-2">
-            <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Exceções ({excecaoList.length})
-            </h4>
-          </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-            Quando o artista ou música contiver qualquer palavra abaixo, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
-          </p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Adicionar palavra (ex.: jingle)"
-              value={newExcecao}
-              onChange={(e) => setNewExcecao(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
-              className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
-              style={{
-                backgroundColor: "var(--layout-page-bg, #fff)",
-                color: "var(--layout-page-text, #1a1a1a)",
-                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-              }}
-            />
-            <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
-              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-              Adicionar
-            </Button>
-          </div>
           <div
-            className="rounded-lg overflow-hidden"
+            className="px-4 py-3 flex items-center gap-2 border-b"
             style={{
-              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
-              backgroundColor: "var(--layout-page-bg, #fff)",
-              maxHeight: 220,
-              overflowY: "auto",
+              background: "linear-gradient(135deg, color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent), color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent))",
+              borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)",
             }}
           >
-            {excecaoList.length === 0 ? (
-              <div className="text-center py-6 text-[11px] opacity-55" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Nenhuma palavra cadastrada.
-              </div>
-            ) : (
-              <table className="w-full text-xs">
-                <tbody>
+            <div
+              className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 18%, transparent)" }}
+            >
+              <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            </div>
+            <h4 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Exceções
+            </h4>
+            <span
+              className="ml-auto text-[10px] font-black tabular-nums px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)",
+                color: "var(--layout-accent-color, #2563eb)",
+              }}
+            >
+              {excecaoList.length}
+            </span>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
+              Quando o artista ou música contiver qualquer palavra abaixo, a tag <code className="px-1 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", fontFamily: "ui-monospace, monospace" }}>&lt;curiosidade&gt;</code> fica vazia.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Adicionar palavra (ex.: jingle)"
+                value={newExcecao}
+                onChange={(e) => setNewExcecao(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
+                className="flex-1 px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 transition-shadow"
+                style={{
+                  backgroundColor: "var(--layout-page-bg, #fff)",
+                  color: "var(--layout-page-text, #1a1a1a)",
+                  border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                }}
+              />
+              <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
+                {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                Adicionar
+              </Button>
+            </div>
+            <div
+              className="rounded-xl p-2"
+              style={{
+                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+                backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 60%, color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent))",
+                maxHeight: 220,
+                overflowY: "auto",
+              }}
+            >
+              {excecaoList.length === 0 ? (
+                <div className="text-center py-6 text-[11px] opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Nenhuma palavra cadastrada.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
                   {excecaoList.map((w, i) => (
-                    <tr
+                    <span
                       key={w + i}
+                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold group transition-all hover:shadow-sm"
                       style={{
-                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                        backgroundColor: "var(--layout-page-bg, #fff)",
+                        color: "var(--layout-page-text, #1a1a1a)",
+                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
                       }}
                     >
-                      <td className="px-3 py-2 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                        {w}
-                      </td>
-                      <td className="px-3 py-2 text-right w-10">
-                        <button
-                          onClick={() => removeExcecao(w)}
-                          className="opacity-50 hover:opacity-100 transition-opacity"
-                          style={{ color: "#dc2626" }}
-                          title="Remover"
-                          disabled={savingExcecoes}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </td>
-                    </tr>
+                      <span className="truncate max-w-[180px]">{w}</span>
+                      <button
+                        onClick={() => removeExcecao(w)}
+                        className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
+                        style={{ backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)", color: "#dc2626" }}
+                        title="Remover"
+                        disabled={savingExcecoes}
+                      >
+                        <X size={10} />
+                      </button>
+                    </span>
                   ))}
-                </tbody>
-              </table>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
