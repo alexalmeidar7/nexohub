@@ -108,6 +108,8 @@ export interface UpsertOuvinteInput {
   radioUserId: string;
   origem: OuvinteOrigem;
   fields: CadastroFieldMap & { cidade_uf?: string | null };
+  /** Identificador da mensagem do WhatsApp (auditoria) — usado quando origem = "chatbot". */
+  whatsappMessageId?: string | null;
 }
 
 /**
