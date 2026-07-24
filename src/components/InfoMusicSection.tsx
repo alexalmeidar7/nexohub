@@ -930,12 +930,13 @@ export default function InfoMusicSection() {
                         <td className="px-3 py-2 text-right">
                           <button
                             onClick={() => removeExcecao(w)}
-                            className="inline-flex items-center justify-center w-6 h-6 rounded-md transition-all hover:scale-110"
-                            style={{ backgroundColor: "color-mix(in srgb, #dc2626 10%, transparent)", color: "#dc2626" }}
-                            title="Remover"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all hover:scale-105"
+                            style={{ backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)", color: "#dc2626", border: "1px solid color-mix(in srgb, #dc2626 25%, transparent)" }}
+                            title="Remover exceção"
                             disabled={savingExcecoes}
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={11} />
+                            Remover
                           </button>
                         </td>
                       </tr>
