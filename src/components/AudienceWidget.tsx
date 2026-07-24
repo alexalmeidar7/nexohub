@@ -1397,6 +1397,7 @@ function AudienceReportDialog({
   const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
   const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; youtube: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+  const [yesterdayYt, setYesterdayYt] = useState<{ peak: number; avg: number; sum: number; has: boolean; dateLabel: string } | null>(null);
 
   // Totais no período selecionado (por fonte), respeita filtro de programa
   useEffect(() => {
@@ -1455,6 +1456,42 @@ function AudienceReportDialog({
     load();
     return () => { cancelled = true; };
   }, [open, userId, date]);
+
+  // Carrega YouTube do dia anterior (para comparação lado a lado)
+  useEffect(() => {
+    if (!open || !userId) { setYesterdayYt(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      const base = new Date(`${date}T00:00:00`);
+      const prev = new Date(base);
+      prev.setDate(prev.getDate() - 1);
+      const y = prev.getFullYear();
+      const m = String(prev.getMonth() + 1).padStart(2, "0");
+      const d = String(prev.getDate()).padStart(2, "0");
+      const startIso = new Date(`${y}-${m}-${d}T00:00:00`).toISOString();
+      const endIso = new Date(`${y}-${m}-${d}T23:59:59.999`).toISOString();
+      let q = supabase
+        .from("audiencia_historico")
+        .select("youtube, programa")
+        .eq("user_id", userId as any)
+        .gte("created_at", startIso)
+        .lte("created_at", endIso);
+      const { data } = await q;
+      if (cancelled) return;
+      const filtered = ((data as any[]) || []).filter((r) =>
+        programaFilter === "__ALL__" ? true : (r.programa || "") === programaFilter
+      );
+      const yts = filtered.map((r) => Number(r.youtube || 0));
+      const sum = yts.reduce((s, v) => s + v, 0);
+      const peak = yts.reduce((m, v) => (v > m ? v : m), 0);
+      const avg = yts.length ? Math.round(sum / yts.length) : 0;
+      setYesterdayYt({ peak, avg, sum, has: sum > 0, dateLabel: `${d}/${m}` });
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, date, programaFilter]);
+
+
 
   // Carrega lista de programas com registro nos últimos 6 meses
   useEffect(() => {
@@ -1992,6 +2029,68 @@ function AudienceReportDialog({
                   </div>
                 </div>
               )}
+
+              {/* Comparação Live YouTube · Hoje vs Ontem */}
+              {(stats?.hasYoutube || yesterdayYt?.has) && (() => {
+                const todayPeak = stats?.hasYoutube ? (stats.peakYoutube.youtube || 0) : 0;
+                const todayAvg = stats?.avgYoutube || 0;
+                const todaySum = stats?.sumYoutube || 0;
+                const yPeak = yesterdayYt?.peak || 0;
+                const yAvg = yesterdayYt?.avg || 0;
+                const ySum = yesterdayYt?.sum || 0;
+                const delta = (a: number, b: number) => {
+                  if (b === 0) return a > 0 ? { pct: 100, up: true } : { pct: 0, up: null as any };
+                  const diff = ((a - b) / b) * 100;
+                  return { pct: Math.abs(Math.round(diff)), up: diff >= 0 };
+                };
+                const dPeak = delta(todayPeak, yPeak);
+                const dAvg = delta(todayAvg, yAvg);
+                const dSum = delta(todaySum, ySum);
+                const Cell = ({ label, today, yesterday, d }: { label: string; today: number; yesterday: number; d: { pct: number; up: boolean | null } }) => (
+                  <div className="p-3 flex flex-col gap-1.5">
+                    <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>{label}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: "#FF0000", opacity: 0.75 }}>Hoje</span>
+                        <span className="text-lg font-black tabular-nums leading-tight" style={{ color: "#FF0000" }}>{today.toLocaleString("pt-BR")}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.5 }}>Ontem</span>
+                        <span className="text-lg font-black tabular-nums leading-tight" style={{ color: DARK, opacity: 0.75 }}>{yesterday.toLocaleString("pt-BR")}</span>
+                      </div>
+                    </div>
+                    {d.up !== null && (
+                      <div className="inline-flex items-center gap-1 text-[10px] font-black tabular-nums self-start px-1.5 py-0.5 rounded-full"
+                        style={{
+                          background: d.up ? "#DCFCE7" : "#FEE2E2",
+                          color: d.up ? "#166534" : "#991B1B",
+                        }}>
+                        {d.up ? "▲" : "▼"} {d.pct}%
+                      </div>
+                    )}
+                  </div>
+                );
+                return (
+                  <div className="rounded-2xl overflow-hidden mb-1" style={{ background: "#fff", border: `1px solid #FF000033` }}>
+                    <div className="px-4 py-2 flex items-center justify-between" style={{ background: "linear-gradient(90deg, #FFE8E8 0%, transparent 100%)" }}>
+                      <span className="text-[10px] font-black uppercase tracking-widest inline-flex items-center gap-1.5" style={{ color: "#B91C1C" }}>
+                        <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "#FF0000" }} />
+                        Live YouTube · Hoje vs Ontem
+                      </span>
+                      {yesterdayYt?.dateLabel && (
+                        <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>Ontem = {yesterdayYt.dateLabel}</span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-3 divide-x" style={{ borderColor: "#FF000022" }}>
+                      <Cell label="Pico" today={todayPeak} yesterday={yPeak} d={dPeak} />
+                      <Cell label="Média" today={todayAvg} yesterday={yAvg} d={dAvg} />
+                      <Cell label="Soma · views" today={todaySum} yesterday={ySum} d={dSum} />
+                    </div>
+                  </div>
+                );
+              })()}
+
+
 
               {/* Gráfico + Tabela lado a lado */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-[420px]">
