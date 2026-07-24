@@ -1554,7 +1554,9 @@ export default function CortesVideoPage() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
+
   );
 }
