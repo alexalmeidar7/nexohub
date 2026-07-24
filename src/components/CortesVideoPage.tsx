@@ -225,6 +225,22 @@ export default function CortesVideoPage() {
     high: { label: "Alta", sub: "~10 Mbps", bitrate: 10_000_000, hint: "Boa qualidade para edição ou publicação em canais como YouTube/TV." },
     max: { label: "Máxima", sub: "~16 Mbps", bitrate: 16_000_000, hint: "Máxima qualidade — arquivos maiores, indicado para masters e arquivos originais." },
   };
+
+  // Quick effects
+  type CropLevel = "none" | "soft" | "medium" | "strong";
+  type FadeMode = "none" | "in" | "out" | "both";
+  type SharpLevel = "none" | "subtle" | "medium" | "strong";
+  const [crop, setCrop] = useState<CropLevel>("none");
+  const [fade, setFade] = useState<FadeMode>("none");
+  const [sharpness, setSharpness] = useState<SharpLevel>("none");
+  const cropZoom: Record<CropLevel, number> = { none: 1, soft: 1.05, medium: 1.15, strong: 1.3 };
+  const sharpFilter: Record<SharpLevel, string> = {
+    none: "none",
+    subtle: "contrast(1.08) saturate(1.05)",
+    medium: "contrast(1.15) saturate(1.1)",
+    strong: "contrast(1.25) saturate(1.15) brightness(1.02)",
+  };
+  const FADE_SEC = 0.6;
   const [cutting, setCutting] = useState(false);
   type CutResult = {
     blob_url?: string;
