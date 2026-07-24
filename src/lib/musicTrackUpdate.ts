@@ -38,6 +38,12 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
     const curData = await fetchCuriosity();
     if (curData?.curiosidade && isStillCurrent()) {
       await merge(userId, { music_current_curiosity: curData.curiosidade });
+      // Step 3: curiosity lives in XML for 20s only, then clears.
+      setTimeout(() => {
+        if (isStillCurrent()) {
+          void merge(userId, { music_current_curiosity: "" }).catch((e) => onError?.(e));
+        }
+      }, 20000);
     }
   } catch (e) {
     onError?.(e);
