@@ -578,10 +578,14 @@ export default function CortesVideoPage() {
     target: "fullhd" | "reel" | "original",
     bitrate: number,
     onProgress: (pct: number) => void,
-    onStage: (title: string, detail?: string) => void
+    onStage: (title: string, detail?: string) => void,
+    effects?: { crop: CropLevel; fade: FadeMode; sharpness: SharpLevel }
   ): Promise<Blob> => {
     const clipDuration = endSec - startSec;
     if (clipDuration <= 0) throw new Error("Duração inválida.");
+    const fx = effects || { crop: "none" as CropLevel, fade: "none" as FadeMode, sharpness: "none" as SharpLevel };
+    const zoom = cropZoom[fx.crop];
+    const cssFilter = sharpFilter[fx.sharpness];
 
     onStage("Preparando vídeo...", "Lendo metadados do arquivo");
     const url = URL.createObjectURL(file);
