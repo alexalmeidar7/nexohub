@@ -43,6 +43,7 @@ const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
 const VIDEO_MS = 30 * 1000; // 30s for video viewers
+const YT_LIVE_MS = 8 * 1000; // 8s for YouTube Live viewers refresh
 
 // Client-side cache of audience counts keyed by URL(+xpath). Serves stale value
 // instantly on remount / route change so the widget never shows a spinner when
