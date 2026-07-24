@@ -368,9 +368,16 @@ export default function InfoMusicSection() {
         .limit(2000);
       const { data: infos } = await supabase
         .from("infomusic")
-        .select("artista, musica")
+        .select("artista, musica, curiosidade")
         .limit(2000);
-      const known = new Set((infos || []).map(i => `${(i.artista || "").trim().toLowerCase()}::${(i.musica || "").trim().toLowerCase()}`));
+      // "Known" only when a real curiosity is saved — blank rows must still
+      // appear in the "sem curiosidade" filter so they can be filled in.
+      const known = new Set(
+        (infos || [])
+          .filter((i) => (i.curiosidade || "").trim().length > 0)
+          .map((i) => `${(i.artista || "").trim().toLowerCase()}::${(i.musica || "").trim().toLowerCase()}`),
+      );
+
       const seen = new Set<string>();
       const missing: { artista: string; musica: string; ultima: string }[] = [];
       for (const p of played || []) {
