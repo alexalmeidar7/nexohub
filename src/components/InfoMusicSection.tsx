@@ -1187,6 +1187,34 @@ export default function InfoMusicSection() {
                           <Send size={14} />
                          </button>
                        </td>
+                       <td className="px-3 py-2 align-top text-center">
+                         {(() => {
+                           const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           return (
+                             <label className="inline-flex items-center justify-center cursor-pointer" title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}>
+                               <input
+                                 type="checkbox"
+                                 checked={isEx}
+                                 onChange={async () => {
+                                   const nameRaw = r.artista.trim();
+                                   if (!nameRaw) return;
+                                   if (isEx) {
+                                     const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
+                                     await saveExcecoesValue(next);
+                                     toast.success("Removido das exceções");
+                                   } else {
+                                     const next = [...excecaoList, nameRaw].join(", ");
+                                     await saveExcecoesValue(next);
+                                     toast.success("Adicionado às exceções");
+                                   }
+                                 }}
+                                 className="w-4 h-4 cursor-pointer"
+                                 style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
+                               />
+                             </label>
+                           );
+                         })()}
+                       </td>
                        <td className="px-3 py-2 align-top text-right">
                          <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
                            <Trash2 size={13} />
