@@ -17,6 +17,11 @@ interface SocialCounts {
   facebook: number | null;
 }
 
+interface StreamSource {
+  url: string;
+  xpath: string;
+}
+
 interface SourcesConfig {
   instagram: string;
   facebook: string;
@@ -25,6 +30,8 @@ interface SourcesConfig {
   audio_stream_xpath: string;
   video_stream_api_url: string;
   video_stream_xpath: string;
+  audio_extras: StreamSource[];
+  video_extras: StreamSource[];
   youtube_api_key: string;
   youtube_channel_id: string;
 }
