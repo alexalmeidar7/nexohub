@@ -175,6 +175,28 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
+  // Pré-carrega a foto e o selo do próximo programa quando restar <= 60s
+  // para o programa atual, evitando o "flash vazio" na virada.
+  useEffect(() => {
+    if (!onAir) return;
+    const [eh, em] = onAir.programa.horarioFim.split(":").map(Number);
+    const check = () => {
+      const now = new Date();
+      const endMin = eh * 60 + em;
+      const curMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      const remainingSec = Math.round((endMin - curMin) * 60);
+      if (remainingSec <= 60 && remainingSec > -5) {
+        const foto = firstNextAp?.foto;
+        const selo = firstNext?.selo;
+        if (foto) { const img = new Image(); img.src = foto; }
+        if (selo) { const img = new Image(); img.src = selo; }
+      }
+    };
+    check();
+    const iv = setInterval(check, 5000);
+    return () => clearInterval(iv);
+  }, [onAir, firstNextAp?.foto, firstNext?.selo]);
+
   // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
     if (!user?.id) return;
