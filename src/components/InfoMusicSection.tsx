@@ -1096,11 +1096,37 @@ export default function InfoMusicSection() {
               </div>
             ) : (
               <div className="max-h-[420px] overflow-auto">
-                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold gap-2 flex-wrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
                   <span>{filteredMissing.length} música(s) sem curiosidade</span>
-                  <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 normal-case">
-                    <RefreshCw size={10} /> Atualizar
-                  </button>
+                  <div className="flex items-center gap-1.5 normal-case">
+                    <button
+                      onClick={handleExportMissing}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)" }}
+                      title="Baixar Excel com as músicas sem curiosidade"
+                    >
+                      <Download size={11} /> Exportar
+                    </button>
+                    <button
+                      onClick={() => importFileRef.current?.click()}
+                      disabled={importingXlsx}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: "color-mix(in srgb, #16a34a 14%, transparent)", color: "#15803d", border: "1px solid color-mix(in srgb, #16a34a 32%, transparent)" }}
+                      title="Importar Excel com curiosidades"
+                    >
+                      {importingXlsx ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />} Importar
+                    </button>
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleImportMissing}
+                    />
+                    <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
+                      <RefreshCw size={10} /> Atualizar
+                    </button>
+                  </div>
                 </div>
                 {filteredMissing.map((m, i) => {
                   const key = `${m.artista}::${m.musica}`.toLowerCase();
