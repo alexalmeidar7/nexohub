@@ -1538,10 +1538,14 @@ function AudienceReportDialog({
     if (filteredRows.length === 0) return null;
     const peakAudio = filteredRows.reduce((m, r) => (r.audio > m.audio ? r : m), filteredRows[0]);
     const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
-    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), filteredRows[0]);
+    const peakYoutube = filteredRows.reduce((m, r) => ((r.youtube || 0) > (m.youtube || 0) ? r : m), filteredRows[0]);
+    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video + (r.youtube || 0)) > (m.audio + m.video + (m.youtube || 0)) ? r : m), filteredRows[0]);
     const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
     const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
-    return { peakAudio, peakVideo, peakTotal, avgAudio, avgVideo };
+    const avgYoutube = Math.round(filteredRows.reduce((s, r) => s + (r.youtube || 0), 0) / filteredRows.length);
+    const sumYoutube = filteredRows.reduce((s, r) => s + (r.youtube || 0), 0);
+    const hasYoutube = sumYoutube > 0;
+    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube };
   }, [filteredRows]);
 
 
