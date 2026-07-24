@@ -1395,7 +1395,7 @@ export default function CortesVideoPage() {
             </p>
           </div>
 
-          {/* Efeitos rápidos panel (full width row) */}
+          {/* Efeitos rápidos panel */}
           <div className="lg:col-span-3 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }}>
             <div className="flex items-center gap-1.5 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Efeitos rápidos</span>
@@ -1411,99 +1411,148 @@ export default function CortesVideoPage() {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Crop */}
-              <div>
-                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Crop (zoom central)</label>
-                <div className="grid grid-cols-4 gap-1">
-                  {([
-                    { k: "none" as CropLevel, label: "Sem" },
-                    { k: "soft" as CropLevel, label: "Suave" },
-                    { k: "medium" as CropLevel, label: "Médio" },
-                    { k: "strong" as CropLevel, label: "Forte" },
-                  ]).map(({ k, label }) => {
-                    const active = crop === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setCrop(k)}
-                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
-                        style={{
-                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
-                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
-                          color: "var(--layout-page-text, #1a1a1a)",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Fade */}
-              <div>
-                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Fade (0,6s)</label>
-                <div className="grid grid-cols-4 gap-1">
-                  {([
-                    { k: "none" as FadeMode, label: "Sem" },
-                    { k: "in" as FadeMode, label: "Entrada" },
-                    { k: "out" as FadeMode, label: "Saída" },
-                    { k: "both" as FadeMode, label: "Ambos" },
-                  ]).map(({ k, label }) => {
-                    const active = fade === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setFade(k)}
-                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
-                        style={{
-                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
-                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
-                          color: "var(--layout-page-text, #1a1a1a)",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Sharpness */}
-              <div>
-                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nitidez</label>
-                <div className="grid grid-cols-4 gap-1">
-                  {([
-                    { k: "none" as SharpLevel, label: "Sem" },
-                    { k: "subtle" as SharpLevel, label: "Sutil" },
-                    { k: "medium" as SharpLevel, label: "Médio" },
-                    { k: "strong" as SharpLevel, label: "Forte" },
-                  ]).map(({ k, label }) => {
-                    const active = sharpness === k;
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setSharpness(k)}
-                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
-                        style={{
-                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
-                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
-                          color: "var(--layout-page-text, #1a1a1a)",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
+            {/* Icon tabs */}
+            <div className="flex items-stretch gap-2 mb-3">
+              {([
+                { k: "crop" as const, label: "Crop", Icon: Crop, active: crop !== "none", valueLabel: crop === "none" ? null : (crop === "soft" ? "Suave" : crop === "medium" ? "Médio" : "Forte") },
+                { k: "fade" as const, label: "Fade", Icon: Sparkles, active: fade !== "none", valueLabel: fade === "none" ? null : (fade === "in" ? "Entrada" : fade === "out" ? "Saída" : "Ambos") },
+                { k: "sharp" as const, label: "Nitidez", Icon: Wand2, active: sharpness !== "none", valueLabel: sharpness === "none" ? null : (sharpness === "subtle" ? "Sutil" : sharpness === "medium" ? "Médio" : "Forte") },
+              ]).map(({ k, label, Icon, active: hasValue, valueLabel }) => {
+                const selected = activeFx === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setActiveFx(k)}
+                    className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg transition-all text-left relative"
+                    style={{
+                      border: `1.5px solid ${selected ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)"}`,
+                      backgroundColor: selected ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)",
+                    }}
+                  >
+                    <div
+                      className="flex items-center justify-center rounded-md"
+                      style={{
+                        width: 30, height: 30,
+                        background: selected ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
+                        color: selected ? "#fff" : "var(--layout-page-text, #1a1a1a)",
+                      }}
+                    >
+                      <Icon size={16} strokeWidth={2.2} />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                      <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</span>
+                      <span className="text-[9px] font-mono opacity-70" style={{ color: hasValue ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)" }}>
+                        {valueLabel || "sem efeito"}
+                      </span>
+                    </div>
+                    {hasValue && (
+                      <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full" style={{ background: "var(--layout-accent-color, #2563eb)" }} />
+                    )}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* Options for active effect */}
+            <div className="rounded-lg p-2.5" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
+              {activeFx === "crop" && (
+                <>
+                  <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-2 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Crop — zoom central</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {([
+                      { k: "none" as CropLevel, label: "Sem" },
+                      { k: "soft" as CropLevel, label: "Suave" },
+                      { k: "medium" as CropLevel, label: "Médio" },
+                      { k: "strong" as CropLevel, label: "Forte" },
+                    ]).map(({ k, label }) => {
+                      const active = crop === k;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setCrop(k)}
+                          className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                          style={{
+                            border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 22%, transparent)"}`,
+                            backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "var(--layout-page-bg, #fff)",
+                            color: active ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {activeFx === "fade" && (
+                <>
+                  <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-2 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Fade — 0,6s início/fim</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {([
+                      { k: "none" as FadeMode, label: "Sem" },
+                      { k: "in" as FadeMode, label: "Entrada" },
+                      { k: "out" as FadeMode, label: "Saída" },
+                      { k: "both" as FadeMode, label: "Ambos" },
+                    ]).map(({ k, label }) => {
+                      const active = fade === k;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setFade(k)}
+                          className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                          style={{
+                            border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 22%, transparent)"}`,
+                            backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "var(--layout-page-bg, #fff)",
+                            color: active ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              {activeFx === "sharp" && (
+                <>
+                  <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-2 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nitidez — realce de contraste</label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {([
+                      { k: "none" as SharpLevel, label: "Sem" },
+                      { k: "subtle" as SharpLevel, label: "Sutil" },
+                      { k: "medium" as SharpLevel, label: "Médio" },
+                      { k: "strong" as SharpLevel, label: "Forte" },
+                    ]).map(({ k, label }) => {
+                      const active = sharpness === k;
+                      return (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setSharpness(k)}
+                          className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                          style={{
+                            border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 22%, transparent)"}`,
+                            backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "var(--layout-page-bg, #fff)",
+                            color: active ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)",
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+
             <p className="text-[9px] leading-snug mt-2 opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Efeitos são aplicados durante o render do arquivo final (modo Local). Crop aproxima o centro da cena, fade suaviza início/fim e nitidez realça contraste e cor.
+              Efeitos aplicados durante o render final (modo Local). Crop aproxima o centro da cena, fade suaviza início/fim e nitidez realça contraste e cor.
             </p>
           </div>
         </div>
