@@ -631,11 +631,61 @@ export default function OuvintesPage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar nome, CPF, e-mail ou cidade"
-              style={{ ...pillInput, width: 320, paddingLeft: 40, height: 40, fontSize: 12 }}
+              placeholder="Buscar nome, CPF, telefone, e-mail, cidade ou ID WhatsApp"
+              style={{ ...pillInput, width: 360, paddingLeft: 40, height: 40, fontSize: 12 }}
             />
           </div>
         </div>
+
+        {/* Filtro por modo de preenchimento (origem do cadastro) */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", color: "#64748B" }}>
+            Modo:
+          </span>
+          {([
+            { key: "all",         label: "Todos",         bg: CARD_BG,     fg: DARK,      Icon: Users },
+            { key: "manual",      label: "Manual",        bg: CARD_BG,     fg: DARK,      Icon: UserIcon },
+            { key: "player_site", label: "Player / Site", bg: "#DBEAFE",   fg: "#1D4ED8", Icon: RadioIcon },
+            { key: "app",         label: "Aplicativo",    bg: "#EDE9FE",   fg: "#6D28D9", Icon: Smartphone },
+            { key: "chatbot",     label: "WhatsApp",      bg: "#25D36622", fg: "#128C7E", Icon: MessageCircle },
+          ] as const).map((opt) => {
+            const active = origemFilter === opt.key;
+            const count = opt.key === "all" ? ouvintes.length : (origemCounts[opt.key] || 0);
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setOrigemFilter(opt.key as typeof origemFilter)}
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 6,
+                  padding: "6px 12px", borderRadius: 999,
+                  background: active ? opt.fg : opt.bg,
+                  color: active ? "#FFFFFF" : opt.fg,
+                  fontSize: 11, fontWeight: 800, letterSpacing: 0.6,
+                  textTransform: "uppercase",
+                  border: active ? `1px solid ${opt.fg}` : `1px solid transparent`,
+                  boxShadow: active ? "0 2px 8px rgba(10, 37, 64, 0.12)" : "none",
+                  cursor: "pointer",
+                  transition: "all .15s ease",
+                }}
+              >
+                <opt.Icon size={12} />
+                {opt.label}
+                <span
+                  style={{
+                    background: active ? "rgba(255,255,255,0.25)" : "rgba(15,23,42,0.08)",
+                    color: active ? "#FFFFFF" : opt.fg,
+                    padding: "1px 8px", borderRadius: 999,
+                    fontSize: 10, fontWeight: 800, marginLeft: 2,
+                  }}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
 
         {filtered.length === 0 ? (
           <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0", fontFamily: "'Montserrat', sans-serif" }}>
