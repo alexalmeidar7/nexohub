@@ -1749,7 +1749,7 @@ function AudienceReportDialog({
 
           {/* Totais no período · por fonte (com média embutida) */}
           {totalsPeriod && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+            <div className="rounded-2xl overflow-hidden flex-shrink-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
               <div className="flex items-center justify-between gap-3 px-4 py-2 flex-wrap" style={{ background: `linear-gradient(90deg, ${CYAN}22, transparent)` }}>
                 <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK }}>
                   Relatório em tempo real · últimos {periodDays === 180 ? "6 meses" : `${periodDays} dias`} · por fonte
