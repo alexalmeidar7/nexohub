@@ -659,35 +659,37 @@ export default function OuvintesPage() {
                     }}
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
-                      {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
-                    </td>
-                    <td style={{ padding: "12px 14px", minWidth: 200 }}>
                       {(() => {
                         const origem = o.origem_cadastro || "manual";
                         const meta: Record<string, { label: string; bg: string; fg: string; Icon: typeof UserIcon }> = {
-                          manual:      { label: "Manual",       bg: CARD_BG,     fg: DARK,      Icon: UserIcon },
-                          player_site: { label: "Player / Site", bg: "#DBEAFE",  fg: "#1D4ED8", Icon: RadioIcon },
-                          app:         { label: "Aplicativo",   bg: "#EDE9FE",   fg: "#6D28D9", Icon: Smartphone },
-                          chatbot:     { label: "Chatbot",      bg: "#25D36622", fg: "#128C7E", Icon: MessageCircle },
+                          manual:      { label: "Manual",        bg: CARD_BG,     fg: DARK,      Icon: UserIcon },
+                          player_site: { label: "Player / Site", bg: "#DBEAFE",   fg: "#1D4ED8", Icon: RadioIcon },
+                          app:         { label: "Aplicativo",    bg: "#EDE9FE",   fg: "#6D28D9", Icon: Smartphone },
+                          chatbot:     { label: "WhatsApp",      bg: "#25D36622", fg: "#128C7E", Icon: MessageCircle },
                         };
                         const m = meta[origem] || meta.manual;
                         return (
-                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                            <span
-                              title={`Origem: ${m.label}`}
-                              style={{
-                                flexShrink: 0,
-                                width: 26, height: 26, borderRadius: "50%",
-                                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                                background: m.bg, color: m.fg,
-                              }}
-                            >
-                              <m.Icon size={13} />
-                            </span>
-                            <span style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>{o.nome}</span>
-                          </div>
+                          <span
+                            title={`Origem: ${m.label}`}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 6,
+                              padding: "4px 10px", borderRadius: 999,
+                              background: m.bg, color: m.fg,
+                              fontSize: 10, fontWeight: 800, letterSpacing: 0.6,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            <m.Icon size={12} />
+                            {m.label}
+                          </span>
                         );
                       })()}
+                    </td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                      {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
+                    </td>
+                    <td style={{ padding: "12px 14px", minWidth: 200, fontWeight: 700, fontSize: 13 }}>
+                      {o.nome}
                     </td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{formatPhone(o.telefone) || "—"}</td>
