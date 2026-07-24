@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -37,6 +37,8 @@ export default function InfoMusicSection() {
   const curiosityFetchKeyRef = useRef<string>("");
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
   const [xmlCheck, setXmlCheck] = useState<{ status: "idle" | "checking" | "ok" | "diverge" | "error"; xmlText: string; checkedAt: number; error?: string }>({ status: "idle", xmlText: "", checkedAt: 0 });
+  const [showHowTo, setShowHowTo] = useState(false);
+  const [newExcecao, setNewExcecao] = useState("");
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -106,21 +108,50 @@ export default function InfoMusicSection() {
     setTogglingAi(false);
   };
 
-  const saveExcecoes = async () => {
+  const saveExcecoesValue = async (val: string) => {
     if (!user) return;
     setSavingExcecoes(true);
     try {
       const { error } = await supabase
         .from("user_settings")
-        .upsert({ user_id: user.id, infomusic_excecoes: excecoes }, { onConflict: "user_id" });
+        .upsert({ user_id: user.id, infomusic_excecoes: val }, { onConflict: "user_id" });
       if (error) throw error;
-      setExcecoesInitial(excecoes);
-      toast.success("Exceções salvas");
+      setExcecoes(val);
+      setExcecoesInitial(val);
     } catch (e) {
       toast.error("Erro ao salvar exceções");
     }
     setSavingExcecoes(false);
   };
+
+  const saveExcecoes = async () => {
+    await saveExcecoesValue(excecoes);
+    toast.success("Exceções salvas");
+  };
+
+  const excecaoList = useMemo(
+    () => excecoes.split(",").map((s) => s.trim()).filter(Boolean),
+    [excecoes]
+  );
+
+  const addExcecao = async () => {
+    const v = newExcecao.trim();
+    if (!v) return;
+    if (excecaoList.some((x) => x.toLowerCase() === v.toLowerCase())) {
+      toast.error("Palavra já cadastrada");
+      return;
+    }
+    const next = [...excecaoList, v].join(", ");
+    setNewExcecao("");
+    await saveExcecoesValue(next);
+    toast.success("Exceção adicionada");
+  };
+
+  const removeExcecao = async (word: string) => {
+    const next = excecaoList.filter((x) => x !== word).join(", ");
+    await saveExcecoesValue(next);
+  };
+
 
   const PAGE_SIZE = 50;
   const HARD_CAP = 1000;
@@ -358,31 +389,87 @@ export default function InfoMusicSection() {
 
   return (
     <div className="space-y-5">
-      {/* ── Header: Como funciona + garantia de cache ── */}
-      <div className="rounded-2xl p-4" style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 92%, var(--layout-accent-color, #2563eb))",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
-      }}>
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={16} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          <h4 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Como funciona
-          </h4>
-        </div>
-        <p className="text-xs leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-          Ao tocar uma nova música, o sistema consulta a tabela <strong>InfoMusic</strong>. Se não houver curiosidade salva, a IA gera uma frase curta e a envia ao XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre <strong>10s e 25s</strong>. Curiosidades ficam salvas por <strong>6 meses</strong>. Cota de IA: <strong>20/mês</strong> por usuário.
-        </p>
-        <div className="mt-2 rounded-lg px-3 py-2 flex items-start gap-2 text-[11px] leading-snug" style={{
-          backgroundColor: "color-mix(in srgb, #10b981 12%, transparent)",
-          border: "1px solid color-mix(in srgb, #10b981 30%, transparent)",
-          color: "var(--layout-page-text, #1a1a1a)",
-        }}>
-          <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color: "#10b981" }} />
-          <span>
-            <strong>Mesmo sem cota</strong> ou com IA desabilitada, curiosidades já salvas no banco continuam sendo enviadas ao XML normalmente.
-          </span>
-        </div>
+      {/* ── Header row: título compacto + botão "?" ── */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowHowTo(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)",
+            color: "var(--layout-accent-color, #2563eb)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+          }}
+          title="Como funciona"
+        >
+          <HelpCircle size={13} />
+          Como funciona?
+        </button>
       </div>
+
+      {showHowTo && (
+        <div
+          onClick={() => setShowHowTo(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2147483000,
+            background: "rgba(10, 37, 64, 0.55)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-2xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+              maxWidth: 520,
+              width: "100%",
+              boxShadow: "0 24px 60px rgba(10,37,64,0.25)",
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, #000))", color: "#fff" }}>
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} />
+                <h4 className="text-sm font-bold uppercase tracking-wider">Como funciona o Info Music</h4>
+              </div>
+              <button onClick={() => setShowHowTo(false)} className="p-1 rounded-full hover:bg-white/15" aria-label="Fechar">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Ao tocar uma nova música, o sistema consulta a tabela <strong>InfoMusic</strong>.
+                Se não houver curiosidade salva, a IA gera uma frase curta e a envia ao XML
+                <code className="mx-1 px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code>
+                entre <strong>10s e 25s</strong>. Curiosidades ficam salvas por <strong>6 meses</strong>.
+                Cota de IA: <strong>20/mês</strong> por usuário.
+              </p>
+              <div className="rounded-lg px-3 py-2 flex items-start gap-2 text-[11px] leading-snug" style={{
+                backgroundColor: "color-mix(in srgb, #10b981 12%, transparent)",
+                border: "1px solid color-mix(in srgb, #10b981 30%, transparent)",
+                color: "var(--layout-page-text, #1a1a1a)",
+              }}>
+                <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color: "#10b981" }} />
+                <span>
+                  <strong>Mesmo sem cota</strong> ou com IA desabilitada, curiosidades já salvas no banco continuam sendo enviadas ao XML normalmente.
+                </span>
+              </div>
+              <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                A lista de <strong>exceções</strong> bloqueia a geração para músicas ou artistas cujo nome contenha alguma das palavras cadastradas (ex.: <em>jingle</em>, <em>vinheta</em>).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── AI toggle + Exceções (grid 2 col) ── */}
       <div className="grid md:grid-cols-2 gap-4">
@@ -443,18 +530,19 @@ export default function InfoMusicSection() {
           <div className="flex items-center gap-2">
             <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
             <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Exceções
+              Exceções ({excecaoList.length})
             </h4>
           </div>
           <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-            Palavras separadas por vírgula. Ex.: <em>jingle, vinheta, promo</em>. Quando o artista ou música contiver qualquer uma, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
+            Quando o artista ou música contiver qualquer palavra abaixo, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
           </p>
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex gap-2">
             <input
               type="text"
-              placeholder="jingle, vinheta, promo..."
-              value={excecoes}
-              onChange={e => setExcecoes(e.target.value)}
+              placeholder="Adicionar palavra (ex.: jingle)"
+              value={newExcecao}
+              onChange={(e) => setNewExcecao(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
               className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
               style={{
                 backgroundColor: "var(--layout-page-bg, #fff)",
@@ -462,10 +550,53 @@ export default function InfoMusicSection() {
                 border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
               }}
             />
-            <Button variant="save" onClick={saveExcecoes} disabled={savingExcecoes || excecoes === excecoesInitial}>
-              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-              Salvar
+            <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
+              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+              Adicionar
             </Button>
+          </div>
+          <div
+            className="rounded-lg overflow-hidden"
+            style={{
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              maxHeight: 220,
+              overflowY: "auto",
+            }}
+          >
+            {excecaoList.length === 0 ? (
+              <div className="text-center py-6 text-[11px] opacity-55" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Nenhuma palavra cadastrada.
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                <tbody>
+                  {excecaoList.map((w, i) => (
+                    <tr
+                      key={w + i}
+                      style={{
+                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                        {w}
+                      </td>
+                      <td className="px-3 py-2 text-right w-10">
+                        <button
+                          onClick={() => removeExcecao(w)}
+                          className="opacity-50 hover:opacity-100 transition-opacity"
+                          style={{ color: "#dc2626" }}
+                          title="Remover"
+                          disabled={savingExcecoes}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
@@ -514,40 +645,69 @@ export default function InfoMusicSection() {
             </button>
           </div>
 
-          {/* Curiosidade inline */}
+          {/* Curiosidade inline — dois estados distintos */}
           <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={13} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Curiosidade
-              </h4>
-              {nowPlaying.curiosity && (
-                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.15)", color: "#10b981" }}>
-                  Ativa no XML
-                </span>
-              )}
-            </div>
             {nowPlaying.curiosity ? (
-              <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
-                "{nowPlaying.curiosity}"
-              </p>
-            ) : !showManualForm ? (
-              <div className="space-y-2">
-                <p className="text-xs opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Nenhuma curiosidade encontrada no banco para esta música.
-                  {quotaExhausted && (
-                    <span className="block mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                      Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
-                    </span>
-                  )}
+              // ─── ENCONTRADA: box verde "enviada ao XML" ───
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  backgroundColor: "color-mix(in srgb, #10b981 12%, var(--layout-page-bg, #fff))",
+                  border: "1px solid color-mix(in srgb, #10b981 35%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 size={14} style={{ color: "#10b981" }} />
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
+                    Curiosidade encontrada e enviada ao XML
+                  </h4>
+                  <span
+                    className="ml-auto inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ backgroundColor: "rgba(16,185,129,0.18)", color: "#10b981" }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ativa
+                  </span>
+                </div>
+                <p
+                  className="text-xs italic leading-relaxed"
+                  style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 90%, transparent)" }}
+                >
+                  "{nowPlaying.curiosity}"
                 </p>
+              </div>
+            ) : !showManualForm ? (
+              // ─── NÃO ENCONTRADA: mensagem amigável + CTA ───
+              <div
+                className="rounded-xl p-4 space-y-3"
+                style={{
+                  backgroundColor: "color-mix(in srgb, #f59e0b 10%, var(--layout-page-bg, #fff))",
+                  border: "1px dashed color-mix(in srgb, #f59e0b 45%, transparent)",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl leading-none">🤔</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#b45309" }}>
+                      Nada encontrado sobre esta música
+                    </h4>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
+                    </p>
+                    {quotaExhausted && (
+                      <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
+                        Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setShowManualForm(true)}
                     className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:opacity-90"
                     style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
                   >
-                    Cadastrar manualmente
+                    Cadastrar manualmente agora
                   </button>
                   <button
                     onClick={() => { curiosityFetchKeyRef.current = ""; }}
@@ -559,7 +719,13 @@ export default function InfoMusicSection() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div
+                className="rounded-xl p-4 space-y-2"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #fff))",
+                  border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+                }}
+              >
                 <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Cadastrando curiosidade manual para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}
                 </p>
