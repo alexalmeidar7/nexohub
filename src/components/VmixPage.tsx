@@ -543,6 +543,8 @@ export default function VmixPage() {
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
+  const [transitionStyle, setTransitionStyle] = useState<string>(() => localStorage.getItem("vmix_transition_style") || "Fade");
+  const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
   const [studioName, setStudioName] = useState("");
@@ -2998,9 +3000,9 @@ export default function VmixPage() {
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher — Broadcast Console</span>
               <StatusPill />
             </div>
             {(reloadingInputs || reloadFallback) && (
@@ -3029,130 +3031,227 @@ export default function VmixPage() {
                 )}
               </div>
             )}
-            <div className="flex flex-wrap gap-2 items-start">
-            {inputs.map(input => {
-              const isActive = activeInput === input.number;
-              const isPreview = previewInput === input.number;
-              const isNdi = isNdiInput(input);
-              const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#3b82f6" : "#ffffff10";
-              const headerBg = isActive ? "#dc262620" : isPreview ? "#3b82f615" : "#111115";
 
-              return (
-                <div
-                  key={input.key || input.number}
-                  className={`relative rounded-xl overflow-hidden transition-all duration-300 group ${
-                    isActive ? "ring-2 ring-red-600 shadow-[0_0_25px_rgba(220,38,38,0.2)]" : 
-                    isPreview ? "ring-2 ring-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.15)]" : "border border-white/5 hover:border-white/20"
-                  }`}
-                  style={{ width: isMin ? 44 : 200, backgroundColor: "#1a1a1f" }}
-                >
-                  {/* Status Indicator Bar */}
-                  <div className={`h-1 w-full ${isActive ? "bg-red-600" : isPreview ? "bg-blue-500" : "bg-transparent"}`} />
-
-                  {/* Header / Info */}
-                  <div 
-                    className="p-2.5 flex flex-col gap-1 cursor-pointer"
-                    onClick={() => {
-                      if (isPreview) {
-                        sendCommand("Cut");
-                        setActiveInput(input.number);
-                      } else {
-                        sendCommand("PreviewInput", input.number);
-                        setPreviewInput(input.number);
-                      }
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                        isActive ? "bg-red-600 text-white" : isPreview ? "bg-blue-600 text-white" : "bg-white/5 text-white/30"
-                      }`}>
-                        {input.number}
-                      </span>
-                      {isNdi && (
-                        <div className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
-                          <span className="text-[8px] font-black text-green-500 tracking-tighter">NDI</span>
-                        </div>
+            {/* ATEM-style console */}
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px]">
+                {/* LEFT: Program + Preview + Style + CUT/AUTO */}
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
+                  {/* PROGRAM row */}
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
+                      {inputs.length === 0 && (
+                        <span className="col-span-full text-[10px] text-white/30">Nenhum input encontrado no vMix.</span>
                       )}
+                      {inputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        return (
+                          <button
+                            key={`pgm-${input.key || input.number}`}
+                            onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }}
+                            title={input.title}
+                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
+                              color: isActive ? "#fff" : "#ddd",
+                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
+                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                            }}
+                          >
+                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    
-                    {!isMin && (
-                      <h3 className={`text-[11px] font-bold uppercase tracking-tight truncate leading-tight ${
-                        isActive ? "text-white" : isPreview ? "text-blue-400" : "text-white/40"
-                      }`}>
-                        {input.title}
-                      </h3>
-                    )}
-                  </div>
+                  </section>
 
-                  {/* Thumbnail / Preview Area */}
-                  {!isMin && (
-                    <div 
-                      className="relative aspect-video bg-black overflow-hidden cursor-pointer"
-                      onClick={() => {
-                        sendCommand("CutDirect", input.number);
-                        setActiveInput(input.number);
-                      }}
-                    >
-                      <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      
-                      {/* Interaction Overlays */}
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button className="px-3 py-1 bg-white text-black text-[9px] font-black rounded uppercase tracking-widest hover:bg-white/90">TAKE</button>
+                  {/* PREVIEW row */}
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
+                      {inputs.map(input => {
+                        const isPreview = previewInput === input.number;
+                        const isActive = activeInput === input.number;
+                        return (
+                          <button
+                            key={`pvw-${input.key || input.number}`}
+                            onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }}
+                            title={input.title}
+                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
+                              color: isPreview ? "#fff" : "#ddd",
+                              borderColor: isPreview ? "#86efac" : "#4a4a4a",
+                              boxShadow: isPreview ? "0 0 18px rgba(22,163,74,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              opacity: isActive && !isPreview ? 0.55 : 1,
+                            }}
+                          >
+                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Style + CUT/AUTO */}
+                  <section className="grid grid-cols-[1fr_auto] gap-6 items-end">
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Estilo de Transição</h3>
+                      <div className="grid grid-cols-6 gap-2">
+                        {[
+                          { label: "MIX", fn: "Fade" },
+                          { label: "DIP", fn: "Merge" },
+                          { label: "WIPE", fn: "Wipe" },
+                          { label: "STING", fn: "Stinger1" },
+                          { label: "DVE", fn: "Zoom" },
+                          { label: "SLIDE", fn: "Slide" },
+                        ].map(s => {
+                          const active = transitionStyle === s.fn;
+                          return (
+                            <button
+                              key={s.fn}
+                              onClick={() => { setTransitionStyle(s.fn); localStorage.setItem("vmix_transition_style", s.fn); }}
+                              className="h-10 rounded border text-[10px] font-black tracking-wider transition-all"
+                              style={{
+                                backgroundColor: active ? "#f59e0b" : "#3a3a3a",
+                                color: active ? "#111" : "#ddd",
+                                borderColor: active ? "#fcd34d" : "#4a4a4a",
+                                boxShadow: active ? "0 0 12px rgba(245,158,11,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              }}
+                            >
+                              {s.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="flex items-center gap-2 mt-3">
+                        <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
+                        <input
+                          type="range"
+                          min={200} max={4000} step={100}
+                          value={transitionDuration}
+                          onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
+                          className="flex-1 accent-amber-500"
+                        />
+                        <span className="text-[10px] font-mono text-amber-400 w-14 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
                       </div>
                     </div>
-                  )}
-
-                  {/* Footer Actions */}
-                  {!isMin && (
-                    <div className="p-1.5 flex items-center justify-between bg-black/40">
-                      <div className="flex gap-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setCapturingShortcut(input.number);
-                          }}
-                          className={`text-[8px] font-bold px-2 py-0.5 rounded border ${
-                            inputShortcuts[input.number] ? "border-amber-500/30 text-amber-500 bg-amber-500/10" : "border-white/5 text-white/20 hover:text-white/40"
-                          }`}
-                        >
-                          {inputShortcuts[input.number] || "SHORTCUT"}
-                        </button>
-                      </div>
-                      
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: !isMin })); }}
-                        className="p-1 text-white/20 hover:text-white/40"
+                    <div className="grid grid-cols-3 gap-2 min-w-[280px]">
+                      <button
+                        onClick={() => sendCommand("Cut")}
+                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), 0 0 12px rgba(220,38,38,0.35)" }}
                       >
-                        <ChevronDown size={10} />
+                        CUT
+                      </button>
+                      <button
+                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
+                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                      >
+                        AUTO
+                      </button>
+                      <button
+                        onClick={() => sendCommand("FadeToBlack")}
+                        className="h-16 rounded border text-[11px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#111", color: "#dc2626", borderColor: "#7f1d1d", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6)" }}
+                      >
+                        FTB
                       </button>
                     </div>
-                  )}
-                  
-                  {isMin && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
-                      className="w-full py-2 text-white/20 hover:text-white/40 flex justify-center"
-                    >
-                      <ChevronUp size={10} />
-                    </button>
-                  )}
+                  </section>
                 </div>
-              );
-            })}
-            {inputs.length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Nenhum input encontrado no vMix</p>
-            )}
+
+                {/* RIGHT: Próxima Transição + Overlays (Keys) */}
+                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#252525" }}>
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Próxima Transição</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="h-12 rounded border flex items-center justify-center text-[10px] font-black"
+                        style={{ backgroundColor: "#f59e0b", color: "#111", borderColor: "#fcd34d", boxShadow: "0 0 10px rgba(245,158,11,0.35)" }}>
+                        BKGD
+                      </div>
+                      {[1, 2, 3, 4].map(n => {
+                        const isOn = overlays[n];
+                        return (
+                          <button
+                            key={`key-${n}`}
+                            onClick={() => {
+                              const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
+                              sendCommand(cmd);
+                              setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
+                            }}
+                            className="h-12 rounded border text-[10px] font-black tracking-wider transition-all"
+                            style={{
+                              backgroundColor: isOn ? "#dc2626" : "#3a3a3a",
+                              color: isOn ? "#fff" : "#ddd",
+                              borderColor: isOn ? "#fca5a5" : "#4a4a4a",
+                              boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                            }}
+                            title={`Overlay ${n} — ${isOn ? "ON AIR" : "OFF"}`}
+                          >
+                            KEY {n}
+                            {isOn && <span className="block text-[7px] mt-0.5 opacity-90">ON AIR</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Atalhos & Status</h3>
+                    <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Estilo ativo</span>
+                        <span className="font-mono text-amber-400 font-bold">{transitionStyle}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Duração</span>
+                        <span className="font-mono text-amber-400 font-bold">{(transitionDuration/1000).toFixed(1)}s</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Inputs</span>
+                        <span className="font-mono text-white/70 font-bold">{inputs.length}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Fontes NDI</span>
+                        <span className="font-mono text-emerald-400 font-bold">{ndiSources.length}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {inputs.slice(0, 6).map(input => (
+                        <button
+                          key={`sc-${input.key || input.number}`}
+                          onClick={() => setCapturingShortcut(input.number)}
+                          className="h-8 rounded border text-[9px] font-black uppercase tracking-wider transition-all truncate px-2"
+                          style={{
+                            backgroundColor: "#1d1d1d",
+                            color: inputShortcuts[input.number] ? "#fbbf24" : "#666",
+                            borderColor: inputShortcuts[input.number] ? "#f59e0b60" : "#333",
+                          }}
+                          title={`Atalho para ${input.title}`}
+                        >
+                          {input.number}: {inputShortcuts[input.number] || "—"}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+
             {/* NDI Network Sources Discovery Section */}
-            <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="mt-2 pt-4 border-t border-white/5 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
                   <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Fontes NDI na Rede</h3>
                 </div>
                 <div className="flex gap-2 flex-1 max-w-sm ml-auto">
-                   <input 
+                   <input
                      type="text"
                      placeholder="Nome do PC ou IP (Ex: DESKTOP-123)"
                      className="flex-1 bg-[#111115] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
@@ -3160,9 +3259,9 @@ export default function VmixPage() {
                      onChange={e => setManualNdiHost(e.target.value)}
                      onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
                    />
-                   <Button 
-                     size="sm" 
-                     variant="outline" 
+                   <Button
+                     size="sm"
+                     variant="outline"
                      className="h-9 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
                      onClick={() => scanNdiSources()}
                      disabled={ndiScanning}
@@ -3190,17 +3289,16 @@ export default function VmixPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 rounded-2xl bg-[#111115]/40 border border-dashed border-white/5">
+                <div className="flex flex-col items-center justify-center py-8 rounded-2xl bg-[#111115]/40 border border-dashed border-white/5">
                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
                      <HelpCircle size={20} className="text-white/20" />
                    </div>
-                   <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-center max-w-[200px] leading-relaxed">
+                   <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-center max-w-[220px] leading-relaxed">
                      Insira o nome de um PC ou IP na rede para detectar fontes NDI disponíveis
                    </p>
                 </div>
               )}
             </div>
-          </div>
           </div>
         )}
 
