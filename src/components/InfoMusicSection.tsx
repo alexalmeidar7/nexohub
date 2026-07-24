@@ -433,6 +433,19 @@ export default function InfoMusicSection() {
   };
 
   useEffect(() => { load(); }, []);
+  // Guarantee: any row in "Tocadas" that matches the current exception list is purged from DB + UI
+  useEffect(() => {
+    if (!user || excecaoList.length === 0 || rows.length === 0) return;
+    const hasMatch = rows.some((r) => {
+      const a = (r.artista || "").toLowerCase();
+      const m = (r.musica || "").toLowerCase();
+      return excecaoList.some((w) => {
+        const ww = w.toLowerCase();
+        return a.includes(ww) || m.includes(ww);
+      });
+    });
+    if (hasMatch) purgeExceptionsFromTocadas(excecaoList);
+  }, [excecaoList, rows, user]);
   useEffect(() => {
     if (filterField === "sem_curiosidade" && missingRows.length === 0 && !loadingMissing) {
       loadMissing();
