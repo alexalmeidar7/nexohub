@@ -5,6 +5,7 @@ import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface Ouvinte {
   id: string;
@@ -252,7 +253,7 @@ export default function OuvintesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir este ouvinte?")) return;
+    if (!(await confirmDialog("Excluir este ouvinte?"))) return;
     const { error } = await supabase.from("ouvintes").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });

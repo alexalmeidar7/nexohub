@@ -5,6 +5,7 @@ import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, MessageSquareQuote
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 // Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte
 const CYAN = "#00BFF0";
@@ -286,7 +287,7 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta citação?")) return;
+    if (!(await confirmDialog("Excluir esta citação?"))) return;
     await supabase.from("testemunhais").delete().eq("id", id);
     await loadData();
   };

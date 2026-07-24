@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Image as ImageIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface Banner {
   id: string;
@@ -64,7 +65,7 @@ export default function SiteBannersManager({ effectiveUserId }: { effectiveUserI
   };
 
   const remove = async (id: string) => {
-    if (!confirm("Excluir este banner?")) return;
+    if (!(await confirmDialog("Excluir este banner?"))) return;
     await supabase.from("site_banners").delete().eq("id", id);
     setBanners((p) => p.filter((b) => b.id !== id));
   };

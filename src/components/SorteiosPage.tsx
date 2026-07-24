@@ -5,6 +5,7 @@ import { Loader2, Trash2, Pencil, Save, X, Search, Gift, Package, Dice5, Truck, 
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import { findCurrentProgram } from "./OnAirWidget";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 
 // Palette (nexo-form-design-system)
@@ -282,7 +283,7 @@ function PremiosTab({ premios, userId, onReload }: { premios: Premio[]; userId?:
   };
 
   const del = async (id: string) => {
-    if (!confirm("Excluir este prêmio?")) return;
+    if (!(await confirmDialog("Excluir este prêmio?"))) return;
     const { error } = await supabase.from("sorteio_premios").delete().eq("id", id);
     if (error) { toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Prêmio excluído" });
@@ -547,7 +548,7 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
 
   const clearPrograma = async (programa: ProgramaLite) => {
     if (!userId) return;
-    if (!confirm(`Limpar todos os prêmios de "${programa.nome}"? As quantidades voltarão ao estoque.`)) return;
+    if (!(await confirmDialog(`Limpar todos os prêmios de "${programa.nome}"? As quantidades voltarão ao estoque.`))) return;
     const toReturn = links.filter(l => l.programa_id === programa.id);
     const { error } = await supabase.from("sorteio_premio_programas").delete().eq("user_id", userId).eq("programa_id", programa.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
@@ -682,7 +683,7 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                                   title="Remover prêmio"
                                   style={{ ...ghostBtn, height: 26, padding: "0 8px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
                                   onClick={() => {
-                                    if (!confirm(`Remover "${pr.nome}" deste programa? A quantidade voltará ao estoque.`)) return;
+                                    if (!(await confirmDialog(`Remover "${pr.nome}" deste programa? A quantidade voltará ao estoque.`))) return;
                                     removeLink(l.id);
                                   }}
                                 >
@@ -1296,7 +1297,7 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
   };
 
   const excluir = async (id: string) => {
-    if (!confirm("Excluir este registro de sorteio?")) return;
+    if (!(await confirmDialog("Excluir este registro de sorteio?"))) return;
     const { error } = await supabase.from("sorteio_sorteios").delete().eq("id", id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     onReload();

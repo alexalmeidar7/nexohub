@@ -12,6 +12,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface Campaign {
   id: string;
@@ -139,7 +140,7 @@ export default function AdsChatbotPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Remover esta campanha?")) return;
+    if (!(await confirmDialog("Remover esta campanha?"))) return;
     await supabase.from("wa_broadcasts").delete().eq("id", id);
     toast({ title: "Campanha removida" }); load();
   }
