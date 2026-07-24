@@ -1038,7 +1038,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 4b: Info Music (curiosidades de IA por música) */}
-      {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Info Music — Curiosidades por IA" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Info Music — Curiosidades por IA" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <InfoMusicSection />
         </Suspense>
