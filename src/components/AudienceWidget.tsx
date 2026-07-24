@@ -594,6 +594,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     if (!dataUserId) return;
     const initial = initialSourcesRef.current;
     if (!initial) return;
+    const extrasKey = (arr: StreamSource[]) =>
+      JSON.stringify(arr.map((e) => ({ url: e.url.trim(), xpath: e.xpath.trim() })));
     const changed =
       initial.instagram !== sources.instagram ||
       initial.facebook !== sources.facebook ||
@@ -602,9 +604,23 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url ||
       initial.video_stream_xpath !== sources.video_stream_xpath ||
+      extrasKey(initial.audio_extras) !== extrasKey(sources.audio_extras) ||
+      extrasKey(initial.video_extras) !== extrasKey(sources.video_extras) ||
       initial.youtube_api_key !== sources.youtube_api_key ||
       initial.youtube_channel_id !== sources.youtube_channel_id;
     if (!changed) return;
+
+    const buildList = (primaryUrl: string, primaryXp: string, extras: StreamSource[]) => {
+      const list: StreamSource[] = [];
+      if (primaryUrl.trim()) list.push({ url: primaryUrl.trim(), xpath: primaryXp.trim() });
+      for (const e of extras) {
+        const u = e.url.trim();
+        if (u) list.push({ url: u, xpath: e.xpath.trim() });
+      }
+      return list;
+    };
+    const audioList = buildList(sources.audio_stream_api_url, sources.audio_stream_xpath, sources.audio_extras);
+    const videoList = buildList(sources.video_stream_api_url, sources.video_stream_xpath, sources.video_extras);
 
     const payload = {
       user_id: dataUserId,
@@ -615,6 +631,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       audio_stream_xpath: sources.audio_stream_xpath.trim() || null,
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
       video_stream_xpath: sources.video_stream_xpath.trim() || null,
+      audio_sources: audioList,
+      video_sources: videoList,
       youtube_api_key: sources.youtube_api_key.trim() || null,
       youtube_channel_id: sources.youtube_channel_id.trim() || null,
     };
