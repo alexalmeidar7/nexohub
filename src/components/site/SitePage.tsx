@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Globe, Newspaper, Cloud, Settings, Loader2, Search, ExternalLink, Eye, EyeOff,
+  Globe, Newspaper, Cloud, Settings, Loader2, Search, Eye, EyeOff,
   Smartphone, Monitor, Palette, MapPin, LayoutDashboard, Image as ImageIcon, Server,
   FileText, Upload as UploadIcon, CheckCircle2,
 } from "lucide-react";
@@ -118,7 +118,7 @@ export default function SitePage({ effectiveUserId }: Props) {
     update({ cidade_clima: c.name, cidade_lat: c.latitude, cidade_lon: c.longitude });
     setCityResults([]); setCityQuery("");
   };
-  const openPreview = () => window.open(`/site-preview?user=${effectiveUserId}`, "_blank", "noopener");
+  
 
   const accent = "var(--layout-accent-color, #268ffa)";
   const textColor = "var(--layout-page-text, #1a1a1a)";
@@ -144,11 +144,6 @@ export default function SitePage({ effectiveUserId }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={openPreview}
-            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition"
-            style={{ background: "#ffffff", color: "#0A2540", border: "2px solid #00BFF0" }}>
-            <ExternalLink size={13} /> Preview
-          </button>
           <button onClick={() => setModule("servidor")}
             data-nexo="primary"
             className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition"
@@ -209,7 +204,7 @@ export default function SitePage({ effectiveUserId }: Props) {
                         <Smartphone size={12} />
                       </button>
                       <span className="opacity-60 ml-2">Preview ao vivo</span>
-                      <button onClick={openPreview} className="ml-auto text-[10px] opacity-70 hover:opacity-100 flex items-center gap-1"><ExternalLink size={10} /> abrir</button>
+                      <span className="ml-auto text-[10px] opacity-70">preview ao vivo</span>
                     </div>
                     <div className="bg-white flex justify-center overflow-auto" style={{ maxHeight: 480 }}>
                       <div style={{ width: device === "mobile" ? 360 : "100%", maxWidth: device === "mobile" ? 360 : "none" }}>

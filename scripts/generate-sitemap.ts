@@ -22,10 +22,6 @@ const entries: SitemapEntry[] = [
   { path: "/cenario-tela-full", changefreq: "weekly", priority: "0.6" },
   { path: "/vmix-control", changefreq: "monthly", priority: "0.5" },
   { path: "/intercom", changefreq: "monthly", priority: "0.5" },
-  { path: "/site-preview", changefreq: "monthly", priority: "0.5" },
-  { path: "/jornal-export", changefreq: "monthly", priority: "0.5" },
-  { path: "/roteiro-export", changefreq: "monthly", priority: "0.5" },
-  { path: "/roteiro-apresentador-edit", changefreq: "monthly", priority: "0.5" },
   { path: "/tp-externo", changefreq: "monthly", priority: "0.5" },
   { path: "/reset-password", changefreq: "yearly", priority: "0.3" },
 ];
