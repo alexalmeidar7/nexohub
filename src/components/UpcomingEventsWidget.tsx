@@ -161,28 +161,20 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
 
 
 
-  // Upcoming events from selected day forward, next 30 days, sorted chronologically.
-  // Inclui: (a) eventos cadastrados na agenda + (b) síntese dos programas ativos
-  // cadastrados (dias_semana), para que a agenda semanal apareça mesmo sem lançar
-  // um registro em agenda_eventos.
-  const upcoming = useMemo(() => {
-    const DAY_INDEX_TO_NAME = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-    const out: { date: Date; evt: Evt }[] = [];
+  // Timeline por dia a partir do dia selecionado (próximos 14 dias).
+  // Cada slot representa um dia com sua lista de eventos (pode estar vazia).
+  const timeline = useMemo(() => {
     const nowD = new Date();
     const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
-    // Evita duplicar quando já existe agenda_eventos semanal apontando pro programa.
-    const semanalCoveredProgIds = new Set(
-      eventos
-        .filter((e) => (e.recorrencia === "semanal" || e.recorrencia === "programa_semanal") && e.programa_id)
-        .map((e) => e.programa_id as string)
-    );
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    for (let i = 0; i < 30; i++) {
+    const days: { date: Date; events: Evt[] }[] = [];
+    const DAYS_AHEAD = 14;
+    let totalEvents = 0;
+    for (let i = 0; i < DAYS_AHEAD; i++) {
       const d = addDays(selected, i);
       const isTodayD = isSameDay(d, nowD);
       const isPastD = d < nowD && !isTodayD;
       if (isPastD) continue;
-
+      const dayEvts: Evt[] = [];
       for (const evt of eventos) {
         if (!matches(evt, d)) continue;
         if (evt.status === "cancelado" || evt.status === "concluido") continue;
@@ -192,22 +184,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
           const refT = endT || startT;
           if (refT && refT.slice(0, 5) < nowHM) continue;
         }
-        out.push({ date: d, evt });
+        dayEvts.push(evt);
       }
-      // Somente eventos cadastrados na agenda são exibidos.
-
-
-      if (out.length >= 40) break;
+      dayEvts.sort((a, b) => {
+        const at = a.horario_gravacao || a.programa?.horario_inicio || "00:00";
+        const bt = b.horario_gravacao || b.programa?.horario_inicio || "00:00";
+        return at.localeCompare(bt);
+      });
+      days.push({ date: d, events: dayEvts });
+      totalEvents += dayEvts.length;
+      if (totalEvents >= 20 && i >= 6) break;
     }
-    out.sort((a, b) => {
-      const dc = a.date.getTime() - b.date.getTime();
-      if (dc !== 0) return dc;
-      const at = a.evt.horario_gravacao || a.evt.programa?.horario_inicio || "00:00";
-      const bt = b.evt.horario_gravacao || b.evt.programa?.horario_inicio || "00:00";
-      return at.localeCompare(bt);
-    });
-    return out.slice(0, 12);
-  }, [eventos, programasAll, selected]);
+    return days;
+  }, [eventos, selected]);
+
+  const hasAnyUpcoming = useMemo(() => timeline.some((d) => d.events.length > 0), [timeline]);
 
 
 
