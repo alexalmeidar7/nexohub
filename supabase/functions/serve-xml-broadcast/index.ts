@@ -641,14 +641,27 @@ serve(async (req) => {
     }
 
     // If no manual override, use the live curiosity written by the client-side
-    // guard (useGlobalMusicSync). That field has a 20s TTL — the guard clears
-    // it 20s after publishing and re-clears it whenever the track changes, so
-    // the XML never carries a stale curiosity from the previous song.
+    // guard (useGlobalMusicSync). The guard binds the curiosity to a track
+    // signature and a short expiry timestamp so the XML self-invalidates the
+    // instant the current track no longer matches — no need to wait for the
+    // client's next 20s-clear write to land.
     if (!curiosidade) {
       const dashboard = (settingsRes.data?.dashboard_items as any) || {};
       const liveCuriosity = (dashboard.music_current_curiosity || "").toString().trim();
       if (liveCuriosity) {
-        curiosidade = liveCuriosity;
+        const curTitle = (dashboard.music_current_title || "").toString().trim().toLowerCase();
+        const curArtist = (dashboard.music_current_artist || "").toString().trim().toLowerCase();
+        const curSig = `${curArtist}|${curTitle}`;
+        const boundSig = (dashboard.music_current_curiosity_track || "").toString().trim().toLowerCase();
+        const expiresAtRaw = dashboard.music_current_curiosity_expires_at;
+        const expiresMs = expiresAtRaw ? new Date(expiresAtRaw).getTime() : NaN;
+        const notExpired = !Number.isFinite(expiresMs) || Date.now() < expiresMs;
+        // Emit curiosity ONLY when it is bound to the track currently on-air
+        // and hasn't passed its TTL. If either check fails, XML returns empty
+        // immediately regardless of the DB write lag.
+        if ((!boundSig || boundSig === curSig) && notExpired) {
+          curiosidade = liveCuriosity;
+        }
       }
     }
 
