@@ -305,6 +305,7 @@ Deno.serve(async (req) => {
         ok: true,
         viewers: anyOk ? total : null,
         perStream: counts,
+        youtubeLive: ytLive,
         debug: body?.debug ? debug : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
