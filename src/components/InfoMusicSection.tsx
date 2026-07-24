@@ -166,7 +166,7 @@ export default function InfoMusicSection() {
   const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
 
-  const saveRowCuriosity = async (row: Row) => {
+  const saveRowCuriosity = async (row: InfoMusicRow) => {
     const val = (pendingEdits[row.id] ?? "").trim();
     if (!val) { toast.error("Digite a curiosidade antes de salvar"); return; }
     setSavingRowId(row.id);
