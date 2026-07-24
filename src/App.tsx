@@ -26,19 +26,27 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 
-// Retry wrapper for lazy imports — retries up to 3 times on chunk load failure
-function lazyRetry(factory: () => Promise<{ default: React.ComponentType<any> }>, retries = 3) {
-  return lazy(() =>
-    factory().catch((err) => {
-      if (retries > 0) {
-        return new Promise<{ default: React.ComponentType<any> }>((resolve) =>
-          setTimeout(() => resolve(lazyRetry(factory, retries - 1) as any), 800)
-        );
-      }
-      throw err;
-    })
-  );
+// Retry wrapper for lazy imports — retries the import promise up to `retries`
+// times on chunk load failure, with exponential backoff. IMPORTANT: retries
+// must resolve with a real module object ({ default: Component }), NOT with a
+// nested lazy component — React.lazy would then fail to render.
+function lazyRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+  retries = 3,
+  delay = 800
+) {
+  return lazy(() => {
+    const attempt = (left: number, wait: number): Promise<{ default: T }> =>
+      factory().catch((err) => {
+        if (left <= 0) throw err;
+        return new Promise<{ default: T }>((resolve, reject) => {
+          setTimeout(() => attempt(left - 1, wait * 1.5).then(resolve, reject), wait);
+        });
+      });
+    return attempt(retries, delay);
+  });
 }
+
 
 // Lazy-loaded heavy pages with automatic retry
 const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
