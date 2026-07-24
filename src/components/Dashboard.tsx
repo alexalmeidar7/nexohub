@@ -757,10 +757,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 className="relative"
 
                 onMouseEnter={() => {
-                  clearMenuLeaveTimer();
-                  if (item.children) setHoveredMenu(item.label);
-                }}
-                onMouseLeave={scheduleCloseMenu}
+                   clearMenuLeaveTimer();
+                   if (item.children) {
+                     setHoveredMenu(item.label);
+                   } else {
+                     // Fecha imediatamente qualquer submenu aberto de outro ícone
+                     // para não prejudicar a visibilidade do tooltip deste item.
+                     setHoveredMenu(null);
+                   }
+                 }}
+                 onMouseLeave={scheduleCloseMenu}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>

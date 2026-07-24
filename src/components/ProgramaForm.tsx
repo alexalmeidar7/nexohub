@@ -1315,7 +1315,126 @@ export default function ProgramaForm() {
         </div>
       </section>
 
-      {/* GRADE DE PROGRAMAÇÃO */}
+      {/* LIST CARD — exibido acima da grade a pedido do usuário */}
+
+      {programas.length > 0 && (
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 28,
+            padding: "20px 24px 28px",
+            border: "1px solid #E5F5FB",
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-3" style={{ color: DARK }}>
+              <PlaySquare size={18} style={{ color: CYAN }} />
+              <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+                Programas Cadastrados
+              </h3>
+              <span style={{ fontSize: 11, fontWeight: 700, background: CARD_BG, color: DARK, padding: "3px 12px", borderRadius: 999 }}>
+                {sortedProgramas.length}
+              </span>
+            </div>
+            <div style={{ minWidth: 180 }}>
+              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="horario">Ordenar por Horário</SelectItem>
+                  <SelectItem value="nome">Ordenar por Nome</SelectItem>
+                  <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
+                  <SelectItem value="status">Ordenar por Status</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: CYAN, color: "#FFFFFF" }}>
+                  {["Programa", "Exibição", "Horário", "Apresentador", "Estúdio", "Status", "Ações"].map((h) => (
+                    <th key={h} style={{ padding: "12px 14px", textAlign: h === "Status" || h === "Ações" ? "center" : "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sortedProgramas.map((p, i) => (
+                  <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
+                    <td style={{ padding: "10px 14px", fontWeight: 700 }}>
+                      <div className="flex items-center gap-2">
+                        {p.capa && <img src={p.capa} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            {p.nome}
+                            {p.variavel && <span style={{ fontSize: 9, padding: "1px 8px", borderRadius: 999, fontWeight: 800, background: "#FEF3C7", color: "#92400E", letterSpacing: 0.5 }}>VAR</span>}
+                          </div>
+                          {p.classificacaoEtaria && <div style={{ marginTop: 3 }}><ClassificacaoBadge value={p.classificacaoEtaria} size={13} /></div>}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: "10px 14px", fontSize: 11 }}>
+                      {p.variavel && p.dataVariavel
+                        ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
+                        : (
+                          <div className="flex flex-wrap gap-1">
+                            {(() => {
+                              const WEEKDAYS = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+                              const days = p.diasSemana || [];
+                              const isMonFri = WEEKDAYS.every(d => days.includes(d)) && !days.includes("Sábado") && !days.includes("Domingo");
+                              if (isMonFri) {
+                                return (
+                                  <span style={{ padding: "2px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>Seg → Sex</span>
+                                );
+                              }
+                              return days.map(d => (
+                                <span key={d} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>{d.slice(0, 3)}</span>
+                              ));
+                            })()}
+                          </div>
+                        )}
+                    </td>
+                    <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>
+                      <span className="inline-flex items-center gap-1.5" style={{ fontWeight: 600 }}>
+                        <Clock size={11} style={{ color: CYAN }} />
+                        {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 14px" }}>{getApresentadoresNomes(p)}</td>
+                    <td style={{ padding: "10px 14px" }}>{p.estudio || "—"}</td>
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: p.ativo ? "#DCFCE7" : "#FEE2E2", color: p.ativo ? "#166534" : "#991B1B" }}>
+                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.ativo ? "#22C55E" : "#DC2626" }} />
+                        {p.ativo ? "Ativo" : "Inativo"}
+                      </span>
+                    </td>
+                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
+                      <div style={{ display: "inline-flex", gap: 6 }}>
+                        <button onClick={() => startEdit(p)} title="Editar" style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: DARK }}>
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} style={{ width: 30, height: 30, borderRadius: "50%", background: p.ativo ? "#DCFCE7" : "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: p.ativo ? "#166534" : "#991B1B" }}>
+                          <Power size={14} />
+                        </button>
+                        <button onClick={() => removePrograma(p.id)} title="Remover" style={{ width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#DC2626" }}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* GRADE DE PROGRAMAÇÃO — exibida abaixo da lista de cadastros */}
       {programas.length > 0 && (
         <section
           style={{
@@ -1404,113 +1523,7 @@ export default function ProgramaForm() {
         </section>
       )}
 
-      {/* LIST CARD */}
-      {programas.length > 0 && (
-        <section
-          style={{
-            background: "#FFFFFF",
-            borderRadius: 28,
-            padding: "20px 24px 28px",
-            border: "1px solid #E5F5FB",
-            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
-          }}
-        >
-          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
-            <div className="flex items-center gap-3" style={{ color: DARK }}>
-              <PlaySquare size={18} style={{ color: CYAN }} />
-              <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
-                Programas Cadastrados
-              </h3>
-              <span style={{ fontSize: 11, fontWeight: 700, background: CARD_BG, color: DARK, padding: "3px 12px", borderRadius: 999 }}>
-                {sortedProgramas.length}
-              </span>
-            </div>
-            <div style={{ minWidth: 180 }}>
-              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
-                  <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="horario">Ordenar por Horário</SelectItem>
-                  <SelectItem value="nome">Ordenar por Nome</SelectItem>
-                  <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
-                  <SelectItem value="status">Ordenar por Status</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
 
-          <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
-            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: CYAN, color: "#FFFFFF" }}>
-                  {["Programa", "Exibição", "Horário", "Apresentador", "Estúdio", "Status", "Ações"].map((h) => (
-                    <th key={h} style={{ padding: "12px 14px", textAlign: h === "Status" || h === "Ações" ? "center" : "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedProgramas.map((p, i) => (
-                  <tr key={p.id} style={{ background: i % 2 === 0 ? "#FFFFFF" : "#F7FCFE", color: DARK }}>
-                    <td style={{ padding: "10px 14px", fontWeight: 700 }}>
-                      <div className="flex items-center gap-2">
-                        {p.capa && <img src={p.capa} alt="" style={{ width: 34, height: 34, borderRadius: 10, objectFit: "cover", border: `1px solid ${CARD_BG}` }} />}
-                        <div>
-                          <div className="flex items-center gap-1.5">
-                            {p.nome}
-                            {p.variavel && <span style={{ fontSize: 9, padding: "1px 8px", borderRadius: 999, fontWeight: 800, background: "#FEF3C7", color: "#92400E", letterSpacing: 0.5 }}>VAR</span>}
-                          </div>
-                          {p.classificacaoEtaria && <div style={{ marginTop: 3 }}><ClassificacaoBadge value={p.classificacaoEtaria} size={13} /></div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: "10px 14px", fontSize: 11 }}>
-                      {p.variavel && p.dataVariavel
-                        ? format(new Date(p.dataVariavel + "T12:00:00"), "dd/MM/yyyy (EEEE)", { locale: ptBR })
-                        : (
-                          <div className="flex flex-wrap gap-1">
-                            {p.diasSemana.map(d => (
-                              <span key={d} style={{ padding: "2px 8px", borderRadius: 999, fontSize: 10, fontWeight: 700, background: CARD_BG, color: DARK }}>{d.slice(0, 3)}</span>
-                            ))}
-                          </div>
-                        )}
-                    </td>
-                    <td style={{ padding: "10px 14px", whiteSpace: "nowrap" }}>
-                      <span className="inline-flex items-center gap-1.5" style={{ fontWeight: 600 }}>
-                        <Clock size={11} style={{ color: CYAN }} />
-                        {p.horarioInicio.slice(0, 5)} — {p.horarioFim.slice(0, 5)}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 14px" }}>{getApresentadoresNomes(p)}</td>
-                    <td style={{ padding: "10px 14px" }}>{p.estudio || "—"}</td>
-                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800, background: p.ativo ? "#DCFCE7" : "#FEE2E2", color: p.ativo ? "#166534" : "#991B1B" }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: p.ativo ? "#22C55E" : "#DC2626" }} />
-                        {p.ativo ? "Ativo" : "Inativo"}
-                      </span>
-                    </td>
-                    <td style={{ padding: "10px 14px", textAlign: "center" }}>
-                      <div style={{ display: "inline-flex", gap: 6 }}>
-                        <button onClick={() => startEdit(p)} title="Editar" style={{ width: 30, height: 30, borderRadius: "50%", background: CARD_BG, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: DARK }}>
-                          <Pencil size={14} />
-                        </button>
-                        <button onClick={() => toggleAtivo(p.id, p.ativo)} title={p.ativo ? "Desativar" : "Ativar"} style={{ width: 30, height: 30, borderRadius: "50%", background: p.ativo ? "#DCFCE7" : "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: p.ativo ? "#166534" : "#991B1B" }}>
-                          <Power size={14} />
-                        </button>
-                        <button onClick={() => removePrograma(p.id)} title="Remover" style={{ width: 30, height: 30, borderRadius: "50%", background: "#FEE2E2", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#DC2626" }}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
 
       {showSuccess && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10, 37, 64, 0.4)" }}>
