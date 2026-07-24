@@ -702,9 +702,8 @@ export default function InfoMusicSection() {
                   </div>
                 </div>
               </div>
-
-              </div>
             ) : (
+
               <div
                 className="rounded-xl p-4 space-y-2"
                 style={{
