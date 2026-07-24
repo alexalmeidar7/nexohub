@@ -204,7 +204,7 @@ export default function SitePage({ effectiveUserId }: Props) {
                         <Smartphone size={12} />
                       </button>
                       <span className="opacity-60 ml-2">Preview ao vivo</span>
-                      <button onClick={openPreview} className="ml-auto text-[10px] opacity-70 hover:opacity-100 flex items-center gap-1"><ExternalLink size={10} /> abrir</button>
+                      <span className="ml-auto text-[10px] opacity-70">preview ao vivo</span>
                     </div>
                     <div className="bg-white flex justify-center overflow-auto" style={{ maxHeight: 480 }}>
                       <div style={{ width: device === "mobile" ? 360 : "100%", maxWidth: device === "mobile" ? 360 : "none" }}>
