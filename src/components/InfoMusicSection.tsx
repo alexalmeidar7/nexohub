@@ -143,15 +143,33 @@ export default function InfoMusicSection() {
       toast.error("Palavra já cadastrada");
       return;
     }
-    const next = [...excecaoList, v].join(", ");
+    // Novo item vai para o TOPO da lista
+    const next = [v, ...excecaoList].join(", ");
     setNewExcecao("");
     await saveExcecoesValue(next);
-    toast.success("Exceção adicionada");
+    toast.success("Exceção adicionada", {
+      action: {
+        label: "Desfazer",
+        onClick: async () => {
+          const rollback = excecaoList.join(", ");
+          await saveExcecoesValue(rollback);
+        },
+      },
+    });
   };
 
   const removeExcecao = async (word: string) => {
+    const prev = excecaoList.slice();
     const next = excecaoList.filter((x) => x !== word).join(", ");
     await saveExcecoesValue(next);
+    toast.success(`"${word}" removida`, {
+      action: {
+        label: "Desfazer",
+        onClick: async () => {
+          await saveExcecoesValue(prev.join(", "));
+        },
+      },
+    });
   };
 
 
