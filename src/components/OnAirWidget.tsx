@@ -335,13 +335,14 @@ export default function OnAirWidget() {
         className="h-full relative flex flex-col transition-all duration-500"
         style={{ opacity: isHovered ? 0 : 1 }}
       >
-        {/* Presenter photo - anchored to bottom, larger */}
+        {/* Presenter photo - anchored to bottom, larger. Animates on change. */}
         {apresentadorFoto && (
           <img
+            key={`foto-${programa.id}-${apresentadorFoto}`}
             src={apresentadorFoto}
             alt={apresentadorNome}
-            className="absolute object-contain pointer-events-none"
-            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom" }}
+            className="absolute object-contain pointer-events-none animate-fade-in"
+            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom", animationDuration: "600ms" }}
           />
         )}
 
