@@ -1969,16 +1969,17 @@ function AudienceReportDialog({
                 {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
                 <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
-                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio vs TV</span>
+                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio · TV · YouTube</span>
                     <span className="flex items-center gap-3">
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Áudio</span>
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />Vídeo</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Rádio</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />TV</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: "#FF0000" }} />YouTube</span>
                     </span>
                   </div>
                   <div className="flex-1 min-h-[180px]">
                     {filteredRows.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                           <defs>
                             <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -1988,13 +1989,18 @@ function AudienceReportDialog({
                               <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
                               <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
                             </linearGradient>
+                            <linearGradient id="gYoutube" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#FF0000" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#FF0000" stopOpacity={0} />
+                            </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
                           <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 9 }} interval="preserveStartEnd" />
                           <YAxis tick={{ fill: DARK, fontSize: 9 }} width={38} />
                           <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
-                          <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
-                          <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
+                          <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Rádio" />
+                          <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="TV" />
+                          <Area type="monotone" dataKey="youtube" stroke="#FF0000" strokeWidth={2} fill="url(#gYoutube)" name="YouTube" />
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : (
