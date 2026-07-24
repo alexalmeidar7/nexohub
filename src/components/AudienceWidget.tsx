@@ -1490,8 +1490,14 @@ function AudienceReportDialog({
 
   const periodLabel = periodDays === 180 ? "6 meses" : `${periodDays} dias`;
   const programaLabel = programaFilter === "__ALL__" ? "Todos os programas" : programaFilter;
-  const safeSlug = (s: string) => s.replace(/[^\w\-]+/g, "_").slice(0, 40);
-  const exportFilenameBase = () => `audiencia_${date}_${safeSlug(programaLabel)}_${periodDays}d`;
+  const safeSlug = (s: string) => s.replace(/[^\w\-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "sem_programa";
+  const exportFilenameBase = (kind: "CSV" | "PDF") => {
+    const end = new Date(`${date}T00:00:00`);
+    const start = new Date(end);
+    start.setDate(start.getDate() - periodDays);
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return `audiencia_${safeSlug(programaLabel)}_${iso(start)}_a_${iso(end)}_${kind}`;
+  };
 
   const exportCSV = () => {
     const esc = (v: unknown) => {
@@ -1521,7 +1527,7 @@ function AudienceReportDialog({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${exportFilenameBase()}.csv`;
+    a.download = `${exportFilenameBase("CSV")}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1593,7 +1599,7 @@ function AudienceReportDialog({
       y += 12;
     }
 
-    doc.save(`${exportFilenameBase()}.pdf`);
+    doc.save(`${exportFilenameBase("PDF")}.pdf`);
     toast.success("PDF exportado");
   };
 
@@ -1601,8 +1607,8 @@ function AudienceReportDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl w-[96vw] p-0 overflow-hidden"
-        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column" }}
+        className="max-w-6xl w-[96vw] p-0 overflow-hidden top-[2vh] translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4"
+        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column", height: "96vh", maxHeight: "96vh" }}
       >
         <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "20px 24px" }}>
           <DialogHeader>
