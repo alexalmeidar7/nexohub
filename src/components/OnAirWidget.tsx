@@ -196,7 +196,7 @@ export default function OnAirWidget() {
     check();
     const iv = setInterval(check, 5000);
     return () => clearInterval(iv);
-  }, [onAir, firstNextAp?.foto, firstNext?.selo]);
+  }, [onAir, nextPrograms, nextApresentadores]);
 
   // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
