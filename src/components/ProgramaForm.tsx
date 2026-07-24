@@ -1004,30 +1004,49 @@ export default function ProgramaForm() {
         }}
       >
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
-            {editingId ? "Editar Programa" : "Cadastro de Programa"}
-          </h3>
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Ativo Toggle */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
-              <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
-                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: ativo ? LIME : "#E2E8F0", transition: "background 0.2s" }} />
-                <span style={{ position: "absolute", top: 2, left: ativo ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>{ativo ? "Ativo" : "Inativo"}</span>
-            </label>
-            {/* Variável Toggle */}
-            <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${variavel ? "#F59E0B" : CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
-              <div style={{ position: "relative", width: 34, height: 18 }}>
-                <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
-                <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: variavel ? "#F59E0B" : "#E2E8F0", transition: "background 0.2s" }} />
-                <span style={{ position: "absolute", top: 2, left: variavel ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
-              </div>
-              <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>Variável</span>
-            </label>
-          </div>
+          <button
+            type="button"
+            onClick={() => setFormOpen((v) => !v)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 999, background: CYAN, color: "#FFFFFF" }}>
+              {formOpen ? <ChevronDown size={18} /> : <Plus size={18} />}
+            </span>
+            <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
+              {editingId ? "Editar Programa" : "Cadastro de Programa"}
+            </h3>
+            {!formOpen && !editingId && (
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>
+                Clique para expandir
+              </span>
+            )}
+          </button>
+          {formOpen && (
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Ativo Toggle */}
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
+                <div style={{ position: "relative", width: 34, height: 18 }}>
+                  <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+                  <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: ativo ? LIME : "#E2E8F0", transition: "background 0.2s" }} />
+                  <span style={{ position: "absolute", top: 2, left: ativo ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>{ativo ? "Ativo" : "Inativo"}</span>
+              </label>
+              {/* Variável Toggle */}
+              <label style={{ display: "inline-flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none", background: "#FFFFFF", border: `2px solid ${variavel ? "#F59E0B" : CYAN}`, borderRadius: 999, padding: "6px 14px" }}>
+                <div style={{ position: "relative", width: 34, height: 18 }}>
+                  <input type="checkbox" checked={variavel} onChange={(e) => { setVariavel(e.target.checked); if (!e.target.checked) setDataVariavel(undefined); }} style={{ position: "absolute", opacity: 0, width: 0, height: 0 }} />
+                  <span style={{ position: "absolute", inset: 0, borderRadius: 999, background: variavel ? "#F59E0B" : "#E2E8F0", transition: "background 0.2s" }} />
+                  <span style={{ position: "absolute", top: 2, left: variavel ? 18 : 2, width: 14, height: 14, borderRadius: "50%", background: "#FFFFFF", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: DARK, letterSpacing: 1.5, textTransform: "uppercase" }}>Variável</span>
+              </label>
+            </div>
+          )}
         </div>
+
+        {formOpen && (<>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
           <Field label="Nome do Programa" span="lg:col-span-2">
