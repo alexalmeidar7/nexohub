@@ -38,6 +38,8 @@ export default function InfoMusicSection() {
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
   const [xmlCheck, setXmlCheck] = useState<{ status: "idle" | "checking" | "ok" | "diverge" | "error"; xmlText: string; checkedAt: number; error?: string }>({ status: "idle", xmlText: "", checkedAt: 0 });
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showAiToggle, setShowAiToggle] = useState(false);
+
   const [newExcecao, setNewExcecao] = useState("");
 
   const loadExcecoes = async () => {
@@ -432,9 +434,11 @@ export default function InfoMusicSection() {
     <div className="space-y-5">
       {/* ── Header row: status crédito IA + botão "?" ── */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold"
-          title={`Créditos de geração por IA usados este mês (${monthlyQuota.count} de ${monthlyQuota.limit})`}
+        <button
+          type="button"
+          onClick={() => setShowAiToggle(v => !v)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold hover:opacity-90 transition-opacity"
+          title={`Créditos de geração por IA usados este mês (${monthlyQuota.count} de ${monthlyQuota.limit}). Clique para configurar.`}
           style={{
             backgroundColor: quotaExhausted
               ? "color-mix(in srgb, #ef4444 12%, transparent)"
@@ -452,16 +456,47 @@ export default function InfoMusicSection() {
             <span className="opacity-50 font-normal"> / {monthlyQuota.limit}</span>
           </span>
           <span
-            className={`ml-1 inline-block w-1.5 h-1.5 rounded-full ${aiEnabled ? "animate-pulse" : ""}`}
+            className={`inline-block w-1.5 h-1.5 rounded-full ${aiEnabled ? "animate-pulse" : ""}`}
             style={{
-              backgroundColor: !aiEnabled
-                ? "#9ca3af"
-                : quotaExhausted
-                  ? "#ef4444"
-                  : "#10b981",
+              backgroundColor: !aiEnabled ? "#9ca3af" : quotaExhausted ? "#ef4444" : "#10b981",
             }}
           />
-        </div>
+        </button>
+
+        {showAiToggle && (
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+              color: "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            <Sparkles size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <span className="uppercase tracking-wider opacity-70">Geração por IA</span>
+            <button
+              onClick={toggleAi}
+              disabled={togglingAi}
+              role="switch"
+              aria-checked={aiEnabled}
+              className="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: aiEnabled
+                  ? "var(--layout-accent-color, #2563eb)"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
+              }}
+            >
+              <span
+                className="inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow"
+                style={{ transform: aiEnabled ? "translateX(18px)" : "translateX(2px)" }}
+              />
+            </button>
+            <span className="text-[10px] opacity-60">
+              {aiEnabled ? "Ativo" : "Desativado"}
+            </span>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => setShowHowTo(true)}
@@ -543,56 +578,7 @@ export default function InfoMusicSection() {
         </div>
       )}
 
-      {/* ── AI toggle (linha própria) ── */}
-      <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
-      }}>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Geração por IA
-            </h4>
-          </div>
-          <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-            {aiEnabled
-              ? "Habilitado: novas músicas geram curiosidade pela IA (limite 20/mês)."
-              : "Desabilitado: apenas o banco de curiosidades já salvas alimenta o XML."}
-          </p>
-          <div className="mt-2 flex items-center gap-3">
-            <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${Math.min(100, (monthlyQuota.count / monthlyQuota.limit) * 100)}%`,
-                  backgroundColor: quotaExhausted ? "#ef4444" : "var(--layout-accent-color, #2563eb)",
-                }}
-              />
-            </div>
-            <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: quotaExhausted ? "#ef4444" : "var(--layout-page-text, #1a1a1a)" }}>
-              {monthlyQuota.count} / {monthlyQuota.limit}
-            </span>
-          </div>
-        </div>
-        <button
-          onClick={toggleAi}
-          disabled={togglingAi}
-          role="switch"
-          aria-checked={aiEnabled}
-          className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
-          style={{
-            backgroundColor: aiEnabled
-              ? "var(--layout-accent-color, #2563eb)"
-              : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
-          }}
-        >
-          <span
-            className="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow"
-            style={{ transform: aiEnabled ? "translateX(24px)" : "translateX(4px)" }}
-          />
-        </button>
-      </div>
+
 
       {/* ── NO AR AGORA (esquerda) + Exceções (direita) ── */}
       <div className={nowPlaying ? "grid md:grid-cols-2 gap-4 items-start" : ""}>
