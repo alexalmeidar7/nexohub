@@ -495,10 +495,11 @@ export default function InfoMusicSection() {
     if (hasMatch) purgeExceptionsFromTocadas(excecaoList);
   }, [excecaoList, rows, user]);
   useEffect(() => {
-    if (filterField === "sem_curiosidade" && missingRows.length === 0 && !loadingMissing) {
+    if (filterField === "sem_curiosidade" && !loadingMissing) {
       loadMissing();
     }
-  }, [filterField]);
+  }, [filterField, rows]);
+
   useEffect(() => { 
     loadExcecoes();
     // Auto refresh every 5 seconds to keep "Now Playing" updated
