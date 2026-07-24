@@ -682,7 +682,7 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
                                 <button
                                   title="Remover prêmio"
                                   style={{ ...ghostBtn, height: 26, padding: "0 8px", fontSize: 10, borderColor: "#ef4444", color: "#ef4444" }}
-                                  onClick={() => {
+                                  onClick={async () => {
                                     if (!(await confirmDialog(`Remover "${pr.nome}" deste programa? A quantidade voltará ao estoque.`))) return;
                                     removeLink(l.id);
                                   }}
