@@ -142,6 +142,63 @@ async function fetchYouTubeLiveViewers(url: string): Promise<number | null> {
   } catch { return null; }
 }
 
+// --- YouTube Data API v3 -------------------------------------------------
+// Given a channel URL (or @handle / channel id) and an API key, resolves the
+// current live broadcast and returns concurrent viewers.
+function parseYouTubeChannel(input: string): { channelId?: string; handle?: string; username?: string } {
+  try {
+    const u = new URL(input.startsWith("http") ? input : `https://youtube.com/${input.replace(/^\/+/, "")}`);
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts[0]?.startsWith("@")) return { handle: parts[0].slice(1) };
+    const ci = parts.indexOf("channel");
+    if (ci >= 0 && parts[ci + 1]) return { channelId: parts[ci + 1] };
+    const ui = parts.indexOf("user");
+    if (ui >= 0 && parts[ui + 1]) return { username: parts[ui + 1] };
+    const ci2 = parts.indexOf("c");
+    if (ci2 >= 0 && parts[ci2 + 1]) return { username: parts[ci2 + 1] };
+  } catch { /* not a URL */ }
+  if (input.startsWith("@")) return { handle: input.slice(1) };
+  if (/^UC[\w-]{20,}$/.test(input)) return { channelId: input };
+  return {};
+}
+
+async function resolveYouTubeChannelId(ref: { channelId?: string; handle?: string; username?: string }, apiKey: string): Promise<string | null> {
+  if (ref.channelId) return ref.channelId;
+  const p = new URLSearchParams({ part: "id", key: apiKey });
+  if (ref.handle) p.set("forHandle", `@${ref.handle}`);
+  else if (ref.username) p.set("forUsername", ref.username);
+  else return null;
+  try {
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?${p.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.items?.[0]?.id || null;
+  } catch { return null; }
+}
+
+async function fetchYouTubeApiLiveViewers(channelUrl: string, apiKey: string): Promise<number | null> {
+  const ref = parseYouTubeChannel(channelUrl);
+  const channelId = await resolveYouTubeChannelId(ref, apiKey);
+  if (!channelId) return null;
+  try {
+    // Find current live broadcast for this channel.
+    const searchP = new URLSearchParams({
+      part: "id", channelId, eventType: "live", type: "video", maxResults: "1", key: apiKey,
+    });
+    const sr = await fetch(`https://www.googleapis.com/youtube/v3/search?${searchP.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!sr.ok) return null;
+    const sj = await sr.json();
+    const videoId: string | undefined = sj?.items?.[0]?.id?.videoId;
+    if (!videoId) return 0; // Not live right now.
+    const vp = new URLSearchParams({ part: "liveStreamingDetails", id: videoId, key: apiKey });
+    const vr = await fetch(`https://www.googleapis.com/youtube/v3/videos?${vp.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!vr.ok) return null;
+    const vj = await vr.json();
+    const n = parseInt(vj?.items?.[0]?.liveStreamingDetails?.concurrentViewers || "0", 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch { return null; }
+}
+
 async function fetchProviderViewers(streamUrl: string): Promise<number | null> {
   // YouTube live is by far the most common. Add more provider probes here.
   if (/youtu\.?be/i.test(streamUrl)) return fetchYouTubeLiveViewers(streamUrl);
