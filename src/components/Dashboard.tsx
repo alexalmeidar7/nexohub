@@ -1183,7 +1183,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   </div>
                 )}
 
-                {isDashboard && <InlineNotification mode="inline" />}
+                {/* Notificações agora são centralizadas no topo via App.tsx */}
               </div>
             </div>
           </div>
