@@ -532,6 +532,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       const now = new Date();
       const dia = DIAS[now.getDay()];
       const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      let programa: string | null = null;
       try {
         const { data: progs } = await supabase
           .from("programas")
@@ -550,6 +551,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         programa,
         audio,
         video,
+        youtube,
       } as any);
     };
     // primeiro log após 30s (para dar tempo dos contadores)
