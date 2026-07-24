@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles } from "lucide-react";
+const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1739,6 +1740,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   return null;
                 })()}
               </div>
+            </div>
+
+            {/* Info Music — Curiosidades por IA */}
+            <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+              <p className="text-[10px] mb-3 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                <Sparkles size={10} /> Info Music — Curiosidades por IA
+              </p>
+              <Suspense fallback={<div className="flex items-center gap-2 text-xs py-4 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={14} className="animate-spin" /> Carregando...</div>}>
+                <InfoMusicSection />
+              </Suspense>
             </div>
 
             {/* Upload History — últimas 3 atualizações */}
