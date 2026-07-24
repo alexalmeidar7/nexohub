@@ -887,7 +887,20 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+          badge={
+            youtubeLiveCount && youtubeLiveCount > 0 ? (
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                style={{ background: "#ef4444", color: "#fff" }}
+                title="YouTube ao vivo"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                AO VIVO {youtubeLiveCount.toLocaleString("pt-BR")}
+              </span>
+            ) : (
+              <PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />
+            )
+          }
         />
         <StatCell
           icon={<Globe size={14} />}
