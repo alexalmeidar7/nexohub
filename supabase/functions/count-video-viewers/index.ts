@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
     let urls: string[] = [];
     let ytChannelUrl: string | null = typeof body?.youtubeUrl === "string" ? body.youtubeUrl.trim() : null;
     let ytApiKey: string | null = typeof body?.youtubeApiKey === "string" ? body.youtubeApiKey.trim() : null;
+    let ytChannelId: string | null = typeof body?.youtubeChannelId === "string" ? body.youtubeChannelId.trim() : null;
 
     if (Array.isArray(body?.urls)) {
       urls = body.urls.filter((u: unknown) => typeof u === "string" && u);
@@ -266,7 +267,7 @@ Deno.serve(async (req) => {
             { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
           ),
           fetch(
-            `${supaUrl}/rest/v1/empresa_config?user_id=eq.${userId}&select=youtube,youtube_api_key`,
+            `${supaUrl}/rest/v1/empresa_config?user_id=eq.${userId}&select=youtube,youtube_api_key,youtube_channel_id`,
             { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
           ),
         ]);
@@ -282,6 +283,7 @@ Deno.serve(async (req) => {
           const cfg = Array.isArray(rows) ? rows[0] : null;
           if (!ytChannelUrl && cfg?.youtube) ytChannelUrl = cfg.youtube;
           if (!ytApiKey && cfg?.youtube_api_key) ytApiKey = cfg.youtube_api_key;
+          if (!ytChannelId && cfg?.youtube_channel_id) ytChannelId = cfg.youtube_channel_id;
         }
       }
     }
@@ -289,11 +291,12 @@ Deno.serve(async (req) => {
     const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
-    // YouTube Live via official Data API (when both channel URL and key exist).
+    // YouTube Live via official Data API. Prefer explicit channel ID over URL parsing.
     let ytLive: number | null = null;
-    if (ytChannelUrl && ytApiKey) {
-      ytLive = await fetchYouTubeApiLiveViewers(ytChannelUrl, ytApiKey);
-      debug.push(`youtube_api ${ytChannelUrl} -> ${ytLive}`);
+    if (ytApiKey && (ytChannelId || ytChannelUrl)) {
+      const ref = ytChannelId ? ytChannelId : ytChannelUrl!;
+      ytLive = await fetchYouTubeApiLiveViewers(ref, ytApiKey);
+      debug.push(`youtube_api ${ref} -> ${ytLive}`);
     }
 
     const streamTotal = counts.reduce((a, n) => a + (n ?? 0), 0);

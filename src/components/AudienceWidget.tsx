@@ -26,6 +26,7 @@ interface SourcesConfig {
   video_stream_api_url: string;
   video_stream_xpath: string;
   youtube_api_key: string;
+  youtube_channel_id: string;
 }
 
 
@@ -111,6 +112,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     video_stream_api_url: "",
     video_stream_xpath: "",
     youtube_api_key: "",
+    youtube_channel_id: "",
   });
 
   const initialSourcesRef = useRef<SourcesConfig | null>(null);
@@ -279,7 +281,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         // populate the rotation labels immediately.
         const { data } = await supabase
           .from("empresa_config")
-          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key")
+          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id")
           .eq("user_id", dataUserId as any)
           .maybeSingle();
         if (!cancelled && data) {
@@ -298,6 +300,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             video_stream_api_url: (data as any).video_stream_api_url || "",
             video_stream_xpath: (data as any).video_stream_xpath || "",
             youtube_api_key: (data as any).youtube_api_key || "",
+            youtube_channel_id: (data as any).youtube_channel_id || "",
           };
           setSources(s);
         }
@@ -539,7 +542,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url ||
       initial.video_stream_xpath !== sources.video_stream_xpath ||
-      initial.youtube_api_key !== sources.youtube_api_key;
+      initial.youtube_api_key !== sources.youtube_api_key ||
+      initial.youtube_channel_id !== sources.youtube_channel_id;
     if (!changed) return;
 
     const payload = {
@@ -552,6 +556,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
       video_stream_xpath: sources.video_stream_xpath.trim() || null,
       youtube_api_key: sources.youtube_api_key.trim() || null,
+      youtube_channel_id: sources.youtube_channel_id.trim() || null,
     };
 
     await supabase
@@ -966,6 +971,15 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   onChange={(v) => setSources((s) => ({ ...s, youtube_api_key: v }))}
                   helperText="Obrigatório para ler a audiência ao vivo do canal informado em 'YouTube' (Redes sociais). Crie em console.cloud.google.com → APIs → YouTube Data API v3."
                 />
+                <div className="mt-2">
+                  <SourceField
+                    label="ID do canal (Channel ID)"
+                    placeholder="UCxxxxxxxxxxxxxxxxxxxxxx"
+                    value={sources.youtube_channel_id}
+                    onChange={(v) => setSources((s) => ({ ...s, youtube_channel_id: v }))}
+                    helperText="Opcional, mas recomendado. Cole o Channel ID (começa com 'UC…') encontrado em youtube.com/account_advanced. Evita falha na detecção quando a URL usa @handle."
+                  />
+                </div>
               </div>
             </section>
 
