@@ -251,22 +251,37 @@ Deno.serve(async (req) => {
     const debug: string[] = [];
 
     let urls: string[] = [];
+    let ytChannelUrl: string | null = typeof body?.youtubeUrl === "string" ? body.youtubeUrl.trim() : null;
+    let ytApiKey: string | null = typeof body?.youtubeApiKey === "string" ? body.youtubeApiKey.trim() : null;
+
     if (Array.isArray(body?.urls)) {
       urls = body.urls.filter((u: unknown) => typeof u === "string" && u);
     } else if (userId) {
       const supaUrl = Deno.env.get("SUPABASE_URL");
       const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (supaUrl && svcKey) {
-        const r = await fetch(
-          `${supaUrl}/rest/v1/streaming_channels?user_id=eq.${userId}&type=eq.video_live&active=eq.true&select=url`,
-          { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
-        );
-        if (r.ok) {
-          const rows = await r.json();
+        const [chRes, cfgRes] = await Promise.all([
+          fetch(
+            `${supaUrl}/rest/v1/streaming_channels?user_id=eq.${userId}&type=eq.video_live&active=eq.true&select=url`,
+            { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
+          ),
+          fetch(
+            `${supaUrl}/rest/v1/empresa_config?user_id=eq.${userId}&select=youtube,youtube_api_key`,
+            { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
+          ),
+        ]);
+        if (chRes.ok) {
+          const rows = await chRes.json();
           urls = (Array.isArray(rows) ? rows : []).map((x: any) => x.url).filter(Boolean);
           debug.push(`channels=${urls.length}`);
         } else {
-          debug.push(`lookup http=${r.status}`);
+          debug.push(`lookup http=${chRes.status}`);
+        }
+        if (cfgRes.ok) {
+          const rows = await cfgRes.json();
+          const cfg = Array.isArray(rows) ? rows[0] : null;
+          if (!ytChannelUrl && cfg?.youtube) ytChannelUrl = cfg.youtube;
+          if (!ytApiKey && cfg?.youtube_api_key) ytApiKey = cfg.youtube_api_key;
         }
       }
     }
@@ -274,8 +289,16 @@ Deno.serve(async (req) => {
     const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
-    const total = counts.reduce((a, n) => a + (n ?? 0), 0);
-    const anyOk = counts.some((n) => n !== null);
+    // YouTube Live via official Data API (when both channel URL and key exist).
+    let ytLive: number | null = null;
+    if (ytChannelUrl && ytApiKey) {
+      ytLive = await fetchYouTubeApiLiveViewers(ytChannelUrl, ytApiKey);
+      debug.push(`youtube_api ${ytChannelUrl} -> ${ytLive}`);
+    }
+
+    const streamTotal = counts.reduce((a, n) => a + (n ?? 0), 0);
+    const total = streamTotal + (ytLive ?? 0);
+    const anyOk = counts.some((n) => n !== null) || ytLive !== null;
 
     return new Response(
       JSON.stringify({
