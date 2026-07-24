@@ -23,6 +23,7 @@ interface Ouvinte {
   pontuacao: number | null;
   sexo: string | null;
   origem_cadastro: string | null;
+  whatsapp_message_id?: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
