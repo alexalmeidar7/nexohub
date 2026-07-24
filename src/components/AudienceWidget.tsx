@@ -1716,7 +1716,30 @@ function AudienceReportDialog({
                 <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
               </div>
             )}
+
+            {/* Exportar */}
+            <div className={`${view === "day" && stats ? "" : "ml-auto"} flex items-center gap-1.5`}>
+              <button
+                type="button"
+                onClick={exportCSV}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03] inline-flex items-center gap-1.5"
+                style={{ background: "#fff", border: `2px solid ${CYAN}`, color: DARK }}
+                title="Exportar CSV com os filtros aplicados"
+              >
+                <Download size={12} style={{ color: CYAN }} /> CSV
+              </button>
+              <button
+                type="button"
+                onClick={exportPDF}
+                className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03] inline-flex items-center gap-1.5"
+                style={{ background: CYAN, color: "#fff" }}
+                title="Exportar PDF com os filtros aplicados"
+              >
+                <FileText size={12} /> PDF
+              </button>
+            </div>
           </div>
+
 
           {/* Totais no período · por fonte (com média embutida) */}
           {totalsPeriod && (
