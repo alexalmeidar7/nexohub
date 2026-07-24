@@ -434,9 +434,11 @@ export default function InfoMusicSection() {
     <div className="space-y-5">
       {/* ── Header row: status crédito IA + botão "?" ── */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
-        <div
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold"
-          title={`Créditos de geração por IA usados este mês (${monthlyQuota.count} de ${monthlyQuota.limit})`}
+        <button
+          type="button"
+          onClick={() => setShowAiToggle(v => !v)}
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold hover:opacity-90 transition-opacity"
+          title={`Créditos de geração por IA usados este mês (${monthlyQuota.count} de ${monthlyQuota.limit}). Clique para configurar.`}
           style={{
             backgroundColor: quotaExhausted
               ? "color-mix(in srgb, #ef4444 12%, transparent)"
@@ -454,16 +456,47 @@ export default function InfoMusicSection() {
             <span className="opacity-50 font-normal"> / {monthlyQuota.limit}</span>
           </span>
           <span
-            className={`ml-1 inline-block w-1.5 h-1.5 rounded-full ${aiEnabled ? "animate-pulse" : ""}`}
+            className={`inline-block w-1.5 h-1.5 rounded-full ${aiEnabled ? "animate-pulse" : ""}`}
             style={{
-              backgroundColor: !aiEnabled
-                ? "#9ca3af"
-                : quotaExhausted
-                  ? "#ef4444"
-                  : "#10b981",
+              backgroundColor: !aiEnabled ? "#9ca3af" : quotaExhausted ? "#ef4444" : "#10b981",
             }}
           />
-        </div>
+        </button>
+
+        {showAiToggle && (
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold"
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+              color: "var(--layout-page-text, #1a1a1a)",
+            }}
+          >
+            <Sparkles size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <span className="uppercase tracking-wider opacity-70">Geração por IA</span>
+            <button
+              onClick={toggleAi}
+              disabled={togglingAi}
+              role="switch"
+              aria-checked={aiEnabled}
+              className="relative inline-flex h-4 w-8 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: aiEnabled
+                  ? "var(--layout-accent-color, #2563eb)"
+                  : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
+              }}
+            >
+              <span
+                className="inline-block h-3 w-3 transform rounded-full bg-white transition-transform shadow"
+                style={{ transform: aiEnabled ? "translateX(18px)" : "translateX(2px)" }}
+              />
+            </button>
+            <span className="text-[10px] opacity-60">
+              {aiEnabled ? "Ativo" : "Desativado"}
+            </span>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => setShowHowTo(true)}
