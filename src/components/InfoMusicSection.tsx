@@ -336,6 +336,7 @@ export default function InfoMusicSection() {
       if (overwritten) parts.push(`${overwritten} sobrescrita(s)`);
       if (notFound.length) parts.push(`${notFound.length} não encontrada(s) em Tocadas`);
       toast.success(parts.join(" · ") || "Nada a importar");
+      setImportSummary({ filled, inserted, overwritten, notFound });
       await Promise.all([load(), loadMissing()]);
     } catch (err) {
       toast.error("Erro ao importar: " + ((err as Error).message || "desconhecido"));
