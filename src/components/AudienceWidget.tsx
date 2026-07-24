@@ -1607,20 +1607,20 @@ function AudienceReportDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl w-[96vw] p-0 overflow-hidden top-[2vh] translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4"
-        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column", height: "96vh", maxHeight: "96vh" }}
+        className="max-w-6xl w-[98vw] sm:w-[96vw] p-0 overflow-hidden top-[1vh] sm:top-[2vh] translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4"
+        style={{ background: BG, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column", height: "98vh", maxHeight: "98vh", borderRadius: "clamp(16px, 3vw, 28px)" }}
       >
-        <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "20px 24px" }}>
+        <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "clamp(12px, 2.2vw, 20px) clamp(14px, 2.5vw, 24px)" }}>
           <DialogHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
-                <FileBarChart size={20} color="#fff" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.2)" }}>
+                <FileBarChart size={18} color="#fff" />
               </div>
-              <div className="flex flex-col">
-                <DialogTitle className="text-lg font-black uppercase tracking-wider text-white">
+              <div className="flex flex-col min-w-0">
+                <DialogTitle className="text-base sm:text-lg font-black uppercase tracking-wider text-white truncate">
                   Relatório de Audiência
                 </DialogTitle>
-                <DialogDescription className="text-xs text-white/85">
+                <DialogDescription className="text-[10px] sm:text-xs text-white/85">
                   Histórico consolidado de áudio e vídeo por programa.
                 </DialogDescription>
               </div>
@@ -1628,7 +1628,8 @@ function AudienceReportDialog({
           </DialogHeader>
         </div>
 
-        <div className="p-5 flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+        <div className="p-3 sm:p-5 flex flex-col gap-2 sm:gap-3 flex-1 min-h-0 overflow-y-auto">
+
           {/* Barra unificada: Tabs · Data · Hoje · Filtro de programa */}
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-2 p-1 rounded-full" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
@@ -1749,7 +1750,7 @@ function AudienceReportDialog({
 
           {/* Totais no período · por fonte (com média embutida) */}
           {totalsPeriod && (
-            <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+            <div className="rounded-2xl overflow-hidden flex-shrink-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
               <div className="flex items-center justify-between gap-3 px-4 py-2 flex-wrap" style={{ background: `linear-gradient(90deg, ${CYAN}22, transparent)` }}>
                 <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK }}>
                   Relatório em tempo real · últimos {periodDays === 180 ? "6 meses" : `${periodDays} dias`} · por fonte
