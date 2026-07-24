@@ -1650,36 +1650,17 @@ function AudienceReportDialog({
 
           {view === "day" && (
             <>
-              {/* Filtro + Highlights */}
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
-                  <CalendarIcon size={14} style={{ color: CYAN }} />
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    className="text-sm font-bold outline-none bg-transparent"
-                    style={{ color: DARK, fontFamily: "Montserrat, sans-serif" }}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setDate(todayStr())}
-                  className="text-[10px] font-black uppercase tracking-wider px-3 py-2 rounded-full transition-transform hover:scale-[1.03]"
-                  style={{ background: LIME, color: DARK }}
-                >
-                  Hoje
-                </button>
-                <div className="flex-1" />
-                {stats && (
+              {/* Pico do dia */}
+              {stats && (
+                <div className="flex justify-end">
                   <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
                     <Trophy size={14} style={{ color: LIME }} />
                     <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
                     <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
                     <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
                   </div>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Stat cards */}
               {stats && (
