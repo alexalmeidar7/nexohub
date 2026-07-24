@@ -163,6 +163,21 @@ export default function InfoMusicSection() {
   const [loadingMissing, setLoadingMissing] = useState(false);
   const [missingInputs, setMissingInputs] = useState<Record<string, string>>({});
   const [savingMissingKey, setSavingMissingKey] = useState<string | null>(null);
+  const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
+  const [savingRowId, setSavingRowId] = useState<string | null>(null);
+
+  const saveRowCuriosity = async (row: Row) => {
+    const val = (pendingEdits[row.id] ?? "").trim();
+    if (!val) { toast.error("Digite a curiosidade antes de salvar"); return; }
+    setSavingRowId(row.id);
+    const { error } = await supabase.from("infomusic").update({ curiosidade: val }).eq("id", row.id);
+    setSavingRowId(null);
+    if (error) { toast.error("Erro ao salvar"); return; }
+    setRows(prev => prev.map(r => r.id === row.id ? { ...r, curiosidade: val } : r));
+    setPendingEdits(prev => { const n = { ...prev }; delete n[row.id]; return n; });
+    toast.success("Curiosidade cadastrada!");
+  };
+
 
   const loadMissing = async () => {
     setLoadingMissing(true);
