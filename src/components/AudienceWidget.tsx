@@ -1442,13 +1442,13 @@ function AudienceReportDialog({
       const end = new Date(`${date}T23:59:59.999`);
       const { data } = await supabase
         .from("audiencia_historico")
-        .select("id, created_at, programa, audio, video")
+        .select("id, created_at, programa, audio, video, youtube")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
         .order("created_at", { ascending: false });
       if (!cancelled) {
-        setRows((data as any as HistRow[]) || []);
+        setRows(((data as any[]) || []).map((r) => ({ ...r, youtube: r.youtube || 0 })) as HistRow[]);
         setLoading(false);
       }
     };
