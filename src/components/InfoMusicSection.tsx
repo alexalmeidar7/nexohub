@@ -1049,7 +1049,11 @@ export default function InfoMusicSection() {
             <option value="sem_curiosidade">Músicas sem curiosidades</option>
           </select>
         </div>
-        <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
+        <div className="rounded-2xl overflow-hidden" style={{
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+          backgroundColor: "var(--layout-page-bg, #fff)",
+          boxShadow: "0 8px 24px -18px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
+        }}>
           {filterField === "sem_curiosidade" ? (
             loadingMissing ? (
               <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
