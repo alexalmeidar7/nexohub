@@ -615,7 +615,7 @@ export default function CortesVideoPage() {
       canvas.height = outH;
       const ctx = canvas.getContext("2d", { alpha: false })!;
 
-      const scale = Math.max(outW / srcW, outH / srcH);
+      const scale = Math.max(outW / srcW, outH / srcH) * zoom;
       const drawW = srcW * scale;
       const drawH = srcH * scale;
       const dx = (outW - drawW) / 2;
