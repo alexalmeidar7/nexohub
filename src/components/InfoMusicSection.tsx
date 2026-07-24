@@ -794,11 +794,11 @@ export default function InfoMusicSection() {
               </Button>
             </div>
             <div
-              className="rounded-xl p-2"
+              className="rounded-xl overflow-hidden"
               style={{
-                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
-                backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 60%, color-mix(in srgb, var(--layout-border-color, #333) 8%, transparent))",
-                maxHeight: 220,
+                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 18%, transparent)",
+                backgroundColor: "var(--layout-page-bg, #fff)",
+                maxHeight: 280,
                 overflowY: "auto",
               }}
             >
@@ -807,32 +807,55 @@ export default function InfoMusicSection() {
                   Nenhuma palavra cadastrada.
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {excecaoList.map((w, i) => (
-                    <span
-                      key={w + i}
-                      className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-[11px] font-semibold group transition-all hover:shadow-sm"
-                      style={{
-                        backgroundColor: "var(--layout-page-bg, #fff)",
-                        color: "var(--layout-page-text, #1a1a1a)",
-                        border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
-                      }}
-                    >
-                      <span className="truncate max-w-[180px]">{w}</span>
-                      <button
-                        onClick={() => removeExcecao(w)}
-                        className="w-4 h-4 rounded-full inline-flex items-center justify-center opacity-60 hover:opacity-100 transition-opacity"
-                        style={{ backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)", color: "#dc2626" }}
-                        title="Remover"
-                        disabled={savingExcecoes}
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 z-10" style={{
+                    background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 10%, var(--layout-page-bg, #fff)), color-mix(in srgb, var(--layout-header-bg, #0d0446) 5%, var(--layout-page-bg, #fff)))",
+                    boxShadow: "0 1px 0 0 color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
+                  }}>
+                    <tr>
+                      <th className="text-left px-3 py-2 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
+                        Palavra / Artista / Música
+                      </th>
+                      <th className="text-right px-3 py-2 font-black uppercase text-[10px] tracking-wider w-16" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
+                        Ação
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {excecaoList.map((w, i) => (
+                      <tr
+                        key={w + i}
+                        className="excecao-row transition-colors"
+                        style={{
+                          borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                          backgroundColor: i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined,
+                        }}
                       >
-                        <X size={10} />
-                      </button>
-                    </span>
-                  ))}
-                </div>
+                        <td className="px-3 py-2 font-medium truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          {w}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <button
+                            onClick={() => removeExcecao(w)}
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-md transition-all hover:scale-110"
+                            style={{ backgroundColor: "color-mix(in srgb, #dc2626 10%, transparent)", color: "#dc2626" }}
+                            title="Remover"
+                            disabled={savingExcecoes}
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
+            <style>{`
+              .excecao-row:hover {
+                background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent) !important;
+              }
+            `}</style>
           </div>
         </div>
       </div>
