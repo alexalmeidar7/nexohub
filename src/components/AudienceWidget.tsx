@@ -1527,7 +1527,7 @@ function AudienceReportDialog({
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${exportFilenameBase()}.csv`;
+    a.download = `${exportFilenameBase("CSV")}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1599,7 +1599,7 @@ function AudienceReportDialog({
       y += 12;
     }
 
-    doc.save(`${exportFilenameBase()}.pdf`);
+    doc.save(`${exportFilenameBase("PDF")}.pdf`);
     toast.success("PDF exportado");
   };
 
