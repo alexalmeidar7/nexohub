@@ -246,62 +246,66 @@ export default function InfoMusicSection() {
       const buf = await file.arrayBuffer();
       const wb = XLSX.read(buf, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rowsIn = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
-      // Normalize header keys (accept ARTISTA/Artista/artist, MUSICA/MÚSICA, CURIOSIDADE)
+      // Read positionally (col A = artista, col B = musica, col C = curiosidade),
+      // ignoring headers. Works whether the sheet has a header row or not.
+      const rowsIn = XLSX.utils.sheet_to_json<any[]>(ws, { header: 1, defval: "" });
       const norm = (s: string) => s.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-      const parsed = rowsIn.map(r => {
-        const entries: Record<string, string> = {};
-        for (const [k, v] of Object.entries(r)) entries[norm(k)] = String(v ?? "").trim();
-        return {
-          artista: entries["artista"] || entries["artist"] || "",
-          musica: entries["musica"] || entries["music"] || entries["song"] || "",
-          curiosidade: entries["curiosidade"] || entries["curiosity"] || entries["fato"] || "",
-        };
-      }).filter(r => r.artista && r.musica && r.curiosidade);
+      const parsed = rowsIn
+        .map(r => ({
+          artista: String(r?.[0] ?? "").trim(),
+          musica: String(r?.[1] ?? "").trim(),
+          curiosidade: String(r?.[2] ?? "").trim(),
+        }))
+        .filter(r => {
+          if (!r.artista || !r.musica || !r.curiosidade) return false;
+          // skip header row if present
+          const a = norm(r.artista), m = norm(r.musica);
+          if (a === "artista" && m === "musica") return false;
+          return true;
+        });
 
       if (!parsed.length) {
-        toast.error("Nenhuma linha válida (ARTISTA + MUSICA + CURIOSIDADE)");
+        toast.error("Nenhuma linha válida (colunas A=Artista, B=Música, C=Curiosidade)");
         setImportingXlsx(false);
         return;
       }
 
-      let updated = 0;
-      let inserted = 0;
+      // Load existing rows for this user once (match against Tocadas)
+      const { data: existingRows } = await supabase
+        .from("infomusic")
+        .select("id, artista, musica, curiosidade")
+        .eq("user_id", user.id);
+      const byKey = new Map<string, { id: string; curiosidade: string | null }>();
+      for (const row of existingRows || []) {
+        byKey.set(`${norm(row.artista || "")}::${norm(row.musica || "")}`, { id: row.id, curiosidade: row.curiosidade });
+      }
+
+      let filled = 0;
+      let overwritten = 0;
       const notFound: string[] = [];
       const expiresAt = new Date();
       expiresAt.setMonth(expiresAt.getMonth() + 6);
 
       for (const item of parsed) {
-        const { data: existing } = await supabase
+        const match = byKey.get(`${norm(item.artista)}::${norm(item.musica)}`);
+        if (!match) {
+          notFound.push(`${item.artista} — ${item.musica}`);
+          continue;
+        }
+        const wasEmpty = !match.curiosidade || !match.curiosidade.trim();
+        const { error } = await supabase
           .from("infomusic")
-          .select("id, curiosidade")
-          .eq("user_id", user.id)
-          .ilike("artista", item.artista)
-          .ilike("musica", item.musica)
-          .limit(1)
-          .maybeSingle();
-
-        if (existing?.id) {
-          const { error } = await supabase
-            .from("infomusic")
-            .update({ curiosidade: item.curiosidade, expires_at: expiresAt.toISOString() })
-            .eq("id", existing.id);
-          if (!error) updated++;
-        } else {
-          const { error } = await supabase.from("infomusic").insert({
-            user_id: user.id,
-            artista: item.artista,
-            musica: item.musica,
-            curiosidade: item.curiosidade,
-            deezer_artist_img: null,
-            expires_at: expiresAt.toISOString(),
-          });
-          if (!error) inserted++;
-          else notFound.push(`${item.artista} — ${item.musica}`);
+          .update({ curiosidade: item.curiosidade, expires_at: expiresAt.toISOString() })
+          .eq("id", match.id);
+        if (!error) {
+          if (wasEmpty) filled++; else overwritten++;
         }
       }
 
-      toast.success(`Importadas: ${updated} atualizada(s), ${inserted} nova(s)${notFound.length ? `, ${notFound.length} com erro` : ""}`);
+      const parts = [`${filled} curiosidade(s) preenchida(s)`];
+      if (overwritten) parts.push(`${overwritten} sobrescrita(s)`);
+      if (notFound.length) parts.push(`${notFound.length} não encontrada(s) na tabela Tocadas`);
+      toast.success(parts.join(" · "));
       await Promise.all([load(), loadMissing()]);
     } catch (err) {
       toast.error("Erro ao importar: " + ((err as Error).message || "desconhecido"));
