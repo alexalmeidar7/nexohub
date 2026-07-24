@@ -1655,8 +1655,8 @@ function AudienceReportDialog({
     doc.setFontSize(11);
     doc.text(`Registros do dia (${filteredRows.length})`, 32, y); y += 14;
 
-    const headers = ["Hora", "Programa", "Áudio", "Vídeo", "Total"];
-    const cols = [32, 90, 320, 400, 470];
+    const headers = ["Hora", "Programa", "Rádio", "TV", "YouTube", "Total"];
+    const cols = [32, 90, 300, 360, 410, 480];
     doc.setFontSize(9);
     doc.setFillColor(240, 249, 255);
     doc.rect(28, y - 10, W - 56, 16, "F");
@@ -1665,7 +1665,8 @@ function AudienceReportDialog({
     doc.setFont("helvetica", "normal");
     for (const r of filteredRows) {
       if (y > H - 40) { doc.addPage(); y = 50; }
-      const cells = [fmtTime(r.created_at), (r.programa || "").slice(0, 40), String(r.audio), String(r.video), String((r.audio || 0) + (r.video || 0))];
+      const yt = r.youtube || 0;
+      const cells = [fmtTime(r.created_at), (r.programa || "").slice(0, 34), String(r.audio), String(r.video), String(yt), String((r.audio || 0) + (r.video || 0) + yt)];
       cells.forEach((c, i) => doc.text(c, cols[i], y));
       y += 12;
     }
