@@ -298,15 +298,28 @@ export default function OuvintesPage() {
   };
 
   const filtered = ouvintes.filter((o) => {
+    // Filtro por origem (modo de preenchimento)
+    if (origemFilter !== "all") {
+      const src = (o.origem_cadastro || "manual") as typeof origemFilter;
+      if (src !== origemFilter) return false;
+    }
     if (!search.trim()) return true;
     const s = search.toLowerCase();
     return (
       o.nome?.toLowerCase().includes(s) ||
       o.cpf?.toLowerCase().includes(s) ||
       o.email?.toLowerCase().includes(s) ||
-      o.cidade?.toLowerCase().includes(s)
+      o.telefone?.toLowerCase().includes(s) ||
+      o.cidade?.toLowerCase().includes(s) ||
+      o.whatsapp_message_id?.toLowerCase().includes(s)
     );
   });
+
+  const origemCounts = ouvintes.reduce<Record<string, number>>((acc, o) => {
+    const k = o.origem_cadastro || "manual";
+    acc[k] = (acc[k] || 0) + 1;
+    return acc;
+  }, {});
 
   if (loading) return <ModulePageSkeleton />;
 
