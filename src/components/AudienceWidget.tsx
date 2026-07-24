@@ -542,7 +542,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       initial.audio_stream_xpath !== sources.audio_stream_xpath ||
       initial.video_stream_api_url !== sources.video_stream_api_url ||
       initial.video_stream_xpath !== sources.video_stream_xpath ||
-      initial.youtube_api_key !== sources.youtube_api_key;
+      initial.youtube_api_key !== sources.youtube_api_key ||
+      initial.youtube_channel_id !== sources.youtube_channel_id;
     if (!changed) return;
 
     const payload = {
@@ -555,6 +556,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       video_stream_api_url: sources.video_stream_api_url.trim() || null,
       video_stream_xpath: sources.video_stream_xpath.trim() || null,
       youtube_api_key: sources.youtube_api_key.trim() || null,
+      youtube_channel_id: sources.youtube_channel_id.trim() || null,
     };
 
     await supabase
