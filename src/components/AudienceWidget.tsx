@@ -1329,6 +1329,41 @@ function AudienceReportDialog({
   const [trendLoading, setTrendLoading] = useState(false);
   const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
   const [programOptions, setProgramOptions] = useState<string[]>([]);
+  const [totals30d, setTotals30d] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+
+  // Totais dos últimos 30 dias (por fonte: áudio/vídeo), respeita filtro de programa
+  useEffect(() => {
+    if (!open || !userId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date();
+      start.setDate(start.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      let q = supabase
+        .from("audiencia_historico")
+        .select("audio, video, programa")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString());
+      if (programaFilter !== "__ALL__") q = q.eq("programa", programaFilter);
+      const { data } = await q;
+      if (cancelled) return;
+      const rows = (data as any[]) || [];
+      let a = 0, v = 0, pa = 0, pv = 0;
+      for (const r of rows) {
+        const ra = r.audio || 0, rv = r.video || 0;
+        a += ra; v += rv;
+        if (ra > pa) pa = ra;
+        if (rv > pv) pv = rv;
+      }
+      const n = Math.max(1, rows.length);
+      setTotals30d({
+        audio: a, video: v, peakAudio: pa, peakVideo: pv, samples: rows.length,
+        avgAudio: Math.round(a / n), avgVideo: Math.round(v / n),
+      });
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, programaFilter]);
 
   useEffect(() => {
     if (!open || !userId) return;
