@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus, Download, Upload } from "lucide-react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -186,6 +187,98 @@ export default function InfoMusicSection() {
   const [savingMissingKey, setSavingMissingKey] = useState<string | null>(null);
   const [pendingEdits, setPendingEdits] = useState<Record<string, string>>({});
   const [savingRowId, setSavingRowId] = useState<string | null>(null);
+  const [importingXlsx, setImportingXlsx] = useState(false);
+  const importFileRef = useRef<HTMLInputElement | null>(null);
+
+  const handleExportMissing = () => {
+    try {
+      const list = filteredMissing.length > 0 ? filteredMissing : missingRows;
+      if (!list.length) { toast.info("Nenhuma música sem curiosidade para exportar"); return; }
+      const data = list.map(m => ({ ARTISTA: m.artista, MUSICA: m.musica, CURIOSIDADE: "" }));
+      const ws = XLSX.utils.json_to_sheet(data, { header: ["ARTISTA", "MUSICA", "CURIOSIDADE"] });
+      ws["!cols"] = [{ wch: 32 }, { wch: 40 }, { wch: 80 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "SemCuriosidade");
+      const stamp = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `musicas-sem-curiosidade-${stamp}.xlsx`);
+      toast.success(`Exportadas ${data.length} músicas`);
+    } catch (e) {
+      toast.error("Erro ao exportar: " + ((e as Error).message || "desconhecido"));
+    }
+  };
+
+  const handleImportMissing = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !user) return;
+    setImportingXlsx(true);
+    try {
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rowsIn = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: "" });
+      // Normalize header keys (accept ARTISTA/Artista/artist, MUSICA/MÚSICA, CURIOSIDADE)
+      const norm = (s: string) => s.toString().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+      const parsed = rowsIn.map(r => {
+        const entries: Record<string, string> = {};
+        for (const [k, v] of Object.entries(r)) entries[norm(k)] = String(v ?? "").trim();
+        return {
+          artista: entries["artista"] || entries["artist"] || "",
+          musica: entries["musica"] || entries["music"] || entries["song"] || "",
+          curiosidade: entries["curiosidade"] || entries["curiosity"] || entries["fato"] || "",
+        };
+      }).filter(r => r.artista && r.musica && r.curiosidade);
+
+      if (!parsed.length) {
+        toast.error("Nenhuma linha válida (ARTISTA + MUSICA + CURIOSIDADE)");
+        setImportingXlsx(false);
+        return;
+      }
+
+      let updated = 0;
+      let inserted = 0;
+      const notFound: string[] = [];
+      const expiresAt = new Date();
+      expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+      for (const item of parsed) {
+        const { data: existing } = await supabase
+          .from("infomusic")
+          .select("id, curiosidade")
+          .eq("user_id", user.id)
+          .ilike("artista", item.artista)
+          .ilike("musica", item.musica)
+          .limit(1)
+          .maybeSingle();
+
+        if (existing?.id) {
+          const { error } = await supabase
+            .from("infomusic")
+            .update({ curiosidade: item.curiosidade, expires_at: expiresAt.toISOString() })
+            .eq("id", existing.id);
+          if (!error) updated++;
+        } else {
+          const { error } = await supabase.from("infomusic").insert({
+            user_id: user.id,
+            artista: item.artista,
+            musica: item.musica,
+            curiosidade: item.curiosidade,
+            deezer_artist_img: null,
+            expires_at: expiresAt.toISOString(),
+          });
+          if (!error) inserted++;
+          else notFound.push(`${item.artista} — ${item.musica}`);
+        }
+      }
+
+      toast.success(`Importadas: ${updated} atualizada(s), ${inserted} nova(s)${notFound.length ? `, ${notFound.length} com erro` : ""}`);
+      await Promise.all([load(), loadMissing()]);
+    } catch (err) {
+      toast.error("Erro ao importar: " + ((err as Error).message || "desconhecido"));
+    }
+    setImportingXlsx(false);
+  };
+
 
   const saveRowCuriosity = async (row: InfoMusicRow) => {
     const val = (pendingEdits[row.id] ?? "").trim();
@@ -1095,11 +1188,37 @@ export default function InfoMusicSection() {
               </div>
             ) : (
               <div className="max-h-[420px] overflow-auto">
-                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold gap-2 flex-wrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
                   <span>{filteredMissing.length} música(s) sem curiosidade</span>
-                  <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100 normal-case">
-                    <RefreshCw size={10} /> Atualizar
-                  </button>
+                  <div className="flex items-center gap-1.5 normal-case">
+                    <button
+                      onClick={handleExportMissing}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90"
+                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)" }}
+                      title="Baixar Excel com as músicas sem curiosidade"
+                    >
+                      <Download size={11} /> Exportar
+                    </button>
+                    <button
+                      onClick={() => importFileRef.current?.click()}
+                      disabled={importingXlsx}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-50"
+                      style={{ backgroundColor: "color-mix(in srgb, #16a34a 14%, transparent)", color: "#15803d", border: "1px solid color-mix(in srgb, #16a34a 32%, transparent)" }}
+                      title="Importar Excel com curiosidades"
+                    >
+                      {importingXlsx ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />} Importar
+                    </button>
+                    <input
+                      ref={importFileRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      className="hidden"
+                      onChange={handleImportMissing}
+                    />
+                    <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
+                      <RefreshCw size={10} /> Atualizar
+                    </button>
+                  </div>
                 </div>
                 {filteredMissing.map((m, i) => {
                   const key = `${m.artista}::${m.musica}`.toLowerCase();
