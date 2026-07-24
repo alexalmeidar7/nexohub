@@ -1329,15 +1329,16 @@ function AudienceReportDialog({
   const [trendLoading, setTrendLoading] = useState(false);
   const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
   const [programOptions, setProgramOptions] = useState<string[]>([]);
-  const [totals30d, setTotals30d] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+  const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
+  const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
 
-  // Totais dos últimos 30 dias (por fonte: áudio/vídeo), respeita filtro de programa
+  // Totais no período selecionado (por fonte), respeita filtro de programa
   useEffect(() => {
     if (!open || !userId) return;
     let cancelled = false;
     const load = async () => {
       const start = new Date();
-      start.setDate(start.getDate() - 30);
+      start.setDate(start.getDate() - periodDays);
       start.setHours(0, 0, 0, 0);
       let q = supabase
         .from("audiencia_historico")
@@ -1356,14 +1357,15 @@ function AudienceReportDialog({
         if (rv > pv) pv = rv;
       }
       const n = Math.max(1, rows.length);
-      setTotals30d({
+      setTotalsPeriod({
         audio: a, video: v, peakAudio: pa, peakVideo: pv, samples: rows.length,
         avgAudio: Math.round(a / n), avgVideo: Math.round(v / n),
       });
     };
     load();
     return () => { cancelled = true; };
-  }, [open, userId, programaFilter]);
+  }, [open, userId, programaFilter, periodDays]);
+
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -1594,54 +1596,90 @@ function AudienceReportDialog({
                 <X size={10} /> Limpar
               </button>
             )}
+
+            {/* Pico do dia — ao lado do combo Programa */}
+            {view === "day" && stats && (
+              <div className="ml-auto flex items-center gap-2 rounded-full px-4 py-1.5" style={{ background: DARK, color: "#fff" }}>
+                <Trophy size={14} style={{ color: LIME }} />
+                <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
+                <span className="text-sm font-black tabular-nums">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
+              </div>
+            )}
           </div>
 
-          {/* Totais 30 dias · por fonte */}
-          {totals30d && (
+          {/* Totais no período · por fonte (com média embutida) */}
+          {totalsPeriod && (
             <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
-              <div className="flex items-center justify-between px-4 py-2" style={{ background: `linear-gradient(90deg, ${CYAN}22, transparent)` }}>
+              <div className="flex items-center justify-between gap-3 px-4 py-2 flex-wrap" style={{ background: `linear-gradient(90deg, ${CYAN}22, transparent)` }}>
                 <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK }}>
-                  Totais nos últimos 30 dias · por fonte
+                  Relatório em tempo real · últimos {periodDays === 180 ? "6 meses" : `${periodDays} dias`} · por fonte
                 </span>
-                <span className="text-[10px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
-                  {totals30d.samples.toLocaleString("pt-BR")} registros
-                </span>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 p-1 rounded-full" style={{ background: "#fff", border: `2px solid ${CYAN}` }}>
+                    {([30, 60, 90, 180] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setPeriodDays(d)}
+                        className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full transition-all"
+                        style={{
+                          background: periodDays === d ? CYAN : "transparent",
+                          color: periodDays === d ? "#fff" : DARK,
+                        }}
+                      >
+                        {d === 180 ? "6M" : `${d}d`}
+                      </button>
+                    ))}
+                  </div>
+                  <span className="text-[10px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
+                    {totalsPeriod.samples.toLocaleString("pt-BR")} registros
+                  </span>
+                </div>
               </div>
               <div className="grid grid-cols-3 divide-x" style={{ borderColor: `${CYAN}33` }}>
-                <div className="p-3 flex flex-col gap-1">
+                <div className="p-4 flex flex-col gap-2">
                   <div className="flex items-center gap-1.5" style={{ color: AUDIO_COLOR }}>
                     <Radio size={13} />
-                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Áudio · 30d</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Pico Áudio</span>
                   </div>
-                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: AUDIO_COLOR }}>
-                    {totals30d.audio.toLocaleString("pt-BR")}
+                  <span className="text-2xl font-black leading-none tabular-nums" style={{ color: AUDIO_COLOR }}>
+                    {totalsPeriod.peakAudio.toLocaleString("pt-BR")}
                   </span>
-                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
-                    média {totals30d.avgAudio.toLocaleString("pt-BR")} · pico {totals30d.peakAudio.toLocaleString("pt-BR")}
+                  <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: `${AUDIO_COLOR}22` }}>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Média</span>
+                    <span className="text-sm font-black tabular-nums" style={{ color: DARK }}>{totalsPeriod.avgAudio.toLocaleString("pt-BR")}</span>
+                  </div>
+                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>
+                    soma {totalsPeriod.audio.toLocaleString("pt-BR")}
                   </span>
                 </div>
-                <div className="p-3 flex flex-col gap-1">
+                <div className="p-4 flex flex-col gap-2">
                   <div className="flex items-center gap-1.5" style={{ color: VIDEO_COLOR }}>
                     <MonitorPlay size={13} />
-                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Vídeo · 30d</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Pico Vídeo</span>
                   </div>
-                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: VIDEO_COLOR }}>
-                    {totals30d.video.toLocaleString("pt-BR")}
+                  <span className="text-2xl font-black leading-none tabular-nums" style={{ color: VIDEO_COLOR }}>
+                    {totalsPeriod.peakVideo.toLocaleString("pt-BR")}
                   </span>
-                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
-                    média {totals30d.avgVideo.toLocaleString("pt-BR")} · pico {totals30d.peakVideo.toLocaleString("pt-BR")}
+                  <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: `${VIDEO_COLOR}22` }}>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Média</span>
+                    <span className="text-sm font-black tabular-nums" style={{ color: DARK }}>{totalsPeriod.avgVideo.toLocaleString("pt-BR")}</span>
+                  </div>
+                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>
+                    soma {totalsPeriod.video.toLocaleString("pt-BR")}
                   </span>
                 </div>
-                <div className="p-3 flex flex-col gap-1" style={{ background: `${LIME}22` }}>
+                <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
                   <div className="flex items-center gap-1.5" style={{ color: DARK }}>
                     <Trophy size={13} />
-                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ opacity: 0.6 }}>Total · 30d</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ opacity: 0.6 }}>Total geral</span>
                   </div>
-                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: DARK }}>
-                    {(totals30d.audio + totals30d.video).toLocaleString("pt-BR")}
+                  <span className="text-2xl font-black leading-none tabular-nums" style={{ color: DARK }}>
+                    {(totalsPeriod.audio + totalsPeriod.video).toLocaleString("pt-BR")}
                   </span>
                   <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
-                    soma áudio + vídeo
+                    soma áudio + vídeo no período
                   </span>
                 </div>
               </div>
@@ -1650,27 +1688,7 @@ function AudienceReportDialog({
 
           {view === "day" && (
             <>
-              {/* Pico do dia */}
-              {stats && (
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-2 rounded-full px-4 py-2" style={{ background: DARK, color: "#fff" }}>
-                    <Trophy size={14} style={{ color: LIME }} />
-                    <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
-                    <span className="text-sm font-black">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
-                    <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
-                  </div>
-                </div>
-              )}
 
-              {/* Stat cards */}
-              {stats && (
-                <div className="grid grid-cols-4 gap-3">
-                  <MiniStat label="Pico Áudio" value={stats.peakAudio.audio} time={fmtTime(stats.peakAudio.created_at)} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-                  <MiniStat label="Pico Vídeo" value={stats.peakVideo.video} time={fmtTime(stats.peakVideo.created_at)} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-                  <MiniStat label="Média Áudio" value={stats.avgAudio} icon={<Radio size={14} />} cyan={CYAN} dark={DARK} />
-                  <MiniStat label="Média Vídeo" value={stats.avgVideo} icon={<MonitorPlay size={14} />} cyan={CYAN} dark={DARK} />
-                </div>
-              )}
 
               {/* Gráfico + Tabela lado a lado */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 flex-1 min-h-0">
