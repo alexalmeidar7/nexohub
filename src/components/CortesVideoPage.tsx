@@ -1364,7 +1364,7 @@ export default function CortesVideoPage() {
             <div className="flex items-center gap-1.5 mb-3">
               <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Qualidade</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-2">
               {(Object.keys(qualityPresets) as Quality[]).map((k) => {
                 const active = quality === k;
                 const p = qualityPresets[k];
@@ -1373,19 +1373,19 @@ export default function CortesVideoPage() {
                     key={k}
                     type="button"
                     onClick={() => setQuality(k)}
-                    className="flex flex-col items-start gap-0.5 p-2 rounded-lg transition-all text-left"
+                    className="relative flex flex-col items-start gap-0.5 px-2.5 py-2 rounded-lg transition-all text-left"
                     style={{
-                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
-                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)"}`,
+                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)",
                     }}
                   >
                     <div className="flex items-center gap-1 w-full">
-                      <span className="text-[10px] font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.label}</span>
+                      <span className="text-[11px] font-black" style={{ color: active ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)" }}>{p.label}</span>
                       {k === "balanced" && (
                         <span className="ml-auto text-[7px] font-bold px-1 py-0.5 rounded" style={{ background: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>PADRÃO</span>
                       )}
                     </div>
-                    <div className="text-[8px] font-mono opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.sub}</div>
+                    <div className="text-[8px] font-mono opacity-60 leading-none" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.sub}</div>
                   </button>
                 );
               })}
