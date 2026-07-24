@@ -749,6 +749,11 @@ export default function OuvintesPage() {
                         textTransform: "uppercase",
                         fontSize: 10,
                         whiteSpace: "nowrap",
+                        position: h === "Ações" ? "sticky" : undefined,
+                        right: h === "Ações" ? 0 : undefined,
+                        background: h === "Ações" ? CYAN : undefined,
+                        zIndex: h === "Ações" ? 2 : undefined,
+                        boxShadow: h === "Ações" ? "-8px 0 12px -8px rgba(10,37,64,0.15)" : undefined,
                       }}
                     >
                       {h}
