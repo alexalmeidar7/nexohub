@@ -225,6 +225,22 @@ export default function CortesVideoPage() {
     high: { label: "Alta", sub: "~10 Mbps", bitrate: 10_000_000, hint: "Boa qualidade para edição ou publicação em canais como YouTube/TV." },
     max: { label: "Máxima", sub: "~16 Mbps", bitrate: 16_000_000, hint: "Máxima qualidade — arquivos maiores, indicado para masters e arquivos originais." },
   };
+
+  // Quick effects
+  type CropLevel = "none" | "soft" | "medium" | "strong";
+  type FadeMode = "none" | "in" | "out" | "both";
+  type SharpLevel = "none" | "subtle" | "medium" | "strong";
+  const [crop, setCrop] = useState<CropLevel>("none");
+  const [fade, setFade] = useState<FadeMode>("none");
+  const [sharpness, setSharpness] = useState<SharpLevel>("none");
+  const cropZoom: Record<CropLevel, number> = { none: 1, soft: 1.05, medium: 1.15, strong: 1.3 };
+  const sharpFilter: Record<SharpLevel, string> = {
+    none: "none",
+    subtle: "contrast(1.08) saturate(1.05)",
+    medium: "contrast(1.15) saturate(1.1)",
+    strong: "contrast(1.25) saturate(1.15) brightness(1.02)",
+  };
+  const FADE_SEC = 0.6;
   const [cutting, setCutting] = useState(false);
   type CutResult = {
     blob_url?: string;
@@ -562,10 +578,14 @@ export default function CortesVideoPage() {
     target: "fullhd" | "reel" | "original",
     bitrate: number,
     onProgress: (pct: number) => void,
-    onStage: (title: string, detail?: string) => void
+    onStage: (title: string, detail?: string) => void,
+    effects?: { crop: CropLevel; fade: FadeMode; sharpness: SharpLevel }
   ): Promise<Blob> => {
     const clipDuration = endSec - startSec;
     if (clipDuration <= 0) throw new Error("Duração inválida.");
+    const fx = effects || { crop: "none" as CropLevel, fade: "none" as FadeMode, sharpness: "none" as SharpLevel };
+    const zoom = cropZoom[fx.crop];
+    const cssFilter = sharpFilter[fx.sharpness];
 
     onStage("Preparando vídeo...", "Lendo metadados do arquivo");
     const url = URL.createObjectURL(file);
@@ -595,7 +615,7 @@ export default function CortesVideoPage() {
       canvas.height = outH;
       const ctx = canvas.getContext("2d", { alpha: false })!;
 
-      const scale = Math.max(outW / srcW, outH / srcH);
+      const scale = Math.max(outW / srcW, outH / srcH) * zoom;
       const drawW = srcW * scale;
       const drawH = srcH * scale;
       const dx = (outW - drawW) / 2;
@@ -641,7 +661,24 @@ export default function CortesVideoPage() {
 
       let rafId = 0;
       const drawLoop = () => {
+        ctx.filter = cssFilter;
         ctx.drawImage(video, dx, dy, drawW, drawH);
+        ctx.filter = "none";
+        if (fx.fade !== "none") {
+          const elapsed = Math.max(0, video.currentTime - startSec);
+          let a = 0;
+          if ((fx.fade === "in" || fx.fade === "both") && elapsed < FADE_SEC) {
+            a = Math.max(a, 1 - elapsed / FADE_SEC);
+          }
+          const remaining = clipDuration - elapsed;
+          if ((fx.fade === "out" || fx.fade === "both") && remaining < FADE_SEC) {
+            a = Math.max(a, 1 - Math.max(0, remaining) / FADE_SEC);
+          }
+          if (a > 0) {
+            ctx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`;
+            ctx.fillRect(0, 0, outW, outH);
+          }
+        }
         rafId = requestAnimationFrame(drawLoop);
       };
       drawLoop();
@@ -725,7 +762,8 @@ export default function CortesVideoPage() {
           (title, detail) => {
             setStatusMsg(`Trecho ${i + 1}/${totalClips} — ${title}`);
             setLoadDetail(detail || "");
-          }
+          },
+          { crop, fade, sharpness }
         );
 
         const isMp4 = blob.type.includes("mp4");
@@ -1306,6 +1344,118 @@ export default function CortesVideoPage() {
             </div>
             <p className="text-[9px] leading-snug mt-2 opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               {qualityPresets[quality].hint}
+            </p>
+          </div>
+
+          {/* Efeitos rápidos panel (full width row) */}
+          <div className="lg:col-span-3 rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }}>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Efeitos rápidos</span>
+              <span className="text-[9px] font-mono opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>aplicados no render local</span>
+              {(crop !== "none" || fade !== "none" || sharpness !== "none") && (
+                <button
+                  type="button"
+                  onClick={() => { setCrop("none"); setFade("none"); setSharpness("none"); }}
+                  className="ml-auto text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
+                  style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Crop */}
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Crop (zoom central)</label>
+                <div className="grid grid-cols-4 gap-1">
+                  {([
+                    { k: "none" as CropLevel, label: "Sem" },
+                    { k: "soft" as CropLevel, label: "Suave" },
+                    { k: "medium" as CropLevel, label: "Médio" },
+                    { k: "strong" as CropLevel, label: "Forte" },
+                  ]).map(({ k, label }) => {
+                    const active = crop === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setCrop(k)}
+                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                        style={{
+                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
+                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                          color: "var(--layout-page-text, #1a1a1a)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Fade */}
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Fade (0,6s)</label>
+                <div className="grid grid-cols-4 gap-1">
+                  {([
+                    { k: "none" as FadeMode, label: "Sem" },
+                    { k: "in" as FadeMode, label: "Entrada" },
+                    { k: "out" as FadeMode, label: "Saída" },
+                    { k: "both" as FadeMode, label: "Ambos" },
+                  ]).map(({ k, label }) => {
+                    const active = fade === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setFade(k)}
+                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                        style={{
+                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
+                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                          color: "var(--layout-page-text, #1a1a1a)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Sharpness */}
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nitidez</label>
+                <div className="grid grid-cols-4 gap-1">
+                  {([
+                    { k: "none" as SharpLevel, label: "Sem" },
+                    { k: "subtle" as SharpLevel, label: "Sutil" },
+                    { k: "medium" as SharpLevel, label: "Médio" },
+                    { k: "strong" as SharpLevel, label: "Forte" },
+                  ]).map(({ k, label }) => {
+                    const active = sharpness === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setSharpness(k)}
+                        className="py-1.5 rounded-md text-[10px] font-bold transition-all"
+                        style={{
+                          border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
+                          backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                          color: "var(--layout-page-text, #1a1a1a)",
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            <p className="text-[9px] leading-snug mt-2 opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Efeitos são aplicados durante o render do arquivo final (modo Local). Crop aproxima o centro da cena, fade suaviza início/fim e nitidez realça contraste e cor.
             </p>
           </div>
         </div>
