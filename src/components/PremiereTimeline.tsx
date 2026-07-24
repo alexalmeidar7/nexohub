@@ -526,6 +526,17 @@ export default function PremiereTimeline({
           <span className="text-[9px] font-mono opacity-80 w-10 text-right">{zoomPct}x</span>
           <button type="button" onClick={zoomToSelection} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">Trecho</button>
           <button type="button" onClick={resetZoom} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset">Reset</button>
+          <button
+            type="button"
+            onClick={() => setSnapEnabled((s) => !s)}
+            className="px-2 h-6 rounded text-[9px] font-bold ml-1"
+            style={{
+              backgroundColor: snapEnabled ? accent : `color-mix(in srgb, ${headerText} 15%, transparent)`,
+              color: snapEnabled ? accentText : headerText,
+            }}
+            title="Snap magnético (segure Shift ao arrastar para desativar temporariamente)"
+          >🧲 Snap {snapEnabled ? "ON" : "OFF"}</button>
+
         </div>
       </div>
 
