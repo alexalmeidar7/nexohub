@@ -1488,6 +1488,116 @@ function AudienceReportDialog({
     return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
   };
 
+  const periodLabel = periodDays === 180 ? "6 meses" : `${periodDays} dias`;
+  const programaLabel = programaFilter === "__ALL__" ? "Todos os programas" : programaFilter;
+  const safeSlug = (s: string) => s.replace(/[^\w\-]+/g, "_").slice(0, 40);
+  const exportFilenameBase = () => `audiencia_${date}_${safeSlug(programaLabel)}_${periodDays}d`;
+
+  const exportCSV = () => {
+    const esc = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines: string[] = [];
+    lines.push(`Relatório de Audiência`);
+    lines.push(`Data;${fmtDate(new Date(`${date}T00:00:00`).toISOString())}`);
+    lines.push(`Programa;${programaLabel}`);
+    lines.push(`Período (totais);Últimos ${periodLabel}`);
+    lines.push("");
+    if (totalsPeriod) {
+      lines.push(`Resumo do período;Áudio;Vídeo;Total`);
+      lines.push([`Pico`, totalsPeriod.peakAudio, totalsPeriod.peakVideo, totalsPeriod.peakAudio + totalsPeriod.peakVideo].map(esc).join(";"));
+      lines.push([`Média`, totalsPeriod.avgAudio, totalsPeriod.avgVideo, totalsPeriod.avgAudio + totalsPeriod.avgVideo].map(esc).join(";"));
+      lines.push([`Soma`, totalsPeriod.audio, totalsPeriod.video, totalsPeriod.audio + totalsPeriod.video].map(esc).join(";"));
+      lines.push(`Registros;${totalsPeriod.samples}`);
+      lines.push("");
+    }
+    lines.push(`Registros do dia`);
+    lines.push([`Data`, `Hora`, `Programa`, `Áudio`, `Vídeo`, `Total`].map(esc).join(";"));
+    for (const r of filteredRows) {
+      lines.push([fmtDate(r.created_at), fmtTime(r.created_at), r.programa || "", r.audio, r.video, (r.audio || 0) + (r.video || 0)].map(esc).join(";"));
+    }
+    const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportFilenameBase()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exportado");
+  };
+
+  const exportPDF = async () => {
+    const { default: jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    const W = doc.internal.pageSize.getWidth();
+    const H = doc.internal.pageSize.getHeight();
+    let y = 40;
+    doc.setFillColor(0, 191, 240);
+    doc.rect(0, 0, W, 60, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Relatório de Audiência", 32, 38);
+    y = 90;
+    doc.setTextColor(30, 41, 59);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(`Data: ${fmtDate(new Date(`${date}T00:00:00`).toISOString())}`, 32, y); y += 14;
+    doc.text(`Programa: ${programaLabel}`, 32, y); y += 14;
+    doc.text(`Período dos totais: últimos ${periodLabel}`, 32, y); y += 20;
+
+    if (totalsPeriod) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.text(`Resumo · últimos ${periodLabel}`, 32, y); y += 14;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      const rows: [string, string, string, string][] = [
+        ["", "Áudio", "Vídeo", "Total"],
+        ["Pico", String(totalsPeriod.peakAudio), String(totalsPeriod.peakVideo), String(totalsPeriod.peakAudio + totalsPeriod.peakVideo)],
+        ["Média", String(totalsPeriod.avgAudio), String(totalsPeriod.avgVideo), String(totalsPeriod.avgAudio + totalsPeriod.avgVideo)],
+        ["Soma", String(totalsPeriod.audio), String(totalsPeriod.video), String(totalsPeriod.audio + totalsPeriod.video)],
+      ];
+      const colX = [32, 200, 300, 400];
+      for (const [i, row] of rows.entries()) {
+        if (i === 0) doc.setFont("helvetica", "bold"); else doc.setFont("helvetica", "normal");
+        row.forEach((c, j) => doc.text(c, colX[j], y));
+        y += 14;
+      }
+      y += 6;
+      doc.setFontSize(9);
+      doc.setTextColor(100);
+      doc.text(`Registros no período: ${totalsPeriod.samples}`, 32, y); y += 16;
+      doc.setTextColor(30, 41, 59);
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(`Registros do dia (${filteredRows.length})`, 32, y); y += 14;
+
+    const headers = ["Hora", "Programa", "Áudio", "Vídeo", "Total"];
+    const cols = [32, 90, 320, 400, 470];
+    doc.setFontSize(9);
+    doc.setFillColor(240, 249, 255);
+    doc.rect(28, y - 10, W - 56, 16, "F");
+    headers.forEach((h, i) => doc.text(h, cols[i], y));
+    y += 14;
+    doc.setFont("helvetica", "normal");
+    for (const r of filteredRows) {
+      if (y > H - 40) { doc.addPage(); y = 50; }
+      const cells = [fmtTime(r.created_at), (r.programa || "").slice(0, 40), String(r.audio), String(r.video), String((r.audio || 0) + (r.video || 0))];
+      cells.forEach((c, i) => doc.text(c, cols[i], y));
+      y += 12;
+    }
+
+    doc.save(`${exportFilenameBase()}.pdf`);
+    toast.success("PDF exportado");
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
