@@ -139,6 +139,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   // Refs to keep latest counts for the periodic history logger
   const streamingRef = useRef<number | null>(null);
   const videoRef = useRef<number | null>(null);
+  const youtubeRef = useRef<number | null>(null);
   useEffect(() => { streamingRef.current = streamingCount; }, [streamingCount]);
   useEffect(() => { videoRef.current = videoCount; }, [videoCount]);
 
