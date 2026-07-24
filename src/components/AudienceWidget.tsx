@@ -1329,6 +1329,41 @@ function AudienceReportDialog({
   const [trendLoading, setTrendLoading] = useState(false);
   const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
   const [programOptions, setProgramOptions] = useState<string[]>([]);
+  const [totals30d, setTotals30d] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+
+  // Totais dos últimos 30 dias (por fonte: áudio/vídeo), respeita filtro de programa
+  useEffect(() => {
+    if (!open || !userId) return;
+    let cancelled = false;
+    const load = async () => {
+      const start = new Date();
+      start.setDate(start.getDate() - 30);
+      start.setHours(0, 0, 0, 0);
+      let q = supabase
+        .from("audiencia_historico")
+        .select("audio, video, programa")
+        .eq("user_id", userId as any)
+        .gte("created_at", start.toISOString());
+      if (programaFilter !== "__ALL__") q = q.eq("programa", programaFilter);
+      const { data } = await q;
+      if (cancelled) return;
+      const rows = (data as any[]) || [];
+      let a = 0, v = 0, pa = 0, pv = 0;
+      for (const r of rows) {
+        const ra = r.audio || 0, rv = r.video || 0;
+        a += ra; v += rv;
+        if (ra > pa) pa = ra;
+        if (rv > pv) pv = rv;
+      }
+      const n = Math.max(1, rows.length);
+      setTotals30d({
+        audio: a, video: v, peakAudio: pa, peakVideo: pv, samples: rows.length,
+        avgAudio: Math.round(a / n), avgVideo: Math.round(v / n),
+      });
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, programaFilter]);
 
   useEffect(() => {
     if (!open || !userId) return;
@@ -1544,6 +1579,57 @@ function AudienceReportDialog({
             </span>
           </div>
 
+          {/* Totais 30 dias · por fonte */}
+          {totals30d && (
+            <div className="rounded-2xl overflow-hidden" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
+              <div className="flex items-center justify-between px-4 py-2" style={{ background: `linear-gradient(90deg, ${CYAN}22, transparent)` }}>
+                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: DARK }}>
+                  Totais nos últimos 30 dias · por fonte
+                </span>
+                <span className="text-[10px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
+                  {totals30d.samples.toLocaleString("pt-BR")} registros
+                </span>
+              </div>
+              <div className="grid grid-cols-3 divide-x" style={{ borderColor: `${CYAN}33` }}>
+                <div className="p-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5" style={{ color: AUDIO_COLOR }}>
+                    <Radio size={13} />
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Áudio · 30d</span>
+                  </div>
+                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: AUDIO_COLOR }}>
+                    {totals30d.audio.toLocaleString("pt-BR")}
+                  </span>
+                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
+                    média {totals30d.avgAudio.toLocaleString("pt-BR")} · pico {totals30d.peakAudio.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <div className="p-3 flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5" style={{ color: VIDEO_COLOR }}>
+                    <MonitorPlay size={13} />
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>Vídeo · 30d</span>
+                  </div>
+                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: VIDEO_COLOR }}>
+                    {totals30d.video.toLocaleString("pt-BR")}
+                  </span>
+                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
+                    média {totals30d.avgVideo.toLocaleString("pt-BR")} · pico {totals30d.peakVideo.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <div className="p-3 flex flex-col gap-1" style={{ background: `${LIME}22` }}>
+                  <div className="flex items-center gap-1.5" style={{ color: DARK }}>
+                    <Trophy size={13} />
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ opacity: 0.6 }}>Total · 30d</span>
+                  </div>
+                  <span className="text-xl font-black leading-none tabular-nums" style={{ color: DARK }}>
+                    {(totals30d.audio + totals30d.video).toLocaleString("pt-BR")}
+                  </span>
+                  <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>
+                    soma áudio + vídeo
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {view === "day" && (
             <>
