@@ -118,6 +118,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     audio_stream_xpath: "",
     video_stream_api_url: "",
     video_stream_xpath: "",
+    audio_extras: [],
+    video_extras: [],
     youtube_api_key: "",
     youtube_channel_id: "",
   });
