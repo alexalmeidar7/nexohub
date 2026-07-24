@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -1210,48 +1211,31 @@ export default function InfoMusicSection() {
                        <td className="px-3 py-2 align-top text-center">
                          {(() => {
                            const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           const handleToggle = async () => {
+                             const nameRaw = r.artista.trim();
+                             if (!nameRaw) return;
+                             const prevList = excecaoList.slice();
+                             if (isEx) {
+                               const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
+                               await saveExcecoesValue(next);
+                               toast.success(`"${nameRaw}" removido das exceções`, {
+                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
+                               });
+                             } else {
+                               const next = [nameRaw, ...excecaoList].join(", ");
+                               await saveExcecoesValue(next);
+                               toast.success(`"${nameRaw}" adicionado às exceções`, {
+                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
+                               });
+                             }
+                           };
                            return (
-                             <label
-                               className="inline-flex items-center justify-center cursor-pointer rounded-md px-2 py-1 transition-colors hover:bg-black/5"
+                             <div
+                               className="inline-flex items-center justify-center"
                                title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções (oculta desta tabela)"}
                              >
-                               <input
-                                 type="checkbox"
-                                 checked={isEx}
-                                 onChange={async () => {
-                                   const nameRaw = r.artista.trim();
-                                   if (!nameRaw) return;
-                                   const prevList = excecaoList.slice();
-                                   if (isEx) {
-                                     const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
-                                     await saveExcecoesValue(next);
-                                     toast.success(`"${nameRaw}" removido das exceções`, {
-                                       action: {
-                                         label: "Desfazer",
-                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
-                                       },
-                                     });
-                                   } else {
-                                     // Adiciona no TOPO da lista
-                                     const next = [nameRaw, ...excecaoList].join(", ");
-                                     await saveExcecoesValue(next);
-                                     toast.success(`"${nameRaw}" adicionado às exceções`, {
-                                       action: {
-                                         label: "Desfazer",
-                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
-                                       },
-                                     });
-                                   }
-                                 }}
-                                 className="w-[18px] h-[18px] cursor-pointer"
-                                 style={{
-                                   accentColor: "var(--layout-accent-color, #2563eb)",
-                                   outline: "2px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)",
-                                   outlineOffset: 1,
-                                   borderRadius: 4,
-                                 }}
-                               />
-                             </label>
+                               <Switch checked={isEx} onCheckedChange={handleToggle} />
+                             </div>
                            );
                          })()}
                        </td>
