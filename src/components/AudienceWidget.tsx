@@ -1490,8 +1490,14 @@ function AudienceReportDialog({
 
   const periodLabel = periodDays === 180 ? "6 meses" : `${periodDays} dias`;
   const programaLabel = programaFilter === "__ALL__" ? "Todos os programas" : programaFilter;
-  const safeSlug = (s: string) => s.replace(/[^\w\-]+/g, "_").slice(0, 40);
-  const exportFilenameBase = () => `audiencia_${date}_${safeSlug(programaLabel)}_${periodDays}d`;
+  const safeSlug = (s: string) => s.replace(/[^\w\-]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40) || "sem_programa";
+  const exportFilenameBase = (kind: "CSV" | "PDF") => {
+    const end = new Date(`${date}T00:00:00`);
+    const start = new Date(end);
+    start.setDate(start.getDate() - periodDays);
+    const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return `audiencia_${safeSlug(programaLabel)}_${iso(start)}_a_${iso(end)}_${kind}`;
+  };
 
   const exportCSV = () => {
     const esc = (v: unknown) => {
