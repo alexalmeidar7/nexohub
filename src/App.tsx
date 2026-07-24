@@ -30,7 +30,7 @@ import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 // times on chunk load failure, with exponential backoff. IMPORTANT: retries
 // must resolve with a real module object ({ default: Component }), NOT with a
 // nested lazy component — React.lazy would then fail to render.
-function lazyRetry<T extends React.ComponentType<any>>(
+export function lazyRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   retries = 3,
   delay = 800
