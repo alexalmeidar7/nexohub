@@ -136,6 +136,7 @@ export default function OuvintesPage() {
   const [form, setForm] = useState({ ...emptyForm });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [origemFilter, setOrigemFilter] = useState<"all" | "manual" | "player_site" | "app" | "chatbot">("all");
   const [cidadesUF, setCidadesUF] = useState<string[]>([]);
   const [showCidadeSug, setShowCidadeSug] = useState(false);
   const [rulesCadastro, setRulesCadastro] = useState<Record<string, number>>(DEFAULT_CADASTRO_RULES);
