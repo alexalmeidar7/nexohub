@@ -974,11 +974,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
           </div>
         ) : (
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Tv size={16} style={{ color: "var(--layout-icon-color, #888888)" }} />
-              <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais Cadastrados</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
+          <div className="rounded-3xl p-6 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 rounded-full bg-gray-800" />
+                <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais cadastrados</h4>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{String(canais.length).padStart(2, "0")} cadastrados</span>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
