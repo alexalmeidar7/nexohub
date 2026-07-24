@@ -1369,6 +1369,7 @@ interface HistRow {
   programa: string | null;
   audio: number;
   video: number;
+  youtube: number;
 }
 function AudienceReportDialog({
   open,
