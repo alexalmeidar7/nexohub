@@ -1810,33 +1810,29 @@ function AudienceReportDialog({
                   const hasYt = tp.youtube > 0;
                   return (
                     <>
-                      <div className={`grid ${hasYt ? "grid-cols-4" : "grid-cols-3"} divide-x`} style={{ borderColor: `${CYAN}33` }}>
-                        <SourceTotalCell
-                          label="Rádio"
-                          icon={<Radio size={13} />}
-                          color={AUDIO_COLOR}
-                          dark={DARK}
-                          value={tp.audio}
-                          share={pctRadio}
-                        />
-                        <SourceTotalCell
-                          label="TV"
-                          icon={<MonitorPlay size={13} />}
-                          color={VIDEO_COLOR}
-                          dark={DARK}
-                          value={tp.video}
-                          share={pctTv}
-                        />
-                        {hasYt && (
-                          <SourceTotalCell
-                            label="YouTube"
-                            icon={<Youtube size={13} />}
-                            color="#FF0000"
-                            dark={DARK}
-                            value={tp.youtube}
-                            share={pctYt}
-                          />
-                        )}
+                      {(() => {
+                        const Cell = ({ label, icon, color, value, share }: { label: string; icon: React.ReactNode; color: string; value: number; share: number }) => (
+                          <div className="p-4 flex flex-col gap-2">
+                            <div className="flex items-center gap-1.5" style={{ color }}>
+                              {icon}
+                              <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.6 }}>{label}</span>
+                            </div>
+                            <span className="text-2xl font-black leading-none tabular-nums" style={{ color }}>
+                              {value.toLocaleString("pt-BR")}
+                            </span>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
+                              <span className="text-[9px] font-black tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: `${color}18`, color }}>{share}%</span>
+                            </div>
+                          </div>
+                        );
+                        return (
+                          <div className={`grid ${hasYt ? "grid-cols-4" : "grid-cols-3"} divide-x`} style={{ borderColor: `${CYAN}33` }}>
+                            <Cell label="Rádio" icon={<Radio size={13} />} color={AUDIO_COLOR} value={tp.audio} share={pctRadio} />
+                            <Cell label="TV" icon={<MonitorPlay size={13} />} color={VIDEO_COLOR} value={tp.video} share={pctTv} />
+                            {hasYt && (
+                              <Cell label="YouTube" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} />
+                            )}
                         <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
                           <div className="flex items-center gap-1.5" style={{ color: DARK }}>
                             <Trophy size={13} />
