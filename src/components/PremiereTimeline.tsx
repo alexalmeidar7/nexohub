@@ -239,22 +239,60 @@ export default function PremiereTimeline({
   };
   const zoomPct = duration > 0 ? Math.round((duration / viewSpan) * 10) / 10 : 1;
 
+  // Snap a candidate time to nearby targets (playhead, playback bounds, whole seconds, half-seconds).
+  // Threshold is in pixels, converted to seconds via current viewport width.
+  const snapTime = useCallback((t: number, exclude: number[] = []): { t: number; snapped: number | null } => {
+    if (!snapEnabled || shiftHeldRef.current) return { t, snapped: null };
+    const rect = trackRef.current?.getBoundingClientRect();
+    const pxPerSec = rect ? rect.width / viewSpan : 100;
+    const threshPx = 8;
+    const thresh = threshPx / Math.max(1, pxPerSec);
+    const targets: number[] = [0, duration, playhead];
+    // Whole seconds within viewport
+    const s0 = Math.max(0, Math.floor(viewStart));
+    const s1 = Math.min(duration, Math.ceil(viewEnd));
+    const step = viewSpan > 60 ? 5 : viewSpan > 20 ? 1 : 0.5;
+    for (let s = s0; s <= s1; s += step) targets.push(s);
+    let best: number | null = null;
+    let bestDist = thresh;
+    for (const tg of targets) {
+      if (exclude.some((ex) => Math.abs(ex - tg) < 1e-6)) continue;
+      const d = Math.abs(tg - t);
+      if (d < bestDist) { bestDist = d; best = tg; }
+    }
+    return best != null ? { t: best, snapped: best } : { t, snapped: null };
+  }, [snapEnabled, viewSpan, viewStart, viewEnd, duration, playhead]);
+
   const handleMove = useCallback((e: PointerEvent) => {
-    const t = xToTime(e.clientX);
+    shiftHeldRef.current = e.shiftKey;
+    const raw = xToTime(e.clientX);
     if (dragging === "start") {
+      const { t, snapped } = snapTime(raw, [startSec]);
+      setSnapGuide(snapped);
       onChange(Math.min(t, endSec - 0.5), endSec);
     } else if (dragging === "end") {
+      const { t, snapped } = snapTime(raw, [endSec]);
+      setSnapGuide(snapped);
       onChange(startSec, Math.max(t, startSec + 0.5));
     } else if (dragging === "range") {
       const len = endSec - startSec;
-      const newStart = Math.max(0, Math.min(duration - len, t - dragOffsetRef.current));
+      let newStart = Math.max(0, Math.min(duration - len, raw - dragOffsetRef.current));
+      // Try snapping either edge of the range
+      const snapS = snapTime(newStart);
+      const snapE = snapTime(newStart + len);
+      const dS = snapS.snapped != null ? Math.abs(snapS.t - newStart) : Infinity;
+      const dE = snapE.snapped != null ? Math.abs(snapE.t - (newStart + len)) : Infinity;
+      if (dS < dE && dS !== Infinity) { newStart = snapS.t; setSnapGuide(snapS.snapped); }
+      else if (dE !== Infinity) { newStart = snapE.t - len; setSnapGuide(snapE.snapped); }
+      else setSnapGuide(null);
+      newStart = Math.max(0, Math.min(duration - len, newStart));
       onChange(newStart, newStart + len);
     }
-  }, [dragging, duration, endSec, startSec, onChange, xToTime]);
+  }, [dragging, duration, endSec, startSec, onChange, xToTime, snapTime]);
 
   useEffect(() => {
     if (!dragging) return;
-    const up = () => setDragging(null);
+    const up = () => { setDragging(null); setSnapGuide(null); };
     window.addEventListener("pointermove", handleMove);
     window.addEventListener("pointerup", up);
     return () => {
@@ -262,6 +300,7 @@ export default function PremiereTimeline({
       window.removeEventListener("pointerup", up);
     };
   }, [dragging, handleMove]);
+
 
   const startHandle = (kind: "start" | "end" | "range") => (e: React.PointerEvent) => {
     e.preventDefault();
