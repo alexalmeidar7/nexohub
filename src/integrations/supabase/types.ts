@@ -782,6 +782,7 @@ export type Database = {
       empresa_config: {
         Row: {
           ativo: boolean
+          audio_sources: Json
           audio_stream_api_url: string | null
           audio_stream_xpath: string | null
           background_url: string | null
@@ -800,6 +801,7 @@ export type Database = {
           timezone: string
           updated_at: string
           user_id: string
+          video_sources: Json
           video_stream_api_url: string | null
           video_stream_xpath: string | null
           youtube: string | null
@@ -809,6 +811,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          audio_sources?: Json
           audio_stream_api_url?: string | null
           audio_stream_xpath?: string | null
           background_url?: string | null
@@ -827,6 +830,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id: string
+          video_sources?: Json
           video_stream_api_url?: string | null
           video_stream_xpath?: string | null
           youtube?: string | null
@@ -836,6 +840,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          audio_sources?: Json
           audio_stream_api_url?: string | null
           audio_stream_xpath?: string | null
           background_url?: string | null
@@ -854,6 +859,7 @@ export type Database = {
           timezone?: string
           updated_at?: string
           user_id?: string
+          video_sources?: Json
           video_stream_api_url?: string | null
           video_stream_xpath?: string | null
           youtube?: string | null
