@@ -91,13 +91,43 @@ export async function upsertPlayerListenerProfile(
   authUserId: string,
   radioUserId: string,
   patch: Partial<PlayerListenerProfile>,
+  origem: "player_site" | "app" = "player_site",
 ) {
-  return supabase.from("player_listener_profiles").upsert({
+  const result = await supabase.from("player_listener_profiles").upsert({
     auth_user_id: authUserId,
     radio_user_id: radioUserId,
     ...patch,
     updated_at: new Date().toISOString(),
   } as any, { onConflict: "auth_user_id,radio_user_id" });
+
+  // Reflete o cadastro na tabela `ouvintes` (CRM) — sem interromper o fluxo
+  // caso o upsert do CRM falhe. Origem preserva a fonte original quando o
+  // ouvinte já existir (definido em upsertOuvinteRecord).
+  try {
+    const { upsertOuvinteRecord } = await import("./ouvintesUpsert");
+    // Separa cidade/UF quando o profile persistir campos separados.
+    const cidade = (patch as any).cidade || "";
+    const estado = (patch as any).estado || "";
+    const cidade_uf = cidade
+      ? (estado ? `${String(cidade).trim()}/${String(estado).trim()}` : String(cidade).trim())
+      : null;
+    void upsertOuvinteRecord({
+      radioUserId,
+      origem,
+      fields: {
+        nome: (patch as any).nome || null,
+        email: (patch as any).email || null,
+        cpf: (patch as any).cpf || null,
+        telefone: (patch as any).whatsapp || null,
+        sexo: (patch as any).sexo || null,
+        data_nascimento: (patch as any).data_nascimento || null,
+        setor: (patch as any).setor || null,
+        cidade_uf,
+      },
+    });
+  } catch { /* ignore — CRM é best-effort */ }
+
+  return result;
 }
 
 export function scopedRadioFilter<T extends { eq: (column: string, value: any) => T; is: (column: string, value: null) => T }>(
