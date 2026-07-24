@@ -796,7 +796,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-3 pr-10">
+      <div className="grid grid-cols-4 gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
