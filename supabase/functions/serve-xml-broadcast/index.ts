@@ -640,28 +640,18 @@ serve(async (req) => {
       }
     }
 
-    // If no manual override, try the current music curiosity from DB
+    // If no manual override, use the live curiosity written by the client-side
+    // guard (useGlobalMusicSync). That field has a 20s TTL — the guard clears
+    // it 20s after publishing and re-clears it whenever the track changes, so
+    // the XML never carries a stale curiosity from the previous song.
     if (!curiosidade) {
-      const dashboard = settingsRes.data?.dashboard_items as any || {};
-      const musicData = dashboard.musicData || {};
-      const musicaAtual = musicData.musica || dashboard.music_current_title || "";
-      const artistaAtual = musicData.artista || dashboard.music_current_artist || "";
-      
-      if (musicaAtual && artistaAtual) {
-        const { data: info } = await supabase
-          .from("infomusic")
-          .select("curiosidade")
-          .ilike("artista", artistaAtual.trim())
-          .ilike("musica", musicaAtual.trim())
-          .gt("expires_at", new Date().toISOString())
-          .limit(1)
-          .maybeSingle();
-        
-        if (info?.curiosidade) {
-          curiosidade = info.curiosidade;
-        }
+      const dashboard = (settingsRes.data?.dashboard_items as any) || {};
+      const liveCuriosity = (dashboard.music_current_curiosity || "").toString().trim();
+      if (liveCuriosity) {
+        curiosidade = liveCuriosity;
       }
     }
+
     
     // ── Music details ──
     if (!deezerArtistImg) {
