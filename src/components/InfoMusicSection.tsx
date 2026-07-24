@@ -639,8 +639,9 @@ export default function InfoMusicSection() {
       <div className={nowPlaying ? "grid md:grid-cols-2 gap-4 items-start" : ""}>
         {nowPlaying && (
           <div className="rounded-2xl overflow-hidden relative" style={{
-            backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
-            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+            backgroundColor: "var(--layout-page-bg, #fff)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)",
+            boxShadow: "0 10px 24px -14px color-mix(in srgb, var(--layout-accent-color, #2563eb) 40%, transparent)",
           }}>
             <div className="p-4 flex items-center gap-4 relative z-10 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
               <div className="relative shrink-0">
