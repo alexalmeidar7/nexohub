@@ -112,6 +112,33 @@ export default function InfoMusicSection() {
     setTogglingAi(false);
   };
 
+  const purgeExceptionsFromTocadas = async (words: string[]) => {
+    if (!user) return;
+    const list = words.map((w) => w.trim()).filter(Boolean);
+    if (list.length === 0) return;
+    try {
+      // Delete every infomusic row whose artista OR musica contains any exception word
+      for (const w of list) {
+        const like = `%${w.replace(/[%_]/g, "")}%`;
+        await supabase.from("infomusic").delete().eq("user_id", user.id).ilike("artista", like);
+        await supabase.from("infomusic").delete().eq("user_id", user.id).ilike("musica", like);
+      }
+      // Update local state immediately so UI reflects removal
+      setRows((prev) =>
+        prev.filter((r) => {
+          const a = (r.artista || "").toLowerCase();
+          const m = (r.musica || "").toLowerCase();
+          return !list.some((w) => {
+            const ww = w.toLowerCase();
+            return a.includes(ww) || m.includes(ww);
+          });
+        }),
+      );
+    } catch (e) {
+      console.warn("[InfoMusicSection] purge exceptions failed", e);
+    }
+  };
+
   const saveExcecoesValue = async (val: string) => {
     if (!user) return;
     setSavingExcecoes(true);
@@ -122,6 +149,9 @@ export default function InfoMusicSection() {
       if (error) throw error;
       setExcecoes(val);
       setExcecoesInitial(val);
+      // Ensure any track matching the current exception list is removed from "Tocadas"
+      const parsed = val.split(",").map((s) => s.trim()).filter(Boolean);
+      await purgeExceptionsFromTocadas(parsed);
     } catch (e) {
       toast.error("Erro ao salvar exceções");
     }
