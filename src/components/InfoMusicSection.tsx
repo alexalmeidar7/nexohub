@@ -530,18 +530,19 @@ export default function InfoMusicSection() {
           <div className="flex items-center gap-2">
             <Ban size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
             <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Exceções
+              Exceções ({excecaoList.length})
             </h4>
           </div>
           <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-            Palavras separadas por vírgula. Ex.: <em>jingle, vinheta, promo</em>. Quando o artista ou música contiver qualquer uma, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
+            Quando o artista ou música contiver qualquer palavra abaixo, a tag <code>&lt;curiosidade&gt;</code> fica vazia.
           </p>
-          <div className="flex flex-col md:flex-row gap-2">
+          <div className="flex gap-2">
             <input
               type="text"
-              placeholder="jingle, vinheta, promo..."
-              value={excecoes}
-              onChange={e => setExcecoes(e.target.value)}
+              placeholder="Adicionar palavra (ex.: jingle)"
+              value={newExcecao}
+              onChange={(e) => setNewExcecao(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
               className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
               style={{
                 backgroundColor: "var(--layout-page-bg, #fff)",
@@ -549,10 +550,53 @@ export default function InfoMusicSection() {
                 border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
               }}
             />
-            <Button variant="save" onClick={saveExcecoes} disabled={savingExcecoes || excecoes === excecoesInitial}>
-              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-              Salvar
+            <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
+              {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+              Adicionar
             </Button>
+          </div>
+          <div
+            className="rounded-lg overflow-hidden"
+            style={{
+              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              maxHeight: 220,
+              overflowY: "auto",
+            }}
+          >
+            {excecaoList.length === 0 ? (
+              <div className="text-center py-6 text-[11px] opacity-55" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Nenhuma palavra cadastrada.
+              </div>
+            ) : (
+              <table className="w-full text-xs">
+                <tbody>
+                  {excecaoList.map((w, i) => (
+                    <tr
+                      key={w + i}
+                      style={{
+                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                        {w}
+                      </td>
+                      <td className="px-3 py-2 text-right w-10">
+                        <button
+                          onClick={() => removeExcecao(w)}
+                          className="opacity-50 hover:opacity-100 transition-opacity"
+                          style={{ color: "#dc2626" }}
+                          title="Remover"
+                          disabled={savingExcecoes}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
