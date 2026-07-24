@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Globe, Newspaper, Cloud, Settings, Loader2, Search, ExternalLink, Eye, EyeOff,
+  Globe, Newspaper, Cloud, Settings, Loader2, Search, Eye, EyeOff,
   Smartphone, Monitor, Palette, MapPin, LayoutDashboard, Image as ImageIcon, Server,
   FileText, Upload as UploadIcon, CheckCircle2,
 } from "lucide-react";
