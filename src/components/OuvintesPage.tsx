@@ -6,6 +6,7 @@ import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { promptDialog } from "@/lib/promptDialog";
 import { DEFAULT_CADASTRO_RULES, computePontuacaoFromRules } from "@/lib/ouvintesUpsert";
 
 interface Ouvinte {
@@ -302,18 +303,33 @@ export default function OuvintesPage() {
 
   const handleToggleBan = async (o: Ouvinte) => {
     const isBanned = o.banido === true;
-    const ok = await confirmDialog({
-      title: isBanned ? "Remover banimento" : "Banir ouvinte",
-      message: isBanned
-        ? `Remover o banimento de ${o.nome}? Ele voltará a participar de promoções, receber mensagens e acessar o player/site.`
-        : `Banir ${o.nome}? Enquanto banido, ele não poderá participar de promoções, receber mensagens nem acessar o player/site.`,
-      destructive: !isBanned,
-      confirmLabel: isBanned ? "Remover banimento" : "Banir",
-    });
-    if (!ok) return;
+    let motivo: string | null = null;
+    if (isBanned) {
+      const ok = await confirmDialog({
+        title: "Remover banimento",
+        message: `Remover o banimento de ${o.nome}? Ele voltará a participar de promoções, receber mensagens e acessar o player/site.${o.banido_motivo ? `\n\nMotivo registrado: ${o.banido_motivo}` : ""}`,
+        confirmLabel: "Remover banimento",
+      });
+      if (!ok) return;
+    } else {
+      motivo = await promptDialog({
+        title: "Banir ouvinte",
+        message: `Banir ${o.nome}? Informe o motivo do banimento — ele ficará registrado junto com a data/hora. Enquanto banido, o ouvinte não poderá participar de promoções, receber mensagens nem acessar o player/site.`,
+        placeholder: "Ex.: linguagem ofensiva no chat em 20/03",
+        confirmLabel: "Banir",
+        cancelLabel: "Cancelar",
+        destructive: true,
+        required: true,
+        multiline: true,
+        maxLength: 500,
+      });
+      if (motivo === null) return;
+      motivo = motivo.trim();
+      if (!motivo) return;
+    }
     const payload: Record<string, unknown> = isBanned
       ? { banido: false, banido_at: null, banido_motivo: null }
-      : { banido: true, banido_at: new Date().toISOString() };
+      : { banido: true, banido_at: new Date().toISOString(), banido_motivo: motivo };
     const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
     if (error) {
       toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
@@ -803,7 +819,10 @@ export default function OuvintesPage() {
                         <span style={{ textDecoration: o.banido ? "line-through" : "none" }}>{o.nome}</span>
                         {o.banido ? (
                           <span
-                            title={o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido"}
+                            title={[
+                              o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido",
+                              o.banido_motivo ? `Motivo: ${o.banido_motivo}` : null,
+                            ].filter(Boolean).join(" — ")}
                             style={{
                               display: "inline-flex", alignItems: "center", gap: 4,
                               padding: "3px 8px", borderRadius: 999,
