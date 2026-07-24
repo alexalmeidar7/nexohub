@@ -37,6 +37,8 @@ export default function InfoMusicSection() {
   const curiosityFetchKeyRef = useRef<string>("");
   const [xmlTelemetry, setXmlTelemetry] = useState<{ source: "manual" | "ai" | "none"; text: string; until?: string }>({ source: "none", text: "" });
   const [xmlCheck, setXmlCheck] = useState<{ status: "idle" | "checking" | "ok" | "diverge" | "error"; xmlText: string; checkedAt: number; error?: string }>({ status: "idle", xmlText: "", checkedAt: 0 });
+  const [showHowTo, setShowHowTo] = useState(false);
+  const [newExcecao, setNewExcecao] = useState("");
 
   const loadExcecoes = async () => {
     if (!user) return;
