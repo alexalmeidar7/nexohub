@@ -306,56 +306,78 @@ export default function InfoMusicSection() {
       setShowManualForm(false);
       setManualCuriosityText("");
     }
-    if (nowPlaying.curiosity) return;
+
+    // Skip if artist/music matches any exception word (case-insensitive substring)
+    const hay = `${nowPlaying.artista} ${nowPlaying.musica}`.toLowerCase();
+    const isException = excecaoList.some((w) => {
+      const ww = w.trim().toLowerCase();
+      return !!ww && hay.includes(ww);
+    });
+    if (isException) return;
+
     let cancelled = false;
     (async () => {
+      // 1) Ensure a row exists in "Tocadas" for every played track (blank curiosity by default)
+      let existingId: string | null = null;
+      let existingCuriosity = "";
+      try {
+        const { data: existing } = await supabase
+          .from("infomusic")
+          .select("id, curiosidade")
+          .eq("user_id", user.id)
+          .ilike("artista", nowPlaying.artista)
+          .ilike("musica", nowPlaying.musica)
+          .maybeSingle();
+        if (existing) {
+          existingId = existing.id;
+          existingCuriosity = existing.curiosidade || "";
+        } else {
+          const { data: inserted } = await supabase
+            .from("infomusic")
+            .insert({
+              user_id: user.id,
+              artista: nowPlaying.artista,
+              musica: nowPlaying.musica,
+              curiosidade: nowPlaying.curiosity || "",
+            })
+            .select("id")
+            .maybeSingle();
+          existingId = inserted?.id || null;
+          existingCuriosity = nowPlaying.curiosity || "";
+          load();
+        }
+      } catch (err) {
+        console.warn("[InfoMusicSection] tocadas upsert failed", err);
+      }
+
+      if (cancelled) return;
+      if (nowPlaying.curiosity || existingCuriosity) return;
+
+      // 2) Try to fetch curiosity for this track
       try {
         const { data } = await supabase.functions.invoke("get-music-curiosity", {
           body: { artista: nowPlaying.artista, musica: nowPlaying.musica, userId: user.id },
         });
         if (cancelled) return;
         const txt = (data as { curiosidade?: string })?.curiosidade;
-        if (!txt) {
-          // Nothing found — still register a blank row in infomusic so the user
-          // can fill the curiosidade manually later from the saved list.
-          try {
-            const { data: existing } = await supabase
-              .from("infomusic")
-              .select("id")
-              .eq("user_id", user.id)
-              .ilike("artista", nowPlaying.artista)
-              .ilike("musica", nowPlaying.musica)
-              .maybeSingle();
-            if (!existing) {
-              await supabase.from("infomusic").insert({
-                user_id: user.id,
-                artista: nowPlaying.artista,
-                musica: nowPlaying.musica,
-                curiosidade: "",
-              });
-              // Refresh the saved list so the new blank entry appears immediately
-              load();
-            }
-          } catch (err) {
-            console.warn("[InfoMusicSection] blank infomusic insert failed", err);
-          }
-          return;
-        }
-        // Reflect immediately in UI
+        if (!txt) return;
         setNowPlaying(prev => prev && prev.musica === nowPlaying.musica && prev.artista === nowPlaying.artista
           ? { ...prev, curiosity: txt } : prev);
-        // Persist to dashboard so the XML picks it up
         const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle()).data?.dashboard_items as any || {};
         await supabase.from("user_settings").update({
           dashboard_items: { ...currentDashboard, music_current_curiosity: txt },
         }).eq("user_id", user.id);
-
+        // Update the "Tocadas" row so table reflects the newly fetched curiosity
+        if (existingId) {
+          await supabase.from("infomusic").update({ curiosidade: txt }).eq("id", existingId);
+          load();
+        }
       } catch (e) {
         console.warn("[InfoMusicSection] curiosity fetch failed", e);
       }
     })();
     return () => { cancelled = true; };
-  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user]);
+  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user, excecaoList]);
 
   // ============ XML Verifier ============
   // Fetch the live broadcast XML and compare its <curiosidade> value with the text
