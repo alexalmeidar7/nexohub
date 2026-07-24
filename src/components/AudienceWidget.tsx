@@ -290,7 +290,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         // populate the rotation labels immediately.
         const { data } = await supabase
           .from("empresa_config")
-          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id")
+          .select("youtube, instagram, facebook, video_stream_api_url, audio_stream_api_url, audio_stream_xpath, video_stream_xpath, youtube_api_key, youtube_channel_id, audio_sources, video_sources")
           .eq("user_id", dataUserId as any)
           .maybeSingle();
         if (!cancelled && data) {
@@ -300,14 +300,34 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             facebook: (data as any).facebook || undefined,
           };
           videoApiUrlRef.current = (data as any).video_stream_api_url || null;
+
+          const asList = Array.isArray((data as any).audio_sources) ? (data as any).audio_sources : [];
+          const vsList = Array.isArray((data as any).video_sources) ? (data as any).video_sources : [];
+          const normList = (arr: any[]): StreamSource[] =>
+            arr
+              .map((x) => ({ url: String(x?.url ?? "").trim(), xpath: String(x?.xpath ?? "").trim() }))
+              .filter((x) => x.url.length > 0);
+          const audioAll = normList(asList);
+          const videoAll = normList(vsList);
+          // Primary comes from legacy columns; if empty, seed from first jsonb entry.
+          const primaryAudioUrl = ((data as any).audio_stream_api_url || audioAll[0]?.url || "") as string;
+          const primaryAudioXp = ((data as any).audio_stream_xpath || audioAll[0]?.xpath || "") as string;
+          const primaryVideoUrl = ((data as any).video_stream_api_url || videoAll[0]?.url || "") as string;
+          const primaryVideoXp = ((data as any).video_stream_xpath || videoAll[0]?.xpath || "") as string;
+          // Extras = jsonb entries whose URL differs from primary.
+          const audioExtras = audioAll.filter((x) => x.url && x.url !== primaryAudioUrl);
+          const videoExtras = videoAll.filter((x) => x.url && x.url !== primaryVideoUrl);
+
           const s: SourcesConfig = {
             instagram: (data as any).instagram || "",
             facebook: (data as any).facebook || "",
             youtube: (data as any).youtube || "",
-            audio_stream_api_url: (data as any).audio_stream_api_url || "",
-            audio_stream_xpath: (data as any).audio_stream_xpath || "",
-            video_stream_api_url: (data as any).video_stream_api_url || "",
-            video_stream_xpath: (data as any).video_stream_xpath || "",
+            audio_stream_api_url: primaryAudioUrl,
+            audio_stream_xpath: primaryAudioXp,
+            video_stream_api_url: primaryVideoUrl,
+            video_stream_xpath: primaryVideoXp,
+            audio_extras: audioExtras,
+            video_extras: videoExtras,
             youtube_api_key: (data as any).youtube_api_key || "",
             youtube_channel_id: (data as any).youtube_channel_id || "",
           };
