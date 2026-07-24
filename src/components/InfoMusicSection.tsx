@@ -645,40 +645,69 @@ export default function InfoMusicSection() {
             </button>
           </div>
 
-          {/* Curiosidade inline */}
+          {/* Curiosidade inline — dois estados distintos */}
           <div className="p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={13} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Curiosidade
-              </h4>
-              {nowPlaying.curiosity && (
-                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.15)", color: "#10b981" }}>
-                  Ativa no XML
-                </span>
-              )}
-            </div>
             {nowPlaying.curiosity ? (
-              <p className="text-xs italic leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
-                "{nowPlaying.curiosity}"
-              </p>
-            ) : !showManualForm ? (
-              <div className="space-y-2">
-                <p className="text-xs opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Nenhuma curiosidade encontrada no banco para esta música.
-                  {quotaExhausted && (
-                    <span className="block mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                      Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
-                    </span>
-                  )}
+              // ─── ENCONTRADA: box verde "enviada ao XML" ───
+              <div
+                className="rounded-xl p-4"
+                style={{
+                  backgroundColor: "color-mix(in srgb, #10b981 12%, var(--layout-page-bg, #fff))",
+                  border: "1px solid color-mix(in srgb, #10b981 35%, transparent)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle2 size={14} style={{ color: "#10b981" }} />
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
+                    Curiosidade encontrada e enviada ao XML
+                  </h4>
+                  <span
+                    className="ml-auto inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                    style={{ backgroundColor: "rgba(16,185,129,0.18)", color: "#10b981" }}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Ativa
+                  </span>
+                </div>
+                <p
+                  className="text-xs italic leading-relaxed"
+                  style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 90%, transparent)" }}
+                >
+                  "{nowPlaying.curiosity}"
                 </p>
+              </div>
+            ) : !showManualForm ? (
+              // ─── NÃO ENCONTRADA: mensagem amigável + CTA ───
+              <div
+                className="rounded-xl p-4 space-y-3"
+                style={{
+                  backgroundColor: "color-mix(in srgb, #f59e0b 10%, var(--layout-page-bg, #fff))",
+                  border: "1px dashed color-mix(in srgb, #f59e0b 45%, transparent)",
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl leading-none">🤔</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#b45309" }}>
+                      Nada encontrado sobre esta música
+                    </h4>
+                    <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                      Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
+                    </p>
+                    {quotaExhausted && (
+                      <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
+                        Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
+                      </p>
+                    )}
+                  </div>
+                </div>
                 <div className="flex gap-2 flex-wrap">
                   <button
                     onClick={() => setShowManualForm(true)}
                     className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide hover:opacity-90"
                     style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
                   >
-                    Cadastrar manualmente
+                    Cadastrar manualmente agora
                   </button>
                   <button
                     onClick={() => { curiosityFetchKeyRef.current = ""; }}
@@ -690,7 +719,13 @@ export default function InfoMusicSection() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div
+                className="rounded-xl p-4 space-y-2"
+                style={{
+                  backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #fff))",
+                  border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+                }}
+              >
                 <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Cadastrando curiosidade manual para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}
                 </p>
