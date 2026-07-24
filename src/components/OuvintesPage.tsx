@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon, Smartphone, Radio as RadioIcon } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { DEFAULT_CADASTRO_RULES, computePontuacaoFromRules } from "@/lib/ouvintesUpsert";
 
 interface Ouvinte {
   id: string;
@@ -136,7 +137,33 @@ export default function OuvintesPage() {
   const [search, setSearch] = useState("");
   const [cidadesUF, setCidadesUF] = useState<string[]>([]);
   const [showCidadeSug, setShowCidadeSug] = useState(false);
+  const [rulesCadastro, setRulesCadastro] = useState<Record<string, number>>(DEFAULT_CADASTRO_RULES);
   const cidadeWrapRef = useRef<HTMLDivElement>(null);
+
+  // Load Pontuação rules (Cadastro tab) from localStorage — kept in sync by PontuacaoRulesSection.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`nexohub_pontuacao_rules_cadastro_${user?.id || "anon"}`);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (p && typeof p === "object") setRulesCadastro({ ...DEFAULT_CADASTRO_RULES, ...p });
+      }
+    } catch { /* ignore */ }
+  }, [user?.id]);
+
+  // Live pontuação: calculada em tempo real conforme os campos preenchidos.
+  const pontuacaoAuto = useMemo(
+    () => computePontuacaoFromRules(
+      {
+        nome: form.nome, cpf: form.cpf, telefone: form.telefone, email: form.email,
+        sexo: form.sexo, data_nascimento: form.data_nascimento, uf: form.uf,
+        cidade: form.cidade, setor: form.setor, escolaridade: form.escolaridade,
+        renda: form.renda,
+      },
+      rulesCadastro,
+    ),
+    [form, rulesCadastro],
+  );
 
   // Load IBGE cities whenever UF changes
   useEffect(() => {
@@ -208,8 +235,13 @@ export default function OuvintesPage() {
       escolaridade: form.escolaridade || null,
       renda: form.renda || null,
       sexo: form.sexo || null,
-      // pontuacao NÃO é editada manualmente — é calculada pela participação do ouvinte
+      // Pontuação AUTOMÁTICA: recalculada a partir das REGRAS DE PONTUAÇÃO
+      // (aba "Formulário de Cadastro") sempre que o admin salva. Ao criar,
+      // marca a origem como manual — os cadastros vindos do player/site/app
+      // são gravados via upsertOuvinteRecord com origem própria.
+      pontuacao: pontuacaoAuto,
     };
+    if (!editingId) payload.origem_cadastro = "manual";
 
     let error;
     if (editingId) {
@@ -485,9 +517,9 @@ export default function OuvintesPage() {
               }}
               title="Calculada automaticamente conforme a participação do ouvinte"
             >
-              <span style={{ fontSize: 16, color: CYAN, fontWeight: 800 }}>{editingId ? (form.pontuacao || "0") : "0"}</span>
+              <span style={{ fontSize: 16, color: CYAN, fontWeight: 800 }}>{pontuacaoAuto}</span>
               <span style={{ fontSize: 10, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>
-                gerado pela participação
+                calculado pelas regras
               </span>
             </div>
           </Field>
@@ -631,20 +663,26 @@ export default function OuvintesPage() {
                     </td>
                     <td style={{ padding: "12px 14px", minWidth: 200 }}>
                       {(() => {
-                        const isBot = o.origem_cadastro === "chatbot";
+                        const origem = o.origem_cadastro || "manual";
+                        const meta: Record<string, { label: string; bg: string; fg: string; Icon: typeof UserIcon }> = {
+                          manual:      { label: "Manual",       bg: CARD_BG,     fg: DARK,      Icon: UserIcon },
+                          player_site: { label: "Player / Site", bg: "#DBEAFE",  fg: "#1D4ED8", Icon: RadioIcon },
+                          app:         { label: "Aplicativo",   bg: "#EDE9FE",   fg: "#6D28D9", Icon: Smartphone },
+                          chatbot:     { label: "Chatbot",      bg: "#25D36622", fg: "#128C7E", Icon: MessageCircle },
+                        };
+                        const m = meta[origem] || meta.manual;
                         return (
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <span
-                              title={isBot ? "Origem: Chatbot" : "Origem: Manual"}
+                              title={`Origem: ${m.label}`}
                               style={{
                                 flexShrink: 0,
                                 width: 26, height: 26, borderRadius: "50%",
                                 display: "inline-flex", alignItems: "center", justifyContent: "center",
-                                background: isBot ? "#25D36622" : CARD_BG,
-                                color: isBot ? "#128C7E" : DARK,
+                                background: m.bg, color: m.fg,
                               }}
                             >
-                              {isBot ? <MessageCircle size={13} /> : <UserIcon size={13} />}
+                              <m.Icon size={13} />
                             </span>
                             <span style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>{o.nome}</span>
                           </div>

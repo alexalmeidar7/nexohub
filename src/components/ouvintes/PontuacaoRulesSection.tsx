@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Award, FileText, RotateCcw, ChevronDown, Radio } from "lucide-react";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
@@ -111,11 +112,21 @@ export default function PontuacaoRulesSection() {
     setCurrentRules((r) => ({ ...r, [key]: n }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setSaving(true);
     try {
       localStorage.setItem(keyCadastro(user?.id), JSON.stringify(rulesCadastro));
       localStorage.setItem(keyPlayer(user?.id), JSON.stringify(rulesPlayer));
+      // Espelha no user_settings para que fluxos externos (player/site/app)
+      // consigam ler as regras ao inserir na tabela `ouvintes`.
+      if (user?.id) {
+        try {
+          await mergeUserDashboardItems(user.id, {
+            pontuacao_rules_cadastro: rulesCadastro,
+            pontuacao_rules_player: rulesPlayer,
+          });
+        } catch { /* ignore — fallback é localStorage */ }
+      }
       toast({ title: "Regras salvas", description: "Pontuação atualizada com sucesso." });
     } catch {
       toast({ title: "Erro", description: "Não foi possível salvar as regras.", variant: "destructive" });
