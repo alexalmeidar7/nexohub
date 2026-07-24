@@ -661,7 +661,24 @@ export default function CortesVideoPage() {
 
       let rafId = 0;
       const drawLoop = () => {
+        ctx.filter = cssFilter;
         ctx.drawImage(video, dx, dy, drawW, drawH);
+        ctx.filter = "none";
+        if (fx.fade !== "none") {
+          const elapsed = Math.max(0, video.currentTime - startSec);
+          let a = 0;
+          if ((fx.fade === "in" || fx.fade === "both") && elapsed < FADE_SEC) {
+            a = Math.max(a, 1 - elapsed / FADE_SEC);
+          }
+          const remaining = clipDuration - elapsed;
+          if ((fx.fade === "out" || fx.fade === "both") && remaining < FADE_SEC) {
+            a = Math.max(a, 1 - Math.max(0, remaining) / FADE_SEC);
+          }
+          if (a > 0) {
+            ctx.fillStyle = `rgba(0,0,0,${a.toFixed(3)})`;
+            ctx.fillRect(0, 0, outW, outH);
+          }
+        }
         rafId = requestAnimationFrame(drawLoop);
       };
       drawLoop();
