@@ -352,12 +352,18 @@ export default function InfoMusicSection() {
   };
 
   const filteredMissing = useMemo(() => {
+    const excLower = excecaoList.map(w => w.trim().toLowerCase()).filter(Boolean);
+    const notExcepted = missingRows.filter(m => {
+      const a = (m.artista || "").toLowerCase();
+      const mu = (m.musica || "").toLowerCase();
+      return !excLower.some(w => a.includes(w) || mu.includes(w));
+    });
     const q = search.trim().toLowerCase();
-    if (!q) return missingRows;
-    return missingRows.filter(m =>
+    if (!q) return notExcepted;
+    return notExcepted.filter(m =>
       m.artista.toLowerCase().includes(q) || m.musica.toLowerCase().includes(q)
     );
-  }, [missingRows, search]);
+  }, [missingRows, search, excecaoList]);
 
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const Highlight = ({ text, term }: { text: string; term: string }) => {
