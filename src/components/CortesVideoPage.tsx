@@ -1326,31 +1326,26 @@ export default function CortesVideoPage() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               {([
-                { k: "fullhd" as const, label: "16:9", sub: "1920×1080", w: 40, h: 22 },
-                { k: "reel" as const, label: "9:16", sub: "1080×1920", w: 22, h: 40 },
-                { k: "original" as const, label: "AUTO", sub: "Original", w: 32, h: 32 },
-              ]).map(({ k, label, sub, w, h }) => {
+                { k: "fullhd" as const, label: "16:9", sub: "1920×1080", Icon: Monitor },
+                { k: "reel" as const, label: "9:16", sub: "1080×1920", Icon: Smartphone },
+                { k: "original" as const, label: "AUTO", sub: "Original", Icon: Maximize2 },
+              ]).map(({ k, label, sub, Icon }) => {
                 const active = format === k;
                 return (
                   <button
                     key={k}
                     type="button"
                     onClick={() => setFormat(k)}
-                    className="flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all"
+                    className="flex flex-col items-center justify-center gap-1 px-2 py-2.5 rounded-lg transition-all"
                     style={{
-                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
-                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
+                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)"}`,
+                      backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)",
+                      color: active ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)",
                     }}
                   >
-                    <div
-                      style={{
-                        width: w, height: h,
-                        backgroundColor: active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
-                        borderRadius: 3,
-                      }}
-                    />
-                    <div className="text-[10px] font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
-                    <div className="text-[8px] font-mono opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{sub}</div>
+                    <Icon size={18} strokeWidth={active ? 2.4 : 1.8} />
+                    <div className="text-[11px] font-black leading-none">{label}</div>
+                    <div className="text-[8px] font-mono opacity-60 leading-none" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{sub}</div>
                   </button>
                 );
               })}
