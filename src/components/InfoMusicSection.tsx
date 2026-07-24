@@ -848,13 +848,30 @@ export default function InfoMusicSection() {
                 </p>
               </div>
 
-              <button
-                onClick={loadExcecoes}
-                className="p-2 rounded-full hover:bg-black/5 transition-colors shrink-0"
-                title="Atualizar música"
-              >
-                <RefreshCw size={14} className="opacity-40" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {(() => {
+                  const hay = `${nowPlaying.artista} ${nowPlaying.musica}`.toLowerCase();
+                  const isException = excecaoList.some((w) => {
+                    const ww = w.trim().toLowerCase();
+                    return !!ww && hay.includes(ww);
+                  });
+                  if (!isException) return null;
+                  return (
+                    <span
+                      className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"
+                      style={{ boxShadow: "0 0 8px rgba(239,68,68,0.8)" }}
+                      title="Esta música está na lista de EXCEÇÕES"
+                    />
+                  );
+                })()}
+                <button
+                  onClick={loadExcecoes}
+                  className="p-2 rounded-full hover:bg-black/5 transition-colors"
+                  title="Atualizar música"
+                >
+                  <RefreshCw size={14} className="opacity-40" />
+                </button>
+              </div>
             </div>
 
             {/* Curiosidade inline — dois estados */}
