@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon, Smartphone, Radio as RadioIcon } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, Search, Users, MessageCircle, User as UserIcon, Smartphone, Radio as RadioIcon, Ban, ShieldCheck } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { useToast } from "@/hooks/use-toast";
 import PontuacaoRulesSection from "./ouvintes/PontuacaoRulesSection";
@@ -24,6 +24,9 @@ interface Ouvinte {
   sexo: string | null;
   origem_cadastro: string | null;
   whatsapp_message_id?: string | null;
+  banido?: boolean | null;
+  banido_at?: string | null;
+  banido_motivo?: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
@@ -287,12 +290,35 @@ export default function OuvintesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!(await confirmDialog("Excluir este ouvinte?"))) return;
+    if (!(await confirmDialog({ title: "Excluir ouvinte", message: "Excluir este ouvinte? Esta ação não pode ser desfeita.", destructive: true, confirmLabel: "Excluir" }))) return;
     const { error } = await supabase.from("ouvintes").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Ouvinte excluído" });
+      load();
+    }
+  };
+
+  const handleToggleBan = async (o: Ouvinte) => {
+    const isBanned = o.banido === true;
+    const ok = await confirmDialog({
+      title: isBanned ? "Remover banimento" : "Banir ouvinte",
+      message: isBanned
+        ? `Remover o banimento de ${o.nome}? Ele voltará a participar de promoções, receber mensagens e acessar o player/site.`
+        : `Banir ${o.nome}? Enquanto banido, ele não poderá participar de promoções, receber mensagens nem acessar o player/site.`,
+      destructive: !isBanned,
+      confirmLabel: isBanned ? "Remover banimento" : "Banir",
+    });
+    if (!ok) return;
+    const payload: Record<string, unknown> = isBanned
+      ? { banido: false, banido_at: null, banido_motivo: null }
+      : { banido: true, banido_at: new Date().toISOString() };
+    const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
+    if (error) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
       load();
     }
   };
@@ -719,8 +745,9 @@ export default function OuvintesPage() {
                   <tr
                     key={o.id}
                     style={{
-                      background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                      background: o.banido ? "#FEF2F2" : (idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE"),
                       color: DARK,
+                      opacity: o.banido ? 0.85 : 1,
                     }}
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
@@ -772,7 +799,23 @@ export default function OuvintesPage() {
                       {o.created_at ? new Date(o.created_at).toLocaleDateString("pt-BR") : "—"}
                     </td>
                     <td style={{ padding: "12px 14px", minWidth: 200, fontWeight: 700, fontSize: 13 }}>
-                      {o.nome}
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ textDecoration: o.banido ? "line-through" : "none" }}>{o.nome}</span>
+                        {o.banido ? (
+                          <span
+                            title={o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido"}
+                            style={{
+                              display: "inline-flex", alignItems: "center", gap: 4,
+                              padding: "3px 8px", borderRadius: 999,
+                              background: "#DC2626", color: "#fff",
+                              fontSize: 9, fontWeight: 900, letterSpacing: 0.6,
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            <Ban size={10} /> Banido
+                          </span>
+                        ) : null}
+                      </span>
                     </td>
                     <td style={{ padding: "12px 14px" }}>{o.cpf || "—"}</td>
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{formatPhone(o.telefone) || "—"}</td>
@@ -816,6 +859,19 @@ export default function OuvintesPage() {
                           }}
                         >
                           <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleToggleBan(o)}
+                          title={o.banido ? "Remover banimento" : "Banir ouvinte"}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: o.banido ? "#DCFCE7" : "#FEF3C7",
+                            border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: o.banido ? "#166534" : "#B45309",
+                          }}
+                        >
+                          {o.banido ? <ShieldCheck size={14} /> : <Ban size={14} />}
                         </button>
                         <button
                           onClick={() => handleDelete(o.id)}

@@ -1187,6 +1187,9 @@ export type Database = {
       }
       ouvintes: {
         Row: {
+          banido: boolean
+          banido_at: string | null
+          banido_motivo: string | null
           cidade: string | null
           cpf: string | null
           created_at: string
@@ -1206,6 +1209,9 @@ export type Database = {
           whatsapp_message_id: string | null
         }
         Insert: {
+          banido?: boolean
+          banido_at?: string | null
+          banido_motivo?: string | null
           cidade?: string | null
           cpf?: string | null
           created_at?: string
@@ -1225,6 +1231,9 @@ export type Database = {
           whatsapp_message_id?: string | null
         }
         Update: {
+          banido?: boolean
+          banido_at?: string | null
+          banido_motivo?: string | null
           cidade?: string | null
           cpf?: string | null
           created_at?: string
@@ -3020,6 +3029,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_ouvinte_banido: {
+        Args: { _identifier: string; _radio_user_id: string }
         Returns: boolean
       }
       list_roteiros_historico_by_share_token: {
