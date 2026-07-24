@@ -24,6 +24,9 @@ interface Ouvinte {
   sexo: string | null;
   origem_cadastro: string | null;
   whatsapp_message_id?: string | null;
+  banido?: boolean | null;
+  banido_at?: string | null;
+  banido_motivo?: string | null;
 }
 
 const ESCOLARIDADE_OPTIONS = [
