@@ -663,20 +663,26 @@ export default function OuvintesPage() {
                     </td>
                     <td style={{ padding: "12px 14px", minWidth: 200 }}>
                       {(() => {
-                        const isBot = o.origem_cadastro === "chatbot";
+                        const origem = o.origem_cadastro || "manual";
+                        const meta: Record<string, { label: string; bg: string; fg: string; Icon: typeof UserIcon }> = {
+                          manual:      { label: "Manual",       bg: CARD_BG,     fg: DARK,      Icon: UserIcon },
+                          player_site: { label: "Player / Site", bg: "#DBEAFE",  fg: "#1D4ED8", Icon: RadioIcon },
+                          app:         { label: "Aplicativo",   bg: "#EDE9FE",   fg: "#6D28D9", Icon: Smartphone },
+                          chatbot:     { label: "Chatbot",      bg: "#25D36622", fg: "#128C7E", Icon: MessageCircle },
+                        };
+                        const m = meta[origem] || meta.manual;
                         return (
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <span
-                              title={isBot ? "Origem: Chatbot" : "Origem: Manual"}
+                              title={`Origem: ${m.label}`}
                               style={{
                                 flexShrink: 0,
                                 width: 26, height: 26, borderRadius: "50%",
                                 display: "inline-flex", alignItems: "center", justifyContent: "center",
-                                background: isBot ? "#25D36622" : CARD_BG,
-                                color: isBot ? "#128C7E" : DARK,
+                                background: m.bg, color: m.fg,
                               }}
                             >
-                              {isBot ? <MessageCircle size={13} /> : <UserIcon size={13} />}
+                              <m.Icon size={13} />
                             </span>
                             <span style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2 }}>{o.nome}</span>
                           </div>
