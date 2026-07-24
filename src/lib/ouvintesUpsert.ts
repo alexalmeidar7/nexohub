@@ -148,6 +148,12 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
       if (data) { existing = data as Record<string, any>; break; }
     }
 
+    // Banimento: ouvintes banidos não podem participar de promoções,
+    // receber mensagens ou logar no player/site. Rejeitamos o upsert.
+    if (existing && (existing as any).banido === true) {
+      return { ok: false, error: "banido", id: existing.id as string };
+    }
+
     const cidadeFinal = fields.cidade_uf
       ?? (fields.cidade && fields.uf
         ? `${String(fields.cidade).trim()}/${String(fields.uf).trim()}`
