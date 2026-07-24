@@ -407,6 +407,12 @@ export default function ProgramaForm() {
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+
+  // Auto-open form when editing
+  useEffect(() => {
+    if (editingId) setFormOpen(true);
+  }, [editingId]);
 
   // Estúdio management
   const [estudios, setEstudios] = useState<string[]>([]);
