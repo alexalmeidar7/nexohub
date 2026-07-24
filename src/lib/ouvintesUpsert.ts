@@ -130,20 +130,20 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
 
   try {
     // Look up existing por qualquer identificador único informado.
-    let existing: any = null;
-    const identifierFilters: Array<{ col: string; val: string }> = [];
+    let existing: Record<string, any> | null = null;
+    const identifierFilters: Array<{ col: "email" | "cpf" | "telefone"; val: string }> = [];
     if (email) identifierFilters.push({ col: "email", val: email });
     if (cpf) identifierFilters.push({ col: "cpf", val: cpf });
     if (telefone) identifierFilters.push({ col: "telefone", val: telefone });
 
     for (const f of identifierFilters) {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("ouvintes")
         .select("*")
         .eq("user_id", radioUserId)
         .eq(f.col, f.val)
         .maybeSingle();
-      if (data) { existing = data; break; }
+      if (data) { existing = data as Record<string, any>; break; }
     }
 
     const cidadeFinal = fields.cidade_uf
