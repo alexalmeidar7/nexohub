@@ -595,6 +595,27 @@ export default function PremiereTimeline({
               <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: `${pctPlay}%`, width: 2, backgroundColor: accentText, boxShadow: `0 0 6px ${accent}` }} />
             )}
 
+            {/* Snap guide line (visible while snapping during drag) */}
+            {snapGuide != null && dragging && (
+              <div
+                className="absolute top-0 bottom-0 pointer-events-none"
+                style={{
+                  left: `${tToPct(snapGuide)}%`,
+                  width: 0,
+                  borderLeft: `1px dashed ${accentText}`,
+                  boxShadow: `0 0 8px ${accent}`,
+                }}
+              >
+                <div
+                  className="absolute -top-4 -translate-x-1/2 px-1 py-0.5 rounded text-[8px] font-mono font-bold whitespace-nowrap"
+                  style={{ backgroundColor: accentText, color: headerBg }}
+                >
+                  {fmt(snapGuide, true)}
+                </div>
+              </div>
+            )}
+
+
             {/* Start handle */}
             <div
               onPointerDown={startHandle("start")}
