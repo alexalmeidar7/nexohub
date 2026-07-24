@@ -33,19 +33,30 @@ export async function applyTrackChangeWithCuriosityGuard(opts: ApplyTrackChangeO
   };
   await merge(userId, basePatch);
 
-  // Step 2: background curiosity fetch, guarded on write.
-  try {
-    const curData = await fetchCuriosity();
-    if (curData?.curiosidade && isStillCurrent()) {
-      await merge(userId, { music_current_curiosity: curData.curiosidade });
-      // Step 3: curiosity lives in XML for 20s only, then clears.
-      setTimeout(() => {
-        if (isStillCurrent()) {
-          void merge(userId, { music_current_curiosity: "" }).catch((e) => onError?.(e));
-        }
-      }, 20000);
+  // Step 2: background curiosity fetch — up to 3 attempts spaced 5s apart at
+  // the start of the song, stopping as soon as a curiosity is found.
+  const MAX_ATTEMPTS = 3;
+  const RETRY_MS = 5000;
+  const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    if (!isStillCurrent()) return;
+    try {
+      const curData = await fetchCuriosity();
+      if (!isStillCurrent()) return;
+      if (curData?.curiosidade) {
+        await merge(userId, { music_current_curiosity: curData.curiosidade });
+        // Step 3: curiosity lives in XML for 20s only, then clears.
+        setTimeout(() => {
+          if (isStillCurrent()) {
+            void merge(userId, { music_current_curiosity: "" }).catch((e) => onError?.(e));
+          }
+        }, 20000);
+        return;
+      }
+    } catch (e) {
+      onError?.(e);
     }
-  } catch (e) {
-    onError?.(e);
+    if (attempt < MAX_ATTEMPTS) await delay(RETRY_MS);
   }
 }
