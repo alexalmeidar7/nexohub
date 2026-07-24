@@ -952,6 +952,21 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                 onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
                 helperText="Detecta automaticamente o campo com o número de espectadores."
               />
+              <div className="mt-1 pt-3" style={{ borderTop: "1px dashed rgba(10,37,64,0.15)" }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Youtube size={14} color="#FF0000" />
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#0A2540" }}>
+                    YouTube Live · API oficial
+                  </span>
+                </div>
+                <SourceField
+                  label="YouTube Data API v3 · API Key"
+                  placeholder="AIzaSy... (Google Cloud Console)"
+                  value={sources.youtube_api_key}
+                  onChange={(v) => setSources((s) => ({ ...s, youtube_api_key: v }))}
+                  helperText="Obrigatório para ler a audiência ao vivo do canal informado em 'YouTube' (Redes sociais). Crie em console.cloud.google.com → APIs → YouTube Data API v3."
+                />
+              </div>
             </section>
 
             {probeError && (
