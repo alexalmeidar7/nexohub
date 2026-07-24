@@ -795,70 +795,97 @@ export default function CortesVideoPage() {
 
   const handleCutYoutube = async () => {
     if (!videoId || clips.length === 0 || !user) return;
-    
+
     setCutting(true);
     setErrorMsg(null);
     setErrorDetails(null);
     setShowErrorDetails(false);
     setResults([]);
     setProgress(0);
-    
+    setStatusMsg("Preparando trechos...");
+    setLoadDetail("");
+
     const totalClips = clips.length;
-    const newResults: CutResult[] = [];
-    
-    try {
-      for (let i = 0; i < totalClips; i++) {
-        const clip = clips[i];
-        const clipStartSeconds = parseHMS(clip.start);
-        const clipEndSeconds = parseHMS(clip.end);
-        
-        setStatusMsg(`Enviando trecho ${i + 1} de ${totalClips} para o servidor...`);
-        setProgress(Math.round((i / totalClips) * 90));
+    // Seed placeholder results so cards render immediately and show per-clip status.
+    const initialResults: CutResult[] = clips.map((clip) => {
+      const s = parseHMS(clip.start);
+      const e = parseHMS(clip.end);
+      return {
+        clip_embed_url: `https://www.youtube.com/embed/${videoId}?start=${Math.floor(s)}&end=${Math.floor(e)}&autoplay=0`,
+        share_url: `https://youtu.be/${videoId}?t=${Math.floor(s)}`,
+        thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        duration: Math.max(0, e - s),
+        is_local: false,
+        start_seconds: s,
+        end_seconds: e,
+      };
+    });
+    setResults(initialResults);
 
-        const { data, error } = await supabase.functions.invoke("cut-youtube-video", {
-          body: { 
-            youtube_url: youtubeUrl, 
-            start_seconds: clipStartSeconds, 
-              end_seconds: clipEndSeconds,
-              quality,
-          },
-        });
+    let completed = 0;
+    let rateLimited = false;
+    let anySuccess = false;
+    const failures: string[] = [];
 
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
+    // Concurrency 2 keeps the RapidAPI quota happy while still parallelising work.
+    const CONCURRENCY = 2;
+    let cursor = 0;
 
-        newResults.push({
-          clip_embed_url: data.clip_embed_url,
-          share_url: data.share_url,
-          thumbnail_url: data.thumbnail_url,
-          download_url: data.download_url || "",
-          fallback_download_url: data.fallback_download_url || "",
-          download_provider: data.download_provider || "",
-          is_clip_download: !!data.is_clip_download,
-          duration: data.duration,
-          is_local: false,
-          start_seconds: clipStartSeconds,
-          end_seconds: clipEndSeconds,
-        });
+    const worker = async () => {
+      while (cursor < totalClips) {
+        const idx = cursor++;
+        setStatusMsg(`Gerando trecho ${completed + 1} de ${totalClips}...`);
+        try {
+          const download = await requestDownloadClipWithRetry(initialResults[idx], idx, 3);
+          if (download?.url) {
+            anySuccess = true;
+            setResults((prev) =>
+              prev.map((r, i) =>
+                i === idx
+                  ? { ...r, blob_url: download.url, file_name: download.fileName, is_clip_download: true }
+                  : r,
+              ),
+            );
+          } else {
+            failures.push(`Trecho ${idx + 1}: sem arquivo retornado.`);
+          }
+        } catch (err: any) {
+          const msg = err?.message || "Falha desconhecida.";
+          if (/429|too many|rate/i.test(msg)) rateLimited = true;
+          failures.push(`Trecho ${idx + 1}: ${msg}`);
+        } finally {
+          completed++;
+          setProgress(Math.round((completed / totalClips) * 100));
+        }
       }
+    };
 
-      setResults(newResults);
-      setProgress(100);
+    try {
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, totalClips) }, worker));
+
       setStatusMsg("");
-      toast({ title: "Trechos gerados!", description: `${newResults.length} trecho(s) pronto(s) para uso.` });
-    } catch (err: any) {
-      const errorMsg = err.message || "Tente novamente.";
-      setErrorMsg(errorMsg);
-      setErrorDetails({
-        stack: err.stack,
-        log: "Falha na chamada ao servidor (Edge Function)."
-      });
-      toast({ title: "Erro", description: errorMsg, variant: "destructive" });
-      setStatusMsg("");
+      setLoadDetail("");
+
+      if (anySuccess && failures.length === 0) {
+        toast({ title: "Trechos gerados!", description: `${totalClips} trecho(s) prontos para download.` });
+      } else if (anySuccess) {
+        toast({
+          title: "Alguns trechos falharam",
+          description: `${totalClips - failures.length}/${totalClips} concluídos. Os demais podem ser tentados de novo.`,
+        });
+      } else {
+        const banner = rateLimited
+          ? "O serviço de corte do YouTube atingiu o limite de requisições. Aguarde alguns minutos ou use o fallback abaixo."
+          : "Não foi possível gerar nenhum trecho agora. Serviços externos indisponíveis — use o fallback abaixo.";
+        setErrorMsg(banner);
+        setErrorDetails({ log: failures.join("\n") });
+        toast({ title: "Falha ao gerar trechos", description: banner, variant: "destructive" });
+      }
     } finally {
       setCutting(false);
     }
   };
+
 
   const handleCut = () => (mode === "local" ? handleCutLocal() : handleCutYoutube());
 
