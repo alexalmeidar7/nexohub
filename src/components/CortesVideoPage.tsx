@@ -953,109 +953,152 @@ export default function CortesVideoPage() {
 
   if (loading) return <ModulePageSkeleton variant="list" />;
 
+  const hasSource = (mode === "youtube" && !!videoId) || (mode === "local" && !!localUrl);
+
   return (
     <div className="nexo-scope animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Scissors size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+      <div
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 92%, black 8%) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 78%, var(--layout-page-bg, #fff) 22%) 100%)",
+          boxShadow: "0 12px 40px rgba(0,0,0,0.18)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)",
+        }}
+      >
+        {/* ===== TOP TOOLBAR (editor chrome) ===== */}
+        <div
+          className="flex items-center gap-3 px-4 py-2.5"
+          style={{
+            background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 85%, black 15%)",
+            borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 50%, transparent)",
+          }}
+        >
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)" }}>
+            <Scissors size={16} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
           </div>
-          <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Cortes de Vídeo</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>YouTube ou arquivo local — até 10 minutos</p>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-bold leading-tight" style={{ color: "var(--layout-header-text, #fff)" }}>Editor de Cortes</div>
+            <div className="text-[10px] opacity-60 truncate" style={{ color: "var(--layout-header-text, #fff)" }}>
+              {mode === "youtube" ? (videoTitle || "YouTube") : (localFile?.name || "Arquivo local")} · até 10 min
+            </div>
+          </div>
+          {/* Mode switch — segmented */}
+          <div className="flex rounded-lg overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 60%, transparent)" }}>
+            {([
+              { k: "youtube", label: "YouTube", icon: Youtube },
+              { k: "local", label: "Local", icon: FileVideo },
+            ] as const).map(({ k, label, icon: Icon }) => (
+              <button
+                key={k}
+                onClick={() => { setMode(k); setResults([]); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold transition-colors"
+                style={{
+                  backgroundColor: mode === k ? "var(--layout-accent-color, #2563eb)" : "transparent",
+                  color: mode === k ? "#fff" : "color-mix(in srgb, var(--layout-header-text, #fff) 70%, transparent)",
+                }}
+              >
+                <Icon size={12} /> {label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Mode tabs */}
-        <div className="flex gap-2 mb-5">
-          {([
-            { k: "youtube", label: "YouTube", icon: Youtube },
-            { k: "local", label: "Arquivo Local", icon: FileVideo },
-          ] as const).map(({ k, label, icon: Icon }) => (
-            <button
-              key={k}
-              onClick={() => { setMode(k); setResults([]); }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all"
+        {/* ===== SOURCE INPUT (compact bar) ===== */}
+        <div
+          className="px-4 py-3"
+          style={{
+            background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 70%, black 30%)",
+            borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)",
+          }}
+        >
+          {mode === "youtube" ? (
+            <div className="relative flex items-center">
+              <Link2 size={14} className="absolute left-3 pointer-events-none" style={{ color: "color-mix(in srgb, var(--layout-header-text, #fff) 50%, transparent)" }} />
+              <input
+                type="url"
+                value={youtubeUrl}
+                onChange={(e) => { setYoutubeUrl(e.target.value); setResults([]); }}
+                placeholder="Cole aqui o link do YouTube — https://www.youtube.com/watch?v=..."
+                className="w-full pl-9 pr-4 py-2 text-xs outline-none rounded-lg"
+                style={{
+                  backgroundColor: "color-mix(in srgb, black 60%, var(--layout-header-bg, #1a1a1a) 40%)",
+                  border: `1px solid ${youtubeUrl && !videoId ? "#ef4444" : "color-mix(in srgb, var(--layout-border-color, #333) 60%, transparent)"}`,
+                  color: "var(--layout-header-text, #fff)",
+                }}
+              />
+              {videoId && (
+                <span className="ml-2 text-[10px] font-mono px-2 py-1 rounded whitespace-nowrap" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)", color: "var(--layout-header-text, #fff)" }}>
+                  ID {videoId.slice(0, 8)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <label className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors text-xs font-bold"
               style={{
-                backgroundColor: mode === k ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)",
-                color: mode === k ? "#fff" : "var(--layout-page-text, #1a1a1a)",
-              }}
-            >
-              <Icon size={14} /> {label}
-            </button>
-          ))}
+                border: "1.5px dashed color-mix(in srgb, var(--layout-header-text, #fff) 25%, transparent)",
+                color: "var(--layout-header-text, #fff)",
+                backgroundColor: "color-mix(in srgb, black 40%, transparent)",
+              }}>
+              <Upload size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+              <span className="flex-1 truncate">{localFile ? localFile.name : "Arraste ou selecione um vídeo (.mp4, .mov, .webm…)"}</span>
+              {localFile && (
+                <span className="text-[10px] font-mono opacity-70">
+                  {(localFile.size / 1024 / 1024).toFixed(1)} MB{localDuration > 0 && ` · ${formatDuration(localDuration)}`}
+                </span>
+              )}
+              <input type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
+            </label>
+          )}
         </div>
 
-        {/* Source input */}
-        {mode === "youtube" ? (
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🔗 Link do Vídeo</h3>
+        {/* ===== PREVIEW STAGE (cinema) ===== */}
+        <div
+          className="relative flex items-center justify-center px-4 py-5"
+          style={{
+            background: "radial-gradient(ellipse at center, #0a0a0a 0%, #000 100%)",
+            minHeight: 340,
+          }}
+        >
+          {mode === "youtube" && videoId ? (
+            <div className="w-full max-w-3xl rounded-lg overflow-hidden shadow-2xl" style={{ aspectRatio: "16 / 9", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)" }}>
+              <YoutubeTrimPlayer videoId={videoId} startSec={startSeconds} endSec={endSeconds} />
             </div>
-            <div className="p-5">
-              <div className="relative flex items-center">
-                <Link2 size={16} className="absolute left-3 pointer-events-none flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-                <input
-                  type="url"
-                  value={youtubeUrl}
-                  onChange={(e) => { setYoutubeUrl(e.target.value); setResults([]); }}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full pl-10 pr-4 py-2.5 text-sm outline-none transition-colors"
-                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "20px" }}
-                />
+          ) : mode === "local" && localUrl ? (
+            <video
+              ref={localVideoRef}
+              src={localUrl}
+              controls
+              className="w-full max-w-3xl rounded-lg shadow-2xl"
+              style={{ maxHeight: 420, border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)" }}
+              onLoadedMetadata={(e) => setLocalDuration((e.target as HTMLVideoElement).duration)}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-3 text-center opacity-50">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "color-mix(in srgb, white 8%, transparent)" }}>
+                {mode === "youtube" ? <Youtube size={28} color="#fff" /> : <FileVideo size={28} color="#fff" />}
               </div>
-              {youtubeUrl && !videoId && (
-                <p className="text-[10px] mt-1" style={{ color: "#ef4444" }}>URL inválida.</p>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>📁 Arquivo de Vídeo</h3>
-            </div>
-            <div className="p-5">
-              <label className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl cursor-pointer transition-colors text-sm font-bold"
-                style={{ border: "2px dashed var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)" }}>
-                <Upload size={16} />
-                {localFile ? localFile.name : "Selecionar vídeo (.mp4, .mov, .webm...)"}
-                <input type="file" accept="video/*" onChange={handleFileSelect} className="hidden" />
-              </label>
-              {localFile && (
-                <p className="text-[10px] mt-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-                  {(localFile.size / 1024 / 1024).toFixed(1)} MB
-                  {localDuration > 0 && ` • Duração: ${formatDuration(localDuration)}`}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Preview */}
-        {(mode === "youtube" && videoId) && (
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="p-4 flex flex-col items-center gap-2">
-              <div className="rounded-xl overflow-hidden w-full" style={{ maxWidth: 480 }}>
-                <YoutubeTrimPlayer videoId={videoId} startSec={startSeconds} endSec={endSeconds} />
+              <div className="text-xs font-bold" style={{ color: "#fff" }}>Sem vídeo carregado</div>
+              <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+                {mode === "youtube" ? "Cole um link do YouTube acima" : "Selecione um arquivo de vídeo"}
               </div>
-              {videoTitle && <p className="text-xs font-bold text-center max-w-[480px] leading-snug" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{videoTitle}</p>}
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>{currentTimeStr}</p>
             </div>
-          </div>
-        )}
-        {(mode === "local" && localUrl) && (
-          <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="p-4 flex justify-center">
-              <video ref={localVideoRef} src={localUrl} controls className="w-full rounded-xl" style={{ maxWidth: 480 }}
-                onLoadedMetadata={(e) => setLocalDuration((e.target as HTMLVideoElement).duration)} />
+          )}
+          {hasSource && (
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              PREVIEW
             </div>
-          </div>
-        )}
+          )}
+          {hasSource && (
+            <div className="absolute top-3 right-3 px-2 py-1 rounded-md text-[10px] font-mono" style={{ background: "rgba(0,0,0,0.55)", color: "#fff", border: "1px solid rgba(255,255,255,0.15)" }}>
+              {currentTimeStr}
+            </div>
+          )}
+        </div>
 
-        {/* Premiere-style Timeline (local only — needs CORS access to frames/audio) */}
-        {mode === "local" && localUrl && localDuration > 0 && (
-          <div className="mb-5">
+        {/* ===== TIMELINE (full width) ===== */}
+        {(mode === "local" && localUrl && localDuration > 0) && (
+          <div className="px-4 pt-4 pb-2" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 65%, black 35%)", borderTop: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)" }}>
             <PremiereTimeline
               videoUrl={localUrl}
               duration={localDuration}
@@ -1068,10 +1111,8 @@ export default function CortesVideoPage() {
             />
           </div>
         )}
-
-        {/* YouTube Timeline (sem miniaturas — CORS impede extração) */}
-        {mode === "youtube" && videoId && youtubeDuration > 0 && (
-          <div className="mb-5">
+        {(mode === "youtube" && videoId && youtubeDuration > 0) && (
+          <div className="px-4 pt-4 pb-2" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 65%, black 35%)", borderTop: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)" }}>
             <PremiereTimeline
               videoUrl=""
               duration={youtubeDuration}
@@ -1083,123 +1124,120 @@ export default function CortesVideoPage() {
           </div>
         )}
 
-
-
-        {/* Trechos List */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              <Scissors size={12} /> Trechos para Processar
-            </h4>
-            <span className="text-[10px] opacity-40">{clips.length}/5 trechos</span>
+        {/* ===== CLIPS STRIP ===== */}
+        <div
+          className="px-4 py-3 flex items-center gap-2 flex-wrap"
+          style={{
+            background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 78%, black 22%)",
+            borderTop: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)",
+          }}
+        >
+          <div className="flex items-center gap-1.5 mr-2 opacity-70">
+            <Scissors size={12} style={{ color: "#fff" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#fff" }}>Trechos</span>
+            <span className="text-[10px] opacity-60 font-mono" style={{ color: "#fff" }}>{clips.length}/5</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {clips.map((clip, idx) => {
-              const isActive = activeClipId === clip.id;
-              return (
-                <div key={clip.id} className="relative group">
+          {clips.map((clip, idx) => {
+            const isActive = activeClipId === clip.id;
+            return (
+              <div key={clip.id} className="relative group">
+                <button
+                  onClick={() => setActiveClipId(clip.id)}
+                  className="px-3 py-1.5 rounded-md text-[11px] font-bold transition-all flex items-center gap-2"
+                  style={{
+                    backgroundColor: isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, white 8%, transparent)",
+                    color: "#fff",
+                    border: `1px solid ${isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, white 12%, transparent)"}`,
+                  }}
+                >
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${isActive ? 'bg-white/25' : 'bg-black/25'}`}>{idx + 1}</span>
+                  <span className="font-mono text-[10px]">{toHMS(parseHMS(clip.start)).split('.')[0]} → {toHMS(parseHMS(clip.end)).split('.')[0]}</span>
+                </button>
+                {clips.length > 1 && (
                   <button
-                    onClick={() => setActiveClipId(clip.id)}
-                    className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border shadow-sm hover:shadow-md"
-                    style={{
-                      backgroundColor: isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)",
-                      color: isActive ? "#fff" : "var(--layout-page-text, #1a1a1a)",
-                      borderColor: isActive ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 15%, transparent)"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newClips = clips.filter(c => c.id !== clip.id);
+                      setClips(newClips);
+                      if (isActive) setActiveClipId(newClips[0].id);
                     }}
+                    className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[8px] ${isActive ? 'bg-white/20' : 'bg-black/10'}`}>
-                      {idx + 1}
-                    </span>
-                    <span className="font-mono text-[10px]">{toHMS(parseHMS(clip.start)).split('.')[0]}</span>
+                    <Trash2 size={9} />
                   </button>
-                  {clips.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newClips = clips.filter(c => c.id !== clip.id);
-                        setClips(newClips);
-                        if (isActive) setActiveClipId(newClips[0].id);
-                      }}
-                      className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
-                    >
-                      <Trash2 size={10} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            {clips.length < 5 && (
-              <button
-                onClick={() => {
-                  const newId = crypto.randomUUID();
-                  const lastClip = clips[clips.length - 1];
-                  const lastEnd = parseHMS(lastClip.end);
-                  const nextStart = lastEnd;
-                  const nextEnd = Math.min(localDuration || 3600, nextStart + 10);
-                  setClips([...clips, { id: newId, start: toHMS(nextStart), end: toHMS(nextEnd) }]);
-                  setActiveClipId(newId);
-                }}
-                className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-dashed transition-all hover:border-solid flex items-center gap-2"
-                style={{
-                  borderColor: "color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)",
-                  color: "var(--layout-page-text, #1a1a1a)"
-                }}
-              >
-                <Plus size={14} /> Adicionar
-              </button>
-            )}
-          </div>
+                )}
+              </div>
+            );
+          })}
+          {clips.length < 5 && (
+            <button
+              onClick={() => {
+                const newId = crypto.randomUUID();
+                const lastClip = clips[clips.length - 1];
+                const lastEnd = parseHMS(lastClip.end);
+                const nextStart = lastEnd;
+                const nextEnd = Math.min(localDuration || 3600, nextStart + 10);
+                setClips([...clips, { id: newId, start: toHMS(nextStart), end: toHMS(nextEnd) }]);
+                setActiveClipId(newId);
+              }}
+              className="px-3 py-1.5 rounded-md text-[11px] font-bold border-dashed flex items-center gap-1.5"
+              style={{ border: "1.5px dashed color-mix(in srgb, white 25%, transparent)", color: "#fff" }}
+            >
+              <Plus size={12} /> Novo trecho
+            </button>
+          )}
         </div>
 
-        {/* Time inputs + Format */}
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 mb-5">
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold flex items-center gap-2" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-                <Clock size={16} /> Ajustar Trecho #{clips.findIndex(c => c.id === activeClipId) + 1}
-              </h3>
+        {/* ===== CONTROL PANELS (3 columns, editor properties) ===== */}
+        <div
+          className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr] gap-3 p-4"
+          style={{
+            background: "var(--layout-page-bg, #fff)",
+            borderTop: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
+          }}
+        >
+          {/* Trim panel */}
+          <div className="rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }}>
+            <div className="flex items-center gap-1.5 mb-3">
+              <Clock size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Trim · Trecho #{clips.findIndex(c => c.id === activeClipId) + 1}
+              </span>
             </div>
-            <div className="p-5">
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Inicial</label>
-                  <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
-                    placeholder="HH:MM:SS.mmm" maxLength={12}
-                    className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
-                    style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
-                </div>
-
-                <div className="flex flex-col items-center justify-center gap-1">
-                  <Scissors size={20} style={{ color: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }} />
-                  <div className="flex items-center gap-1.5 px-4 py-2 rounded-full"
-                    style={{ backgroundColor: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: duration > 0 ? "#fff" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                    <Clock size={14} />
-                    <span className="text-sm font-bold font-mono">{formatDuration(duration > 0 ? duration : 0)}</span>
-                  </div>
-                  {duration > 600 && <p className="text-[10px] mt-1 text-center" style={{ color: "#ef4444" }}>Máximo 10 min</p>}
-                </div>
-
-                <div className="rounded-xl p-4 flex flex-col items-center gap-2" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tempo Final</label>
-                  <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
-                    placeholder="HH:MM:SS.mmm" maxLength={12}
-                    className="w-36 text-center py-2 rounded-lg text-sm font-mono outline-none"
-                    style={{ border: "1px solid var(--layout-border-color, #333333)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }} />
-                </div>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>IN</label>
+                <input type="text" value={startTime} onChange={(e) => setStartTime(maskHMS(e.target.value))}
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-full text-center py-1.5 rounded-md text-xs font-mono outline-none"
+                  style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #fff)" }} />
+              </div>
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-wider opacity-60 mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>OUT</label>
+                <input type="text" value={endTime} onChange={(e) => setEndTime(maskHMS(e.target.value))}
+                  placeholder="HH:MM:SS.mmm" maxLength={12}
+                  className="w-full text-center py-1.5 rounded-md text-xs font-mono outline-none"
+                  style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 40%, transparent)", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #fff)" }} />
               </div>
             </div>
+            <div className="flex items-center justify-between px-2 py-1.5 rounded-md"
+              style={{ backgroundColor: duration > 0 ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
+              <span className="text-[9px] font-bold uppercase tracking-wider opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Duração</span>
+              <span className="text-xs font-black font-mono" style={{ color: duration > 0 ? "var(--layout-accent-color, #2563eb)" : "var(--layout-page-text, #1a1a1a)" }}>{formatDuration(duration > 0 ? duration : 0)}</span>
+            </div>
+            {duration > 600 && <p className="text-[9px] mt-1.5" style={{ color: "#ef4444" }}>⚠ Máximo 10 min por trecho</p>}
           </div>
 
-          {/* Format */}
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-            <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>🎞️ Formato</h3>
+          {/* Format panel */}
+          <div className="rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }}>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Formato de saída</span>
             </div>
-            <div className="p-5 flex flex-col gap-3">
+            <div className="grid grid-cols-3 gap-2">
               {([
-                { k: "fullhd" as const, label: "FULL HD", sub: "1920 × 1080", w: 56, h: 32 },
-                { k: "reel" as const, label: "REEL", sub: "1080 × 1920", w: 32, h: 56 },
-                { k: "original" as const, label: "ORIGINAL", sub: "Sem Alteração", w: 44, h: 44 },
+                { k: "fullhd" as const, label: "16:9", sub: "1920×1080", w: 40, h: 22 },
+                { k: "reel" as const, label: "9:16", sub: "1080×1920", w: 22, h: 40 },
+                { k: "original" as const, label: "AUTO", sub: "Original", w: 32, h: 32 },
               ]).map(({ k, label, sub, w, h }) => {
                 const active = format === k;
                 return (
@@ -1207,9 +1245,9 @@ export default function CortesVideoPage() {
                     key={k}
                     type="button"
                     onClick={() => setFormat(k)}
-                    className="flex items-center gap-3 p-3 rounded-xl transition-all text-left"
+                    className="flex flex-col items-center gap-1.5 p-2 rounded-lg transition-all"
                     style={{
-                      border: `2px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)"}`,
+                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
                       backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
                     }}
                   >
@@ -1217,34 +1255,30 @@ export default function CortesVideoPage() {
                       style={{
                         width: w, height: h,
                         backgroundColor: active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
-                        borderRadius: 4,
-                        flexShrink: 0,
+                        borderRadius: 3,
                       }}
                     />
-                    <div>
-                      <div className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
-                      <div className="text-[10px] font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{sub}</div>
-                    </div>
+                    <div className="text-[10px] font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</div>
+                    <div className="text-[8px] font-mono opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{sub}</div>
                   </button>
                 );
               })}
-              <p className="text-[10px] leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                {format === "reel"
-                  ? "Vertical: o vídeo é centralizado e cortado nas laterais (ideal para Reels/TikTok)."
-                  : format === "original"
-                  ? "Ultra-rápido: mantém a qualidade original e corta em segundos (pode haver pequena variação no início/fim)."
-                  : "Horizontal padrão: 1920x1080 (YouTube/TV)."}
-              </p>
+            </div>
+            <p className="text-[9px] leading-snug mt-2 opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              {format === "reel"
+                ? "Vertical — centralizado, corta laterais (Reels/TikTok)."
+                : format === "original"
+                ? "Rápido — mantém qualidade e proporção originais."
+                : "Horizontal — 1920×1080 (YouTube/TV)."}
+            </p>
           </div>
-        </div>
 
-        {/* Qualidade / Bitrate */}
-        <div className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>⚙️ Qualidade do Vídeo</h3>
-          </div>
-          <div className="p-5">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {/* Quality panel */}
+          <div className="rounded-xl p-3" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)", background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 2%, transparent)" }}>
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Qualidade</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
               {(Object.keys(qualityPresets) as Quality[]).map((k) => {
                 const active = quality === k;
                 const p = qualityPresets[k];
@@ -1253,30 +1287,31 @@ export default function CortesVideoPage() {
                     key={k}
                     type="button"
                     onClick={() => setQuality(k)}
-                    className="flex flex-col items-start gap-1 p-3 rounded-xl transition-all text-left"
+                    className="flex flex-col items-start gap-0.5 p-2 rounded-lg transition-all text-left"
                     style={{
-                      border: `2px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)"}`,
+                      border: `1.5px solid ${active ? "var(--layout-accent-color, #2563eb)" : "color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)"}`,
                       backgroundColor: active ? "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)" : "transparent",
                     }}
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.label}</span>
+                    <div className="flex items-center gap-1 w-full">
+                      <span className="text-[10px] font-black" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.label}</span>
                       {k === "balanced" && (
-                        <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: "var(--layout-accent-color, #2563eb)", color: "var(--layout-page-bg, #fff)" }}>PADRÃO</span>
+                        <span className="ml-auto text-[7px] font-bold px-1 py-0.5 rounded" style={{ background: "var(--layout-accent-color, #2563eb)", color: "#fff" }}>PADRÃO</span>
                       )}
                     </div>
-                    <div className="text-[10px] font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>{p.sub}</div>
+                    <div className="text-[8px] font-mono opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{p.sub}</div>
                   </button>
                 );
               })}
             </div>
-            <p className="text-[10px] leading-snug mt-3" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+            <p className="text-[9px] leading-snug mt-2 opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               {qualityPresets[quality].hint}
             </p>
           </div>
         </div>
 
-        </div>
+        <div className="px-4 pb-4" style={{ background: "var(--layout-page-bg, #fff)" }}>
+
 
         {/* Preview do trecho selecionado */}
         {canCut && (
