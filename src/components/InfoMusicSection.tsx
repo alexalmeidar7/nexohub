@@ -471,57 +471,164 @@ export default function InfoMusicSection() {
         </div>
       )}
 
-      {/* ── AI toggle + Exceções (grid 2 col) ── */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
-        }}>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Geração por IA
-              </h4>
+      {/* ── AI toggle (linha própria) ── */}
+      <div className="rounded-xl p-4 flex items-center justify-between gap-4" style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
+      }}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Sparkles size={14} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
+            <h4 className="text-xs font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Geração por IA
+            </h4>
+          </div>
+          <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
+            {aiEnabled
+              ? "Habilitado: novas músicas geram curiosidade pela IA (limite 20/mês)."
+              : "Desabilitado: apenas o banco de curiosidades já salvas alimenta o XML."}
+          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${Math.min(100, (monthlyQuota.count / monthlyQuota.limit) * 100)}%`,
+                  backgroundColor: quotaExhausted ? "#ef4444" : "var(--layout-accent-color, #2563eb)",
+                }}
+              />
             </div>
-            <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 65%, transparent)" }}>
-              {aiEnabled
-                ? "Habilitado: novas músicas geram curiosidade pela IA (limite 20/mês)."
-                : "Desabilitado: apenas o banco de curiosidades já salvas alimenta o XML."}
-            </p>
-            <div className="mt-2 flex items-center gap-3">
-              <div className="flex-1 h-1.5 rounded-full bg-black/5 overflow-hidden">
-                <div
-                  className="h-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(100, (monthlyQuota.count / monthlyQuota.limit) * 100)}%`,
-                    backgroundColor: quotaExhausted ? "#ef4444" : "var(--layout-accent-color, #2563eb)",
-                  }}
-                />
+            <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: quotaExhausted ? "#ef4444" : "var(--layout-page-text, #1a1a1a)" }}>
+              {monthlyQuota.count} / {monthlyQuota.limit}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={toggleAi}
+          disabled={togglingAi}
+          role="switch"
+          aria-checked={aiEnabled}
+          className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
+          style={{
+            backgroundColor: aiEnabled
+              ? "var(--layout-accent-color, #2563eb)"
+              : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
+          }}
+        >
+          <span
+            className="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow"
+            style={{ transform: aiEnabled ? "translateX(24px)" : "translateX(4px)" }}
+          />
+        </button>
+      </div>
+
+      {/* ── NO AR AGORA (esquerda) + Exceções (direita) ── */}
+      <div className={nowPlaying ? "grid md:grid-cols-2 gap-4 items-start" : ""}>
+        {nowPlaying && (
+          <div className="rounded-2xl overflow-hidden relative" style={{
+            backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+          }}>
+            <div className="p-4 flex items-center gap-4 relative z-10 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
+              <div className="relative shrink-0">
+                {nowPlaying.capa ? (
+                  <img
+                    src={nowPlaying.capa}
+                    alt={nowPlaying.artista}
+                    className="w-16 h-16 rounded-lg object-cover shadow-lg border border-white/20"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-lg bg-black/10 flex items-center justify-center border border-dashed border-black/20">
+                    <Music size={24} className="opacity-20" />
+                  </div>
+                )}
+                <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white animate-pulse" title="No ar agora" />
               </div>
-              <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: quotaExhausted ? "#ef4444" : "var(--layout-page-text, #1a1a1a)" }}>
-                {monthlyQuota.count} / {monthlyQuota.limit}
-              </span>
+
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
+                  No Ar Agora
+                </span>
+                <h3 className="mt-1 text-sm font-bold truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  {nowPlaying.musica}
+                </h3>
+                <p className="text-xs font-medium truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  {nowPlaying.artista}
+                </p>
+              </div>
+
+              <button
+                onClick={loadExcecoes}
+                className="p-2 rounded-full hover:bg-black/5 transition-colors shrink-0"
+                title="Atualizar música"
+              >
+                <RefreshCw size={14} className="opacity-40" />
+              </button>
+            </div>
+
+            {/* Curiosidade inline — dois estados */}
+            <div className="p-4">
+              {nowPlaying.curiosity ? (
+                <div
+                  className="rounded-xl p-4"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, #10b981 12%, var(--layout-page-bg, #fff))",
+                    border: "1px solid color-mix(in srgb, #10b981 35%, transparent)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <CheckCircle2 size={14} style={{ color: "#10b981" }} />
+                    <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
+                      Curiosidade encontrada e enviada ao XML
+                    </h4>
+                    <span
+                      className="ml-auto inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                      style={{ backgroundColor: "rgba(16,185,129,0.18)", color: "#10b981" }}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Ativa
+                    </span>
+                  </div>
+                  <p
+                    className="text-xs italic leading-relaxed"
+                    style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 90%, transparent)" }}
+                  >
+                    "{nowPlaying.curiosity}"
+                  </p>
+                </div>
+              ) : (
+                <div
+                  className="rounded-xl p-4 space-y-3"
+                  style={{
+                    backgroundColor: "color-mix(in srgb, #f59e0b 10%, var(--layout-page-bg, #fff))",
+                    border: "1px dashed color-mix(in srgb, #f59e0b 45%, transparent)",
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl leading-none">🤔</div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#b45309" }}>
+                        Nada encontrado sobre esta música
+                      </h4>
+                      <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                        Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
+                      </p>
+                      {quotaExhausted && (
+                        <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
+                          Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-[0.03] pointer-events-none">
+              <Music size={120} />
             </div>
           </div>
-          <button
-            onClick={toggleAi}
-            disabled={togglingAi}
-            role="switch"
-            aria-checked={aiEnabled}
-            className="relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50"
-            style={{
-              backgroundColor: aiEnabled
-                ? "var(--layout-accent-color, #2563eb)"
-                : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)",
-            }}
-          >
-            <span
-              className="inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow"
-              style={{ transform: aiEnabled ? "translateX(24px)" : "translateX(4px)" }}
-            />
-          </button>
-        </div>
+        )}
 
         <div className="rounded-xl p-4 space-y-3" style={{
           backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 96%, var(--layout-border-color, #333))",
@@ -602,206 +709,6 @@ export default function InfoMusicSection() {
       </div>
 
 
-      {/* ── Now Playing + Curiosidade (card único) ── */}
-      {nowPlaying && (
-        <div className="rounded-2xl overflow-hidden relative" style={{
-          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, var(--layout-accent-color, #2563eb))",
-          border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
-        }}>
-          <div className="p-4 flex items-center gap-4 relative z-10 border-b" style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)" }}>
-            <div className="relative shrink-0">
-              {nowPlaying.capa ? (
-                <img
-                  src={nowPlaying.capa}
-                  alt={nowPlaying.artista}
-                  className="w-16 h-16 rounded-lg object-cover shadow-lg border border-white/20"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-lg bg-black/10 flex items-center justify-center border border-dashed border-black/20">
-                  <Music size={24} className="opacity-20" />
-                </div>
-              )}
-              <div className="absolute -bottom-1 -right-1 bg-green-500 w-3 h-3 rounded-full border-2 border-white animate-pulse" title="No ar agora" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
-                No Ar Agora
-              </span>
-              <h3 className="mt-1 text-sm font-bold truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                {nowPlaying.musica}
-              </h3>
-              <p className="text-xs font-medium truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                {nowPlaying.artista}
-              </p>
-            </div>
-
-            <button
-              onClick={loadExcecoes}
-              className="p-2 rounded-full hover:bg-black/5 transition-colors shrink-0"
-              title="Atualizar música"
-            >
-              <RefreshCw size={14} className="opacity-40" />
-            </button>
-          </div>
-
-          {/* Curiosidade inline — dois estados distintos */}
-          <div className="p-4">
-            {nowPlaying.curiosity ? (
-              // ─── ENCONTRADA: box verde "enviada ao XML" ───
-              <div
-                className="rounded-xl p-4"
-                style={{
-                  backgroundColor: "color-mix(in srgb, #10b981 12%, var(--layout-page-bg, #fff))",
-                  border: "1px solid color-mix(in srgb, #10b981 35%, transparent)",
-                }}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <CheckCircle2 size={14} style={{ color: "#10b981" }} />
-                  <h4 className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#10b981" }}>
-                    Curiosidade encontrada e enviada ao XML
-                  </h4>
-                  <span
-                    className="ml-auto inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
-                    style={{ backgroundColor: "rgba(16,185,129,0.18)", color: "#10b981" }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Ativa
-                  </span>
-                </div>
-                <p
-                  className="text-xs italic leading-relaxed"
-                  style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 90%, transparent)" }}
-                >
-                  "{nowPlaying.curiosity}"
-                </p>
-              </div>
-            ) : !showManualForm ? (
-              // ─── NÃO ENCONTRADA: mensagem amigável + CTA ───
-              <div
-                className="rounded-xl p-4 space-y-3"
-                style={{
-                  backgroundColor: "color-mix(in srgb, #f59e0b 10%, var(--layout-page-bg, #fff))",
-                  border: "1px dashed color-mix(in srgb, #f59e0b 45%, transparent)",
-                }}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl leading-none">🤔</div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-[11px] font-bold uppercase tracking-wider mb-1" style={{ color: "#b45309" }}>
-                      Nada encontrado sobre esta música
-                    </h4>
-                    <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                      Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
-                    </p>
-                    {quotaExhausted && (
-                      <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                        Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-
-              <div
-                className="rounded-xl p-4 space-y-2"
-                style={{
-                  backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 8%, var(--layout-page-bg, #fff))",
-                  border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
-                }}
-              >
-                <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Cadastrando curiosidade manual para <strong>{nowPlaying.musica}</strong> — {nowPlaying.artista}
-                </p>
-                <textarea
-                  value={manualCuriosityText}
-                  onChange={e => setManualCuriosityText(e.target.value)}
-                  placeholder="Digite uma curiosidade sobre esta música ou artista..."
-                  rows={2}
-                  maxLength={280}
-                  className="w-full px-3 py-2 rounded-lg text-xs outline-none resize-none"
-                  style={{
-                    backgroundColor: "var(--layout-page-bg, #fff)",
-                    color: "var(--layout-page-text, #1a1a1a)",
-                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-                  }}
-                />
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[10px] opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                    {manualCuriosityText.length}/280 · salva por 6 meses e vai ao XML por 30s
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => { setShowManualForm(false); setManualCuriosityText(""); }}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide opacity-70 hover:opacity-100"
-                      style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
-                    >
-                      Cancelar
-                    </button>
-                    <Button variant="save"
-                      onClick={async () => {
-                        if (!manualCuriosityText.trim() || !user) return;
-                        setSavingManualCuriosity(true);
-                        try {
-                          const expiresAt = new Date();
-                          expiresAt.setMonth(expiresAt.getMonth() + 6);
-                          const { data: inserted, error } = await supabase
-                            .from("infomusic")
-                            .insert({
-                              user_id: user.id,
-                              artista: nowPlaying.artista,
-                              musica: nowPlaying.musica,
-                              curiosidade: manualCuriosityText.trim(),
-                              deezer_artist_img: null,
-                              expires_at: expiresAt.toISOString(),
-                            })
-                            .select()
-                            .maybeSingle();
-                          if (error) throw error;
-
-                          const until = new Date(Date.now() + 30_000).toISOString();
-                          const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user.id).maybeSingle()).data?.dashboard_items as any || {};
-                          await supabase.from("user_settings").update({
-                            last_manual_curiosity_id: inserted?.id,
-                            dashboard_items: {
-                              ...currentDashboard,
-                              music_current_curiosity: manualCuriosityText.trim(),
-                              music_curiosity_manual: manualCuriosityText.trim(),
-                              music_curiosity_manual_until: until,
-                              music_curiosity_manual_img: "",
-                            },
-                          }).eq("user_id", user.id);
-
-                          window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: manualCuriosityText.trim() } }));
-                          toast.success("Curiosidade cadastrada e enviada ao XML!");
-                          setManualCuriosityText("");
-                          setShowManualForm(false);
-                          await load();
-                          await loadExcecoes();
-                        } catch (e) {
-                          toast.error((e as Error).message || "Erro ao salvar");
-                        }
-                        setSavingManualCuriosity(false);
-                      }}
-                      disabled={savingManualCuriosity || !manualCuriosityText.trim()}
-                      className="px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1.5"
-                      style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                    >
-                      {savingManualCuriosity ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
-                      Salvar e enviar
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="absolute top-0 right-0 -mt-4 -mr-4 opacity-[0.03] pointer-events-none">
-            <Music size={120} />
-          </div>
-        </div>
-      )}
 
       {/* ── XML: telemetria + verificador (grid 2 col) ── */}
       <div className="grid md:grid-cols-2 gap-3">
