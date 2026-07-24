@@ -25,7 +25,7 @@ interface SourcesConfig {
   audio_stream_xpath: string;
   video_stream_api_url: string;
   video_stream_xpath: string;
-
+  youtube_api_key: string;
 }
 
 
