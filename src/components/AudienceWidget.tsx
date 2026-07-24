@@ -863,7 +863,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       </div>
 
 
-      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
+      <div className={`grid ${youtubeLiveCount && youtubeLiveCount > 0 ? "grid-cols-5" : "grid-cols-4"} gap-2 flex-1 min-h-0`}>
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
@@ -887,21 +887,27 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
-          badge={
-            youtubeLiveCount && youtubeLiveCount > 0 ? (
+          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+        />
+        {youtubeLiveCount && youtubeLiveCount > 0 ? (
+          <StatCell
+            icon={<Youtube size={14} />}
+            label="Live YouTube"
+            value={youtubeLiveCount}
+            loading={false}
+            dark={dark}
+            badge={
               <span
                 className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
                 style={{ background: "#ef4444", color: "#fff" }}
-                title="YouTube ao vivo"
+                title="Transmissão ao vivo"
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                AO VIVO {youtubeLiveCount.toLocaleString("pt-BR")}
+                AO VIVO
               </span>
-            ) : (
-              <PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />
-            )
-          }
-        />
+            }
+          />
+        ) : null}
         <StatCell
           icon={<Globe size={14} />}
           label="Conectados no Player"
