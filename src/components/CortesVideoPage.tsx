@@ -762,7 +762,8 @@ export default function CortesVideoPage() {
           (title, detail) => {
             setStatusMsg(`Trecho ${i + 1}/${totalClips} — ${title}`);
             setLoadDetail(detail || "");
-          }
+          },
+          { crop, fade, sharpness }
         );
 
         const isMp4 = blob.type.includes("mp4");
