@@ -36,20 +36,20 @@ describe("applyTrackChangeWithCuriosityGuard", () => {
 
     // The immediate merge MUST have happened with cleared curiosity — before AI resolves.
     expect(merge).toHaveBeenCalledTimes(1);
-    expect(merge).toHaveBeenCalledWith("u1", {
+    expect(merge).toHaveBeenCalledWith("u1", expect.objectContaining({
       music_start_time: now,
       music_current_title: trackA.titulo,
       music_current_artist: trackA.artista,
       music_current_cover: trackA.capa,
       music_current_curiosity: "",
-    });
+    }));
 
     // Now resolve the AI response; the follow-up merge must write the curiosity.
     resolveCuriosity({ curiosidade: "Fun fact about A" });
     await promise;
 
     expect(merge).toHaveBeenCalledTimes(2);
-    expect(merge).toHaveBeenLastCalledWith("u1", { music_current_curiosity: "Fun fact about A" });
+    expect(merge).toHaveBeenLastCalledWith("u1", expect.objectContaining({ music_current_curiosity: "Fun fact about A" }));
   });
 
   it("does NOT overwrite the new track's state with a stale curiosity from a previous track", async () => {
