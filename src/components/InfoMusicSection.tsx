@@ -693,11 +693,6 @@ export default function InfoMusicSection() {
                       <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                         Ihh, não achei nada sobre essa música — vou pôr na lista pra gente cadastrar manualmente depois.
                       </p>
-                      {quotaExhausted && (
-                        <p className="mt-1 text-[11px]" style={{ color: "#ef4444" }}>
-                          Cota mensal de IA esgotada — novas gerações voltam no próximo mês. Cache continua ativo.
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>
