@@ -43,6 +43,7 @@ const REFETCH_MS = Math.round((24 * 60 * 60 * 1000) / 5);
 const LISTENERS_MS = 30 * 1000; // 30s for stream listeners
 const SITE_MS = 30 * 1000; // 30s for site realtime users
 const VIDEO_MS = 30 * 1000; // 30s for video viewers
+const YT_LIVE_MS = 8 * 1000; // 8s for YouTube Live viewers refresh
 
 // Client-side cache of audience counts keyed by URL(+xpath). Serves stale value
 // instantly on remount / route change so the widget never shows a spinner when
@@ -523,6 +524,28 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dataUserId, videoSourcesKey]);
+
+  // Fast YouTube Live viewers refresh (every few seconds) — independent from the
+  // 30s full video poll so the "Live YouTube" card feels real-time.
+  useEffect(() => {
+    if (!dataUserId) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const { data } = await supabase.functions.invoke("count-video-viewers", {
+          body: { userId: dataUserId, youtubeOnly: true },
+        });
+        const d = data as any;
+        if (cancelled || !d?.ok) return;
+        if (typeof d.youtubeLive === "number") setYoutubeLiveCount(d.youtubeLive);
+      } catch { /* ignore */ }
+    };
+    const iv = setInterval(tick, YT_LIVE_MS);
+    tick();
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [dataUserId]);
+
+
 
   // Log audiência a cada 5 minutos para o relatório histórico
   useEffect(() => {
