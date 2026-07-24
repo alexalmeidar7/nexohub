@@ -1434,6 +1434,97 @@ export default function ProgramaForm() {
         </section>
       )}
 
+      {/* GRADE DE PROGRAMAÇÃO — exibida abaixo da lista de cadastros */}
+      {programas.length > 0 && (
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 28,
+            padding: "20px 24px 24px",
+            border: "1px solid #E5F5FB",
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+          }}
+        >
+          <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+            <div className="flex items-center gap-3" style={{ color: DARK }}>
+              <Calendar size={18} style={{ color: CYAN }} />
+              <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+                Grade de Programação
+              </h3>
+            </div>
+            <div style={{ minWidth: 200 }}>
+              <Select value={gradeEstudioFilter} onValueChange={setGradeEstudioFilter}>
+                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                  <SelectValue placeholder="Filtrar por estúdio" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os estúdios</SelectItem>
+                  {estudios.map(e => (<SelectItem key={e} value={e}>{e}</SelectItem>))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <style>{`
+            .grade-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+            .grade-scroll::-webkit-scrollbar-track { background: transparent; }
+            .grade-scroll::-webkit-scrollbar-thumb { background: ${CYAN}; border-radius: 3px; }
+          `}</style>
+          <div
+            ref={gradeRef}
+            className="rounded-2xl overflow-auto max-h-[440px] grade-scroll"
+            style={{ border: `1px solid ${CARD_BG}`, background: "#FFFFFF", position: "relative" }}
+          >
+            <table data-no-row-hover className="w-full text-xs border-separate border-spacing-[2px]">
+              <thead className="sticky top-0 z-10">
+                <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)` }}>
+                  <th style={{ padding: "12px 12px", textAlign: "right", width: 78, fontSize: 9, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase", color: "#FFFFFF" }}>Horário</th>
+                  {DIAS_SEMANA.map(dia => {
+                    const isToday = dia === diaAtual;
+                    return (
+                      <th key={dia} style={{
+                        padding: "10px 8px", textAlign: "center", fontSize: 10, fontWeight: 900, letterSpacing: 1.4, textTransform: "uppercase",
+                        color: isToday ? DARK : "#FFFFFF",
+                        background: isToday ? LIME : "transparent",
+                        borderBottom: isToday ? `3px solid ${DARK}` : "3px solid transparent",
+                        position: "relative",
+                      }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                          {isToday && <span style={{ width: 6, height: 6, borderRadius: "50%", background: DARK, display: "inline-block" }} />}
+                          {dia.slice(0, 3)}
+                        </div>
+                        <div style={{ fontSize: 10, marginTop: 2, opacity: isToday ? 0.75 : 0.85, fontWeight: 700 }}>{weekDates[dia]}</div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <GradeBody
+                gradeSlots={gradeSlots}
+                diasSemana={DIAS_SEMANA}
+                diaAtual={diaAtual}
+                currentTimeStr={currentTimeStr}
+                getProgramaForSlot={getProgramaForSlot}
+                apresentadores={apresentadores}
+              />
+            </table>
+            <div ref={needleRef} style={{
+              position: "absolute", left: 0, right: 0, height: 2,
+              background: "linear-gradient(90deg, #DC2626, #EF4444)",
+              zIndex: 15, pointerEvents: "none", display: "none",
+              boxShadow: "0 0 6px rgba(220,38,38,0.4)",
+            }}>
+              <div style={{ position: "absolute", left: -4, top: -4, width: 10, height: 10, borderRadius: "50%", background: "#DC2626", boxShadow: "0 0 6px rgba(220,38,38,0.5)" }} />
+              <div style={{ position: "absolute", left: 12, top: -9, fontSize: 9, fontWeight: 700, color: "#FFFFFF", background: "#DC2626", padding: "2px 6px", borderRadius: 4, whiteSpace: "nowrap" }}>
+                {currentTimeStr.slice(0, 5)}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+
+
       {showSuccess && (
         <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10, 37, 64, 0.4)" }}>
           <div style={{ width: 420, padding: "28px 32px", background: CARD_BG, borderRadius: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 20px 60px rgba(10, 37, 64, 0.3)" }}>
