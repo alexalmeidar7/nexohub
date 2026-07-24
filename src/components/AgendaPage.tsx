@@ -806,7 +806,7 @@ export default function AgendaPage() {
   };
 
   // Solicita a exclusão — se recorrente, abre diálogo de escolha
-  const requestDelete = (evt: Evento, occurrenceDateStr?: string) => {
+  const requestDelete = async (evt: Evento, occurrenceDateStr?: string) => {
     const isRecorrente = evt.recorrencia && evt.recorrencia !== "unico";
     if (!isRecorrente) {
       if (await confirmDialog("Tem certeza que deseja excluir este evento?")) handleDelete(evt.id);
