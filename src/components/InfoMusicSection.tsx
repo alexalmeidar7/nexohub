@@ -1153,9 +1153,11 @@ export default function InfoMusicSection() {
                   {filteredRows.map((r, i) => {
                     const isLastManual = r.id === lastManualId;
                     return (
-                      <tr key={r.id} style={{ 
-                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
-                        backgroundColor: isLastManual ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.1)" : undefined
+                      <tr key={r.id} className="transition-colors hover:brightness-[0.98]" style={{ 
+                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 7%, transparent)" : undefined,
+                        backgroundColor: isLastManual
+                          ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.10)"
+                          : (i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined),
                       }}>
                         <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-1">
