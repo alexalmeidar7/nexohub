@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Award, FileText, RotateCcw, ChevronDown, Radio } from "lucide-react";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
