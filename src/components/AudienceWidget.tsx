@@ -1369,6 +1369,7 @@ interface HistRow {
   programa: string | null;
   audio: number;
   video: number;
+  youtube: number;
 }
 function AudienceReportDialog({
   open,
@@ -1441,13 +1442,13 @@ function AudienceReportDialog({
       const end = new Date(`${date}T23:59:59.999`);
       const { data } = await supabase
         .from("audiencia_historico")
-        .select("id, created_at, programa, audio, video")
+        .select("id, created_at, programa, audio, video, youtube")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString())
         .lte("created_at", end.toISOString())
         .order("created_at", { ascending: false });
       if (!cancelled) {
-        setRows((data as any as HistRow[]) || []);
+        setRows(((data as any[]) || []).map((r) => ({ ...r, youtube: r.youtube || 0 })) as HistRow[]);
         setLoading(false);
       }
     };
@@ -1537,10 +1538,14 @@ function AudienceReportDialog({
     if (filteredRows.length === 0) return null;
     const peakAudio = filteredRows.reduce((m, r) => (r.audio > m.audio ? r : m), filteredRows[0]);
     const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
-    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video) > (m.audio + m.video) ? r : m), filteredRows[0]);
+    const peakYoutube = filteredRows.reduce((m, r) => ((r.youtube || 0) > (m.youtube || 0) ? r : m), filteredRows[0]);
+    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video + (r.youtube || 0)) > (m.audio + m.video + (m.youtube || 0)) ? r : m), filteredRows[0]);
     const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
     const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
-    return { peakAudio, peakVideo, peakTotal, avgAudio, avgVideo };
+    const avgYoutube = Math.round(filteredRows.reduce((s, r) => s + (r.youtube || 0), 0) / filteredRows.length);
+    const sumYoutube = filteredRows.reduce((s, r) => s + (r.youtube || 0), 0);
+    const hasYoutube = sumYoutube > 0;
+    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube };
   }, [filteredRows]);
 
 
@@ -1584,9 +1589,10 @@ function AudienceReportDialog({
       lines.push("");
     }
     lines.push(`Registros do dia`);
-    lines.push([`Data`, `Hora`, `Programa`, `Áudio`, `Vídeo`, `Total`].map(esc).join(";"));
+    lines.push([`Data`, `Hora`, `Programa`, `Rádio`, `TV`, `YouTube`, `Total`].map(esc).join(";"));
     for (const r of filteredRows) {
-      lines.push([fmtDate(r.created_at), fmtTime(r.created_at), r.programa || "", r.audio, r.video, (r.audio || 0) + (r.video || 0)].map(esc).join(";"));
+      const yt = r.youtube || 0;
+      lines.push([fmtDate(r.created_at), fmtTime(r.created_at), r.programa || "", r.audio, r.video, yt, (r.audio || 0) + (r.video || 0) + yt].map(esc).join(";"));
     }
     const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -1649,8 +1655,8 @@ function AudienceReportDialog({
     doc.setFontSize(11);
     doc.text(`Registros do dia (${filteredRows.length})`, 32, y); y += 14;
 
-    const headers = ["Hora", "Programa", "Áudio", "Vídeo", "Total"];
-    const cols = [32, 90, 320, 400, 470];
+    const headers = ["Hora", "Programa", "Rádio", "TV", "YouTube", "Total"];
+    const cols = [32, 90, 300, 360, 410, 480];
     doc.setFontSize(9);
     doc.setFillColor(240, 249, 255);
     doc.rect(28, y - 10, W - 56, 16, "F");
@@ -1659,7 +1665,8 @@ function AudienceReportDialog({
     doc.setFont("helvetica", "normal");
     for (const r of filteredRows) {
       if (y > H - 40) { doc.addPage(); y = 50; }
-      const cells = [fmtTime(r.created_at), (r.programa || "").slice(0, 40), String(r.audio), String(r.video), String((r.audio || 0) + (r.video || 0))];
+      const yt = r.youtube || 0;
+      const cells = [fmtTime(r.created_at), (r.programa || "").slice(0, 34), String(r.audio), String(r.video), String(yt), String((r.audio || 0) + (r.video || 0) + yt)];
       cells.forEach((c, i) => doc.text(c, cols[i], y));
       y += 12;
     }
@@ -1784,7 +1791,7 @@ function AudienceReportDialog({
               <div className="ml-auto flex items-center gap-2 rounded-full px-4 py-1.5" style={{ background: DARK, color: "#fff" }}>
                 <Trophy size={14} style={{ color: LIME }} />
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
-                <span className="text-sm font-black tabular-nums">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                <span className="text-sm font-black tabular-nums">{(stats.peakTotal.audio + stats.peakTotal.video + (stats.peakTotal.youtube || 0)).toLocaleString("pt-BR")}</span>
                 <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
               </div>
             )}
@@ -1957,23 +1964,51 @@ function AudienceReportDialog({
 
           {view === "day" && (
             <>
-
+              {stats?.hasYoutube && (
+                <div className="rounded-2xl p-3 flex items-center gap-3 mb-1" style={{ background: "linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)", border: `1px solid #FF000033` }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#FF0000" }}>
+                    <span className="text-white text-[10px] font-black tracking-widest">LIVE</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#B91C1C", opacity: 0.75 }}>Live YouTube · desempenho do dia</div>
+                    <div className="text-xs font-bold" style={{ color: DARK, opacity: 0.7 }}>
+                      Pico às <span style={{ color: "#FF0000" }}>{fmtTime(stats.peakYoutube.created_at)}</span>
+                      {stats.peakYoutube.programa && <> · {stats.peakYoutube.programa}</>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Pico</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: "#FF0000" }}>{(stats.peakYoutube.youtube || 0).toLocaleString("pt-BR")}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Média</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: DARK }}>{stats.avgYoutube.toLocaleString("pt-BR")}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Views · soma</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: DARK }}>{stats.sumYoutube.toLocaleString("pt-BR")}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Gráfico + Tabela lado a lado */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-[420px]">
                 {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
                 <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
-                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio vs TV</span>
+                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio · TV · YouTube</span>
                     <span className="flex items-center gap-3">
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Áudio</span>
-                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />Vídeo</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Rádio</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />TV</span>
+                      <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: "#FF0000" }} />YouTube</span>
                     </span>
                   </div>
                   <div className="flex-1 min-h-[180px]">
                     {filteredRows.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                           <defs>
                             <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -1983,13 +2018,18 @@ function AudienceReportDialog({
                               <stop offset="0%" stopColor={VIDEO_COLOR} stopOpacity={0.35} />
                               <stop offset="100%" stopColor={VIDEO_COLOR} stopOpacity={0} />
                             </linearGradient>
+                            <linearGradient id="gYoutube" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#FF0000" stopOpacity={0.4} />
+                              <stop offset="100%" stopColor="#FF0000" stopOpacity={0} />
+                            </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#00BFF033" />
                           <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 9 }} interval="preserveStartEnd" />
                           <YAxis tick={{ fill: DARK, fontSize: 9 }} width={38} />
                           <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
-                          <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Áudio" />
-                          <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="Vídeo" />
+                          <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Rádio" />
+                          <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="TV" />
+                          <Area type="monotone" dataKey="youtube" stroke="#FF0000" strokeWidth={2} fill="url(#gYoutube)" name="YouTube" />
                         </AreaChart>
                       </ResponsiveContainer>
                     ) : (
@@ -2008,25 +2048,27 @@ function AudienceReportDialog({
                         <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
                           <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
                           <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
-                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
-                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Rádio</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">TV</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">YouTube</th>
                           <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {loading && (
-                          <tr><td colSpan={5} className="py-10 text-center">
+                          <tr><td colSpan={6} className="py-10 text-center">
                             <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
                           </td></tr>
                         )}
                         {!loading && filteredRows.length === 0 && (
-                          <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                          <tr><td colSpan={6} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
                             Nenhum registro encontrado para essa data.
                           </td></tr>
                         )}
                         {!loading && filteredRows.map((r, i) => {
                           const isPeak = stats && r.id === stats.peakTotal.id;
-                          const total = (r.audio || 0) + (r.video || 0);
+                          const yt = r.youtube || 0;
+                          const total = (r.audio || 0) + (r.video || 0) + yt;
                           return (
                             <tr key={r.id} style={{
                               background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
@@ -2041,6 +2083,7 @@ function AudienceReportDialog({
                               </td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: AUDIO_COLOR }}>{r.audio.toLocaleString("pt-BR")}</td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: VIDEO_COLOR }}>{r.video.toLocaleString("pt-BR")}</td>
+                              <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: yt > 0 ? "#FF0000" : DARK, opacity: yt > 0 ? 1 : 0.35 }}>{yt.toLocaleString("pt-BR")}</td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: DARK }}>{total.toLocaleString("pt-BR")}</td>
                             </tr>
                           );
