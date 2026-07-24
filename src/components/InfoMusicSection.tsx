@@ -1134,6 +1134,33 @@ export default function InfoMusicSection() {
                         {isSaving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
                         Salvar
                       </Button>
+                      <button
+                        onClick={async () => {
+                          const nameRaw = (m.artista || "").trim();
+                          if (!nameRaw) return;
+                          if (excecaoList.some(x => x.toLowerCase() === nameRaw.toLowerCase())) {
+                            toast.info(`"${nameRaw}" já está nas exceções`);
+                            setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
+                            return;
+                          }
+                          const prevList = excecaoList.slice();
+                          const next = [nameRaw, ...excecaoList].join(", ");
+                          await saveExcecoesValue(next);
+                          setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
+                          toast.success(`"${nameRaw}" adicionado às exceções`, {
+                            action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
+                          });
+                        }}
+                        title="Adicionar este artista à lista de exceções (não gera curiosidade)"
+                        className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1.5 shrink-0 transition-opacity hover:opacity-90"
+                        style={{
+                          backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)",
+                          color: "#dc2626",
+                          border: "1px solid color-mix(in srgb, #dc2626 30%, transparent)",
+                        }}
+                      >
+                        <Ban size={11} /> Exceção
+                      </button>
                     </div>
                   );
                 })}
