@@ -861,6 +861,19 @@ export default function OuvintesPage() {
                           <Pencil size={14} />
                         </button>
                         <button
+                          onClick={() => handleToggleBan(o)}
+                          title={o.banido ? "Remover banimento" : "Banir ouvinte"}
+                          style={{
+                            width: 30, height: 30, borderRadius: "50%",
+                            background: o.banido ? "#DCFCE7" : "#FEF3C7",
+                            border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: o.banido ? "#166534" : "#B45309",
+                          }}
+                        >
+                          {o.banido ? <ShieldCheck size={14} /> : <Ban size={14} />}
+                        </button>
+                        <button
                           onClick={() => handleDelete(o.id)}
                           title="Excluir"
                           style={{
