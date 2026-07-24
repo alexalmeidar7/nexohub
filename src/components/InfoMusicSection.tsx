@@ -1243,11 +1243,8 @@ export default function InfoMusicSection() {
               border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
             }}
           >
-            <option value="all">Todos os campos</option>
-            <option value="artista">Somente artista</option>
-            <option value="musica">Somente música</option>
-            <option value="curiosidade">Somente curiosidade</option>
-            <option value="sem_curiosidade">Músicas sem curiosidades</option>
+            <option value="all">Todas as músicas</option>
+            <option value="sem_curiosidade">Músicas sem curiosidade</option>
           </select>
         </div>
         <div className="rounded-2xl overflow-hidden" style={{
