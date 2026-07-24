@@ -875,7 +875,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         />
         <StatCell
           icon={<Radio size={14} />}
-          label="Streaming de áudio"
+          label="Rádio (áudio)"
           value={streamingCount}
           loading={loadingStreaming && streamingCount === null}
           dark={dark}
@@ -883,7 +883,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         />
         <StatCell
           icon={<MonitorPlay size={14} />}
-          label="Streaming de vídeo"
+          label="TV (vídeo)"
           value={videoCount}
           loading={loadingVideo && videoCount === null}
           dark={dark}
@@ -1920,7 +1920,7 @@ function AudienceReportDialog({
                 {/* Mini gráfico intra-dia (áudio vs vídeo por hora) */}
                 <div className="lg:col-span-2 rounded-2xl p-3 pt-4 flex flex-col min-h-0" style={{ background: "#fff", border: `1px solid ${CYAN}` }}>
                   <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2 flex items-center justify-between" style={{ color: DARK }}>
-                    <span style={{ opacity: 0.7 }}>Curva do dia · Áudio vs Vídeo</span>
+                    <span style={{ opacity: 0.7 }}>Curva do dia · Rádio vs TV</span>
                     <span className="flex items-center gap-3">
                       <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: AUDIO_COLOR }} />Áudio</span>
                       <span className="flex items-center gap-1"><span className="inline-block w-2 h-2 rounded-full" style={{ background: VIDEO_COLOR }} />Vídeo</span>
@@ -2474,10 +2474,10 @@ function TrendPanel({
     <div className="flex flex-col gap-4 overflow-auto pr-1" style={{ maxHeight: "60vh" }}>
       {/* Resumo */}
       <div className="grid grid-cols-4 gap-3">
-        <MiniStat label="Pico Áudio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Pico Vídeo · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Média Áudio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
-        <MiniStat label="Média Vídeo" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico Rádio · 6m" value={totals.peakAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Pico TV · 6m" value={totals.peakVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média Rádio" value={totals.avgAudio} icon={<Radio size={14} />} cyan={cyan} dark={dark} />
+        <MiniStat label="Média TV" value={totals.avgVideo} icon={<MonitorPlay size={14} />} cyan={cyan} dark={dark} />
       </div>
 
       {/* Dominância */}
@@ -2497,7 +2497,7 @@ function TrendPanel({
       {/* Tendência diária */}
       <div className="rounded-2xl p-3 pt-4" style={{ background: "#fff", border: `1px solid ${cyan}` }}>
         <div className="text-[10px] font-black uppercase tracking-widest px-1 pb-2" style={{ color: dark, opacity: 0.7 }}>
-          Tendência diária · Áudio vs Vídeo
+          Tendência diária · Rádio vs TV
         </div>
         <ResponsiveContainer width="100%" height={240}>
           <LineChart data={data.map((r) => ({ day: fmtDay(r.day), audio: r.audio, video: r.video }))}>
