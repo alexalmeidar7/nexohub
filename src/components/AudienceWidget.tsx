@@ -971,6 +971,14 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   onChange={(v) => setSources((s) => ({ ...s, youtube_api_key: v }))}
                   helperText="Obrigatório para ler a audiência ao vivo do canal informado em 'YouTube' (Redes sociais). Crie em console.cloud.google.com → APIs → YouTube Data API v3."
                 />
+                <div className="mt-2">
+                  <SourceField
+                    label="ID do canal (Channel ID)"
+                    placeholder="UCxxxxxxxxxxxxxxxxxxxxxx"
+                    value={sources.youtube_channel_id}
+                    onChange={(v) => setSources((s) => ({ ...s, youtube_channel_id: v }))}
+                    helperText="Opcional, mas recomendado. Cole o Channel ID (começa com 'UC…') encontrado em youtube.com/account_advanced. Evita falha na detecção quando a URL usa @handle."
+                  />
               </div>
             </section>
 
