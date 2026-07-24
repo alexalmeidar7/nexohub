@@ -108,6 +108,8 @@ export interface UpsertOuvinteInput {
   radioUserId: string;
   origem: OuvinteOrigem;
   fields: CadastroFieldMap & { cidade_uf?: string | null };
+  /** Identificador da mensagem do WhatsApp (auditoria) — usado quando origem = "chatbot". */
+  whatsappMessageId?: string | null;
 }
 
 /**
@@ -120,7 +122,7 @@ export interface UpsertOuvinteInput {
  * Nunca lança — retorna { ok, id?, error? } para não interromper login/registro.
  */
 export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const { radioUserId, origem, fields } = input;
+  const { radioUserId, origem, fields, whatsappMessageId } = input;
   if (!radioUserId) return { ok: false, error: "missing radioUserId" };
   const nome = (fields.nome || "").trim();
   const email = (fields.email || "").trim();
@@ -187,6 +189,10 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
       renda: merged.renda,
       pontuacao,
       origem_cadastro: existing?.origem_cadastro || origem,
+      whatsapp_message_id:
+        origem === "chatbot"
+          ? (whatsappMessageId || (existing as any)?.whatsapp_message_id || null)
+          : ((existing as any)?.whatsapp_message_id ?? null),
     };
 
     if (existing) {

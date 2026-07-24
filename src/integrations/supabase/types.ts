@@ -1203,6 +1203,7 @@ export type Database = {
           telefone: string | null
           updated_at: string
           user_id: string
+          whatsapp_message_id: string | null
         }
         Insert: {
           cidade?: string | null
@@ -1221,6 +1222,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id: string
+          whatsapp_message_id?: string | null
         }
         Update: {
           cidade?: string | null
@@ -1239,6 +1241,7 @@ export type Database = {
           telefone?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp_message_id?: string | null
         }
         Relationships: []
       }
