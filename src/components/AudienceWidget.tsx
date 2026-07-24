@@ -513,7 +513,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       const anyOk = all.some((n) => n !== null);
       const total = all.reduce((a, n) => a + (n ?? 0), 0);
       setVideoCount(anyOk ? total : null);
-      setYoutubeLiveCount(primary.youtubeLive);
+      // Não sobrescreve com null (erro/quota) — mantém último valor conhecido.
+      if (typeof primary.youtubeLive === "number") setYoutubeLiveCount(primary.youtubeLive);
       setLoadingVideo(false);
     };
     tick();
