@@ -354,7 +354,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               };
             }
             setSocial({
-              youtube: r.youtube ?? null,
+              youtube: (() => { const y = r.youtube ?? null; youtubeRef.current = y; return y; })(),
               instagram: r.instagram ?? null,
               facebook: r.facebook ?? null,
             });
