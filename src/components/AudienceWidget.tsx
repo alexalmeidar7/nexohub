@@ -1457,6 +1457,42 @@ function AudienceReportDialog({
     return () => { cancelled = true; };
   }, [open, userId, date]);
 
+  // Carrega YouTube do dia anterior (para comparação lado a lado)
+  useEffect(() => {
+    if (!open || !userId) { setYesterdayYt(null); return; }
+    let cancelled = false;
+    const load = async () => {
+      const base = new Date(`${date}T00:00:00`);
+      const prev = new Date(base);
+      prev.setDate(prev.getDate() - 1);
+      const y = prev.getFullYear();
+      const m = String(prev.getMonth() + 1).padStart(2, "0");
+      const d = String(prev.getDate()).padStart(2, "0");
+      const startIso = new Date(`${y}-${m}-${d}T00:00:00`).toISOString();
+      const endIso = new Date(`${y}-${m}-${d}T23:59:59.999`).toISOString();
+      let q = supabase
+        .from("audiencia_historico")
+        .select("youtube, programa")
+        .eq("user_id", userId as any)
+        .gte("created_at", startIso)
+        .lte("created_at", endIso);
+      const { data } = await q;
+      if (cancelled) return;
+      const filtered = ((data as any[]) || []).filter((r) =>
+        programaFilter === "__ALL__" ? true : (r.programa || "") === programaFilter
+      );
+      const yts = filtered.map((r) => Number(r.youtube || 0));
+      const sum = yts.reduce((s, v) => s + v, 0);
+      const peak = yts.reduce((m, v) => (v > m ? v : m), 0);
+      const avg = yts.length ? Math.round(sum / yts.length) : 0;
+      setYesterdayYt({ peak, avg, sum, has: sum > 0, dateLabel: `${d}/${m}` });
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [open, userId, date, programaFilter]);
+
+
+
   // Carrega lista de programas com registro nos últimos 6 meses
   useEffect(() => {
     if (!open || !userId) return;
