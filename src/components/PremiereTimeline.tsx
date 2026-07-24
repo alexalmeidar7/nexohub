@@ -393,6 +393,100 @@ export default function PremiereTimeline({
         </div>
       </div>
 
+      {/* Transport & precision controls */}
+      <div
+        className="px-3 py-2 flex items-center gap-3 flex-wrap"
+        style={{
+          backgroundColor: `color-mix(in srgb, ${headerBg} 92%, black)`,
+          color: headerText,
+          borderBottom: `1px solid color-mix(in srgb, ${border} 30%, transparent)`,
+        }}
+      >
+        {/* Transport buttons */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (v) { v.currentTime = startSec; setPlayhead(startSec); } }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Ir para o início do trecho"
+          >⏮</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (!v) return; const t = Math.max(startSec, (v.currentTime || startSec) - 1/30); v.currentTime = t; setPlayhead(t); }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Frame anterior (←)"
+          >◀|</button>
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="w-9 h-7 rounded flex items-center justify-center text-[12px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: accent, color: accentText }}
+            title="Play/Pause (Espaço)"
+          >{playing ? "❚❚" : "▶"}</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (!v) return; const t = Math.min(endSec, (v.currentTime || startSec) + 1/30); v.currentTime = t; setPlayhead(t); }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Próximo frame (→)"
+          >|▶</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (v) { v.currentTime = Math.max(startSec, endSec - 0.05); setPlayhead(endSec); } }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Ir para o fim do trecho"
+          >⏭</button>
+        </div>
+
+        {/* Seek scrubber (within selected range) */}
+        <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+          <span className="text-[9px] font-mono opacity-80 w-14 text-right">{fmt(playhead, true)}</span>
+          <input
+            type="range"
+            min={startSec}
+            max={endSec}
+            step={1/30}
+            value={Math.min(endSec, Math.max(startSec, playhead))}
+            onChange={(e) => { const t = parseFloat(e.target.value); const v = previewVideoRef.current; if (v) v.currentTime = t; setPlayhead(t); }}
+            className="flex-1 h-1 accent-current cursor-pointer"
+            style={{ accentColor: accent }}
+            title="Seek dentro do trecho"
+          />
+          <span className="text-[9px] font-mono opacity-80 w-14">{fmt(endSec, true)}</span>
+        </div>
+
+        {/* Zoom slider */}
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-mono opacity-80">Zoom</span>
+          <input
+            type="range"
+            min={1}
+            max={Math.max(1, Math.round(duration / 0.5))}
+            step={0.1}
+            value={zoomPct}
+            onChange={(e) => {
+              const z = parseFloat(e.target.value);
+              const c = (viewStart + viewEnd) / 2;
+              const ns = Math.max(0.5, Math.min(duration, duration / z));
+              let s = Math.max(0, c - ns / 2);
+              let en = Math.min(duration, s + ns);
+              if (en - s < ns) s = Math.max(0, en - ns);
+              setViewStart(s); setViewEnd(en);
+            }}
+            className="w-28 h-1 cursor-pointer"
+            style={{ accentColor: accent }}
+            title="Zoom da timeline"
+          />
+          <span className="text-[9px] font-mono opacity-80 w-10 text-right">{zoomPct}x</span>
+          <button type="button" onClick={zoomToSelection} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">Trecho</button>
+          <button type="button" onClick={resetZoom} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset">Reset</button>
+        </div>
+      </div>
+
+
       <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
         {/* Video layer — frames positioned at exact timestamps within viewport */}
         <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
