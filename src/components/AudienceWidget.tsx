@@ -1822,6 +1822,133 @@ function SourceField({
   );
 }
 
+function StreamSourceRow({
+  kind,
+  index,
+  isExtra,
+  url,
+  xpath,
+  showXpath,
+  onUrlChange,
+  onXpathChange,
+  onToggleXpath,
+  onAddExtra,
+  onRemove,
+  xpathError,
+  probing,
+  onProbe,
+  suggestions,
+  onPickSuggestion,
+}: {
+  kind: "audio" | "video";
+  index: number;
+  isExtra?: boolean;
+  url: string;
+  xpath: string;
+  showXpath: boolean;
+  onUrlChange: (v: string) => void;
+  onXpathChange: (v: string) => void;
+  onToggleXpath: () => void;
+  onAddExtra?: () => void;
+  onRemove?: () => void;
+  xpathError?: string | null;
+  probing?: boolean;
+  onProbe?: () => void;
+  suggestions?: Array<{ xpath: string; value: number }>;
+  onPickSuggestion?: (xpath: string) => void;
+}) {
+  const isAudio = kind === "audio";
+  const label = isExtra
+    ? `Fonte adicional #${(index ?? 0) + 1}`
+    : "URL do stream";
+  const xpathLabel = isAudio
+    ? "XPath do nódulo de ouvintes"
+    : "XPath do nódulo de espectadores";
+  const xpathPh = isAudio
+    ? "//SHOUTCASTSERVER/CURRENTLISTENERS"
+    : "//info/espectadores_conectados";
+  const urlPh = isAudio
+    ? "https://seu-servidor:8000/stream"
+    : "https://video.logicahost.com.br/api/...";
+  return (
+    <div
+      className={isExtra ? "flex flex-col gap-2 rounded-xl p-3" : "flex flex-col gap-2"}
+      style={isExtra ? { background: "rgba(0,191,240,0.06)", border: "1px dashed rgba(0,191,240,0.35)" } : undefined}
+    >
+      <SourceField
+        label={label}
+        placeholder={urlPh}
+        value={url}
+        onChange={onUrlChange}
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={onToggleXpath}
+          className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+          style={{
+            background: showXpath ? "#0A2540" : "transparent",
+            border: `1.5px solid ${showXpath ? "#0A2540" : "#00BFF0"}`,
+            color: showXpath ? "#fff" : "#0A2540",
+            fontFamily: "Montserrat, sans-serif",
+          }}
+        >
+          {showXpath ? "− Ocultar XPath" : "+ Inserir XPath"}
+        </button>
+        {onAddExtra && (
+          <button
+            type="button"
+            onClick={onAddExtra}
+            className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+            style={{
+              background: "#C6F03C",
+              border: "1.5px solid #8FBB1F",
+              color: "#0A2540",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            + Adicionar outra fonte
+          </button>
+        )}
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="ml-auto text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full transition-transform hover:scale-[1.03]"
+            style={{
+              background: "transparent",
+              border: "1.5px solid #E11D48",
+              color: "#E11D48",
+              fontFamily: "Montserrat, sans-serif",
+            }}
+          >
+            Remover
+          </button>
+        )}
+      </div>
+      {showXpath && (
+        <SourceField
+          label={xpathLabel}
+          placeholder={xpathPh}
+          value={xpath}
+          onChange={onXpathChange}
+          error={xpathError}
+          actionLabel={onProbe ? (probing ? "Analisando..." : "Sugerir XPath") : undefined}
+          onAction={onProbe}
+          actionDisabled={probing}
+          suggestions={suggestions}
+          onPickSuggestion={onPickSuggestion}
+          helperText={
+            isAudio
+              ? "Detecta automaticamente o campo com o número de ouvintes."
+              : "Detecta automaticamente o campo com o número de espectadores."
+          }
+        />
+      )}
+    </div>
+  );
+}
+
 
 
 function Skeleton({ width, height, dark, className }: { width: number | string; height: number; dark: string; className?: string }) {
