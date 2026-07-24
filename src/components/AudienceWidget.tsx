@@ -1050,25 +1050,56 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   </span>
                 </div>
               </div>
-              <SourceField
-                label="URL do stream"
-                placeholder="https://video.logicahost.com.br/api/..."
-                value={sources.video_stream_api_url}
-                onChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
-              />
-              <SourceField
-                label="XPath do nódulo de espectadores"
-                placeholder="//info/espectadores_conectados"
-                value={sources.video_stream_xpath}
-                onChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
-                error={videoXPathError}
-                actionLabel={probing === "video" ? "Analisando..." : "Sugerir XPath"}
-                onAction={() => probeXPath("video")}
-                actionDisabled={probing !== null}
+              <StreamSourceRow
+                kind="video"
+                index={-1}
+                url={sources.video_stream_api_url}
+                xpath={sources.video_stream_xpath}
+                showXpath={!!sources.video_stream_xpath || videoXpOpen[-1]}
+                onUrlChange={(v) => setSources((s) => ({ ...s, video_stream_api_url: v }))}
+                onXpathChange={(v) => { setSources((s) => ({ ...s, video_stream_xpath: v })); setVideoXPathError(null); }}
+                onToggleXpath={() => setVideoXpOpen((o) => ({ ...o, [-1]: !o[-1] }))}
+                onAddExtra={() =>
+                  setSources((s) => ({ ...s, video_extras: [...s.video_extras, { url: "", xpath: "" }] }))
+                }
+                xpathError={videoXPathError}
+                probing={probing === "video"}
+                onProbe={() => probeXPath("video")}
                 suggestions={videoSuggestions}
                 onPickSuggestion={(xp) => { setSources((s) => ({ ...s, video_stream_xpath: xp })); setVideoXPathError(null); }}
-                helperText="Detecta automaticamente o campo com o número de espectadores."
               />
+              {sources.video_extras.map((extra, i) => (
+                <StreamSourceRow
+                  key={`vx-${i}`}
+                  kind="video"
+                  index={i}
+                  isExtra
+                  url={extra.url}
+                  xpath={extra.xpath}
+                  showXpath={!!extra.xpath || videoXpOpen[i]}
+                  onUrlChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.video_extras];
+                      next[i] = { ...next[i], url: v };
+                      return { ...s, video_extras: next };
+                    })
+                  }
+                  onXpathChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.video_extras];
+                      next[i] = { ...next[i], xpath: v };
+                      return { ...s, video_extras: next };
+                    })
+                  }
+                  onToggleXpath={() => setVideoXpOpen((o) => ({ ...o, [i]: !o[i] }))}
+                  onRemove={() =>
+                    setSources((s) => ({
+                      ...s,
+                      video_extras: s.video_extras.filter((_, j) => j !== i),
+                    }))
+                  }
+                />
+              ))}
               <div className="mt-1 pt-3" style={{ borderTop: "1px dashed rgba(10,37,64,0.15)" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Youtube size={14} color="#FF0000" />
