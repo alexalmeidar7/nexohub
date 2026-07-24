@@ -290,12 +290,35 @@ export default function OuvintesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!(await confirmDialog("Excluir este ouvinte?"))) return;
+    if (!(await confirmDialog({ title: "Excluir ouvinte", message: "Excluir este ouvinte? Esta ação não pode ser desfeita.", destructive: true, confirmLabel: "Excluir" }))) return;
     const { error } = await supabase.from("ouvintes").delete().eq("id", id);
     if (error) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Ouvinte excluído" });
+      load();
+    }
+  };
+
+  const handleToggleBan = async (o: Ouvinte) => {
+    const isBanned = o.banido === true;
+    const ok = await confirmDialog({
+      title: isBanned ? "Remover banimento" : "Banir ouvinte",
+      message: isBanned
+        ? `Remover o banimento de ${o.nome}? Ele voltará a participar de promoções, receber mensagens e acessar o player/site.`
+        : `Banir ${o.nome}? Enquanto banido, ele não poderá participar de promoções, receber mensagens nem acessar o player/site.`,
+      destructive: !isBanned,
+      confirmLabel: isBanned ? "Remover banimento" : "Banir",
+    });
+    if (!ok) return;
+    const payload: Record<string, unknown> = isBanned
+      ? { banido: false, banido_at: null, banido_motivo: null }
+      : { banido: true, banido_at: new Date().toISOString() };
+    const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", o.id);
+    if (error) {
+      toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: isBanned ? "Banimento removido" : "Ouvinte banido" });
       load();
     }
   };
