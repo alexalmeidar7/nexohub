@@ -1589,9 +1589,10 @@ function AudienceReportDialog({
       lines.push("");
     }
     lines.push(`Registros do dia`);
-    lines.push([`Data`, `Hora`, `Programa`, `Áudio`, `Vídeo`, `Total`].map(esc).join(";"));
+    lines.push([`Data`, `Hora`, `Programa`, `Rádio`, `TV`, `YouTube`, `Total`].map(esc).join(";"));
     for (const r of filteredRows) {
-      lines.push([fmtDate(r.created_at), fmtTime(r.created_at), r.programa || "", r.audio, r.video, (r.audio || 0) + (r.video || 0)].map(esc).join(";"));
+      const yt = r.youtube || 0;
+      lines.push([fmtDate(r.created_at), fmtTime(r.created_at), r.programa || "", r.audio, r.video, yt, (r.audio || 0) + (r.video || 0) + yt].map(esc).join(";"));
     }
     const blob = new Blob(["\uFEFF" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
