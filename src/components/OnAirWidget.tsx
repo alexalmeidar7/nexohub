@@ -175,6 +175,29 @@ export default function OnAirWidget() {
     return () => clearInterval(interval);
   }, []);
 
+  // Pré-carrega a foto e o selo do próximo programa quando restar <= 60s
+  // para o programa atual, evitando o "flash vazio" na virada.
+  useEffect(() => {
+    if (!onAir) return;
+    const [eh, em] = onAir.programa.horarioFim.split(":").map(Number);
+    const check = () => {
+      const now = new Date();
+      const endMin = eh * 60 + em;
+      const curMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      const remainingSec = Math.round((endMin - curMin) * 60);
+      if (remainingSec <= 60 && remainingSec > -5) {
+        const next = nextPrograms[0];
+        const foto = next ? nextApresentadores[next.id]?.foto : undefined;
+        const selo = next?.selo;
+        if (foto) { const img = new Image(); img.src = foto; }
+        if (selo) { const img = new Image(); img.src = selo; }
+      }
+    };
+    check();
+    const iv = setInterval(check, 5000);
+    return () => clearInterval(iv);
+  }, [onAir, nextPrograms, nextApresentadores]);
+
   // Poll music data from per-user localStorage (scoped per user)
   useEffect(() => {
     if (!user?.id) return;
@@ -312,13 +335,14 @@ export default function OnAirWidget() {
         className="h-full relative flex flex-col transition-all duration-500"
         style={{ opacity: isHovered ? 0 : 1 }}
       >
-        {/* Presenter photo - anchored to bottom, larger */}
+        {/* Presenter photo - anchored to bottom, larger. Animates on change. */}
         {apresentadorFoto && (
           <img
+            key={`foto-${programa.id}-${apresentadorFoto}`}
             src={apresentadorFoto}
             alt={apresentadorNome}
-            className="absolute object-contain pointer-events-none"
-            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom" }}
+            className="absolute object-contain pointer-events-none animate-fade-in"
+            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom", animationDuration: "600ms" }}
           />
         )}
 
@@ -342,7 +366,7 @@ export default function OnAirWidget() {
           <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
-        <div className="flex-1 flex flex-col justify-center z-10">
+        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in" style={{ animationDuration: "500ms" }}>
           <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
             <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
             {programa.classificacaoEtaria && (
@@ -374,7 +398,7 @@ export default function OnAirWidget() {
         </div>
 
 
-        <div className="z-10 mb-4 flex items-center gap-1.5">
+        <div key={`ap-${apresentadorNome}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "500ms" }}>
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
           <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
           <button
