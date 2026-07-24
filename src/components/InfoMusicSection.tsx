@@ -108,21 +108,50 @@ export default function InfoMusicSection() {
     setTogglingAi(false);
   };
 
-  const saveExcecoes = async () => {
+  const saveExcecoesValue = async (val: string) => {
     if (!user) return;
     setSavingExcecoes(true);
     try {
       const { error } = await supabase
         .from("user_settings")
-        .upsert({ user_id: user.id, infomusic_excecoes: excecoes }, { onConflict: "user_id" });
+        .upsert({ user_id: user.id, infomusic_excecoes: val }, { onConflict: "user_id" });
       if (error) throw error;
-      setExcecoesInitial(excecoes);
-      toast.success("Exceções salvas");
+      setExcecoes(val);
+      setExcecoesInitial(val);
     } catch (e) {
       toast.error("Erro ao salvar exceções");
     }
     setSavingExcecoes(false);
   };
+
+  const saveExcecoes = async () => {
+    await saveExcecoesValue(excecoes);
+    toast.success("Exceções salvas");
+  };
+
+  const excecaoList = useMemo(
+    () => excecoes.split(",").map((s) => s.trim()).filter(Boolean),
+    [excecoes]
+  );
+
+  const addExcecao = async () => {
+    const v = newExcecao.trim();
+    if (!v) return;
+    if (excecaoList.some((x) => x.toLowerCase() === v.toLowerCase())) {
+      toast.error("Palavra já cadastrada");
+      return;
+    }
+    const next = [...excecaoList, v].join(", ");
+    setNewExcecao("");
+    await saveExcecoesValue(next);
+    toast.success("Exceção adicionada");
+  };
+
+  const removeExcecao = async (word: string) => {
+    const next = excecaoList.filter((x) => x !== word).join(", ");
+    await saveExcecoesValue(next);
+  };
+
 
   const PAGE_SIZE = 50;
   const HARD_CAP = 1000;
