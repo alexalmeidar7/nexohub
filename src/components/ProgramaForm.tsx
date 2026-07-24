@@ -1338,7 +1338,9 @@ export default function ProgramaForm() {
             {saving ? "Salvando..." : editingId ? "Atualizar" : "Salvar Programa"}
           </button>
         </div>
+        </>)}
       </section>
+
 
       {/* LIST CARD — exibido acima da grade a pedido do usuário */}
 
