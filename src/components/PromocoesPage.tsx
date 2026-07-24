@@ -5,6 +5,7 @@ import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Bold, Italic, Underline,
 import { useToast } from "@/hooks/use-toast";
 import { compressImage } from "@/lib/imageCompressor";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 // Palette (nexo-form-design-system) — mesmo padrão do Cadastro de Ouvinte / Citações
 const CYAN = "#00BFF0";
@@ -318,7 +319,7 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Excluir esta promoção?")) return;
+    if (!(await confirmDialog("Excluir esta promoção?"))) return;
     await supabase.from("promocoes").delete().eq("id", id);
     await loadData();
   };

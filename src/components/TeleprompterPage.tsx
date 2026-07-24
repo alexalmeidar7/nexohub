@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Plus, Trash2, Power } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface TP {
   id: string;
@@ -80,7 +81,7 @@ export default function TeleprompterPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Remover este TP?")) return;
+    if (!(await confirmDialog("Remover este TP?"))) return;
     await (supabase as any).from("teleprompters").delete().eq("id", id);
     loadTPs();
   }

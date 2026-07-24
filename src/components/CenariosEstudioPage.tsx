@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { compressImage } from "@/lib/imageCompressor";
 import { toast } from "sonner";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface Programa {
   id: string;
@@ -185,7 +186,7 @@ export default function CenariosEstudioPage() {
   };
 
   const removeGrupo = async (id: string) => {
-    if (!confirm("Excluir este template e todas as suas TVs?")) return;
+    if (!(await confirmDialog("Excluir este template e todas as suas TVs?"))) return;
     const { error } = await (supabase as any).from("cenario_estudio_grupos").delete().eq("id", id);
     if (error) {
       toast.error("Erro ao excluir");

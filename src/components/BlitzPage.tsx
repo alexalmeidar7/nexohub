@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Siren, Save, Loader2, Pencil, Trash2, Check, X, Calendar, Clock, Users, Building2, FileText, CheckCircle2 } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 // Nexo palette
 const CYAN = "#00BFF0";
@@ -145,7 +146,7 @@ export default function BlitzPage() {
   };
 
   const del = async (id: string) => {
-    if (!confirm("Excluir esta blitz?")) return;
+    if (!(await confirmDialog("Excluir esta blitz?"))) return;
     const { error } = await supabase.from("blitz_promocionais").delete().eq("id", id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Blitz excluída" });

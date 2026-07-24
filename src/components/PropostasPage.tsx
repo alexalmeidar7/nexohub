@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 type Status = "rascunho" | "arte_final" | "aprovacao" | "concluido";
 
@@ -148,7 +149,7 @@ export default function PropostasPage() {
   };
 
   const handleDeleteProposta = async (propostaId: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita.")) return;
+    if (!(await confirmDialog("Tem certeza que deseja excluir esta proposta? Esta ação não pode ser desfeita."))) return;
 
     const { error } = await supabase.from("comercial_propostas").delete().eq("id", propostaId);
 

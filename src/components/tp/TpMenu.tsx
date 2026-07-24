@@ -3,6 +3,7 @@ import { MessageSquare, SlidersHorizontal, Monitor, LogOut, Trash2 } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import logoNexo from "@/assets/logo-nexo.png";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 interface TpMenuProps {
   onMessage: () => void;
@@ -56,7 +57,7 @@ export default function TpMenu({ onMessage, onControl, onOpenTp, onLogout }: TpM
 
   async function handleClearText() {
     if (!user) return;
-    if (!confirm("Limpar o texto salvo no TP?")) return;
+    if (!(await confirmDialog("Limpar o texto salvo no TP?"))) return;
     await (supabase as any)
       .from("teleprompters")
       .update({ texto_atual: "", is_html: false })

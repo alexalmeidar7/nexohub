@@ -6,6 +6,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { confirmDialog } from "@/lib/confirmDialog";
 
 type Tab = "inbox" | "flows" | "broadcast" | "settings";
 
@@ -364,7 +365,7 @@ function FlowsTab({ userId }: { userId: string }) {
               </button>
               {!f.is_default && (
                 <button onClick={async () => {
-                  if (!confirm("Excluir automação?")) return;
+                  if (!(await confirmDialog("Excluir automação?"))) return;
                   await supabase.from("wa_flows").delete().eq("id", f.id);
                   load();
                 }} className="p-1.5 rounded-full" style={{ color: "#c00" }}><Trash2 size={14}/></button>
