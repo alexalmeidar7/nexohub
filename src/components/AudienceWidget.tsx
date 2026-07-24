@@ -2019,25 +2019,27 @@ function AudienceReportDialog({
                         <tr style={{ background: `linear-gradient(180deg, ${CYAN} 0%, #00A9D6 100%)`, color: "#fff" }}>
                           <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Hora</th>
                           <th className="px-3 py-2.5 text-left text-[10px] font-black uppercase tracking-widest">Programa</th>
-                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Áudio</th>
-                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Vídeo</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Rádio</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">TV</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">YouTube</th>
                           <th className="px-3 py-2.5 text-right text-[10px] font-black uppercase tracking-widest">Total</th>
                         </tr>
                       </thead>
                       <tbody>
                         {loading && (
-                          <tr><td colSpan={5} className="py-10 text-center">
+                          <tr><td colSpan={6} className="py-10 text-center">
                             <Loader2 className="inline-block animate-spin" size={20} style={{ color: CYAN }} />
                           </td></tr>
                         )}
                         {!loading && filteredRows.length === 0 && (
-                          <tr><td colSpan={5} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
+                          <tr><td colSpan={6} className="py-10 text-center text-xs font-semibold" style={{ color: DARK, opacity: 0.55 }}>
                             Nenhum registro encontrado para essa data.
                           </td></tr>
                         )}
                         {!loading && filteredRows.map((r, i) => {
                           const isPeak = stats && r.id === stats.peakTotal.id;
-                          const total = (r.audio || 0) + (r.video || 0);
+                          const yt = r.youtube || 0;
+                          const total = (r.audio || 0) + (r.video || 0) + yt;
                           return (
                             <tr key={r.id} style={{
                               background: isPeak ? `${LIME}44` : (i % 2 === 0 ? "#fff" : "#F4FBFD"),
@@ -2052,6 +2054,7 @@ function AudienceReportDialog({
                               </td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: AUDIO_COLOR }}>{r.audio.toLocaleString("pt-BR")}</td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: VIDEO_COLOR }}>{r.video.toLocaleString("pt-BR")}</td>
+                              <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: yt > 0 ? "#FF0000" : DARK, opacity: yt > 0 ? 1 : 0.35 }}>{yt.toLocaleString("pt-BR")}</td>
                               <td className="px-3 py-2 text-xs font-black text-right tabular-nums" style={{ color: DARK }}>{total.toLocaleString("pt-BR")}</td>
                             </tr>
                           );
