@@ -1964,7 +1964,34 @@ function AudienceReportDialog({
 
           {view === "day" && (
             <>
-
+              {stats?.hasYoutube && (
+                <div className="rounded-2xl p-3 flex items-center gap-3 mb-1" style={{ background: "linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%)", border: `1px solid #FF000033` }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "#FF0000" }}>
+                    <span className="text-white text-[10px] font-black tracking-widest">LIVE</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#B91C1C", opacity: 0.75 }}>Live YouTube · desempenho do dia</div>
+                    <div className="text-xs font-bold" style={{ color: DARK, opacity: 0.7 }}>
+                      Pico às <span style={{ color: "#FF0000" }}>{fmtTime(stats.peakYoutube.created_at)}</span>
+                      {stats.peakYoutube.programa && <> · {stats.peakYoutube.programa}</>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Pico</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: "#FF0000" }}>{(stats.peakYoutube.youtube || 0).toLocaleString("pt-BR")}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Média</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: DARK }}>{stats.avgYoutube.toLocaleString("pt-BR")}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[9px] font-black uppercase tracking-widest" style={{ color: DARK, opacity: 0.55 }}>Views · soma</div>
+                      <div className="text-lg font-black tabular-nums" style={{ color: DARK }}>{stats.sumYoutube.toLocaleString("pt-BR")}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Gráfico + Tabela lado a lado */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 min-h-[420px]">
