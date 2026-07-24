@@ -527,9 +527,13 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   // Fast YouTube Live viewers refresh (every few seconds) — independent from the
   // 30s full video poll so the "Live YouTube" card feels real-time.
+  // Detecta o fim da live: quando a API do YouTube responde 0 (não há transmissão
+  // ao vivo no momento) por duas leituras consecutivas, ocultamos o card. Erros
+  // (null) não derrubam o valor exibido.
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
+    let zeroStreak = 0;
     const tick = async () => {
       try {
         const { data } = await supabase.functions.invoke("count-video-viewers", {
@@ -537,13 +541,23 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         });
         const d = data as any;
         if (cancelled || !d?.ok) return;
-        if (typeof d.youtubeLive === "number") setYoutubeLiveCount(d.youtubeLive);
+        const v = d.youtubeLive;
+        if (typeof v !== "number") return; // erro/desconhecido — mantém último valor
+        if (v > 0) {
+          zeroStreak = 0;
+          setYoutubeLiveCount(v);
+        } else {
+          // v === 0 → live encerrada. Confirma com uma segunda leitura para evitar flicker.
+          zeroStreak += 1;
+          if (zeroStreak >= 2) setYoutubeLiveCount(0);
+        }
       } catch { /* ignore */ }
     };
     const iv = setInterval(tick, YT_LIVE_MS);
     tick();
     return () => { cancelled = true; clearInterval(iv); };
   }, [dataUserId]);
+
 
 
 
