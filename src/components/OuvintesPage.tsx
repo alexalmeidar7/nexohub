@@ -870,7 +870,7 @@ export default function OuvintesPage() {
                     <td style={{ padding: "12px 14px", textAlign: "right", fontWeight: 800, color: CYAN }}>
                       {o.pontuacao ?? 0}
                     </td>
-                    <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                    <td style={{ padding: "12px 14px", textAlign: "right", position: "sticky", right: 0, background: o.banido ? "#FEF2F2" : (idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE"), boxShadow: "-8px 0 12px -8px rgba(10,37,64,0.15)" }}>
                       <div style={{ display: "inline-flex", gap: 6 }}>
                         <button
                           onClick={() => handleEdit(o)}
