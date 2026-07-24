@@ -1329,7 +1329,8 @@ function AudienceReportDialog({
   const [trendLoading, setTrendLoading] = useState(false);
   const [programaFilter, setProgramaFilter] = useState<string>("__ALL__");
   const [programOptions, setProgramOptions] = useState<string[]>([]);
-  const [totals30d, setTotals30d] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+  const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
+  const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
 
   // Totais dos últimos 30 dias (por fonte: áudio/vídeo), respeita filtro de programa
   useEffect(() => {
