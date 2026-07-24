@@ -1842,8 +1842,10 @@ function AudienceReportDialog({
                             {totalAll.toLocaleString("pt-BR")}
                           </span>
                           <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.55 }}>soma Rádio + TV{hasYt ? " + YouTube" : ""}</span>
-                        </div>
-                      </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {/* Comparação · share % por fonte */}
                       <div className="px-4 pt-3 pb-4" style={{ borderTop: `1px solid ${CYAN}22` }}>
                         <div className="flex items-center justify-between mb-2">
