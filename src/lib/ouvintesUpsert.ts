@@ -190,13 +190,13 @@ export async function upsertOuvinteRecord(input: UpsertOuvinteInput): Promise<{ 
     };
 
     if (existing) {
-      const { error } = await supabase.from("ouvintes").update(payload).eq("id", existing.id);
+      const { error } = await (supabase as any).from("ouvintes").update(payload).eq("id", existing.id);
       if (error) return { ok: false, error: error.message };
-      return { ok: true, id: existing.id };
+      return { ok: true, id: existing.id as string };
     } else {
-      const { data, error } = await supabase.from("ouvintes").insert(payload).select("id").maybeSingle();
+      const { data, error } = await (supabase as any).from("ouvintes").insert(payload).select("id").maybeSingle();
       if (error) return { ok: false, error: error.message };
-      return { ok: true, id: data?.id };
+      return { ok: true, id: (data as any)?.id };
     }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
