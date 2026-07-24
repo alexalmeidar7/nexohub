@@ -291,11 +291,12 @@ Deno.serve(async (req) => {
     const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
-    // YouTube Live via official Data API (when both channel URL and key exist).
+    // YouTube Live via official Data API. Prefer explicit channel ID over URL parsing.
     let ytLive: number | null = null;
-    if (ytChannelUrl && ytApiKey) {
-      ytLive = await fetchYouTubeApiLiveViewers(ytChannelUrl, ytApiKey);
-      debug.push(`youtube_api ${ytChannelUrl} -> ${ytLive}`);
+    if (ytApiKey && (ytChannelId || ytChannelUrl)) {
+      const ref = ytChannelId ? ytChannelId : ytChannelUrl!;
+      ytLive = await fetchYouTubeApiLiveViewers(ref, ytApiKey);
+      debug.push(`youtube_api ${ref} -> ${ytLive}`);
     }
 
     const streamTotal = counts.reduce((a, n) => a + (n ?? 0), 0);
