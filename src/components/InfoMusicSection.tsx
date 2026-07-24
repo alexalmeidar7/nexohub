@@ -389,31 +389,87 @@ export default function InfoMusicSection() {
 
   return (
     <div className="space-y-5">
-      {/* ── Header: Como funciona + garantia de cache ── */}
-      <div className="rounded-2xl p-4" style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 92%, var(--layout-accent-color, #2563eb))",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)",
-      }}>
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles size={16} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          <h4 className="text-sm font-bold uppercase tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Como funciona
-          </h4>
-        </div>
-        <p className="text-xs leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-          Ao tocar uma nova música, o sistema consulta a tabela <strong>InfoMusic</strong>. Se não houver curiosidade salva, a IA gera uma frase curta e a envia ao XML <code className="px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code> entre <strong>10s e 25s</strong>. Curiosidades ficam salvas por <strong>6 meses</strong>. Cota de IA: <strong>20/mês</strong> por usuário.
-        </p>
-        <div className="mt-2 rounded-lg px-3 py-2 flex items-start gap-2 text-[11px] leading-snug" style={{
-          backgroundColor: "color-mix(in srgb, #10b981 12%, transparent)",
-          border: "1px solid color-mix(in srgb, #10b981 30%, transparent)",
-          color: "var(--layout-page-text, #1a1a1a)",
-        }}>
-          <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color: "#10b981" }} />
-          <span>
-            <strong>Mesmo sem cota</strong> ou com IA desabilitada, curiosidades já salvas no banco continuam sendo enviadas ao XML normalmente.
-          </span>
-        </div>
+      {/* ── Header row: título compacto + botão "?" ── */}
+      <div className="flex items-center justify-end">
+        <button
+          type="button"
+          onClick={() => setShowHowTo(true)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider hover:opacity-90 transition-opacity"
+          style={{
+            backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)",
+            color: "var(--layout-accent-color, #2563eb)",
+            border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)",
+          }}
+          title="Como funciona"
+        >
+          <HelpCircle size={13} />
+          Como funciona?
+        </button>
       </div>
+
+      {showHowTo && (
+        <div
+          onClick={() => setShowHowTo(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 2147483000,
+            background: "rgba(10, 37, 64, 0.55)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="rounded-2xl overflow-hidden"
+            style={{
+              backgroundColor: "var(--layout-page-bg, #fff)",
+              border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 30%, transparent)",
+              maxWidth: 520,
+              width: "100%",
+              boxShadow: "0 24px 60px rgba(10,37,64,0.25)",
+            }}
+          >
+            <div className="flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #2563eb), color-mix(in srgb, var(--layout-accent-color, #2563eb) 70%, #000))", color: "#fff" }}>
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} />
+                <h4 className="text-sm font-bold uppercase tracking-wider">Como funciona o Info Music</h4>
+              </div>
+              <button onClick={() => setShowHowTo(false)} className="p-1 rounded-full hover:bg-white/15" aria-label="Fechar">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-3">
+              <p className="text-xs leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Ao tocar uma nova música, o sistema consulta a tabela <strong>InfoMusic</strong>.
+                Se não houver curiosidade salva, a IA gera uma frase curta e a envia ao XML
+                <code className="mx-1 px-1 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>&lt;curiosidade&gt;</code>
+                entre <strong>10s e 25s</strong>. Curiosidades ficam salvas por <strong>6 meses</strong>.
+                Cota de IA: <strong>20/mês</strong> por usuário.
+              </p>
+              <div className="rounded-lg px-3 py-2 flex items-start gap-2 text-[11px] leading-snug" style={{
+                backgroundColor: "color-mix(in srgb, #10b981 12%, transparent)",
+                border: "1px solid color-mix(in srgb, #10b981 30%, transparent)",
+                color: "var(--layout-page-text, #1a1a1a)",
+              }}>
+                <CheckCircle2 size={12} className="mt-0.5 shrink-0" style={{ color: "#10b981" }} />
+                <span>
+                  <strong>Mesmo sem cota</strong> ou com IA desabilitada, curiosidades já salvas no banco continuam sendo enviadas ao XML normalmente.
+                </span>
+              </div>
+              <p className="text-[11px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                A lista de <strong>exceções</strong> bloqueia a geração para músicas ou artistas cujo nome contenha alguma das palavras cadastradas (ex.: <em>jingle</em>, <em>vinheta</em>).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── AI toggle + Exceções (grid 2 col) ── */}
       <div className="grid md:grid-cols-2 gap-4">
