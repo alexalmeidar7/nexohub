@@ -1108,10 +1108,41 @@ export default function InfoMusicSection() {
                           {(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}
                         </td>
                         <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
-                          <div className="line-clamp-3 leading-relaxed">
-                            {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
-                          </div>
+                          {r.curiosidade && r.curiosidade.trim() ? (
+                            <div className="line-clamp-3 leading-relaxed">
+                              {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
+                                Aguardando cadastro manual
+                              </span>
+                              <textarea
+                                value={pendingEdits[r.id] ?? ""}
+                                onChange={(e) => setPendingEdits(p => ({ ...p, [r.id]: e.target.value }))}
+                                placeholder="Digite a curiosidade sobre esta música..."
+                                rows={2}
+                                className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-y"
+                                style={{
+                                  backgroundColor: "var(--layout-page-bg, #fff)",
+                                  color: "var(--layout-page-text, #1a1a1a)",
+                                  border: "1px dashed color-mix(in srgb, #f59e0b 50%, transparent)",
+                                }}
+                              />
+                              <div className="flex justify-end">
+                                <Button
+                                  variant="save"
+                                  onClick={() => saveRowCuriosity(r)}
+                                  disabled={savingRowId === r.id || !(pendingEdits[r.id] ?? "").trim()}
+                                >
+                                  {savingRowId === r.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                                  Salvar
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </td>
+
                         <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                           {new Date(r.created_at).toLocaleString("pt-BR")}
                         </td>
