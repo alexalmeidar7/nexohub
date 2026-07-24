@@ -375,38 +375,50 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     };
   }, [dataUserId]);
 
-  // Poll audio stream stats using the URL (and optionally the XPath) configured
-  // in the popup. If no XPath is provided, the edge function tries to detect a
-  // common listeners tag/field automatically.
+  // Poll audio stream stats. Sums the primary URL plus each extra source
+  // configured. When any of them returns a number, the widget shows the sum.
+  const audioSourcesKey = JSON.stringify(
+    [
+      { url: sources.audio_stream_api_url?.trim(), xpath: sources.audio_stream_xpath?.trim() },
+      ...sources.audio_extras.map((e) => ({ url: e.url?.trim(), xpath: e.xpath?.trim() })),
+    ].filter((x) => x.url),
+  );
   useEffect(() => {
     if (!dataUserId) return;
     let cancelled = false;
-    const overrideUrl = sources.audio_stream_api_url?.trim();
-    const xpath = sources.audio_stream_xpath?.trim();
-    if (!overrideUrl) {
+    const list: Array<{ url: string; xpath: string }> = [];
+    const pUrl = sources.audio_stream_api_url?.trim();
+    if (pUrl) list.push({ url: pUrl, xpath: sources.audio_stream_xpath?.trim() || "" });
+    for (const e of sources.audio_extras) {
+      const u = e.url?.trim();
+      if (u) list.push({ url: u, xpath: e.xpath?.trim() || "" });
+    }
+    if (list.length === 0) {
       setStreamingCount(null);
       setLoadingStreaming(false);
       return;
     }
-    // Hydrate instantly from client cache when a fresh value exists.
-    const ck = audKey("a", overrideUrl, xpath);
-    const cached = getAudCache(ck);
-    if (cached !== undefined) {
-      setStreamingCount(cached);
-      setLoadingStreaming(false);
-    }
     const tick = async () => {
-      const body: Record<string, unknown> = { userId: dataUserId, urls: [overrideUrl] };
-      if (xpath) body.xpath = xpath;
-      const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+      const results = await Promise.all(
+        list.map(async ({ url, xpath }) => {
+          const ck = audKey("a", url, xpath);
+          const body: Record<string, unknown> = { userId: dataUserId, urls: [url] };
+          if (xpath) body.xpath = xpath;
+          try {
+            const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+            const raw = (data as any)?.ok ? (data as any).listeners : null;
+            const n = typeof raw === "number" ? raw : null;
+            setAudCache(ck, n, LISTENERS_MS);
+            return n;
+          } catch {
+            return null;
+          }
+        }),
+      );
       if (cancelled) return;
-      let n: number | null = null;
-      if (data && (data as any).ok) {
-        const raw = (data as any).listeners;
-        n = typeof raw === "number" ? raw : null;
-      }
-      setStreamingCount(n);
-      setAudCache(ck, n, LISTENERS_MS);
+      const anyOk = results.some((n) => n !== null);
+      const total = results.reduce((a, n) => a + (n ?? 0), 0);
+      setStreamingCount(anyOk ? total : null);
       setLoadingStreaming(false);
     };
     tick();
@@ -415,7 +427,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       cancelled = true;
       clearInterval(iv);
     };
-  }, [dataUserId, sources.audio_stream_api_url, sources.audio_stream_xpath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataUserId, audioSourcesKey]);
 
 
 
