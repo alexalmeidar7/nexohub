@@ -1789,7 +1789,7 @@ function AudienceReportDialog({
               <div className="ml-auto flex items-center gap-2 rounded-full px-4 py-1.5" style={{ background: DARK, color: "#fff" }}>
                 <Trophy size={14} style={{ color: LIME }} />
                 <span className="text-[10px] font-bold uppercase tracking-wider opacity-70">Pico do dia</span>
-                <span className="text-sm font-black tabular-nums">{(stats.peakTotal.audio + stats.peakTotal.video).toLocaleString("pt-BR")}</span>
+                <span className="text-sm font-black tabular-nums">{(stats.peakTotal.audio + stats.peakTotal.video + (stats.peakTotal.youtube || 0)).toLocaleString("pt-BR")}</span>
                 <span className="text-[10px] opacity-70">às {fmtTime(stats.peakTotal.created_at)}</span>
               </div>
             )}
