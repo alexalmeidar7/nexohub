@@ -144,11 +144,6 @@ export default function SitePage({ effectiveUserId }: Props) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={openPreview}
-            className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-xs font-bold uppercase tracking-wider transition"
-            style={{ background: "#ffffff", color: "#0A2540", border: "2px solid #00BFF0" }}>
-            <ExternalLink size={13} /> Preview
-          </button>
           <button onClick={() => setModule("servidor")}
             data-nexo="primary"
             className="inline-flex items-center gap-1.5 h-10 px-5 rounded-full text-xs font-extrabold uppercase tracking-wider transition"
