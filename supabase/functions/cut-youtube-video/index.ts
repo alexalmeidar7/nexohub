@@ -447,114 +447,10 @@ Deno.serve(async (req) => {
       return new Response(clip.response.body, { status: 200, headers });
     }
 
-    // Metadata request: only report whether a fallback full-video URL exists.
-    // The real clip download is generated on demand with action=download_clip,
-    // so temporary provider URLs and private API headers are never exposed to the browser.
-    let downloadUrl = "";
-    let providerUsed = "";
-    let isClipDownload = false;
-
-    // 2) Piped instances (open source YT frontend, no auth)
-    const pipedInstances = [
-      "https://pipedapi.kavin.rocks",
-      "https://pipedapi.adminforge.de",
-      "https://pipedapi.leptons.xyz",
-      "https://pipedapi.reallyaweso.me",
-    ];
-    for (const base of pipedInstances) {
-      if (downloadUrl) break;
-      try {
-        const r = await fetch(`${base}/streams/${videoId}`, {
-          headers: { "Accept": "application/json" },
-          signal: AbortSignal.timeout(6000),
-        });
-        if (!r.ok) { console.log(`Piped ${base} non-ok:`, r.status); continue; }
-        const data = await r.json();
-        const videoStreams: any[] = data.videoStreams || [];
-        // Prefer combined (with audio) MP4 streams
-        const combined = videoStreams.filter((s) => s.videoOnly === false && (s.format || "").toLowerCase().includes("mpeg_4"));
-        const pick = combined.sort((a, b) => (b.height || 0) - (a.height || 0))[0]
-          || videoStreams.filter((s) => s.videoOnly === false).sort((a, b) => (b.height || 0) - (a.height || 0))[0];
-        if (pick?.url) {
-          downloadUrl = pick.url;
-          providerUsed = `piped:${base}`;
-          isClipDownload = false;
-        }
-      } catch (e) {
-        console.log(`Piped ${base} error:`, (e as Error).message);
-      }
-    }
-
-    // 3) Invidious instances
-    if (!downloadUrl) {
-      const invInstances = [
-        "https://yewtu.be",
-        "https://invidious.privacyredirect.com",
-        "https://invidious.nerdvpn.de",
-        "https://iv.melmac.space",
-      ];
-      for (const base of invInstances) {
-        if (downloadUrl) break;
-        try {
-          const r = await fetch(`${base}/api/v1/videos/${videoId}`, {
-            headers: { "Accept": "application/json" },
-            signal: AbortSignal.timeout(6000),
-          });
-          if (!r.ok) { console.log(`Invidious ${base} non-ok:`, r.status); continue; }
-          const data = await r.json();
-          const streams: any[] = data.formatStreams || [];
-          const pick = streams
-            .filter((s: any) => (s.container || "").toLowerCase() === "mp4")
-            .sort((a: any, b: any) => (parseInt(b.resolution) || 0) - (parseInt(a.resolution) || 0))[0]
-            || streams[0];
-          if (pick?.url) {
-            downloadUrl = pick.url;
-            providerUsed = `invidious:${base}`;
-            isClipDownload = false;
-          }
-        } catch (e) {
-          console.log(`Invidious ${base} error:`, (e as Error).message);
-        }
-      }
-    }
-
-    // 4) Cobalt (last resort — usually requires JWT now)
-    if (!downloadUrl) {
-      try {
-        const cobaltRes = await fetch("https://api.cobalt.tools/", {
-          method: "POST",
-          headers: { "Accept": "application/json", "Content-Type": "application/json" },
-          body: JSON.stringify({
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-            videoQuality: "720",
-            filenameStyle: "basic",
-          }),
-          signal: AbortSignal.timeout(6000),
-        });
-        if (cobaltRes.ok) {
-          const cobaltData = await cobaltRes.json();
-          if (cobaltData.status === "stream" || cobaltData.status === "redirect" || cobaltData.status === "tunnel") {
-            downloadUrl = cobaltData.url || "";
-            providerUsed = "cobalt";
-            isClipDownload = false;
-          } else if (cobaltData.status === "picker" && Array.isArray(cobaltData.picker)) {
-            const mp4 = cobaltData.picker.find((p: any) => p.type === "video") || cobaltData.picker[0];
-            downloadUrl = mp4?.url || "";
-            providerUsed = "cobalt-picker";
-            isClipDownload = false;
-          }
-        } else {
-          console.log("Cobalt API non-ok:", cobaltRes.status, await cobaltRes.text());
-        }
-      } catch (cobaltErr) {
-        console.log("Cobalt API error (non-fatal):", (cobaltErr as Error).message);
-      }
-    }
-
-    console.log(`Resolved download URL via: ${providerUsed || "none"} for video ${videoId} clip=${isClipDownload}`);
-
-
-    // Generate clip embed and share URLs
+    // Metadata request: return instantly with embed/share/thumbnail.
+    // The actual clip download is generated on demand via action=download_clip,
+    // so we no longer probe Piped/Invidious/Cobalt here (they were adding 20-30s
+    // per request and are frequently rate-limited or offline).
     const clipEmbedUrl = `https://www.youtube.com/embed/${videoId}?start=${start_seconds}&end=${end_seconds}&autoplay=1`;
     const shareUrl = `https://youtu.be/${videoId}?t=${start_seconds}`;
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
@@ -566,10 +462,10 @@ Deno.serve(async (req) => {
         clip_embed_url: clipEmbedUrl,
         share_url: shareUrl,
         thumbnail_url: thumbnailUrl,
-        download_url: isClipDownload ? downloadUrl : "",
-        fallback_download_url: isClipDownload ? "" : downloadUrl,
-        download_provider: providerUsed,
-        is_clip_download: isClipDownload,
+        download_url: "",
+        fallback_download_url: "",
+        download_provider: "",
+        is_clip_download: false,
         start_seconds,
         end_seconds,
         duration,
