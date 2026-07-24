@@ -170,17 +170,12 @@ const App = () => (
             <Route path="/player/watch" element={<PlayerPage />} />
             <Route path="/player/catalog" element={<PlayerCatalog />} />
             <Route path="/player/app" element={<PlayerApp />} />
-            <Route path="/jornal-export" element={<JornalExport />} />
-            <Route path="/roteiro-export" element={<RoteiroExport />} />
-            <Route path="/roteiro-apresentador-edit" element={<RoteiroApresentadorEdit />} />
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
             <Route path="/intercom" element={<IntercomListener />} />
             <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
             <Route path="/telainterativatelao" element={<TelaInterativa />} />
-            <Route path="/site-preview" element={<SitePreview />} />
-            <Route path="/design-system" element={<DesignSystemDemo />} />
             <Route path="/vmix/assunto/:userId" element={<VmixAssunto />} />
 
             {/* Slug routes for dynamic access */}
