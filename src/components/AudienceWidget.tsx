@@ -1607,8 +1607,8 @@ function AudienceReportDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-6xl w-[96vw] p-0 overflow-hidden"
-        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column" }}
+        className="max-w-6xl w-[96vw] p-0 overflow-hidden top-[2vh] translate-y-0 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4"
+        style={{ background: BG, borderRadius: 28, border: "none", fontFamily: "Montserrat, sans-serif", display: "flex", flexDirection: "column", height: "96vh", maxHeight: "96vh" }}
       >
         <div style={{ background: `linear-gradient(135deg, ${CYAN} 0%, #00A9D6 100%)`, padding: "20px 24px" }}>
           <DialogHeader>
