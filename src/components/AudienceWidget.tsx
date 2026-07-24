@@ -1397,6 +1397,7 @@ function AudienceReportDialog({
   const [programOptions, setProgramOptions] = useState<string[]>([]);
   const [periodDays, setPeriodDays] = useState<30 | 60 | 90 | 180>(30);
   const [totalsPeriod, setTotalsPeriod] = useState<{ audio: number; video: number; youtube: number; peakAudio: number; peakVideo: number; samples: number; avgAudio: number; avgVideo: number } | null>(null);
+  const [yesterdayYt, setYesterdayYt] = useState<{ peak: number; avg: number; sum: number; has: boolean; dateLabel: string } | null>(null);
 
   // Totais no período selecionado (por fonte), respeita filtro de programa
   useEffect(() => {
