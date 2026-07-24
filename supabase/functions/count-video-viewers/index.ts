@@ -176,6 +176,36 @@ async function resolveYouTubeChannelId(ref: { channelId?: string; handle?: strin
   } catch { return null; }
 }
 
+// Fallback: scrape the channel's /live page directly. The YouTube Data API
+// search endpoint has several-minute indexing lag for eventType=live, so it
+// often reports "no live" while a broadcast is actively running. The public
+// /channel/<id>/live URL redirects to the current live video and exposes the
+// concurrent viewer count in the HTML.
+async function fetchYouTubeChannelLiveScrape(channelId: string): Promise<number | null> {
+  try {
+    const r = await fetch(`https://www.youtube.com/channel/${channelId}/live?hl=en`, {
+      headers: { ...HDR, "Accept-Language": "en-US,en;q=0.9" },
+      signal: AbortSignal.timeout(T),
+    });
+    if (!r.ok) return null;
+    const t = await r.text();
+    const patterns = [
+      /"concurrentViewers":\s*"(\d+)"/,
+      /"viewCount":\s*{\s*"videoViewCountRenderer":\s*{\s*"viewCount":\s*{\s*"runs":\s*\[\s*{\s*"text":\s*"([\d.,\s]+)"/,
+      /(\d[\d.,\s]*)\s+watching now/i,
+    ];
+    for (const re of patterns) {
+      const m = t.match(re);
+      if (m) {
+        const n = parseInt(m[1].replace(/[^\d]/g, ""), 10);
+        if (Number.isFinite(n)) return n;
+      }
+    }
+    // No live indicators found on the page — channel is not live.
+    return 0;
+  } catch { return null; }
+}
+
 async function fetchYouTubeApiLiveViewers(channelUrl: string, apiKey: string): Promise<number | null> {
   const ref = parseYouTubeChannel(channelUrl);
   const channelId = await resolveYouTubeChannelId(ref, apiKey);
@@ -186,17 +216,27 @@ async function fetchYouTubeApiLiveViewers(channelUrl: string, apiKey: string): P
       part: "id", channelId, eventType: "live", type: "video", maxResults: "1", key: apiKey,
     });
     const sr = await fetch(`https://www.googleapis.com/youtube/v3/search?${searchP.toString()}`, { signal: AbortSignal.timeout(T) });
-    if (!sr.ok) return null;
-    const sj = await sr.json();
-    const videoId: string | undefined = sj?.items?.[0]?.id?.videoId;
-    if (!videoId) return 0; // Not live right now.
-    const vp = new URLSearchParams({ part: "liveStreamingDetails", id: videoId, key: apiKey });
-    const vr = await fetch(`https://www.googleapis.com/youtube/v3/videos?${vp.toString()}`, { signal: AbortSignal.timeout(T) });
-    if (!vr.ok) return null;
-    const vj = await vr.json();
-    const n = parseInt(vj?.items?.[0]?.liveStreamingDetails?.concurrentViewers || "0", 10);
-    return Number.isFinite(n) ? n : 0;
-  } catch { return null; }
+    if (sr.ok) {
+      const sj = await sr.json();
+      const videoId: string | undefined = sj?.items?.[0]?.id?.videoId;
+      if (videoId) {
+        const vp = new URLSearchParams({ part: "liveStreamingDetails", id: videoId, key: apiKey });
+        const vr = await fetch(`https://www.googleapis.com/youtube/v3/videos?${vp.toString()}`, { signal: AbortSignal.timeout(T) });
+        if (vr.ok) {
+          const vj = await vr.json();
+          const n = parseInt(vj?.items?.[0]?.liveStreamingDetails?.concurrentViewers || "0", 10);
+          if (Number.isFinite(n) && n > 0) return n;
+        }
+      }
+    }
+    // API said "no live" (or quota/error) — confirm with an HTML scrape which
+    // reflects reality without indexing lag.
+    const scraped = await fetchYouTubeChannelLiveScrape(channelId);
+    return scraped;
+  } catch {
+    // Last-ditch scrape if the API call itself threw.
+    return await fetchYouTubeChannelLiveScrape(channelId);
+  }
 }
 
 async function fetchProviderViewers(streamUrl: string): Promise<number | null> {
