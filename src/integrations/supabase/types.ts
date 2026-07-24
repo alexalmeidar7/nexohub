@@ -803,6 +803,7 @@ export type Database = {
           video_stream_api_url: string | null
           video_stream_xpath: string | null
           youtube: string | null
+          youtube_api_key: string | null
           youtube_subs: number | null
         }
         Insert: {
@@ -828,6 +829,7 @@ export type Database = {
           video_stream_api_url?: string | null
           video_stream_xpath?: string | null
           youtube?: string | null
+          youtube_api_key?: string | null
           youtube_subs?: number | null
         }
         Update: {
@@ -853,6 +855,7 @@ export type Database = {
           video_stream_api_url?: string | null
           video_stream_xpath?: string | null
           youtube?: string | null
+          youtube_api_key?: string | null
           youtube_subs?: number | null
         }
         Relationships: []

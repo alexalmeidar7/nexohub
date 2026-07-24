@@ -142,6 +142,63 @@ async function fetchYouTubeLiveViewers(url: string): Promise<number | null> {
   } catch { return null; }
 }
 
+// --- YouTube Data API v3 -------------------------------------------------
+// Given a channel URL (or @handle / channel id) and an API key, resolves the
+// current live broadcast and returns concurrent viewers.
+function parseYouTubeChannel(input: string): { channelId?: string; handle?: string; username?: string } {
+  try {
+    const u = new URL(input.startsWith("http") ? input : `https://youtube.com/${input.replace(/^\/+/, "")}`);
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts[0]?.startsWith("@")) return { handle: parts[0].slice(1) };
+    const ci = parts.indexOf("channel");
+    if (ci >= 0 && parts[ci + 1]) return { channelId: parts[ci + 1] };
+    const ui = parts.indexOf("user");
+    if (ui >= 0 && parts[ui + 1]) return { username: parts[ui + 1] };
+    const ci2 = parts.indexOf("c");
+    if (ci2 >= 0 && parts[ci2 + 1]) return { username: parts[ci2 + 1] };
+  } catch { /* not a URL */ }
+  if (input.startsWith("@")) return { handle: input.slice(1) };
+  if (/^UC[\w-]{20,}$/.test(input)) return { channelId: input };
+  return {};
+}
+
+async function resolveYouTubeChannelId(ref: { channelId?: string; handle?: string; username?: string }, apiKey: string): Promise<string | null> {
+  if (ref.channelId) return ref.channelId;
+  const p = new URLSearchParams({ part: "id", key: apiKey });
+  if (ref.handle) p.set("forHandle", `@${ref.handle}`);
+  else if (ref.username) p.set("forUsername", ref.username);
+  else return null;
+  try {
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/channels?${p.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j?.items?.[0]?.id || null;
+  } catch { return null; }
+}
+
+async function fetchYouTubeApiLiveViewers(channelUrl: string, apiKey: string): Promise<number | null> {
+  const ref = parseYouTubeChannel(channelUrl);
+  const channelId = await resolveYouTubeChannelId(ref, apiKey);
+  if (!channelId) return null;
+  try {
+    // Find current live broadcast for this channel.
+    const searchP = new URLSearchParams({
+      part: "id", channelId, eventType: "live", type: "video", maxResults: "1", key: apiKey,
+    });
+    const sr = await fetch(`https://www.googleapis.com/youtube/v3/search?${searchP.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!sr.ok) return null;
+    const sj = await sr.json();
+    const videoId: string | undefined = sj?.items?.[0]?.id?.videoId;
+    if (!videoId) return 0; // Not live right now.
+    const vp = new URLSearchParams({ part: "liveStreamingDetails", id: videoId, key: apiKey });
+    const vr = await fetch(`https://www.googleapis.com/youtube/v3/videos?${vp.toString()}`, { signal: AbortSignal.timeout(T) });
+    if (!vr.ok) return null;
+    const vj = await vr.json();
+    const n = parseInt(vj?.items?.[0]?.liveStreamingDetails?.concurrentViewers || "0", 10);
+    return Number.isFinite(n) ? n : 0;
+  } catch { return null; }
+}
+
 async function fetchProviderViewers(streamUrl: string): Promise<number | null> {
   // YouTube live is by far the most common. Add more provider probes here.
   if (/youtu\.?be/i.test(streamUrl)) return fetchYouTubeLiveViewers(streamUrl);
@@ -194,22 +251,37 @@ Deno.serve(async (req) => {
     const debug: string[] = [];
 
     let urls: string[] = [];
+    let ytChannelUrl: string | null = typeof body?.youtubeUrl === "string" ? body.youtubeUrl.trim() : null;
+    let ytApiKey: string | null = typeof body?.youtubeApiKey === "string" ? body.youtubeApiKey.trim() : null;
+
     if (Array.isArray(body?.urls)) {
       urls = body.urls.filter((u: unknown) => typeof u === "string" && u);
     } else if (userId) {
       const supaUrl = Deno.env.get("SUPABASE_URL");
       const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
       if (supaUrl && svcKey) {
-        const r = await fetch(
-          `${supaUrl}/rest/v1/streaming_channels?user_id=eq.${userId}&type=eq.video_live&active=eq.true&select=url`,
-          { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
-        );
-        if (r.ok) {
-          const rows = await r.json();
+        const [chRes, cfgRes] = await Promise.all([
+          fetch(
+            `${supaUrl}/rest/v1/streaming_channels?user_id=eq.${userId}&type=eq.video_live&active=eq.true&select=url`,
+            { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
+          ),
+          fetch(
+            `${supaUrl}/rest/v1/empresa_config?user_id=eq.${userId}&select=youtube,youtube_api_key`,
+            { headers: { apikey: svcKey, Authorization: `Bearer ${svcKey}` } },
+          ),
+        ]);
+        if (chRes.ok) {
+          const rows = await chRes.json();
           urls = (Array.isArray(rows) ? rows : []).map((x: any) => x.url).filter(Boolean);
           debug.push(`channels=${urls.length}`);
         } else {
-          debug.push(`lookup http=${r.status}`);
+          debug.push(`lookup http=${chRes.status}`);
+        }
+        if (cfgRes.ok) {
+          const rows = await cfgRes.json();
+          const cfg = Array.isArray(rows) ? rows[0] : null;
+          if (!ytChannelUrl && cfg?.youtube) ytChannelUrl = cfg.youtube;
+          if (!ytApiKey && cfg?.youtube_api_key) ytApiKey = cfg.youtube_api_key;
         }
       }
     }
@@ -217,14 +289,23 @@ Deno.serve(async (req) => {
     const counts = await Promise.all(urls.map((u) => resolveCached(u, xpath)));
     urls.forEach((u, i) => debug.push(`${u} -> ${counts[i]}`));
 
-    const total = counts.reduce((a, n) => a + (n ?? 0), 0);
-    const anyOk = counts.some((n) => n !== null);
+    // YouTube Live via official Data API (when both channel URL and key exist).
+    let ytLive: number | null = null;
+    if (ytChannelUrl && ytApiKey) {
+      ytLive = await fetchYouTubeApiLiveViewers(ytChannelUrl, ytApiKey);
+      debug.push(`youtube_api ${ytChannelUrl} -> ${ytLive}`);
+    }
+
+    const streamTotal = counts.reduce((a, n) => a + (n ?? 0), 0);
+    const total = streamTotal + (ytLive ?? 0);
+    const anyOk = counts.some((n) => n !== null) || ytLive !== null;
 
     return new Response(
       JSON.stringify({
         ok: true,
         viewers: anyOk ? total : null,
         perStream: counts,
+        youtubeLive: ytLive,
         debug: body?.debug ? debug : undefined,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
