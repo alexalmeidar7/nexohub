@@ -536,11 +536,23 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: "var(--layout-button-text, #ffffff)" }}>
-          <h3 className="text-sm font-bold">Configurações do Player</h3>
+      {(section === "all" || section === "player") && <div className="space-y-6">
+        {/* Bento admin header */}
+        <div className="w-full rounded-2xl px-6 py-5 flex items-center justify-between" style={{ backgroundColor: "#1a1a1a", borderBottom: "4px solid #00BFF0", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#00BFF0" }}>
+              <Tv size={18} className="text-white" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-white">
+              Player <span className="font-light" style={{ color: "#00BFF0" }}>— Configurações</span>
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "#C6F03C" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Admin Panel</span>
+          </div>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="space-y-6">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
