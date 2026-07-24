@@ -980,25 +980,56 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
                   </span>
                 </div>
               </div>
-              <SourceField
-                label="URL do stream"
-                placeholder="https://seu-servidor:8000/stream"
-                value={sources.audio_stream_api_url}
-                onChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
-              />
-              <SourceField
-                label="XPath do nódulo de ouvintes"
-                placeholder="//SHOUTCASTSERVER/CURRENTLISTENERS"
-                value={sources.audio_stream_xpath}
-                onChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
-                error={audioXPathError}
-                actionLabel={probing === "audio" ? "Analisando..." : "Sugerir XPath"}
-                onAction={() => probeXPath("audio")}
-                actionDisabled={probing !== null}
+              <StreamSourceRow
+                kind="audio"
+                index={-1}
+                url={sources.audio_stream_api_url}
+                xpath={sources.audio_stream_xpath}
+                showXpath={!!sources.audio_stream_xpath || audioXpOpen[-1]}
+                onUrlChange={(v) => setSources((s) => ({ ...s, audio_stream_api_url: v }))}
+                onXpathChange={(v) => { setSources((s) => ({ ...s, audio_stream_xpath: v })); setAudioXPathError(null); }}
+                onToggleXpath={() => setAudioXpOpen((o) => ({ ...o, [-1]: !o[-1] }))}
+                onAddExtra={() =>
+                  setSources((s) => ({ ...s, audio_extras: [...s.audio_extras, { url: "", xpath: "" }] }))
+                }
+                xpathError={audioXPathError}
+                probing={probing === "audio"}
+                onProbe={() => probeXPath("audio")}
                 suggestions={audioSuggestions}
                 onPickSuggestion={(xp) => { setSources((s) => ({ ...s, audio_stream_xpath: xp })); setAudioXPathError(null); }}
-                helperText="Detecta automaticamente o campo com o número de ouvintes."
               />
+              {sources.audio_extras.map((extra, i) => (
+                <StreamSourceRow
+                  key={`ax-${i}`}
+                  kind="audio"
+                  index={i}
+                  isExtra
+                  url={extra.url}
+                  xpath={extra.xpath}
+                  showXpath={!!extra.xpath || audioXpOpen[i]}
+                  onUrlChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.audio_extras];
+                      next[i] = { ...next[i], url: v };
+                      return { ...s, audio_extras: next };
+                    })
+                  }
+                  onXpathChange={(v) =>
+                    setSources((s) => {
+                      const next = [...s.audio_extras];
+                      next[i] = { ...next[i], xpath: v };
+                      return { ...s, audio_extras: next };
+                    })
+                  }
+                  onToggleXpath={() => setAudioXpOpen((o) => ({ ...o, [i]: !o[i] }))}
+                  onRemove={() =>
+                    setSources((s) => ({
+                      ...s,
+                      audio_extras: s.audio_extras.filter((_, j) => j !== i),
+                    }))
+                  }
+                />
+              ))}
             </section>
 
             {/* Streaming Vídeo */}
