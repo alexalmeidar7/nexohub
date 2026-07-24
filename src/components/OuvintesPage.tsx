@@ -819,7 +819,10 @@ export default function OuvintesPage() {
                         <span style={{ textDecoration: o.banido ? "line-through" : "none" }}>{o.nome}</span>
                         {o.banido ? (
                           <span
-                            title={o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido"}
+                            title={[
+                              o.banido_at ? `Banido em ${new Date(o.banido_at).toLocaleString("pt-BR")}` : "Banido",
+                              o.banido_motivo ? `Motivo: ${o.banido_motivo}` : null,
+                            ].filter(Boolean).join(" — ")}
                             style={{
                               display: "inline-flex", alignItems: "center", gap: 4,
                               padding: "3px 8px", borderRadius: 999,
