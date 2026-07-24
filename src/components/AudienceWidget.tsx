@@ -132,6 +132,9 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [audioSuggestions, setAudioSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [videoSuggestions, setVideoSuggestions] = useState<Array<{ xpath: string; value: number }>>([]);
   const [probeError, setProbeError] = useState<string | null>(null);
+  // Show/hide XPath field per source row. Key: -1 = primary, >=0 = extras[idx].
+  const [audioXpOpen, setAudioXpOpen] = useState<Record<number, boolean>>({});
+  const [videoXpOpen, setVideoXpOpen] = useState<Record<number, boolean>>({});
 
   // Refs to keep latest counts for the periodic history logger
   const streamingRef = useRef<number | null>(null);
