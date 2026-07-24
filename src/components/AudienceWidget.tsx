@@ -96,6 +96,7 @@ function extractByPath(text: string, rawPath: string): number | null {
 export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [videoCount, setVideoCount] = useState<number | null>(null);
+  const [youtubeLiveCount, setYoutubeLiveCount] = useState<number | null>(null);
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
