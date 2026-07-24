@@ -39,12 +39,16 @@ export default function PremiereTimeline({
   const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapGuide, setSnapGuide] = useState<number | null>(null);
   const dragOffsetRef = useRef(0);
   const reverseRef = useRef<number | null>(null);
+  const shiftHeldRef = useRef(false);
   // Viewport (zoom/pan window) in seconds
   const [viewStart, setViewStart] = useState(0);
   const [viewEnd, setViewEnd] = useState(0);
   const panRef = useRef<{ x: number; vs: number; ve: number } | null>(null);
+
 
   // Initialize / reset viewport when duration changes
   useEffect(() => {
