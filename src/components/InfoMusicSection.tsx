@@ -143,15 +143,33 @@ export default function InfoMusicSection() {
       toast.error("Palavra já cadastrada");
       return;
     }
-    const next = [...excecaoList, v].join(", ");
+    // Novo item vai para o TOPO da lista
+    const next = [v, ...excecaoList].join(", ");
     setNewExcecao("");
     await saveExcecoesValue(next);
-    toast.success("Exceção adicionada");
+    toast.success("Exceção adicionada", {
+      action: {
+        label: "Desfazer",
+        onClick: async () => {
+          const rollback = excecaoList.join(", ");
+          await saveExcecoesValue(rollback);
+        },
+      },
+    });
   };
 
   const removeExcecao = async (word: string) => {
+    const prev = excecaoList.slice();
     const next = excecaoList.filter((x) => x !== word).join(", ");
     await saveExcecoesValue(next);
+    toast.success(`"${word}" removida`, {
+      action: {
+        label: "Desfazer",
+        onClick: async () => {
+          await saveExcecoesValue(prev.join(", "));
+        },
+      },
+    });
   };
 
 
@@ -244,9 +262,16 @@ export default function InfoMusicSection() {
   };
 
   const filteredRows = useMemo(() => {
+    // Ocultar da tabela Tocadas qualquer artista/música que esteja na lista de Exceções
+    const excLower = excecaoList.map(w => w.toLowerCase()).filter(Boolean);
+    const notExcepted = rows.filter(r => {
+      const artista = (r.artista || "").toLowerCase();
+      const musica = (r.musica || "").toLowerCase();
+      return !excLower.some(w => artista.includes(w) || musica.includes(w));
+    });
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter(r => {
+    if (!q) return notExcepted;
+    return notExcepted.filter(r => {
       const artista = (r.artista || "").toLowerCase();
       const musica = (r.musica || "").toLowerCase();
       const curiosidade = (r.curiosidade || "").toLowerCase();
@@ -255,7 +280,7 @@ export default function InfoMusicSection() {
       if (filterField === "curiosidade") return curiosidade.includes(q);
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
-  }, [rows, search, filterField]);
+  }, [rows, search, filterField, excecaoList]);
 
   const load = async () => {
     setLoading(true);
@@ -1186,25 +1211,45 @@ export default function InfoMusicSection() {
                          {(() => {
                            const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
                            return (
-                             <label className="inline-flex items-center justify-center cursor-pointer" title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}>
+                             <label
+                               className="inline-flex items-center justify-center cursor-pointer rounded-md px-2 py-1 transition-colors hover:bg-black/5"
+                               title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções (oculta desta tabela)"}
+                             >
                                <input
                                  type="checkbox"
                                  checked={isEx}
                                  onChange={async () => {
                                    const nameRaw = r.artista.trim();
                                    if (!nameRaw) return;
+                                   const prevList = excecaoList.slice();
                                    if (isEx) {
                                      const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
                                      await saveExcecoesValue(next);
-                                     toast.success("Removido das exceções");
+                                     toast.success(`"${nameRaw}" removido das exceções`, {
+                                       action: {
+                                         label: "Desfazer",
+                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
+                                       },
+                                     });
                                    } else {
-                                     const next = [...excecaoList, nameRaw].join(", ");
+                                     // Adiciona no TOPO da lista
+                                     const next = [nameRaw, ...excecaoList].join(", ");
                                      await saveExcecoesValue(next);
-                                     toast.success("Adicionado às exceções");
+                                     toast.success(`"${nameRaw}" adicionado às exceções`, {
+                                       action: {
+                                         label: "Desfazer",
+                                         onClick: async () => { await saveExcecoesValue(prevList.join(", ")); },
+                                       },
+                                     });
                                    }
                                  }}
-                                 className="w-4 h-4 cursor-pointer"
-                                 style={{ accentColor: "var(--layout-accent-color, #2563eb)" }}
+                                 className="w-[18px] h-[18px] cursor-pointer"
+                                 style={{
+                                   accentColor: "var(--layout-accent-color, #2563eb)",
+                                   outline: "2px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)",
+                                   outlineOffset: 1,
+                                   borderRadius: 4,
+                                 }}
                                />
                              </label>
                            );
