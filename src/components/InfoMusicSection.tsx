@@ -1572,6 +1572,52 @@ export default function InfoMusicSection() {
           )}
         </div>
       </div>
+
+      <Dialog open={!!importSummary} onOpenChange={(o) => { if (!o) setImportSummary(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+              Resumo da importação
+            </DialogTitle>
+          </DialogHeader>
+          {importSummary && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3">
+                  <div className="text-2xl font-bold text-emerald-500">{importSummary.filled + importSummary.inserted}</div>
+                  <div className="text-xs text-muted-foreground mt-1">Curiosidades preenchidas</div>
+                  {(importSummary.overwritten > 0) && (
+                    <div className="text-[10px] text-muted-foreground/70 mt-1">+ {importSummary.overwritten} sobrescrita(s)</div>
+                  )}
+                </div>
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+                  <div className="text-2xl font-bold text-amber-500">{importSummary.notFound.length}</div>
+                  <div className="text-xs text-muted-foreground mt-1">Não encontradas em Tocadas</div>
+                </div>
+              </div>
+
+              {importSummary.notFound.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
+                    Músicas não encontradas
+                  </div>
+                  <div className="max-h-64 overflow-y-auto rounded-md border border-border bg-muted/30">
+                    <ul className="divide-y divide-border">
+                      {importSummary.notFound.map((n, i) => (
+                        <li key={i} className="px-3 py-2 text-xs">{n}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setImportSummary(null)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
