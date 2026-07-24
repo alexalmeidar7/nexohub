@@ -186,8 +186,9 @@ export default function OnAirWidget() {
       const curMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
       const remainingSec = Math.round((endMin - curMin) * 60);
       if (remainingSec <= 60 && remainingSec > -5) {
-        const foto = firstNextAp?.foto;
-        const selo = firstNext?.selo;
+        const next = nextPrograms[0];
+        const foto = next ? nextApresentadores[next.id]?.foto : undefined;
+        const selo = next?.selo;
         if (foto) { const img = new Image(); img.src = foto; }
         if (selo) { const img = new Image(); img.src = selo; }
       }
