@@ -745,8 +745,9 @@ export default function OuvintesPage() {
                   <tr
                     key={o.id}
                     style={{
-                      background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                      background: o.banido ? "#FEF2F2" : (idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE"),
                       color: DARK,
+                      opacity: o.banido ? 0.85 : 1,
                     }}
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
