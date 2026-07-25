@@ -128,7 +128,7 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     const analyser = getOrCreateAnalyser(audio);
 
     // Buffers do espectro (só se houver analyser)
-    let bins: Uint8Array | null = null;
+    let bins: Uint8Array<ArrayBuffer> | null = null;
     let prevBass: Float32Array | null = null;
     let bassEnd = 0;
     let midEnd = 0;
