@@ -346,8 +346,8 @@ export default function PlayerTvWelcome() {
             referrerPolicy="no-referrer"
             className={
               (loadedMode === "presenter"
-                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
-                : "ws-kenburns absolute inset-0 w-full h-full object-cover") +
+                ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
+                : "tv-kenburns absolute inset-0 w-full h-full object-cover") +
               " transition-opacity duration-700 ease-out opacity-100"
             }
           />
