@@ -107,6 +107,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     localFileName: null,
   });
   const settingsFetchedRef = useRef(false);
+  const excecoesRef = useRef<string[]>([]);
   const lastRecordedRef = useRef<string>("");
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
