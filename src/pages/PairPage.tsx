@@ -50,11 +50,15 @@ export default function PairPage() {
       const { data, error } = await supabase.functions.invoke("tv-pair-claim", { body: { code } });
       if (error || !(data as any)?.ok) {
         const reason = (data as any)?.reason;
+        if (reason === "code_expired") {
+          setStatus({ kind: "expired", message: "O código exibido na TV expirou. Toque em \"Gerar novo código\" na TV e digite os novos 4 dígitos aqui." });
+          setConfirming(false);
+          return;
+        }
         const map: Record<string, string> = {
           invalid_code: "Código inválido. Confira os 4 dígitos exibidos na TV.",
           code_not_found: "Código não encontrado. Gere um novo na TV.",
           code_already_used: "Este código já foi usado em outro dispositivo.",
-          code_expired: "O código expirou. Gere um novo na TV e tente de novo.",
           not_authenticated: "Faça login com o Google para continuar.",
         };
         setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Verifique sua conexão e tente novamente." });
