@@ -28,11 +28,6 @@ const audioCtxMap = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser:
 
 export function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
   try {
-    if (audioCtxMap.has(audio)) {
-      const entry = audioCtxMap.get(audio)!;
-      if (entry.ctx.state === "suspended") entry.ctx.resume().catch(() => {});
-      return entry.analyser;
-    }
     // Segurança CRÍTICA: createMediaElementSource desvia o áudio do <audio>
     // nativo para o grafo Web Audio. Se o stream for cross-origin SEM CORS
     // (crossOrigin não setado como "anonymous"), o navegador silencia a
@@ -41,6 +36,11 @@ export function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | nul
     const isAnonymousCORS = audio.crossOrigin === "anonymous" || audio.getAttribute("crossorigin") === "anonymous";
     if (!isAnonymousCORS) {
       return null; // deixa o áudio nativo intacto; DJ Mode usa fallback rítmico
+    }
+    if (audioCtxMap.has(audio)) {
+      const entry = audioCtxMap.get(audio)!;
+      if (entry.ctx.state === "suspended") entry.ctx.resume().catch(() => {});
+      return entry.analyser;
     }
     const ctx = new AudioContext();
     const source = ctx.createMediaElementSource(audio);

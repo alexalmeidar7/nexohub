@@ -1698,6 +1698,10 @@ export default function PlayerPage() {
         if (media.muted) return;
         const target = Math.max(0, Math.min(1, volumeRef.current / 100));
         if (target <= 0) return;
+        if (isAudioType) {
+          try { media.volume = target; } catch {}
+          return;
+        }
         const duration = 900;
         const start = performance.now();
         media.volume = 0;
@@ -1712,9 +1716,19 @@ export default function PlayerPage() {
       };
       const requestPlay = (media: HTMLMediaElement) => {
         media.muted = shouldStartMuted;
-        media.volume = shouldStartMuted ? volumeRef.current / 100 : 0;
+        media.volume = (shouldStartMuted || isAudioType) ? volumeRef.current / 100 : 0;
         return media.play().then(() => {
           fadeInMedia(media);
+          if (isAudioType && !shouldStartMuted) {
+            const targetVolume = Math.max(0, Math.min(1, volumeRef.current / 100));
+            window.setTimeout(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              if (media.paused || media.muted) return;
+              if (media.volume < Math.max(0.05, targetVolume * 0.5)) {
+                try { media.volume = targetVolume; } catch {}
+              }
+            }, 1200);
+          }
           handlePlayStarted();
         }).catch((e) => handlePlayBlocked(playLabel, e));
       };
@@ -2263,29 +2277,30 @@ export default function PlayerPage() {
     else { document.exitFullscreen?.(); setFullscreen(false); }
   };
 
-  const toggleMute = useCallback(() => {
-    setMuted(prev => {
-      const newMuted = !prev;
-      mutedRef.current = newMuted;
-      if (!newMuted) autoplayMutedRef.current = false;
-      if (videoRef.current) videoRef.current.muted = newMuted;
-      if (audioRef.current) audioRef.current.muted = newMuted;
-      try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
-      return newMuted;
-    });
+  const setPlayerMuted = useCallback((newMuted: boolean) => {
+    mutedRef.current = newMuted;
+    if (!newMuted) autoplayMutedRef.current = false;
+    setMuted(newMuted);
+    if (videoRef.current) videoRef.current.muted = newMuted;
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
+
+  const toggleMute = useCallback(() => {
+    setPlayerMuted(!mutedRef.current);
+  }, [setPlayerMuted]);
 
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
     volumeRef.current = val;
     try { localStorage.setItem("player:lastVolume", String(val)); } catch {}
     const v = val / 100;
-    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
-    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
-    if (val > 0) autoplayMutedRef.current = false;
     const newMuted = val === 0;
-    setMuted(newMuted);
     mutedRef.current = newMuted;
+    if (val > 0) autoplayMutedRef.current = false;
+    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = newMuted; }
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = newMuted; }
+    setMuted(newMuted);
     try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
@@ -2294,6 +2309,36 @@ export default function PlayerPage() {
     if (videoRef.current) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
     if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
   }, [muted, volume]);
+
+  // Safety net for live audio: autoplay retries and DJ/fade effects can leave
+  // the element playing with volume 0. Restore the intended volume on media
+  // readiness/playback events without forcing mute state on video channels.
+  useEffect(() => {
+    if (!isAudio) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const restoreAudibleVolume = () => {
+      const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+      const shouldMute = mutedRef.current || target <= 0;
+      try { audio.muted = shouldMute; } catch {}
+      if (!shouldMute && audio.volume < Math.max(0.05, target * 0.5)) {
+        try { audio.volume = target; } catch {}
+      }
+    };
+
+    restoreAudibleVolume();
+    audio.addEventListener("play", restoreAudibleVolume);
+    audio.addEventListener("playing", restoreAudibleVolume);
+    audio.addEventListener("canplay", restoreAudibleVolume);
+    audio.addEventListener("volumechange", restoreAudibleVolume);
+    return () => {
+      audio.removeEventListener("play", restoreAudibleVolume);
+      audio.removeEventListener("playing", restoreAudibleVolume);
+      audio.removeEventListener("canplay", restoreAudibleVolume);
+      audio.removeEventListener("volumechange", restoreAudibleVolume);
+    };
+  }, [canal?.id, isAudio]);
 
   // OSD volume indicator — shows briefly on mute/volume change
   const [volumeOsd, setVolumeOsd] = useState(false);
@@ -2923,14 +2968,8 @@ export default function PlayerPage() {
           volume={volume}
           buffering={buffering}
           onTogglePlay={handlePlayCanal}
-          onSetMuted={setMuted}
-          onSetVolume={(v) => {
-            setVolume(v);
-            volumeRef.current = v;
-            const nv = Math.max(0, Math.min(1, v / 100));
-            if (audioRef.current) audioRef.current.volume = nv;
-            if (videoRef.current) videoRef.current.volume = nv;
-          }}
+          onSetMuted={setPlayerMuted}
+          onSetVolume={handleVolumeChange}
           liked={liked}
           onToggleLike={toggleLike}
           chatOpen={chatOpen}
