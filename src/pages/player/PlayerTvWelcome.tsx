@@ -530,9 +530,6 @@ export default function PlayerTvWelcome() {
           </div>
         </div>
 
-        <div className="flex-none pt-tv-6 text-tv-caption text-slate-500">
-          O código expira em 15 minutos. Ao expirar, gere um novo para continuar.
-        </div>
       </div>
     </div>
   );
