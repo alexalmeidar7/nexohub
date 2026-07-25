@@ -790,9 +790,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   }, [ts.offset]);
   const isBehind = ts.offset > 2;
   const rafRef = useRef<number | null>(null);
+  // Retorna o elemento de mídia ativo (vídeo para canais de vídeo, áudio caso contrário).
+  // Assim a timeshift bar funciona tanto no canal de áudio quanto no de vídeo.
+  const getMedia = useCallback((): HTMLMediaElement | null => {
+    return isVideoChannel ? (videoRef.current as HTMLMediaElement | null) : (audioRef.current as HTMLMediaElement | null);
+  }, [isVideoChannel, audioRef, videoRef]);
   useEffect(() => {
     const tick = () => {
-      const a = audioRef.current;
+      const a = getMedia();
       if (a && a.buffered && a.buffered.length > 0) {
         const start = a.buffered.start(0);
         const end = a.buffered.end(a.buffered.length - 1);
@@ -807,10 +812,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     };
     tick();
     return () => { if (rafRef.current) clearTimeout(rafRef.current as any); };
-  }, [audioRef, canal?.id, playing]);
+  }, [getMedia, canal?.id, playing]);
 
   const seekBySeconds = (secsBack: number, opts?: { forcePlay?: boolean }) => {
-    const a = audioRef.current;
+    const a = getMedia();
     if (!a || !a.buffered.length) return;
     const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
@@ -828,7 +833,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
   };
   const seekLive = (opts?: { forcePlay?: boolean }) => {
-    const a = audioRef.current;
+    const a = getMedia();
     if (!a || !a.buffered.length) return;
     const wasPaused = a.paused;
     try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
