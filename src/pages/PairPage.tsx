@@ -151,7 +151,11 @@ export default function PairPage() {
             pattern="\d*"
             maxLength={4}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
+              if (status.kind === "expired" || status.kind === "error") setStatus({ kind: "idle" });
+              autoRunRef.current = false;
+            }}
             placeholder="0000"
             className="mt-1 w-full text-center text-4xl tracking-[0.5em] font-bold bg-white/5 border border-white/10 rounded-xl py-4 outline-none focus:border-primary/60"
           />
@@ -159,7 +163,7 @@ export default function PairPage() {
 
         <button
           type="button"
-          disabled={!user || !canConfirm || confirming || status.kind === "ok"}
+          disabled={!user || !canConfirm || confirming || status.kind === "ok" || status.kind === "expired"}
           onClick={handleConfirm}
           className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition inline-flex items-center justify-center gap-2"
         >
