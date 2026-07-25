@@ -273,6 +273,30 @@ export default function PlayerTvWelcome() {
 
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
+      {/* Zoom in/out bem lento (Ken Burns) para a imagem de fundo */}
+      <style>{`
+        @keyframes tv-kenburns {
+          0%   { transform: scale(1.02); }
+          50%  { transform: scale(1.18); }
+          100% { transform: scale(1.02); }
+        }
+        .tv-kenburns {
+          animation: tv-kenburns 40s ease-in-out infinite;
+          transform-origin: center center;
+          will-change: transform;
+        }
+        .tv-kenburns--contain {
+          animation-name: tv-kenburns-contain;
+        }
+        @keyframes tv-kenburns-contain {
+          0%   { transform: translate(-50%, -50%) scale(1.00); }
+          50%  { transform: translate(-50%, -50%) scale(1.10); }
+          100% { transform: translate(-50%, -50%) scale(1.00); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tv-kenburns { animation: none; }
+        }
+      `}</style>
       {/* Gradiente elegante atrás da foto do locutor (transição suave) */}
       <div
         className="absolute inset-0 z-0 transition-opacity duration-1000"
@@ -346,8 +370,8 @@ export default function PlayerTvWelcome() {
             referrerPolicy="no-referrer"
             className={
               (loadedMode === "presenter"
-                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
-                : "ws-kenburns absolute inset-0 w-full h-full object-cover") +
+                ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
+                : "tv-kenburns absolute inset-0 w-full h-full object-cover") +
               " transition-opacity duration-700 ease-out opacity-100"
             }
           />
