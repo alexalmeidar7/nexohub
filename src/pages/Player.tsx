@@ -2275,7 +2275,6 @@ export default function PlayerPage() {
   const toggleMute = useCallback(() => {
     setPlayerMuted(!mutedRef.current);
   }, [setPlayerMuted]);
-  }, []);
 
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
