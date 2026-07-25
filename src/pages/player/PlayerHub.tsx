@@ -75,6 +75,7 @@ export default function PlayerHub() {
 
   // Real-time "connected on player" heartbeat (20s ping).
   usePlayerHeartbeat(publicUserId || user?.id || null);
+  useTvFocusAutoScroll(true);
 
 
   useEffect(() => {
