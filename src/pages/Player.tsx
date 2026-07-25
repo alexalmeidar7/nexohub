@@ -1655,7 +1655,7 @@ export default function PlayerPage() {
         if (media.muted) return;
         const target = Math.max(0, Math.min(1, volumeRef.current / 100));
         if (target <= 0) return;
-        const duration = 500;
+        const duration = 900;
         const start = performance.now();
         media.volume = 0;
         const step = (now: number) => {
@@ -2881,7 +2881,13 @@ export default function PlayerPage() {
           buffering={buffering}
           onTogglePlay={handlePlayCanal}
           onSetMuted={setMuted}
-          onSetVolume={(v) => { setVolume(v); if (audioRef.current) audioRef.current.volume = v / 100; }}
+          onSetVolume={(v) => {
+            setVolume(v);
+            volumeRef.current = v;
+            const nv = Math.max(0, Math.min(1, v / 100));
+            if (audioRef.current) audioRef.current.volume = nv;
+            if (videoRef.current) videoRef.current.volume = nv;
+          }}
           liked={liked}
           onToggleLike={toggleLike}
           chatOpen={chatOpen}
