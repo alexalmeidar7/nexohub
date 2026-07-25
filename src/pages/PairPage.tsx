@@ -1,0 +1,180 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2, Tv } from "lucide-react";
+
+/**
+ * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
+ * Google, digita/valida o código de 4 dígitos e confirma o pareamento.
+ */
+export default function PairPage() {
+  const { userSlug: rawSlug } = useParams();
+  const userSlug = (rawSlug || "").toLowerCase();
+  const [sp] = useSearchParams();
+  const initialCode = (sp.get("code") || "").replace(/\D/g, "").slice(0, 4);
+  const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  const [code, setCode] = useState<string>(initialCode);
+  const [signingIn, setSigningIn] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error"; message?: string }>({ kind: "idle" });
+  const autoRunRef = useRef(false);
+
+  const canConfirm = useMemo(() => /^\d{4}$/.test(code), [code]);
+
+  const handleGoogleLogin = async () => {
+    setSigningIn(true);
+    try {
+      const returnUrl = `${window.location.origin}/${userSlug}/pair${code ? `?code=${code}` : ""}`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: returnUrl },
+      });
+      if (error) {
+        setStatus({ kind: "error", message: error.message });
+        setSigningIn(false);
+      }
+    } catch (e: any) {
+      setStatus({ kind: "error", message: String(e?.message || e) });
+      setSigningIn(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    if (!canConfirm) return;
+    setConfirming(true);
+    setStatus({ kind: "idle" });
+    try {
+      const { data, error } = await supabase.functions.invoke("tv-pair-claim", { body: { code } });
+      if (error || !(data as any)?.ok) {
+        const reason = (data as any)?.reason;
+        const map: Record<string, string> = {
+          invalid_code: "Código inválido.",
+          code_not_found: "Código não encontrado.",
+          code_already_used: "Este código já foi usado.",
+          code_expired: "O código expirou. Gere um novo na TV.",
+          not_authenticated: "Faça login para continuar.",
+        };
+        setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Tente novamente." });
+        setConfirming(false);
+        return;
+      }
+      setStatus({ kind: "ok", message: "TV pareada com sucesso! Você já pode fechar esta página." });
+    } catch (e: any) {
+      setStatus({ kind: "error", message: String(e?.message || e) });
+    } finally {
+      setConfirming(false);
+    }
+  };
+
+  // Se voltou do Google já com code + sessão, tenta parear automaticamente uma vez.
+  useEffect(() => {
+    if (loading || !user || !canConfirm || autoRunRef.current) return;
+    autoRunRef.current = true;
+    handleConfirm();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user, canConfirm]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100 flex flex-col items-center justify-center px-6 py-10">
+      <div className="w-full max-w-md rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-6 shadow-2xl">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-11 w-11 rounded-2xl bg-primary/20 flex items-center justify-center">
+            <Tv className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <div className="text-xs uppercase tracking-widest text-slate-400">Parear TV</div>
+            <div className="text-lg font-semibold">{userSlug.toUpperCase()}</div>
+          </div>
+        </div>
+
+        <p className="text-sm text-slate-300 mb-5">
+          Faça login com sua conta Google e confirme o código que aparece na sua TV.
+        </p>
+
+        {/* Login */}
+        {!user ? (
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={signingIn}
+            className="w-full flex items-center justify-center gap-3 rounded-xl bg-white text-slate-900 font-semibold py-3 hover:bg-slate-100 transition disabled:opacity-60"
+          >
+            {signingIn ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
+                  <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.8 6C12.3 13.2 17.7 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 2.8-2.2 5.2-4.7 6.9l7.4 5.8c4.3-4 6.9-9.9 6.9-17.2z"/>
+                  <path fill="#FBBC05" d="M10.4 28.7A14.6 14.6 0 0 1 9.5 24c0-1.7.3-3.2.9-4.7l-7.8-6A24 24 0 0 0 0 24c0 3.9.9 7.6 2.6 10.9l7.8-6.2z"/>
+                  <path fill="#34A853" d="M24 48c6.5 0 12-2.1 16-5.8l-7.4-5.8c-2.1 1.4-4.8 2.3-8.6 2.3-6.3 0-11.7-3.7-13.6-9.1l-7.8 6C6.5 42.6 14.6 48 24 48z"/>
+                </svg>
+                Entrar com Google
+              </>
+            )}
+          </button>
+        ) : (
+          <div className="rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 mb-4">
+            {user.user_metadata?.avatar_url ? (
+              <img src={user.user_metadata.avatar_url as string} alt="" className="h-9 w-9 rounded-full" />
+            ) : (
+              <div className="h-9 w-9 rounded-full bg-primary/30" />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate">
+                {(user.user_metadata?.full_name as string) || user.email}
+              </div>
+              <div className="text-xs text-slate-400 truncate">{user.email}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Código */}
+        <div className="mt-5">
+          <label className="text-xs uppercase tracking-widest text-slate-400">Código da TV</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="\d*"
+            maxLength={4}
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            placeholder="0000"
+            className="mt-1 w-full text-center text-4xl tracking-[0.5em] font-bold bg-white/5 border border-white/10 rounded-xl py-4 outline-none focus:border-primary/60"
+          />
+        </div>
+
+        <button
+          type="button"
+          disabled={!user || !canConfirm || confirming}
+          onClick={handleConfirm}
+          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition"
+        >
+          {confirming ? "Pareando…" : "Confirmar pareamento"}
+        </button>
+
+        {status.kind === "ok" && (
+          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-sm px-4 py-3">
+            {status.message}
+          </div>
+        )}
+        {status.kind === "error" && (
+          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-sm px-4 py-3">
+            {status.message}
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="mt-6 w-full text-xs text-slate-400 hover:text-slate-200"
+          onClick={() => navigate(`/${userSlug}/player`)}
+        >
+          Continuar como visitante
+        </button>
+      </div>
+    </div>
+  );
+}
