@@ -30,6 +30,7 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
     musicStartTime: typeof dashboardItems.music_start_time === "number"
       ? dashboardItems.music_start_time
       : null,
+    deezerArtistImg: (dashboardItems.music_deezer_artist_img as string) || "",
   };
 }
 
@@ -292,6 +293,7 @@ Deno.serve(async (req) => {
 
     // Try dashboard first, and enrich missing cover from XML when needed
     let musicResult = readMusicFromDashboard(dashboardItems);
+    const deezerArtistImgFromDash = (dashboardItems?.music_deezer_artist_img as string) || "";
     if ((!musicResult?.musicData || !musicResult.musicData.capa) && settingsRes.data?.music_xml_url) {
       const xmlMusic = await fetchMusicFromXml(settingsRes.data.music_xml_url);
       const mergedMusic = mergeMusicPayload(musicResult?.musicData ?? null, xmlMusic);
@@ -299,9 +301,33 @@ Deno.serve(async (req) => {
         musicResult = {
           musicData: mergedMusic,
           musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
+          deezerArtistImg: deezerArtistImgFromDash,
         };
       }
     }
+
+    // Encontra locutor do programa NO AR agora
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const diaAtual = dayNames[now.getDay()];
+    const todayStr = now.toISOString().slice(0, 10);
+    const currentProgram = (programasRes.data || []).find((p: any) => {
+      const ini = String(p.horario_inicio || "").slice(0, 5);
+      const fim = String(p.horario_fim || "").slice(0, 5);
+      if (!ini || !fim) return false;
+      const inRange = ini <= fim ? (currentTime >= ini && currentTime <= fim) : (currentTime >= ini || currentTime <= fim);
+      if (!inRange) return false;
+      if (p.variavel) return p.data_variavel === todayStr;
+      const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+      return dias.includes(diaAtual);
+    });
+    const presenterIds: string[] = currentProgram
+      ? (Array.isArray(currentProgram.apresentadores_ids) && currentProgram.apresentadores_ids.length
+          ? currentProgram.apresentadores_ids
+          : (currentProgram.apresentador_id ? [currentProgram.apresentador_id] : []))
+      : [];
+    const currentPresenter = presenterIds.length
+      ? (apresentadoresRes.data || []).find((a: any) => a.id === presenterIds[0])
+      : null;
 
     return new Response(
       JSON.stringify({
@@ -315,6 +341,9 @@ Deno.serve(async (req) => {
         shopActive: isShopActive,
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
+        musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        currentProgram: currentProgram || null,
+        currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
