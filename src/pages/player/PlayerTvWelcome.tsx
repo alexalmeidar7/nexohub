@@ -20,6 +20,7 @@ export default function PlayerTvWelcome() {
   const [error, setError] = useState<string | null>(null);
   const [radioName, setRadioName] = useState<string>("");
   const [radioLogo, setRadioLogo] = useState<string>("");
+  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
   const [claimedName, setClaimedName] = useState<string | null>(null);
   const tvSessionId = useMemo(() => {
     try {
@@ -36,19 +37,45 @@ export default function PlayerTvWelcome() {
   }, [userSlug]);
   const claimedRef = useRef(false);
 
-  // Busca metadata pública da rádio (logo + nome).
+  // Busca metadata pública da rádio + background (mesma lógica do WelcomeScreen:
+  // thumb do programa NO AR agora, com fallback para thumb do canal ativo).
   useEffect(() => {
     if (!userSlug) return;
     (async () => {
       try {
         const { data } = await supabase.functions.invoke("public-player-data", {
-          body: { slug: userSlug, section: "bootstrap" },
+          body: { slug: userSlug },
         });
         const emp = (data as any)?.empresa || {};
         const nome = emp.nome_empresa || emp.nome || userSlug;
         const logo = emp.logo_url || emp.logo || "";
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
+
+        // Pick program thumb (current program NO AR)
+        const now = new Date();
+        const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+        const dayCode = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
+        const programas = Array.isArray((data as any)?.programas) ? (data as any).programas : [];
+        const current = programas.find((p: any) => {
+          if (!p?.ativo) return false;
+          const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+          if (dias.length && !dias.map((d: any) => String(d).toLowerCase()).includes(dayCode)) return false;
+          const ini = String(p.horario_inicio || "").slice(0, 5);
+          const fim = String(p.horario_fim || "").slice(0, 5);
+          if (!ini || !fim) return false;
+          return ini <= fim ? hhmm >= ini && hhmm <= fim : hhmm >= ini || hhmm <= fim;
+        });
+        const programThumb = current?.thumb || null;
+
+        // Fallback: primeiro canal ativo com thumb.
+        const channels = Array.isArray((data as any)?.channels) ? (data as any).channels : [];
+        const channelThumb = channels
+          .filter((c: any) => c?.active)
+          .map((c: any) => c?.cover_url || c?.background_url || c?.logo_url)
+          .find(Boolean) || null;
+
+        setBackgroundUrl(programThumb || channelThumb || null);
       } catch {
         setRadioName(userSlug.toUpperCase());
       }
