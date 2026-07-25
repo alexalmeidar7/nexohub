@@ -102,7 +102,7 @@ export default function PlayerTvWelcome() {
         const idx = options.indexOf(prev as any);
         return options[(idx + 1) % options.length];
       });
-    }, 8000);
+    }, 5000);
     return () => clearInterval(iv);
   }, [artistImg, presenterImg]);
 
