@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { AlertCircle, CheckCircle2, Loader2, Tv } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
 
 /**
  * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
@@ -19,7 +19,7 @@ export default function PairPage() {
   const [code, setCode] = useState<string>(initialCode);
   const [signingIn, setSigningIn] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error"; message?: string }>({ kind: "idle" });
+  const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error" | "expired"; message?: string }>({ kind: "idle" });
   const autoRunRef = useRef(false);
 
   const canConfirm = useMemo(() => /^\d{4}$/.test(code), [code]);
@@ -50,11 +50,15 @@ export default function PairPage() {
       const { data, error } = await supabase.functions.invoke("tv-pair-claim", { body: { code } });
       if (error || !(data as any)?.ok) {
         const reason = (data as any)?.reason;
+        if (reason === "code_expired") {
+          setStatus({ kind: "expired", message: "O código exibido na TV expirou. Toque em \"Gerar novo código\" na TV e digite os novos 4 dígitos aqui." });
+          setConfirming(false);
+          return;
+        }
         const map: Record<string, string> = {
           invalid_code: "Código inválido. Confira os 4 dígitos exibidos na TV.",
           code_not_found: "Código não encontrado. Gere um novo na TV.",
           code_already_used: "Este código já foi usado em outro dispositivo.",
-          code_expired: "O código expirou. Gere um novo na TV e tente de novo.",
           not_authenticated: "Faça login com o Google para continuar.",
         };
         setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Verifique sua conexão e tente novamente." });
@@ -147,7 +151,11 @@ export default function PairPage() {
             pattern="\d*"
             maxLength={4}
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            onChange={(e) => {
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 4));
+              if (status.kind === "expired" || status.kind === "error") setStatus({ kind: "idle" });
+              autoRunRef.current = false;
+            }}
             placeholder="0000"
             className="mt-1 w-full text-center text-4xl tracking-[0.5em] font-bold bg-white/5 border border-white/10 rounded-xl py-4 outline-none focus:border-primary/60"
           />
@@ -155,7 +163,7 @@ export default function PairPage() {
 
         <button
           type="button"
-          disabled={!user || !canConfirm || confirming || status.kind === "ok"}
+          disabled={!user || !canConfirm || confirming || status.kind === "ok" || status.kind === "expired"}
           onClick={handleConfirm}
           className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition inline-flex items-center justify-center gap-2"
         >
@@ -194,6 +202,22 @@ export default function PairPage() {
                 className="mt-2 text-xs font-semibold underline underline-offset-2 hover:text-white disabled:opacity-50"
               >
                 Tentar novamente
+              </button>
+            </div>
+          </div>
+        )}
+        {status.kind === "expired" && (
+          <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-100 text-sm px-4 py-3 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-semibold">Código expirado</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+              <button
+                type="button"
+                onClick={() => { setCode(""); setStatus({ kind: "idle" }); autoRunRef.current = false; }}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-amber-50 px-3 py-1.5 text-xs font-semibold"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Digitar novo código
               </button>
             </div>
           </div>
