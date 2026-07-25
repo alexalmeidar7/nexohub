@@ -2,45 +2,52 @@ import { useEffect, useRef, useState } from "react";
 import { getOrCreateAnalyser } from "@/components/AudioSpectrum";
 
 /**
- * Overlay que faz o fundo piscar cores neon no ritmo da música.
- * Uso ESPECÍFICO: usuário "interativa fm", programa "Pra Cima!" (áudio),
- * um programa de música eletrônica onde o VJ/DJ dita o clima visual.
+ * Overlay que faz o BACKGROUND piscar em cores contrastantes no ritmo da
+ * música. Fica atrás do conteúdo, cobrindo o fundo original enquanto ligado.
  *
- * Detecção de batida: energia dos bins graves do AnalyserNode. Quando a
- * energia ultrapassa um limiar dinâmico (média móvel * fator) e passou
- * o tempo mínimo de refractário, troca a cor.
- *
- * Fallback: se o AudioContext não puder ser criado (CORS do stream, por
- * exemplo), cai num pulso baseado em timer para manter o efeito visual.
+ * Estratégia:
+ *  - Tenta extrair espectro via AnalyserNode e detecta onsets (spectral flux
+ *    nos graves) para estimar BPM real da faixa.
+ *  - Se o AudioContext não puder ser criado OU se os dados vierem zerados
+ *    por N frames (comum em streams CORS que "aceitam" mas retornam silêncio),
+ *    cai automaticamente para um pulso rítmico em 128 BPM.
  */
-const NEON_PALETTE = [
-  "#ff00d4", "#00e5ff", "#ffea00", "#ff3d00", "#00ff85",
-  "#7c4dff", "#ff1744", "#18ffff", "#e040fb", "#76ff03",
-  "#f50057", "#00b8ff", "#ffab00", "#651fff", "#c6ff00",
-];
 
-function randomColor(prev?: string): string {
-  let c = prev;
-  let guard = 0;
-  while (c === prev && guard++ < 5) {
-    c = NEON_PALETTE[Math.floor(Math.random() * NEON_PALETTE.length)];
-  }
-  return c || NEON_PALETTE[0];
-}
+// Pares de cores altamente contrastantes (complementares/split-complementares).
+// Cada par gera um degradê forte que "pisca" ao trocar.
+const CONTRAST_PAIRS: Array<[string, string]> = [
+  ["#ff0055", "#00e5ff"], // rosa neon x ciano
+  ["#ffee00", "#7c00ff"], // amarelo x violeta
+  ["#00ff85", "#ff007b"], // verde ácido x magenta
+  ["#ff6a00", "#00b3ff"], // laranja x azul elétrico
+  ["#39ff14", "#ff0090"], // verde neon x pink
+  ["#ffffff", "#0088ff"], // branco x azul
+  ["#ff2a2a", "#00ffd5"], // vermelho x turquesa
+  ["#c6ff00", "#d500ff"], // lima x roxo neon
+  ["#ff00ff", "#00ff66"], // magenta x verde
+  ["#ffbf00", "#001aff"], // âmbar x azul cobalto
+];
 
 interface Palette {
   a: string;
   b: string;
-  c: string;
   angle: number;
 }
 
 function randomPalette(prev?: Palette): Palette {
-  const a = randomColor(prev?.a);
-  const b = randomColor(a);
-  let cc = randomColor(b);
-  if (cc === a) cc = randomColor(a);
-  return { a, b, c: cc, angle: Math.floor(Math.random() * 360) };
+  let pair = CONTRAST_PAIRS[0];
+  let guard = 0;
+  do {
+    pair = CONTRAST_PAIRS[Math.floor(Math.random() * CONTRAST_PAIRS.length)];
+    guard++;
+  } while (prev && pair[0] === prev.a && guard < 5);
+  // 50% de chance de inverter a ordem, e ângulo aleatório para variar direção
+  const flip = Math.random() > 0.5;
+  return {
+    a: flip ? pair[1] : pair[0],
+    b: flip ? pair[0] : pair[1],
+    angle: Math.floor(Math.random() * 360),
+  };
 }
 
 interface Props {
@@ -54,15 +61,15 @@ export default function DjModeLayer({ audioRef, active }: Props) {
   const [flash, setFlash] = useState<number>(0);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
-  const emaRef = useRef<number>(0);
   const paletteRef = useRef<Palette>(palette);
 
-  // BPM tracking state
   const prevSpectrumRef = useRef<Float32Array | null>(null);
-  const onsetTimesRef = useRef<number[]>([]); // timestamps ms of detected onsets
-  const bpmRef = useRef<number>(0);           // 0 = unknown yet
-  const nextBeatRef = useRef<number>(0);      // predicted next beat time (ms)
+  const onsetTimesRef = useRef<number[]>([]);
+  const bpmRef = useRef<number>(0);
+  const nextBeatRef = useRef<number>(0);
   const lastOnsetRef = useRef<number>(0);
+  const emaRef = useRef<number>(0);
+  const silentFramesRef = useRef<number>(0);
 
   useEffect(() => {
     if (!active) return;
@@ -70,25 +77,35 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     if (!audio) return;
 
     let cancelled = false;
-    const analyser = getOrCreateAnalyser(audio);
 
     const triggerBeat = (energy: number) => {
       paletteRef.current = randomPalette(paletteRef.current);
       setPalette(paletteRef.current);
       setIntensity(Math.min(1, energy));
       setFlash(1);
-      window.setTimeout(() => setFlash(0), 90);
+      window.setTimeout(() => setFlash(0), 110);
     };
 
-    if (!analyser) {
-      // Sem acesso ao áudio (CORS): usa BPM fixo de 128 (padrão eletrônico)
+    const startFallback = () => {
+      if (fallbackRef.current) return;
+      // Pulso rítmico em 128 BPM (padrão dance/eletrônico) quando não há
+      // acesso real ao áudio (CORS ou stream silencioso ao AnalyserNode).
       const interval = 60000 / 128;
       fallbackRef.current = window.setInterval(() => {
-        triggerBeat(0.85);
-        window.setTimeout(() => setIntensity(0.45), 160);
+        triggerBeat(0.95);
+        window.setTimeout(() => setIntensity(0.55), 180);
       }, interval);
+    };
+
+    const analyser = getOrCreateAnalyser(audio);
+
+    if (!analyser) {
+      startFallback();
       return () => {
-        if (fallbackRef.current) window.clearInterval(fallbackRef.current);
+        if (fallbackRef.current) {
+          window.clearInterval(fallbackRef.current);
+          fallbackRef.current = null;
+        }
       };
     }
 
@@ -97,16 +114,11 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     const bassEnd = Math.max(4, Math.floor(binCount * 0.18));
     prevSpectrumRef.current = new Float32Array(bassEnd);
 
-    // Estima BPM via autocorrelação dos intervalos entre onsets recentes.
-    // Faixa alvo: 90..180 BPM (dance/eletrônico). Retorna 0 se sem dados.
     const estimateBpm = (): number => {
       const onsets = onsetTimesRef.current;
       if (onsets.length < 6) return 0;
       const intervals: number[] = [];
-      for (let i = 1; i < onsets.length; i++) {
-        intervals.push(onsets[i] - onsets[i - 1]);
-      }
-      // Vote em bpm arredondado para o mais próximo (janela 90..180)
+      for (let i = 1; i < onsets.length; i++) intervals.push(onsets[i] - onsets[i - 1]);
       const votes = new Map<number, number>();
       for (const iv of intervals) {
         for (const mult of [1, 2, 0.5]) {
@@ -131,7 +143,20 @@ export default function DjModeLayer({ audioRef, active }: Props) {
       if (cancelled) return;
       analyser.getByteFrequencyData(bins);
 
-      // Spectral flux nos graves — detecta transientes (kick/bass hit)
+      // Detecta stream silencioso (CORS que retorna zeros) → fallback
+      let totalSum = 0;
+      for (let i = 0; i < binCount; i++) totalSum += bins[i];
+      if (totalSum < 4) {
+        silentFramesRef.current++;
+        if (silentFramesRef.current > 90) {
+          // ~1.5s de silêncio total → provavelmente CORS bloqueando dados
+          startFallback();
+          return; // encerra o RAF, fallback assume
+        }
+      } else {
+        silentFramesRef.current = 0;
+      }
+
       let flux = 0;
       let bassSum = 0;
       const prev = prevSpectrumRef.current!;
@@ -145,36 +170,26 @@ export default function DjModeLayer({ audioRef, active }: Props) {
       const bassAvg = bassSum / bassEnd;
       emaRef.current = emaRef.current * 0.94 + flux * 0.06;
       const now = performance.now();
-      const fluxThreshold = Math.max(140, emaRef.current * 1.9);
+      const fluxThreshold = Math.max(120, emaRef.current * 1.8);
 
-      // Onset real detectado
       if (flux > fluxThreshold && now - lastOnsetRef.current > 160) {
         lastOnsetRef.current = now;
-        // Guarda até últimos 32 onsets em janela de 8s
         const arr = onsetTimesRef.current;
         arr.push(now);
         while (arr.length > 32 || (arr.length && now - arr[0] > 8000)) arr.shift();
-
-        // Reestima BPM ocasionalmente
         if (arr.length % 4 === 0) {
           const bpm = estimateBpm();
           if (bpm > 0) bpmRef.current = bpm;
         }
-
-        // Corrige fase: se estamos perto do próximo beat previsto, sincroniza
-        const bpm = bpmRef.current;
-        if (bpm > 0) {
-          const period = 60000 / bpm;
-          nextBeatRef.current = now + period;
+        if (bpmRef.current > 0) {
+          nextBeatRef.current = now + 60000 / bpmRef.current;
         }
-        triggerBeat(Math.min(1, bassAvg / 200));
+        triggerBeat(Math.min(1, bassAvg / 180));
       } else if (bpmRef.current > 0 && now >= nextBeatRef.current) {
-        // Beat previsto pelo BPM (mesmo sem onset forte)
-        const period = 60000 / bpmRef.current;
-        nextBeatRef.current = now + period;
-        triggerBeat(0.7);
+        nextBeatRef.current = now + 60000 / bpmRef.current;
+        triggerBeat(0.75);
       } else {
-        setIntensity((p) => (p > 0.2 ? p * 0.92 : 0.2));
+        setIntensity((p) => (p > 0.25 ? p * 0.9 : 0.25));
       }
 
       rafRef.current = requestAnimationFrame(loop);
@@ -184,36 +199,45 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     return () => {
       cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (fallbackRef.current) {
+        window.clearInterval(fallbackRef.current);
+        fallbackRef.current = null;
+      }
     };
   }, [active, audioRef]);
 
   if (!active) return null;
 
-  const { a, b, c, angle } = palette;
-  const gradient = `linear-gradient(${angle}deg, ${a} 0%, ${b} 50%, ${c} 100%)`;
-  const glow = `radial-gradient(ellipse at 30% 30%, ${a}cc 0%, transparent 55%), radial-gradient(ellipse at 70% 70%, ${c}cc 0%, transparent 60%), ${gradient}`;
+  const { a, b, angle } = palette;
+  // Cobre TODO o fundo com o degradê de cores contrastantes; a intensidade
+  // e o flash empurram o brilho no beat.
+  const base = `linear-gradient(${angle}deg, ${a} 0%, ${b} 100%)`;
+  const glow = `radial-gradient(circle at 30% 30%, ${a} 0%, transparent 55%), radial-gradient(circle at 70% 75%, ${b} 0%, transparent 55%), ${base}`;
 
   return (
     <>
+      {/* Camada de fundo — cobre o bg original enquanto ligado */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none z-[1]"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background: glow,
-          opacity: 0.55 + intensity * 0.4,
-          mixBlendMode: "screen",
-          transition: "background 120ms linear, opacity 140ms ease-out",
-          filter: "saturate(1.5)",
+          opacity: 0.85 + intensity * 0.15,
+          transition: "background 90ms linear, opacity 110ms ease-out",
+          filter: "saturate(1.55) contrast(1.05)",
+          zIndex: 0,
         }}
       />
+      {/* Flash branco curto no ataque de cada beat */}
       <div
         aria-hidden
-        className="absolute inset-0 pointer-events-none z-[2]"
+        className="absolute inset-0 pointer-events-none"
         style={{
           background: "#fff",
-          opacity: flash * 0.18,
+          opacity: flash * 0.28,
           mixBlendMode: "overlay",
-          transition: "opacity 90ms ease-out",
+          transition: "opacity 100ms ease-out",
+          zIndex: 1,
         }}
       />
     </>
