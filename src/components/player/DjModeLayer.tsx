@@ -54,9 +54,15 @@ export default function DjModeLayer({ audioRef, active }: Props) {
   const [flash, setFlash] = useState<number>(0);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
-  const lastBeatRef = useRef<number>(0);
   const emaRef = useRef<number>(0);
   const paletteRef = useRef<Palette>(palette);
+
+  // BPM tracking state
+  const prevSpectrumRef = useRef<Float32Array | null>(null);
+  const onsetTimesRef = useRef<number[]>([]); // timestamps ms of detected onsets
+  const bpmRef = useRef<number>(0);           // 0 = unknown yet
+  const nextBeatRef = useRef<number>(0);      // predicted next beat time (ms)
+  const lastOnsetRef = useRef<number>(0);
 
   useEffect(() => {
     if (!active) return;
@@ -75,33 +81,102 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     };
 
     if (!analyser) {
+      // Sem acesso ao áudio (CORS): usa BPM fixo de 128 (padrão eletrônico)
+      const interval = 60000 / 128;
       fallbackRef.current = window.setInterval(() => {
         triggerBeat(0.85);
-        window.setTimeout(() => setIntensity(0.4), 160);
-      }, 380);
+        window.setTimeout(() => setIntensity(0.45), 160);
+      }, interval);
       return () => {
         if (fallbackRef.current) window.clearInterval(fallbackRef.current);
       };
     }
 
-    const bins = new Uint8Array(analyser.frequencyBinCount);
-    const bassEnd = Math.max(4, Math.floor(analyser.frequencyBinCount * 0.18));
+    const binCount = analyser.frequencyBinCount;
+    const bins = new Uint8Array(binCount);
+    const bassEnd = Math.max(4, Math.floor(binCount * 0.18));
+    prevSpectrumRef.current = new Float32Array(bassEnd);
+
+    // Estima BPM via autocorrelação dos intervalos entre onsets recentes.
+    // Faixa alvo: 90..180 BPM (dance/eletrônico). Retorna 0 se sem dados.
+    const estimateBpm = (): number => {
+      const onsets = onsetTimesRef.current;
+      if (onsets.length < 6) return 0;
+      const intervals: number[] = [];
+      for (let i = 1; i < onsets.length; i++) {
+        intervals.push(onsets[i] - onsets[i - 1]);
+      }
+      // Vote em bpm arredondado para o mais próximo (janela 90..180)
+      const votes = new Map<number, number>();
+      for (const iv of intervals) {
+        for (const mult of [1, 2, 0.5]) {
+          const bpm = Math.round(60000 / (iv * mult));
+          if (bpm >= 90 && bpm <= 180) {
+            votes.set(bpm, (votes.get(bpm) || 0) + (mult === 1 ? 2 : 1));
+          }
+        }
+      }
+      let best = 0;
+      let bestScore = 0;
+      votes.forEach((score, bpm) => {
+        if (score > bestScore) {
+          bestScore = score;
+          best = bpm;
+        }
+      });
+      return best;
+    };
 
     const loop = () => {
       if (cancelled) return;
       analyser.getByteFrequencyData(bins);
-      let sum = 0;
-      for (let i = 0; i < bassEnd; i++) sum += bins[i];
-      const avg = sum / bassEnd;
-      emaRef.current = emaRef.current * 0.92 + avg * 0.08;
-      const now = performance.now();
-      const threshold = Math.max(28, emaRef.current * 1.35);
-      if (avg > threshold && now - lastBeatRef.current > 170) {
-        lastBeatRef.current = now;
-        triggerBeat(avg / 220);
-      } else {
-        setIntensity((prev) => (prev > 0.18 ? prev * 0.9 : 0.18));
+
+      // Spectral flux nos graves — detecta transientes (kick/bass hit)
+      let flux = 0;
+      let bassSum = 0;
+      const prev = prevSpectrumRef.current!;
+      for (let i = 0; i < bassEnd; i++) {
+        const v = bins[i];
+        const d = v - prev[i];
+        if (d > 0) flux += d;
+        prev[i] = v;
+        bassSum += v;
       }
+      const bassAvg = bassSum / bassEnd;
+      emaRef.current = emaRef.current * 0.94 + flux * 0.06;
+      const now = performance.now();
+      const fluxThreshold = Math.max(140, emaRef.current * 1.9);
+
+      // Onset real detectado
+      if (flux > fluxThreshold && now - lastOnsetRef.current > 160) {
+        lastOnsetRef.current = now;
+        // Guarda até últimos 32 onsets em janela de 8s
+        const arr = onsetTimesRef.current;
+        arr.push(now);
+        while (arr.length > 32 || (arr.length && now - arr[0] > 8000)) arr.shift();
+
+        // Reestima BPM ocasionalmente
+        if (arr.length % 4 === 0) {
+          const bpm = estimateBpm();
+          if (bpm > 0) bpmRef.current = bpm;
+        }
+
+        // Corrige fase: se estamos perto do próximo beat previsto, sincroniza
+        const bpm = bpmRef.current;
+        if (bpm > 0) {
+          const period = 60000 / bpm;
+          nextBeatRef.current = now + period;
+        }
+        triggerBeat(Math.min(1, bassAvg / 200));
+      } else if (bpmRef.current > 0 && now >= nextBeatRef.current) {
+        // Beat previsto pelo BPM (mesmo sem onset forte)
+        const period = 60000 / bpmRef.current;
+        nextBeatRef.current = now + period;
+        triggerBeat(0.7);
+      } else {
+        setIntensity((p) => (p > 0.2 ? p * 0.92 : 0.2));
+      }
+
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
