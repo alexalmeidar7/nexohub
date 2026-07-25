@@ -1568,17 +1568,65 @@ img, video, canvas, svg { max-width: 100%; }
   border-radius: inherit;
 }
 
-/* TV keyboard navigation focus (Player Home) */
+/* ===========================================================
+   TV keyboard/remote navigation — foco e seleção
+   Aplica em qualquer elemento com [data-tv-focusable].
+   Estados:
+     :focus-visible → foco atual (contorno + scale + glow)
+     [data-tv-selected] → item selecionado/ativo persistente
+     :hover → paridade visual leve com foco (mouse users)
+   =========================================================== */
 [data-tv-focusable] {
   outline: none;
-  transition: transform 0.25s cubic-bezier(0.25,0.1,0.25,1), box-shadow 0.25s, border-color 0.25s;
+  position: relative;
+  scroll-margin: 96px;                 /* garante espaço ao rolar até o item ativo */
+  transition:
+    transform 220ms cubic-bezier(0.25,0.1,0.25,1),
+    box-shadow 220ms ease,
+    outline-color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease;
 }
+
+/* Hover leve — só um lift, sem contorno agressivo */
+@media (hover: hover) {
+  [data-tv-focusable]:hover:not(:focus-visible):not([data-tv-selected]) {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  }
+}
+
+/* Foco atual (controle remoto / Tab / setas) */
 [data-tv-focusable]:focus-visible {
   transform: scale(1.08);
-  outline: 3px solid rgba(255,255,255,0.95);
+  outline: 3px solid var(--nexo-accent, rgba(255,255,255,0.95));
   outline-offset: 4px;
   z-index: 20;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.55);
+  box-shadow:
+    0 0 0 6px rgba(0,0,0,0.35),
+    0 12px 44px rgba(0,0,0,0.55),
+    0 0 28px color-mix(in srgb, var(--nexo-accent, #ffffff) 55%, transparent);
+  border-radius: inherit;
+}
+
+/* Seleção persistente (ex.: canal atual, aba ativa, item marcado) */
+[data-tv-focusable][data-tv-selected] {
+  outline: 2px solid var(--nexo-accent, rgba(255,255,255,0.85));
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 4px rgba(0,0,0,0.25),
+    0 0 22px color-mix(in srgb, var(--nexo-accent, #ffffff) 45%, transparent);
+}
+
+/* Selecionado + focado ao mesmo tempo → foco vence, mas mantém tint */
+[data-tv-focusable][data-tv-selected]:focus-visible {
+  outline-width: 3px;
+}
+
+/* Desabilita o glow em elementos "planos" (inputs de texto, campos) */
+[data-tv-focusable][data-tv-flat]:focus-visible {
+  transform: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--nexo-accent, #ffffff) 45%, transparent);
 }
 
 /* Welcome Screen: star pop-in + gentle twinkle */
