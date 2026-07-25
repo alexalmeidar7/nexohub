@@ -51,17 +51,17 @@ export default function PairPage() {
       if (error || !(data as any)?.ok) {
         const reason = (data as any)?.reason;
         const map: Record<string, string> = {
-          invalid_code: "Código inválido.",
-          code_not_found: "Código não encontrado.",
-          code_already_used: "Este código já foi usado.",
-          code_expired: "O código expirou. Gere um novo na TV.",
-          not_authenticated: "Faça login para continuar.",
+          invalid_code: "Código inválido. Confira os 4 dígitos exibidos na TV.",
+          code_not_found: "Código não encontrado. Gere um novo na TV.",
+          code_already_used: "Este código já foi usado em outro dispositivo.",
+          code_expired: "O código expirou. Gere um novo na TV e tente de novo.",
+          not_authenticated: "Faça login com o Google para continuar.",
         };
-        setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Tente novamente." });
+        setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Verifique sua conexão e tente novamente." });
         setConfirming(false);
         return;
       }
-      setStatus({ kind: "ok", message: "TV pareada com sucesso! Você já pode fechar esta página." });
+      setStatus({ kind: "ok", message: "TV pareada com sucesso! Você já pode fechar esta página — a TV entrará no player em instantes." });
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
     } finally {
