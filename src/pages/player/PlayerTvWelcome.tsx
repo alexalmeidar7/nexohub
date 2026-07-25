@@ -83,24 +83,30 @@ export default function PlayerTvWelcome() {
   }, [userSlug]);
 
   // Gera código de pareamento.
-  useEffect(() => {
+  const generateCode = useCallback(async () => {
     if (!userSlug) return;
+    setError(null);
+    setCode(null);
+    setExpiresAt(null);
+    const { data, error: fnErr } = await supabase.functions.invoke("tv-pair-create", {
+      body: { userSlug, tvSessionId },
+    });
+    if (fnErr || !data?.ok) {
+      setError("Não foi possível gerar o código. Verifique sua conexão e tente novamente.");
+      return;
+    }
+    setCode(data.code);
+    setExpiresAt(data.expiresAt);
+  }, [userSlug, tvSessionId]);
+
+  useEffect(() => {
     let cancelled = false;
     (async () => {
-      setError(null);
-      const { data, error: fnErr } = await supabase.functions.invoke("tv-pair-create", {
-        body: { userSlug, tvSessionId },
-      });
       if (cancelled) return;
-      if (fnErr || !data?.ok) {
-        setError("Não foi possível gerar o código. Tente novamente.");
-        return;
-      }
-      setCode(data.code);
-      setExpiresAt(data.expiresAt);
+      await generateCode();
     })();
     return () => { cancelled = true; };
-  }, [userSlug, tvSessionId]);
+  }, [generateCode]);
 
   // Escuta Realtime aguardando o claim.
   useEffect(() => {
@@ -127,7 +133,7 @@ export default function PlayerTvWelcome() {
             setClaimedName(row.paired_name || row.paired_email || "Convidado");
             setTimeout(() => {
               navigate(`/${userSlug}/player`, { replace: true });
-            }, 1200);
+            }, 1800);
           }
         }
       )
@@ -135,17 +141,29 @@ export default function PlayerTvWelcome() {
     return () => { supabase.removeChannel(channel); };
   }, [code, userSlug, navigate]);
 
-  // Regenera automaticamente ao expirar.
+  // Countdown de expiração (mm:ss) + regenera automaticamente.
+  const [remaining, setRemaining] = useState<number>(0);
   useEffect(() => {
-    if (!expiresAt) return;
-    const ms = new Date(expiresAt).getTime() - Date.now();
-    if (ms <= 0) return;
-    const t = setTimeout(() => {
-      setCode(null);
-      setExpiresAt(null);
-    }, ms + 500);
-    return () => clearTimeout(t);
-  }, [expiresAt]);
+    if (!expiresAt) { setRemaining(0); return; }
+    const tick = () => {
+      const ms = new Date(expiresAt).getTime() - Date.now();
+      setRemaining(Math.max(0, ms));
+      if (ms <= 0) {
+        generateCode();
+      }
+    };
+    tick();
+    const iv = setInterval(tick, 1000);
+    return () => clearInterval(iv);
+  }, [expiresAt, generateCode]);
+
+  const remainingLabel = useMemo(() => {
+    const s = Math.floor(remaining / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  }, [remaining]);
+
 
   const pairUrl = code
     ? `${window.location.origin}/${userSlug}/pair?code=${code}`
