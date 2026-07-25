@@ -13,7 +13,9 @@ import { extractDominantPair } from "@/lib/dominantColors";
  */
 export default function PlayerTvWelcome() {
   const { userSlug: rawSlug } = useParams();
-  const userSlug = (rawSlug || "").toLowerCase();
+  // Ignora slugs inválidos (rota acessada sem substituir o parâmetro, ex.: literal ":userSlug").
+  const rawTrim = (rawSlug || "").trim();
+  const userSlug = /^[a-z0-9][a-z0-9_-]*$/i.test(rawTrim) ? rawTrim.toLowerCase() : "";
   const navigate = useNavigate();
 
   const [code, setCode] = useState<string | null>(null);
@@ -341,6 +343,22 @@ export default function PlayerTvWelcome() {
   const hasAnyImage = Boolean(artistImg || presenterImg || fallbackImg);
   const showSkeleton = hasAnyImage && !loadedBg && (!activeBg || !pendingReady);
   const showStaticFallback = !hasAnyImage;
+
+  if (!userSlug) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-slate-950 text-slate-100 p-8">
+        <div className="max-w-md text-center space-y-4">
+          <AlertTriangle className="h-10 w-10 text-amber-300 mx-auto" />
+          <h1 className="text-2xl font-tv-bold">URL inválida</h1>
+          <p className="text-slate-300/90">
+            Abra este player usando o endereço da sua rádio, por exemplo:
+            <br />
+            <span className="font-mono text-primary">/suaradio/player/tv</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
