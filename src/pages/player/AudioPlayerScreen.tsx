@@ -1769,15 +1769,37 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </div>
         </div>
 
-        {/* timeshift bar (janela fixa 5 min) */}
+        {/* timeshift bar (janela fixa 30 min) */}
+        {(() => {
+          const bufferPct = Math.max(0, Math.min(100, (ts.back / TIMESHIFT_WINDOW) * 100));
+          const bufferLeft = 100 - bufferPct; // buffer disponível cresce da direita (AO VIVO) para a esquerda
+          const playheadPct = (1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100;
+          const fiveMinPct = (1 - (5 * 60) / TIMESHIFT_WINDOW) * 100; // marcador -5min
+          return (
         <div className="relative group/timeshift focus-within:scale-[1.01] transition-transform">
           <div
-            className="h-1 rounded-full bg-white/12 overflow-hidden transition-all duration-200 group-focus-within/timeshift:h-2 group-focus-within/timeshift:bg-white/25 group-focus-within/timeshift:shadow-[0_0_0_2px_var(--nexo-accent,#00BFF0),0_0_14px_var(--nexo-accent,#00BFF0)]"
+            className="relative h-1 rounded-full bg-white/[0.06] overflow-hidden transition-all duration-200 group-focus-within/timeshift:h-2 group-focus-within/timeshift:bg-white/[0.10] group-focus-within/timeshift:shadow-[0_0_0_2px_var(--nexo-accent,#00BFF0),0_0_14px_var(--nexo-accent,#00BFF0)]"
           >
+            {/* Buffer disponível (janela de seek) */}
             <div
-              className="h-full bg-white/85 transition-all duration-500 group-focus-within/timeshift:bg-[var(--nexo-accent,#00BFF0)]"
-              style={{ width: `${(1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100}%` }}
+              className="absolute top-0 bottom-0 bg-white/20 transition-[left,width] duration-500"
+              style={{ left: `${bufferLeft}%`, width: `${bufferPct}%` }}
+              aria-hidden
             />
+            {/* Playhead / progresso do seek */}
+            <div
+              className="absolute top-0 bottom-0 left-0 bg-white/85 transition-all duration-500 group-focus-within/timeshift:bg-[var(--nexo-accent,#00BFF0)]"
+              style={{ width: `${playheadPct}%` }}
+            />
+          </div>
+          {/* Marcadores dos limites: -5min e AO VIVO */}
+          <div className="pointer-events-none absolute inset-x-0 -top-1 h-4">
+            <span
+              className="absolute top-0 h-4 w-px bg-white/30"
+              style={{ left: `${fiveMinPct}%` }}
+              aria-hidden
+            />
+            <span className="absolute top-0 h-4 w-px bg-[var(--nexo-accent,#00BFF0)]/80 right-0" aria-hidden />
           </div>
           <input
             type="range"
@@ -1798,13 +1820,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             data-tv-selected={ts.offset > 1 ? "true" : undefined}
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
-            <span>-5min</span>
+            <span className="text-white/55">-5min</span>
             <span>
               {ts.offset > 1 ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}` : "AO VIVO"}
             </span>
-            <span>você pode voltar a programação em {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
+            <span>buffer disponível: {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
           </div>
         </div>
+          );
+        })()}
         </>
 
         {/* play row */}
