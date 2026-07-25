@@ -616,6 +616,7 @@ export default function WelcomeScreen({
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + window.location.pathname,
+        extraParams: { prompt: "select_account" },
       });
       if (result?.error) {
         const msg = (result.error as any)?.message || "não foi possível conectar com o google. tente novamente.";
