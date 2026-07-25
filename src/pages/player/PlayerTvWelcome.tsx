@@ -240,11 +240,12 @@ export default function PlayerTvWelcome() {
     bgMode === "presenter" ? presenterImg :
     fallbackImg;
 
-  // Cross-fade entre imagens de fundo: mantém a última carregada visível
-  // até que a próxima termine de baixar, evitando "flash" de tela vazia
-  // em conexões lentas.
+  // Cross-fade entre imagens de fundo: mantemos a camada anterior visível
+  // enquanto a nova entra suavemente (opacity 0 → 1), depois removemos a antiga.
   const [loadedBg, setLoadedBg] = useState<string | null>(null);
   const [loadedMode, setLoadedMode] = useState<"artist" | "presenter" | "fallback">("fallback");
+  const [prevBg, setPrevBg] = useState<string | null>(null);
+  const [prevMode, setPrevMode] = useState<"artist" | "presenter" | "fallback">("fallback");
   const [pendingReady, setPendingReady] = useState(false);
   useEffect(() => {
     if (!activeBg) { setPendingReady(false); return; }
@@ -254,16 +255,29 @@ export default function PlayerTvWelcome() {
     img.crossOrigin = "anonymous";
     img.referrerPolicy = "no-referrer";
     let cancelled = false;
+    let cleanupTimer: ReturnType<typeof setTimeout> | null = null;
     img.onload = () => {
       if (cancelled) return;
+      // Move a imagem atual para a camada "prev" para que ela permaneça
+      // visível enquanto a nova entra por cima com opacity animada.
+      setPrevBg(loadedBg);
+      setPrevMode(loadedMode);
       setLoadedBg(activeBg);
       setLoadedMode(bgMode);
       setPendingReady(true);
+      // Após o crossfade terminar, descarta a camada antiga para não
+      // acumular <img> na árvore e liberar a animação Ken Burns.
+      cleanupTimer = setTimeout(() => {
+        if (!cancelled) setPrevBg(null);
+      }, 1200);
     };
     img.onerror = () => { if (!cancelled) setPendingReady(false); };
     img.src = activeBg;
-    return () => { cancelled = true; };
-  }, [activeBg, bgMode, loadedBg]);
+    return () => {
+      cancelled = true;
+      if (cleanupTimer) clearTimeout(cleanupTimer);
+    };
+  }, [activeBg, bgMode, loadedBg, loadedMode]);
 
   const presenterGradient = presenterColors
     ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
