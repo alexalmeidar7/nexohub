@@ -28,6 +28,21 @@ function randomColor(prev?: string): string {
   return c || NEON_PALETTE[0];
 }
 
+interface Palette {
+  a: string;
+  b: string;
+  c: string;
+  angle: number;
+}
+
+function randomPalette(prev?: Palette): Palette {
+  const a = randomColor(prev?.a);
+  const b = randomColor(a);
+  let cc = randomColor(b);
+  if (cc === a) cc = randomColor(a);
+  return { a, b, c: cc, angle: Math.floor(Math.random() * 360) };
+}
+
 interface Props {
   audioRef: React.RefObject<HTMLAudioElement>;
   active: boolean;
