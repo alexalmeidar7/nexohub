@@ -2263,16 +2263,18 @@ export default function PlayerPage() {
     else { document.exitFullscreen?.(); setFullscreen(false); }
   };
 
+  const setPlayerMuted = useCallback((newMuted: boolean) => {
+    mutedRef.current = newMuted;
+    if (!newMuted) autoplayMutedRef.current = false;
+    setMuted(newMuted);
+    if (videoRef.current) videoRef.current.muted = newMuted;
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
+  }, []);
+
   const toggleMute = useCallback(() => {
-    setMuted(prev => {
-      const newMuted = !prev;
-      mutedRef.current = newMuted;
-      if (!newMuted) autoplayMutedRef.current = false;
-      if (videoRef.current) videoRef.current.muted = newMuted;
-      if (audioRef.current) audioRef.current.muted = newMuted;
-      try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
-      return newMuted;
-    });
+    setPlayerMuted(!mutedRef.current);
+  }, [setPlayerMuted]);
   }, []);
 
   const handleVolumeChange = useCallback((val: number) => {
@@ -2280,12 +2282,12 @@ export default function PlayerPage() {
     volumeRef.current = val;
     try { localStorage.setItem("player:lastVolume", String(val)); } catch {}
     const v = val / 100;
-    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
-    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
-    if (val > 0) autoplayMutedRef.current = false;
     const newMuted = val === 0;
-    setMuted(newMuted);
     mutedRef.current = newMuted;
+    if (val > 0) autoplayMutedRef.current = false;
+    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = newMuted; }
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = newMuted; }
+    setMuted(newMuted);
     try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
@@ -2923,14 +2925,8 @@ export default function PlayerPage() {
           volume={volume}
           buffering={buffering}
           onTogglePlay={handlePlayCanal}
-          onSetMuted={setMuted}
-          onSetVolume={(v) => {
-            setVolume(v);
-            volumeRef.current = v;
-            const nv = Math.max(0, Math.min(1, v / 100));
-            if (audioRef.current) audioRef.current.volume = nv;
-            if (videoRef.current) videoRef.current.volume = nv;
-          }}
+          onSetMuted={setPlayerMuted}
+          onSetVolume={handleVolumeChange}
           liked={liked}
           onToggleLike={toggleLike}
           chatOpen={chatOpen}
