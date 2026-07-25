@@ -73,6 +73,15 @@ export default function PairPage() {
     }
   };
 
+  // Registra evento "scanned" quando a página é aberta com um código (via QR code).
+  useEffect(() => {
+    if (!initialCode || !userSlug) return;
+    supabase.functions.invoke("tv-pair-track", {
+      body: { event: "scanned", code: initialCode, userSlug, meta: { referrer: document.referrer || null } },
+    }).catch(() => { /* fire-and-forget */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Se voltou do Google já com code + sessão, tenta parear automaticamente uma vez.
   useEffect(() => {
     if (loading || !user || !canConfirm || autoRunRef.current) return;

@@ -2565,6 +2565,54 @@ export type Database = {
         }
         Relationships: []
       }
+      tv_pairing_events: {
+        Row: {
+          code: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          meta: Json
+          paired_email: string | null
+          paired_user_id: string | null
+          reason: string | null
+          slug_user_id: string | null
+          tv_session_id: string | null
+          user_agent: string | null
+          user_slug: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          paired_email?: string | null
+          paired_user_id?: string | null
+          reason?: string | null
+          slug_user_id?: string | null
+          tv_session_id?: string | null
+          user_agent?: string | null
+          user_slug?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          paired_email?: string | null
+          paired_user_id?: string | null
+          reason?: string | null
+          slug_user_id?: string | null
+          tv_session_id?: string | null
+          user_agent?: string | null
+          user_slug?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

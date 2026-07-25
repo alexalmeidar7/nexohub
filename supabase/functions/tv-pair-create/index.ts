@@ -20,17 +20,23 @@ async function resolveSlug(supabase: ReturnType<typeof createClient>, slug: stri
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const ua = req.headers.get("user-agent") || null;
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  const logEvent = (row: Record<string, unknown>) =>
+    supabase.from("tv_pairing_events").insert({ user_agent: ua, ip, ...row }).then(() => {}, () => {});
   try {
     const body = await req.json().catch(() => ({}));
     const userSlug = typeof body?.userSlug === "string" ? body.userSlug.trim() : "";
     const tvSessionId = typeof body?.tvSessionId === "string" ? body.tvSessionId.trim().slice(0, 128) : "";
     if (!userSlug || !tvSessionId) {
+      await logEvent({ event_type: "error", reason: "missing_params", user_slug: userSlug || null, tv_session_id: tvSessionId || null });
       return new Response(JSON.stringify({ ok: false, reason: "missing_params" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const slugUserId = await resolveSlug(supabase, userSlug);
     if (!slugUserId) {
+      await logEvent({ event_type: "error", reason: "slug_not_found", user_slug: userSlug, tv_session_id: tvSessionId });
       return new Response(JSON.stringify({ ok: false, reason: "slug_not_found" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -53,6 +59,7 @@ Deno.serve(async (req) => {
       if (!existing) { code = candidate; break; }
     }
     if (!code) {
+      await logEvent({ event_type: "error", reason: "no_code_available", slug_user_id: slugUserId, user_slug: userSlug, tv_session_id: tvSessionId });
       return new Response(JSON.stringify({ ok: false, reason: "no_code_available" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -67,8 +74,11 @@ Deno.serve(async (req) => {
     });
     if (error) {
       console.error("[tv-pair-create] insert error:", error);
+      await logEvent({ event_type: "error", reason: "insert_failed", slug_user_id: slugUserId, user_slug: userSlug, tv_session_id: tvSessionId, code, meta: { error: String(error.message || error) } });
       return new Response(JSON.stringify({ ok: false, reason: "insert_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+
+    await logEvent({ event_type: "created", slug_user_id: slugUserId, user_slug: userSlug.toLowerCase(), tv_session_id: tvSessionId, code, meta: { expires_at: expiresAt } });
 
     return new Response(JSON.stringify({ ok: true, code, expiresAt, userSlug: userSlug.toLowerCase() }), {
       status: 200,
@@ -76,6 +86,7 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("[tv-pair-create] error:", e);
+    await logEvent({ event_type: "error", reason: "server_error", meta: { error: String((e as any)?.message || e) } });
     return new Response(JSON.stringify({ ok: false, reason: "server_error" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
