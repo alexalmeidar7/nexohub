@@ -205,6 +205,22 @@ export default function PlayerTvWelcome() {
     ? `${window.location.origin}/${userSlug}/pair?code=${code}`
     : `${window.location.origin}/${userSlug}/pair`;
 
+  // Encurta a URL para facilitar a digitação no navegador.
+  useEffect(() => {
+    if (!code) { setShortUrl(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("shorten-url", { body: { url: pairUrl } });
+        if (!cancelled && (data as any)?.ok && (data as any)?.short) {
+          setShortUrl((data as any).short as string);
+        }
+      } catch { /* fallback: mantém shortUrl null e mostra URL completa */ }
+    })();
+    return () => { cancelled = true; };
+  }, [code, pairUrl]);
+
+
   const activeBg =
     bgMode === "artist" ? artistImg :
     bgMode === "presenter" ? presenterImg :
