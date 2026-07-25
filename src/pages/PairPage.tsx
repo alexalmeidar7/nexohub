@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Tv } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Tv } from "lucide-react";
 
 /**
  * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
@@ -51,17 +51,17 @@ export default function PairPage() {
       if (error || !(data as any)?.ok) {
         const reason = (data as any)?.reason;
         const map: Record<string, string> = {
-          invalid_code: "Código inválido.",
-          code_not_found: "Código não encontrado.",
-          code_already_used: "Este código já foi usado.",
-          code_expired: "O código expirou. Gere um novo na TV.",
-          not_authenticated: "Faça login para continuar.",
+          invalid_code: "Código inválido. Confira os 4 dígitos exibidos na TV.",
+          code_not_found: "Código não encontrado. Gere um novo na TV.",
+          code_already_used: "Este código já foi usado em outro dispositivo.",
+          code_expired: "O código expirou. Gere um novo na TV e tente de novo.",
+          not_authenticated: "Faça login com o Google para continuar.",
         };
-        setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Tente novamente." });
+        setStatus({ kind: "error", message: map[reason] || "Não foi possível parear. Verifique sua conexão e tente novamente." });
         setConfirming(false);
         return;
       }
-      setStatus({ kind: "ok", message: "TV pareada com sucesso! Você já pode fechar esta página." });
+      setStatus({ kind: "ok", message: "TV pareada com sucesso! Você já pode fechar esta página — a TV entrará no player em instantes." });
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
     } finally {
@@ -93,6 +93,12 @@ export default function PairPage() {
         <p className="text-sm text-slate-300 mb-5">
           Faça login com sua conta Google e confirme o código que aparece na sua TV.
         </p>
+
+        {loading && (
+          <div className="mb-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 text-sm text-slate-300">
+            <Loader2 className="h-4 w-4 animate-spin" /> Verificando sessão…
+          </div>
+        )}
 
         {/* Login */}
         {!user ? (
@@ -149,21 +155,47 @@ export default function PairPage() {
 
         <button
           type="button"
-          disabled={!user || !canConfirm || confirming}
+          disabled={!user || !canConfirm || confirming || status.kind === "ok"}
           onClick={handleConfirm}
-          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition"
+          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition inline-flex items-center justify-center gap-2"
         >
-          {confirming ? "Pareando…" : "Confirmar pareamento"}
+          {confirming ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Pareando com a TV…
+            </>
+          ) : status.kind === "ok" ? (
+            <>
+              <CheckCircle2 className="h-4 w-4" /> Pareado
+            </>
+          ) : (
+            "Confirmar pareamento"
+          )}
         </button>
 
         {status.kind === "ok" && (
-          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-sm px-4 py-3">
-            {status.message}
+          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-100 text-sm px-4 py-3 flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold">Pareado com sucesso!</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+            </div>
           </div>
         )}
         {status.kind === "error" && (
-          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-sm px-4 py-3">
-            {status.message}
+          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-100 text-sm px-4 py-3 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-300 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-semibold">Não foi possível parear</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={!user || !canConfirm || confirming}
+                className="mt-2 text-xs font-semibold underline underline-offset-2 hover:text-white disabled:opacity-50"
+              >
+                Tentar novamente
+              </button>
+            </div>
           </div>
         )}
 
