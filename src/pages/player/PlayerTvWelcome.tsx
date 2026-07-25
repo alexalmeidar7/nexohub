@@ -227,9 +227,36 @@ export default function PlayerTvWelcome() {
     bgMode === "presenter" ? presenterImg :
     fallbackImg;
 
+  // Cross-fade entre imagens de fundo: mantém a última carregada visível
+  // até que a próxima termine de baixar, evitando "flash" de tela vazia
+  // em conexões lentas.
+  const [loadedBg, setLoadedBg] = useState<string | null>(null);
+  const [loadedMode, setLoadedMode] = useState<"artist" | "presenter" | "fallback">("fallback");
+  const [pendingReady, setPendingReady] = useState(false);
+  useEffect(() => {
+    if (!activeBg) { setPendingReady(false); return; }
+    if (activeBg === loadedBg) { setPendingReady(true); return; }
+    setPendingReady(false);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.referrerPolicy = "no-referrer";
+    let cancelled = false;
+    img.onload = () => {
+      if (cancelled) return;
+      setLoadedBg(activeBg);
+      setLoadedMode(bgMode);
+      setPendingReady(true);
+    };
+    img.onerror = () => { if (!cancelled) setPendingReady(false); };
+    img.src = activeBg;
+    return () => { cancelled = true; };
+  }, [activeBg, bgMode, loadedBg]);
+
   const presenterGradient = presenterColors
     ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
     : null;
+
+  const showSkeleton = !loadedBg && (!activeBg || !pendingReady);
 
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
@@ -237,40 +264,55 @@ export default function PlayerTvWelcome() {
       <div
         className="absolute inset-0 z-0 transition-opacity duration-1000"
         style={{
-          opacity: bgMode === "presenter" && presenterGradient ? 1 : 0,
+          opacity: (bgMode === "presenter" || loadedMode === "presenter") && presenterGradient ? 1 : 0,
           background: presenterGradient || "transparent",
         }}
         aria-hidden
       />
-      {/* Background principal (imagem) */}
+      {/* Background principal (imagem) com cross-fade */}
       <div className="absolute inset-0 z-0 bg-black">
-        {activeBg ? (
+        {/* Base gradient — sempre presente por baixo */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
+          }}
+        />
+        {/* Skeleton shimmer enquanto nenhuma imagem carregou */}
+        {showSkeleton && (
+          <div
+            className="absolute inset-0 animate-pulse"
+            style={{
+              background:
+                "linear-gradient(110deg, rgba(255,255,255,0.02) 20%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 80%)",
+              backgroundSize: "200% 100%",
+            }}
+            aria-hidden
+          />
+        )}
+        {/* Camada da imagem carregada (visível assim que pronta) */}
+        {loadedBg && (
           <img
-            key={activeBg}
-            src={activeBg}
+            key={loadedBg}
+            src={loadedBg}
             alt=""
             aria-hidden
             crossOrigin="anonymous"
             referrerPolicy="no-referrer"
             className={
-              bgMode === "presenter"
-                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl animate-fade-in"
-                : "ws-kenburns absolute inset-0 w-full h-full object-cover animate-fade-in"
+              (loadedMode === "presenter"
+                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
+                : "ws-kenburns absolute inset-0 w-full h-full object-cover") +
+              " transition-opacity duration-700 ease-out opacity-100"
             }
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
-            }}
           />
         )}
         {/* Escurecimento para legibilidade */}
-        <div className={bgMode === "presenter" ? "absolute inset-0 bg-black/25" : "absolute inset-0 bg-black/55"} />
+        <div className={`absolute inset-0 transition-colors duration-700 ${loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
+
 
       {/* Conteúdo */}
       <div className="relative z-10 flex flex-col p-tv-safe min-h-screen">
