@@ -177,21 +177,22 @@ export default function PlayerTvWelcome() {
     return () => { supabase.removeChannel(channel); };
   }, [code, userSlug, navigate]);
 
-  // Countdown de expiração (mm:ss) + regenera automaticamente.
+  // Countdown de expiração (mm:ss). Ao chegar em 0 marca como expirado (não
+  // regenera automaticamente — usuário precisa clicar em "Gerar novo código").
   const [remaining, setRemaining] = useState<number>(0);
+  const [expired, setExpired] = useState<boolean>(false);
   useEffect(() => {
     if (!expiresAt) { setRemaining(0); return; }
+    setExpired(false);
     const tick = () => {
       const ms = new Date(expiresAt).getTime() - Date.now();
       setRemaining(Math.max(0, ms));
-      if (ms <= 0) {
-        generateCode();
-      }
+      if (ms <= 0) setExpired(true);
     };
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
-  }, [expiresAt, generateCode]);
+  }, [expiresAt]);
 
   const remainingLabel = useMemo(() => {
     const s = Math.floor(remaining / 1000);
