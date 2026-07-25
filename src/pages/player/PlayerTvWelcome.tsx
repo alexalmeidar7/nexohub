@@ -486,7 +486,7 @@ export default function PlayerTvWelcome() {
           />
         )}
         {/* Escurecimento para legibilidade (mais leve no fallback estático — já é escuro) */}
-        <div className={`absolute inset-0 transition-colors duration-700 ${showStaticFallback ? "bg-black/10" : loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
+        <div className={`absolute inset-0 transition-colors duration-700 ${showStaticFallback ? "bg-black/10" : loadedMode === "presenter" ? "bg-black/10" : "bg-black/55"}`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
 
