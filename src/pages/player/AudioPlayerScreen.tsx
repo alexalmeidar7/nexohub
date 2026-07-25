@@ -561,7 +561,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       const excs = await getMusicExceptions(effectiveUserId);
       const filtered = filterOutMusicExceptions(excs, data as any[]).slice(0, HIST_MAX);
       // Hidrata com capas já em cache imediatamente
-      const withCached = (data as HistoryTrack[]).map((t) => ({
+      const withCached = (filtered as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||
