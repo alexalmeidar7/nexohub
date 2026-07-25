@@ -1329,9 +1329,9 @@ export default function PlayerPage() {
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
             body: { slug: userSlug, section: "now_playing" },
-            // @ts-expect-error supabase-js v2 aceita signal via fetch options
-            signal: controller.signal,
           });
+          // Aborta manualmente se o timeout disparou
+          if (controller.signal.aborted) return;
           if (cancelled || error || !data) return;
 
           if (publicUserId && typeof data.userId === "string" && data.userId !== publicUserId) return;
