@@ -49,13 +49,14 @@ interface Props {
 }
 
 export default function DjModeLayer({ audioRef, active }: Props) {
-  const [color, setColor] = useState<string>(NEON_PALETTE[0]);
+  const [palette, setPalette] = useState<Palette>(() => randomPalette());
   const [intensity, setIntensity] = useState<number>(0);
+  const [flash, setFlash] = useState<number>(0);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const lastBeatRef = useRef<number>(0);
   const emaRef = useRef<number>(0);
-  const colorRef = useRef<string>(NEON_PALETTE[0]);
+  const paletteRef = useRef<Palette>(palette);
 
   useEffect(() => {
     if (!active) return;
@@ -65,13 +66,18 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     let cancelled = false;
     const analyser = getOrCreateAnalyser(audio);
 
+    const triggerBeat = (energy: number) => {
+      paletteRef.current = randomPalette(paletteRef.current);
+      setPalette(paletteRef.current);
+      setIntensity(Math.min(1, energy));
+      setFlash(1);
+      window.setTimeout(() => setFlash(0), 90);
+    };
+
     if (!analyser) {
-      // Fallback rítmico: troca a cor a cada 380ms
       fallbackRef.current = window.setInterval(() => {
-        colorRef.current = randomColor(colorRef.current);
-        setColor(colorRef.current);
-        setIntensity(1);
-        window.setTimeout(() => setIntensity(0.4), 140);
+        triggerBeat(0.85);
+        window.setTimeout(() => setIntensity(0.4), 160);
       }, 380);
       return () => {
         if (fallbackRef.current) window.clearInterval(fallbackRef.current);
@@ -79,7 +85,6 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     }
 
     const bins = new Uint8Array(analyser.frequencyBinCount);
-    // Analisa apenas os bins de baixa frequência (kick/bass)
     const bassEnd = Math.max(4, Math.floor(analyser.frequencyBinCount * 0.18));
 
     const loop = () => {
@@ -87,19 +92,15 @@ export default function DjModeLayer({ audioRef, active }: Props) {
       analyser.getByteFrequencyData(bins);
       let sum = 0;
       for (let i = 0; i < bassEnd; i++) sum += bins[i];
-      const avg = sum / bassEnd; // 0..255
-      // Média móvel exponencial (baseline dinâmico)
+      const avg = sum / bassEnd;
       emaRef.current = emaRef.current * 0.92 + avg * 0.08;
       const now = performance.now();
       const threshold = Math.max(28, emaRef.current * 1.35);
       if (avg > threshold && now - lastBeatRef.current > 170) {
         lastBeatRef.current = now;
-        colorRef.current = randomColor(colorRef.current);
-        setColor(colorRef.current);
-        setIntensity(Math.min(1, avg / 220));
+        triggerBeat(avg / 220);
       } else {
-        // decay suave
-        setIntensity((prev) => (prev > 0.15 ? prev * 0.9 : 0.15));
+        setIntensity((prev) => (prev > 0.18 ? prev * 0.9 : 0.18));
       }
       rafRef.current = requestAnimationFrame(loop);
     };
@@ -113,17 +114,33 @@ export default function DjModeLayer({ audioRef, active }: Props) {
 
   if (!active) return null;
 
+  const { a, b, c, angle } = palette;
+  const gradient = `linear-gradient(${angle}deg, ${a} 0%, ${b} 50%, ${c} 100%)`;
+  const glow = `radial-gradient(ellipse at 30% 30%, ${a}cc 0%, transparent 55%), radial-gradient(ellipse at 70% 70%, ${c}cc 0%, transparent 60%), ${gradient}`;
+
   return (
-    <div
-      aria-hidden
-      className="absolute inset-0 pointer-events-none z-[1]"
-      style={{
-        background: `radial-gradient(ellipse at 50% 45%, ${color} 0%, transparent 65%), linear-gradient(135deg, ${color}55 0%, transparent 70%)`,
-        opacity: 0.35 + intensity * 0.45,
-        mixBlendMode: "screen",
-        transition: "background 90ms linear, opacity 120ms ease-out",
-        filter: "saturate(1.4)",
-      }}
-    />
+    <>
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none z-[1]"
+        style={{
+          background: glow,
+          opacity: 0.55 + intensity * 0.4,
+          mixBlendMode: "screen",
+          transition: "background 120ms linear, opacity 140ms ease-out",
+          filter: "saturate(1.5)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none z-[2]"
+        style={{
+          background: "#fff",
+          opacity: flash * 0.18,
+          mixBlendMode: "overlay",
+          transition: "opacity 90ms ease-out",
+        }}
+      />
+    </>
   );
 }
