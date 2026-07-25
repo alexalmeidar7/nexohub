@@ -14,6 +14,20 @@ function SlugRedirect({ template }: { template: string }) {
   const { search, hash } = window.location;
   return <Navigate to={`${template.replace(":userSlug", userSlug)}${search}${hash}`} replace />;
 }
+
+// Slug guard: valida o :userSlug ANTES de renderizar rotas dinâmicas. Se o
+// parâmetro chegar vazio, como placeholder literal (":userslug"), ou com
+// caracteres inválidos, redireciona para a home em vez de disparar o edge
+// function com um slug inexistente e mostrar tela em branco.
+const SLUG_RE = /^[a-z0-9][a-z0-9_-]*$/i;
+function SlugGuard({ children }: { children: ReactNode }) {
+  const { userSlug = "" } = useParams();
+  const clean = (userSlug || "").trim();
+  if (!clean || !SLUG_RE.test(clean) || clean.toLowerCase() === ":userslug") {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
