@@ -341,7 +341,9 @@ Deno.serve(async (req) => {
         shopActive: isShopActive,
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
-      }),
+        musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        currentProgram: currentProgram || null,
+        currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
