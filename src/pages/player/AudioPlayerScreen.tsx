@@ -1016,16 +1016,20 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       }}
     >
 
+      {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
+      <DjModeLayer audioRef={audioRef} active={djModeActive} />
+
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }}
+      >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }} />
 
-      {/* Modo DJ — pisca no ritmo (específico Interativa FM · Pra Cima!) */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} />
 
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
