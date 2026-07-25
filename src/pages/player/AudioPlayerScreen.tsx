@@ -395,11 +395,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return false;
     }
   });
+  const [djSensitivity, setDjSensitivity] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("nexohub_dj_sensitivity");
+      const v = raw != null ? parseFloat(raw) : NaN;
+      return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.5;
+    } catch {
+      return 0.5;
+    }
+  });
+  const [djPanelOpen, setDjPanelOpen] = useState<boolean>(false);
   useEffect(() => {
     try {
       localStorage.setItem("nexohub_dj_mode", djModeOn ? "1" : "0");
     } catch {}
   }, [djModeOn]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("nexohub_dj_sensitivity", String(djSensitivity));
+    } catch {}
+  }, [djSensitivity]);
   const djModeActive = !isVideoChannel && djModeOn;
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
@@ -1017,7 +1032,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     >
 
       {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} />
+      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} />
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
@@ -1181,32 +1196,109 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               active={isFullscreen}
             />
             {!isVideoChannel && (
-              <button
-                type="button"
-                onClick={() => setDjModeOn((v) => !v)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border transition-all ${djModeActive ? "animate-pulse" : ""}`}
-                style={
-                  djModeActive
-                    ? {
-                        background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
-                        borderColor: "rgba(255,255,255,0.35)",
-                        color: "#fff",
-                        boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
-                        textShadow: "0 0 8px rgba(255,255,255,0.55)",
-                      }
-                    : {
-                        background: "rgba(255,255,255,0.06)",
-                        borderColor: "rgba(255,255,255,0.18)",
-                        color: "rgba(255,255,255,0.75)",
-                      }
-                }
-                title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ (fundo pisca no ritmo)"}
-                aria-pressed={djModeActive}
-                aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
-              >
-                <span aria-hidden style={{ fontSize: 12 }}>🎧</span>
-                modo dj {djModeActive ? "ligado" : "desligado"}
-              </button>
+              <div className="relative flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setDjModeOn((v) => !v)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border transition-all ${djModeActive ? "animate-pulse" : ""}`}
+                  style={
+                    djModeActive
+                      ? {
+                          background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
+                          borderColor: "rgba(255,255,255,0.35)",
+                          color: "#fff",
+                          boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                          textShadow: "0 0 8px rgba(255,255,255,0.55)",
+                        }
+                      : {
+                          background: "rgba(255,255,255,0.06)",
+                          borderColor: "rgba(255,255,255,0.18)",
+                          color: "rgba(255,255,255,0.75)",
+                        }
+                  }
+                  title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ (fundo pisca no ritmo)"}
+                  aria-pressed={djModeActive}
+                  aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
+                >
+                  <span aria-hidden style={{ fontSize: 12 }}>🎧</span>
+                  modo dj {djModeActive ? "ligado" : "desligado"}
+                </button>
+                {djModeActive && (
+                  <button
+                    type="button"
+                    onClick={() => setDjPanelOpen((v) => !v)}
+                    className="flex items-center justify-center w-7 h-7 rounded-full border transition-all"
+                    style={{
+                      background: djPanelOpen ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)",
+                      borderColor: "rgba(255,255,255,0.22)",
+                      color: "rgba(255,255,255,0.9)",
+                    }}
+                    title="Ajustar sensibilidade do Modo DJ"
+                    aria-label="Ajustar sensibilidade do Modo DJ"
+                    aria-expanded={djPanelOpen}
+                  >
+                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>⚙</span>
+                  </button>
+                )}
+                {djModeActive && djPanelOpen && (
+                  <div
+                    className="absolute top-full right-0 mt-2 p-3 rounded-xl border backdrop-blur-md z-30"
+                    style={{
+                      background: "rgba(15,15,20,0.82)",
+                      borderColor: "rgba(255,255,255,0.14)",
+                      minWidth: 240,
+                      boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
+                    }}
+                    role="dialog"
+                    aria-label="Sensibilidade do Modo DJ"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/85">Sensibilidade</span>
+                      <span className="text-[10.5px] font-mono text-white/70 tabular-nums">
+                        {Math.round(djSensitivity * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round(djSensitivity * 100)}
+                      onChange={(e) => setDjSensitivity(parseInt(e.target.value, 10) / 100)}
+                      className="w-full accent-fuchsia-400"
+                      aria-label="Sensibilidade do Modo DJ"
+                    />
+                    <div className="flex items-center justify-between mt-1 text-[9.5px] uppercase tracking-[0.14em] text-white/45">
+                      <span>Suave</span>
+                      <span>Agressivo</span>
+                    </div>
+                    <div className="mt-2 flex gap-1">
+                      {[
+                        { label: "Baixa", v: 0.25 },
+                        { label: "Média", v: 0.5 },
+                        { label: "Alta", v: 0.8 },
+                      ].map((p) => (
+                        <button
+                          key={p.label}
+                          type="button"
+                          onClick={() => setDjSensitivity(p.v)}
+                          className="flex-1 py-1 rounded-md text-[10px] font-semibold uppercase tracking-[0.1em] border transition-colors"
+                          style={{
+                            background: Math.abs(djSensitivity - p.v) < 0.02 ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.05)",
+                            borderColor: "rgba(255,255,255,0.14)",
+                            color: "rgba(255,255,255,0.85)",
+                          }}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[10px] leading-snug text-white/55">
+                      Aumente para captar batidas fracas; diminua para reagir só aos picos fortes.
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </nav>
         </div>
