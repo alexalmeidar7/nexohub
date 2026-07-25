@@ -1790,6 +1790,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onKeyUp={commitDrag}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
             aria-label="Voltar até 30 minutos"
+            data-tv-focusable
+            data-tv-flat
+            data-tv-scroll="center"
+            data-tv-selected={ts.offset > 1 ? "true" : undefined}
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
             <span>-5min</span>
