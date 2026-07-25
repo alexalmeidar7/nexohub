@@ -400,7 +400,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       if (!settingsFetchedRef.current) {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode, dashboard_items")
+          .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -410,6 +410,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           mode: settings?.music_source_mode || "online",
           localFileName: dashboardItems?.local_xml_filename || null,
         };
+        excecoesRef.current = ((settings?.infomusic_excecoes || "") as string)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         settingsFetchedRef.current = true;
       }
 
