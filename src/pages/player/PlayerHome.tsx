@@ -237,7 +237,7 @@ function TopNavBar({
               data-tv-focusable
               data-tv-topnav={idx + 1}
               title={`Atalho: ${idx + 1}`}
-              className="group relative py-1 font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
+              className="group relative py-1 font-tv-medium tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
@@ -322,7 +322,7 @@ function TopNavBar({
                 onFocus={() => setSearchFocused(true)}
                 placeholder="buscar"
                 data-tv-focusable
-                className="flex-1 min-w-0 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
+                className="flex-1 min-w-0 bg-transparent text-tv-card-sub font-tv-medium placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
                 style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
                 onKeyDown={(e) => {
                   const el = e.currentTarget;
@@ -363,11 +363,11 @@ function TopNavBar({
           >
             <div className="max-h-[50vh] overflow-y-auto px-2 py-2">
               {isTyping ? (
-                <p className="text-center text-white/30 text-sm py-6">digitando…</p>
+                <p className="text-center text-slate-300 text-tv-card-sub py-6">digitando…</p>
               ) : !debouncedQuery ? (
-                <p className="text-center text-white/25 text-sm py-6">digite ao menos 2 caracteres</p>
+                <p className="text-center text-slate-300 text-tv-card-sub py-6">digite ao menos 2 caracteres</p>
               ) : !hasResults ? (
-                <p className="text-center text-white/25 text-sm py-6">Nenhum resultado</p>
+                <p className="text-center text-slate-300 text-tv-card-sub py-6">Nenhum resultado</p>
 
               ) : (
                 <>
@@ -380,7 +380,7 @@ function TopNavBar({
                             {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{ch.name}</span>
                             <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
                           </div>
                         </button>
@@ -396,7 +396,7 @@ function TopNavBar({
                             {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{p.nome}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{p.nome}</span>
                             <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
                           </div>
                         </div>
@@ -412,7 +412,7 @@ function TopNavBar({
                             <Disc className="w-4 h-4 text-white/30" />
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{formatTrackText(m.musica)}</span>
                             <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
                           </div>
                         </div>
@@ -486,10 +486,10 @@ function TopNavBar({
           {profileOpen && !userId && (
             <div className="absolute right-0 top-[calc(100%+8px)] z-50 animate-fade-in" style={{ minWidth: "200px" }}>
               <div className="rounded-2xl px-4 py-3 flex flex-col gap-2" style={{ background: "rgba(10,10,10,0.95)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 4px 16px rgba(0,0,0,0.4)" }}>
-                <span className="text-sm font-bold text-white">{userName}</span>
+                <span className="text-tv-card-title font-tv-bold text-white truncate">{userName}</span>
                 <div className="w-full h-px bg-white/10" />
                 {showSignup && onSignup && (
-                  <button onClick={() => { setProfileOpen(false); onSignup(); }} className="text-xs text-left py-1" style={{ color: "hsl(var(--player-accent))" }}>Cadastre-se</button>
+                  <button onClick={() => { setProfileOpen(false); onSignup(); }} className="text-tv-card-sub font-tv-medium text-left py-1" style={{ color: "hsl(var(--player-accent))" }}>Cadastre-se</button>
                 )}
               </div>
             </div>
@@ -705,10 +705,10 @@ function HeroBanner({
           <div className="relative z-[1] p-4 flex flex-col h-full">
             <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/40 text-white/85 tracking-wide">ouvir</span>
             <div className="mt-auto">
-              <p className="text-[13px] text-white/70 leading-none">no ar</p>
-              <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[55%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
+              <p className="text-tv-card-sub text-slate-300 leading-none">no ar</p>
+              <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate max-w-[55%]">{currentProgram?.nome?.toLowerCase() || "—"}</p>
               {currentProgram && (
-                <p className="text-[12px] text-white/60 mt-1">{currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}</p>
+                <p className="text-tv-card-sub text-slate-300 mt-1">{currentProgram.horario_inicio.slice(0,5)}/{currentProgram.horario_fim.slice(0,5)}</p>
               )}
             </div>
           </div>
@@ -737,10 +737,10 @@ function HeroBanner({
           <div className="relative z-[1] p-4 flex flex-col h-full">
             <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">assistir</span>
             <div className="mt-auto">
-              <p className="text-[13px] text-white/70 leading-none">tocando</p>
-              <p className="text-[18px] font-semibold text-white leading-tight truncate">{nowPlaying?.musica ? formatTrackText(nowPlaying.musica) : "—"}</p>
+              <p className="text-tv-card-sub text-slate-300 leading-none">tocando</p>
+              <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate">{nowPlaying?.musica ? formatTrackText(nowPlaying.musica) : "—"}</p>
               {nowPlaying?.artista && (
-                <p className="text-[12px] text-white/70 mt-0.5 truncate">{formatTrackText(nowPlaying.artista)}</p>
+                <p className="text-tv-card-sub text-slate-300 mt-0.5 truncate">{formatTrackText(nowPlaying.artista)}</p>
               )}
             </div>
           </div>
@@ -757,7 +757,7 @@ function HeroBanner({
             style={{ border: "1px solid rgba(255,255,255,0.35)" }}
             aria-label="Ajuda de navegação"
           >
-            <span className="text-sm font-light">?</span>
+            <span className="text-tv-card-sub font-tv-medium">?</span>
           </button>
           <div
             className="pointer-events-none absolute bottom-full right-0 mb-3 w-[320px] opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-200"
@@ -771,7 +771,7 @@ function HeroBanner({
                 boxShadow: "0 20px 50px rgba(0,0,0,0.6)",
               }}
             >
-              <p className="text-white text-sm font-semibold mb-1" style={{ fontFamily: "'Lufga', sans-serif" }}>
+              <p className="text-white text-tv-card-title font-tv-bold mb-1" style={{ fontFamily: "'Lufga', sans-serif" }}>
                 Navegação por teclado
               </p>
               <p className="text-white/70 text-[11px] leading-relaxed mb-4">
@@ -960,7 +960,7 @@ function StreamingCard({ channel, currentProgram, nowPlaying, onClick }: {
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 z-[4] text-left pointer-events-none flex flex-col">
         <div className="px-3.5 pb-3">
-          <p className="text-xs font-normal text-white leading-tight line-clamp-2 drop-shadow-lg">
+          <p className="text-tv-card-sub font-tv-medium text-white leading-tight line-clamp-2 drop-shadow-lg">
             {currentProgram?.nome || channel.name}
           </p>
           {currentProgram && (
@@ -1039,7 +1039,7 @@ function ContentRow({ title, children, scrollRoot }: { title: React.ReactNode; c
       className="mb-8 relative group/row player-row-slide"
       style={{ transition: "opacity 0.3s ease, transform 0.3s ease", willChange: "opacity, transform", ...fadeScale }}
     >
-      <h2 className="text-base sm:text-lg font-bold mb-3 tracking-wide text-white/90 px-1 player-hero-content">{title}</h2>
+      <h2 className="text-tv-card-title sm:text-tv-section font-tv-bold mb-3 tracking-wide text-slate-100 px-1 player-hero-content">{title}</h2>
       <div className="relative">
         {canScrollLeft && (
           <button
@@ -1229,7 +1229,7 @@ function TrendingCard({ item, idx, channels, onClick }: {
         {/* Text overlay always visible on the cover side */}
         <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
         <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
-          <p className="text-xs font-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
+          <p className="text-tv-card-sub font-tv-bold text-white leading-tight line-clamp-2 drop-shadow-lg">{item.title}</p>
           {item.subtitle && <p className="text-[10px] text-white/50 mt-1 font-medium">{item.subtitle}</p>}
           {item.type === "catalog" && hovered && (
             <p className="text-[9px] text-white/40 mt-1.5 uppercase tracking-wider font-semibold flex items-center gap-1">
@@ -1317,8 +1317,8 @@ function CatalogCard({ image, title, subtitle, logoUrl, onClick }: { image?: str
       <div className="relative z-[1] p-4 flex flex-col h-full">
         <span className="inline-flex self-start text-[11px] px-3 py-1 rounded-full bg-black/50 text-white/85 tracking-wide">on demand</span>
         <div className="mt-auto">
-          <p className="text-[18px] font-semibold text-white leading-tight truncate max-w-[70%] lowercase">{title}</p>
-          {subtitle && <p className="text-[12px] text-white/70 mt-0.5 truncate">{subtitle}</p>}
+          <p className="text-tv-card-title font-tv-bold text-white leading-tight truncate max-w-[70%] lowercase">{title}</p>
+          {subtitle && <p className="text-tv-card-sub text-slate-300 mt-0.5 truncate">{subtitle}</p>}
         </div>
       </div>
     </button>
@@ -1367,7 +1367,7 @@ function HistoryCard({ item, onClick }: { item: { channel_name: string; channel_
       {/* Gradient + info */}
       <div className="absolute inset-0 z-[3] pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 40%, transparent 65%)" }} />
       <div className="absolute bottom-0 left-0 right-0 p-3 z-[4] text-left pointer-events-none">
-        <p className="text-xs font-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
+        <p className="text-tv-card-sub font-tv-bold text-white truncate drop-shadow-lg">{item.channel_name}</p>
         <p className="text-[9px] text-white/50 flex items-center gap-1 mt-1">
           <Clock className="h-2.5 w-2.5" />
           {new Date(item.watched_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
@@ -2122,7 +2122,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className={`fixed inset-0 text-white flex flex-col transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
       {/* Top loading bar */}
