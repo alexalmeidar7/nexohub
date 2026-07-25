@@ -208,8 +208,9 @@ const App = () => (
             <Route path="/:userSlug/telapromo" element={<PromocoesKiosk />} />
             <Route path="/:userSlug/locutor" element={<PromocoesKiosk />} />
             <Route path="/locutor" element={<PromocoesKiosk />} />
-            <Route path="/:userSlug/player" element={<PlayerHub />} />
-            <Route path="/:userSlug/player/tv" element={<PlayerTvWelcome />} />
+            <Route path="/:userSlug/player" element={<SlugGuard><PlayerHub /></SlugGuard>} />
+            <Route path="/:userSlug/player/tv" element={<SlugGuard><PlayerTvWelcome /></SlugGuard>} />
+            <Route path="/player/tv" element={<Navigate to="/" replace />} />
             <Route path="/:userSlug/pair" element={<PairPage />} />
             <Route path="/google-check" element={<GoogleCheckPage />} />
             <Route path="/:userSlug/google-check" element={<GoogleCheckPage />} />
