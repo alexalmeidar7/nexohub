@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone, Home } from "lucide-react";
 import { extractDominantPair } from "@/lib/dominantColors";
 
 /**
@@ -534,7 +534,7 @@ export default function PlayerTvWelcome() {
       {/* Conteúdo */}
       <div className="relative z-10 flex flex-col p-tv-safe min-h-screen">
         {/* Cabeçalho: apenas a logo, sem texto "PLAYER ..." */}
-        <div className="flex-none flex items-center">
+        <div className="flex-none flex items-center gap-4">
           {radioLogo ? (
             <img
               src={radioLogo}
@@ -542,7 +542,17 @@ export default function PlayerTvWelcome() {
               className="h-24 w-24 rounded-2xl object-contain bg-white/10 backdrop-blur-md p-2 border border-white/10 shadow-xl"
             />
           ) : null}
+          <button
+            type="button"
+            onClick={() => navigate(userSlug ? `/${userSlug}/player` : "/player")}
+            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-white hover:bg-white/20 transition shadow-lg"
+            aria-label="Acessar player sem login"
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-tv-body font-tv-bold">Entrar sem login</span>
+          </button>
         </div>
+
 
         {/* Corpo */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
@@ -550,9 +560,7 @@ export default function PlayerTvWelcome() {
           <div className="lg:col-span-8 max-w-3xl">
             {/* Bloco headline com respiro generoso */}
             <div className="space-y-6 mb-14">
-              <p className="text-tv-caption font-tv-bold uppercase tracking-[0.28em] text-primary drop-shadow">
-                Configuração do player
-              </p>
+
               <h1 className="text-tv-h1 font-tv-bold leading-[1.05] drop-shadow-lg">
                 Bem-vindo ao player da{" "}
                 <span className="text-primary">{radioName || userSlug.toUpperCase()}</span>

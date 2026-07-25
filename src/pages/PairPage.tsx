@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
 
@@ -28,14 +29,17 @@ export default function PairPage() {
     setSigningIn(true);
     try {
       const returnUrl = `${window.location.origin}/${userSlug}/pair${code ? `?code=${code}` : ""}`;
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: returnUrl },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: returnUrl,
+        extraParams: { prompt: "select_account" },
       });
-      if (error) {
-        setStatus({ kind: "error", message: error.message });
+      if (result.error) {
+        setStatus({ kind: "error", message: result.error.message });
         setSigningIn(false);
+        return;
       }
+      if (result.redirected) return;
+      setSigningIn(false);
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
       setSigningIn(false);
