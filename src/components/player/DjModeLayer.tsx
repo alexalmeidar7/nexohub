@@ -22,6 +22,8 @@ import { getOrCreateAnalyser } from "@/components/AudioSpectrum";
 interface Props {
   audioRef: React.RefObject<HTMLAudioElement>;
   active: boolean;
+  /** 0..1 — quanto maior, mais sensível a batidas fracas (mais piscadas). Default 0.5 */
+  sensitivity?: number;
 }
 
 // Curva de envelope no beat: attack rápido, decay suave.
