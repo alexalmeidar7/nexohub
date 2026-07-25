@@ -24,6 +24,8 @@ interface Props {
   active: boolean;
   /** 0..1 — quanto maior, mais sensível a batidas fracas (mais piscadas). Default 0.5 */
   sensitivity?: number;
+  /** Paleta da capa (hex) — usada como base para mesclar com as cores geradas. */
+  coverPalette?: { primary: string; secondary: string } | null;
 }
 
 // Curva de envelope no beat: attack rápido, decay suave.
@@ -34,30 +36,101 @@ function beatEnvelope(t: number): number {
   return Math.max(0, 1 - d * d * 0.92);        // decay quadrático até quase 0
 }
 
-// Converte razões de energia (bass/mid/treble) em par de matizes contrastantes.
-function paletteFromSpectrum(bass: number, mid: number, treble: number, seed: number): { a: string; b: string; angle: number } {
+// ---- Utilidades HSL ----
+function hexToHsl(hex: string): { h: number; s: number; l: number } | null {
+  const m = hex.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(m) && !/^[0-9a-fA-F]{3}$/.test(m)) return null;
+  const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+  const r = parseInt(full.slice(0, 2), 16) / 255;
+  const g = parseInt(full.slice(2, 4), 16) / 255;
+  const b = parseInt(full.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0;
+  const l = (max + min) / 2;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return { h: h * 360, s: s * 100, l: l * 100 };
+}
+
+/**
+ * Gera par de cores considerando:
+ *  - BPM: lento (< 110) → cores FRIAS contrastantes; rápido (> 132) → VIBRANTES quentes/saturadas.
+ *  - Espectro (bass/mid/treble): puxa matiz secundário conforme energia.
+ *  - Paleta da CAPA: um dos matizes é sempre "ancorado" na capa (mistura visual com a música).
+ */
+function paletteFromContext(
+  bpm: number,
+  bass: number,
+  mid: number,
+  treble: number,
+  coverHue: number | null,
+  seed: number,
+): { a: string; b: string; angle: number } {
   const total = bass + mid + treble + 0.0001;
   const bR = bass / total;
   const tR = treble / total;
-  // Hue A: quente quando graves dominam (0..40°), frio quando agudos (180..260°).
-  const hueA = Math.round(200 - bR * 200 + tR * 60 + (seed % 25));
-  // Hue B: complementar deslocado.
-  const hueB = (hueA + 150 + Math.round((mid / total) * 60)) % 360;
-  const sat = 95;
-  const light = 55;
-  const a = `hsl(${(hueA + 360) % 360} ${sat}% ${light}%)`;
-  const b = `hsl(${hueB} ${sat}% ${light}%)`;
+
+  // tempo: 0 = lento, 1 = rápido (mapeia 90..160 BPM)
+  const tempo = bpm > 0 ? Math.max(0, Math.min(1, (bpm - 90) / 70)) : 0.5;
+
+  // Cor A: ancorada na capa (se houver), com leve variação pelo seed.
+  // Sem capa, usa matiz derivado do espectro.
+  const spectrumHue = 200 - bR * 200 + tR * 60;
+  const anchorHue = coverHue != null
+    ? (coverHue + ((seed % 21) - 10)) % 360
+    : spectrumHue + (seed % 25);
+
+  // Cor B: contraste que depende do tempo.
+  //  - Lento: puxa para FRIO (180..260°) e complementa a capa.
+  //  - Rápido: complementar quente/vibrante (0..40° ou 300..340°).
+  let contrastHue: number;
+  if (tempo < 0.35) {
+    // Frio contrastante — força faixa cyan/azul/violeta
+    const coolBase = 190 + (seed % 60); // 190..250
+    // se a capa já for fria, aumenta distância; se quente, complementa
+    const delta = coverHue != null ? Math.abs(((coverHue - coolBase + 540) % 360) - 180) : 180;
+    contrastHue = delta < 40 ? (coolBase + 45) % 360 : coolBase;
+  } else if (tempo > 0.6) {
+    // Quente vibrante — força faixa rosa/laranja/amarelo
+    const hotBase = (seed * 37) % 60; // 0..60 (vermelho→amarelo)
+    contrastHue = Math.random() > 0.5 ? hotBase : (320 + (seed % 40)) % 360;
+  } else {
+    // Meio termo: complementar clássico deslocado pela energia média
+    contrastHue = (anchorHue + 150 + (mid / total) * 60) % 360;
+  }
+
+  // Saturação e luminância dependem do tempo: mais vibrante quanto mais rápido.
+  const sat = Math.round(70 + tempo * 28);           // 70..98%
+  const light = Math.round(48 + (1 - tempo) * 10);   // 48..58%
+
+  const a = `hsl(${((anchorHue % 360) + 360) % 360} ${Math.min(96, sat)}% ${light}%)`;
+  const b = `hsl(${((contrastHue % 360) + 360) % 360} ${sat}% ${light}%)`;
   const angle = (seed * 47) % 360;
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
+  const coverHueRef = useRef<number | null>(null);
+  coverHueRef.current = (() => {
+    if (!coverPalette?.primary) return null;
+    const hsl = hexToHsl(coverPalette.primary);
+    return hsl ? hsl.h : null;
+  })();
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
+  const bpmRef = useRef<number>(0);
 
   useEffect(() => {
     if (!active) return;
@@ -83,7 +156,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
 
     const applyPalette = (bassE: number, midE: number, trebleE: number) => {
       seed = (seed + 1 + Math.floor(Math.random() * 3)) % 10000;
-      const p = paletteFromSpectrum(bassE, midE, trebleE, seed);
+      const p = paletteFromContext(bpm || bpmRef.current, bassE, midE, trebleE, coverHueRef.current, seed);
       paletteA = p.a;
       paletteB = p.b;
       paletteAngle = p.angle;
@@ -122,6 +195,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
     const startFallback = () => {
       if (fallbackRef.current) return;
       bpm = 128;
+      bpmRef.current = 128;
       phaseAnchor = performance.now();
       // Loop de render continua rodando via RAF abaixo, usando bpm=128.
       fallbackRef.current = window.setInterval(() => {
@@ -204,7 +278,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
             while (onsetTimes.length > 32 || (onsetTimes.length && now - onsetTimes[0] > 8000)) onsetTimes.shift();
             if (onsetTimes.length % 4 === 0) {
               const est = estimateBpm();
-              if (est > 0) bpm = est;
+              if (est > 0) { bpm = est; bpmRef.current = est; }
             }
             // Corrige fase: alinha o próximo beat com o transiente real
             phaseAnchor = now;
