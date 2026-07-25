@@ -1770,10 +1770,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </div>
 
         {/* timeshift bar (janela fixa 5 min) */}
-        <div className="relative">
-          <div className="h-1 rounded-full bg-white/12 overflow-hidden">
+        <div className="relative group/timeshift focus-within:scale-[1.01] transition-transform">
+          <div
+            className="h-1 rounded-full bg-white/12 overflow-hidden transition-all duration-200 group-focus-within/timeshift:h-2 group-focus-within/timeshift:bg-white/25 group-focus-within/timeshift:shadow-[0_0_0_2px_var(--nexo-accent,#00BFF0),0_0_14px_var(--nexo-accent,#00BFF0)]"
+          >
             <div
-              className="h-full bg-white/85 transition-all duration-500"
+              className="h-full bg-white/85 transition-all duration-500 group-focus-within/timeshift:bg-[var(--nexo-accent,#00BFF0)]"
               style={{ width: `${(1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100}%` }}
             />
           </div>
@@ -1790,6 +1792,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onKeyUp={commitDrag}
             className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
             aria-label="Voltar até 30 minutos"
+            data-tv-focusable
+            data-tv-flat
+            data-tv-scroll="center"
+            data-tv-selected={ts.offset > 1 ? "true" : undefined}
           />
           <div className="mt-1 flex justify-between text-[10px] text-white/45">
             <span>-5min</span>
@@ -1825,7 +1831,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   <button
                     onClick={() => onSetMuted(!muted)}
                     className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
-                    data-focusable
+                    data-tv-focusable
+                    data-tv-scroll="center"
+                    data-tv-selected={muted ? "true" : undefined}
                     aria-label={muted ? "Ativar som" : "Silenciar"}
                     title={muted ? "Ativar som" : "Silenciar"}
                   >
@@ -1856,7 +1864,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onClick={onTogglePlay}
             className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
             aria-label={playing ? "Pausar" : "Reproduzir"}
-            data-focusable
+            data-tv-focusable
+            data-tv-scroll="center"
+            data-tv-selected={playing ? "true" : undefined}
           >
             {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
           </button>
