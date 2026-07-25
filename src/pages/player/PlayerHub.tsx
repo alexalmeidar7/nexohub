@@ -6,6 +6,7 @@ import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { usePlayerHeartbeat } from "@/hooks/usePlayerHeartbeat";
+import { useTvFocusAutoScroll } from "@/hooks/useTvFocusAutoScroll";
 import { preloadImage } from "@/hooks/usePreloadImages";
 import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
