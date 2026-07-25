@@ -386,6 +386,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .map((w) => w[0]?.toUpperCase())
     .join("") || "•";
 
+  // ---- MODO DJ (específico Interativa FM / programa "Pra Cima!") ----
+  // Regra: usuário = interativa fm && canal de áudio && programa no ar = "Pra Cima!"
+  // O fundo pisca cores neon aleatórias no ritmo dos graves da música.
+  const djModeActive = useMemo(() => {
+    if (isVideoChannel) return false;
+    const identify = `${userSlug || ""} ${empresaNome || ""}`.toLowerCase();
+    const isInterativa = /interativa/.test(identify);
+    if (!isInterativa) return false;
+    const progNome = String(currentProg?.nome || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return progNome === "pra cima" || progNome.startsWith("pra cima");
+  }, [isVideoChannel, userSlug, empresaNome, currentProg?.nome]);
+
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
 
   // ---- Background dinâmico ----
