@@ -934,37 +934,40 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
     else setAddingWeather(true);
     
     try {
-      let city = "";
+      // ALWAYS use the primary city registered in "Previsão do Tempo" (user-scoped)
+      let primary: { name: string; lat?: number; lon?: number } | null = null;
       try {
-        const primary = JSON.parse(localStorage.getItem("masterview_primary_city") || "null");
-        if (primary?.name) city = primary.name;
-        if (!city) city = localStorage.getItem("masterview_last_city") || "";
+        if (user?.id) {
+          primary = JSON.parse(localStorage.getItem(`masterview_primary_city_${user.id}`) || "null");
+        }
       } catch {}
 
-      if (!city && user) {
-        const { data } = await supabase.from("user_settings").select("weather_city").eq("user_id", user.id).maybeSingle();
-        if (data?.weather_city) city = data.weather_city;
-      }
-
-      if (!city) {
-        toast.error("Cidade não configurada. Defina em CADASTRO > CIDADE TEMPO.");
+      if (!primary?.name) {
+        toast.error("Cidade principal não definida. Defina em PREVISÃO DO TEMPO > Tornar Principal.");
         if (isRegenerating) setFetchingLink(null);
         else setAddingWeather(false);
         return;
       }
 
-      const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
-        body: { action: "geocode", query: city, count: 1 },
-      });
+      let latitude = primary.lat;
+      let longitude = primary.lon;
+      let name = primary.name;
 
-      if (!geoData?.results?.length) {
-        toast.error("Não foi possível localizar a cidade.");
-        if (isRegenerating) setFetchingLink(null);
-        else setAddingWeather(false);
-        return;
+      if (latitude == null || longitude == null) {
+        const { data: geoData } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "geocode", query: primary.name, count: 1 },
+        });
+        if (!geoData?.results?.length) {
+          toast.error("Não foi possível localizar a cidade principal.");
+          if (isRegenerating) setFetchingLink(null);
+          else setAddingWeather(false);
+          return;
+        }
+        latitude = geoData.results[0].latitude;
+        longitude = geoData.results[0].longitude;
+        name = geoData.results[0].name || primary.name;
       }
 
-      const { latitude, longitude, name } = geoData.results[0];
       const { data: wxResp } = await supabase.functions.invoke("fetch-weather", {
         body: { action: "forecast", lat: latitude, lon: longitude, forecast_days: 2 },
       });
