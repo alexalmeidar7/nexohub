@@ -534,7 +534,7 @@ export default function PlayerTvWelcome() {
       {/* Conteúdo */}
       <div className="relative z-10 flex flex-col p-tv-safe min-h-screen">
         {/* Cabeçalho: apenas a logo, sem texto "PLAYER ..." */}
-        <div className="flex-none flex items-center">
+        <div className="flex-none flex items-center gap-4">
           {radioLogo ? (
             <img
               src={radioLogo}
@@ -542,7 +542,17 @@ export default function PlayerTvWelcome() {
               className="h-24 w-24 rounded-2xl object-contain bg-white/10 backdrop-blur-md p-2 border border-white/10 shadow-xl"
             />
           ) : null}
+          <button
+            type="button"
+            onClick={() => navigate(userSlug ? `/${userSlug}/player` : "/player")}
+            className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-white hover:bg-white/20 transition shadow-lg"
+            aria-label="Acessar player sem login"
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-tv-body font-tv-bold">Entrar sem login</span>
+          </button>
         </div>
+
 
         {/* Corpo */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
