@@ -277,7 +277,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
             while (onsetTimes.length > 32 || (onsetTimes.length && now - onsetTimes[0] > 8000)) onsetTimes.shift();
             if (onsetTimes.length % 4 === 0) {
               const est = estimateBpm();
-              if (est > 0) bpm = est;
+              if (est > 0) { bpm = est; bpmRef.current = est; }
             }
             // Corrige fase: alinha o próximo beat com o transiente real
             phaseAnchor = now;
