@@ -9,6 +9,9 @@ verify_jwt = false
 [functions.public-player-data]
 verify_jwt = false
 
+[functions.shorten-url]
+verify_jwt = false
+
 [functions.public-promo-data]
 verify_jwt = false
 
