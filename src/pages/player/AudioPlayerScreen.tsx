@@ -1025,6 +1025,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       </div>
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
 
+      {/* Modo DJ — pisca no ritmo (específico Interativa FM · Pra Cima!) */}
+      <DjModeLayer audioRef={audioRef} active={djModeActive} />
+
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
