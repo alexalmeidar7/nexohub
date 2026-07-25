@@ -523,8 +523,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
 
     setResolvedMusicCover("");
+    // FIX (bug capa travada): mesmo antes do fetch resolver — ou se ele falhar /
+    // retornar vazio — sobe a música corrente para history[0] imediatamente.
+    // Sem isso, quando musicData.capa vem vazio e o iTunes/fallback não retorna
+    // capa, o histórico continuava com a faixa anterior no topo e o
+    // <NowCoverCrossfade capa={history[0].capa}> ficava congelado na capa antiga.
+    setHistory((prev) => ensureCurrentAtFront(prev, undefined));
+
     fetchCover(artista, musica).then((cover) => {
-      if (cancelled || !cover) return;
+      if (cancelled) return;
+      if (!cover) return;
       setResolvedMusicCover(cover);
       setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
