@@ -26,7 +26,7 @@ function resolveColor(barColor?: string): string {
 // ── Web Audio API helper — shared context to avoid multiple connections ──
 const audioCtxMap = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser: AnalyserNode; source: MediaElementAudioSourceNode }>();
 
-function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
+export function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
   try {
     if (audioCtxMap.has(audio)) {
       const entry = audioCtxMap.get(audio)!;

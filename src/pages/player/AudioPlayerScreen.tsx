@@ -14,6 +14,7 @@ import {
 } from "@/lib/locutorImageCache";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
+import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
@@ -384,6 +385,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase())
     .join("") || "•";
+
+  // ---- MODO DJ (específico Interativa FM / programa "Pra Cima!") ----
+  // Regra: usuário = interativa fm && canal de áudio && programa no ar = "Pra Cima!"
+  // O fundo pisca cores neon aleatórias no ritmo dos graves da música.
+  const djModeActive = useMemo(() => {
+    if (isVideoChannel) return false;
+    const identify = `${userSlug || ""} ${empresaNome || ""}`.toLowerCase();
+    const isInterativa = /interativa/.test(identify);
+    if (!isInterativa) return false;
+    const progNome = String(currentProg?.nome || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return progNome === "pra cima" || progNome.startsWith("pra cima");
+  }, [isVideoChannel, userSlug, empresaNome, currentProg?.nome]);
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
 
@@ -1007,6 +1025,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       </div>
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)" }} />
 
+      {/* Modo DJ — pisca no ritmo (específico Interativa FM · Pra Cima!) */}
+      <DjModeLayer audioRef={audioRef} active={djModeActive} />
+
       {/* Media elements (owned by parent HLS) */}
       <audio ref={audioRef} muted={muted} preload="none" className="hidden" />
       <video ref={videoRef} className="hidden" muted playsInline />
@@ -1156,6 +1177,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onClick={toggleFullscreen}
               active={isFullscreen}
             />
+            {djModeActive && (
+              <div
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border animate-pulse"
+                style={{
+                  background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
+                  borderColor: "rgba(255,255,255,0.35)",
+                  color: "#fff",
+                  boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                  textShadow: "0 0 8px rgba(255,255,255,0.55)",
+                }}
+                title="Programa Pra Cima! — fundo reage à batida"
+                aria-label="Modo DJ ativado"
+              >
+                <span aria-hidden style={{ fontSize: 12 }}>🎧</span>
+                modo dj ativado
+              </div>
+            )}
           </nav>
         </div>
 
