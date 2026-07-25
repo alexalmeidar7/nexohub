@@ -94,6 +94,12 @@ export default function PairPage() {
           Faça login com sua conta Google e confirme o código que aparece na sua TV.
         </p>
 
+        {loading && (
+          <div className="mb-4 rounded-xl bg-white/5 border border-white/10 px-4 py-3 flex items-center gap-3 text-sm text-slate-300">
+            <Loader2 className="h-4 w-4 animate-spin" /> Verificando sessão…
+          </div>
+        )}
+
         {/* Login */}
         {!user ? (
           <button
