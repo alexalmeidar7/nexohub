@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone, Home } from "lucide-react";
 import { extractDominantPair } from "@/lib/dominantColors";
 
 /**
