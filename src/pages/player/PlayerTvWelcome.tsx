@@ -377,9 +377,19 @@ export default function PlayerTvWelcome() {
 
           {/* Coluna direita: QR + código (com respiro entre eles) */}
           <div className="flex flex-col items-center justify-center">
-            <div className="rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="relative rounded-3xl bg-white p-6 shadow-2xl">
               {code ? (
-                <QRCodeSVG value={pairUrl} size={280} level="M" includeMargin={false} />
+                <>
+                  <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
+                    <QRCodeSVG value={pairUrl} size={280} level="M" includeMargin={false} />
+                  </div>
+                  {expired && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-3xl bg-black/40 backdrop-blur-sm">
+                      <AlertTriangle className="h-10 w-10 text-amber-300" />
+                      <div className="text-tv-body font-tv-bold text-white">Expirado</div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-3">
                   <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
@@ -389,21 +399,32 @@ export default function PlayerTvWelcome() {
             </div>
             <div className="text-center mt-10">
               <div className="text-tv-caption uppercase tracking-widest text-slate-300">Código de pareamento</div>
-              <div className="text-6xl font-tv-bold tracking-[0.4em] mt-3 text-white drop-shadow-lg">
+              <div className={`text-6xl font-tv-bold tracking-[0.4em] mt-3 drop-shadow-lg ${expired ? "text-slate-500 line-through decoration-4" : "text-white"}`}>
                 {code ? code : "----"}
               </div>
-              {code && remaining > 0 && (
+              {code && !expired && remaining > 0 && (
                 <div className="text-tv-caption text-slate-400 mt-3">
                   Expira em <span className="text-white font-tv-bold">{remainingLabel}</span>
                 </div>
+              )}
+              {code && expired && (
+                <button
+                  type="button"
+                  onClick={generateCode}
+                  data-tv-focusable
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 px-5 py-3 mt-4 text-tv-body font-tv-bold shadow-lg"
+                >
+                  <RefreshCw className="h-5 w-5" /> Gerar novo código
+                </button>
               )}
             </div>
           </div>
         </div>
 
         <div className="mt-tv-6 text-tv-caption text-slate-400">
-          O código expira em 15 minutos e é renovado automaticamente.
+          O código expira em 15 minutos. Ao expirar, gere um novo para continuar.
         </div>
+
 
       </div>
     </div>
