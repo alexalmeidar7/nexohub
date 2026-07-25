@@ -265,7 +265,11 @@ export default function PlayerTvWelcome() {
     ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
     : null;
 
-  const showSkeleton = !loadedBg && (!activeBg || !pendingReady);
+  // Nenhuma imagem disponível (nem artista, nem locutor, nem thumb de programa/canal):
+  // ativa um fallback estático elegante — sem shimmer infinito.
+  const hasAnyImage = Boolean(artistImg || presenterImg || fallbackImg);
+  const showSkeleton = hasAnyImage && !loadedBg && (!activeBg || !pendingReady);
+  const showStaticFallback = !hasAnyImage;
 
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
@@ -288,7 +292,38 @@ export default function PlayerTvWelcome() {
               "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
           }}
         />
-        {/* Skeleton shimmer enquanto nenhuma imagem carregou */}
+        {/* Fallback estático elegante quando não há NENHUMA imagem disponível */}
+        {showStaticFallback && (
+          <>
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(60% 70% at 20% 25%, rgba(0,191,240,0.35) 0%, transparent 65%), radial-gradient(55% 65% at 82% 78%, rgba(198,240,60,0.22) 0%, transparent 70%), radial-gradient(80% 90% at 50% 50%, rgba(15,23,42,0.0) 0%, rgba(2,6,23,0.85) 90%), linear-gradient(135deg, #0b1220 0%, #0f172a 55%, #050914 100%)",
+              }}
+              aria-hidden
+            />
+            {/* Grão sutil para dar textura e evitar banding */}
+            <div
+              className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+              }}
+              aria-hidden
+            />
+            {/* Halo suave no centro para dar profundidade */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(45% 55% at 50% 45%, rgba(255,255,255,0.06) 0%, transparent 70%)",
+              }}
+              aria-hidden
+            />
+          </>
+        )}
+        {/* Skeleton shimmer enquanto nenhuma imagem carregou (só quando há imagem para carregar) */}
         {showSkeleton && (
           <div
             className="absolute inset-0 animate-pulse"
@@ -317,8 +352,8 @@ export default function PlayerTvWelcome() {
             }
           />
         )}
-        {/* Escurecimento para legibilidade */}
-        <div className={`absolute inset-0 transition-colors duration-700 ${loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
+        {/* Escurecimento para legibilidade (mais leve no fallback estático — já é escuro) */}
+        <div className={`absolute inset-0 transition-colors duration-700 ${showStaticFallback ? "bg-black/10" : loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
 
