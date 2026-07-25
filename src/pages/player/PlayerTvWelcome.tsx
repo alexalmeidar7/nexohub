@@ -318,6 +318,13 @@ export default function PlayerTvWelcome() {
           0%, 100% { height: 25%; }
           50%      { height: 100%; }
         }
+        @keyframes tv-bg-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .tv-bg-enter {
+          animation: tv-bg-fade-in 1100ms ease-out both;
+        }
       `}</style>
       {/* Gradiente elegante atrás da foto do locutor (transição suave) */}
       <div
