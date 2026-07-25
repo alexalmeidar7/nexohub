@@ -49,7 +49,7 @@ export async function extractDominantPair(imageUrl: string): Promise<DominantPai
           const S = 48; // downscale
           const canvas = document.createElement("canvas");
           canvas.width = S; canvas.height = S;
-          const ctx = canvas.getContext("2d", { willReadFrequently: true } as any);
+          const ctx = canvas.getContext("2d", { willReadFrequently: true } as any) as CanvasRenderingContext2D | null;
           if (!ctx) return resolve(null);
           ctx.drawImage(img, 0, 0, S, S);
           const { data } = ctx.getImageData(0, 0, S, S);
