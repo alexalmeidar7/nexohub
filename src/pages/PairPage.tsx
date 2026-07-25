@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { AlertCircle, CheckCircle2, Loader2, Tv } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
 
 /**
  * Página mobile de pareamento com a TV. O usuário lê o QR code, faz login com
