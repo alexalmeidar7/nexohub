@@ -29,7 +29,6 @@ export default function PairPage() {
   const handleGoogleLogin = async () => {
     setSigningIn(true);
     try {
-      const returnUrl = `${window.location.origin}/${userSlug}/pair${code ? `?code=${code}` : ""}`;
       setOAuthReturnPath(`/${userSlug}/pair${code ? `?code=${code}` : ""}`);
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
