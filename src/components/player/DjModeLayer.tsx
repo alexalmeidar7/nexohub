@@ -128,6 +128,9 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
   })();
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
+  const hudBpmRef = useRef<HTMLSpanElement | null>(null);
+  const hudTempRef = useRef<HTMLSpanElement | null>(null);
+  const hudDotRef = useRef<HTMLSpanElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const bpmRef = useRef<number>(0);
@@ -320,6 +323,23 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
 
+      // === HUD: BPM + temperatura ===
+      const bpmNow = bpm || bpmRef.current;
+      if (hudBpmRef.current) {
+        hudBpmRef.current.textContent = bpmNow > 0 ? String(bpmNow) : "—";
+      }
+      if (hudTempRef.current && hudDotRef.current) {
+        // mesma faixa usada em paletteFromContext (< 110 fria, > 132 quente)
+        let label = "intermediária";
+        let color = "hsl(45 95% 60%)"; // âmbar
+        if (bpmNow > 0 && bpmNow < 110) { label = "fria"; color = "hsl(200 95% 62%)"; }
+        else if (bpmNow > 132) { label = "quente"; color = "hsl(345 95% 62%)"; }
+        else if (bpmNow === 0) { label = "detectando…"; color = "hsl(0 0% 70%)"; }
+        hudTempRef.current.textContent = label;
+        hudDotRef.current.style.background = color;
+        hudDotRef.current.style.boxShadow = `0 0 10px ${color}`;
+      }
+
       rafRef.current = requestAnimationFrame(loop);
     };
     rafRef.current = requestAnimationFrame(loop);
@@ -360,6 +380,37 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
           zIndex: 1,
         }}
       />
+      {/* HUD ao vivo: BPM + temperatura da paleta */}
+      <div
+        aria-hidden
+        className="absolute top-4 right-4 pointer-events-none flex items-center gap-2 px-3 py-1.5 rounded-full"
+        style={{
+          zIndex: 2,
+          background: "rgba(0,0,0,0.42)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          border: "1px solid rgba(255,255,255,0.14)",
+          color: "#fff",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          fontSize: 12,
+          letterSpacing: 0.4,
+        }}
+      >
+        <span style={{ opacity: 0.7 }}>BPM</span>
+        <span ref={hudBpmRef} style={{ fontWeight: 700, minWidth: 24, textAlign: "center" }}>—</span>
+        <span style={{ opacity: 0.35 }}>·</span>
+        <span
+          ref={hudDotRef}
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: 999,
+            background: "hsl(0 0% 70%)",
+            transition: "background 200ms ease, box-shadow 200ms ease",
+          }}
+        />
+        <span ref={hudTempRef} style={{ opacity: 0.9 }}>detectando…</span>
+      </div>
     </>
   );
 }
