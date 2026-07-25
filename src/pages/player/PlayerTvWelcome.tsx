@@ -601,8 +601,6 @@ export default function PlayerTvWelcome() {
           </div>
         )}
 
-        </div>
-
       </div>
     </div>
   );
