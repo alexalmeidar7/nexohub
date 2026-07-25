@@ -134,7 +134,7 @@ export default function DjModeLayer({ audioRef, active }: Props) {
     let midEnd = 0;
     if (analyser) {
       const binCount = analyser.frequencyBinCount;
-      bins = new Uint8Array(binCount);
+      bins = new Uint8Array(new ArrayBuffer(binCount));
       bassEnd = Math.max(4, Math.floor(binCount * 0.14));
       midEnd = Math.max(bassEnd + 4, Math.floor(binCount * 0.45));
       prevBass = new Float32Array(bassEnd);
