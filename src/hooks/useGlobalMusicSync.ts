@@ -299,7 +299,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         })();
       }
 
-      if (!isPlaceholderTrack(data) && !isBreakTrack(data)) {
+      if (
+        !isPlaceholderTrack(data) &&
+        !isBreakTrack(data) &&
+        !isStandbyTrack(data) &&
+        !matchesMusicException(excecoesRef.current, data.artista, data.titulo)
+      ) {
         void recordToHistory(data.titulo, data.artista || "Desconhecido");
       }
     };
