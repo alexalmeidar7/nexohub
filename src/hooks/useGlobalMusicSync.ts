@@ -154,6 +154,36 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     };
 
     const processTrackData = async (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
+      // Exceções cadastradas em INFO MUSIC: essa faixa não deve aparecer em
+      // nenhum lugar do player como nome/artista, e a capa/imagem do Deezer
+      // deve ser substituída pela foto do locutor no ar (para virar um
+      // degradê elegante nos componentes que já fazem esse tratamento).
+      if (matchesMusicException(excecoesRef.current, data.artista, data.titulo)) {
+        const photo = await getOnAirPresenterPhoto();
+        // Título/artista vazios (interpretados como placeholder) — os
+        // componentes de UI escondem esses textos quando ficam em branco.
+        const masked = {
+          titulo: "",
+          artista: "",
+          duracao: 0,
+          capa: photo || "",
+        };
+        // Bypass do guarda de placeholder do applyMusicData: escreve
+        // diretamente o estado mascarado e propaga para o dashboard.
+        writeMusicData(user.id, masked);
+        localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+        if (user?.id) {
+          void mergeUserDashboardItems(user.id, {
+            music_current_title: "",
+            music_current_artist: "",
+            music_current_cover: photo || "",
+            music_deezer_artist_img: photo || "",
+            music_current_curiosity: "",
+          }).catch(() => {});
+        }
+        return;
+      }
+
       if (isStandbyTrack(data)) {
         const photo = await getOnAirPresenterPhoto();
         if (photo) data.capa = photo;
