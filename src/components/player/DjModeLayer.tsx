@@ -117,13 +117,20 @@ function paletteFromContext(
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
+  const coverHueRef = useRef<number | null>(null);
+  coverHueRef.current = (() => {
+    if (!coverPalette?.primary) return null;
+    const hsl = hexToHsl(coverPalette.primary);
+    return hsl ? hsl.h : null;
+  })();
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
+  const bpmRef = useRef<number>(0);
 
   useEffect(() => {
     if (!active) return;
@@ -149,7 +156,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
 
     const applyPalette = (bassE: number, midE: number, trebleE: number) => {
       seed = (seed + 1 + Math.floor(Math.random() * 3)) % 10000;
-      const p = paletteFromSpectrum(bassE, midE, trebleE, seed);
+      const p = paletteFromContext(bpm || bpmRef.current, bassE, midE, trebleE, coverHueRef.current, seed);
       paletteA = p.a;
       paletteB = p.b;
       paletteAngle = p.angle;
