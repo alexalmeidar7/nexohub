@@ -180,15 +180,18 @@ function TopNavBar({
         .eq("user_id", scopedMusicUserId)
         .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(30);
       if (cancelled || !data) return;
+      const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
+      const excs = await getMusicExceptions(scopedMusicUserId);
+      const clean = filterOutMusicExceptions(excs, data);
       const seen = new Set<string>();
-      setMusicResults(data.filter(m => {
+      setMusicResults(clean.filter(m => {
         const key = `${m.musica}|${m.artista}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      }));
+      }).slice(0, 10));
     })();
     return () => { cancelled = true; };
   }, [debouncedQuery, userId, radioUserId, musicUserId]);
