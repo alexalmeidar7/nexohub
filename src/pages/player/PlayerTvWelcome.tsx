@@ -13,7 +13,9 @@ import { extractDominantPair } from "@/lib/dominantColors";
  */
 export default function PlayerTvWelcome() {
   const { userSlug: rawSlug } = useParams();
-  const userSlug = (rawSlug || "").toLowerCase();
+  // Ignora slugs inválidos (rota acessada sem substituir o parâmetro, ex.: literal ":userSlug").
+  const rawTrim = (rawSlug || "").trim();
+  const userSlug = /^[a-z0-9][a-z0-9_-]*$/i.test(rawTrim) ? rawTrim.toLowerCase() : "";
   const navigate = useNavigate();
 
   const [code, setCode] = useState<string | null>(null);
