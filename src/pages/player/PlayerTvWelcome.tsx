@@ -22,6 +22,8 @@ export default function PlayerTvWelcome() {
   const [radioName, setRadioName] = useState<string>("");
   const [radioLogo, setRadioLogo] = useState<string>("");
   const [artistImg, setArtistImg] = useState<string | null>(null);
+  const [musicTitle, setMusicTitle] = useState<string>("");
+  const [musicArtist, setMusicArtist] = useState<string>("");
   const [presenterImg, setPresenterImg] = useState<string | null>(null);
   const [fallbackImg, setFallbackImg] = useState<string | null>(null);
   const [bgMode, setBgMode] = useState<"artist" | "presenter" | "fallback">("fallback");
