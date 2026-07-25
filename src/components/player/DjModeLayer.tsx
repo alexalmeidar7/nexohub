@@ -188,9 +188,17 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
           trebleE = trebleSum / ((bins.length - midEnd) * 255);
 
           emaFlux = emaFlux * 0.94 + flux * 0.06;
-          const threshold = Math.max(120, emaFlux * 1.8);
+          // Sensibilidade: 0 = conservador (só picos fortes), 1 = agressivo.
+          const s = sensRef.current;
+          // Threshold multiplier: 2.6 (baixa sens) → 1.1 (alta sens)
+          const thrMul = 2.6 - s * 1.5;
+          // Base mínima: 180 (baixa) → 60 (alta) — permite pegar batidas fracas
+          const thrBase = 180 - s * 120;
+          const threshold = Math.max(thrBase, emaFlux * thrMul);
+          // Gap mínimo entre onsets: 220ms (baixa) → 110ms (alta)
+          const minGap = 220 - s * 110;
 
-          if (flux > threshold && now - lastOnset > 160) {
+          if (flux > threshold && now - lastOnset > minGap) {
             lastOnset = now;
             onsetTimes.push(now);
             while (onsetTimes.length > 32 || (onsetTimes.length && now - onsetTimes[0] > 8000)) onsetTimes.shift();
@@ -201,9 +209,11 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Pro
             // Corrige fase: alinha o próximo beat com o transiente real
             phaseAnchor = now;
 
-            // Accent forte → troca a paleta (mas não a cada beat)
+            // Accent forte → troca a paleta (mais frequente com sens alta)
             const accentStrength = Math.min(1, flux / (threshold * 1.8));
-            if (accentStrength > 0.55 && now - lastAccent > 350) {
+            const accentCut = 0.75 - s * 0.35; // 0.75 → 0.40
+            const accentGap = 500 - s * 250;    // 500ms → 250ms
+            if (accentStrength > accentCut && now - lastAccent > accentGap) {
               lastAccent = now;
               applyPalette(bassE, midE, trebleE);
             }
