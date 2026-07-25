@@ -395,11 +395,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return false;
     }
   });
+  const [djSensitivity, setDjSensitivity] = useState<number>(() => {
+    try {
+      const raw = localStorage.getItem("nexohub_dj_sensitivity");
+      const v = raw != null ? parseFloat(raw) : NaN;
+      return Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0.5;
+    } catch {
+      return 0.5;
+    }
+  });
+  const [djPanelOpen, setDjPanelOpen] = useState<boolean>(false);
   useEffect(() => {
     try {
       localStorage.setItem("nexohub_dj_mode", djModeOn ? "1" : "0");
     } catch {}
   }, [djModeOn]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("nexohub_dj_sensitivity", String(djSensitivity));
+    } catch {}
+  }, [djSensitivity]);
   const djModeActive = !isVideoChannel && djModeOn;
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
