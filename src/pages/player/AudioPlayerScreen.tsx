@@ -1864,7 +1864,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onClick={onTogglePlay}
             className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
             aria-label={playing ? "Pausar" : "Reproduzir"}
-            data-focusable
+            data-tv-focusable
+            data-tv-scroll="center"
+            data-tv-selected={playing ? "true" : undefined}
           >
             {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
           </button>
