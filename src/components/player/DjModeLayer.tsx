@@ -195,6 +195,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
     const startFallback = () => {
       if (fallbackRef.current) return;
       bpm = 128;
+      bpmRef.current = 128;
       phaseAnchor = performance.now();
       // Loop de render continua rodando via RAF abaixo, usando bpm=128.
       fallbackRef.current = window.setInterval(() => {
