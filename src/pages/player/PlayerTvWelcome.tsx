@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchPublicPlayerData } from "@/lib/publicPlayerData";
+
 import { Loader2 } from "lucide-react";
 
 /**
