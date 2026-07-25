@@ -42,50 +42,80 @@ export default function PlayerTvWelcome() {
   }, [userSlug]);
   const claimedRef = useRef(false);
 
-  // Busca metadata pública da rádio + background (mesma lógica do WelcomeScreen:
-  // thumb do programa NO AR agora, com fallback para thumb do canal ativo).
+  // Busca metadata pública da rádio + música tocando + locutor no ar.
+  // Faz polling a cada 15s para manter o fundo atualizado.
   useEffect(() => {
     if (!userSlug) return;
-    (async () => {
+    let cancelled = false;
+
+    const load = async () => {
       try {
         const { data } = await supabase.functions.invoke("public-player-data", {
           body: { slug: userSlug },
         });
-        const emp = (data as any)?.empresa || {};
+        if (cancelled) return;
+        const d = (data || {}) as any;
+        const emp = d.empresa || {};
         const nome = emp.nome_empresa || emp.nome || userSlug;
         const logo = emp.logo_url || emp.logo || "";
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
 
-        // Pick program thumb (current program NO AR)
-        const now = new Date();
-        const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-        const dayCode = ["dom", "seg", "ter", "qua", "qui", "sex", "sab"][now.getDay()];
-        const programas = Array.isArray((data as any)?.programas) ? (data as any).programas : [];
-        const current = programas.find((p: any) => {
-          if (!p?.ativo) return false;
-          const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
-          if (dias.length && !dias.map((d: any) => String(d).toLowerCase()).includes(dayCode)) return false;
-          const ini = String(p.horario_inicio || "").slice(0, 5);
-          const fim = String(p.horario_fim || "").slice(0, 5);
-          if (!ini || !fim) return false;
-          return ini <= fim ? hhmm >= ini && hhmm <= fim : hhmm >= ini || hhmm <= fim;
-        });
-        const programThumb = current?.thumb || null;
+        // Deezer artist image (via dashboard_items, já persistido pelo useGlobalMusicSync)
+        const deezer: string | null = d.musicDeezerArtistImg || null;
+        const cover: string | null = d.musicData?.capa || null;
+        setArtistImg(deezer || cover || null);
 
-        // Fallback: primeiro canal ativo com thumb.
-        const channels = Array.isArray((data as any)?.channels) ? (data as any).channels : [];
+        // Locutor no ar
+        const presenter = d.currentPresenter?.foto || null;
+        setPresenterImg(presenter);
+
+        // Fallback: thumb do programa NO AR ou canal ativo
+        const programThumb = d.currentProgram?.thumb || null;
+        const channels = Array.isArray(d.channels) ? d.channels : [];
         const channelThumb = channels
           .filter((c: any) => c?.active)
           .map((c: any) => c?.cover_url || c?.background_url || c?.logo_url)
           .find(Boolean) || null;
-
-        setBackgroundUrl(programThumb || channelThumb || null);
+        setFallbackImg(programThumb || channelThumb || null);
       } catch {
         setRadioName(userSlug.toUpperCase());
       }
-    })();
+    };
+
+    load();
+    const iv = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(iv); };
   }, [userSlug]);
+
+  // Alterna o fundo entre foto do artista (Deezer) e foto do locutor a cada 8s.
+  useEffect(() => {
+    const options: Array<"artist" | "presenter" | "fallback"> = [];
+    if (artistImg) options.push("artist");
+    if (presenterImg) options.push("presenter");
+    if (options.length === 0) { setBgMode("fallback"); return; }
+    if (options.length === 1) { setBgMode(options[0]); return; }
+    setBgMode((prev) => (options.includes(prev) ? prev : options[0]));
+    const iv = setInterval(() => {
+      setBgMode((prev) => {
+        const idx = options.indexOf(prev as any);
+        return options[(idx + 1) % options.length];
+      });
+    }, 8000);
+    return () => clearInterval(iv);
+  }, [artistImg, presenterImg]);
+
+  // Extrai duas cores dominantes da foto do locutor para o gradiente.
+  useEffect(() => {
+    let cancelled = false;
+    if (!presenterImg) { setPresenterColors(null); return; }
+    (async () => {
+      const pair = await extractDominantPair(presenterImg);
+      if (!cancelled) setPresenterColors(pair);
+    })();
+    return () => { cancelled = true; };
+  }, [presenterImg]);
+
 
   // Gera código de pareamento.
   const generateCode = useCallback(async () => {
