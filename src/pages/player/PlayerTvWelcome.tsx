@@ -388,7 +388,23 @@ export default function PlayerTvWelcome() {
             aria-hidden
           />
         )}
-        {/* Camada da imagem carregada (visível assim que pronta) */}
+        {/* Camada anterior — permanece visível enquanto a nova entra por cima (crossfade). */}
+        {prevBg && prevBg !== loadedBg && (
+          <img
+            key={`prev-${prevBg}`}
+            src={prevBg}
+            alt=""
+            aria-hidden
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
+            className={
+              prevMode === "presenter"
+                ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl opacity-100"
+                : "tv-kenburns absolute inset-0 w-full h-full object-cover opacity-100"
+            }
+          />
+        )}
+        {/* Camada da imagem atual — entra com fade-in (crossfade sobre a anterior). */}
         {loadedBg && (
           <img
             key={loadedBg}
@@ -401,7 +417,7 @@ export default function PlayerTvWelcome() {
               (loadedMode === "presenter"
                 ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
                 : "tv-kenburns absolute inset-0 w-full h-full object-cover") +
-              " transition-opacity duration-700 ease-out opacity-100"
+              " tv-bg-enter"
             }
           />
         )}
