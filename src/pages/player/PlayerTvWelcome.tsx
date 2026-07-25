@@ -22,6 +22,8 @@ export default function PlayerTvWelcome() {
   const [radioName, setRadioName] = useState<string>("");
   const [radioLogo, setRadioLogo] = useState<string>("");
   const [artistImg, setArtistImg] = useState<string | null>(null);
+  const [musicTitle, setMusicTitle] = useState<string>("");
+  const [musicArtist, setMusicArtist] = useState<string>("");
   const [presenterImg, setPresenterImg] = useState<string | null>(null);
   const [fallbackImg, setFallbackImg] = useState<string | null>(null);
   const [bgMode, setBgMode] = useState<"artist" | "presenter" | "fallback">("fallback");
@@ -66,6 +68,8 @@ export default function PlayerTvWelcome() {
         const deezer: string | null = d.musicDeezerArtistImg || null;
         const cover: string | null = d.musicData?.capa || null;
         setArtistImg(deezer || cover || null);
+        setMusicTitle(String(d.musicData?.titulo || "").trim());
+        setMusicArtist(String(d.musicData?.artista || "").trim());
 
         // Locutor no ar
         const presenter = d.currentPresenter?.foto || null;
@@ -236,11 +240,12 @@ export default function PlayerTvWelcome() {
     bgMode === "presenter" ? presenterImg :
     fallbackImg;
 
-  // Cross-fade entre imagens de fundo: mantém a última carregada visível
-  // até que a próxima termine de baixar, evitando "flash" de tela vazia
-  // em conexões lentas.
+  // Cross-fade entre imagens de fundo: mantemos a camada anterior visível
+  // enquanto a nova entra suavemente (opacity 0 → 1), depois removemos a antiga.
   const [loadedBg, setLoadedBg] = useState<string | null>(null);
   const [loadedMode, setLoadedMode] = useState<"artist" | "presenter" | "fallback">("fallback");
+  const [prevBg, setPrevBg] = useState<string | null>(null);
+  const [prevMode, setPrevMode] = useState<"artist" | "presenter" | "fallback">("fallback");
   const [pendingReady, setPendingReady] = useState(false);
   useEffect(() => {
     if (!activeBg) { setPendingReady(false); return; }
@@ -250,16 +255,29 @@ export default function PlayerTvWelcome() {
     img.crossOrigin = "anonymous";
     img.referrerPolicy = "no-referrer";
     let cancelled = false;
+    let cleanupTimer: ReturnType<typeof setTimeout> | null = null;
     img.onload = () => {
       if (cancelled) return;
+      // Move a imagem atual para a camada "prev" para que ela permaneça
+      // visível enquanto a nova entra por cima com opacity animada.
+      setPrevBg(loadedBg);
+      setPrevMode(loadedMode);
       setLoadedBg(activeBg);
       setLoadedMode(bgMode);
       setPendingReady(true);
+      // Após o crossfade terminar, descarta a camada antiga para não
+      // acumular <img> na árvore e liberar a animação Ken Burns.
+      cleanupTimer = setTimeout(() => {
+        if (!cancelled) setPrevBg(null);
+      }, 1200);
     };
     img.onerror = () => { if (!cancelled) setPendingReady(false); };
     img.src = activeBg;
-    return () => { cancelled = true; };
-  }, [activeBg, bgMode, loadedBg]);
+    return () => {
+      cancelled = true;
+      if (cleanupTimer) clearTimeout(cleanupTimer);
+    };
+  }, [activeBg, bgMode, loadedBg, loadedMode]);
 
   const presenterGradient = presenterColors
     ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
@@ -295,6 +313,17 @@ export default function PlayerTvWelcome() {
         }
         @media (prefers-reduced-motion: reduce) {
           .tv-kenburns { animation: none; }
+        }
+        @keyframes tv-eq {
+          0%, 100% { height: 25%; }
+          50%      { height: 100%; }
+        }
+        @keyframes tv-bg-fade-in {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .tv-bg-enter {
+          animation: tv-bg-fade-in 1100ms ease-out both;
         }
       `}</style>
       {/* Gradiente elegante atrás da foto do locutor (transição suave) */}
@@ -359,7 +388,23 @@ export default function PlayerTvWelcome() {
             aria-hidden
           />
         )}
-        {/* Camada da imagem carregada (visível assim que pronta) */}
+        {/* Camada anterior — permanece visível enquanto a nova entra por cima (crossfade). */}
+        {prevBg && prevBg !== loadedBg && (
+          <img
+            key={`prev-${prevBg}`}
+            src={prevBg}
+            alt=""
+            aria-hidden
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
+            className={
+              prevMode === "presenter"
+                ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl opacity-100"
+                : "tv-kenburns absolute inset-0 w-full h-full object-cover opacity-100"
+            }
+          />
+        )}
+        {/* Camada da imagem atual — entra com fade-in (crossfade sobre a anterior). */}
         {loadedBg && (
           <img
             key={loadedBg}
@@ -372,7 +417,7 @@ export default function PlayerTvWelcome() {
               (loadedMode === "presenter"
                 ? "tv-kenburns tv-kenburns--contain absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
                 : "tv-kenburns absolute inset-0 w-full h-full object-cover") +
-              " transition-opacity duration-700 ease-out opacity-100"
+              " tv-bg-enter"
             }
           />
         )}
@@ -413,25 +458,9 @@ export default function PlayerTvWelcome() {
               </p>
             </div>
 
-            {/* Bloco de ação: URL manual + status pill, separados por divider */}
+            {/* Bloco de ação: apenas status pill (URL foi movida para o card do QR) */}
             {!claimedName && !error && (
               <div className="flex flex-wrap items-center gap-8">
-                {/* URL manual */}
-                <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 shadow-2xl">
-                  <p className="text-[11px] font-tv-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
-                    Acesse no navegador
-                  </p>
-                  <p className="text-3xl font-tv-bold tracking-tight text-primary">
-                    {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
-                  </p>
-                </div>
-
-                {/* Divider vertical — só quando houver conteúdo à direita */}
-                {(!code || expired) && (
-                  <div className="hidden sm:block h-16 w-px bg-white/10" aria-hidden />
-                )}
-
-                {/* Status pill: apenas para "gerando código" e "expirado" */}
                 {!code && !expired && (
                   <div
                     className="inline-flex items-center gap-4 rounded-full border border-primary/30 bg-primary/10 px-7 py-4 backdrop-blur-md"
@@ -461,12 +490,6 @@ export default function PlayerTvWelcome() {
               </div>
             )}
 
-            {/* Sub-caption sobre o link encurtado */}
-            {!claimedName && !error && shortUrl && (
-              <p className="text-tv-caption text-slate-400 mt-6">
-                Link encurtado para digitar mais fácil.
-              </p>
-            )}
 
             {claimedName && (
               <div className="rounded-3xl bg-emerald-500/15 border border-emerald-400/40 px-8 py-6 text-emerald-100 backdrop-blur-md inline-flex items-center gap-4 shadow-2xl">
@@ -497,45 +520,82 @@ export default function PlayerTvWelcome() {
             )}
           </div>
 
-          {/* Coluna direita: card branco compacto (QR + código + expira) */}
+          {/* Coluna direita: card branco elegante (QR + código + expira + URL discreta) */}
           <div className="lg:col-span-4 flex items-center justify-center lg:justify-end">
-            <div className="bg-white p-10 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center w-full max-w-md">
-              {/* QR */}
-              <div className="relative bg-slate-50 p-5 rounded-3xl mb-8">
-                {code ? (
-                  <>
-                    <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
-                      <QRCodeSVG value={pairUrl} size={256} level="M" includeMargin={false} />
-                    </div>
-                    {expired && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-3xl bg-black/40 backdrop-blur-sm">
-                        <AlertTriangle className="h-10 w-10 text-amber-300" />
-                        <div className="text-tv-body font-tv-bold text-white">Expirado</div>
+            <div
+              className="relative bg-white/95 backdrop-blur-2xl px-10 pt-10 pb-8 rounded-[2.5rem] flex flex-col items-center w-full max-w-md border border-white/60"
+              style={{
+                boxShadow:
+                  "0 40px 80px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.4) inset, 0 60px 120px -40px hsl(var(--primary) / 0.35)",
+              }}
+            >
+              {/* Halo colorido sutil atrás do card */}
+              <div
+                className="absolute -inset-1 -z-10 rounded-[2.75rem] opacity-60 blur-2xl"
+                style={{
+                  background:
+                    "radial-gradient(60% 60% at 30% 20%, hsl(var(--primary) / 0.35) 0%, transparent 70%), radial-gradient(60% 60% at 75% 90%, hsl(var(--accent) / 0.25) 0%, transparent 70%)",
+                }}
+                aria-hidden
+              />
+
+              {/* QR — moldura com cantinhos estilo "viewfinder" */}
+              <div className="relative mb-7">
+                <div className="relative bg-white p-6 rounded-[1.75rem] ring-1 ring-slate-200/80">
+                  {/* Cantos decorativos */}
+                  <span className="absolute -top-1 -left-1 h-5 w-5 border-t-[3px] border-l-[3px] border-primary rounded-tl-xl" aria-hidden />
+                  <span className="absolute -top-1 -right-1 h-5 w-5 border-t-[3px] border-r-[3px] border-primary rounded-tr-xl" aria-hidden />
+                  <span className="absolute -bottom-1 -left-1 h-5 w-5 border-b-[3px] border-l-[3px] border-primary rounded-bl-xl" aria-hidden />
+                  <span className="absolute -bottom-1 -right-1 h-5 w-5 border-b-[3px] border-r-[3px] border-primary rounded-br-xl" aria-hidden />
+                  {code ? (
+                    <>
+                      <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
+                        <QRCodeSVG value={pairUrl} size={240} level="M" includeMargin={false} />
                       </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="w-[256px] h-[256px] flex flex-col items-center justify-center gap-3">
-                    <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
-                    <div className="text-xs text-slate-500">Gerando QR code…</div>
-                  </div>
-                )}
+                      {expired && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-[1.75rem] bg-black/40 backdrop-blur-sm">
+                          <AlertTriangle className="h-10 w-10 text-amber-300" />
+                          <div className="text-tv-body font-tv-bold text-white">Expirado</div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="w-[240px] h-[240px] flex flex-col items-center justify-center gap-3">
+                      <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
+                      <div className="text-xs text-slate-500">Gerando QR code…</div>
+                    </div>
+                  )}
+                </div>
+                {/* Logo/ícone flutuante para dar sofisticação */}
+                <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 rounded-full bg-white px-4 py-1.5 ring-1 ring-slate-200 shadow-md flex items-center gap-2">
+                  <Smartphone className="h-3.5 w-3.5 text-primary" />
+                  <span className="text-[10px] font-tv-bold uppercase tracking-[0.22em] text-slate-500">Escaneie</span>
+                </div>
               </div>
 
               {/* Código */}
-              <div className="text-center space-y-3">
-                <p className="text-slate-400 font-tv-bold uppercase tracking-[0.24em] text-[11px]">
+              <div className="w-full text-center space-y-3">
+                <p className="text-slate-400 font-tv-bold uppercase tracking-[0.28em] text-[10px]">
                   Código de pareamento
                 </p>
-                <div className={`text-6xl font-tv-bold tracking-[0.2em] ${expired ? "text-slate-400 line-through decoration-4" : "text-slate-900"}`}>
+                <div className={`text-6xl font-tv-bold tracking-[0.22em] ${expired ? "text-slate-400 line-through decoration-4" : "text-slate-900"}`}>
                   {code ? code : "----"}
                 </div>
                 {code && !expired && remaining > 0 && (
-                  <div className="pt-3">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                  <div className="pt-2 flex flex-col items-center gap-3">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100/80 rounded-full">
                       <span className="text-slate-500 text-sm font-semibold">
-                        Expira em <span className="text-slate-900 font-tv-bold">{remainingLabel}</span>
+                        Expira em <span className="text-slate-900 font-tv-bold tabular-nums">{remainingLabel}</span>
                       </span>
+                    </div>
+                    {/* URL manual — discreta, logo abaixo do contador */}
+                    <div className="text-center">
+                      <p className="text-[9px] font-tv-bold uppercase tracking-[0.28em] text-slate-400">
+                        ou acesse no navegador
+                      </p>
+                      <p className="text-sm font-tv-bold tracking-tight text-slate-600 mt-1 break-all">
+                        {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -553,6 +613,34 @@ export default function PlayerTvWelcome() {
             </div>
           </div>
         </div>
+
+        {/* Now Playing (canto inferior esquerdo) — visível apenas quando o fundo mostra o artista */}
+        {(bgMode === "artist" || loadedMode === "artist") && (musicTitle || musicArtist) && (
+          <div
+            className={`pointer-events-none absolute left-8 bottom-8 max-w-md transition-opacity duration-700 ${
+              bgMode === "artist" && loadedMode === "artist" ? "opacity-100" : "opacity-70"
+            }`}
+          >
+            <div className="flex items-center gap-4 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 px-5 py-4 shadow-2xl">
+              {/* Barras de equalizer animadas */}
+              <div className="flex items-end gap-1 h-8" aria-hidden>
+                <span className="w-1 rounded-full bg-primary animate-[tv-eq_1s_ease-in-out_infinite]" style={{ animationDelay: "0ms" }} />
+                <span className="w-1 rounded-full bg-primary animate-[tv-eq_1.1s_ease-in-out_infinite]" style={{ animationDelay: "150ms" }} />
+                <span className="w-1 rounded-full bg-primary animate-[tv-eq_0.9s_ease-in-out_infinite]" style={{ animationDelay: "300ms" }} />
+                <span className="w-1 rounded-full bg-primary animate-[tv-eq_1.2s_ease-in-out_infinite]" style={{ animationDelay: "450ms" }} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-tv-bold uppercase tracking-[0.28em] text-primary/90">Tocando agora</p>
+                {musicTitle && (
+                  <p className="text-tv-body font-tv-bold text-white truncate mt-1 drop-shadow">{musicTitle}</p>
+                )}
+                {musicArtist && (
+                  <p className="text-tv-caption text-slate-200/85 truncate">{musicArtist}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
