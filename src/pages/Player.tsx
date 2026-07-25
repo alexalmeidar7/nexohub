@@ -2306,6 +2306,36 @@ export default function PlayerPage() {
     if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
   }, [muted, volume]);
 
+  // Safety net for live audio: autoplay retries and DJ/fade effects can leave
+  // the element playing with volume 0. Restore the intended volume on media
+  // readiness/playback events without forcing mute state on video channels.
+  useEffect(() => {
+    if (!isAudio) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const restoreAudibleVolume = () => {
+      const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+      const shouldMute = mutedRef.current || target <= 0;
+      try { audio.muted = shouldMute; } catch {}
+      if (!shouldMute && audio.volume < Math.max(0.05, target * 0.5)) {
+        try { audio.volume = target; } catch {}
+      }
+    };
+
+    restoreAudibleVolume();
+    audio.addEventListener("play", restoreAudibleVolume);
+    audio.addEventListener("playing", restoreAudibleVolume);
+    audio.addEventListener("canplay", restoreAudibleVolume);
+    audio.addEventListener("volumechange", restoreAudibleVolume);
+    return () => {
+      audio.removeEventListener("play", restoreAudibleVolume);
+      audio.removeEventListener("playing", restoreAudibleVolume);
+      audio.removeEventListener("canplay", restoreAudibleVolume);
+      audio.removeEventListener("volumechange", restoreAudibleVolume);
+    };
+  }, [canal?.id, isAudio]);
+
   // OSD volume indicator — shows briefly on mute/volume change
   const [volumeOsd, setVolumeOsd] = useState(false);
   const volumeOsdTimeout = useRef<ReturnType<typeof setTimeout>>();
