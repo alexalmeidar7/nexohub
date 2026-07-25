@@ -123,6 +123,9 @@ export default function InfoMusicSection() {
         const like = `%${w.replace(/[%_]/g, "")}%`;
         await supabase.from("infomusic").delete().eq("user_id", user.id).ilike("artista", like);
         await supabase.from("infomusic").delete().eq("user_id", user.id).ilike("musica", like);
+        // Também apaga do histórico de músicas tocadas para não aparecer no player
+        await supabase.from("musicas_tocadas").delete().eq("user_id", user.id).ilike("artista", like);
+        await supabase.from("musicas_tocadas").delete().eq("user_id", user.id).ilike("musica", like);
       }
       // Update local state immediately so UI reflects removal
       setRows((prev) =>

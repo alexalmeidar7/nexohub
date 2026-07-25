@@ -8,6 +8,8 @@ import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
 import { isCulturaFmXmlPayload, culturaFmXmlToPseudoXml } from "@/lib/culturaFmXml";
 import { fetchArtistImageCached } from "@/lib/artistImageCache";
+import { matchesMusicException } from "@/lib/musicExceptions";
+
 
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
@@ -105,6 +107,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     localFileName: null,
   });
   const settingsFetchedRef = useRef(false);
+  const excecoesRef = useRef<string[]>([]);
   const lastRecordedRef = useRef<string>("");
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
@@ -151,6 +154,36 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     };
 
     const processTrackData = async (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
+      // Exceções cadastradas em INFO MUSIC: essa faixa não deve aparecer em
+      // nenhum lugar do player como nome/artista, e a capa/imagem do Deezer
+      // deve ser substituída pela foto do locutor no ar (para virar um
+      // degradê elegante nos componentes que já fazem esse tratamento).
+      if (matchesMusicException(excecoesRef.current, data.artista, data.titulo)) {
+        const photo = await getOnAirPresenterPhoto();
+        // Título/artista vazios (interpretados como placeholder) — os
+        // componentes de UI escondem esses textos quando ficam em branco.
+        const masked = {
+          titulo: "",
+          artista: "",
+          duracao: 0,
+          capa: photo || "",
+        };
+        // Bypass do guarda de placeholder do applyMusicData: escreve
+        // diretamente o estado mascarado e propaga para o dashboard.
+        writeMusicData(user.id, masked);
+        localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
+        if (user?.id) {
+          void mergeUserDashboardItems(user.id, {
+            music_current_title: "",
+            music_current_artist: "",
+            music_current_cover: photo || "",
+            music_deezer_artist_img: photo || "",
+            music_current_curiosity: "",
+          }).catch(() => {});
+        }
+        return;
+      }
+
       if (isStandbyTrack(data)) {
         const photo = await getOnAirPresenterPhoto();
         if (photo) data.capa = photo;
@@ -266,7 +299,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         })();
       }
 
-      if (!isPlaceholderTrack(data) && !isBreakTrack(data)) {
+      if (
+        !isPlaceholderTrack(data) &&
+        !isBreakTrack(data) &&
+        !isStandbyTrack(data) &&
+        !matchesMusicException(excecoesRef.current, data.artista, data.titulo)
+      ) {
         void recordToHistory(data.titulo, data.artista || "Desconhecido");
       }
     };
@@ -362,7 +400,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       if (!settingsFetchedRef.current) {
         const { data: settings } = await supabase
           .from("user_settings")
-          .select("music_xml_url, music_source_mode, dashboard_items")
+          .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes")
           .eq("user_id", user.id)
           .maybeSingle();
 
@@ -372,6 +410,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           mode: settings?.music_source_mode || "online",
           localFileName: dashboardItems?.local_xml_filename || null,
         };
+        excecoesRef.current = ((settings?.infomusic_excecoes || "") as string)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
         settingsFetchedRef.current = true;
       }
 

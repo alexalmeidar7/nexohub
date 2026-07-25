@@ -549,7 +549,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         .select("musica, artista, horario")
         .eq("user_id", effectiveUserId)
         .order("created_at", { ascending: false })
-        .limit(HIST_MAX);
+        .limit(HIST_MAX * 2);
       if (cancelled) return;
       // Se der erro OU vier vazio, NÃO limpa o histórico existente — evita colapso do carrossel
       // por hiccups transitórios de RLS/rede/realtime.
@@ -557,8 +557,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         setHistory((prev) => (prev.length > 0 ? ensureCurrentAtFront(prev) : prev));
         return;
       }
+      const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
+      const excs = await getMusicExceptions(effectiveUserId);
+      const filtered = filterOutMusicExceptions(excs, data as any[]).slice(0, HIST_MAX);
       // Hidrata com capas já em cache imediatamente
-      const withCached = (data as HistoryTrack[]).map((t) => ({
+      const withCached = (filtered as HistoryTrack[]).map((t) => ({
         ...t,
         capa:
           coverCacheRef.current.get(`${(t.artista || "").toLowerCase()}|${(t.musica || "").toLowerCase()}`) ||

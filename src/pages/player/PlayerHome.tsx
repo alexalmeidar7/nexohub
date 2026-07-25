@@ -180,15 +180,18 @@ function TopNavBar({
         .eq("user_id", scopedMusicUserId)
         .or(`musica.ilike.%${q}%,artista.ilike.%${q}%`)
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(30);
       if (cancelled || !data) return;
+      const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
+      const excs = await getMusicExceptions(scopedMusicUserId);
+      const clean = filterOutMusicExceptions(excs, data);
       const seen = new Set<string>();
-      setMusicResults(data.filter(m => {
+      setMusicResults(clean.filter(m => {
         const key = `${m.musica}|${m.artista}`;
         if (seen.has(key)) return false;
         seen.add(key);
         return true;
-      }));
+      }).slice(0, 10));
     })();
     return () => { cancelled = true; };
   }, [debouncedQuery, userId, radioUserId, musicUserId]);
@@ -1667,8 +1670,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       } catch {}
 
       try {
-        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(1).maybeSingle();
-        if (data) setNowPlaying({ musica: formatTrackText(data.musica), artista: formatTrackText(data.artista) });
+        const { data } = await supabase.from("musicas_tocadas").select("musica, artista").eq("user_id", userId).order("created_at", { ascending: false }).limit(5);
+        if (data && data.length) {
+          const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
+          const excs = await getMusicExceptions(userId);
+          const clean = filterOutMusicExceptions(excs, data);
+          const first = clean[0];
+          if (first) setNowPlaying({ musica: formatTrackText(first.musica), artista: formatTrackText(first.artista) });
+        }
       } catch {}
     };
     fetchMusic();
