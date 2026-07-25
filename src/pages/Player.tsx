@@ -772,9 +772,16 @@ export default function PlayerPage() {
   useEffect(() => {
     const playlistOwnerId = isPublicMode ? publicUserId : user?.id;
     if (!playlistOpen || !playlistOwnerId) return;
-    supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
-      .order("created_at", { ascending: false }).limit(20)
-      .then(({ data }) => { if (data) setRecentTracks(data); });
+    (async () => {
+      const [{ data }, { getMusicExceptions, filterOutMusicExceptions }] = await Promise.all([
+        supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
+          .order("created_at", { ascending: false }).limit(40),
+        import("@/lib/musicExceptions"),
+      ]);
+      if (!data) return;
+      const excs = await getMusicExceptions(playlistOwnerId);
+      setRecentTracks(filterOutMusicExceptions(excs, data).slice(0, 20));
+    })();
   }, [isPublicMode, playlistOpen, publicUserId, user?.id]);
 
   // Close playlist on outside click
