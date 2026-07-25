@@ -19,7 +19,7 @@ export default function PairPage() {
   const [code, setCode] = useState<string>(initialCode);
   const [signingIn, setSigningIn] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error"; message?: string }>({ kind: "idle" });
+  const [status, setStatus] = useState<{ kind: "idle" | "ok" | "error" | "expired"; message?: string }>({ kind: "idle" });
   const autoRunRef = useRef(false);
 
   const canConfirm = useMemo(() => /^\d{4}$/.test(code), [code]);
