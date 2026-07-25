@@ -560,9 +560,7 @@ export default function PlayerTvWelcome() {
           <div className="lg:col-span-8 max-w-3xl">
             {/* Bloco headline com respiro generoso */}
             <div className="space-y-6 mb-14">
-              <p className="text-tv-caption font-tv-bold uppercase tracking-[0.28em] text-primary drop-shadow">
-                Configuração do player
-              </p>
+
               <h1 className="text-tv-h1 font-tv-bold leading-[1.05] drop-shadow-lg">
                 Bem-vindo ao player da{" "}
                 <span className="text-primary">{radioName || userSlug.toUpperCase()}</span>
