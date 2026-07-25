@@ -1701,7 +1701,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
         style={isVideoChannel ? controlsStyle : undefined}
       >
-        {!isVideoChannel && (<>
+        {/* Timeshift disponível para áudio E vídeo — usa videoRef quando isVideoChannel */}
+        <>
         {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
           <div className="relative group/live">
