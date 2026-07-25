@@ -1176,22 +1176,33 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onClick={toggleFullscreen}
               active={isFullscreen}
             />
-            {djModeActive && (
-              <div
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border animate-pulse"
-                style={{
-                  background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
-                  borderColor: "rgba(255,255,255,0.35)",
-                  color: "#fff",
-                  boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
-                  textShadow: "0 0 8px rgba(255,255,255,0.55)",
-                }}
-                title="Programa Pra Cima! — fundo reage à batida"
-                aria-label="Modo DJ ativado"
+            {!isVideoChannel && (
+              <button
+                type="button"
+                onClick={() => setDjModeOn((v) => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border transition-all ${djModeActive ? "animate-pulse" : ""}`}
+                style={
+                  djModeActive
+                    ? {
+                        background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
+                        borderColor: "rgba(255,255,255,0.35)",
+                        color: "#fff",
+                        boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                        textShadow: "0 0 8px rgba(255,255,255,0.55)",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.06)",
+                        borderColor: "rgba(255,255,255,0.18)",
+                        color: "rgba(255,255,255,0.75)",
+                      }
+                }
+                title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ (fundo pisca no ritmo)"}
+                aria-pressed={djModeActive}
+                aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
               >
                 <span aria-hidden style={{ fontSize: 12 }}>🎧</span>
-                modo dj ativado
-              </div>
+                modo dj {djModeActive ? "ligado" : "desligado"}
+              </button>
             )}
           </nav>
         </div>
