@@ -303,7 +303,7 @@ export default function PlayerTvWelcome() {
             </p>
 
             {/* Status */}
-            {!claimedName && !error && (
+            {!claimedName && !error && !expired && (
               <div className="mt-tv-6 rounded-2xl bg-white/10 border border-white/15 px-tv-4 py-tv-3 backdrop-blur-md inline-flex items-center gap-tv-3">
                 {code ? (
                   <>
@@ -325,6 +325,25 @@ export default function PlayerTvWelcome() {
                     <div className="text-tv-body">Gerando código de pareamento…</div>
                   </>
                 )}
+              </div>
+            )}
+
+            {!claimedName && expired && (
+              <div className="mt-tv-6 rounded-2xl bg-amber-500/15 border border-amber-400/40 px-tv-4 py-tv-3 text-amber-100 backdrop-blur-md inline-flex items-center gap-tv-3">
+                <AlertTriangle className="h-6 w-6 text-amber-300" />
+                <div className="flex-1">
+                  <div className="text-tv-body font-tv-bold">Código expirado</div>
+                  <div className="text-tv-caption opacity-90">Este código não é mais válido. Gere um novo para continuar.</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={generateCode}
+                  data-tv-focusable
+                  autoFocus
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 text-tv-caption font-tv-bold"
+                >
+                  <RefreshCw className="h-4 w-4" /> Gerar novo código
+                </button>
               </div>
             )}
 
