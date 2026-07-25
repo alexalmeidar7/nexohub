@@ -196,6 +196,7 @@ const App = () => (
             <Route path="/:userSlug/player" element={<PlayerHub />} />
             <Route path="/:userSlug/player/tv" element={<PlayerTvWelcome />} />
             <Route path="/:userSlug/pair" element={<PairPage />} />
+            <Route path="/tv-pairing-events" element={<TvPairingEventsPage />} />
             <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
             <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
             <Route path="/:userSlug/player/app" element={<PlayerApp />} />
