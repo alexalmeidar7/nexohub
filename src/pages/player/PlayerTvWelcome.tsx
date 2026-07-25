@@ -367,17 +367,43 @@ export default function PlayerTvWelcome() {
               "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
           }}
         />
-        {/* Gradiente elegante atrás da foto do locutor — extraído da própria foto.
-            Fica acima da base e abaixo da imagem (contain) do locutor, aparecendo
-            nas laterais/atrás da silhueta. Transição suave ao alternar modos. */}
-        <div
-          className="absolute inset-0 transition-opacity duration-1000"
-          style={{
-            opacity: (bgMode === "presenter" || loadedMode === "presenter") && presenterGradient ? 1 : 0,
-            background: presenterGradient || "transparent",
-          }}
-          aria-hidden
-        />
+        {/* Degradê atrás da foto do locutor — usa a PRÓPRIA foto em cover + blur
+            (estilo Spotify/Apple Music), com tint das cores dominantes por cima
+            para uma paleta coesa. Aparece somente no modo presenter. */}
+        {presenterImg && (
+          <div
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{
+              opacity: (bgMode === "presenter" || loadedMode === "presenter") ? 1 : 0,
+            }}
+            aria-hidden
+          >
+            <img
+              src={presenterImg}
+              alt=""
+              aria-hidden
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+              className="absolute inset-0 w-full h-full object-cover"
+              style={{ filter: "blur(60px) saturate(1.2) brightness(0.55)", transform: "scale(1.15)" }}
+            />
+            {/* Tint das cores dominantes por cima do blur para reforçar o degradê */}
+            {presenterGradient && (
+              <div
+                className="absolute inset-0 mix-blend-soft-light opacity-80"
+                style={{ background: presenterGradient }}
+              />
+            )}
+            {/* Vinheta radial para dar foco na foto central */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "radial-gradient(70% 80% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%)",
+              }}
+            />
+          </div>
+        )}
         {/* Fallback estático elegante quando não há NENHUMA imagem disponível */}
         {showStaticFallback && (
           <>
