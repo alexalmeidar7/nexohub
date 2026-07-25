@@ -8,6 +8,8 @@ import { applyTrackChangeWithCuriosityGuard } from "@/lib/musicTrackUpdate";
 import { isJornalFmTxtPayload, jornalFmTxtToPseudoXml } from "@/lib/jornalFmTxt";
 import { isCulturaFmXmlPayload, culturaFmXmlToPseudoXml } from "@/lib/culturaFmXml";
 import { fetchArtistImageCached } from "@/lib/artistImageCache";
+import { matchesMusicException } from "@/lib/musicExceptions";
+
 
 
 const LOCAL_SOURCE_GRACE_MS = 15000;
