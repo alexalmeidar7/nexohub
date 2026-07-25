@@ -45,6 +45,29 @@ export default function PlayerTvWelcome() {
   }, [userSlug]);
   const claimedRef = useRef(false);
 
+  // Auto-fullscreen quando aberto em navegador de TV (WebOS/Tizen/AndroidTV/etc).
+  // Alguns navegadores só permitem via gesto — nesse caso, o primeiro clique/tecla dispara.
+  useEffect(() => {
+    const ua = (navigator.userAgent || "").toLowerCase();
+    const isTv = /smart-tv|smarttv|hbbtv|web0s|webos|tizen|viera|nettv|googletv|appletv|crkey|bravia|android tv|large screen/.test(ua);
+    if (!isTv) return;
+    const tryFs = () => {
+      const el = document.documentElement as any;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req && !document.fullscreenElement) {
+        try { req.call(el); } catch { /* precisa gesto */ }
+      }
+    };
+    tryFs();
+    const onGesture = () => { tryFs(); };
+    window.addEventListener("keydown", onGesture, { once: true });
+    window.addEventListener("pointerdown", onGesture, { once: true });
+    return () => {
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("pointerdown", onGesture);
+    };
+  }, []);
+
   // Busca metadata pública da rádio + música tocando + locutor no ar.
   // Faz polling a cada 15s para manter o fundo atualizado.
   useEffect(() => {
@@ -64,10 +87,9 @@ export default function PlayerTvWelcome() {
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
 
-        // Deezer artist image (via dashboard_items, já persistido pelo useGlobalMusicSync)
+        // Apenas a imagem do artista via Deezer — NÃO usar capa do CD como fallback.
         const deezer: string | null = d.musicDeezerArtistImg || null;
-        const cover: string | null = d.musicData?.capa || null;
-        setArtistImg(deezer || cover || null);
+        setArtistImg(deezer);
         setMusicTitle(String(d.musicData?.titulo || "").trim());
         setMusicArtist(String(d.musicData?.artista || "").trim());
 
@@ -584,40 +606,19 @@ export default function PlayerTvWelcome() {
             )}
           </div>
 
-          {/* Coluna direita: card branco elegante (QR + código + expira + URL discreta) */}
+          {/* Coluna direita: bloco clean sem card branco — QR + código + textos em branco */}
           <div className="lg:col-span-4 flex items-center justify-center lg:justify-end">
-            <div
-              className="relative bg-white/95 backdrop-blur-2xl px-10 pt-10 pb-8 rounded-[2.5rem] flex flex-col items-center w-full max-w-md border border-white/60"
-              style={{
-                boxShadow:
-                  "0 40px 80px -20px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.4) inset, 0 60px 120px -40px hsl(var(--primary) / 0.35)",
-              }}
-            >
-              {/* Halo colorido sutil atrás do card */}
-              <div
-                className="absolute -inset-1 -z-10 rounded-[2.75rem] opacity-60 blur-2xl"
-                style={{
-                  background:
-                    "radial-gradient(60% 60% at 30% 20%, hsl(var(--primary) / 0.35) 0%, transparent 70%), radial-gradient(60% 60% at 75% 90%, hsl(var(--accent) / 0.25) 0%, transparent 70%)",
-                }}
-                aria-hidden
-              />
-
-              {/* QR — moldura com cantinhos estilo "viewfinder" */}
-              <div className="relative mb-7">
-                <div className="relative bg-white p-6 rounded-[1.75rem] ring-1 ring-slate-200/80">
-                  {/* Cantos decorativos */}
-                  <span className="absolute -top-1 -left-1 h-5 w-5 border-t-[3px] border-l-[3px] border-primary rounded-tl-xl" aria-hidden />
-                  <span className="absolute -top-1 -right-1 h-5 w-5 border-t-[3px] border-r-[3px] border-primary rounded-tr-xl" aria-hidden />
-                  <span className="absolute -bottom-1 -left-1 h-5 w-5 border-b-[3px] border-l-[3px] border-primary rounded-bl-xl" aria-hidden />
-                  <span className="absolute -bottom-1 -right-1 h-5 w-5 border-b-[3px] border-r-[3px] border-primary rounded-br-xl" aria-hidden />
+            <div className="relative flex flex-col items-center w-full max-w-md">
+              {/* QR — apenas o QR sobre fundo branco mínimo (necessário para leitura), sem cantos decorativos */}
+              <div className="relative mb-8">
+                <div className="relative bg-white p-5 rounded-2xl shadow-2xl">
                   {code ? (
                     <>
                       <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
                         <QRCodeSVG value={pairUrl} size={240} level="M" includeMargin={false} />
                       </div>
                       {expired && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-[1.75rem] bg-black/40 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl bg-black/50 backdrop-blur-sm">
                           <AlertTriangle className="h-10 w-10 text-amber-300" />
                           <div className="text-tv-body font-tv-bold text-white">Expirado</div>
                         </div>
@@ -630,34 +631,27 @@ export default function PlayerTvWelcome() {
                     </div>
                   )}
                 </div>
-                {/* Logo/ícone flutuante para dar sofisticação */}
-                <div className="absolute left-1/2 -translate-x-1/2 -bottom-4 rounded-full bg-white px-4 py-1.5 ring-1 ring-slate-200 shadow-md flex items-center gap-2">
-                  <Smartphone className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-[10px] font-tv-bold uppercase tracking-[0.22em] text-slate-500">Escaneie</span>
-                </div>
               </div>
 
               {/* Código */}
               <div className="w-full text-center space-y-3">
-                <p className="text-slate-400 font-tv-bold uppercase tracking-[0.28em] text-[10px]">
+                <p className="text-white/70 font-tv-bold uppercase tracking-[0.28em] text-[10px] drop-shadow">
                   Código de pareamento
                 </p>
-                <div className={`text-6xl font-tv-bold tracking-[0.22em] ${expired ? "text-slate-400 line-through decoration-4" : "text-slate-900"}`}>
+                <div className={`text-6xl font-tv-bold tracking-[0.22em] drop-shadow-lg ${expired ? "text-white/40 line-through decoration-4" : "text-white"}`}>
                   {code ? code : "----"}
                 </div>
                 {code && !expired && remaining > 0 && (
                   <div className="pt-2 flex flex-col items-center gap-3">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-100/80 rounded-full">
-                      <span className="text-slate-500 text-sm font-semibold">
-                        Expira em <span className="text-slate-900 font-tv-bold tabular-nums">{remainingLabel}</span>
-                      </span>
+                    <div className="text-white/80 text-sm font-semibold drop-shadow">
+                      Expira em <span className="text-white font-tv-bold tabular-nums">{remainingLabel}</span>
                     </div>
                     {/* URL manual — discreta, logo abaixo do contador */}
                     <div className="text-center">
-                      <p className="text-[9px] font-tv-bold uppercase tracking-[0.28em] text-slate-400">
+                      <p className="text-[9px] font-tv-bold uppercase tracking-[0.28em] text-white/60">
                         ou acesse no navegador
                       </p>
-                      <p className="text-sm font-tv-bold tracking-tight text-slate-600 mt-1 break-all">
+                      <p className="text-sm font-tv-bold tracking-tight text-white/85 mt-1 break-all drop-shadow">
                         {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
                       </p>
                     </div>
