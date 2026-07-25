@@ -64,10 +64,9 @@ export default function PlayerTvWelcome() {
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
 
-        // Deezer artist image (via dashboard_items, já persistido pelo useGlobalMusicSync)
+        // Apenas a imagem do artista via Deezer — NÃO usar capa do CD como fallback.
         const deezer: string | null = d.musicDeezerArtistImg || null;
-        const cover: string | null = d.musicData?.capa || null;
-        setArtistImg(deezer || cover || null);
+        setArtistImg(deezer);
         setMusicTitle(String(d.musicData?.titulo || "").trim());
         setMusicArtist(String(d.musicData?.artista || "").trim());
 
