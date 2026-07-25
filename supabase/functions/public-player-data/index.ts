@@ -344,6 +344,7 @@ Deno.serve(async (req) => {
         musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
         currentProgram: currentProgram || null,
         currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
