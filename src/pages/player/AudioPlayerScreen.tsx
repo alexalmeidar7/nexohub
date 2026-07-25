@@ -1770,10 +1770,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </div>
 
         {/* timeshift bar (janela fixa 5 min) */}
-        <div className="relative">
-          <div className="h-1 rounded-full bg-white/12 overflow-hidden">
+        <div className="relative group/timeshift focus-within:scale-[1.01] transition-transform">
+          <div
+            className="h-1 rounded-full bg-white/12 overflow-hidden transition-all duration-200 group-focus-within/timeshift:h-2 group-focus-within/timeshift:bg-white/25 group-focus-within/timeshift:shadow-[0_0_0_2px_var(--nexo-accent,#00BFF0),0_0_14px_var(--nexo-accent,#00BFF0)]"
+          >
             <div
-              className="h-full bg-white/85 transition-all duration-500"
+              className="h-full bg-white/85 transition-all duration-500 group-focus-within/timeshift:bg-[var(--nexo-accent,#00BFF0)]"
               style={{ width: `${(1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100}%` }}
             />
           </div>
