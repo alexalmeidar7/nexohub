@@ -523,8 +523,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
 
     setResolvedMusicCover("");
+    // FIX (bug capa travada): mesmo antes do fetch resolver — ou se ele falhar /
+    // retornar vazio — sobe a música corrente para history[0] imediatamente.
+    // Sem isso, quando musicData.capa vem vazio e o iTunes/fallback não retorna
+    // capa, o histórico continuava com a faixa anterior no topo e o
+    // <NowCoverCrossfade capa={history[0].capa}> ficava congelado na capa antiga.
+    setHistory((prev) => ensureCurrentAtFront(prev, undefined));
+
     fetchCover(artista, musica).then((cover) => {
-      if (cancelled || !cover) return;
+      if (cancelled) return;
+      if (!cover) return;
       setResolvedMusicCover(cover);
       setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
@@ -782,9 +790,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   }, [ts.offset]);
   const isBehind = ts.offset > 2;
   const rafRef = useRef<number | null>(null);
+  // Retorna o elemento de mídia ativo (vídeo para canais de vídeo, áudio caso contrário).
+  // Assim a timeshift bar funciona tanto no canal de áudio quanto no de vídeo.
+  const getMedia = useCallback((): HTMLMediaElement | null => {
+    return isVideoChannel ? (videoRef.current as HTMLMediaElement | null) : (audioRef.current as HTMLMediaElement | null);
+  }, [isVideoChannel, audioRef, videoRef]);
   useEffect(() => {
     const tick = () => {
-      const a = audioRef.current;
+      const a = getMedia();
       if (a && a.buffered && a.buffered.length > 0) {
         const start = a.buffered.start(0);
         const end = a.buffered.end(a.buffered.length - 1);
@@ -799,10 +812,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     };
     tick();
     return () => { if (rafRef.current) clearTimeout(rafRef.current as any); };
-  }, [audioRef, canal?.id, playing]);
+  }, [getMedia, canal?.id, playing]);
 
   const seekBySeconds = (secsBack: number, opts?: { forcePlay?: boolean }) => {
-    const a = audioRef.current;
+    const a = getMedia();
     if (!a || !a.buffered.length) return;
     const start = a.buffered.start(0);
     const end = a.buffered.end(a.buffered.length - 1);
@@ -820,7 +833,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
   };
   const seekLive = (opts?: { forcePlay?: boolean }) => {
-    const a = audioRef.current;
+    const a = getMedia();
     if (!a || !a.buffered.length) return;
     const wasPaused = a.paused;
     try { a.currentTime = a.buffered.end(a.buffered.length - 1) - 0.5; } catch {}
@@ -1688,7 +1701,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
         style={isVideoChannel ? controlsStyle : undefined}
       >
-        {!isVideoChannel && (<>
+        {/* Timeshift disponível para áudio E vídeo — usa videoRef quando isVideoChannel */}
+        <>
         {/* live pill com rewind interativo por arraste (à direita) */}
         <div className="flex justify-end mb-2">
           <div className="relative group/live">
@@ -1785,7 +1799,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <span>você pode voltar a programação em {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
           </div>
         </div>
-        </>)}
+        </>
 
         {/* play row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
