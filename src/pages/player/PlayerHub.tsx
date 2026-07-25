@@ -233,7 +233,8 @@ export default function PlayerHub() {
   }, []);
 
   useEffect(() => {
-    if (!splashDone || loading || !dataReady) return;
+    if (!splashDone) return;
+    if (!tvGuestMode && (loading || !dataReady)) return;
     // A WelcomeScreen agora cobre AMBOS os estados (logado e deslogado),
     // mostrando os botões "entrar com google" / "cadastre-se" quando não há
     // usuário. Assim, após o logout o usuário permanece na welcome.
@@ -244,7 +245,7 @@ export default function PlayerHub() {
       transitionTo(target);
       return current;
     });
-  }, [splashDone, loading, dataReady, user, skipToHome, transitionTo]);
+  }, [splashDone, loading, dataReady, user, skipToHome, transitionTo, tvGuestMode]);
 
 
   const onLoginSuccess = useCallback(() => {
@@ -272,7 +273,13 @@ export default function PlayerHub() {
   if (step === "splash") {
     return (
       <div className={wrapperClass}>
-        <SplashScreen logoUrl={logoUrl} channelName={channelName} onFinish={onSplashFinish} ready={!loading && dataReady} />
+        <SplashScreen
+          logoUrl={logoUrl}
+          channelName={channelName}
+          onFinish={onSplashFinish}
+          ready={tvGuestMode ? true : !loading && dataReady}
+          maxDurationMs={tvGuestMode ? 4200 : 12000}
+        />
       </div>
     );
   }

@@ -15,9 +15,10 @@ interface SplashScreenProps {
   channelName?: string;
   onFinish: () => void;
   ready?: boolean;
+  maxDurationMs?: number;
 }
 
-export default function SplashScreen({ onFinish, ready = true }: SplashScreenProps) {
+export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 12000 }: SplashScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -98,11 +99,11 @@ export default function SplashScreen({ onFinish, ready = true }: SplashScreenPro
   // a rede finalmente entregar o arquivo (usuário em conexão lenta).
 
   // Absolute safety timeout: even if the <video> never fires `ended` or `error`
-  // (e.g. autoplay policies on some embedded browsers), force-progress after 12s.
+  // (e.g. autoplay policies on some embedded browsers), force-progress.
   useEffect(() => {
-    const t = setTimeout(() => setVideoEnded(true), 12000);
+    const t = setTimeout(() => setVideoEnded(true), maxDurationMs);
     return () => clearTimeout(t);
-  }, []);
+  }, [maxDurationMs]);
 
 
 
