@@ -51,7 +51,9 @@ function paletteFromSpectrum(bass: number, mid: number, treble: number, seed: nu
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5 }: Props) {
+  const sensRef = useRef<number>(sensitivity);
+  sensRef.current = Math.max(0, Math.min(1, sensitivity));
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
