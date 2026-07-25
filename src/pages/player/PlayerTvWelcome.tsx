@@ -121,6 +121,37 @@ export default function PlayerTvWelcome() {
     return () => { cancelled = true; };
   }, [presenterImg]);
 
+  // Pré-carrega TODAS as imagens candidatas (artista, locutor e fallback) assim
+  // que suas URLs ficam conhecidas — antes mesmo de virarem o fundo ativo.
+  // Isso elimina o flicker na troca a cada 5s: quando bgMode alterna, o browser
+  // já tem o arquivo em cache e o crossfade acontece instantaneamente.
+  const preloadedRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  useEffect(() => {
+    const urls = [artistImg, presenterImg, fallbackImg].filter(
+      (u): u is string => Boolean(u)
+    );
+    for (const url of urls) {
+      if (preloadedRef.current.has(url)) continue;
+      const img = new Image();
+      img.decoding = "async";
+      img.crossOrigin = "anonymous";
+      img.referrerPolicy = "no-referrer";
+      img.src = url;
+      // decode() força o browser a resolver o bitmap agora, evitando pop-in
+      // quando a <img> visível montar depois.
+      if (typeof img.decode === "function") {
+        img.decode().catch(() => { /* ignore — fallback é o onload padrão */ });
+      }
+      preloadedRef.current.set(url, img);
+    }
+    // Garbage-collect entradas cujas URLs não são mais candidatas atuais.
+    for (const key of Array.from(preloadedRef.current.keys())) {
+      if (!urls.includes(key)) preloadedRef.current.delete(key);
+    }
+  }, [artistImg, presenterImg, fallbackImg]);
+
+
+
 
   // Gera código de pareamento.
   const generateCode = useCallback(async () => {
