@@ -34,5 +34,8 @@ export function consumeOAuthReturnPath() {
 
 export function getManagedOAuthRedirectUri() {
   if (typeof window === "undefined") return undefined;
-  return window.location.origin;
+  // Use uma rota pública dedicada para não bater na Index enquanto o handler
+  // restaura o path original salvo em localStorage. `/auth/callback` já é
+  // registrado no App e faz o Navigate para o return path.
+  return `${window.location.origin}/auth/callback`;
 }
