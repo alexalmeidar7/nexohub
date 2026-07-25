@@ -417,25 +417,9 @@ export default function PlayerTvWelcome() {
               </p>
             </div>
 
-            {/* Bloco de ação: URL manual + status pill, separados por divider */}
+            {/* Bloco de ação: apenas status pill (URL foi movida para o card do QR) */}
             {!claimedName && !error && (
               <div className="flex flex-wrap items-center gap-8">
-                {/* URL manual */}
-                <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 shadow-2xl">
-                  <p className="text-[11px] font-tv-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
-                    Acesse no navegador
-                  </p>
-                  <p className="text-3xl font-tv-bold tracking-tight text-primary">
-                    {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
-                  </p>
-                </div>
-
-                {/* Divider vertical — só quando houver conteúdo à direita */}
-                {(!code || expired) && (
-                  <div className="hidden sm:block h-16 w-px bg-white/10" aria-hidden />
-                )}
-
-                {/* Status pill: apenas para "gerando código" e "expirado" */}
                 {!code && !expired && (
                   <div
                     className="inline-flex items-center gap-4 rounded-full border border-primary/30 bg-primary/10 px-7 py-4 backdrop-blur-md"
@@ -465,12 +449,6 @@ export default function PlayerTvWelcome() {
               </div>
             )}
 
-            {/* Sub-caption sobre o link encurtado */}
-            {!claimedName && !error && shortUrl && (
-              <p className="text-tv-caption text-slate-400 mt-6">
-                Link encurtado para digitar mais fácil.
-              </p>
-            )}
 
             {claimedName && (
               <div className="rounded-3xl bg-emerald-500/15 border border-emerald-400/40 px-8 py-6 text-emerald-100 backdrop-blur-md inline-flex items-center gap-4 shadow-2xl">
