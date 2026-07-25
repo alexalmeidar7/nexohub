@@ -6,6 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone, Home } from "lucide-react";
 import { extractDominantPair } from "@/lib/dominantColors";
 
+const CANONICAL_PAIR_ORIGIN = "https://nexohub.lovable.app";
+
+function getPairOrigin() {
+  if (typeof window === "undefined") return CANONICAL_PAIR_ORIGIN;
+  const host = window.location.hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1") return window.location.origin;
+  if (host.endsWith(".lovable.app")) return window.location.origin;
+  return CANONICAL_PAIR_ORIGIN;
+}
+
 /**
  * Tela de "Bem-vindo" para acesso via TV: gera um código de 4 dígitos e um
  * QR code que aponta para /:userSlug/pair?code=XXXX. Ao ser confirmado no
@@ -46,6 +56,26 @@ export default function PlayerTvWelcome() {
     }
   }, [userSlug]);
   const claimedRef = useRef(false);
+
+  const handleClaimedRow = useCallback((row: any) => {
+    if (!row || claimedRef.current || row.status !== "claimed") return;
+    claimedRef.current = true;
+    const isGuestClaim = !row.paired_user_id && !row.paired_email;
+    try {
+      const guest = {
+        name: isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado",
+        email: row.paired_email || null,
+        avatar_url: row.paired_avatar || "/avatars/usr-default.png",
+        pairedAt: Date.now(),
+      };
+      localStorage.setItem(`nexohub_tv_guest_${userSlug}`, JSON.stringify(guest));
+      if (isGuestClaim) localStorage.removeItem(`player-step-home:${userSlug}`);
+    } catch { /* ignore */ }
+    setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
+    setTimeout(() => {
+      navigate(`/${userSlug}/player${isGuestClaim ? "?tvGuest=1" : ""}`, { replace: true });
+    }, 900);
+  }, [navigate, userSlug]);
 
   // Auto-fullscreen quando aberto em navegador de TV (WebOS/Tizen/AndroidTV/etc).
   // Alguns navegadores só permitem via gesto — nesse caso, o primeiro clique/tecla dispara.
@@ -214,29 +244,31 @@ export default function PlayerTvWelcome() {
         (payload: any) => {
           const row = payload?.new;
           if (!row || claimedRef.current) return;
-          if (row.status === "claimed") {
-            claimedRef.current = true;
-            const isGuestClaim = !row.paired_user_id && !row.paired_email;
-            try {
-              const guest = {
-                name: isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado",
-                email: row.paired_email || null,
-                avatar_url: row.paired_avatar || "/avatars/usr-default.png",
-                pairedAt: Date.now(),
-              };
-              localStorage.setItem(`nexohub_tv_guest_${userSlug}`, JSON.stringify(guest));
-              if (isGuestClaim) localStorage.removeItem(`player-step-home:${userSlug}`);
-            } catch { /* ignore */ }
-            setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
-            setTimeout(() => {
-              navigate(`/${userSlug}/player${isGuestClaim ? "?tvGuest=1" : ""}`, { replace: true });
-            }, 1800);
-          }
+          handleClaimedRow(row);
         }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [code, userSlug, navigate]);
+  }, [code, handleClaimedRow]);
+
+  // Fallback para TVs/navegadores que não recebem Realtime: consulta o status
+  // do código a cada 2s e entra assim que o celular confirmar.
+  useEffect(() => {
+    if (!code) return;
+    let cancelled = false;
+    const poll = async () => {
+      if (claimedRef.current) return;
+      const { data } = await supabase
+        .from("tv_pairing_codes")
+        .select("status, paired_user_id, paired_email, paired_name, paired_avatar")
+        .eq("code", code)
+        .maybeSingle();
+      if (!cancelled) handleClaimedRow(data);
+    };
+    poll();
+    const iv = window.setInterval(poll, 2000);
+    return () => { cancelled = true; window.clearInterval(iv); };
+  }, [code, handleClaimedRow]);
 
   // Countdown de expiração (mm:ss). Ao chegar em 0 marca como expirado (não
   // regenera automaticamente — usuário precisa clicar em "Gerar novo código").
@@ -272,9 +304,10 @@ export default function PlayerTvWelcome() {
   }, [remaining]);
 
 
+  const pairOrigin = getPairOrigin();
   const pairUrl = code
-    ? `${window.location.origin}/${userSlug}/pair?code=${code}`
-    : `${window.location.origin}/${userSlug}/pair`;
+    ? `${pairOrigin}/${userSlug}/pair?code=${code}`
+    : `${pairOrigin}/${userSlug}/pair`;
 
   // Encurta a URL para facilitar a digitação no navegador.
   useEffect(() => {
