@@ -237,7 +237,7 @@ function TopNavBar({
               data-tv-focusable
               data-tv-topnav={idx + 1}
               title={`Atalho: ${idx + 1}`}
-              className="group relative py-1 font-light tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
+              className="group relative py-1 font-tv-medium tracking-wide transition-all duration-200 lowercase focus:outline-none focus-visible:outline-none"
               style={{
                 color: isActive ? "#fff" : "rgba(255,255,255,0.55)",
                 background: "transparent",
@@ -322,7 +322,7 @@ function TopNavBar({
                 onFocus={() => setSearchFocused(true)}
                 placeholder="buscar"
                 data-tv-focusable
-                className="flex-1 min-w-0 bg-transparent text-[15px] font-light placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
+                className="flex-1 min-w-0 bg-transparent text-tv-card-sub font-tv-medium placeholder:text-white/55 text-white outline-none lowercase focus:outline-none focus-visible:outline-none"
                 style={{ fontFamily: "'Lufga', system-ui, sans-serif" }}
                 onKeyDown={(e) => {
                   const el = e.currentTarget;
@@ -380,7 +380,7 @@ function TopNavBar({
                             {ch.logo_url ? <img src={ch.logo_url} className="w-full h-full object-cover" /> : <Radio className="w-4 h-4 text-white/30" />}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{ch.name}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{ch.name}</span>
                             <span className="text-[11px] text-white/30">{ch.type === "video_live" ? "TV ao vivo" : ch.type === "audio_live" ? "Rádio" : "Catálogo"}</span>
                           </div>
                         </button>
@@ -396,7 +396,7 @@ function TopNavBar({
                             {p.selo ? <img src={p.selo} className="w-full h-full object-contain" /> : <Film className="w-4 h-4 text-white/30" />}
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{p.nome}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{p.nome}</span>
                             <span className="text-[11px] text-white/30">{p.horario_inicio} — {p.horario_fim}</span>
                           </div>
                         </div>
@@ -412,7 +412,7 @@ function TopNavBar({
                             <Disc className="w-4 h-4 text-white/30" />
                           </div>
                           <div className="min-w-0">
-                            <span className="text-sm text-white truncate block">{formatTrackText(m.musica)}</span>
+                            <span className="text-tv-card-title font-tv-medium text-white truncate block">{formatTrackText(m.musica)}</span>
                             <span className="text-[11px] text-white/30">{formatTrackText(m.artista)}</span>
                           </div>
                         </div>
@@ -2122,7 +2122,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className={`fixed inset-0 text-white flex flex-col transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
       {/* Top loading bar */}
