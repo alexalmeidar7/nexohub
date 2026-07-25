@@ -1831,7 +1831,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   <button
                     onClick={() => onSetMuted(!muted)}
                     className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
-                    data-focusable
+                    data-tv-focusable
+                    data-tv-scroll="center"
+                    data-tv-selected={muted ? "true" : undefined}
                     aria-label={muted ? "Ativar som" : "Silenciar"}
                     title={muted ? "Ativar som" : "Silenciar"}
                   >
