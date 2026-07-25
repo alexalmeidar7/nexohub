@@ -1,62 +1,99 @@
-# Redesign — Player de Áudio (`/player` — modo áudio)
+## Objetivo
 
-Layout novo baseado no mockup anexado. Substitui a tela atual do player de áudio (`src/pages/Player.tsx` no modo audio) mantendo `PlayerHome`, `WelcomeScreen` e demais telas intactas.
+Criar `/:userSlug/player/tv` — versão TV do welcome sem seletor de perfil, com um código de 4 dígitos e QR code para o usuário fazer login pelo celular com Google. Quando o celular autenticar, a TV entra automaticamente logada como aquele usuário.
 
-## Estrutura visual
+## Fluxo
 
 ```text
-┌───────────────────────────────────────────────────────────────────────┐
-│ ▲▼ canal            [ao vivo][chat][karaoke][músicas tocadas]   LOGO │
-│    Cultura FM Áudio                                              CANAL│
-│                                                                       │
-│   ┌─────┐┌─────┐┌─────┐┌──────────────────┐                          │
-│   │23:22││23:22││23:17││ no ar        ♥   │  a seguir                │
-│   │tocou││tocou││tocou││                  │  top 20 da cultura       │
-│   │ ... ││ ... ││ ... ││  [FOTO LOCUTOR]  │  17:00/18:00             │
-│   └─────┘└─────┘└─────┘│                  │       ⊕ (grade)          │
-│  ← carrossel 50 últimas│  no ar           │                          │
-│                        │  sabadão cultura │                          │
-│                        │  12:00/17:00     │                          │
-│                        │  ▓▓▓▓▓▓▓░░░░     │                          │
-│                        └──────────────────┘                          │
-│                                                            [ao vivo] │
-│ ▓▓▓▓▓▓▓▓▓▓●─────────────────────────────────────────────────────────  │
-│                          ▶ / ❚❚                              ? nexo  │
-└───────────────────────────────────────────────────────────────────────┘
+[TV]                                     [Celular]
+1. Abre /:userSlug/player/tv
+2. Edge gera código 4 dígitos único
+3. Mostra QR + código na tela
+4. Escuta Realtime aguardando "claimed"
+                                         5. Usuário aponta câmera → abre
+                                            /:userSlug/pair?code=1234
+                                         6. Faz login Google (popup Lovable)
+                                         7. Confirma "vincular esta TV?"
+                                         8. Edge grava paired_user_id
+9. Realtime dispara na TV
+10. TV salva sessão do sub-perfil e
+    navega para /:userSlug/player?step=home
 ```
 
-## Componentes / arquivos
+## Tabela nova: `tv_pairing_codes`
 
-- `src/pages/player/AudioPlayerScreen.tsx` (novo) — tela completa do player de áudio.
-- `src/components/player/audio/ChannelSwitcher.tsx` — botões ▲▼ + label do canal atual.
-- `src/components/player/audio/TopActions.tsx` — pills "ao vivo / chat / karaoke / músicas tocadas".
-- `src/components/player/audio/NowPlayingCard.tsx` — card central: foto locutor, gradiente extraído da foto (2 cores via `coverPalette`), nome do programa, horários, progresso.
-- `src/components/player/audio/HistoryCarousel.tsx` — carrossel horizontal empilhado à esquerda com últimas 50 músicas (capa + nome + horário) com animação de "empurrar" a cada nova música.
-- `src/components/player/audio/UpNextPanel.tsx` — "a seguir" + botão ⊕ que abre `PlayerGradeDialog`.
-- `src/components/player/audio/TimeshiftBar.tsx` — barra inferior com scrubbing dos últimos 5 min + botão play/pause central + pill "ao vivo".
-- `src/hooks/useAudioTimeshift.ts` — buffer rolling de 5 min via `MediaSource` + `SourceBuffer` do HLS.js (grava segmentos em memória; permite `currentTime` retroativo até 300 s).
-- Reutilizar: `useGlobalMusicSync`, `fetch-artist-image` (via `artistImageCache`), `coverPalette.extractPaletteFromImage`, `PlayerGradeDialog`, chat/karaoke/músicas tocadas já existentes.
+Colunas:
+- `code` text PK (4 dígitos, único e ativo por vez)
+- `slug_user_id` uuid — dono da rádio (owner do slug)
+- `user_slug` text
+- `tv_session_id` text — id efêmero gerado pela TV
+- `paired_user_id` uuid null — preenchido quando o celular autentica
+- `paired_email` text null
+- `paired_name` text null
+- `status` text: `pending` | `claimed` | `expired`
+- `created_at`, `expires_at` (15 min), `claimed_at`
 
-## Dados
+RLS:
+- `SELECT` permitido para `anon` e `authenticated` filtrando `code` (necessário para a TV public consultar seu próprio código).
+- `INSERT/UPDATE` somente via edge function (service role).
 
-- Últimas 50 músicas: query em `music_history` do owner do canal (edge `public-player-data` já retorna histórico; ampliar `limit` para 50).
-- Programa no ar + a seguir: já vem de `programas` / grade atual usada em `PlayerHome`.
-- Foto locutor: `apresentadores.foto_url` do programa atual.
-- Palette do gradiente: `extractPaletteFromImage(fotoLocutor)` → CSS `linear-gradient(135deg, c1, c2)`.
+## Edge functions
 
-## Timeshift 5 min (áudio)
+### `tv-pair-create` (público)
+Body: `{ userSlug, tvSessionId }`.
+- Resolve `slug_user_id` a partir do slug.
+- Gera código 4 dígitos evitando colisão com pendings ativos (retry até 20x).
+- Expira em 15 min.
+- Retorna `{ code, expiresAt }`.
 
-- HLS.js configurado com `backBufferLength: 300` já mantém segmentos em memória.
-- Scrubbing: setar `audio.currentTime = liveEdge - offset` (0–300 s).
-- Botão "ao vivo" volta para `liveSyncPosition`.
-- Se o stream não permitir seek retroativo (algumas origens rejeitam), esconder a parte "-5 min" e manter só barra "ao vivo" (fallback silencioso).
+### `tv-pair-claim` (autenticado)
+Body: `{ code }`.
+- Usa a sessão do usuário autenticado (do celular).
+- Valida code pending, não expirado, e slug coincidente.
+- Marca `status='claimed'`, grava `paired_user_id`, `paired_email`, `paired_name`.
+- Retorna `{ ok: true, userSlug }`.
 
-## Navegação
+Ambas retornam 200 com `{ ok: false, reason }` em erros (padrão do projeto).
 
-- Teclado espacial já existente é aplicado nos elementos com `data-focusable`: switcher, cada pill, card no ar, painel a seguir, ⊕, timeshift, play/pause.
-- Carrossel de histórico avança sozinho quando nova música entra (animação slide + fade da nova capa entrando da direita, empurrando as antigas para a esquerda).
+## Frontend
 
-## Fora de escopo
+### Nova rota: `/:userSlug/player/tv` → `PlayerTvWelcome.tsx`
+Reaproveita layout do `WelcomeScreen` (mesmo hero/background do slug), mas:
+- **Sem** seletor de perfis e sem botão `+`.
+- Canto inferior esquerdo: bloco com texto `Bem vindo ao player da {Nome do usuário}, para uma melhor interação faça login no QR Code abaixo.` + QR code (biblioteca `qrcode`) apontando para `${origin}/{userSlug}/pair?code=1234`.
+- Também exibe o código em fonte grande (`text-tv-*`) para digitação manual, com fallback caso a câmera não leia.
+- Tokens de TV (`p-tv-safe`, `text-tv-*`, `antialiased`), alto contraste.
+- `useEffect`: chama `tv-pair-create` → recebe código → assina Realtime em `tv_pairing_codes` filtrando pelo `code`. Ao receber `status='claimed'`, salva a sessão de sub-perfil no localStorage do slug (mesma chave usada pelo `WelcomeScreen` hoje) e navega para `/:userSlug/player?step=home`.
+- Watchdog: se expirar, regenera automaticamente um novo código.
 
-- Não altero `WelcomeScreen`, `PlayerHome`, nem player de vídeo.
-- Não crio novo bucket/edge para gravar áudio no servidor — o timeshift usa buffer client-side do HLS (5 min é o que o HLS mantém em memória sem custo de storage). Deixo comentário no código explicando o trade-off caso queira depois virar server-side.
+### Nova rota: `/:userSlug/pair` → `PairPage.tsx` (mobile-first)
+- Lê `?code=1234` (também com input manual se ausente).
+- Se não autenticado, mostra botão "Entrar com Google" usando `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.href })`.
+- Após auth: mostra card "Vincular esta TV à sua conta?" com nome/email do usuário, botão **Vincular** e **Cancelar**.
+- Ao vincular: chama `tv-pair-claim` → toast de sucesso → mensagem "Pode voltar para a TV. A tela vai carregar automaticamente."
+
+## Segurança
+
+- Código 4 dígitos + expiração 15 min + slug scoping tornam bruteforce inviável na prática, mas a claim exige auth e valida slug — nenhuma superfície pública grava dados sensíveis.
+- Não expomos IDs de usuários no payload público da TV; a TV apenas vê `paired_email`/`paired_name` do próprio código.
+
+## Arquivos
+
+Novos:
+- `supabase/migrations/<ts>_tv_pairing_codes.sql`
+- `supabase/functions/tv-pair-create/index.ts`
+- `supabase/functions/tv-pair-claim/index.ts`
+- `src/pages/player/PlayerTvWelcome.tsx`
+- `src/pages/PairPage.tsx`
+
+Editados:
+- `src/App.tsx` — rotas `/:userSlug/player/tv` e `/:userSlug/pair`.
+- `package.json` — dep `qrcode` (se ainda não estiver).
+
+## Confirmações rápidas
+
+1. O login no celular deve ser **Google apenas** (padrão do projeto) — OK?
+2. Expiração de 15 min por código está boa, ou prefere 5/10 min?
+3. Após parear, a TV entra no player usando o **nome/foto do Google** do celular como "sub-perfil" da rádio, correto?
+
+Posso seguir com esses defaults se não houver objeção.

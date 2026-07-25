@@ -51,6 +51,8 @@ export function lazyRetry<T extends React.ComponentType<any>>(
 // Lazy-loaded heavy pages with automatic retry
 const PlayerHub = lazyRetry(() => import("./pages/player/PlayerHub"));
 const PlayerPage = lazyRetry(() => import("./pages/Player"));
+const PlayerTvWelcome = lazyRetry(() => import("./pages/player/PlayerTvWelcome"));
+const PairPage = lazyRetry(() => import("./pages/PairPage"));
 const PlayerApp = lazyRetry(() => import("./pages/PlayerApp"));
 const PromocoesKiosk = lazyRetry(() => import("./pages/Promocoes"));
 const MasterViewHome = lazyRetry(() => import("./pages/masterview/MasterViewHome"));
@@ -191,6 +193,8 @@ const App = () => (
             <Route path="/:userSlug/locutor" element={<PromocoesKiosk />} />
             <Route path="/locutor" element={<PromocoesKiosk />} />
             <Route path="/:userSlug/player" element={<PlayerHub />} />
+            <Route path="/:userSlug/player/tv" element={<PlayerTvWelcome />} />
+            <Route path="/:userSlug/pair" element={<PairPage />} />
             <Route path="/:userSlug/player/watch" element={<PlayerPage />} />
             <Route path="/:userSlug/player/catalog" element={<PlayerCatalog />} />
             <Route path="/:userSlug/player/app" element={<PlayerApp />} />
