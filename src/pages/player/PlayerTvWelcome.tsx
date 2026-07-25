@@ -205,16 +205,41 @@ export default function PlayerTvWelcome() {
     ? `${window.location.origin}/${userSlug}/pair?code=${code}`
     : `${window.location.origin}/${userSlug}/pair`;
 
+  const activeBg =
+    bgMode === "artist" ? artistImg :
+    bgMode === "presenter" ? presenterImg :
+    fallbackImg;
+
+  const presenterGradient = presenterColors
+    ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
+    : null;
+
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
-      {/* Background: mesma imagem da WelcomeScreen (thumb do programa/canal) */}
+      {/* Gradiente elegante atrás da foto do locutor (transição suave) */}
+      <div
+        className="absolute inset-0 z-0 transition-opacity duration-1000"
+        style={{
+          opacity: bgMode === "presenter" && presenterGradient ? 1 : 0,
+          background: presenterGradient || "transparent",
+        }}
+        aria-hidden
+      />
+      {/* Background principal (imagem) */}
       <div className="absolute inset-0 z-0 bg-black">
-        {backgroundUrl ? (
+        {activeBg ? (
           <img
-            src={backgroundUrl}
+            key={activeBg}
+            src={activeBg}
             alt=""
             aria-hidden
-            className="ws-kenburns absolute inset-0 w-full h-full object-cover"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
+            className={
+              bgMode === "presenter"
+                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl animate-fade-in"
+                : "ws-kenburns absolute inset-0 w-full h-full object-cover animate-fade-in"
+            }
           />
         ) : (
           <div
@@ -226,7 +251,7 @@ export default function PlayerTvWelcome() {
           />
         )}
         {/* Escurecimento para legibilidade */}
-        <div className="absolute inset-0 bg-black/55" />
+        <div className={bgMode === "presenter" ? "absolute inset-0 bg-black/25" : "absolute inset-0 bg-black/55"} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
 
