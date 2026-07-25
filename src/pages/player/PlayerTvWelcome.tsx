@@ -227,9 +227,36 @@ export default function PlayerTvWelcome() {
     bgMode === "presenter" ? presenterImg :
     fallbackImg;
 
+  // Cross-fade entre imagens de fundo: mantém a última carregada visível
+  // até que a próxima termine de baixar, evitando "flash" de tela vazia
+  // em conexões lentas.
+  const [loadedBg, setLoadedBg] = useState<string | null>(null);
+  const [loadedMode, setLoadedMode] = useState<"artist" | "presenter" | "fallback">("fallback");
+  const [pendingReady, setPendingReady] = useState(false);
+  useEffect(() => {
+    if (!activeBg) { setPendingReady(false); return; }
+    if (activeBg === loadedBg) { setPendingReady(true); return; }
+    setPendingReady(false);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.referrerPolicy = "no-referrer";
+    let cancelled = false;
+    img.onload = () => {
+      if (cancelled) return;
+      setLoadedBg(activeBg);
+      setLoadedMode(bgMode);
+      setPendingReady(true);
+    };
+    img.onerror = () => { if (!cancelled) setPendingReady(false); };
+    img.src = activeBg;
+    return () => { cancelled = true; };
+  }, [activeBg, bgMode, loadedBg]);
+
   const presenterGradient = presenterColors
     ? `radial-gradient(60% 80% at 30% 40%, ${presenterColors.primary} 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, ${presenterColors.secondary} 0%, transparent 70%), linear-gradient(135deg, ${presenterColors.primary} 0%, ${presenterColors.secondary} 100%)`
     : null;
+
+  const showSkeleton = !loadedBg && (!activeBg || !pendingReady);
 
   return (
     <div className="relative min-h-screen w-full antialiased text-slate-100 overflow-hidden">
@@ -237,45 +264,60 @@ export default function PlayerTvWelcome() {
       <div
         className="absolute inset-0 z-0 transition-opacity duration-1000"
         style={{
-          opacity: bgMode === "presenter" && presenterGradient ? 1 : 0,
+          opacity: (bgMode === "presenter" || loadedMode === "presenter") && presenterGradient ? 1 : 0,
           background: presenterGradient || "transparent",
         }}
         aria-hidden
       />
-      {/* Background principal (imagem) */}
+      {/* Background principal (imagem) com cross-fade */}
       <div className="absolute inset-0 z-0 bg-black">
-        {activeBg ? (
+        {/* Base gradient — sempre presente por baixo */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
+          }}
+        />
+        {/* Skeleton shimmer enquanto nenhuma imagem carregou */}
+        {showSkeleton && (
+          <div
+            className="absolute inset-0 animate-pulse"
+            style={{
+              background:
+                "linear-gradient(110deg, rgba(255,255,255,0.02) 20%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.02) 80%)",
+              backgroundSize: "200% 100%",
+            }}
+            aria-hidden
+          />
+        )}
+        {/* Camada da imagem carregada (visível assim que pronta) */}
+        {loadedBg && (
           <img
-            key={activeBg}
-            src={activeBg}
+            key={loadedBg}
+            src={loadedBg}
             alt=""
             aria-hidden
             crossOrigin="anonymous"
             referrerPolicy="no-referrer"
             className={
-              bgMode === "presenter"
-                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl animate-fade-in"
-                : "ws-kenburns absolute inset-0 w-full h-full object-cover animate-fade-in"
+              (loadedMode === "presenter"
+                ? "absolute inset-1/2 -translate-x-1/2 -translate-y-1/2 h-[95vh] w-auto max-w-none object-contain drop-shadow-2xl"
+                : "ws-kenburns absolute inset-0 w-full h-full object-cover") +
+              " transition-opacity duration-700 ease-out opacity-100"
             }
-          />
-        ) : (
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
-            }}
           />
         )}
         {/* Escurecimento para legibilidade */}
-        <div className={bgMode === "presenter" ? "absolute inset-0 bg-black/25" : "absolute inset-0 bg-black/55"} />
+        <div className={`absolute inset-0 transition-colors duration-700 ${loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
+
 
       {/* Conteúdo */}
       <div className="relative z-10 flex flex-col p-tv-safe min-h-screen">
         {/* Cabeçalho: apenas a logo, sem texto "PLAYER ..." */}
-        <div className="flex items-center">
+        <div className="flex-none flex items-center">
           {radioLogo ? (
             <img
               src={radioLogo}
@@ -286,87 +328,108 @@ export default function PlayerTvWelcome() {
         </div>
 
         {/* Corpo */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-tv-6 items-center mt-tv-8">
-          {/* Coluna esquerda: mensagem */}
-          <div className="max-w-2xl">
-            <div className="text-tv-h2 font-tv-bold leading-tight drop-shadow-lg">
-              Bem-vindo ao player da <span className="text-primary">{radioName || userSlug.toUpperCase()}</span>.
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+          {/* Coluna esquerda: mensagem (8/12) */}
+          <div className="lg:col-span-8 max-w-3xl">
+            {/* Bloco headline com respiro generoso */}
+            <div className="space-y-6 mb-14">
+              <p className="text-tv-caption font-tv-bold uppercase tracking-[0.28em] text-primary drop-shadow">
+                Configuração do player
+              </p>
+              <h1 className="text-tv-h1 font-tv-bold leading-[1.05] drop-shadow-lg">
+                Bem-vindo ao player da{" "}
+                <span className="text-primary">{radioName || userSlug.toUpperCase()}</span>
+              </h1>
+              <p className="text-tv-body text-slate-200/90 max-w-2xl leading-relaxed drop-shadow-md">
+                Para uma melhor interação, leia o QR code ao lado com a câmera do seu celular e faça login com sua conta.
+              </p>
             </div>
-            <p className="text-tv-body text-slate-200 mt-tv-3 drop-shadow-md">
-              Para uma melhor interação, faça login lendo o QR code ao lado com a câmera do seu celular.
-            </p>
-            <p className="text-tv-caption text-slate-300 mt-tv-2">
-              Ou digite no navegador: <span className="text-white font-tv-bold">{shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}</span>
-            </p>
-            <p className="text-tv-caption text-slate-400 mt-tv-1">
-              {shortUrl ? "Link encurtado para digitar mais fácil" : ""}
-            </p>
 
-            {/* Status */}
-            {!claimedName && !error && !expired && (
-              <div className="mt-tv-6 rounded-2xl bg-white/10 border border-white/15 px-tv-4 py-tv-3 backdrop-blur-md inline-flex items-center gap-tv-3">
-                {code ? (
-                  <>
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-70"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                    </span>
-                    <div>
-                      <div className="text-tv-body font-tv-bold">Aguardando pareamento…</div>
-                      <div className="text-tv-caption text-slate-300 inline-flex items-center gap-2">
-                        <Smartphone className="h-4 w-4" />
-                        Abra a câmera do celular no QR code
-                      </div>
-                    </div>
-                  </>
+            {/* Bloco de ação: URL manual + status pill, separados por divider */}
+            {!claimedName && !error && (
+              <div className="flex flex-wrap items-center gap-8">
+                {/* URL manual */}
+                <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 shadow-2xl">
+                  <p className="text-[11px] font-tv-bold uppercase tracking-[0.22em] text-slate-400 mb-2">
+                    Acesse no navegador
+                  </p>
+                  <p className="text-3xl font-tv-bold tracking-tight text-primary">
+                    {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
+                  </p>
+                </div>
+
+                {/* Divider vertical */}
+                <div className="hidden sm:block h-16 w-px bg-white/10" aria-hidden />
+
+                {/* Status pill */}
+                {!expired ? (
+                  <div
+                    className="inline-flex items-center gap-4 rounded-full border border-primary/30 bg-primary/10 px-7 py-4 backdrop-blur-md"
+                    style={{ boxShadow: "0 0 40px hsl(var(--primary) / 0.25)" }}
+                  >
+                    {code ? (
+                      <>
+                        <span className="relative flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                        </span>
+                        <span className="text-tv-body font-tv-bold text-primary">Aguardando pareamento</span>
+                      </>
+                    ) : (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                        <span className="text-tv-body font-tv-bold text-primary">Gerando código…</span>
+                      </>
+                    )}
+                  </div>
                 ) : (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    <div className="text-tv-body">Gerando código de pareamento…</div>
-                  </>
+                  <div className="inline-flex items-center gap-4 rounded-full border border-amber-400/40 bg-amber-500/10 px-7 py-4 backdrop-blur-md">
+                    <AlertTriangle className="h-6 w-6 text-amber-300" />
+                    <div className="flex items-center gap-4">
+                      <span className="text-tv-body font-tv-bold text-amber-100">Código expirado</span>
+                      <button
+                        type="button"
+                        onClick={generateCode}
+                        data-tv-focusable
+                        autoFocus
+                        className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 text-tv-caption font-tv-bold"
+                      >
+                        <RefreshCw className="h-4 w-4" /> Gerar novo
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
 
-            {!claimedName && expired && (
-              <div className="mt-tv-6 rounded-2xl bg-amber-500/15 border border-amber-400/40 px-tv-4 py-tv-3 text-amber-100 backdrop-blur-md inline-flex items-center gap-tv-3">
-                <AlertTriangle className="h-6 w-6 text-amber-300" />
-                <div className="flex-1">
-                  <div className="text-tv-body font-tv-bold">Código expirado</div>
-                  <div className="text-tv-caption opacity-90">Este código não é mais válido. Gere um novo para continuar.</div>
-                </div>
-                <button
-                  type="button"
-                  onClick={generateCode}
-                  data-tv-focusable
-                  autoFocus
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 text-tv-caption font-tv-bold"
-                >
-                  <RefreshCw className="h-4 w-4" /> Gerar novo código
-                </button>
-              </div>
+            {/* Sub-caption sobre o link encurtado */}
+            {!claimedName && !error && shortUrl && (
+              <p className="text-tv-caption text-slate-400 mt-6">
+                Link encurtado para digitar mais fácil.
+              </p>
             )}
 
             {claimedName && (
-              <div className="mt-tv-6 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 px-tv-4 py-tv-3 text-emerald-100 backdrop-blur-md inline-flex items-center gap-tv-3">
-                <CheckCircle2 className="h-7 w-7 text-emerald-300" />
+              <div className="rounded-3xl bg-emerald-500/15 border border-emerald-400/40 px-8 py-6 text-emerald-100 backdrop-blur-md inline-flex items-center gap-4 shadow-2xl">
+                <CheckCircle2 className="h-8 w-8 text-emerald-300" />
                 <div>
                   <div className="text-tv-body font-tv-bold">Pareado com sucesso!</div>
-                  <div className="text-tv-caption opacity-90">Olá, {claimedName}. Entrando no player…</div>
+                  <div className="text-tv-caption opacity-90 mt-1">Olá, {claimedName}. Entrando no player…</div>
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="mt-tv-6 rounded-2xl bg-red-500/15 border border-red-400/40 px-tv-4 py-tv-3 text-red-100 backdrop-blur-md inline-flex items-center gap-tv-3">
-                <AlertTriangle className="h-6 w-6 text-red-300" />
+              <div className="rounded-3xl bg-red-500/15 border border-red-400/40 px-8 py-6 text-red-100 backdrop-blur-md inline-flex items-center gap-4 shadow-2xl">
+                <AlertTriangle className="h-7 w-7 text-red-300" />
                 <div className="flex-1">
                   <div className="text-tv-body font-tv-bold">Erro ao gerar código</div>
-                  <div className="text-tv-caption opacity-90">{error}</div>
+                  <div className="text-tv-caption opacity-90 mt-1">{error}</div>
                 </div>
                 <button
                   type="button"
                   onClick={generateCode}
+                  data-tv-focusable
                   className="inline-flex items-center gap-2 rounded-xl bg-white/15 hover:bg-white/25 px-4 py-2 text-tv-caption font-tv-bold"
                 >
                   <RefreshCw className="h-4 w-4" /> Tentar novamente
@@ -375,57 +438,66 @@ export default function PlayerTvWelcome() {
             )}
           </div>
 
-          {/* Coluna direita: QR + código (com respiro entre eles) */}
-          <div className="flex flex-col items-center justify-center">
-            <div className="relative rounded-3xl bg-white p-6 shadow-2xl">
-              {code ? (
-                <>
-                  <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
-                    <QRCodeSVG value={pairUrl} size={280} level="M" includeMargin={false} />
-                  </div>
-                  {expired && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-3xl bg-black/40 backdrop-blur-sm">
-                      <AlertTriangle className="h-10 w-10 text-amber-300" />
-                      <div className="text-tv-body font-tv-bold text-white">Expirado</div>
+          {/* Coluna direita: card branco compacto (QR + código + expira) */}
+          <div className="lg:col-span-4 flex items-center justify-center lg:justify-end">
+            <div className="bg-white p-10 rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col items-center w-full max-w-md">
+              {/* QR */}
+              <div className="relative bg-slate-50 p-5 rounded-3xl mb-8">
+                {code ? (
+                  <>
+                    <div className={expired ? "opacity-30 grayscale transition-opacity" : "transition-opacity"}>
+                      <QRCodeSVG value={pairUrl} size={256} level="M" includeMargin={false} />
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
-                  <div className="text-xs text-slate-500">Gerando QR code…</div>
-                </div>
-              )}
-            </div>
-            <div className="text-center mt-10">
-              <div className="text-tv-caption uppercase tracking-widest text-slate-300">Código de pareamento</div>
-              <div className={`text-6xl font-tv-bold tracking-[0.4em] mt-3 drop-shadow-lg ${expired ? "text-slate-500 line-through decoration-4" : "text-white"}`}>
-                {code ? code : "----"}
+                    {expired && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-3xl bg-black/40 backdrop-blur-sm">
+                        <AlertTriangle className="h-10 w-10 text-amber-300" />
+                        <div className="text-tv-body font-tv-bold text-white">Expirado</div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="w-[256px] h-[256px] flex flex-col items-center justify-center gap-3">
+                    <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
+                    <div className="text-xs text-slate-500">Gerando QR code…</div>
+                  </div>
+                )}
               </div>
-              {code && !expired && remaining > 0 && (
-                <div className="text-tv-caption text-slate-400 mt-3">
-                  Expira em <span className="text-white font-tv-bold">{remainingLabel}</span>
+
+              {/* Código */}
+              <div className="text-center space-y-3">
+                <p className="text-slate-400 font-tv-bold uppercase tracking-[0.24em] text-[11px]">
+                  Código de pareamento
+                </p>
+                <div className={`text-6xl font-tv-bold tracking-[0.2em] ${expired ? "text-slate-400 line-through decoration-4" : "text-slate-900"}`}>
+                  {code ? code : "----"}
                 </div>
-              )}
-              {code && expired && (
-                <button
-                  type="button"
-                  onClick={generateCode}
-                  data-tv-focusable
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 px-5 py-3 mt-4 text-tv-body font-tv-bold shadow-lg"
-                >
-                  <RefreshCw className="h-5 w-5" /> Gerar novo código
-                </button>
-              )}
+                {code && !expired && remaining > 0 && (
+                  <div className="pt-3">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
+                      <span className="text-slate-500 text-sm font-semibold">
+                        Expira em <span className="text-slate-900 font-tv-bold">{remainingLabel}</span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {code && expired && (
+                  <button
+                    type="button"
+                    onClick={generateCode}
+                    data-tv-focusable
+                    className="inline-flex items-center gap-2 rounded-xl bg-primary text-primary-foreground hover:opacity-90 px-5 py-3 mt-4 text-tv-body font-tv-bold shadow-lg"
+                  >
+                    <RefreshCw className="h-5 w-5" /> Gerar novo código
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="mt-tv-6 text-tv-caption text-slate-400">
+        <div className="flex-none pt-tv-6 text-tv-caption text-slate-500">
           O código expira em 15 minutos. Ao expirar, gere um novo para continuar.
         </div>
-
-
       </div>
     </div>
   );
