@@ -41,9 +41,12 @@ export default function PlayerTvWelcome() {
     if (!userSlug) return;
     (async () => {
       try {
-        const data = await fetchPublicPlayerData(userSlug, "bootstrap");
-        const nome = data?.empresa?.nome_empresa || data?.empresa?.nome || userSlug;
-        const logo = data?.empresa?.logo_url || data?.empresa?.logo || "";
+        const { data } = await supabase.functions.invoke("public-player-data", {
+          body: { slug: userSlug, section: "bootstrap" },
+        });
+        const emp = (data as any)?.empresa || {};
+        const nome = emp.nome_empresa || emp.nome || userSlug;
+        const logo = emp.logo_url || emp.logo || "";
         setRadioName(String(nome).toUpperCase());
         setRadioLogo(String(logo || ""));
       } catch {
