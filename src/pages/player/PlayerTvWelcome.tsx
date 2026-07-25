@@ -4,6 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 
 import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, Smartphone } from "lucide-react";
+import { extractDominantPair } from "@/lib/dominantColors";
 
 /**
  * Tela de "Bem-vindo" para acesso via TV: gera um código de 4 dígitos e um
