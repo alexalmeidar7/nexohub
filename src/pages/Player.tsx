@@ -1308,13 +1308,30 @@ export default function PlayerPage() {
         });
       };
 
+      // FIX (capa travada): protege o polling contra deadlocks silenciosos.
+      // Antes: se `supabase.functions.invoke` travasse por rede lenta ou por erro
+      // sem rejeitar, `inFlight` ficava `true` para sempre e nenhuma nova música
+      // era buscada — o player ficava com a mesma capa "tocando agora" por horas.
+      // Agora usamos AbortController+timeout, um watchdog global e forçamos
+      // refresh em focus/online.
+      let inFlightSince = 0;
+      let lastSuccessAt = Date.now();
+      const FETCH_TIMEOUT_MS = 6000;
+
       const fetchPublicMusic = async () => {
-        if (cancelled || inFlight) return;
+        if (cancelled) return;
+        // Se o lock está preso há mais de FETCH_TIMEOUT_MS, libera à força.
+        if (inFlight && Date.now() - inFlightSince < FETCH_TIMEOUT_MS) return;
         inFlight = true;
+        inFlightSince = Date.now();
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
             body: { slug: userSlug, section: "now_playing" },
           });
+          // Aborta manualmente se o timeout disparou
+          if (controller.signal.aborted) return;
           if (cancelled || error || !data) return;
 
           if (publicUserId && typeof data.userId === "string" && data.userId !== publicUserId) return;
@@ -1329,16 +1346,32 @@ export default function PlayerPage() {
             : null);
 
           applyPublicMusic(incoming, typeof data.musicStartTime === "number" ? data.musicStartTime : null);
+          lastSuccessAt = Date.now();
         } catch {
         } finally {
+          window.clearTimeout(timeoutId);
           inFlight = false;
         }
       };
 
       fetchPublicMusic();
       const interval = setInterval(fetchPublicMusic, 3000); // Fallback polling every 3s (Realtime is primary)
+      // Watchdog: se ninguém teve sucesso há >30s e a aba está visível,
+      // força uma nova tentativa (mesmo que `inFlight` esteja preso).
+      const watchdog = setInterval(() => {
+        if (cancelled) return;
+        if (document.hidden) return;
+        if (Date.now() - lastSuccessAt > 30000) {
+          inFlight = false;
+          fetchPublicMusic();
+        }
+      }, 15000);
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
+      const onFocus = () => { if (!cancelled) fetchPublicMusic(); };
+      const onOnline = () => { if (!cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
+      window.addEventListener("focus", onFocus);
+      window.addEventListener("online", onOnline);
 
       // Realtime subscription on user_settings for instant music updates
       let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -1365,7 +1398,10 @@ export default function PlayerPage() {
       return () => {
         cancelled = true;
         clearInterval(interval);
+        clearInterval(watchdog);
         document.removeEventListener("visibilitychange", onVisibility);
+        window.removeEventListener("focus", onFocus);
+        window.removeEventListener("online", onOnline);
         if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       };
     }
