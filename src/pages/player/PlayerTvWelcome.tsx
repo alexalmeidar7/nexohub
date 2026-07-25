@@ -402,31 +402,22 @@ export default function PlayerTvWelcome() {
                   </p>
                 </div>
 
-                {/* Divider vertical */}
-                <div className="hidden sm:block h-16 w-px bg-white/10" aria-hidden />
+                {/* Divider vertical — só quando houver conteúdo à direita */}
+                {(!code || expired) && (
+                  <div className="hidden sm:block h-16 w-px bg-white/10" aria-hidden />
+                )}
 
-                {/* Status pill */}
-                {!expired ? (
+                {/* Status pill: apenas para "gerando código" e "expirado" */}
+                {!code && !expired && (
                   <div
                     className="inline-flex items-center gap-4 rounded-full border border-primary/30 bg-primary/10 px-7 py-4 backdrop-blur-md"
                     style={{ boxShadow: "0 0 40px hsl(var(--primary) / 0.25)" }}
                   >
-                    {code ? (
-                      <>
-                        <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                        </span>
-                        <span className="text-tv-body font-tv-bold text-primary">Aguardando pareamento</span>
-                      </>
-                    ) : (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                        <span className="text-tv-body font-tv-bold text-primary">Gerando código…</span>
-                      </>
-                    )}
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="text-tv-body font-tv-bold text-primary">Gerando código…</span>
                   </div>
-                ) : (
+                )}
+                {expired && (
                   <div className="inline-flex items-center gap-4 rounded-full border border-amber-400/40 bg-amber-500/10 px-7 py-4 backdrop-blur-md">
                     <AlertTriangle className="h-6 w-6 text-amber-300" />
                     <div className="flex items-center gap-4">
