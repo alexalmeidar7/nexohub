@@ -206,6 +206,22 @@ export default function PairPage() {
             </div>
           </div>
         )}
+        {status.kind === "expired" && (
+          <div className="mt-4 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-100 text-sm px-4 py-3 flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-semibold">Código expirado</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+              <button
+                type="button"
+                onClick={() => { setCode(""); setStatus({ kind: "idle" }); autoRunRef.current = false; }}
+                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-amber-50 px-3 py-1.5 text-xs font-semibold"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Digitar novo código
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           type="button"
