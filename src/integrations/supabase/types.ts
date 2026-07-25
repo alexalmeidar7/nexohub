@@ -2520,6 +2520,51 @@ export type Database = {
           },
         ]
       }
+      tv_pairing_codes: {
+        Row: {
+          claimed_at: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          paired_avatar: string | null
+          paired_email: string | null
+          paired_name: string | null
+          paired_user_id: string | null
+          slug_user_id: string
+          status: string
+          tv_session_id: string
+          user_slug: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          paired_avatar?: string | null
+          paired_email?: string | null
+          paired_name?: string | null
+          paired_user_id?: string | null
+          slug_user_id: string
+          status?: string
+          tv_session_id: string
+          user_slug: string
+        }
+        Update: {
+          claimed_at?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          paired_avatar?: string | null
+          paired_email?: string | null
+          paired_name?: string | null
+          paired_user_id?: string | null
+          slug_user_id?: string
+          status?: string
+          tv_session_id?: string
+          user_slug?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
