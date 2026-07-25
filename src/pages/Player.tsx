@@ -1715,6 +1715,16 @@ export default function PlayerPage() {
         media.volume = shouldStartMuted ? volumeRef.current / 100 : 0;
         return media.play().then(() => {
           fadeInMedia(media);
+          if (isAudioType && !shouldStartMuted) {
+            const targetVolume = Math.max(0, Math.min(1, volumeRef.current / 100));
+            window.setTimeout(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              if (media.paused || media.muted) return;
+              if (media.volume < Math.max(0.05, targetVolume * 0.5)) {
+                try { media.volume = targetVolume; } catch {}
+              }
+            }, 1200);
+          }
           handlePlayStarted();
         }).catch((e) => handlePlayBlocked(playLabel, e));
       };
