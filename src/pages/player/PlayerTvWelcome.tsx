@@ -546,7 +546,7 @@ export default function PlayerTvWelcome() {
           ) : null}
           <button
             type="button"
-            onClick={() => navigate(userSlug ? `/${userSlug}/player` : "/player")}
+            onClick={() => navigate(`${userSlug ? `/${userSlug}` : ""}/player?tvGuest=1`)}
             className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur-md px-5 py-3 text-white hover:bg-white/20 transition shadow-lg"
             aria-label="Acessar player sem login"
           >
