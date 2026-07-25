@@ -20,7 +20,12 @@ export default function PlayerTvWelcome() {
   const [error, setError] = useState<string | null>(null);
   const [radioName, setRadioName] = useState<string>("");
   const [radioLogo, setRadioLogo] = useState<string>("");
-  const [backgroundUrl, setBackgroundUrl] = useState<string | null>(null);
+  const [artistImg, setArtistImg] = useState<string | null>(null);
+  const [presenterImg, setPresenterImg] = useState<string | null>(null);
+  const [fallbackImg, setFallbackImg] = useState<string | null>(null);
+  const [bgMode, setBgMode] = useState<"artist" | "presenter" | "fallback">("fallback");
+  const [presenterColors, setPresenterColors] = useState<{ primary: string; secondary: string } | null>(null);
+  const [shortUrl, setShortUrl] = useState<string | null>(null);
   const [claimedName, setClaimedName] = useState<string | null>(null);
   const tvSessionId = useMemo(() => {
     try {
