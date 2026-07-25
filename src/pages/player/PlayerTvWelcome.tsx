@@ -367,39 +367,44 @@ export default function PlayerTvWelcome() {
               "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
           }}
         />
-        {/* Degradê atrás da foto do locutor — usa a PRÓPRIA foto em cover + blur
-            (estilo Spotify/Apple Music), com tint das cores dominantes por cima
-            para uma paleta coesa. Aparece somente no modo presenter. */}
-        {presenterImg && (
+        {/* Degradê atrás da foto do locutor — camada de COR sólida (extraída da foto)
+            renderizada SEMPRE que estamos em modo presenter, garantindo que o
+            degradê fique visível mesmo antes/depois do blur da foto carregar e
+            sem ser coberto por camadas opacas. */}
+        {(bgMode === "presenter" || loadedMode === "presenter") && (
           <div
             className="absolute inset-0 transition-opacity duration-1000"
-            style={{
-              opacity: (bgMode === "presenter" || loadedMode === "presenter") ? 1 : 0,
-            }}
+            style={{ opacity: 1 }}
             aria-hidden
           >
-            <img
-              src={presenterImg}
-              alt=""
-              aria-hidden
-              crossOrigin="anonymous"
-              referrerPolicy="no-referrer"
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: "blur(60px) saturate(1.2) brightness(0.55)", transform: "scale(1.15)" }}
-            />
-            {/* Tint das cores dominantes por cima do blur para reforçar o degradê */}
-            {presenterGradient && (
-              <div
-                className="absolute inset-0 mix-blend-soft-light opacity-80"
-                style={{ background: presenterGradient }}
-              />
-            )}
-            {/* Vinheta radial para dar foco na foto central */}
+            {/* 1) Gradiente de cor (sempre visível — base do efeito) */}
             <div
               className="absolute inset-0"
               style={{
                 background:
-                  "radial-gradient(70% 80% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%)",
+                  presenterGradient ||
+                  "radial-gradient(60% 80% at 30% 40%, #1f2937 0%, transparent 70%), radial-gradient(60% 80% at 75% 65%, #0f172a 0%, transparent 70%), linear-gradient(135deg, #111827 0%, #0b1220 100%)",
+              }}
+            />
+            {/* 2) Foto do locutor em blur por cima do gradiente, mas translúcida
+                   para que as cores extraídas continuem visíveis nas bordas. */}
+            {presenterImg && (
+              <img
+                src={presenterImg}
+                alt=""
+                aria-hidden
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
+                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
+                style={{ filter: "blur(70px) saturate(1.3) brightness(0.7)", transform: "scale(1.2)" }}
+              />
+            )}
+            {/* 3) Vinheta suave apenas nos cantos para dar foco, sem apagar o degradê */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background:
+                  "radial-gradient(85% 95% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.35) 100%)",
               }}
             />
           </div>
@@ -481,7 +486,7 @@ export default function PlayerTvWelcome() {
           />
         )}
         {/* Escurecimento para legibilidade (mais leve no fallback estático — já é escuro) */}
-        <div className={`absolute inset-0 transition-colors duration-700 ${showStaticFallback ? "bg-black/10" : loadedMode === "presenter" ? "bg-black/25" : "bg-black/55"}`} />
+        <div className={`absolute inset-0 transition-colors duration-700 ${showStaticFallback ? "bg-black/10" : loadedMode === "presenter" ? "bg-black/10" : "bg-black/55"}`} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70" />
       </div>
 
