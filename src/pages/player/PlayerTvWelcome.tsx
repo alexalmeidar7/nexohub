@@ -357,15 +357,6 @@ export default function PlayerTvWelcome() {
           animation: tv-bg-fade-in 1100ms ease-out both;
         }
       `}</style>
-      {/* Gradiente elegante atrás da foto do locutor (transição suave) */}
-      <div
-        className="absolute inset-0 z-0 transition-opacity duration-1000"
-        style={{
-          opacity: (bgMode === "presenter" || loadedMode === "presenter") && presenterGradient ? 1 : 0,
-          background: presenterGradient || "transparent",
-        }}
-        aria-hidden
-      />
       {/* Background principal (imagem) com cross-fade */}
       <div className="absolute inset-0 z-0 bg-black">
         {/* Base gradient — sempre presente por baixo */}
@@ -375,6 +366,17 @@ export default function PlayerTvWelcome() {
             background:
               "linear-gradient(135deg, hsl(var(--background)) 0%, hsl(var(--muted)) 60%, hsl(var(--background)) 100%)",
           }}
+        />
+        {/* Gradiente elegante atrás da foto do locutor — extraído da própria foto.
+            Fica acima da base e abaixo da imagem (contain) do locutor, aparecendo
+            nas laterais/atrás da silhueta. Transição suave ao alternar modos. */}
+        <div
+          className="absolute inset-0 transition-opacity duration-1000"
+          style={{
+            opacity: (bgMode === "presenter" || loadedMode === "presenter") && presenterGradient ? 1 : 0,
+            background: presenterGradient || "transparent",
+          }}
+          aria-hidden
         />
         {/* Fallback estático elegante quando não há NENHUMA imagem disponível */}
         {showStaticFallback && (
