@@ -45,6 +45,29 @@ export default function PlayerTvWelcome() {
   }, [userSlug]);
   const claimedRef = useRef(false);
 
+  // Auto-fullscreen quando aberto em navegador de TV (WebOS/Tizen/AndroidTV/etc).
+  // Alguns navegadores só permitem via gesto — nesse caso, o primeiro clique/tecla dispara.
+  useEffect(() => {
+    const ua = (navigator.userAgent || "").toLowerCase();
+    const isTv = /smart-tv|smarttv|hbbtv|web0s|webos|tizen|viera|nettv|googletv|appletv|crkey|bravia|android tv|large screen/.test(ua);
+    if (!isTv) return;
+    const tryFs = () => {
+      const el = document.documentElement as any;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+      if (req && !document.fullscreenElement) {
+        try { req.call(el); } catch { /* precisa gesto */ }
+      }
+    };
+    tryFs();
+    const onGesture = () => { tryFs(); };
+    window.addEventListener("keydown", onGesture, { once: true });
+    window.addEventListener("pointerdown", onGesture, { once: true });
+    return () => {
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("pointerdown", onGesture);
+    };
+  }, []);
+
   // Busca metadata pública da rádio + música tocando + locutor no ar.
   // Faz polling a cada 15s para manter o fundo atualizado.
   useEffect(() => {
