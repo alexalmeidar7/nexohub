@@ -68,6 +68,8 @@ export default function PlayerTvWelcome() {
         const deezer: string | null = d.musicDeezerArtistImg || null;
         const cover: string | null = d.musicData?.capa || null;
         setArtistImg(deezer || cover || null);
+        setMusicTitle(String(d.musicData?.titulo || "").trim());
+        setMusicArtist(String(d.musicData?.artista || "").trim());
 
         // Locutor no ar
         const presenter = d.currentPresenter?.foto || null;
