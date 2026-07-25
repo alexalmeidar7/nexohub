@@ -216,18 +216,20 @@ export default function PlayerTvWelcome() {
           if (!row || claimedRef.current) return;
           if (row.status === "claimed") {
             claimedRef.current = true;
+            const isGuestClaim = !row.paired_user_id && !row.paired_email;
             try {
               const guest = {
-                name: row.paired_name || row.paired_email || "Convidado",
+                name: isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado",
                 email: row.paired_email || null,
                 avatar_url: row.paired_avatar || "/avatars/usr-default.png",
                 pairedAt: Date.now(),
               };
               localStorage.setItem(`nexohub_tv_guest_${userSlug}`, JSON.stringify(guest));
+              if (isGuestClaim) localStorage.removeItem(`player-step-home:${userSlug}`);
             } catch { /* ignore */ }
-            setClaimedName(row.paired_name || row.paired_email || "Convidado");
+            setClaimedName(isGuestClaim ? "Visitante" : row.paired_name || row.paired_email || "Convidado");
             setTimeout(() => {
-              navigate(`/${userSlug}/player`, { replace: true });
+              navigate(`/${userSlug}/player${isGuestClaim ? "?tvGuest=1" : ""}`, { replace: true });
             }, 1800);
           }
         }

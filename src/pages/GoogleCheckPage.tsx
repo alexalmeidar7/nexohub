@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { CheckCircle2, XCircle, Loader2, LogOut, RefreshCw, Mail, User as UserIcon, Shield, Clock } from "lucide-react";
 
 type UserInfo = {
@@ -66,8 +67,9 @@ export default function GoogleCheckPage() {
     setSigningIn(true);
     setError(null);
     try {
+      setOAuthReturnPath(getCurrentReturnPath());
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + window.location.pathname,
+        redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
       });
       if (result.error) throw result.error;

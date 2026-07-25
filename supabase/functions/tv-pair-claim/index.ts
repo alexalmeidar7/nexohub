@@ -12,28 +12,33 @@ Deno.serve(async (req) => {
   const logEvent = (row: Record<string, unknown>) =>
     admin.from("tv_pairing_events").insert({ user_agent: ua, ip, ...row }).then(() => {}, () => {});
   try {
+    const body = await req.json().catch(() => ({}));
+    const guest = body?.guest === true;
     const authHeader = req.headers.get("Authorization") || "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (!jwt) {
-      await logEvent({ event_type: "error", reason: "not_authenticated" });
-      return new Response(JSON.stringify({ ok: false, reason: "not_authenticated" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+
+    let user: any = null;
+    if (!guest) {
+      if (!jwt) {
+        await logEvent({ event_type: "error", reason: "not_authenticated" });
+        return new Response(JSON.stringify({ ok: false, reason: "not_authenticated" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Cliente com JWT do usuário para validar auth.
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: `Bearer ${jwt}` } },
+      });
+      const { data: userData, error: userErr } = await userClient.auth.getUser();
+      if (userErr || !userData?.user) {
+        await logEvent({ event_type: "error", reason: "invalid_session" });
+        return new Response(JSON.stringify({ ok: false, reason: "invalid_session" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      user = userData.user;
     }
 
-    // Cliente com JWT do usuário para validar auth.
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: `Bearer ${jwt}` } },
-    });
-    const { data: userData, error: userErr } = await userClient.auth.getUser();
-    if (userErr || !userData?.user) {
-      await logEvent({ event_type: "error", reason: "invalid_session" });
-      return new Response(JSON.stringify({ ok: false, reason: "invalid_session" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-    const user = userData.user;
-
-    const body = await req.json().catch(() => ({}));
     const code = typeof body?.code === "string" ? body.code.trim() : "";
     if (!/^\d{4}$/.test(code)) {
-      await logEvent({ event_type: "error", reason: "invalid_code", paired_user_id: user.id, paired_email: user.email });
+      await logEvent({ event_type: "error", reason: "invalid_code", paired_user_id: user?.id, paired_email: user?.email, meta: { guest } });
       return new Response(JSON.stringify({ ok: false, reason: "invalid_code" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -44,29 +49,29 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!row) {
-      await logEvent({ event_type: "error", reason: "code_not_found", code, paired_user_id: user.id, paired_email: user.email });
+      await logEvent({ event_type: "error", reason: "code_not_found", code, paired_user_id: user?.id, paired_email: user?.email, meta: { guest } });
       return new Response(JSON.stringify({ ok: false, reason: "code_not_found" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (row.status !== "pending") {
-      await logEvent({ event_type: "error", reason: "code_already_used", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user.id, paired_email: user.email });
+      await logEvent({ event_type: "error", reason: "code_already_used", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user?.id, paired_email: user?.email, meta: { guest } });
       return new Response(JSON.stringify({ ok: false, reason: "code_already_used" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
     if (new Date(row.expires_at).getTime() < Date.now()) {
       await admin.from("tv_pairing_codes").update({ status: "expired" }).eq("code", code);
-      await logEvent({ event_type: "expired", reason: "code_expired_on_claim", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user.id, paired_email: user.email });
+      await logEvent({ event_type: "expired", reason: "code_expired_on_claim", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user?.id, paired_email: user?.email, meta: { guest } });
       return new Response(JSON.stringify({ ok: false, reason: "code_expired" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const meta = (user.user_metadata || {}) as Record<string, any>;
-    const paired_name = String(meta.full_name || meta.name || meta.given_name || user.email?.split("@")[0] || "").trim() || null;
-    const paired_avatar = String(meta.avatar_url || meta.picture || "").trim() || null;
+    const meta = (user?.user_metadata || {}) as Record<string, any>;
+    const paired_name = guest ? "Visitante" : String(meta.full_name || meta.name || meta.given_name || user?.email?.split("@")[0] || "").trim() || null;
+    const paired_avatar = guest ? "/avatars/usr-default.png" : String(meta.avatar_url || meta.picture || "").trim() || null;
 
     const { error: updErr } = await admin
       .from("tv_pairing_codes")
       .update({
         status: "claimed",
-        paired_user_id: user.id,
-        paired_email: user.email,
+        paired_user_id: guest ? null : user.id,
+        paired_email: guest ? null : user.email,
         paired_name,
         paired_avatar,
         claimed_at: new Date().toISOString(),
@@ -75,11 +80,11 @@ Deno.serve(async (req) => {
 
     if (updErr) {
       console.error("[tv-pair-claim] update error:", updErr);
-      await logEvent({ event_type: "error", reason: "update_failed", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user.id, paired_email: user.email, meta: { error: String(updErr.message || updErr) } });
+      await logEvent({ event_type: "error", reason: "update_failed", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user?.id, paired_email: user?.email, meta: { error: String(updErr.message || updErr), guest } });
       return new Response(JSON.stringify({ ok: false, reason: "update_failed" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    await logEvent({ event_type: "claimed", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user.id, paired_email: user.email, meta: { paired_name } });
+    await logEvent({ event_type: "claimed", code, user_slug: row.user_slug, slug_user_id: row.slug_user_id, tv_session_id: row.tv_session_id, paired_user_id: user?.id, paired_email: user?.email, meta: { paired_name, guest } });
 
     return new Response(JSON.stringify({ ok: true, userSlug: row.user_slug }), {
       status: 200,
