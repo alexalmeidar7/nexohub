@@ -1698,6 +1698,10 @@ export default function PlayerPage() {
         if (media.muted) return;
         const target = Math.max(0, Math.min(1, volumeRef.current / 100));
         if (target <= 0) return;
+        if (isAudioType) {
+          try { media.volume = target; } catch {}
+          return;
+        }
         const duration = 900;
         const start = performance.now();
         media.volume = 0;
@@ -1712,7 +1716,7 @@ export default function PlayerPage() {
       };
       const requestPlay = (media: HTMLMediaElement) => {
         media.muted = shouldStartMuted;
-        media.volume = shouldStartMuted ? volumeRef.current / 100 : 0;
+        media.volume = (shouldStartMuted || isAudioType) ? volumeRef.current / 100 : 0;
         return media.play().then(() => {
           fadeInMedia(media);
           if (isAudioType && !shouldStartMuted) {
