@@ -155,21 +155,47 @@ export default function PairPage() {
 
         <button
           type="button"
-          disabled={!user || !canConfirm || confirming}
+          disabled={!user || !canConfirm || confirming || status.kind === "ok"}
           onClick={handleConfirm}
-          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition"
+          className="mt-4 w-full rounded-xl bg-primary text-primary-foreground font-semibold py-3 disabled:opacity-50 hover:brightness-110 transition inline-flex items-center justify-center gap-2"
         >
-          {confirming ? "Pareando…" : "Confirmar pareamento"}
+          {confirming ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> Pareando com a TV…
+            </>
+          ) : status.kind === "ok" ? (
+            <>
+              <CheckCircle2 className="h-4 w-4" /> Pareado
+            </>
+          ) : (
+            "Confirmar pareamento"
+          )}
         </button>
 
         {status.kind === "ok" && (
-          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 text-sm px-4 py-3">
-            {status.message}
+          <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-100 text-sm px-4 py-3 flex items-start gap-3">
+            <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0 mt-0.5" />
+            <div>
+              <div className="font-semibold">Pareado com sucesso!</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+            </div>
           </div>
         )}
         {status.kind === "error" && (
-          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-200 text-sm px-4 py-3">
-            {status.message}
+          <div className="mt-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-100 text-sm px-4 py-3 flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-red-300 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="font-semibold">Não foi possível parear</div>
+              <div className="opacity-90 mt-0.5">{status.message}</div>
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={!user || !canConfirm || confirming}
+                className="mt-2 text-xs font-semibold underline underline-offset-2 hover:text-white disabled:opacity-50"
+              >
+                Tentar novamente
+              </button>
+            </div>
           </div>
         )}
 
