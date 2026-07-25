@@ -30,6 +30,7 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
     musicStartTime: typeof dashboardItems.music_start_time === "number"
       ? dashboardItems.music_start_time
       : null,
+    deezerArtistImg: (dashboardItems.music_deezer_artist_img as string) || "",
   };
 }
 
