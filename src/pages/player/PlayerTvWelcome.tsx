@@ -221,10 +221,56 @@ export default function PlayerTvWelcome() {
               Ou digite no navegador: <span className="text-white font-medium">{window.location.host}/{userSlug}/pair</span>
             </p>
 
+            {/* Status */}
+            {!claimedName && !error && (
+              <div className="mt-tv-6 rounded-2xl bg-white/10 border border-white/15 px-tv-4 py-tv-3 backdrop-blur-md inline-flex items-center gap-tv-3">
+                {code ? (
+                  <>
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-70"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
+                    </span>
+                    <div>
+                      <div className="text-tv-body font-tv-bold">Aguardando pareamento…</div>
+                      <div className="text-tv-caption text-slate-300 inline-flex items-center gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        Abra a câmera do celular no QR code
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <div className="text-tv-body">Gerando código de pareamento…</div>
+                  </>
+                )}
+              </div>
+            )}
+
             {claimedName && (
-              <div className="mt-tv-6 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 px-tv-4 py-tv-3 text-emerald-100 backdrop-blur-md">
-                <div className="text-tv-body font-tv-bold">Olá, {claimedName}!</div>
-                <div className="text-tv-caption opacity-80">Entrando no player…</div>
+              <div className="mt-tv-6 rounded-2xl bg-emerald-500/15 border border-emerald-400/40 px-tv-4 py-tv-3 text-emerald-100 backdrop-blur-md inline-flex items-center gap-tv-3">
+                <CheckCircle2 className="h-7 w-7 text-emerald-300" />
+                <div>
+                  <div className="text-tv-body font-tv-bold">Pareado com sucesso!</div>
+                  <div className="text-tv-caption opacity-90">Olá, {claimedName}. Entrando no player…</div>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="mt-tv-6 rounded-2xl bg-red-500/15 border border-red-400/40 px-tv-4 py-tv-3 text-red-100 backdrop-blur-md inline-flex items-center gap-tv-3">
+                <AlertTriangle className="h-6 w-6 text-red-300" />
+                <div className="flex-1">
+                  <div className="text-tv-body font-tv-bold">Erro ao gerar código</div>
+                  <div className="text-tv-caption opacity-90">{error}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={generateCode}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white/15 hover:bg-white/25 px-4 py-2 text-tv-caption font-tv-bold"
+                >
+                  <RefreshCw className="h-4 w-4" /> Tentar novamente
+                </button>
               </div>
             )}
           </div>
@@ -235,8 +281,9 @@ export default function PlayerTvWelcome() {
               {code ? (
                 <QRCodeSVG value={pairUrl} size={280} level="M" includeMargin={false} />
               ) : (
-                <div className="w-[280px] h-[280px] flex items-center justify-center">
+                <div className="w-[280px] h-[280px] flex flex-col items-center justify-center gap-3">
                   <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
+                  <div className="text-xs text-slate-500">Gerando QR code…</div>
                 </div>
               )}
             </div>
@@ -245,14 +292,19 @@ export default function PlayerTvWelcome() {
               <div className="text-6xl font-tv-bold tracking-[0.4em] mt-3 text-white drop-shadow-lg">
                 {code ? code : "----"}
               </div>
+              {code && remaining > 0 && (
+                <div className="text-tv-caption text-slate-400 mt-3">
+                  Expira em <span className="text-white font-tv-bold">{remainingLabel}</span>
+                </div>
+              )}
             </div>
-            {error && <div className="text-tv-caption text-red-300 mt-3">{error}</div>}
           </div>
         </div>
 
         <div className="mt-tv-6 text-tv-caption text-slate-400">
-          O código expira em 15 minutos. Gere um novo aguardando a atualização automática.
+          O código expira em 15 minutos e é renovado automaticamente.
         </div>
+
       </div>
     </div>
   );
