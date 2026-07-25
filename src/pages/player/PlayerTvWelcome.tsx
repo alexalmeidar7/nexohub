@@ -184,15 +184,24 @@ export default function PlayerTvWelcome() {
   useEffect(() => {
     if (!expiresAt) { setRemaining(0); return; }
     setExpired(false);
+    let firedExpired = false;
     const tick = () => {
       const ms = new Date(expiresAt).getTime() - Date.now();
       setRemaining(Math.max(0, ms));
-      if (ms <= 0) setExpired(true);
+      if (ms <= 0) {
+        setExpired(true);
+        if (!firedExpired && code) {
+          firedExpired = true;
+          supabase.functions.invoke("tv-pair-track", {
+            body: { event: "expired", code, userSlug, tvSessionId, reason: "countdown_reached_zero" },
+          }).catch(() => { /* fire-and-forget */ });
+        }
+      }
     };
     tick();
     const iv = setInterval(tick, 1000);
     return () => clearInterval(iv);
-  }, [expiresAt]);
+  }, [expiresAt, code, userSlug, tvSessionId]);
 
   const remainingLabel = useMemo(() => {
     const s = Math.floor(remaining / 1000);
