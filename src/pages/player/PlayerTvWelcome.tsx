@@ -279,7 +279,10 @@ export default function PlayerTvWelcome() {
               Para uma melhor interação, faça login lendo o QR code ao lado com a câmera do seu celular.
             </p>
             <p className="text-tv-caption text-slate-300 mt-tv-2">
-              Ou digite no navegador: <span className="text-white font-medium">{window.location.host}/{userSlug}/pair</span>
+              Ou digite no navegador: <span className="text-white font-tv-bold">{shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}</span>
+            </p>
+            <p className="text-tv-caption text-slate-400 mt-tv-1">
+              {shortUrl ? "Link encurtado para digitar mais fácil" : ""}
             </p>
 
             {/* Status */}
