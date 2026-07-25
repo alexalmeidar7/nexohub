@@ -3,6 +3,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
+import { getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, RefreshCw, Tv } from "lucide-react";
 
 /**
@@ -29,8 +30,9 @@ export default function PairPage() {
     setSigningIn(true);
     try {
       const returnUrl = `${window.location.origin}/${userSlug}/pair${code ? `?code=${code}` : ""}`;
+      setOAuthReturnPath(`/${userSlug}/pair${code ? `?code=${code}` : ""}`);
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: returnUrl,
+        redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
       });
       if (result.error) {
@@ -43,6 +45,35 @@ export default function PairPage() {
     } catch (e: any) {
       setStatus({ kind: "error", message: String(e?.message || e) });
       setSigningIn(false);
+    }
+  };
+
+  const handleGuestContinue = async () => {
+    if (!canConfirm) {
+      navigate(`/${userSlug}/player?tvGuest=1`);
+      return;
+    }
+    setConfirming(true);
+    setStatus({ kind: "idle" });
+    try {
+      const { data, error } = await supabase.functions.invoke("tv-pair-claim", {
+        body: { code, guest: true },
+      });
+      if (error || !(data as any)?.ok) {
+        const reason = (data as any)?.reason;
+        if (reason === "code_expired") {
+          setStatus({ kind: "expired", message: "O código exibido na TV expirou. Gere um novo código na TV e tente novamente." });
+          return;
+        }
+        setStatus({ kind: "error", message: "Não foi possível entrar como visitante nesta TV. Confira o código e tente novamente." });
+        return;
+      }
+      setStatus({ kind: "ok", message: "Visitante confirmado! A TV vai abrir o splash e mostrar o perfil de visitante." });
+      navigate(`/${userSlug}/player?tvGuest=1`, { replace: true });
+    } catch (e: any) {
+      setStatus({ kind: "error", message: String(e?.message || e) });
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -239,9 +270,10 @@ export default function PairPage() {
         <button
           type="button"
           className="mt-6 w-full text-xs text-slate-400 hover:text-slate-200"
-          onClick={() => navigate(`/${userSlug}/player`)}
+          onClick={handleGuestContinue}
+          disabled={confirming || status.kind === "expired"}
         >
-          Continuar como visitante
+          Entrar como visitante
         </button>
       </div>
     </div>

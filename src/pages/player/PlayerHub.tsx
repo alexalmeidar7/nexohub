@@ -44,11 +44,13 @@ export default function PlayerHub() {
   const { userSlug } = useParams();
   usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Player");
   const [searchParams, setSearchParams] = useSearchParams();
+  const tvGuestMode = searchParams.get("tvGuest") === "1";
   // Persistência: `?step=home` sobrevive a login/reload via localStorage por slug.
   const storageKey = `player-step-home:${userSlug || "root"}`;
   const skipToHome =
-    searchParams.get("step") === "home" ||
-    (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1");
+    !tvGuestMode &&
+    (searchParams.get("step") === "home" ||
+      (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1"));
   const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
@@ -251,14 +253,16 @@ export default function PlayerHub() {
   }, [transitionTo, skipToHome]);
 
   const onWelcomeContinue = useCallback(() => {
-    try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    if (!tvGuestMode) {
+      try { window.localStorage.setItem(storageKey, "1"); } catch {}
+    }
     const next = new URLSearchParams(searchParams);
     if (next.get("step") !== "home") {
       next.set("step", "home");
       setSearchParams(next, { replace: true });
     }
     transitionTo("home");
-  }, [transitionTo, storageKey, searchParams, setSearchParams]);
+  }, [transitionTo, storageKey, searchParams, setSearchParams, tvGuestMode]);
 
   // NOTE: do NOT use `scale-*` on this wrapper. Any CSS transform here creates a
   // containing block for descendants with `position: fixed` (like SplashScreen),
@@ -275,7 +279,7 @@ export default function PlayerHub() {
 
   // Se o usuário estiver deslogado, sempre renderiza a WelcomeScreen (que possui
   // os botões entrar/cadastre-se). Nunca redireciona para AccessScreen.
-  if (step === "welcome" || !user) {
+  if (step === "welcome" || (!user && !tvGuestMode)) {
     const userName = user?.email?.split("@")[0] || "Visitante";
     return (
       <div className={wrapperClass}>
@@ -290,6 +294,7 @@ export default function PlayerHub() {
           initialEditOpen={welcomeEditOnMount}
           userSlug={userSlug && userSlug !== ":userSlug" ? userSlug : null}
           publicUserId={publicUserId}
+          guestMode={tvGuestMode}
         />
 
       </div>

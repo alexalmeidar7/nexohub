@@ -4,7 +4,8 @@ import RouteProgress from "@/components/RouteProgress";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate, useLocation } from "react-router-dom";
+import { consumeOAuthReturnPath } from "@/lib/oauthReturn";
 
 // Redirect helper that interpolates :userSlug from the current URL params.
 // Plain <Navigate to="/:userSlug/..."> does NOT substitute params and would
@@ -27,6 +28,25 @@ function SlugGuard({ children }: { children: ReactNode }) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;
+}
+
+function OAuthReturnHandler() {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const target = consumeOAuthReturnPath();
+    if (!target) return;
+    if (target === `${location.pathname}${location.search}${location.hash}`) return;
+    navigate(target, { replace: true });
+  }, [location.hash, location.pathname, location.search, navigate]);
+
+  return null;
+}
+
+function OAuthCallbackRedirect() {
+  const target = consumeOAuthReturnPath() || "/";
+  return <Navigate to={target} replace />;
 }
 import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
@@ -182,12 +202,15 @@ const App = () => (
       
       <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <OAuthReturnHandler />
           <PlayerSplashPrefetch />
           <ChunkErrorBoundary>
           <Suspense fallback={<RouteProgress />}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/callback" element={<OAuthCallbackRedirect />} />
+            <Route path="/~oauth/callback" element={<OAuthCallbackRedirect />} />
 
             {/* Main routes */}
             <Route path="/home" element={<MasterViewHome />} />

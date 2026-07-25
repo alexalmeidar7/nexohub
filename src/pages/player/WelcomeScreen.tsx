@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { getMusicData } from "@/lib/musicData";
 import { MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { getCurrentReturnPath, getManagedOAuthRedirectUri, setOAuthReturnPath } from "@/lib/oauthReturn";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import { emitProfileChanged } from "@/lib/profileSync";
 import {
@@ -58,6 +59,7 @@ interface WelcomeScreenProps {
   initialEditOpen?: boolean;
   userSlug?: string | null;
   publicUserId?: string | null;
+  guestMode?: boolean;
 }
 
 
@@ -74,6 +76,7 @@ export default function WelcomeScreen({
   initialEditOpen = false,
   userSlug = null,
   publicUserId = null,
+  guestMode = false,
 }: WelcomeScreenProps) {
 
   const { user, signOut } = useAuth();
@@ -614,8 +617,9 @@ export default function WelcomeScreen({
     window.addEventListener("focus", onFocus);
 
     try {
+      setOAuthReturnPath(getCurrentReturnPath());
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + window.location.pathname,
+        redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
       });
       if (result?.error) {
@@ -1015,6 +1019,60 @@ export default function WelcomeScreen({
 
 
             </>
+          ) : guestMode ? (
+            <div className="flex items-center gap-5 shrink-0">
+              <button
+                onClick={() => { cancelAutoAdvance(); onContinue(); }}
+                data-ws-focusable="true"
+                aria-label="Entrar como visitante"
+                className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
+              >
+                <div
+                  className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
+                  style={{
+                    width: "clamp(120px, 12vw, 160px)",
+                    height: "clamp(120px, 12vw, 160px)",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    boxShadow: "0 18px 50px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.18)",
+                  }}
+                >
+                  {prevBgColors && (
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ background: `linear-gradient(145deg, ${prevBgColors[0]}, ${prevBgColors[1]})` }}
+                    />
+                  )}
+                  <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                      background: `linear-gradient(145deg, ${bgColors[0]}, ${bgColors[1]})`,
+                      opacity: prevBgColors ? (fadeIn ? 1 : 0) : 1,
+                      transition: "opacity 1400ms cubic-bezier(0.4, 0, 0.2, 1)",
+                    }}
+                  />
+                  <img
+                    src="/avatars/usr-default.png"
+                    alt="Visitante"
+                    className="relative w-full h-full object-cover animate-avatar-in"
+                    draggable={false}
+                  />
+                </div>
+              </button>
+
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <div
+                  className="text-white font-semibold leading-tight truncate"
+                  style={{
+                    fontSize: "clamp(22px, 2vw, 30px)",
+                    textShadow: "0 2px 20px rgba(0,0,0,0.55)",
+                    maxWidth: "clamp(160px, 18vw, 260px)",
+                  }}
+                >
+                  Visitante
+                </div>
+                <div className="text-sm text-white/70">perfil de visitante</div>
+              </div>
+            </div>
           ) : (
             <div className="w-full flex items-center justify-center gap-5">
               {[
