@@ -437,18 +437,37 @@ export default function BroadcastPage() {
 
   // Fetch news titles from a custom RSS/XML URL when enabled
   useEffect(() => {
-    if (!data.tickerRssEnabled || !data.tickerRssUrl) return;
+    if (!data.tickerRssEnabled || !data.tickerRssUrl) {
+      setRssStatus({ state: "idle" });
+      return;
+    }
     let cancelled = false;
     const load = async () => {
+      setRssStatus(s => ({ ...s, state: "loading" }));
       try {
-        const { data: resp } = await supabase.functions.invoke("fetch-rss-titles", {
+        const { data: resp, error } = await supabase.functions.invoke("fetch-rss-titles", {
           body: { url: data.tickerRssUrl },
         });
         if (cancelled) return;
+        if (error) {
+          setRssStatus({ state: "error", message: error.message || "Erro ao consultar a função.", lastAt: Date.now() });
+          return;
+        }
         if (resp?.ok && Array.isArray(resp.titles) && resp.titles.length > 0) {
           setNewsTitles(resp.titles);
+          setRssStatus({ state: "ok", via: resp.via, count: resp.titles.length, lastAt: Date.now() });
+        } else {
+          setRssStatus({
+            state: "error",
+            message: resp?.error || "Nenhum título encontrado no feed.",
+            via: resp?.via,
+            lastAt: Date.now(),
+          });
         }
-      } catch { /* silent */ }
+      } catch (e: any) {
+        if (cancelled) return;
+        setRssStatus({ state: "error", message: e?.message || "Falha ao conectar.", lastAt: Date.now() });
+      }
     };
     load();
     const id = setInterval(load, 5 * 60 * 1000);
