@@ -192,6 +192,7 @@ export default function BlitzPage() {
     setForm({
       dia: b.dia,
       horario: b.horario?.slice(0, 5) || "",
+      horario_fim: b.horario_fim?.slice(0, 5) || "",
       cliente: b.cliente,
       equipe: b.equipe || "",
       observacoes: b.observacoes || "",
@@ -201,6 +202,11 @@ export default function BlitzPage() {
 
   const del = async (id: string) => {
     if (!(await confirmDialog("Excluir esta blitz?"))) return;
+    const b = items.find(i => i.id === id);
+    if (b?.agenda_evento_id) {
+      await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
+      await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
+    }
     const { error } = await supabase.from("blitz_promocionais").delete().eq("id", id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Blitz excluída" });
@@ -214,8 +220,20 @@ export default function BlitzPage() {
       data_realizacao: next ? new Date().toISOString() : null,
     }).eq("id", b.id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    if (next && b.agenda_evento_id) {
+      // Encerrada: remove da agenda e da lista do locutor
+      await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
+      await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
+      await supabase.from("blitz_promocionais").update({ agenda_evento_id: null }).eq("id", b.id);
+    } else if (!next && !b.agenda_evento_id) {
+      // Reabrir: recria evento na agenda
+      const payload = await buildAgendaPayload(b.user_id ?? user!.id, b);
+      const { data: evt } = await supabase.from("agenda_eventos").insert(payload).select("id").single();
+      if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", b.id);
+    }
     load();
   };
+
 
   const filtered = useMemo(() => {
     if (filter === "pendentes") return items.filter(i => !i.realizada);
