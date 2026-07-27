@@ -15,6 +15,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
 import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
+import BlitzLocutorPopup from "@/components/BlitzLocutorPopup";
 
 interface Promocao {
   id: string;
@@ -1574,6 +1575,7 @@ export default function PromocoesKiosk() {
             </div>
         </DialogContent>
       </Dialog>
+      <BlitzLocutorPopup userId={audienceUserId} />
     </div>
   );
 }

@@ -314,12 +314,14 @@ export type Database = {
       }
       blitz_promocionais: {
         Row: {
+          agenda_evento_id: string | null
           cliente: string
           created_at: string
           data_realizacao: string | null
           dia: string
           equipe: string | null
           horario: string
+          horario_fim: string | null
           id: string
           observacoes: string | null
           realizada: boolean
@@ -327,12 +329,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          agenda_evento_id?: string | null
           cliente: string
           created_at?: string
           data_realizacao?: string | null
           dia: string
           equipe?: string | null
           horario: string
+          horario_fim?: string | null
           id?: string
           observacoes?: string | null
           realizada?: boolean
@@ -340,12 +344,14 @@ export type Database = {
           user_id: string
         }
         Update: {
+          agenda_evento_id?: string | null
           cliente?: string
           created_at?: string
           data_realizacao?: string | null
           dia?: string
           equipe?: string | null
           horario?: string
+          horario_fim?: string | null
           id?: string
           observacoes?: string | null
           realizada?: boolean
