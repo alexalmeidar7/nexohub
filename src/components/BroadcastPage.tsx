@@ -1312,6 +1312,63 @@ export default function BroadcastPage() {
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
               </div>
             </label>
+
+            {/* Preview do ticker (o que está sendo enviado no XML) */}
+            <div
+              className="mt-4 p-3 rounded-xl"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff70" }}>
+                  Preview do Ticker · o que sai no XML
+                </div>
+                <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
+                  {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                </div>
+              </div>
+
+              <div
+                className="relative overflow-hidden rounded-md"
+                style={{ backgroundColor: "#000", border: `1px solid ${NAVY_BORDER}`, height: 34 }}
+              >
+                {composedTicker ? (
+                  <div
+                    className="absolute whitespace-nowrap text-[13px] font-semibold flex items-center h-full"
+                    style={{
+                      color: "#ffffff",
+                      animation: "tickerSlide 30s linear infinite",
+                      paddingLeft: "100%",
+                    }}
+                  >
+                    {composedTicker}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#ffffff50" }}>
+                    Ative fontes acima ou digite um texto para ver o preview.
+                  </div>
+                )}
+              </div>
+
+              {/* Composição por fonte */}
+              <div className="mt-3 space-y-1.5">
+                {[
+                  { on: data.tickerNews, label: "Notícias", value: newsTitles.length ? `${newsTitles.length} títulos` : "—" },
+                  { on: data.tickerWeather, label: "Tempo", value: weatherText || "—" },
+                  { on: data.tickerQuotes, label: "Cotações", value: quotesText || "—" },
+                  { on: data.tickerSocials, label: "Redes", value: empresaSocials.length ? `${empresaSocials.length} canais` : "—" },
+                  { on: !!data.ticker, label: "Texto livre", value: data.ticker || "—" },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[11px]">
+                    <span
+                      className="inline-block rounded-full"
+                      style={{ width: 6, height: 6, backgroundColor: row.on ? "#22c55e" : "#64748b" }}
+                    />
+                    <span style={{ color: row.on ? "#ffffffcc" : "#ffffff50", minWidth: 70 }}>{row.label}</span>
+                    <span className="truncate" style={{ color: row.on ? "#ffffff90" : "#ffffff40" }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
