@@ -12,6 +12,7 @@ import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
+import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
 // browser starts downloading the program cover in the highest-priority queue,
