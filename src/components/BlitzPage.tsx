@@ -209,15 +209,28 @@ export default function BlitzPage() {
         const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
         if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
       }
+      await logBlitzHistorico({
+        userId: user.id, blitzId: editingId, cliente: payload.cliente, acao: "editada",
+        dadosAntes: current, dadosDepois: payload,
+      });
     } else {
       const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
-      const { error } = await supabase.from("blitz_promocionais").insert({ ...payload, agenda_evento_id: evt?.id || null });
+      const { data: created, error } = await supabase
+        .from("blitz_promocionais")
+        .insert({ ...payload, agenda_evento_id: evt?.id || null })
+        .select("id")
+        .single();
       if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+      await logBlitzHistorico({
+        userId: user.id, blitzId: created?.id ?? null, cliente: payload.cliente, acao: "criada",
+        dadosDepois: payload,
+      });
     }
     setSaving(false);
     toast({ title: editingId ? "Blitz atualizada" : "Blitz cadastrada e adicionada à agenda" });
     reset();
     load();
+    if (showHistorico) loadHistorico();
   };
 
   const edit = (b: Blitz) => {
