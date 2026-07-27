@@ -2181,7 +2181,7 @@ function AudienceReportDialog({
                         </AreaChart>
                       </ResponsiveContainer>
                       );
-                    })()
+                    })() : (
                       <div className="h-full flex items-center justify-center text-[11px] font-semibold" style={{ color: DARK, opacity: 0.4 }}>
                         Sem dados para plotar
                       </div>
