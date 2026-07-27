@@ -291,13 +291,26 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     await loadData();
   };
 
-  const handleRestore = async (logo: Logo) => {
-    const { error } = await supabase.from("logos_patrocinadores").update({ excluido: false, excluido_at: null, ativo: true }).eq("id", logo.id);
+  const handleRestore = (logo: Logo) => {
+    setRestoreLogo(logo);
+    setRestoreProgramaId(logo.programa_id || "");
+  };
+
+  const confirmRestore = async () => {
+    if (!restoreLogo) return;
+    const programaId = restoreProgramaId || null;
+    const { error } = await supabase
+      .from("logos_patrocinadores")
+      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: programaId })
+      .eq("id", restoreLogo.id);
     if (error) {
       toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Logo restaurada com sucesso!" });
+      const progNome = programaId ? (programas.find(p => p.id === programaId)?.nome || "programa") : "SEM PROGRAMA";
+      toast({ title: `Logo restaurada no programa ${progNome}` });
     }
+    setRestoreLogo(null);
+    setRestoreProgramaId("");
     await loadData();
   };
 
