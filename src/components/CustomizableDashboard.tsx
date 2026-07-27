@@ -1409,47 +1409,54 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
     return () => clearInterval(interval);
   }, [dataUserId]);
 
-  // Fetch current program from DB
+  // Fetch current program from DB — usa fuso horário da empresa (evita
+  // "sem programa" quando o navegador está em fuso diferente do da rádio).
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     let prevProgramId = "";
+    let cancelled = false;
     const fetchProgram = async () => {
-      const now = new Date();
-      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
-      const todayKey = dayMap[now.getDay()];
-      const currentTime = now.toTimeString().slice(0, 5);
-
-      const { data } = await supabase
-        .from("programas")
-        .select("*, apresentadores(nome, foto)")
-        .eq("user_id", uid!)
-        .eq("ativo", true)
-        .ilike("estudio", "%fm%")
-        .lte("horario_inicio", currentTime)
-        .gte("horario_fim", currentTime)
-        .contains("dias_semana", [todayKey])
-        .limit(1)
-        .maybeSingle();
-
-      if (data) {
-        if (data.id !== prevProgramId) {
-          prevProgramId = data.id;
+      const [{ data: empresa }, { data: programas }] = await Promise.all([
+        supabase
+          .from("empresa_config")
+          .select("timezone")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase
+          .from("programas")
+          .select("*, apresentadores(nome, foto)")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+      ]);
+      if (cancelled) return;
+      const tz = empresa?.timezone || null;
+      const { current } = resolveEffectiveOnAir((programas as any[]) || [], new Date(), tz);
+      if (current) {
+        if (current.id !== prevProgramId) {
+          prevProgramId = current.id;
           setProgramKey(k => k + 1);
         }
-        setCurrentProgram(data);
-        const [startH, startM] = data.horario_inicio.split(":").map(Number);
-        const [endH, endM] = data.horario_fim.split(":").map(Number);
+        setCurrentProgram(current);
+        const { hhmm } = getZonedNow(tz);
+        const [nowH, nowM] = hhmm.split(":").map(Number);
+        const [startH, startM] = String(current.horario_inicio).split(":").map(Number);
+        const [endH, endM] = String(current.horario_fim).split(":").map(Number);
         const startMin = startH * 60 + startM;
         const endMin = endH * 60 + endM;
-        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const nowMin = nowH * 60 + nowM;
         setTotal(endMin - startMin);
         setElapsed(nowMin - startMin);
+      } else {
+        prevProgramId = "";
+        setCurrentProgram(null);
       }
     };
     fetchProgram();
     const iv = setInterval(fetchProgram, 30000);
-    return () => clearInterval(iv);
-  }, [user]);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [uid]);
+
 
   // Update elapsed every minute
   useEffect(() => {
