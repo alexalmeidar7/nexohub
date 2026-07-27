@@ -303,19 +303,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const load = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
         .eq("user_id", uid)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
       const now = new Date();
+
+      // Pré-carrega o próximo programa 60s antes da virada, evitando "flash sem programa"
+      const { current } = resolveEffectiveOnAir(data as any[], now);
+
+      // Próximo programa (após o current efetivo)
       const dia = DIAS_MAP[now.getDay()];
       const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
-      const current = todays.find((p) => hora >= p.horario_inicio && hora < p.horario_fim);
-      // Find next program (today's later than current, else earliest of next day with programs)
+      const afterHora = current?.horario_fim || hora;
       let next: any = todays
-        .filter((p) => p.horario_inicio > hora)
+        .filter((p) => p.horario_inicio >= afterHora && (!current || p.id !== current.id))
         .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
       if (!next) {
         for (let i = 1; i <= 7; i++) {
@@ -348,7 +352,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       } else if (!cancelled) setNextProgram(null);
     };
     load();
-    const iv = setInterval(load, 60000);
+    // Poll a cada 10s para pegar a virada com precisão
+    const iv = setInterval(load, 10000);
     return () => { cancelled = true; clearInterval(iv); };
   }, [user, effectiveUserId]);
 
