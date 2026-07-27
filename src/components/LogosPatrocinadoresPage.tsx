@@ -74,7 +74,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [excluidasOpen, setExcluidasOpen] = useState(false);
   const [excluidasSearch, setExcluidasSearch] = useState("");
   const [restoreLogo, setRestoreLogo] = useState<Logo | null>(null);
-  const [restoreProgramaId, setRestoreProgramaId] = useState<string>("");
+  const [restoreProgramaIds, setRestoreProgramaIds] = useState<string[]>([]);
 
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -306,24 +306,49 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const handleRestore = (logo: Logo) => {
     setRestoreLogo(logo);
-    setRestoreProgramaId(logo.programa_id || "");
+    setRestoreProgramaIds(logo.programa_id ? [logo.programa_id] : []);
   };
 
   const confirmRestore = async () => {
     if (!restoreLogo) return;
-    const programaId = restoreProgramaId || null;
+    const ids = restoreProgramaIds.length ? restoreProgramaIds : [""];
+    const first = ids[0] || null;
+    const rest = ids.slice(1).map((v) => v || null);
+
     const { error } = await supabase
       .from("logos_patrocinadores")
-      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: programaId })
+      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first })
       .eq("id", restoreLogo.id);
+
     if (error) {
       toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
-    } else {
-      const progNome = programaId ? (programas.find(p => p.id === programaId)?.nome || "programa") : "SEM PROGRAMA";
-      toast({ title: `Logo restaurada no programa ${progNome}` });
+      setRestoreLogo(null);
+      setRestoreProgramaIds([]);
+      await loadData();
+      return;
     }
+
+    if (rest.length && dataUserId) {
+      const rows = rest.map((pid) => ({
+        user_id: dataUserId,
+        programa_id: pid,
+        logo_url: restoreLogo.logo_url,
+        nome: restoreLogo.nome,
+        data_final: restoreLogo.data_final,
+        ativo: true,
+        excluido: false,
+      }));
+      const { error: insErr } = await supabase.from("logos_patrocinadores").insert(rows);
+      if (insErr) {
+        toast({ title: "Erro ao duplicar para outros programas", description: insErr.message, variant: "destructive" });
+      }
+    }
+
+    const nomes = ids.map((pid) => (pid ? (programas.find(p => p.id === pid)?.nome || "programa") : "SEM PROGRAMA"));
+    toast({ title: `Logo restaurada em: ${nomes.join(", ")}` });
+
     setRestoreLogo(null);
-    setRestoreProgramaId("");
+    setRestoreProgramaIds([]);
     await loadData();
   };
 
@@ -978,18 +1003,29 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             </div>
             <div style={{ padding: 22, background: "#D6F4FB" }}>
               <p style={{ color: "#0A2540", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}>
-                Escolha o programa para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
+                Escolha um ou mais programas para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
               </p>
-              <select
-                value={restoreProgramaId}
-                onChange={(e) => setRestoreProgramaId(e.target.value)}
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif", outline: "none" }}
-              >
-                <option value="">— SEM PROGRAMA —</option>
-                {[...programas].sort((a, b) => a.nome.localeCompare(b.nome)).map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
+              <div style={{ maxHeight: 260, overflowY: "auto", background: "#fff", border: "2px solid #00BFF0", borderRadius: 16, padding: 8 }}>
+                {(() => {
+                  const opts = [{ id: "", nome: "— SEM PROGRAMA —" }, ...[...programas].sort((a, b) => a.nome.localeCompare(b.nome))];
+                  return opts.map((p) => {
+                    const checked = restoreProgramaIds.includes(p.id);
+                    return (
+                      <label key={p.id || "none"} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer", background: checked ? "#00BFF022" : "transparent", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif" }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setRestoreProgramaIds((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id));
+                          }}
+                          style={{ accentColor: "#00BFF0", width: 16, height: 16 }}
+                        />
+                        {p.nome}
+                      </label>
+                    );
+                  });
+                })()}
+              </div>
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", padding: "14px 18px", background: "#fff", borderTop: "1px solid #00BFF022" }}>
               <button
