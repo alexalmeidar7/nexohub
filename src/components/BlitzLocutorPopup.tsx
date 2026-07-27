@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Siren, Minus, Check, ChevronUp, Clock, Users, Building2 } from "lucide-react";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
+import { logBlitzHistorico } from "@/lib/blitzHistorico";
 
 interface Blitz {
   id: string;
