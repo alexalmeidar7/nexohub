@@ -1747,7 +1747,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       setChannels(channelsData as any);
       setOwnerUserId(userId);
-      if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); }
+      if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); setTimezone((empRes.data as any).timezone || null); }
       setProgramas(programasData as any);
       setApresentadores((apresRes.data ?? []) as Apresentador[]);
 
