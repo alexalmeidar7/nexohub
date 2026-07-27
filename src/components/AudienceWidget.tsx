@@ -3,7 +3,7 @@ import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Setting
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ReferenceArea, Label as ChartLabel } from "recharts";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Props {
