@@ -9,6 +9,11 @@
  *    no MESMO DIA começando dentro de 120s após o fim → devolve o próximo.
  *  - Se NÃO há atual mas existe um próximo no mesmo dia começando em <= PRELOAD_SECONDS
  *    → devolve o próximo (evita gap na virada).
+ *
+ * IMPORTANTE: o "agora" é calculado no fuso horário configurado em
+ * `empresa_config.timezone` (IANA, ex.: "America/Cuiaba"). Isso permite que
+ * emissoras em fusos diferentes de Brasília (ex.: MT/MS = UTC-4) tenham o
+ * programa no ar correto mesmo quando o navegador do usuário está em outro fuso.
  */
 
 export const PRELOAD_SECONDS = 60;
@@ -33,6 +38,51 @@ function toSec(hhmm: string): number {
   return (h || 0) * 3600 + (m || 0) * 60;
 }
 
+/**
+ * Retorna { weekday, hour, minute, second } para o `date` no `timezone` IANA.
+ * Se `timezone` for vazio/inválido, usa o fuso local do navegador.
+ */
+function getZonedParts(date: Date, timezone?: string | null): {
+  weekday: number; hour: number; minute: number; second: number;
+} {
+  if (!timezone) {
+    return {
+      weekday: date.getDay(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+      second: date.getSeconds(),
+    };
+  }
+  try {
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    const parts = fmt.formatToParts(date);
+    const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+    const wdMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    // Intl retorna "24" à meia-noite em alguns navegadores; normaliza para 0.
+    const hRaw = parseInt(get("hour"), 10);
+    return {
+      weekday: wdMap[get("weekday")] ?? date.getDay(),
+      hour: Number.isFinite(hRaw) ? hRaw % 24 : 0,
+      minute: parseInt(get("minute"), 10) || 0,
+      second: parseInt(get("second"), 10) || 0,
+    };
+  } catch {
+    return {
+      weekday: date.getDay(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+      second: date.getSeconds(),
+    };
+  }
+}
+
 export interface ProgramLike {
   dias_semana?: string[] | null;
   horario_inicio: string;
@@ -43,9 +93,11 @@ export interface ProgramLike {
 export function resolveEffectiveOnAir<T extends ProgramLike>(
   programas: T[],
   now: Date = new Date(),
+  timezone?: string | null,
 ): { current: T | null; isPreloadingNext: boolean } {
-  const dayFull = DIAS_MAP[now.getDay()];
-  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const { weekday, hour, minute, second } = getZonedParts(now, timezone);
+  const dayFull = DIAS_MAP[weekday];
+  const nowSec = hour * 3600 + minute * 60 + second;
 
   const todays = programas
     .filter((p) => matchesDay(p.dias_semana, dayFull))
@@ -70,4 +122,17 @@ export function resolveEffectiveOnAir<T extends ProgramLike>(
   if (upcoming) return { current: upcoming.p, isPreloadingNext: true };
 
   return { current: null, isPreloadingNext: false };
+}
+
+/**
+ * Helper para callers: devolve os "dias da semana" (0=dom..6=sab) e o
+ * horário HH:mm atual no fuso informado. Útil para lógicas de "próximo
+ * programa" que hoje usam `new Date().getDay()` no navegador.
+ */
+export function getZonedNow(timezone?: string | null, now: Date = new Date()) {
+  const { weekday, hour, minute } = getZonedParts(now, timezone);
+  return {
+    weekday,
+    hhmm: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+  };
 }
