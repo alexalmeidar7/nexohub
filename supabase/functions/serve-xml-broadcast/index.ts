@@ -586,14 +586,15 @@ serve(async (req) => {
     const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl && bgAppliesToCurrent ? broadcastConfig.assuntoBgUrl : "";
 
     const tickerParts: string[] = [];
-    if (broadcastConfig.tickerNews) {
+    const rssEnabled = !!(broadcastConfig.tickerRssEnabled && typeof broadcastConfig.tickerRssUrl === "string" && broadcastConfig.tickerRssUrl.trim());
+    if (broadcastConfig.tickerNews || rssEnabled) {
       let titulos = "";
-      // Prefer custom RSS/XML feed when enabled — best-effort, use whatever titles we can grab
-      if (broadcastConfig.tickerRssEnabled && typeof broadcastConfig.tickerRssUrl === "string" && broadcastConfig.tickerRssUrl.trim()) {
+      // Prefer custom RSS/XML feed when enabled — runs independently of tickerNews
+      if (rssEnabled) {
         const rssTitles = await fetchRssTitles(broadcastConfig.tickerRssUrl.trim());
         if (rssTitles.length > 0) titulos = rssTitles.join("  •  ");
       }
-      if (!titulos) titulos = (roteiroRes.data?.tickertitulos || "").trim();
+      if (!titulos && broadcastConfig.tickerNews) titulos = (roteiroRes.data?.tickertitulos || "").trim();
       if (titulos) tickerParts.push(titulos);
     }
     if (broadcastConfig.tickerWeather && settingsRes.data?.weather_lat && settingsRes.data?.weather_lon) {
