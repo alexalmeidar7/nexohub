@@ -102,6 +102,13 @@ export default function BroadcastPage() {
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
+  const [rssStatus, setRssStatus] = useState<{
+    state: "idle" | "loading" | "ok" | "error";
+    message?: string;
+    via?: string;
+    count?: number;
+    lastAt?: number;
+  }>({ state: "idle" });
 
   // Broadcast assuntos (from broadcast_assuntos table, per programa)
   const [programaAssuntos, setProgramaAssuntos] = useState<string[]>([]);
