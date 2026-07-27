@@ -911,6 +911,26 @@ serve(async (req) => {
     let infoCantoTempAtual = "";
     let infoCantoIcoTemp = BLANK_PNG;
 
+    // Always fetch current weather (real-time), independent of rotation slot
+    let currentTempStr = "";
+    let currentTempIcon = BLANK_PNG;
+    try {
+      const lat = settingsRes.data?.weather_lat;
+      const lon = settingsRes.data?.weather_lon;
+      if (lat != null && lon != null) {
+        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo&_=${Math.floor(Date.now() / 60000)}`;
+        const wxRes = await fetchWithTimeout(wxUrl);
+        if (wxRes.ok) {
+          const wd = await wxRes.json();
+          const t = wd.current?.temperature_2m;
+          const code = wd.current?.weather_code;
+          if (t != null) currentTempStr = `${Math.round(t)}°`;
+          if (typeof code === "number") currentTempIcon = wmoIcon(code);
+        }
+      }
+    } catch { /* silent */ }
+
+
     if (cantoSlot <= 2) {
       // Trânsito
       infoCantoTitulo = "trânsito";
@@ -1108,27 +1128,14 @@ serve(async (req) => {
       infoCantoDescricao = linhas.join("\n");
 
     } else {
-      // Tempo agora
+      // Tempo agora — reuse the always-fetched current weather
       infoCantoTitulo = "tempo agora";
       infoCantoIcoCategoria = ICO_CANTO.cloud;
       infoCantoDescricao = "";
-      try {
-        const lat = settingsRes.data?.weather_lat;
-        const lon = settingsRes.data?.weather_lon;
-        if (lat != null && lon != null) {
-          const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo`;
-          const wxRes = await fetchWithTimeout(wxUrl);
-          if (wxRes.ok) {
-            const wd = await wxRes.json();
-            const t = wd.current?.temperature_2m;
-            const code = wd.current?.weather_code;
-            if (t != null) infoCantoTempAtual = `${Math.round(t)}°`;
-            if (typeof code === "number") infoCantoIcoTemp = wmoIcon(code);
-          }
-        }
-      } catch { /* silent */ }
-      if (!infoCantoTempAtual) infoCantoIcoTemp = BLANK_PNG;
+      infoCantoTempAtual = currentTempStr;
+      infoCantoIcoTemp = currentTempStr ? currentTempIcon : BLANK_PNG;
     }
+
 
     const lines: string[] = [];
     lines.push('<?xml version="1.0" encoding="UTF-8"?>');
@@ -1154,6 +1161,8 @@ serve(async (req) => {
     lines.push(`    <musica_capa>${esc(musicaCapa)}</musica_capa>`);
     lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push(`    <banner_l>${esc(bannerLUrl)}</banner_l>`);
+    lines.push(`    <temperatura>${esc(currentTempStr)}</temperatura>`);
+    lines.push(`    <ico_temperatura>${esc(currentTempStr ? currentTempIcon : "")}</ico_temperatura>`);
     lines.push("    <infos_canto>");
     lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
     lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
