@@ -301,21 +301,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     let cancelled = false;
     const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
     const load = async () => {
-      const { data } = await supabase
-        .from("programas")
-        .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
-        .eq("user_id", uid)
-        .eq("ativo", true)
-        .ilike("estudio", "%fm%");
+      const [progRes, empRes] = await Promise.all([
+        supabase
+          .from("programas")
+          .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+        supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+      ]);
+      const data = progRes.data;
+      const tz: string | null = (empRes.data as any)?.timezone || null;
       if (cancelled || !data) return;
       const now = new Date();
 
       // Pré-carrega o próximo programa 60s antes da virada, evitando "flash sem programa"
-      const { current } = resolveEffectiveOnAir(data as any[], now);
+      const { current } = resolveEffectiveOnAir(data as any[], now, tz);
 
-      // Próximo programa (após o current efetivo)
-      const dia = DIAS_MAP[now.getDay()];
-      const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      // Próximo programa (após o current efetivo) — usa dia/hora no fuso da emissora
+      const { weekday, hhmm: hora } = getZonedNow(tz, now);
+      const dia = DIAS_MAP[weekday];
       const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
       const afterHora = current?.horario_fim || hora;
       let next: any = todays
@@ -323,7 +328,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
       if (!next) {
         for (let i = 1; i <= 7; i++) {
-          const d = DIAS_MAP[(now.getDay() + i) % 7];
+          const d = DIAS_MAP[(weekday + i) % 7];
           const arr = (data as any[])
             .filter((p) => (p.dias_semana || []).includes(d))
             .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
