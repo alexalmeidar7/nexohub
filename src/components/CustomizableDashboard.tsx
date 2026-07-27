@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { readMusicData, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { readMusicData, readMusicStart, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
 
@@ -182,7 +182,8 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     is_stereo: boolean;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
-  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; startedAt: number; duracao: number } | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
   const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
   const [footerEl, setFooterEl] = useState<HTMLElement | null>(null);
   const [playerMaxHeight, setPlayerMaxHeight] = useState<number>(400);
@@ -286,7 +287,13 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       try {
         const parsed = readMusicData(dataUserId);
         if (parsed && parsed.titulo) {
-          setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
+          const startedAt = readMusicStart(dataUserId);
+          setCurrentMusic({
+            titulo: parsed.titulo,
+            artista: parsed.artista || "",
+            startedAt: startedAt || 0,
+            duracao: typeof parsed.duracao === "number" ? parsed.duracao : 0,
+          });
           return;
         }
       } catch {}
@@ -296,6 +303,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     const interval = setInterval(pollMusic, 2000);
     return () => clearInterval(interval);
   }, [dataUserId]);
+
+  // Tick every second to update elapsed time / progress bar for the current song
+  useEffect(() => {
+    if (!currentMusic) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [currentMusic?.titulo, currentMusic?.startedAt]);
+
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
@@ -586,21 +601,50 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
             </div>
 
             {/* Música tocando */}
-            {currentMusic && (
-              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)" }}>
-                <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                    <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
-                  </p>
-                  {currentMusic.artista && (
-                    <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
-                      <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
-                    </p>
+            {currentMusic && (() => {
+              const startMs = currentMusic.startedAt || 0;
+              const startedDate = startMs > 0 ? new Date(startMs) : null;
+              const startedLabel = startedDate
+                ? startedDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+                : "";
+              const totalSec = currentMusic.duracao > 0 ? currentMusic.duracao : 0;
+              const elapsedSec = startMs > 0 ? Math.max(0, Math.floor((nowTick - startMs) / 1000)) : 0;
+              const clampedElapsed = totalSec > 0 ? Math.min(elapsedSec, totalSec) : elapsedSec;
+              const pct = totalSec > 0 ? Math.min(100, (clampedElapsed / totalSec) * 100) : 0;
+              const fmt = (s: number) => {
+                const m = Math.floor(s / 60);
+                const r = s % 60;
+                return `${m}:${String(r).padStart(2, "0")}`;
+              };
+              return (
+                <div className="inline-flex flex-col gap-1 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220, maxWidth: 320 }}>
+                  <div className="flex items-center gap-2">
+                    <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
+                        <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
+                      </p>
+                      {currentMusic.artista && (
+                        <p className="text-[9px] truncate" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                          <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {(startedLabel || totalSec > 0) && (
+                    <div className="flex items-center justify-between text-[8.5px] font-mono tabular-nums" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.55 }}>
+                      {startedLabel && <span>Iniciou {startedLabel}</span>}
+                      {totalSec > 0 ? <span>{fmt(clampedElapsed)} / {fmt(totalSec)}</span> : (startMs > 0 && <span>{fmt(elapsedSec)}</span>)}
+                    </div>
+                  )}
+                  {totalSec > 0 && (
+                    <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.12)" }}>
+                      <div className="h-full rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%`, background: "var(--layout-accent-color, #c8ff00)" }} />
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
             </div>
           </div>
         </div>
