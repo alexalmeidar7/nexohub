@@ -279,8 +279,12 @@ export default function BlitzPage() {
             <input type="date" style={pillInput} value={form.dia} onChange={e => setForm({ ...form, dia: e.target.value })} />
           </div>
           <div>
-            <label style={labelStyle}><Clock size={11} style={{ display: "inline", marginRight: 4 }} /> Horário</label>
+            <label style={labelStyle}><Clock size={11} style={{ display: "inline", marginRight: 4 }} /> Horário inicial</label>
             <input type="time" style={pillInput} value={form.horario} onChange={e => setForm({ ...form, horario: e.target.value })} />
+          </div>
+          <div>
+            <label style={labelStyle}><Clock size={11} style={{ display: "inline", marginRight: 4 }} /> Horário final</label>
+            <input type="time" style={pillInput} value={form.horario_fim} onChange={e => setForm({ ...form, horario_fim: e.target.value })} />
           </div>
           <div>
             <label style={labelStyle}><Building2 size={11} style={{ display: "inline", marginRight: 4 }} /> Nome do cliente</label>
