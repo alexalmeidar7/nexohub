@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { readMusicData, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
 
 /* Typewriter text component — animates character-by-character on text change */
