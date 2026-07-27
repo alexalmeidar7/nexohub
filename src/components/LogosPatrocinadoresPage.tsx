@@ -817,7 +817,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           {logo.nome && (
                             <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
                           )}
-                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{diasRestantes}d para expirar</span>
+                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
                         </div>
                       );
                     })}
