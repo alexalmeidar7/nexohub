@@ -76,26 +76,28 @@ Deno.serve(async (req) => {
     target.searchParams.set("_lvcb", Date.now().toString());
     const finalUrl = target.toString();
 
-    // 1) Direct fetch with browser-like headers
-    let attempt = await tryFetch(finalUrl);
+    const candidates: Array<{ url: string; via: string; timeout: number }> = [
+      { url: finalUrl, via: "direct", timeout: 8000 },
+      { url: `https://proxy.cors.sh/${finalUrl}`, via: "cors.sh", timeout: 12000 },
+      { url: `https://r.jina.ai/${finalUrl}`, via: "r.jina.ai", timeout: 12000 },
+    ];
+
+    let attempt: { ok: boolean; status: number; text?: string } = { ok: false, status: 0 };
     let via = "direct";
-
-    // 2) Fallback via r.jina.ai text proxy (returns raw content for XML)
-    if (!attempt.ok) {
-      const proxied = `https://r.jina.ai/${finalUrl}`;
-      const p = await tryFetch(proxied, 10000);
-      if (p.ok) { attempt = p; via = "r.jina.ai"; }
+    let titles: string[] = [];
+    for (const c of candidates) {
+      const p = await tryFetch(c.url, c.timeout);
+      if (!p.ok || !p.text) { attempt = p; via = c.via; continue; }
+      const t = extractTitles(p.text);
+      if (t.length > 0) { attempt = p; via = c.via; titles = t; break; }
+      attempt = p; via = c.via; // keep last text for potential debug
     }
 
-    // 3) Fallback via allorigins raw
-    if (!attempt.ok) {
-      const proxied = `https://api.allorigins.win/raw?url=${encodeURIComponent(finalUrl)}`;
-      const p = await tryFetch(proxied, 10000);
-      if (p.ok) { attempt = p; via = "allorigins"; }
-    }
-
-    if (!attempt.ok || !attempt.text) {
-      return json({ ok: false, error: `Não foi possível baixar o feed (HTTP ${attempt.status || "?"}).`, via });
+    if (titles.length === 0) {
+      if (!attempt.ok) {
+        return json({ ok: false, error: `Não foi possível baixar o feed (HTTP ${attempt.status || "?"}). O host provavelmente bloqueia servidores.`, via });
+      }
+      return json({ ok: false, error: "Feed baixado, mas nenhum título de item foi encontrado.", via });
     }
 
     const titles = extractTitles(attempt.text);
