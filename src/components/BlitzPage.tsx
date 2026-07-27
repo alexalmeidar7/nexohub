@@ -359,7 +359,7 @@ export default function BlitzPage() {
                 </div>
                 <div style={{ minWidth: 70 }}>
                   <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Hora</div>
-                  <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtTime(b.horario)}</div>
+                  <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtTime(b.horario)}{b.horario_fim ? `–${fmtTime(b.horario_fim)}` : ""}</div>
                 </div>
                 <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
                   <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Cliente</div>
