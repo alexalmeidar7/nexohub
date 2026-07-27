@@ -148,6 +148,13 @@ export default function BlitzPage() {
       await supabase.from("agenda_participantes").delete().in("evento_id", agendaIds);
       await supabase.from("agenda_eventos").delete().in("id", agendaIds);
     }
+    for (const b of toExpire) {
+      await logBlitzHistorico({
+        userId: user.id, blitzId: b.id, cliente: b.cliente, acao: "expirada",
+        motivo: "Encerrada automaticamente por vencimento do horário final",
+        dadosAntes: b, dadosDepois: { ...b, realizada: true },
+      });
+    }
     return rows.map(r => ids.includes(r.id) ? { ...r, realizada: true } : r);
   };
 
