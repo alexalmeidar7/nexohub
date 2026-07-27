@@ -287,7 +287,13 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
       try {
         const parsed = readMusicData(dataUserId);
         if (parsed && parsed.titulo) {
-          setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
+          const startedAt = readMusicStart(dataUserId);
+          setCurrentMusic({
+            titulo: parsed.titulo,
+            artista: parsed.artista || "",
+            startedAt: startedAt || 0,
+            duracao: typeof parsed.duracao === "number" ? parsed.duracao : 0,
+          });
           return;
         }
       } catch {}
@@ -297,6 +303,14 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     const interval = setInterval(pollMusic, 2000);
     return () => clearInterval(interval);
   }, [dataUserId]);
+
+  // Tick every second to update elapsed time / progress bar for the current song
+  useEffect(() => {
+    if (!currentMusic) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [currentMusic?.titulo, currentMusic?.startedAt]);
+
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
