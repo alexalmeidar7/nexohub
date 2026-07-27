@@ -290,22 +290,26 @@ export default function BroadcastPage() {
       }
 
       // Fetch ticker titles from latest journalistic roteiro
-      const { data: latestRoteiro } = await supabase
-        .from("roteiros")
-        .select("tickertitulos, conteudo_html")
-        .eq("user_id", user.id)
-        .eq("tipo_programa", "Jornalístico")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (latestRoteiro) {
-        if (latestRoteiro.tickertitulos) {
-          setNewsTitles(latestRoteiro.tickertitulos.split("  •  ").filter(Boolean));
-        } else if (latestRoteiro.conteudo_html) {
-          const matches = latestRoteiro.conteudo_html.match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
-          if (matches) {
-            const titles = matches.map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim()).filter(Boolean);
-            setNewsTitles(titles);
+      // (skip when a custom RSS source is enabled — that effect owns newsTitles)
+      const rssActive = !!(latestDataRef.current?.tickerRssEnabled && latestDataRef.current?.tickerRssUrl);
+      if (!rssActive) {
+        const { data: latestRoteiro } = await supabase
+          .from("roteiros")
+          .select("tickertitulos, conteudo_html")
+          .eq("user_id", user.id)
+          .eq("tipo_programa", "Jornalístico")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (latestRoteiro) {
+          if (latestRoteiro.tickertitulos) {
+            setNewsTitles(latestRoteiro.tickertitulos.split("  •  ").filter(Boolean));
+          } else if (latestRoteiro.conteudo_html) {
+            const matches = latestRoteiro.conteudo_html.match(/<strong>Notícia\s*\d+:<\/strong>\s*([^<]+)/g);
+            if (matches) {
+              const titles = matches.map((m: string) => m.replace(/<strong>Notícia\s*\d+:<\/strong>\s*/, "").trim()).filter(Boolean);
+              setNewsTitles(titles);
+            }
           }
         }
       }
