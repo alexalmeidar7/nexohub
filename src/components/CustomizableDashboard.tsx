@@ -182,7 +182,8 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
     is_stereo: boolean;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
-  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; startedAt: number; duracao: number } | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
   const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
   const [footerEl, setFooterEl] = useState<HTMLElement | null>(null);
   const [playerMaxHeight, setPlayerMaxHeight] = useState<number>(400);
