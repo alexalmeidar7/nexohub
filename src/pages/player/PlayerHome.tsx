@@ -1596,6 +1596,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [channels, setChannels] = useState<Channel[]>(() => cached?.channels ?? []);
   const [logoUrl, setLogoUrl] = useState<string | null>(() => cached?.logoUrl ?? null);
   const [channelName, setChannelName] = useState(() => cached?.channelName ?? "");
+  const [timezone, setTimezone] = useState<string | null>(null);
   const [profileName, setProfileName] = useState(() => cached?.profileName ?? "");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
   const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
@@ -1705,7 +1706,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       const [chRes, empRes, progRes, histRes, shopRes, settingsRes, apresRes, profileRes] = await Promise.all([
         supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
-        supabase.from("empresa_config").select("logo, nome").eq("user_id", userId).single(),
+        supabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
         supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, classificacao_etaria, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
         supabase.from("watch_history").select("id, channel_name, channel_cover_url, channel_logo_url, channel_type, watched_at, channel_id").eq("user_id", userId).eq("radio_user_id", userId).order("watched_at", { ascending: false }).limit(10),
         supabase.from("shopping_products").select("id, name, description, price, image_url, payment_url, stock").eq("user_id", userId).eq("active", true),
@@ -1746,7 +1747,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
       setChannels(channelsData as any);
       setOwnerUserId(userId);
-      if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); }
+      if (empRes.data) { setLogoUrl(empRes.data.logo); setChannelName(empRes.data.nome || ""); setTimezone((empRes.data as any).timezone || null); }
       setProgramas(programasData as any);
       setApresentadores((apresRes.data ?? []) as Apresentador[]);
 
@@ -1783,6 +1784,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setOwnerUserId(data?.userId || null);
       if (data?.empresa?.logo) setLogoUrl(data.empresa.logo);
       if (data?.empresa?.nome) setChannelName(data.empresa.nome);
+      if (data?.empresa?.timezone) setTimezone(data.empresa.timezone);
       setProgramas((data?.programas ?? []) as any);
       setApresentadores((data?.apresentadores ?? []) as Apresentador[]);
       setShopProducts((data?.shopProducts ?? []) as any);
@@ -1841,9 +1843,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     // Usa resolver compartilhado: pré-carrega o próximo programa 60s antes
     // do fim do atual, evitando o "flash sem programa" na virada.
     const eligible = programas.filter((p) => matchesProgramDay(p.dias_semana, new Date()));
-    const { current } = resolveEffectiveOnAir(eligible as any[]);
+    const { current } = resolveEffectiveOnAir(eligible as any[], new Date(), timezone);
     return current as (typeof programas)[number] | undefined;
-  }, [programas]);
+  }, [programas, timezone]);
 
   // Tick a cada 10s para re-avaliar programa no ar na virada de horário
   const [, setOnAirTick] = useState(0);
