@@ -1161,6 +1161,8 @@ serve(async (req) => {
     lines.push(`    <musica_capa>${esc(musicaCapa)}</musica_capa>`);
     lines.push(`    <deezer_artist_img>${esc(deezerArtistImg)}</deezer_artist_img>`);
     lines.push(`    <banner_l>${esc(bannerLUrl)}</banner_l>`);
+    lines.push(`    <temperatura>${esc(currentTempStr)}</temperatura>`);
+    lines.push(`    <ico_temperatura>${esc(currentTempStr ? currentTempIcon : "")}</ico_temperatura>`);
     lines.push("    <infos_canto>");
     lines.push(`      <titulo>${esc(infoCantoTitulo)}</titulo>`);
     lines.push(`      <descricao>${esc(infoCantoDescricao)}</descricao>`);
