@@ -107,3 +107,4 @@ Deno.serve(async (req) => {
     return json({ ok: false, error: e?.message || "erro" });
   }
 });
+
