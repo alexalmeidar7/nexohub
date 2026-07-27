@@ -949,6 +949,53 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           );
         })}
       </div>
+      {restoreLogo && createPortal(
+        <div
+          onClick={() => setRestoreLogo(null)}
+          style={{ position: "fixed", inset: 0, zIndex: 2147483001, background: "rgba(10,37,64,0.55)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "Montserrat, sans-serif" }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: "#fff", borderRadius: 24, width: "100%", maxWidth: 460, overflow: "hidden", boxShadow: "0 24px 60px rgba(10,37,64,0.25)", border: "1px solid #00BFF033" }}
+          >
+            <div style={{ background: "linear-gradient(135deg,#00BFF0 0%,#00A9D6 100%)", padding: "18px 22px", color: "#fff", fontSize: 13, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.12em" }}>
+              Restaurar Logo
+            </div>
+            <div style={{ padding: 22, background: "#D6F4FB" }}>
+              <p style={{ color: "#0A2540", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}>
+                Escolha o programa para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
+              </p>
+              <select
+                value={restoreProgramaId}
+                onChange={(e) => setRestoreProgramaId(e.target.value)}
+                style={{ width: "100%", padding: "10px 14px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif", outline: "none" }}
+              >
+                <option value="">— SEM PROGRAMA —</option>
+                {[...programas].sort((a, b) => a.nome.localeCompare(b.nome)).map((p) => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", padding: "14px 18px", background: "#fff", borderTop: "1px solid #00BFF022" }}>
+              <button
+                type="button"
+                onClick={() => setRestoreLogo(null)}
+                style={{ padding: "9px 18px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif" }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmRestore}
+                style={{ padding: "9px 20px", borderRadius: 999, border: "none", background: "#00BFF0", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px #00BFF055" }}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
     </div>
   );
 }
