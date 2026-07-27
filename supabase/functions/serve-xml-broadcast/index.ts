@@ -278,9 +278,28 @@ serve(async (req) => {
 
     const dataOwnerId = await resolveDataOwnerId(supabase, userId);
 
+    // Use the station's configured timezone so the on-air program is computed
+    // against the local clock of the broadcaster, not the server's default.
+    let tz = "America/Sao_Paulo";
+    try {
+      const { data: tzRow } = await supabase
+        .from("empresa_config")
+        .select("timezone")
+        .eq("user_id", dataOwnerId)
+        .maybeSingle();
+      const cand = (tzRow?.timezone || "").toString().trim();
+      if (cand) {
+        // Validate — if invalid, DateTimeFormat throws.
+        new Intl.DateTimeFormat("en-US", { timeZone: cand });
+        tz = cand;
+      }
+    } catch {
+      tz = "America/Sao_Paulo";
+    }
+
     const now = new Date();
     const brFormatter = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
+      timeZone: tz,
       hour: "2-digit",
       minute: "2-digit",
       second: "2-digit",
@@ -293,15 +312,16 @@ serve(async (req) => {
     const nowSeconds = Number(hh) * 3600 + Number(mm) * 60 + Number(ss);
 
     const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
+      timeZone: tz,
       weekday: "long",
     });
     const dateFormatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "America/Sao_Paulo",
+      timeZone: tz,
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
     });
+
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const dayMap: Record<string, string> = {
       "domingo": "Domingo",
