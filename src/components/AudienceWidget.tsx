@@ -2133,9 +2133,25 @@ function AudienceReportDialog({
                     </span>
                   </div>
                   <div className="flex-1 min-h-[180px]">
-                    {filteredRows.length > 0 ? (
+                    {filteredRows.length > 0 ? (() => {
+                      const chartData = [...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }));
+                      // Identifica todas as "faixas" contínuas de live no YouTube para sombrear no gráfico.
+                      const liveBands: { start: string; end: string; total: number }[] = [];
+                      let bandStart: number | null = null;
+                      let bandSum = 0;
+                      for (let i = 0; i < chartData.length; i++) {
+                        const isLive = chartData[i].youtube > 0;
+                        if (isLive && bandStart === null) { bandStart = i; bandSum = chartData[i].youtube; }
+                        else if (isLive) { bandSum += chartData[i].youtube; }
+                        if ((!isLive || i === chartData.length - 1) && bandStart !== null) {
+                          const endIdx = isLive ? i : i - 1;
+                          liveBands.push({ start: chartData[bandStart].time, end: chartData[endIdx].time, total: bandSum });
+                          bandStart = null; bandSum = 0;
+                        }
+                      }
+                      return (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                        <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                           <defs>
                             <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -2154,12 +2170,18 @@ function AudienceReportDialog({
                           <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 9 }} interval="preserveStartEnd" />
                           <YAxis tick={{ fill: DARK, fontSize: 9 }} width={38} />
                           <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
+                          {liveBands.map((b, idx) => (
+                            <ReferenceArea key={idx} x1={b.start} x2={b.end} strokeOpacity={0} fill="#FF0000" fillOpacity={0.06} ifOverflow="extendDomain">
+                              <ChartLabel value={`LIVE · ${b.total.toLocaleString("pt-BR")} views`} position="insideTop" fill="#B91C1C" fontSize={9} fontWeight={700} />
+                            </ReferenceArea>
+                          ))}
                           <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Rádio" />
                           <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="TV" />
                           <Area type="monotone" dataKey="youtube" stroke="#FF0000" strokeWidth={2} fill="url(#gYoutube)" name="YouTube" />
                         </AreaChart>
                       </ResponsiveContainer>
-                    ) : (
+                      );
+                    })()
                       <div className="h-full flex items-center justify-center text-[11px] font-semibold" style={{ color: DARK, opacity: 0.4 }}>
                         Sem dados para plotar
                       </div>
