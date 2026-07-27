@@ -453,7 +453,8 @@ export default function BroadcastPage() {
           setRssStatus({ state: "error", message: error.message || "Erro ao consultar a função.", lastAt: Date.now() });
           return;
         }
-        if (resp?.ok && Array.isArray(resp.titles) && resp.titles.length > 0) {
+        // Use any titles we managed to fetch, even if the function also reports a partial error
+        if (resp && Array.isArray(resp.titles) && resp.titles.length > 0) {
           setNewsTitles(resp.titles);
           setRssStatus({ state: "ok", via: resp.via, count: resp.titles.length, lastAt: Date.now() });
         } else {
