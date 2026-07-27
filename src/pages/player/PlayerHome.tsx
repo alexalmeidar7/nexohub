@@ -1843,9 +1843,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     // Usa resolver compartilhado: pré-carrega o próximo programa 60s antes
     // do fim do atual, evitando o "flash sem programa" na virada.
     const eligible = programas.filter((p) => matchesProgramDay(p.dias_semana, new Date()));
-    const { current } = resolveEffectiveOnAir(eligible as any[]);
+    const { current } = resolveEffectiveOnAir(eligible as any[], new Date(), timezone);
     return current as (typeof programas)[number] | undefined;
-  }, [programas]);
+  }, [programas, timezone]);
 
   // Tick a cada 10s para re-avaliar programa no ar na virada de horário
   const [, setOnAirTick] = useState(0);
