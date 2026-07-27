@@ -120,6 +120,19 @@ export default function BlitzPage() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
+  const [historico, setHistorico] = useState<BlitzHistRow[]>([]);
+  const [showHistorico, setShowHistorico] = useState(false);
+
+  const loadHistorico = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("blitz_promocionais_historico")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setHistorico((data as BlitzHistRow[]) || []);
+  };
 
   const autoExpire = async (rows: Blitz[]) => {
     if (!user?.id) return rows;
