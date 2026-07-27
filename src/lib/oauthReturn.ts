@@ -34,8 +34,9 @@ export function consumeOAuthReturnPath() {
 
 export function getManagedOAuthRedirectUri() {
   if (typeof window === "undefined") return undefined;
-  // Use uma rota pública dedicada para não bater na Index enquanto o handler
-  // restaura o path original salvo em localStorage. `/auth/callback` já é
-  // registrado no App e faz o Navigate para o return path.
-  return `${window.location.origin}/auth/callback`;
+  // Use apenas o origin: o fluxo managed (web_message/popup) postará os tokens
+  // de volta ao opener antes de qualquer navegação. Apontar redirect_uri para
+  // uma rota SPA (ex.: /auth/callback) faz o Navigate correr antes do handshake
+  // postMessage terminar, resultando em sessão vazia e retorno à tela de login.
+  return window.location.origin;
 }
