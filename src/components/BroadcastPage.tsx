@@ -39,6 +39,8 @@ interface BroadcastData {
   tickerQuotes: boolean;
   tickerSocials: boolean;
   tickerUnitario: boolean;
+  tickerRssEnabled: boolean;
+  tickerRssUrl: string;
   showQrCode: boolean;
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
@@ -54,6 +56,8 @@ const defaultBroadcast: BroadcastData = {
   tickerQuotes: false,
   tickerSocials: false,
   tickerUnitario: false,
+  tickerRssEnabled: false,
+  tickerRssUrl: "",
   showQrCode: false,
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
