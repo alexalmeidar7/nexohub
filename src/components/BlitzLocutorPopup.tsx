@@ -76,6 +76,13 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
       await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
       await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
     }
+    if (userId) {
+      await logBlitzHistorico({
+        userId, blitzId: b.id, cliente: b.cliente, acao: "encerrada",
+        motivo: "Encerrada manualmente pelo locutor",
+        dadosAntes: b, dadosDepois: { ...b, realizada: true },
+      });
+    }
   };
 
   if (!userId || active.length === 0) return null;
