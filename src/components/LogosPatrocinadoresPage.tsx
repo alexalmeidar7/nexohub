@@ -795,7 +795,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {filtered.map((logo) => {
-                      const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
+                      const refDate = logo.excluido_at ? new Date(logo.excluido_at) : (logo.data_final ? new Date(logo.data_final + "T23:59:59") : null);
+                      const diasRestantes = refDate ? Math.max(0, 180 - Math.ceil((Date.now() - refDate.getTime()) / 86400000)) : 0;
+                      const isExpiredOnly = !logo.excluido;
                       return (
                         <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
                           draggable
