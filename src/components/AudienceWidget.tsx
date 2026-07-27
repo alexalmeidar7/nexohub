@@ -1592,10 +1592,25 @@ function AudienceReportDialog({
     const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video + (r.youtube || 0)) > (m.audio + m.video + (m.youtube || 0)) ? r : m), filteredRows[0]);
     const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
     const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
-    const avgYoutube = Math.round(filteredRows.reduce((s, r) => s + (r.youtube || 0), 0) / filteredRows.length);
-    const sumYoutube = filteredRows.reduce((s, r) => s + (r.youtube || 0), 0);
+    // YouTube: apenas amostras com viewers > 0 (programa efetivamente AO VIVO).
+    const liveRows = filteredRows.filter((r) => (r.youtube || 0) > 0);
+    const avgYoutube = liveRows.length
+      ? Math.round(liveRows.reduce((s, r) => s + (r.youtube || 0), 0) / liveRows.length)
+      : 0;
+    // Total "views durante a live" = soma dos picos por programa que teve live no dia.
+    const peakByProg = new Map<string, number>();
+    for (const r of liveRows) {
+      const key = r.programa || "__SEM__";
+      const prev = peakByProg.get(key) || 0;
+      if ((r.youtube || 0) > prev) peakByProg.set(key, r.youtube || 0);
+    }
+    const sumYoutube = Array.from(peakByProg.values()).reduce((s, v) => s + v, 0);
     const hasYoutube = sumYoutube > 0;
-    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube };
+    // Faixa temporal (min/max hora) da(s) live(s) do dia — usado para destacar no gráfico.
+    const liveTimes = liveRows.map((r) => new Date(r.created_at).getTime());
+    const liveStart = liveTimes.length ? new Date(Math.min(...liveTimes)) : null;
+    const liveEnd = liveTimes.length ? new Date(Math.max(...liveTimes)) : null;
+    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube, liveStart, liveEnd, liveProgramsCount: peakByProg.size };
   }, [filteredRows]);
 
 
