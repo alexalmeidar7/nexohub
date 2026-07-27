@@ -1845,6 +1845,13 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     return current as (typeof programas)[number] | undefined;
   }, [programas]);
 
+  // Tick a cada 10s para re-avaliar programa no ar na virada de horário
+  const [, setOnAirTick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setOnAirTick((v) => (v + 1) % 1_000_000), 10000);
+    return () => clearInterval(iv);
+  }, []);
+
   const currentProgram = getCurrentProgram();
 
   // Find next program (the one starting after current ends, same day)
