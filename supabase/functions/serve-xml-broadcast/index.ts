@@ -10,6 +10,10 @@ const corsHeaders = {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 
+const fetchWithTimeout = async (input: string, init: RequestInit = {}, ms = 6000): Promise<Response> => {
+  return await fetch(input, { ...init, signal: AbortSignal.timeout(ms) });
+};
+
 const timeToSeconds = (value: string | null | undefined): number => {
   if (!value) return -1;
 
@@ -221,7 +225,7 @@ const ensurePngImageUrl = async (
     const height = size === 1920 ? 1080 : size;
     const fitMode = size === 1920 ? "inside" : "cover";
     const fetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png&w=${size}&h=${height}&fit=${fitMode}&we&a=center`;
-    const response = await fetch(fetchUrl);
+    const response = await fetchWithTimeout(fetchUrl);
     if (!response.ok) return "";
     const bytes = new Uint8Array(await response.arrayBuffer());
     const url = await uploadPublicPng(supabase, storagePath, bytes);
@@ -510,7 +514,7 @@ serve(async (req) => {
         const lat = settingsRes.data.weather_lat;
         const lon = settingsRes.data.weather_lon;
         const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&forecast_days=2&timezone=America/Sao_Paulo`;
-        const wxRes = await fetch(wxUrl);
+        const wxRes = await fetchWithTimeout(wxUrl);
         if (wxRes.ok) {
           const d = await wxRes.json();
           const t = Math.round(d.current?.temperature_2m);
@@ -530,7 +534,7 @@ serve(async (req) => {
     if (broadcastConfig.tickerQuotes) {
       const qParts: string[] = [];
       try {
-        const cRes = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+        const cRes = await fetchWithTimeout("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
         if (cRes.ok) {
           const cd = await cRes.json();
           const fmt = (v: string) => parseFloat(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -553,7 +557,7 @@ serve(async (req) => {
         ];
         for (const { s, n } of symbols) {
           try {
-            const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=1d`, {
+            const r = await fetchWithTimeout(`https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?interval=1d&range=1d`, {
               headers: { "User-Agent": "Mozilla/5.0" },
             });
             if (!r.ok) continue;
@@ -838,7 +842,7 @@ serve(async (req) => {
               const west = lon - d, south = lat - d, east = lon + d, north = lat + d;
               const bbox = `bbox:${west.toFixed(5)},${south.toFixed(5)},${east.toFixed(5)},${north.toFixed(5)}`;
               const hUrl = `https://data.traffic.hereapi.com/v7/incidents?in=${encodeURIComponent(bbox)}&locationReferencing=shape&lang=pt-BR&apiKey=${hereKey}`;
-              const hRes = await fetch(hUrl);
+              const hRes = await fetchWithTimeout(hUrl);
               if (hRes.ok) {
                 const hData = await hRes.json();
                 const results: any[] = Array.isArray(hData?.results) ? hData.results : [];
@@ -884,7 +888,7 @@ serve(async (req) => {
             const d = 0.18;
             const top = lat + d, bottom = lat - d, left = lon - d, right = lon + d;
             const wUrl = `https://www.waze.com/live-map/api/georss?top=${top}&bottom=${bottom}&left=${left}&right=${right}&env=row&types=alerts,traffic`;
-            const wRes = await fetch(wUrl, {
+            const wRes = await fetchWithTimeout(wUrl, {
               headers: {
                 "User-Agent": "Mozilla/5.0 (compatible; NexoHub/1.0)",
                 "Referer": "https://www.waze.com/live-map",
@@ -948,7 +952,7 @@ serve(async (req) => {
                 const bbox = `${lon - d},${lat - d},${lon + d},${lat + d}`;
                 const fields = "{incidents{properties{iconCategory,magnitudeOfDelay,from,to,length,delay,roadNumbers,events{description}}}}";
                 const tUrl = `https://api.tomtom.com/traffic/services/5/incidentDetails?bbox=${encodeURIComponent(bbox)}&fields=${encodeURIComponent(fields)}&language=pt-PT&t=1111&timeValidityFilter=present&key=${tomKey}`;
-                const tRes = await fetch(tUrl);
+                const tRes = await fetchWithTimeout(tUrl);
                 if (tRes.ok) {
                   const tData = await tRes.json();
                   const incidents: any[] = Array.isArray(tData?.incidents) ? tData.incidents : [];
@@ -988,7 +992,7 @@ serve(async (req) => {
       let usdBrl: number | null = null;
       let eurBrl: number | null = null;
       try {
-        const cRes = await fetch("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
+        const cRes = await fetchWithTimeout("https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL");
         if (cRes.ok) {
           const cd = await cRes.json();
           if (cd?.USDBRL?.bid) usdBrl = parseFloat(cd.USDBRL.bid);
@@ -998,7 +1002,7 @@ serve(async (req) => {
       // Fallback: open.er-api.com (no key, no quota)
       if (usdBrl == null || eurBrl == null) {
         try {
-          const r = await fetch("https://open.er-api.com/v6/latest/USD");
+          const r = await fetchWithTimeout("https://open.er-api.com/v6/latest/USD");
           if (r.ok) {
             const j = await r.json();
             const brl = j?.rates?.BRL;
@@ -1025,7 +1029,7 @@ serve(async (req) => {
         const lon = settingsRes.data?.weather_lon;
         if (lat != null && lon != null) {
           const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo`;
-          const wxRes = await fetch(wxUrl);
+          const wxRes = await fetchWithTimeout(wxUrl);
           if (wxRes.ok) {
             const wd = await wxRes.json();
             const t = wd.current?.temperature_2m;
