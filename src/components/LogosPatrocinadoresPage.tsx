@@ -116,9 +116,22 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       const all = (lData || []) as Logo[];
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 180);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isExpired = (l: Logo) => {
+        if (!l.data_final) return false;
+        const d = new Date(l.data_final + "T23:59:59");
+        return d.getTime() < today.getTime();
+      };
 
-      setLogos(all.filter((l) => !l.excluido));
-      setExcludedLogos(all.filter((l) => l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff));
+      setLogos(all.filter((l) => !l.excluido && !isExpired(l)));
+      setExcludedLogos(
+        all.filter((l) => {
+          if (l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff) return true;
+          if (!l.excluido && isExpired(l)) return true;
+          return false;
+        })
+      );
       setProgramas(pData || []);
     } finally {
       setLoading(false);
@@ -782,7 +795,9 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {filtered.map((logo) => {
-                      const diasRestantes = logo.excluido_at ? Math.max(0, 180 - Math.ceil((Date.now() - new Date(logo.excluido_at).getTime()) / 86400000)) : 0;
+                      const refDate = logo.excluido_at ? new Date(logo.excluido_at) : (logo.data_final ? new Date(logo.data_final + "T23:59:59") : null);
+                      const diasRestantes = refDate ? Math.max(0, 180 - Math.ceil((Date.now() - refDate.getTime()) / 86400000)) : 0;
+                      const isExpiredOnly = !logo.excluido;
                       return (
                         <div key={logo.id} className="w-24 space-y-1 text-center opacity-70 hover:opacity-100 transition-opacity cursor-grab"
                           draggable
@@ -802,7 +817,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           {logo.nome && (
                             <p className="text-[10px] font-semibold truncate" style={{ color: "#6b7280" }}>{logo.nome}</p>
                           )}
-                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{diasRestantes}d para expirar</span>
+                          <span className="text-[9px] block" style={{ color: "#9ca3af" }}>{isExpiredOnly ? "vencida • " : ""}{diasRestantes}d para expirar</span>
                         </div>
                       );
                     })}
