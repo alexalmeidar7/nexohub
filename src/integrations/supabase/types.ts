@@ -360,6 +360,48 @@ export type Database = {
         }
         Relationships: []
       }
+      blitz_promocionais_historico: {
+        Row: {
+          acao: string
+          blitz_id: string | null
+          changed_by: string | null
+          changed_by_email: string | null
+          cliente: string | null
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: string
+          motivo: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          blitz_id?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          cliente?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          motivo?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          blitz_id?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          cliente?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          motivo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       broadcast_assuntos: {
         Row: {
           bg_color: string
