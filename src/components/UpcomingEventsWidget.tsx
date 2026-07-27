@@ -78,6 +78,7 @@ const typeColors: Record<string, { bg: string; text: string; label: string }> = 
   gravacao: { bg: "#8b5cf6", text: "#ffffff", label: "GRAVAÇÃO" },
   reuniao: { bg: "#3b82f6", text: "#ffffff", label: "REUNIÃO" },
   evento: { bg: "#f59e0b", text: "#111111", label: "EVENTO" },
+  blitz: { bg: "#00BFF0", text: "#ffffff", label: "BLITZ" },
   outro: { bg: "#64748b", text: "#ffffff", label: "OUTRO" },
 };
 
