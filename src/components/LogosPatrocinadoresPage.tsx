@@ -845,7 +845,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
                           onDragStart={() => handleDragStart(logo)}
                         >
                           <div className="relative group">
-                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-1" style={{ border: "1px solid rgba(107,114,128,0.2)", backgroundColor: "var(--layout-header-bg, #1a1a1a)", filter: "grayscale(50%)" }} />
+                            <img src={logo.logo_url} alt={logo.nome} className="w-full aspect-square rounded-lg object-contain p-2" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "linear-gradient(135deg,#07111F 0%,#111827 55%,#020617 100%)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05), 0 4px 12px rgba(10,37,64,0.18)" }} />
                             <div className="absolute inset-0 rounded-lg flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: "rgba(0,0,0,0.4)" }}>
                               <button onClick={() => handleRestore(logo)} className="bg-green-500 text-white rounded-full w-7 h-7 flex items-center justify-center" title="Restaurar">
                                 <RotateCcw size={13} />
