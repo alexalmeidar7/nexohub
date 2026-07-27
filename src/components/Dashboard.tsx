@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLayoutColors, defaultLayoutColors } from "@/hooks/useLayoutColors";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
 import { AnimatedFlyout } from "@/components/AnimatedFlyout";
+import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 
 
 // Lazy-load all tab pages for faster initial render
@@ -302,19 +303,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const load = async () => {
       const { data } = await supabase
         .from("programas")
-        .select("nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
+        .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
         .eq("user_id", uid)
         .eq("ativo", true)
         .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
       const now = new Date();
+
+      // Pré-carrega o próximo programa 60s antes da virada, evitando "flash sem programa"
+      const { current } = resolveEffectiveOnAir(data as any[], now);
+
+      // Próximo programa (após o current efetivo)
       const dia = DIAS_MAP[now.getDay()];
       const hora = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
       const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
-      const current = todays.find((p) => hora >= p.horario_inicio && hora < p.horario_fim);
-      // Find next program (today's later than current, else earliest of next day with programs)
+      const afterHora = current?.horario_fim || hora;
       let next: any = todays
-        .filter((p) => p.horario_inicio > hora)
+        .filter((p) => p.horario_inicio >= afterHora && (!current || p.id !== current.id))
         .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
       if (!next) {
         for (let i = 1; i <= 7; i++) {
@@ -347,7 +352,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       } else if (!cancelled) setNextProgram(null);
     };
     load();
-    const iv = setInterval(load, 60000);
+    // Poll a cada 10s para pegar a virada com precisão
+    const iv = setInterval(load, 10000);
     return () => { cancelled = true; clearInterval(iv); };
   }, [user, effectiveUserId]);
 
@@ -363,19 +369,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       .ilike("estudio", "%fm%");
     if (!data) return null;
 
-    const now = new Date();
-    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-    const diaAtual = DIAS_MAP[now.getDay()];
-    const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const current = data.find((p: any) =>
-      (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
-    );
+    // Usa o mesmo resolver com pré-carga do próximo na última minutagem
+    const { current } = resolveEffectiveOnAir(data as any[]);
     if (!current) return null;
 
     const { data: thumbData } = await supabase
       .from("programas")
       .select("selo")
-      .eq("id", current.id)
+      .eq("id", (current as any).id)
       .maybeSingle();
     if ((thumbData as any)?.selo) return (thumbData as any).selo;
     return null;
@@ -542,7 +543,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setOnAirThumb(thumb);
       }
     };
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, 10000);
     return () => clearInterval(interval);
   }, [user, initialLoading, findCurrentOnAirThumb]);
 

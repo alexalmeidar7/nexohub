@@ -12,6 +12,7 @@ import SplashScreen from "./SplashScreen";
 import AccessScreen from "./AccessScreen";
 import WelcomeScreen from "./WelcomeScreen";
 import PlayerHome from "./PlayerHome";
+import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 
 // Injects <link rel="preload" as="image"> for the LCP background so the
 // browser starts downloading the program cover in the highest-priority queue,
@@ -120,16 +121,9 @@ export default function PlayerHub() {
       }));
       console.log(`${tag} agora=${hhmm} (${todayCode}) — ${programs.length} programa(s) considerados`, debug);
 
-      const inWindow = (s: string, e: string) => {
-        // Suporta janelas que atravessam meia-noite (ex.: 23:00 → 02:00)
-        return e > s ? hhmm >= s && hhmm < e : hhmm >= s || hhmm < e;
-      };
-      const current = programs.find((p) => {
-        if (!p?.horario_inicio || !p?.horario_fim) return false;
-        const s = String(p.horario_inicio).slice(0, 5);
-        const e = String(p.horario_fim).slice(0, 5);
-        return inWindow(s, e) && matchesDay(p.dias_semana, now);
-      });
+      // Usa resolver com pré-carga do próximo 60s antes do fim
+      const eligible = (programs as any[]).filter((p) => matchesDay(p?.dias_semana, now));
+      const { current } = resolveEffectiveOnAir(eligible as any[], now);
       if (!current) {
         console.warn(`${tag} nenhum programa NO AR agora — causa provável: horário ${hhmm} (${todayCode}) não bate com nenhuma janela horario_inicio/horario_fim + dias_semana. Verifique também janelas que atravessam meia-noite.`);
         return null;

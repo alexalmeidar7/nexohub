@@ -16,6 +16,7 @@ import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
+import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
@@ -1837,15 +1838,19 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   };
 
   const getCurrentProgram = useCallback(() => {
-    const now = new Date();
-    const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    return programas.find((p) => {
-      const startTime = p.horario_inicio.slice(0, 5);
-      const endTime = p.horario_fim.slice(0, 5);
-      const inTime = hhmm >= startTime && hhmm < endTime;
-      return inTime && matchesProgramDay(p.dias_semana, now);
-    });
+    // Usa resolver compartilhado: pré-carrega o próximo programa 60s antes
+    // do fim do atual, evitando o "flash sem programa" na virada.
+    const eligible = programas.filter((p) => matchesProgramDay(p.dias_semana, new Date()));
+    const { current } = resolveEffectiveOnAir(eligible as any[]);
+    return current as (typeof programas)[number] | undefined;
   }, [programas]);
+
+  // Tick a cada 10s para re-avaliar programa no ar na virada de horário
+  const [, setOnAirTick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setOnAirTick((v) => (v + 1) % 1_000_000), 10000);
+    return () => clearInterval(iv);
+  }, []);
 
   const currentProgram = getCurrentProgram();
 
