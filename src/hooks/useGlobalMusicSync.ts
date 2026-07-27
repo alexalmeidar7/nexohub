@@ -261,9 +261,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         // Debounce rapid switches — BUT never let a BREAK/intervalo entry
         // hold the widget hostage. If the previous stored track is a BREAK
         // label, always accept the new incoming track immediately.
-        if (!prevIsBreak && existingStartStr && prev) {
-          if (prevAgeMs < 5000) return;
-        }
+        // Note: we intentionally do NOT early-return here anymore; the
+        // recordToHistory call below must still run so a fresh song reaches
+        // the musicas_tocadas history even when MusicaNoAr already wrote the
+        // localStorage entry moments before.
+        const skipWrite = !prevIsBreak && existingStartStr && prev && prevAgeMs < 5000;
+        if (!skipWrite) {
 
         const now = Date.now();
         writeMusicData(user.id, data);
