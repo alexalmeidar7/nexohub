@@ -3,7 +3,7 @@ import { Users, Radio, MonitorPlay, Facebook, Instagram, Youtube, Globe, Setting
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Area, AreaChart, ReferenceArea, Label as ChartLabel } from "recharts";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 
 interface Props {
@@ -1409,20 +1409,33 @@ function AudienceReportDialog({
       start.setHours(0, 0, 0, 0);
       let q = supabase
         .from("audiencia_historico")
-        .select("audio, video, youtube, programa")
+        .select("audio, video, youtube, programa, created_at")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString());
       if (programaFilter !== "__ALL__") q = q.eq("programa", programaFilter);
       const { data } = await q;
       if (cancelled) return;
       const rows = (data as any[]) || [];
-      let a = 0, v = 0, y = 0, pa = 0, pv = 0;
+      let a = 0, v = 0, pa = 0, pv = 0;
+      // YouTube: acumular apenas dos programas que efetivamente foram AO VIVO no YouTube.
+      // Regra: para cada sessão (dia + programa) com youtube > 0, contabilizamos o PICO
+      // simultâneo de espectadores. Isso evita somar amostras do canal sem live e
+      // reflete "views durante a live" por programa.
+      const ytSessions = new Map<string, number>(); // key: `${YYYY-MM-DD}|${programa}` -> peak
       for (const r of rows) {
         const ra = r.audio || 0, rv = r.video || 0, ry = r.youtube || 0;
-        a += ra; v += rv; y += ry;
+        a += ra; v += rv;
         if (ra > pa) pa = ra;
         if (rv > pv) pv = rv;
+        if (ry > 0) {
+          const d = new Date(r.created_at);
+          const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const k = `${dayKey}|${r.programa || "__SEM__"}`;
+          const prev = ytSessions.get(k) || 0;
+          if (ry > prev) ytSessions.set(k, ry);
+        }
       }
+      const y = Array.from(ytSessions.values()).reduce((s, val) => s + val, 0);
       const n = Math.max(1, rows.length);
       setTotalsPeriod({
         audio: a, video: v, youtube: y, peakAudio: pa, peakVideo: pv, samples: rows.length,
@@ -1579,10 +1592,25 @@ function AudienceReportDialog({
     const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video + (r.youtube || 0)) > (m.audio + m.video + (m.youtube || 0)) ? r : m), filteredRows[0]);
     const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
     const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
-    const avgYoutube = Math.round(filteredRows.reduce((s, r) => s + (r.youtube || 0), 0) / filteredRows.length);
-    const sumYoutube = filteredRows.reduce((s, r) => s + (r.youtube || 0), 0);
+    // YouTube: apenas amostras com viewers > 0 (programa efetivamente AO VIVO).
+    const liveRows = filteredRows.filter((r) => (r.youtube || 0) > 0);
+    const avgYoutube = liveRows.length
+      ? Math.round(liveRows.reduce((s, r) => s + (r.youtube || 0), 0) / liveRows.length)
+      : 0;
+    // Total "views durante a live" = soma dos picos por programa que teve live no dia.
+    const peakByProg = new Map<string, number>();
+    for (const r of liveRows) {
+      const key = r.programa || "__SEM__";
+      const prev = peakByProg.get(key) || 0;
+      if ((r.youtube || 0) > prev) peakByProg.set(key, r.youtube || 0);
+    }
+    const sumYoutube = Array.from(peakByProg.values()).reduce((s, v) => s + v, 0);
     const hasYoutube = sumYoutube > 0;
-    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube };
+    // Faixa temporal (min/max hora) da(s) live(s) do dia — usado para destacar no gráfico.
+    const liveTimes = liveRows.map((r) => new Date(r.created_at).getTime());
+    const liveStart = liveTimes.length ? new Date(Math.min(...liveTimes)) : null;
+    const liveEnd = liveTimes.length ? new Date(Math.max(...liveTimes)) : null;
+    return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube, liveStart, liveEnd, liveProgramsCount: peakByProg.size };
   }, [filteredRows]);
 
 
@@ -1899,7 +1927,7 @@ function AudienceReportDialog({
                   return (
                     <>
                       {(() => {
-                        const Cell = ({ label, icon, color, value, share }: { label: string; icon: React.ReactNode; color: string; value: number; share: number }) => (
+                        const Cell = ({ label, icon, color, value, share, sublabel }: { label: string; icon: React.ReactNode; color: string; value: number; share: number; sublabel?: string }) => (
                           <div className="p-4 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5" style={{ color }}>
                               {icon}
@@ -1909,7 +1937,7 @@ function AudienceReportDialog({
                               {value.toLocaleString("pt-BR")}
                             </span>
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
+                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>{sublabel || "total no período"}</span>
                               <span className="text-[9px] font-black tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: `${color}18`, color }}>{share}%</span>
                             </div>
                           </div>
@@ -1919,7 +1947,7 @@ function AudienceReportDialog({
                             <Cell label="Rádio" icon={<Radio size={13} />} color={AUDIO_COLOR} value={tp.audio} share={pctRadio} />
                             <Cell label="TV" icon={<MonitorPlay size={13} />} color={VIDEO_COLOR} value={tp.video} share={pctTv} />
                             {hasYt && (
-                              <Cell label="YouTube" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} />
+                              <Cell label="YouTube · lives" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} sublabel="soma dos picos por programa em live" />
                             )}
                         <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
                           <div className="flex items-center gap-1.5" style={{ color: DARK }}>
@@ -2105,9 +2133,25 @@ function AudienceReportDialog({
                     </span>
                   </div>
                   <div className="flex-1 min-h-[180px]">
-                    {filteredRows.length > 0 ? (
+                    {filteredRows.length > 0 ? (() => {
+                      const chartData = [...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }));
+                      // Identifica todas as "faixas" contínuas de live no YouTube para sombrear no gráfico.
+                      const liveBands: { start: string; end: string; total: number }[] = [];
+                      let bandStart: number | null = null;
+                      let bandSum = 0;
+                      for (let i = 0; i < chartData.length; i++) {
+                        const isLive = chartData[i].youtube > 0;
+                        if (isLive && bandStart === null) { bandStart = i; bandSum = chartData[i].youtube; }
+                        else if (isLive) { bandSum += chartData[i].youtube; }
+                        if ((!isLive || i === chartData.length - 1) && bandStart !== null) {
+                          const endIdx = isLive ? i : i - 1;
+                          liveBands.push({ start: chartData[bandStart].time, end: chartData[endIdx].time, total: bandSum });
+                          bandStart = null; bandSum = 0;
+                        }
+                      }
+                      return (
                       <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={[...filteredRows].reverse().map((r) => ({ time: fmtTime(r.created_at), audio: r.audio, video: r.video, youtube: r.youtube || 0 }))} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                        <AreaChart data={chartData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
                           <defs>
                             <linearGradient id="gAudio" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor={AUDIO_COLOR} stopOpacity={0.5} />
@@ -2126,12 +2170,18 @@ function AudienceReportDialog({
                           <XAxis dataKey="time" tick={{ fill: DARK, fontSize: 9 }} interval="preserveStartEnd" />
                           <YAxis tick={{ fill: DARK, fontSize: 9 }} width={38} />
                           <Tooltip contentStyle={{ background: "#fff", border: `1px solid ${CYAN}`, borderRadius: 12, fontSize: 12 }} />
+                          {liveBands.map((b, idx) => (
+                            <ReferenceArea key={idx} x1={b.start} x2={b.end} strokeOpacity={0} fill="#FF0000" fillOpacity={0.06} ifOverflow="extendDomain">
+                              <ChartLabel value={`LIVE · ${b.total.toLocaleString("pt-BR")} views`} position="insideTop" fill="#B91C1C" fontSize={9} fontWeight={700} />
+                            </ReferenceArea>
+                          ))}
                           <Area type="monotone" dataKey="audio" stroke={AUDIO_COLOR} strokeWidth={2} fill="url(#gAudio)" name="Rádio" />
                           <Area type="monotone" dataKey="video" stroke={VIDEO_COLOR} strokeWidth={2} fill="url(#gVideo)" name="TV" />
                           <Area type="monotone" dataKey="youtube" stroke="#FF0000" strokeWidth={2} fill="url(#gYoutube)" name="YouTube" />
                         </AreaChart>
                       </ResponsiveContainer>
-                    ) : (
+                      );
+                    })() : (
                       <div className="h-full flex items-center justify-center text-[11px] font-semibold" style={{ color: DARK, opacity: 0.4 }}>
                         Sem dados para plotar
                       </div>
