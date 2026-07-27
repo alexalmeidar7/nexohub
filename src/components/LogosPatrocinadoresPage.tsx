@@ -354,7 +354,13 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
     }
 
     const nomes = ids.map((pid) => (pid ? (programas.find(p => p.id === pid)?.nome || "programa") : "SEM PROGRAMA"));
-    toast({ title: `Logo restaurada em: ${nomes.join(", ")}` });
+    const totalLogos = ids.length;
+    const logoLabel = totalLogos === 1 ? "1 logo restaurada" : `${totalLogos} logos restauradas`;
+    const progLabel = nomes.length === 1 ? "programa" : "programas";
+    toast({
+      title: logoLabel,
+      description: `${progLabel.charAt(0).toUpperCase() + progLabel.slice(1)} selecionado${nomes.length === 1 ? "" : "s"}: ${nomes.join(", ")}`,
+    });
 
     setRestoreLogo(null);
     setRestoreProgramaIds([]);
