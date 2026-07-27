@@ -102,7 +102,7 @@ export default function PlayerHub() {
       const today = DAY_MAP[String(d.getDay())];
       return dias.some((x) => normalizeWeekday(x).startsWith(today));
     };
-    const pickCurrentProgramThumb = (programs: any[] | null | undefined, source: string): string | null => {
+    const pickCurrentProgramThumb = (programs: any[] | null | undefined, source: string, tz: string | null): string | null => {
       const tag = `[WelcomeBG:${source}]`;
       if (!programs || programs.length === 0) {
         console.warn(`${tag} nenhum programa retornado — possíveis causas: (1) tabela "programas" vazia; (2) filtro ativo=true excluiu todos; (3) filtro estudio ilike "%fm%" excluiu todos; (4) para slug público, o Edge Function não retornou "programas".`);
@@ -119,11 +119,11 @@ export default function PlayerHub() {
         thumb: !!p?.thumb,
         capa: !!p?.capa,
       }));
-      console.log(`${tag} agora=${hhmm} (${todayCode}) — ${programs.length} programa(s) considerados`, debug);
+      console.log(`${tag} agora=${hhmm} (${todayCode}) tz=${tz || "browser-local"} — ${programs.length} programa(s) considerados`, debug);
 
-      // Usa resolver com pré-carga do próximo 60s antes do fim
+      // Usa resolver com pré-carga do próximo 60s antes do fim, no fuso da emissora
       const eligible = (programs as any[]).filter((p) => matchesDay(p?.dias_semana, now));
-      const { current } = resolveEffectiveOnAir(eligible as any[], now);
+      const { current } = resolveEffectiveOnAir(eligible as any[], now, tz);
       if (!current) {
         console.warn(`${tag} nenhum programa NO AR agora — causa provável: horário ${hhmm} (${todayCode}) não bate com nenhuma janela horario_inicio/horario_fim + dias_semana. Verifique também janelas que atravessam meia-noite.`);
         return null;
