@@ -369,19 +369,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       .ilike("estudio", "%fm%");
     if (!data) return null;
 
-    const now = new Date();
-    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-    const diaAtual = DIAS_MAP[now.getDay()];
-    const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const current = data.find((p: any) =>
-      (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
-    );
+    // Usa o mesmo resolver com pré-carga do próximo na última minutagem
+    const { current } = resolveEffectiveOnAir(data as any[]);
     if (!current) return null;
 
     const { data: thumbData } = await supabase
       .from("programas")
       .select("selo")
-      .eq("id", current.id)
+      .eq("id", (current as any).id)
       .maybeSingle();
     if ((thumbData as any)?.selo) return (thumbData as any).selo;
     return null;
