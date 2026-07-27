@@ -1596,6 +1596,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [channels, setChannels] = useState<Channel[]>(() => cached?.channels ?? []);
   const [logoUrl, setLogoUrl] = useState<string | null>(() => cached?.logoUrl ?? null);
   const [channelName, setChannelName] = useState(() => cached?.channelName ?? "");
+  const [timezone, setTimezone] = useState<string | null>(null);
   const [profileName, setProfileName] = useState(() => cached?.profileName ?? "");
   const [profileAvatar, setProfileAvatar] = useState<string | null>(() => cached?.profileAvatar ?? null);
   const [profileEmail, setProfileEmail] = useState(() => cached?.profileEmail ?? "");
