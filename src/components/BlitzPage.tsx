@@ -227,7 +227,7 @@ export default function BlitzPage() {
       await supabase.from("blitz_promocionais").update({ agenda_evento_id: null }).eq("id", b.id);
     } else if (!next && !b.agenda_evento_id) {
       // Reabrir: recria evento na agenda
-      const payload = await buildAgendaPayload(b.user_id ?? user!.id, b);
+      const payload = await buildAgendaPayload(user!.id, b);
       const { data: evt } = await supabase.from("agenda_eventos").insert(payload).select("id").single();
       if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", b.id);
     }
