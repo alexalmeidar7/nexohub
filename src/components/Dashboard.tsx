@@ -366,16 +366,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
     const uid = overrideUserId || effectiveUserId || user?.id;
     if (!uid) return null;
-    const { data } = await supabase
-      .from("programas")
-      .select("id, dias_semana, horario_inicio, horario_fim")
-      .eq("user_id", uid)
-      .eq("ativo", true)
-      .ilike("estudio", "%fm%");
+    const [{ data }, { data: emp }] = await Promise.all([
+      supabase
+        .from("programas")
+        .select("id, dias_semana, horario_inicio, horario_fim")
+        .eq("user_id", uid)
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%"),
+      supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+    ]);
     if (!data) return null;
 
-    // Usa o mesmo resolver com pré-carga do próximo na última minutagem
-    const { current } = resolveEffectiveOnAir(data as any[]);
+    // Usa o mesmo resolver com pré-carga do próximo na última minutagem, no fuso da emissora
+    const { current } = resolveEffectiveOnAir(data as any[], new Date(), (emp as any)?.timezone || null);
     if (!current) return null;
 
     const { data: thumbData } = await supabase
