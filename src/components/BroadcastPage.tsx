@@ -102,6 +102,13 @@ export default function BroadcastPage() {
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
   const [weatherText, setWeatherText] = useState("");
   const [quotesText, setQuotesText] = useState("");
+  const [rssStatus, setRssStatus] = useState<{
+    state: "idle" | "loading" | "ok" | "error";
+    message?: string;
+    via?: string;
+    count?: number;
+    lastAt?: number;
+  }>({ state: "idle" });
 
   // Broadcast assuntos (from broadcast_assuntos table, per programa)
   const [programaAssuntos, setProgramaAssuntos] = useState<string[]>([]);
@@ -430,18 +437,37 @@ export default function BroadcastPage() {
 
   // Fetch news titles from a custom RSS/XML URL when enabled
   useEffect(() => {
-    if (!data.tickerRssEnabled || !data.tickerRssUrl) return;
+    if (!data.tickerRssEnabled || !data.tickerRssUrl) {
+      setRssStatus({ state: "idle" });
+      return;
+    }
     let cancelled = false;
     const load = async () => {
+      setRssStatus(s => ({ ...s, state: "loading" }));
       try {
-        const { data: resp } = await supabase.functions.invoke("fetch-rss-titles", {
+        const { data: resp, error } = await supabase.functions.invoke("fetch-rss-titles", {
           body: { url: data.tickerRssUrl },
         });
         if (cancelled) return;
+        if (error) {
+          setRssStatus({ state: "error", message: error.message || "Erro ao consultar a função.", lastAt: Date.now() });
+          return;
+        }
         if (resp?.ok && Array.isArray(resp.titles) && resp.titles.length > 0) {
           setNewsTitles(resp.titles);
+          setRssStatus({ state: "ok", via: resp.via, count: resp.titles.length, lastAt: Date.now() });
+        } else {
+          setRssStatus({
+            state: "error",
+            message: resp?.error || "Nenhum título encontrado no feed.",
+            via: resp?.via,
+            lastAt: Date.now(),
+          });
         }
-      } catch { /* silent */ }
+      } catch (e: any) {
+        if (cancelled) return;
+        setRssStatus({ state: "error", message: e?.message || "Falha ao conectar.", lastAt: Date.now() });
+      }
     };
     load();
     const id = setInterval(load, 5 * 60 * 1000);
@@ -1155,6 +1181,65 @@ export default function BroadcastPage() {
                 className="w-full px-3 py-2 rounded-lg text-[12px]"
                 style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
               />
+
+              {data.tickerRssEnabled && data.tickerRssUrl && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] uppercase tracking-wide" style={{ color: "#ffffff60" }}>
+                      Preview do feed
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span
+                        className="inline-block rounded-full"
+                        style={{
+                          width: 8, height: 8,
+                          backgroundColor:
+                            rssStatus.state === "ok" ? "#22c55e" :
+                            rssStatus.state === "loading" ? "#eab308" :
+                            rssStatus.state === "error" ? "#ef4444" : "#64748b",
+                          boxShadow: rssStatus.state === "loading" ? "0 0 8px #eab308" : undefined,
+                        }}
+                      />
+                      <span style={{ color: "#ffffff80" }}>
+                        {rssStatus.state === "ok" && `${rssStatus.count} títulos${rssStatus.via && rssStatus.via !== "direct" ? ` · via ${rssStatus.via}` : ""}`}
+                        {rssStatus.state === "loading" && "carregando…"}
+                        {rssStatus.state === "error" && "erro"}
+                        {rssStatus.state === "idle" && "aguardando"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {rssStatus.state === "error" && (
+                    <div
+                      className="text-[10.5px] p-2 rounded-md mb-2"
+                      style={{ backgroundColor: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)", color: "#fecaca" }}
+                    >
+                      {rssStatus.message}
+                      <div className="text-[9.5px] mt-1" style={{ color: "#fecaca90" }}>
+                        Alguns sites (Cloudflare/anti-bot) bloqueiam servidores. Tente um feed alternativo do mesmo portal.
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className="rounded-md p-2 max-h-40 overflow-auto space-y-1"
+                    style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                  >
+                    {newsTitles.length === 0 ? (
+                      <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                        {rssStatus.state === "loading" ? "Buscando títulos…" : "Nenhum título recebido ainda."}
+                      </div>
+                    ) : (
+                      newsTitles.slice(0, 15).map((t, i) => (
+                        <div key={i} className="flex items-start gap-2 text-[11px]" style={{ color: "#ffffffcc" }}>
+                          <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                          <span className="min-w-0 truncate">{t}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -1227,6 +1312,63 @@ export default function BroadcastPage() {
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>Entrega um item por vez no XML, trocando a cada 4s</p>
               </div>
             </label>
+
+            {/* Preview do ticker (o que está sendo enviado no XML) */}
+            <div
+              className="mt-4 p-3 rounded-xl"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#ffffff70" }}>
+                  Preview do Ticker · o que sai no XML
+                </div>
+                <div className="text-[9.5px] px-2 py-0.5 rounded-full" style={{ backgroundColor: "rgba(0,191,240,0.15)", color: CYAN }}>
+                  {data.tickerUnitario ? "Unitário · 4s por item" : "Contínuo"}
+                </div>
+              </div>
+
+              <div
+                className="relative overflow-hidden rounded-md"
+                style={{ backgroundColor: "#000", border: `1px solid ${NAVY_BORDER}`, height: 34 }}
+              >
+                {composedTicker ? (
+                  <div
+                    className="absolute whitespace-nowrap text-[13px] font-semibold flex items-center h-full"
+                    style={{
+                      color: "#ffffff",
+                      animation: "tickerSlide 30s linear infinite",
+                      paddingLeft: "100%",
+                    }}
+                  >
+                    {composedTicker}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-[11px]" style={{ color: "#ffffff50" }}>
+                    Ative fontes acima ou digite um texto para ver o preview.
+                  </div>
+                )}
+              </div>
+
+              {/* Composição por fonte */}
+              <div className="mt-3 space-y-1.5">
+                {[
+                  { on: data.tickerNews, label: "Notícias", value: newsTitles.length ? `${newsTitles.length} títulos` : "—" },
+                  { on: data.tickerWeather, label: "Tempo", value: weatherText || "—" },
+                  { on: data.tickerQuotes, label: "Cotações", value: quotesText || "—" },
+                  { on: data.tickerSocials, label: "Redes", value: empresaSocials.length ? `${empresaSocials.length} canais` : "—" },
+                  { on: !!data.ticker, label: "Texto livre", value: data.ticker || "—" },
+                ].map((row, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[11px]">
+                    <span
+                      className="inline-block rounded-full"
+                      style={{ width: 6, height: 6, backgroundColor: row.on ? "#22c55e" : "#64748b" }}
+                    />
+                    <span style={{ color: row.on ? "#ffffffcc" : "#ffffff50", minWidth: 70 }}>{row.label}</span>
+                    <span className="truncate" style={{ color: row.on ? "#ffffff90" : "#ffffff40" }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
