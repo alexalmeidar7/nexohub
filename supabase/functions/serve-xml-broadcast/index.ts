@@ -911,6 +911,26 @@ serve(async (req) => {
     let infoCantoTempAtual = "";
     let infoCantoIcoTemp = BLANK_PNG;
 
+    // Always fetch current weather (real-time), independent of rotation slot
+    let currentTempStr = "";
+    let currentTempIcon = BLANK_PNG;
+    try {
+      const lat = settingsRes.data?.weather_lat;
+      const lon = settingsRes.data?.weather_lon;
+      if (lat != null && lon != null) {
+        const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&timezone=America/Sao_Paulo&_=${Math.floor(Date.now() / 60000)}`;
+        const wxRes = await fetchWithTimeout(wxUrl);
+        if (wxRes.ok) {
+          const wd = await wxRes.json();
+          const t = wd.current?.temperature_2m;
+          const code = wd.current?.weather_code;
+          if (t != null) currentTempStr = `${Math.round(t)}°`;
+          if (typeof code === "number") currentTempIcon = wmoIcon(code);
+        }
+      }
+    } catch { /* silent */ }
+
+
     if (cantoSlot <= 2) {
       // Trânsito
       infoCantoTitulo = "trânsito";
