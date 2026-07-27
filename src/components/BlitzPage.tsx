@@ -2,9 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Siren, Save, Loader2, Pencil, Trash2, Check, X, Calendar, Clock, Users, Building2, FileText, CheckCircle2 } from "lucide-react";
+import { Siren, Save, Loader2, Pencil, Trash2, Check, X, Calendar, Clock, Users, Building2, FileText, CheckCircle2, History } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { logBlitzHistorico, type BlitzHistAcao } from "@/lib/blitzHistorico";
+
+interface BlitzHistRow {
+  id: string;
+  blitz_id: string | null;
+  cliente: string | null;
+  acao: BlitzHistAcao;
+  motivo: string | null;
+  dados_antes: any;
+  dados_depois: any;
+  changed_by_email: string | null;
+  created_at: string;
+}
 
 // Nexo palette
 const CYAN = "#00BFF0";
