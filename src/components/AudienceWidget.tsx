@@ -1927,7 +1927,7 @@ function AudienceReportDialog({
                   return (
                     <>
                       {(() => {
-                        const Cell = ({ label, icon, color, value, share }: { label: string; icon: React.ReactNode; color: string; value: number; share: number }) => (
+                        const Cell = ({ label, icon, color, value, share, sublabel }: { label: string; icon: React.ReactNode; color: string; value: number; share: number; sublabel?: string }) => (
                           <div className="p-4 flex flex-col gap-2">
                             <div className="flex items-center gap-1.5" style={{ color }}>
                               {icon}
@@ -1937,7 +1937,7 @@ function AudienceReportDialog({
                               {value.toLocaleString("pt-BR")}
                             </span>
                             <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>total no período</span>
+                              <span className="text-[9px] font-bold" style={{ color: DARK, opacity: 0.5 }}>{sublabel || "total no período"}</span>
                               <span className="text-[9px] font-black tabular-nums px-1.5 py-0.5 rounded-full" style={{ background: `${color}18`, color }}>{share}%</span>
                             </div>
                           </div>
@@ -1947,7 +1947,7 @@ function AudienceReportDialog({
                             <Cell label="Rádio" icon={<Radio size={13} />} color={AUDIO_COLOR} value={tp.audio} share={pctRadio} />
                             <Cell label="TV" icon={<MonitorPlay size={13} />} color={VIDEO_COLOR} value={tp.video} share={pctTv} />
                             {hasYt && (
-                              <Cell label="YouTube" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} />
+                              <Cell label="YouTube · lives" icon={<Youtube size={13} />} color="#FF0000" value={tp.youtube} share={pctYt} sublabel="soma dos picos por programa em live" />
                             )}
                         <div className="p-4 flex flex-col gap-2" style={{ background: `${LIME}22` }}>
                           <div className="flex items-center gap-1.5" style={{ color: DARK }}>
