@@ -75,6 +75,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [excluidasSearch, setExcluidasSearch] = useState("");
   const [restoreLogo, setRestoreLogo] = useState<Logo | null>(null);
   const [restoreProgramaIds, setRestoreProgramaIds] = useState<string[]>([]);
+  const [restoring, setRestoring] = useState(false);
 
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -310,20 +311,28 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   };
 
   const confirmRestore = async () => {
-    if (!restoreLogo) return;
+    if (!restoreLogo || restoring) return;
     const ids = restoreProgramaIds.length ? restoreProgramaIds : [""];
     const first = ids[0] || null;
     const rest = ids.slice(1).map((v) => v || null);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const restoreDate = restoreLogo.data_final && new Date(`${restoreLogo.data_final}T23:59:59`).getTime() >= today.getTime()
+      ? restoreLogo.data_final
+      : defaultExpiration;
+
+    setRestoring(true);
 
     const { error } = await supabase
       .from("logos_patrocinadores")
-      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first })
+      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first, data_final: restoreDate })
       .eq("id", restoreLogo.id);
 
     if (error) {
       toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
       setRestoreLogo(null);
       setRestoreProgramaIds([]);
+      setRestoring(false);
       await loadData();
       return;
     }
@@ -334,7 +343,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
         programa_id: pid,
         logo_url: restoreLogo.logo_url,
         nome: restoreLogo.nome,
-        data_final: restoreLogo.data_final,
+        data_final: restoreDate,
         ativo: true,
         excluido: false,
       }));
@@ -349,6 +358,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
     setRestoreLogo(null);
     setRestoreProgramaIds([]);
+    setRestoring(false);
     await loadData();
   };
 
@@ -991,7 +1001,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       </div>
       {restoreLogo && createPortal(
         <div
-          onClick={() => setRestoreLogo(null)}
+          onClick={() => { if (!restoring) setRestoreLogo(null); }}
           style={{ position: "fixed", inset: 0, zIndex: 2147483001, background: "rgba(10,37,64,0.55)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, fontFamily: "Montserrat, sans-serif" }}
         >
           <div
@@ -1002,6 +1012,16 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               Restaurar Logo
             </div>
             <div style={{ padding: 22, background: "#D6F4FB" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14 }}>
+                <div style={{ width: 92, height: 92, borderRadius: 18, background: "linear-gradient(135deg,#07111F 0%,#111827 55%,#020617 100%)", border: "1px solid rgba(255,255,255,0.14)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06), 0 12px 26px rgba(10,37,64,0.20)", padding: 10, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <img src={restoreLogo.logo_url} alt={restoreLogo.nome || "Logo"} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ color: "#0A2540", fontSize: 11, fontWeight: 900, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Logo selecionada</p>
+                  <p style={{ color: "#0A2540", fontSize: 16, fontWeight: 900, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{restoreLogo.nome || "Sem nome"}</p>
+                  <p style={{ color: "rgba(10,37,64,0.62)", fontSize: 11, fontWeight: 700, margin: "5px 0 0" }}>Fundo escuro para conferir transparência e contraste.</p>
+                </div>
+              </div>
               <p style={{ color: "#0A2540", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}>
                 Escolha um ou mais programas para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
               </p>
@@ -1031,6 +1051,7 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               <button
                 type="button"
                 onClick={() => setRestoreLogo(null)}
+                disabled={restoring}
                 style={{ padding: "9px 18px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif" }}
               >
                 Cancelar
@@ -1038,9 +1059,10 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
               <button
                 type="button"
                 onClick={confirmRestore}
-                style={{ padding: "9px 20px", borderRadius: 999, border: "none", background: "#00BFF0", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: "pointer", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px #00BFF055" }}
+                disabled={restoring}
+                style={{ padding: "9px 20px", borderRadius: 999, border: "none", background: restoring ? "#A7E9F7" : "#00BFF0", color: "#0A2540", fontSize: 11, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em", cursor: restoring ? "wait" : "pointer", fontFamily: "Montserrat, sans-serif", boxShadow: "0 4px 14px #00BFF055" }}
               >
-                OK
+                {restoring ? "Restaurando..." : "OK"}
               </button>
             </div>
           </div>
