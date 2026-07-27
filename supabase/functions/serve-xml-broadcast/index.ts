@@ -587,7 +587,13 @@ serve(async (req) => {
 
     const tickerParts: string[] = [];
     if (broadcastConfig.tickerNews) {
-      const titulos = (roteiroRes.data?.tickertitulos || "").trim();
+      let titulos = "";
+      // Prefer custom RSS/XML feed when enabled — best-effort, use whatever titles we can grab
+      if (broadcastConfig.tickerRssEnabled && typeof broadcastConfig.tickerRssUrl === "string" && broadcastConfig.tickerRssUrl.trim()) {
+        const rssTitles = await fetchRssTitles(broadcastConfig.tickerRssUrl.trim());
+        if (rssTitles.length > 0) titulos = rssTitles.join("  •  ");
+      }
+      if (!titulos) titulos = (roteiroRes.data?.tickertitulos || "").trim();
       if (titulos) tickerParts.push(titulos);
     }
     if (broadcastConfig.tickerWeather && settingsRes.data?.weather_lat && settingsRes.data?.weather_lon) {
