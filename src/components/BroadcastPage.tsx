@@ -1181,6 +1181,65 @@ export default function BroadcastPage() {
                 className="w-full px-3 py-2 rounded-lg text-[12px]"
                 style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
               />
+
+              {data.tickerRssEnabled && data.tickerRssUrl && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-[10px] uppercase tracking-wide" style={{ color: "#ffffff60" }}>
+                      Preview do feed
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span
+                        className="inline-block rounded-full"
+                        style={{
+                          width: 8, height: 8,
+                          backgroundColor:
+                            rssStatus.state === "ok" ? "#22c55e" :
+                            rssStatus.state === "loading" ? "#eab308" :
+                            rssStatus.state === "error" ? "#ef4444" : "#64748b",
+                          boxShadow: rssStatus.state === "loading" ? "0 0 8px #eab308" : undefined,
+                        }}
+                      />
+                      <span style={{ color: "#ffffff80" }}>
+                        {rssStatus.state === "ok" && `${rssStatus.count} títulos${rssStatus.via && rssStatus.via !== "direct" ? ` · via ${rssStatus.via}` : ""}`}
+                        {rssStatus.state === "loading" && "carregando…"}
+                        {rssStatus.state === "error" && "erro"}
+                        {rssStatus.state === "idle" && "aguardando"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {rssStatus.state === "error" && (
+                    <div
+                      className="text-[10.5px] p-2 rounded-md mb-2"
+                      style={{ backgroundColor: "rgba(239,68,68,0.10)", border: "1px solid rgba(239,68,68,0.35)", color: "#fecaca" }}
+                    >
+                      {rssStatus.message}
+                      <div className="text-[9.5px] mt-1" style={{ color: "#fecaca90" }}>
+                        Alguns sites (Cloudflare/anti-bot) bloqueiam servidores. Tente um feed alternativo do mesmo portal.
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className="rounded-md p-2 max-h-40 overflow-auto space-y-1"
+                    style={{ backgroundColor: "rgba(0,0,0,0.35)", border: `1px dashed ${NAVY_BORDER}` }}
+                  >
+                    {newsTitles.length === 0 ? (
+                      <div className="text-[10.5px] text-center py-3" style={{ color: "#ffffff50" }}>
+                        {rssStatus.state === "loading" ? "Buscando títulos…" : "Nenhum título recebido ainda."}
+                      </div>
+                    ) : (
+                      newsTitles.slice(0, 15).map((t, i) => (
+                        <div key={i} className="flex items-start gap-2 text-[11px]" style={{ color: "#ffffffcc" }}>
+                          <span className="shrink-0 text-[9.5px] font-mono" style={{ color: CYAN }}>{String(i + 1).padStart(2, "0")}</span>
+                          <span className="min-w-0 truncate">{t}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
