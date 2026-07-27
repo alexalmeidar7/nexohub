@@ -1409,20 +1409,33 @@ function AudienceReportDialog({
       start.setHours(0, 0, 0, 0);
       let q = supabase
         .from("audiencia_historico")
-        .select("audio, video, youtube, programa")
+        .select("audio, video, youtube, programa, created_at")
         .eq("user_id", userId as any)
         .gte("created_at", start.toISOString());
       if (programaFilter !== "__ALL__") q = q.eq("programa", programaFilter);
       const { data } = await q;
       if (cancelled) return;
       const rows = (data as any[]) || [];
-      let a = 0, v = 0, y = 0, pa = 0, pv = 0;
+      let a = 0, v = 0, pa = 0, pv = 0;
+      // YouTube: acumular apenas dos programas que efetivamente foram AO VIVO no YouTube.
+      // Regra: para cada sessão (dia + programa) com youtube > 0, contabilizamos o PICO
+      // simultâneo de espectadores. Isso evita somar amostras do canal sem live e
+      // reflete "views durante a live" por programa.
+      const ytSessions = new Map<string, number>(); // key: `${YYYY-MM-DD}|${programa}` -> peak
       for (const r of rows) {
         const ra = r.audio || 0, rv = r.video || 0, ry = r.youtube || 0;
-        a += ra; v += rv; y += ry;
+        a += ra; v += rv;
         if (ra > pa) pa = ra;
         if (rv > pv) pv = rv;
+        if (ry > 0) {
+          const d = new Date(r.created_at);
+          const dayKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const k = `${dayKey}|${r.programa || "__SEM__"}`;
+          const prev = ytSessions.get(k) || 0;
+          if (ry > prev) ytSessions.set(k, ry);
+        }
       }
+      const y = Array.from(ytSessions.values()).reduce((s, val) => s + val, 0);
       const n = Math.max(1, rows.length);
       setTotalsPeriod({
         audio: a, video: v, youtube: y, peakAudio: pa, peakVideo: pv, samples: rows.length,
