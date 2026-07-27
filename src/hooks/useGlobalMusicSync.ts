@@ -258,46 +258,46 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       const songChanged = !prev || prev.titulo !== data.titulo || prev.artista !== data.artista;
 
       if (songChanged) {
-        // Debounce rapid switches — BUT never let a BREAK/intervalo entry
-        // hold the widget hostage. If the previous stored track is a BREAK
-        // label, always accept the new incoming track immediately.
-        if (!prevIsBreak && existingStartStr && prev) {
-          if (prevAgeMs < 5000) return;
+        // Debounce rapid writes to localStorage/dashboard_items when the same
+        // key was just written (<5s ago), BUT still fall through to
+        // recordToHistory below so musicas_tocadas gets the new track.
+        const skipWrite = !prevIsBreak && !!existingStartStr && !!prev && prevAgeMs < 5000;
+        if (!skipWrite) {
+          const now = Date.now();
+          writeMusicData(user.id, data);
+          localStorage.setItem(MUSIC_START_KEY, now.toString());
+
+          (async () => {
+            await applyTrackChangeWithCuriosityGuard({
+              userId: user.id,
+              now,
+              data,
+              merge: mergeUserDashboardItems,
+              fetchCuriosity: async () => {
+                const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
+                  body: {
+                    artista: data.artista,
+                    musica: data.titulo,
+                    userId: user.id,
+                    deezerArtistImg: data.capa,
+                  },
+                });
+                return curData as { curiosidade?: string } | null | undefined;
+              },
+              isStillCurrent: () => localStorage.getItem(MUSIC_START_KEY) === now.toString(),
+              onError: (e) => console.warn("[MusicSync] Error generating curiosity/merging:", e),
+            });
+          })();
         }
-
-        const now = Date.now();
-        writeMusicData(user.id, data);
-        localStorage.setItem(MUSIC_START_KEY, now.toString());
-
-        (async () => {
-          await applyTrackChangeWithCuriosityGuard({
-            userId: user.id,
-            now,
-            data,
-            merge: mergeUserDashboardItems,
-            fetchCuriosity: async () => {
-              const { data: curData } = await supabase.functions.invoke("get-music-curiosity", {
-                body: {
-                  artista: data.artista,
-                  musica: data.titulo,
-                  userId: user.id,
-                  deezerArtistImg: data.capa,
-                },
-              });
-              return curData as { curiosidade?: string } | null | undefined;
-            },
-            isStillCurrent: () => localStorage.getItem(MUSIC_START_KEY) === now.toString(),
-            onError: (e) => console.warn("[MusicSync] Error generating curiosity/merging:", e),
-          });
-        })();
-      } else if (data.capa && (!prev.capa || prev.capa !== data.capa)) {
-        writeMusicData(user.id, { ...prev, capa: data.capa });
+      } else if (data.capa && (!prev?.capa || prev.capa !== data.capa)) {
+        writeMusicData(user.id, { ...(prev as any), capa: data.capa });
         (async () => {
           try {
             await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
           } catch {}
         })();
       }
+
 
       if (
         !isPlaceholderTrack(data) &&

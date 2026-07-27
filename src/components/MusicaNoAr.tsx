@@ -9,6 +9,7 @@ import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import { matchesMusicException } from "@/lib/musicExceptions";
 
 interface MusicData {
   titulo: string;
@@ -641,6 +642,61 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         addUploadLogToDb(dataUserId, source, deviceNameRef.current, logArtist, logTitle)
           .then(setUploadHistory)
           .catch((e) => console.warn("[MusicaNoAr] history log failed:", e));
+      }
+      // Persist to musicas_tocadas (history table). This runs even when the
+      // Storage-based syncer (useGlobalMusicSync) is stale, so the local file
+      // reader alone is enough to keep the play history up to date.
+      if (dataUserId) {
+        (async () => {
+          try {
+            const titulo = (data.titulo || "").trim();
+            const artista = (data.artista || "").trim();
+            if (!titulo || titulo.toLowerCase() === "sem título" || titulo.toLowerCase() === "sem titulo") return;
+            if (!artista || artista.toLowerCase() === "desconhecido") return;
+            const lower = `${titulo} ${artista}`.toLowerCase();
+            if (["break", "ebs curtas", "intervalo", "commercial break", "standby musical"].some((k) => lower.includes(k))) return;
+
+            const { data: settings } = await supabase
+              .from("user_settings")
+              .select("infomusic_excecoes")
+              .eq("user_id", dataUserId)
+              .maybeSingle();
+            const excecoes = ((settings?.infomusic_excecoes || "") as string)
+              .split(",").map((s) => s.trim()).filter(Boolean);
+            if (matchesMusicException(excecoes, artista, titulo)) return;
+
+            const { data: programas } = await supabase
+              .from("programas")
+              .select("nome, horario_inicio, horario_fim, dias_semana, variavel, data_variavel, ativo")
+              .eq("user_id", dataUserId)
+              .eq("ativo", true);
+            const dias = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+            const d = new Date();
+            const diaAtual = dias[d.getDay()];
+            const horaAtual = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+            const todayStr = d.toISOString().slice(0, 10);
+            let programa = "";
+            for (const p of (programas || []) as any[]) {
+              if (!p.ativo) continue;
+              if (p.variavel) {
+                if (p.data_variavel === todayStr && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim) { programa = p.nome; break; }
+              } else if (p.dias_semana?.includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim) {
+                programa = p.nome; break;
+              }
+            }
+
+            await supabase.from("musicas_tocadas").upsert({
+              user_id: dataUserId,
+              dia: todayStr,
+              horario: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`,
+              programa,
+              artista,
+              musica: titulo,
+            }, { onConflict: "user_id,musica,artista,dia", ignoreDuplicates: true });
+          } catch (e) {
+            console.warn("[MusicaNoAr] musicas_tocadas insert failed:", e);
+          }
+        })();
       }
       // Persist to DB
       if (dataUserId) {
