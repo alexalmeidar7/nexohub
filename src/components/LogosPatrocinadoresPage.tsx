@@ -1003,18 +1003,29 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             </div>
             <div style={{ padding: 22, background: "#D6F4FB" }}>
               <p style={{ color: "#0A2540", fontSize: 13, fontWeight: 600, margin: "0 0 12px" }}>
-                Escolha o programa para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
+                Escolha um ou mais programas para restaurar a logo{restoreLogo.nome ? ` "${restoreLogo.nome}"` : ""}:
               </p>
-              <select
-                value={restoreProgramaId}
-                onChange={(e) => setRestoreProgramaId(e.target.value)}
-                style={{ width: "100%", padding: "10px 14px", borderRadius: 999, border: "2px solid #00BFF0", background: "#fff", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif", outline: "none" }}
-              >
-                <option value="">— SEM PROGRAMA —</option>
-                {[...programas].sort((a, b) => a.nome.localeCompare(b.nome)).map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
+              <div style={{ maxHeight: 260, overflowY: "auto", background: "#fff", border: "2px solid #00BFF0", borderRadius: 16, padding: 8 }}>
+                {(() => {
+                  const opts = [{ id: "", nome: "— SEM PROGRAMA —" }, ...[...programas].sort((a, b) => a.nome.localeCompare(b.nome))];
+                  return opts.map((p) => {
+                    const checked = restoreProgramaIds.includes(p.id);
+                    return (
+                      <label key={p.id || "none"} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer", background: checked ? "#00BFF022" : "transparent", color: "#0A2540", fontSize: 13, fontWeight: 600, fontFamily: "Montserrat, sans-serif" }}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setRestoreProgramaIds((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id));
+                          }}
+                          style={{ accentColor: "#00BFF0", width: 16, height: 16 }}
+                        />
+                        {p.nome}
+                      </label>
+                    );
+                  });
+                })()}
+              </div>
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", padding: "14px 18px", background: "#fff", borderTop: "1px solid #00BFF022" }}>
               <button
