@@ -1575,6 +1575,7 @@ export default function PromocoesKiosk() {
             </div>
         </DialogContent>
       </Dialog>
+      <BlitzLocutorPopup userId={audienceUserId} />
     </div>
   );
 }
