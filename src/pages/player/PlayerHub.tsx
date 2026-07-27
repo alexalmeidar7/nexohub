@@ -177,7 +177,7 @@ export default function PlayerHub() {
             if (!data.programas) {
               console.warn("[WelcomeBG:public] Edge Function public-player-data não retornou a lista de programas — verifique se a função está atualizada.");
             }
-            const programThumb = pickCurrentProgramThumb(data.programas, "public");
+            const programThumb = pickCurrentProgramThumb(data.programas, "public", data.empresa?.timezone || null);
             const channelThumb = pickChannelThumb(data.channels);
             const bg = programThumb || channelThumb;
             console.log("[WelcomeBG:public] resultado final →", { programThumb, channelThumb, escolhido: bg });
