@@ -69,15 +69,34 @@ interface Blitz {
   id: string;
   dia: string;
   horario: string;
+  horario_fim: string | null;
   cliente: string;
   equipe: string | null;
   observacoes: string | null;
   realizada: boolean;
   data_realizacao: string | null;
+  agenda_evento_id: string | null;
   created_at: string;
 }
 
-const emptyForm = { dia: "", horario: "", cliente: "", equipe: "", observacoes: "" };
+const emptyForm = { dia: "", horario: "", horario_fim: "", cliente: "", equipe: "", observacoes: "" };
+
+async function buildAgendaPayload(userId: string, b: { dia: string; horario: string; horario_fim: string | null; cliente: string; equipe: string | null; observacoes: string | null }) {
+  const desc = [b.equipe ? `Equipe: ${b.equipe}` : null, b.observacoes].filter(Boolean).join(" • ");
+  return {
+    user_id: userId,
+    programa_id: null as any,
+    data: b.dia,
+    local: `Blitz ${b.cliente}`,
+    descricao: desc || `Blitz ${b.cliente}`,
+    recorrencia: "unico",
+    prioridade: "alta",
+    status: "confirmado",
+    tipo_evento: "blitz",
+    horario_gravacao: b.horario,
+    horario_gravacao_fim: b.horario_fim || null,
+  } as any;
+}
 
 export default function BlitzPage() {
   const { user } = useAuth();
@@ -89,6 +108,23 @@ export default function BlitzPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
 
+  const autoExpire = async (rows: Blitz[]) => {
+    if (!user?.id) return rows;
+    const today = new Date();
+    const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(today);
+    const nowHM = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false }).format(today);
+    const toExpire = rows.filter(b => !b.realizada && (b.dia < todayStr || (b.dia === todayStr && b.horario_fim && b.horario_fim.slice(0, 5) <= nowHM)));
+    if (!toExpire.length) return rows;
+    const ids = toExpire.map(b => b.id);
+    const agendaIds = toExpire.map(b => b.agenda_evento_id).filter(Boolean) as string[];
+    await supabase.from("blitz_promocionais").update({ realizada: true, data_realizacao: new Date().toISOString() }).in("id", ids);
+    if (agendaIds.length) {
+      await supabase.from("agenda_participantes").delete().in("evento_id", agendaIds);
+      await supabase.from("agenda_eventos").delete().in("id", agendaIds);
+    }
+    return rows.map(r => ids.includes(r.id) ? { ...r, realizada: true } : r);
+  };
+
   const load = async () => {
     if (!user?.id) return;
     setLoading(true);
@@ -99,7 +135,8 @@ export default function BlitzPage() {
       .order("dia", { ascending: false })
       .order("horario", { ascending: false });
     if (error) toast({ title: "Erro ao carregar", description: error.message, variant: "destructive" });
-    setItems((data as Blitz[]) || []);
+    const rows = (data as Blitz[]) || [];
+    setItems(await autoExpire(rows));
     setLoading(false);
   };
 
@@ -113,22 +150,39 @@ export default function BlitzPage() {
       toast({ title: "Preencha dia, horário e cliente", variant: "destructive" });
       return;
     }
+    if (form.horario_fim && form.horario_fim <= form.horario) {
+      toast({ title: "Horário final deve ser depois do inicial", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const payload = {
       user_id: user.id,
       dia: form.dia,
       horario: form.horario,
+      horario_fim: form.horario_fim || null,
       cliente: form.cliente.trim(),
       equipe: form.equipe.trim() || null,
       observacoes: form.observacoes.trim() || null,
     };
-    const q = editingId
-      ? supabase.from("blitz_promocionais").update(payload).eq("id", editingId)
-      : supabase.from("blitz_promocionais").insert(payload);
-    const { error } = await q;
+    const agendaPayload = await buildAgendaPayload(user.id, payload);
+
+    if (editingId) {
+      const current = items.find(i => i.id === editingId);
+      const { error } = await supabase.from("blitz_promocionais").update(payload).eq("id", editingId);
+      if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+      if (current?.agenda_evento_id) {
+        await supabase.from("agenda_eventos").update(agendaPayload).eq("id", current.agenda_evento_id);
+      } else {
+        const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
+        if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
+      }
+    } else {
+      const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
+      const { error } = await supabase.from("blitz_promocionais").insert({ ...payload, agenda_evento_id: evt?.id || null });
+      if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+    }
     setSaving(false);
-    if (error) { toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
-    toast({ title: editingId ? "Blitz atualizada" : "Blitz cadastrada" });
+    toast({ title: editingId ? "Blitz atualizada" : "Blitz cadastrada e adicionada à agenda" });
     reset();
     load();
   };
