@@ -1090,6 +1090,49 @@ export default function BroadcastPage() {
           <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
             <SectionHeader n="02" label="Ticker System" color={CYAN} />
 
+            {/* Fonte RSS/XML personalizada */}
+            <div
+              className="p-4 rounded-xl mb-3"
+              style={{
+                backgroundColor: data.tickerRssEnabled ? "rgba(0,191,240,0.10)" : NAVY_DEEP,
+                border: `1px solid ${data.tickerRssEnabled ? CYAN : NAVY_BORDER}`,
+              }}
+            >
+              <div className="flex items-center justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <span className="text-[12px] font-semibold text-white block">Fonte RSS / XML personalizada</span>
+                  <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                    Cole a URL de um feed RSS/XML — os títulos alimentam o item "Notícias" do ticker.
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={data.tickerRssEnabled}
+                    onChange={e => {
+                      const nextData = { ...latestDataRef.current, tickerRssEnabled: e.target.checked };
+                      setData(nextData);
+                      void handleSave(nextData);
+                    }}
+                    style={{ accentColor: CYAN }}
+                  />
+                  <span className="text-[11px]" style={{ color: data.tickerRssEnabled ? CYAN : "#ffffff70" }}>
+                    {data.tickerRssEnabled ? "Ligado" : "Desligado"}
+                  </span>
+                </label>
+              </div>
+              <input
+                type="url"
+                value={data.tickerRssUrl}
+                onChange={e => setData({ ...data, tickerRssUrl: e.target.value })}
+                onBlur={onFieldBlur}
+                placeholder="https://exemplo.com/feed.xml"
+                disabled={!data.tickerRssEnabled}
+                className="w-full px-3 py-2 rounded-lg text-[12px]"
+                style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
+              />
+            </div>
+
             <div className="space-y-2">
               {([
                 { key: "tickerNews", icon: <Newspaper size={12} />, label: "Notícias", desc: "Títulos das últimas notícias" },
