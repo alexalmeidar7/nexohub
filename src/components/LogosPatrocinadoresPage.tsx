@@ -73,6 +73,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   const [cadastroOpen, setCadastroOpen] = useState(true);
   const [excluidasOpen, setExcluidasOpen] = useState(false);
   const [excluidasSearch, setExcluidasSearch] = useState("");
+  const [restoreLogo, setRestoreLogo] = useState<Logo | null>(null);
+  const [restoreProgramaId, setRestoreProgramaId] = useState<string>("");
 
   const dragItem = useRef<Logo | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
