@@ -10,6 +10,10 @@ const corsHeaders = {
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;");
 
+const fetchWithTimeout = async (input: string, init: RequestInit = {}, ms = 6000): Promise<Response> => {
+  return await fetch(input, { ...init, signal: AbortSignal.timeout(ms) });
+};
+
 const timeToSeconds = (value: string | null | undefined): number => {
   if (!value) return -1;
 
