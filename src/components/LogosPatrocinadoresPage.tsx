@@ -306,24 +306,49 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
 
   const handleRestore = (logo: Logo) => {
     setRestoreLogo(logo);
-    setRestoreProgramaId(logo.programa_id || "");
+    setRestoreProgramaIds(logo.programa_id ? [logo.programa_id] : []);
   };
 
   const confirmRestore = async () => {
     if (!restoreLogo) return;
-    const programaId = restoreProgramaId || null;
+    const ids = restoreProgramaIds.length ? restoreProgramaIds : [""];
+    const first = ids[0] || null;
+    const rest = ids.slice(1).map((v) => v || null);
+
     const { error } = await supabase
       .from("logos_patrocinadores")
-      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: programaId })
+      .update({ excluido: false, excluido_at: null, ativo: true, programa_id: first })
       .eq("id", restoreLogo.id);
+
     if (error) {
       toast({ title: "Erro ao restaurar", description: error.message, variant: "destructive" });
-    } else {
-      const progNome = programaId ? (programas.find(p => p.id === programaId)?.nome || "programa") : "SEM PROGRAMA";
-      toast({ title: `Logo restaurada no programa ${progNome}` });
+      setRestoreLogo(null);
+      setRestoreProgramaIds([]);
+      await loadData();
+      return;
     }
+
+    if (rest.length && dataUserId) {
+      const rows = rest.map((pid) => ({
+        user_id: dataUserId,
+        programa_id: pid,
+        logo_url: restoreLogo.logo_url,
+        nome: restoreLogo.nome,
+        data_final: restoreLogo.data_final,
+        ativo: true,
+        excluido: false,
+      }));
+      const { error: insErr } = await supabase.from("logos_patrocinadores").insert(rows);
+      if (insErr) {
+        toast({ title: "Erro ao duplicar para outros programas", description: insErr.message, variant: "destructive" });
+      }
+    }
+
+    const nomes = ids.map((pid) => (pid ? (programas.find(p => p.id === pid)?.nome || "programa") : "SEM PROGRAMA"));
+    toast({ title: `Logo restaurada em: ${nomes.join(", ")}` });
+
     setRestoreLogo(null);
-    setRestoreProgramaId("");
+    setRestoreProgramaIds([]);
     await loadData();
   };
 
