@@ -290,7 +290,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           })();
         }
       } else if (data.capa && (!prev?.capa || prev.capa !== data.capa)) {
-        writeMusicData(user.id, { ...(prev as MusicData), capa: data.capa });
+        writeMusicData(user.id, { ...(prev as any), capa: data.capa });
         (async () => {
           try {
             await mergeUserDashboardItems(user.id, { music_current_cover: data.capa });
