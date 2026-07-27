@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Siren, Minus, Check, ChevronUp, Clock, Users, Building2 } from "lucide-react";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
+import { logBlitzHistorico } from "@/lib/blitzHistorico";
 
 interface Blitz {
   id: string;
@@ -74,6 +75,13 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     if (b.agenda_evento_id) {
       await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
       await supabase.from("agenda_eventos").delete().eq("id", b.agenda_evento_id);
+    }
+    if (userId) {
+      await logBlitzHistorico({
+        userId, blitzId: b.id, cliente: b.cliente, acao: "encerrada",
+        motivo: "Encerrada manualmente pelo locutor",
+        dadosAntes: b, dadosDepois: { ...b, realizada: true },
+      });
     }
   };
 
