@@ -116,9 +116,22 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
       const all = (lData || []) as Logo[];
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 180);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const isExpired = (l: Logo) => {
+        if (!l.data_final) return false;
+        const d = new Date(l.data_final + "T23:59:59");
+        return d.getTime() < today.getTime();
+      };
 
-      setLogos(all.filter((l) => !l.excluido));
-      setExcludedLogos(all.filter((l) => l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff));
+      setLogos(all.filter((l) => !l.excluido && !isExpired(l)));
+      setExcludedLogos(
+        all.filter((l) => {
+          if (l.excluido && l.excluido_at && new Date(l.excluido_at) > cutoff) return true;
+          if (!l.excluido && isExpired(l)) return true;
+          return false;
+        })
+      );
       setProgramas(pData || []);
     } finally {
       setLoading(false);
