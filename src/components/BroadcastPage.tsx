@@ -424,6 +424,26 @@ export default function BroadcastPage() {
     return () => { cancelled = true; clearInterval(id); };
   }, [data.tickerQuotes]);
 
+  // Fetch news titles from a custom RSS/XML URL when enabled
+  useEffect(() => {
+    if (!data.tickerRssEnabled || !data.tickerRssUrl) return;
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const { data: resp } = await supabase.functions.invoke("fetch-rss-titles", {
+          body: { url: data.tickerRssUrl },
+        });
+        if (cancelled) return;
+        if (resp?.ok && Array.isArray(resp.titles) && resp.titles.length > 0) {
+          setNewsTitles(resp.titles);
+        }
+      } catch { /* silent */ }
+    };
+    load();
+    const id = setInterval(load, 5 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [data.tickerRssEnabled, data.tickerRssUrl]);
+
   // Compose ticker from sources
   const composedTicker = useMemo(() => {
     const parts: string[] = [];
