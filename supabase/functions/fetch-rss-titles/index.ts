@@ -99,11 +99,6 @@ Deno.serve(async (req) => {
       }
       return json({ ok: false, error: "Feed baixado, mas nenhum título de item foi encontrado.", via });
     }
-
-    const titles = extractTitles(attempt.text);
-    if (titles.length === 0) {
-      return json({ ok: false, error: "Feed baixado, mas nenhum título de item foi encontrado.", via });
-    }
     return json({ ok: true, titles, via });
   } catch (e: any) {
     return json({ ok: false, error: e?.message || "erro" });
