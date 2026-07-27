@@ -14,6 +14,67 @@ const fetchWithTimeout = async (input: string, init: RequestInit = {}, ms = 6000
   return await fetch(input, { ...init, signal: AbortSignal.timeout(ms) });
 };
 
+const RSS_BROWSER_HEADERS: Record<string, string> = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  "Accept":
+    "application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8",
+  "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+  "Cache-Control": "no-cache",
+};
+
+const decodeRssEntities = (s: string): string =>
+  (s || "")
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(parseInt(d, 10)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)));
+
+const extractRssTitles = (xml: string): string[] => {
+  const titles: string[] = [];
+  const blocks = xml.match(/<(item|entry)[\s>][\s\S]*?<\/(item|entry)>/gi) || [];
+  for (const b of blocks) {
+    const m = b.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!m) continue;
+    let t = decodeRssEntities(m[1]).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (t.includes("|")) t = t.split("|")[0].trim();
+    if (t && t.length > 3) titles.push(t);
+    if (titles.length >= 15) break;
+  }
+  return titles;
+};
+
+const fetchRssTitles = async (url: string): Promise<string[]> => {
+  try {
+    const u = new URL(url);
+    if (!/^https?:$/.test(u.protocol)) return [];
+    u.searchParams.set("_lvcb", Date.now().toString());
+    const finalUrl = u.toString();
+    const candidates: Array<{ url: string; timeout: number }> = [
+      { url: finalUrl, timeout: 5000 },
+      { url: `https://r.jina.ai/${finalUrl}`, timeout: 7000 },
+      { url: `https://proxy.cors.sh/${finalUrl}`, timeout: 7000 },
+    ];
+    for (const c of candidates) {
+      try {
+        const r = await fetch(c.url, { headers: RSS_BROWSER_HEADERS, signal: AbortSignal.timeout(c.timeout), redirect: "follow" });
+        // Even if status not-ok, some proxies still return usable body — try to parse regardless
+        const text = await r.text().catch(() => "");
+        if (!text) continue;
+        const t = extractRssTitles(text);
+        if (t.length > 0) return t;
+      } catch { /* try next */ }
+    }
+  } catch { /* ignore */ }
+  return [];
+};
+
 const timeToSeconds = (value: string | null | undefined): number => {
   if (!value) return -1;
 
