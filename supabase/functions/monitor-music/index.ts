@@ -129,42 +129,89 @@ Deno.serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   try {
-    // Get all users with XML URLs
+    // Get ALL users that can have a music source:
+    //   - `music_xml_url` set (online mode)
+    //   - `music_source_mode` in ('pasta','both') (local mode — file uploaded
+    //     to Storage by MusicaNoAr; we fall back to reading it here so history
+    //     is recorded 24/7 as long as the operator has a Nexo tab open somewhere).
     const { data: settings, error: settingsErr } = await supabase
       .from("user_settings")
-      .select("user_id, music_xml_url")
-      .not("music_xml_url", "is", null)
-      .neq("music_xml_url", "");
+      .select("user_id, music_xml_url, music_source_mode");
 
     if (settingsErr || !settings?.length) {
-      return new Response(JSON.stringify({ processed: 0, message: "No users with XML URLs" }), {
+      return new Response(JSON.stringify({ processed: 0, message: "No users" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const candidates = settings.filter((s: any) => {
+      const url = (s.music_xml_url || "").trim();
+      const mode = (s.music_source_mode || "").toLowerCase();
+      return !!url || mode === "pasta" || mode === "both";
+    });
+
     let inserted = 0;
 
-    for (const setting of settings) {
+    for (const setting of candidates) {
       try {
-        // Fetch XML
-        const response = await fetch(setting.music_xml_url, {
-          headers: {
-            "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)",
-            Accept: "application/xml, text/xml, */*",
-          },
-          signal: AbortSignal.timeout(10000),
-        });
+        const url = (setting.music_xml_url || "").trim();
+        const mode = (setting.music_source_mode || "").toLowerCase();
+        const useOnline = !!url && mode !== "pasta";
+        const useLocal = !useOnline && (mode === "pasta" || mode === "both" || !url);
 
-        const buffer = await response.arrayBuffer();
-        const text = decodeXmlBuffer(buffer, response.headers.get("content-type") || "");
+        let text = "";
+
+        if (useOnline) {
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (compatible; MusicMonitor/1.0)",
+              Accept: "application/xml, text/xml, */*",
+            },
+            signal: AbortSignal.timeout(10000),
+          });
+          const buffer = await response.arrayBuffer();
+          text = decodeXmlBuffer(buffer, response.headers.get("content-type") || "");
+        }
+
+        if (useLocal || !text) {
+          // Try storage-backed local XML written by MusicaNoAr.syncToStorage.
+          // MusicaNoAr always writes a pseudo-XML (<musica><interprete/><nome_musica/></musica>)
+          // regardless of the source format (Jornal FM TXT, Cultura FM PlayList, etc.),
+          // so extractTag works uniformly here.
+          const bucketPaths = [
+            `${setting.user_id}/local-xml-${setting.user_id}.xml`,
+            `local-xml-${setting.user_id}.xml`,
+          ];
+          for (const path of bucketPaths) {
+            const { data: pub } = supabase.storage.from("xml-files").getPublicUrl(path);
+            if (!pub?.publicUrl) continue;
+            try {
+              const res = await fetch(`${pub.publicUrl}?t=${Date.now()}`, {
+                signal: AbortSignal.timeout(8000),
+                headers: { "Cache-Control": "no-cache" },
+              });
+              if (!res.ok) continue;
+              const buffer = await res.arrayBuffer();
+              const localText = decodeXmlBuffer(buffer, res.headers.get("content-type") || "");
+              if (localText && localText.trim()) {
+                text = localText;
+                break;
+              }
+            } catch {
+              // try next path
+            }
+          }
+        }
+
+        if (!text) continue;
 
         // Parse music data
         const titulo = normalizeMusicText(extractTag(text, "nome_musica", "titulo", "title"));
         const artista = normalizeMusicText(extractTag(text, "interprete", "nome_interprete", "artista", "artist"));
 
-        if (!titulo || titulo === "Sem título" || !artista) continue;
+        if (!titulo || titulo === "Sem título" || !artista || artista === "Desconhecido") continue;
 
-        // Check if this song was already the last recorded for this user
+        // Skip if this exact song is already the last recorded for this user.
         const { data: lastSong } = await supabase
           .from("musicas_tocadas")
           .select("artista, musica")
@@ -201,7 +248,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ processed: settings.length, inserted }), {
+    return new Response(JSON.stringify({ processed: candidates.length, inserted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
