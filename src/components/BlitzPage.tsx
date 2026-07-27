@@ -459,6 +459,75 @@ export default function BlitzPage() {
           </div>
         )}
       </div>
+
+      {/* Histórico / Auditoria */}
+      <div style={cardStyle}>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, display: "flex", alignItems: "center", gap: 8 }}>
+            <History size={14} /> Histórico de alterações
+          </h2>
+          <button
+            style={{ ...ghostBtn, height: 34, padding: "0 14px", fontSize: 11 }}
+            onClick={() => {
+              const next = !showHistorico;
+              setShowHistorico(next);
+              if (next) loadHistorico();
+            }}
+          >
+            {showHistorico ? "Ocultar" : "Mostrar histórico"}
+          </button>
+        </div>
+
+        {showHistorico && (
+          <div className="mt-4">
+            {historico.length === 0 ? (
+              <p style={{ color: "#64748B", fontSize: 13, textAlign: "center", padding: 24 }}>
+                Nenhuma alteração registrada ainda.
+              </p>
+            ) : (
+              <div className="grid gap-2">
+                {historico.map(h => {
+                  const cores: Record<BlitzHistAcao, { bg: string; fg: string; label: string }> = {
+                    criada:   { bg: "#DCFCE7", fg: "#166534", label: "Criada" },
+                    editada:  { bg: "#DBEAFE", fg: "#1E40AF", label: "Editada" },
+                    encerrada:{ bg: LIME,      fg: DARK,      label: "Encerrada" },
+                    reaberta: { bg: "#FEF9C3", fg: "#854D0E", label: "Reaberta" },
+                    excluida: { bg: "#FEE2E2", fg: "#991B1B", label: "Excluída" },
+                    expirada: { bg: "#F1F5F9", fg: "#334155", label: "Expirada" },
+                  };
+                  const c = cores[h.acao] || cores.editada;
+                  const dt = new Date(h.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+                  return (
+                    <div key={h.id} className="flex items-start gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 14, padding: 12, border: `1px solid ${CYAN}33` }}>
+                      <div style={{
+                        padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800,
+                        textTransform: "uppercase", letterSpacing: 1, background: c.bg, color: c.fg,
+                        whiteSpace: "nowrap",
+                      }}>
+                        {c.label}
+                      </div>
+                      <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
+                        <div style={{ fontWeight: 800, color: DARK, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {h.cliente || "(sem cliente)"}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>
+                          {dt}
+                          {h.changed_by_email ? ` • ${h.changed_by_email}` : ""}
+                        </div>
+                        {h.motivo && (
+                          <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>
+                            <b>Motivo:</b> {h.motivo}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
