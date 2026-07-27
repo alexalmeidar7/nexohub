@@ -2,9 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Siren, Save, Loader2, Pencil, Trash2, Check, X, Calendar, Clock, Users, Building2, FileText, CheckCircle2 } from "lucide-react";
+import { Siren, Save, Loader2, Pencil, Trash2, Check, X, Calendar, Clock, Users, Building2, FileText, CheckCircle2, History } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
+import { logBlitzHistorico, type BlitzHistAcao } from "@/lib/blitzHistorico";
+
+interface BlitzHistRow {
+  id: string;
+  blitz_id: string | null;
+  cliente: string | null;
+  acao: BlitzHistAcao;
+  motivo: string | null;
+  dados_antes: any;
+  dados_depois: any;
+  changed_by_email: string | null;
+  created_at: string;
+}
 
 // Nexo palette
 const CYAN = "#00BFF0";
@@ -107,6 +120,19 @@ export default function BlitzPage() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
+  const [historico, setHistorico] = useState<BlitzHistRow[]>([]);
+  const [showHistorico, setShowHistorico] = useState(false);
+
+  const loadHistorico = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("blitz_promocionais_historico")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setHistorico((data as BlitzHistRow[]) || []);
+  };
 
   const autoExpire = async (rows: Blitz[]) => {
     if (!user?.id) return rows;
@@ -121,6 +147,13 @@ export default function BlitzPage() {
     if (agendaIds.length) {
       await supabase.from("agenda_participantes").delete().in("evento_id", agendaIds);
       await supabase.from("agenda_eventos").delete().in("id", agendaIds);
+    }
+    for (const b of toExpire) {
+      await logBlitzHistorico({
+        userId: user.id, blitzId: b.id, cliente: b.cliente, acao: "expirada",
+        motivo: "Encerrada automaticamente por vencimento do horário final",
+        dadosAntes: b, dadosDepois: { ...b, realizada: true },
+      });
     }
     return rows.map(r => ids.includes(r.id) ? { ...r, realizada: true } : r);
   };
@@ -176,15 +209,28 @@ export default function BlitzPage() {
         const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
         if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", editingId);
       }
+      await logBlitzHistorico({
+        userId: user.id, blitzId: editingId, cliente: payload.cliente, acao: "editada",
+        dadosAntes: current, dadosDepois: payload,
+      });
     } else {
       const { data: evt } = await supabase.from("agenda_eventos").insert(agendaPayload).select("id").single();
-      const { error } = await supabase.from("blitz_promocionais").insert({ ...payload, agenda_evento_id: evt?.id || null });
+      const { data: created, error } = await supabase
+        .from("blitz_promocionais")
+        .insert({ ...payload, agenda_evento_id: evt?.id || null })
+        .select("id")
+        .single();
       if (error) { setSaving(false); toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" }); return; }
+      await logBlitzHistorico({
+        userId: user.id, blitzId: created?.id ?? null, cliente: payload.cliente, acao: "criada",
+        dadosDepois: payload,
+      });
     }
     setSaving(false);
     toast({ title: editingId ? "Blitz atualizada" : "Blitz cadastrada e adicionada à agenda" });
     reset();
     load();
+    if (showHistorico) loadHistorico();
   };
 
   const edit = (b: Blitz) => {
@@ -201,7 +247,8 @@ export default function BlitzPage() {
   };
 
   const del = async (id: string) => {
-    if (!(await confirmDialog("Excluir esta blitz?"))) return;
+    const motivo = window.prompt("Excluir esta blitz?\n\nInforme um motivo (opcional) para o histórico:", "");
+    if (motivo === null) return;
     const b = items.find(i => i.id === id);
     if (b?.agenda_evento_id) {
       await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
@@ -209,8 +256,13 @@ export default function BlitzPage() {
     }
     const { error } = await supabase.from("blitz_promocionais").delete().eq("id", id);
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    await logBlitzHistorico({
+      userId: user!.id, blitzId: id, cliente: b?.cliente ?? null, acao: "excluida",
+      motivo: motivo.trim() || null, dadosAntes: b,
+    });
     toast({ title: "Blitz excluída" });
     load();
+    if (showHistorico) loadHistorico();
   };
 
   const toggleRealizada = async (b: Blitz) => {
@@ -231,7 +283,12 @@ export default function BlitzPage() {
       const { data: evt } = await supabase.from("agenda_eventos").insert(payload).select("id").single();
       if (evt?.id) await supabase.from("blitz_promocionais").update({ agenda_evento_id: evt.id }).eq("id", b.id);
     }
+    await logBlitzHistorico({
+      userId: user!.id, blitzId: b.id, cliente: b.cliente, acao: next ? "encerrada" : "reaberta",
+      dadosAntes: b, dadosDepois: { ...b, realizada: next },
+    });
     load();
+    if (showHistorico) loadHistorico();
   };
 
 
@@ -399,6 +456,75 @@ export default function BlitzPage() {
           <div className="mt-4 flex items-center gap-2" style={{ fontSize: 11, color: "#64748B" }}>
             <CheckCircle2 size={13} color={LIME} />
             <span>Taxa de execução: <b style={{ color: DARK }}>{stats.total ? Math.round((stats.realizadas / stats.total) * 100) : 0}%</b></span>
+          </div>
+        )}
+      </div>
+
+      {/* Histórico / Auditoria */}
+      <div style={cardStyle}>
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, display: "flex", alignItems: "center", gap: 8 }}>
+            <History size={14} /> Histórico de alterações
+          </h2>
+          <button
+            style={{ ...ghostBtn, height: 34, padding: "0 14px", fontSize: 11 }}
+            onClick={() => {
+              const next = !showHistorico;
+              setShowHistorico(next);
+              if (next) loadHistorico();
+            }}
+          >
+            {showHistorico ? "Ocultar" : "Mostrar histórico"}
+          </button>
+        </div>
+
+        {showHistorico && (
+          <div className="mt-4">
+            {historico.length === 0 ? (
+              <p style={{ color: "#64748B", fontSize: 13, textAlign: "center", padding: 24 }}>
+                Nenhuma alteração registrada ainda.
+              </p>
+            ) : (
+              <div className="grid gap-2">
+                {historico.map(h => {
+                  const cores: Record<BlitzHistAcao, { bg: string; fg: string; label: string }> = {
+                    criada:   { bg: "#DCFCE7", fg: "#166534", label: "Criada" },
+                    editada:  { bg: "#DBEAFE", fg: "#1E40AF", label: "Editada" },
+                    encerrada:{ bg: LIME,      fg: DARK,      label: "Encerrada" },
+                    reaberta: { bg: "#FEF9C3", fg: "#854D0E", label: "Reaberta" },
+                    excluida: { bg: "#FEE2E2", fg: "#991B1B", label: "Excluída" },
+                    expirada: { bg: "#F1F5F9", fg: "#334155", label: "Expirada" },
+                  };
+                  const c = cores[h.acao] || cores.editada;
+                  const dt = new Date(h.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+                  return (
+                    <div key={h.id} className="flex items-start gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 14, padding: 12, border: `1px solid ${CYAN}33` }}>
+                      <div style={{
+                        padding: "4px 10px", borderRadius: 999, fontSize: 10, fontWeight: 800,
+                        textTransform: "uppercase", letterSpacing: 1, background: c.bg, color: c.fg,
+                        whiteSpace: "nowrap",
+                      }}>
+                        {c.label}
+                      </div>
+                      <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
+                        <div style={{ fontWeight: 800, color: DARK, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {h.cliente || "(sem cliente)"}
+                        </div>
+                        <div style={{ fontSize: 11, color: "#64748B" }}>
+                          {dt}
+                          {h.changed_by_email ? ` • ${h.changed_by_email}` : ""}
+                        </div>
+                        {h.motivo && (
+                          <div style={{ fontSize: 11, color: "#475569", marginTop: 4 }}>
+                            <b>Motivo:</b> {h.motivo}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
