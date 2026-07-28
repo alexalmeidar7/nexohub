@@ -51,6 +51,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
+  const [loading, setLoading] = useState(false);
   const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
