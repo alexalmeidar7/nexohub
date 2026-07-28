@@ -759,8 +759,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const progNavMax = Math.max(0, programNavList.length - 1);
   const focusedProgram = programNavList[progNavIndex] || currentProg;
   const isFocusedOnAir = progNavIndex === 0;
-  const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
-  const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
+  const navDirRef = useRef<1 | -1>(1);
+  const goPrevProg = () => { navDirRef.current = -1; setProgNavIndex((i) => Math.max(0, i - 1)); };
+  const goNextProg = () => { navDirRef.current = 1; setProgNavIndex((i) => Math.min(progNavMax, i + 1)); };
 
   // ---- Crossfade entre cards ao navegar programas (sem flicker / sem atraso) ----
   const [progSwitching, setProgSwitching] = useState(false);
