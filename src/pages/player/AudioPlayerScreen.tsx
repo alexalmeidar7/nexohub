@@ -1316,13 +1316,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Clima (temperatura + ícone) */}
           {weather && (
             <div
-              className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+              className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl transition-opacity ${weatherLoading ? "opacity-60" : "opacity-100"}`}
               title="Tempo agora"
             >
               <WeatherIcon code={weather.code} size={34} />
-              <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
-                {weather.temp}°
-              </span>
+              {weatherLoading ? (
+                <Loader2 size={20} className="animate-spin text-white/80" />
+              ) : (
+                <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
+                  {weather.temp}°
+                </span>
+              )}
             </div>
           )}
 
