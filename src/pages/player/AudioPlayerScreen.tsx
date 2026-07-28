@@ -1845,11 +1845,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   <button
                     type="button"
                     onClick={() => { setDragVal(null); seekLive(); flashHint("ao vivo"); }}
-                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/90 hover:bg-red-500 text-white text-[10px] font-semibold uppercase tracking-[0.14em] shadow-[0_2px_10px_rgba(239,68,68,0.4)] animate-fade-in transition"
+                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/90 hover:bg-white text-black text-[10px] font-semibold uppercase tracking-[0.14em] shadow-[0_2px_10px_rgba(255,255,255,0.25)] animate-fade-in transition"
                     data-focusable
                     aria-label="Voltar para transmissão ao vivo"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
                     <span>ao vivo</span>
                   </button>
                 )}
@@ -1872,30 +1872,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       left: `${playheadPct}%`,
                       right: 0,
                       background: isLive
-                        ? "linear-gradient(90deg, rgba(255,255,255,0.6), rgba(239,68,68,0.85))"
-                        : "linear-gradient(90deg, rgba(255,255,255,0.85), var(--nexo-accent,#00BFF0))",
+                        ? "linear-gradient(90deg, rgba(255,255,255,0.75), rgba(255,255,255,0.25))"
+                        : "linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.30))",
                     }}
                     aria-hidden
                   />
                   {/* pontinho AO VIVO fixo à direita */}
                   <span
-                    className={`absolute -right-0.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${isLive ? "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" : "bg-white/40"}`}
+                    className={`absolute -right-0.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${isLive ? "bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.9)]" : "bg-white/40"}`}
                     aria-hidden
                   />
-                  {/* Thumb (playhead) — pílula com tempo, mais claro que é arrastável */}
+                  {/* Thumb (playhead) — pílula com tempo, branco puro com opacidade dinâmica */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-[left] duration-500"
                     style={{ left: `${playheadPct}%` }}
                     aria-hidden
                   >
                     <div
-                      className={`-translate-x-1/2 flex items-center gap-1 px-2 h-6 rounded-full text-[10px] font-semibold tabular-nums whitespace-nowrap border transition-all ${
+                      className={`-translate-x-1/2 flex items-center gap-1 px-2 h-6 rounded-full text-[10px] font-semibold tabular-nums whitespace-nowrap border border-white/40 shadow-[0_2px_10px_rgba(255,255,255,0.20)] transition-all ${
                         isLive
-                          ? "bg-white text-black border-white/40 shadow-[0_2px_10px_rgba(255,255,255,0.35)]"
-                          : "bg-[var(--nexo-accent,#00BFF0)] text-black border-white/50 shadow-[0_2px_14px_rgba(0,191,240,0.5)]"
-                      } ${dragVal != null ? "scale-110" : "group-hover/timeshift:scale-105"}`}
+                          ? "bg-white text-black shadow-[0_2px_12px_rgba(255,255,255,0.35)]"
+                          : "bg-white/95 text-black"
+                      } ${dragVal != null ? "scale-110 shadow-[0_4px_20px_rgba(255,255,255,0.45)]" : "group-hover/timeshift:scale-105"}`}
                     >
-                      {!isLive && <Rewind size={10} strokeWidth={2.5} />}
+                      {!isLive && <Rewind size={10} strokeWidth={2.5} className="text-black/70" />}
                       <span>{offsetLabel}</span>
                     </div>
                   </div>
@@ -1926,7 +1926,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <div className="mt-1.5 flex justify-between items-center text-[10px] text-white/40 tabular-nums">
                 <span>-30:00</span>
                 <span className="text-white/30">-15:00</span>
-                <span className={isLive ? "text-red-400 font-semibold" : "text-white/60"}>AO VIVO</span>
+                <span className={isLive ? "text-white/90 font-semibold" : "text-white/60"}>AO VIVO</span>
               </div>
             </div>
           );
