@@ -717,10 +717,24 @@ export default function CenarioInterativoPage() {
   const [externalConnected, setExternalConnected] = useState(false);
   const [externalRotation, setExternalRotation] = useState(0);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
+  const fullWindowRef = useRef<Window | null>(null);
+  const [isFullWindowOpen, setIsFullWindowOpen] = useState(false);
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
   const previewIsLandscape = externalRotation === 90 || externalRotation === 270;
+
+  /* Track opened external windows so their buttons can show active state */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (fullWindowRef.current && fullWindowRef.current.closed) {
+        fullWindowRef.current = null;
+        setIsFullWindowOpen(false);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   /* Measure preview container to compute scale exactly like CenarioTela */
   useEffect(() => {
@@ -2881,18 +2895,33 @@ export default function CenarioInterativoPage() {
                 </button>
                 <button
                   type="button"
-                  title="Cenário formato Full"
+                  title={`Cenário formato Full ${isFullWindowOpen ? "(aberto)" : ""}`}
                   aria-label="Cenário formato Full"
-                  onClick={() => window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
-                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                  aria-pressed={isFullWindowOpen}
+                  onClick={() => {
+                    if (fullWindowRef.current && !fullWindowRef.current.closed) {
+                      fullWindowRef.current.focus();
+                      return;
+                    }
+                    const w = window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank");
+                    if (w) {
+                      fullWindowRef.current = w;
+                      setIsFullWindowOpen(true);
+                    }
+                  }}
+                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${isFullWindowOpen ? "" : "hover:opacity-80"}`}
+                  style={{
+                    background: isFullWindowOpen ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
+                    color: isFullWindowOpen ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
+                  }}
                 >
                   <Maximize2 size={15} />
                 </button>
                 <button
                   type="button"
-                  title="Rotacionar 90°"
+                  title={`Rotacionar 90° (atual: ${externalRotation}°)`}
                   aria-label="Rotacionar 90°"
+                  aria-pressed={externalRotation !== 0}
                   onClick={() => {
                     setExternalRotation(prev => {
                       const val = (prev + 90) % 360;
@@ -2901,12 +2930,16 @@ export default function CenarioInterativoPage() {
                       return val;
                     });
                   }}
-                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
-                  style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
+                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${externalRotation !== 0 ? "" : "hover:opacity-80"}`}
+                  style={{
+                    background: externalRotation !== 0 ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
+                    color: externalRotation !== 0 ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
+                  }}
                 >
                   <RotateCw size={15} />
                 </button>
               </div>
+
             </div>
 
             {/* "Telas Conectadas" notification */}
