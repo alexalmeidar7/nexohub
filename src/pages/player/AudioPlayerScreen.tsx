@@ -762,21 +762,36 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
   const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
 
-  // ---- Animação de entrada/saída do card central ao navegar programas ----
+  // ---- Crossfade entre cards ao navegar programas (sem flicker / sem atraso) ----
   const [progSwitching, setProgSwitching] = useState(false);
   const prevFocusRef = useRef<{ program: any; index: number; isOnAir: boolean }>({
     program: focusedProgram,
     index: progNavIndex,
     isOnAir: isFocusedOnAir,
   });
+  const lastCommittedRef = useRef<{ program: any; index: number; isOnAir: boolean }>({
+    program: focusedProgram,
+    index: progNavIndex,
+    isOnAir: isFocusedOnAir,
+  });
+  const switchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (prevFocusRef.current.program?.id === focusedProgram?.id) return;
+    if (lastCommittedRef.current.program?.id === focusedProgram?.id) return;
+    // Snapshot do último foco confirmado (garante rastreio correto em cliques rápidos)
+    prevFocusRef.current = lastCommittedRef.current;
+    lastCommittedRef.current = { program: focusedProgram, index: progNavIndex, isOnAir: isFocusedOnAir };
     setProgSwitching(true);
-    const t = setTimeout(() => {
-      prevFocusRef.current = { program: focusedProgram, index: progNavIndex, isOnAir: isFocusedOnAir };
+    if (switchTimerRef.current) clearTimeout(switchTimerRef.current);
+    switchTimerRef.current = setTimeout(() => {
       setProgSwitching(false);
-    }, 320);
-    return () => clearTimeout(t);
+      switchTimerRef.current = null;
+    }, 220);
+    return () => {
+      if (switchTimerRef.current) {
+        clearTimeout(switchTimerRef.current);
+        switchTimerRef.current = null;
+      }
+    };
   }, [focusedProgram, progNavIndex, isFocusedOnAir]);
 
   // ---- Swipe / drag no card do programa ----
@@ -1548,10 +1563,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onPointerCancel={onProgSwipeEnd}
               data-focusable
             >
-              {/* Crossfade entre programa anterior e programa em foco */}
+              {/* Crossfade puro (opacity) entre programa anterior e programa em foco */}
               <div className="absolute inset-0">
                 {progSwitching && (
-                  <div className="absolute inset-0 z-10 animate-exit">
+                  <div
+                    className="absolute inset-0 z-10 prog-card-exit"
+                    key={`exit-${prevFocusRef.current.program?.id ?? "none"}`}
+                  >
                     <ProgramShowcaseCard
                       program={prevFocusRef.current.program}
                       apresentadores={apresentadores}
@@ -1565,7 +1583,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     />
                   </div>
                 )}
-                <div key={focusedProgram?.id || progNavIndex} className="absolute inset-0 z-20 animate-enter">
+                <div
+                  key={`enter-${focusedProgram?.id || progNavIndex}`}
+                  className="absolute inset-0 z-20 prog-card-enter"
+                >
                   <ProgramShowcaseCard
                     program={focusedProgram}
                     apresentadores={apresentadores}
@@ -1585,6 +1606,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   />
                 </div>
               </div>
+              <style>{`
+                @keyframes progCardIn { from { opacity: 0 } to { opacity: 1 } }
+                @keyframes progCardOut { from { opacity: 1 } to { opacity: 0 } }
+                .prog-card-enter { animation: progCardIn 220ms ease-out both; will-change: opacity; }
+                .prog-card-exit { animation: progCardOut 220ms ease-out both; will-change: opacity; }
+              `}</style>
 
               {/* Setas de navegação de programas — dentro da capa, centralizadas */}
               {programNavList.length > 1 && (
