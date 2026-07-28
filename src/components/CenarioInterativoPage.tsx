@@ -1878,18 +1878,20 @@ export default function CenarioInterativoPage() {
                   {/* Cores dos Elementos do Preview */}
                   {(() => {
                     const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
-                      { key: "colorButtonOff", label: "Ícone desligado (inativo)", def: "#000000" },
-                      { key: "colorButtonOn", label: "Ícone ativo",                 def: "#00BFF0" },
-                      { key: "colorClock",     label: "Texto — Hora",               def: "#FFFFFF" },
-                      { key: "colorDate",      label: "Texto — Data",               def: "#00BFF0" },
-                      { key: "colorMusicName", label: "Texto — Nome da música",     def: "#FFFFFF" },
-                      { key: "colorMusicTitle",label: "Texto — Título da música",   def: "#00BFF0" },
-                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',      def: "#00BFF0" },
-                      { key: "colorNextProgram",  label: "Texto — Programa a seguir", def: "#FFFFFF" },
-                      { key: "colorProgressBar",  label: "Barra de progresso do programa", def: "#00BFF0" },
+                      { key: "colorButtonBgOff", label: "Fundo do botão desligado (inativo)", def: "rgba(0,0,0,0.8)" },
+                      { key: "colorButtonBgOn",  label: "Fundo do botão ativo",             def: "rgba(0,191,240,0.85)" },
+                      { key: "colorButtonOff",   label: "Ícone do botão desligado (inativo)", def: "rgba(255,255,255,0.7)" },
+                      { key: "colorButtonOn",    label: "Ícone do botão ativo",             def: "#FFFFFF" },
+                      { key: "colorClock",       label: "Texto — Hora",                   def: "#FFFFFF" },
+                      { key: "colorDate",        label: "Texto — Data",                   def: "#00BFF0" },
+                      { key: "colorMusicName",   label: "Texto — Nome da música",         def: "#FFFFFF" },
+                      { key: "colorMusicTitle",  label: "Texto — Título da música",       def: "#00BFF0" },
+                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',            def: "#00BFF0" },
+                      { key: "colorNextProgram",  label: "Texto — Programa a seguir",        def: "#FFFFFF" },
+                      { key: "colorProgressBar",  label: "Barra de progresso do programa",   def: "#00BFF0" },
                     ];
                     const normalizeHex = (v: string) => {
-                      const s = v.trim();
+                      const s = v?.trim?.() || "";
                       if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
                       if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
                       const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
@@ -1899,6 +1901,7 @@ export default function CenarioInterativoPage() {
                       }
                       return null;
                     };
+
                     // WCAG 2.1 relative luminance + contrast ratio
                     const hexToRgb = (hex: string): [number, number, number] | null => {
                       const n = normalizeHex(hex);
