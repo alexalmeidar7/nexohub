@@ -3108,7 +3108,10 @@ export default function CenarioInterativoPage() {
                       const thumbSrc = currentProgram?.thumb || currentProgram?.capa || "";
                       
                       return (
-                        <div className="absolute inset-0" style={{ background: useGradient ? buildHomeGradient(config.home) : (bgType === "static" && config.home.bgImage ? "#e8e8e8" : "#000"), zIndex: 0 }}>
+                        <div className="absolute inset-0" style={{ background: useGradient ? buildHomeGradient(config.home) : (bgType === "static" && config.home.bgImage ? "#e8e8e8" : "transparent"), zIndex: 0 }}>
+                          {artistBgUrl && activeTab === "home" && config.home.showArtistImage && (
+                            <img src={artistBgUrl} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "saturate(1.2) brightness(0.7)" }} />
+                          )}
                           {useThumb && thumbSrc && (
                             <>
                               <img 
