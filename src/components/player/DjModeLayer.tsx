@@ -320,22 +320,6 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
 
-      // === HUD: BPM + temperatura ===
-      const bpmNow = bpm || bpmRef.current;
-      if (hudBpmRef.current) {
-        hudBpmRef.current.textContent = bpmNow > 0 ? String(bpmNow) : "—";
-      }
-      if (hudTempRef.current && hudDotRef.current) {
-        // mesma faixa usada em paletteFromContext (< 110 fria, > 132 quente)
-        let label = "intermediária";
-        let color = "hsl(45 95% 60%)"; // âmbar
-        if (bpmNow > 0 && bpmNow < 110) { label = "fria"; color = "hsl(200 95% 62%)"; }
-        else if (bpmNow > 132) { label = "quente"; color = "hsl(345 95% 62%)"; }
-        else if (bpmNow === 0) { label = "detectando…"; color = "hsl(0 0% 70%)"; }
-        hudTempRef.current.textContent = label;
-        hudDotRef.current.style.background = color;
-        hudDotRef.current.style.boxShadow = `0 0 10px ${color}`;
-      }
 
       rafRef.current = requestAnimationFrame(loop);
     };
