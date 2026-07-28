@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { WeatherIcon } from "@/components/WeatherIcons";
