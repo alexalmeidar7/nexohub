@@ -519,6 +519,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         plano: d.plano || "",
       } : ({} as any);
       setEmpresa(cfg);
+      setEmpresaTimezone((d as any)?.timezone || null);
 
       // Plan modules — fire and forget
       if (cfg.plano) {
