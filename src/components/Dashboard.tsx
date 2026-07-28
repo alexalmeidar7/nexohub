@@ -252,6 +252,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+  const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
