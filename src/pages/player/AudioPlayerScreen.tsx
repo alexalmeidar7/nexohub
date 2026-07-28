@@ -1616,10 +1616,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               {/* Setas de navegação de programas — dentro da capa, centralizadas */}
               {programNavList.length > 1 && (
                 <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-                  <div className="flex items-center gap-2 pointer-events-auto px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                  <div
+                    className="flex items-center gap-2 pointer-events-auto px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerMove={(e) => e.stopPropagation()}
+                    onPointerUp={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
-                      onClick={goPrevProg}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); goPrevProg(); }}
                       disabled={progNavIndex <= 0}
                       aria-label="Programa anterior"
                       className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
@@ -1627,12 +1633,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     >
                       <ChevronLeft size={20} />
                     </button>
-                    <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center">
+                    <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center select-none">
                       {isFocusedOnAir ? "no ar" : "a seguir"}
                     </div>
                     <button
                       type="button"
-                      onClick={goNextProg}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); goNextProg(); }}
                       disabled={progNavIndex >= progNavMax}
                       aria-label="Próximo programa"
                       className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
