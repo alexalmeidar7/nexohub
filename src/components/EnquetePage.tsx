@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { toast } from "sonner";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 
@@ -472,8 +473,6 @@ export default function EnquetePage() {
           </div>
         </div>
       </div>
-      {/* XML Link */}
-      {user && <XmlLinkRow label="XML ENQUETE" permanentUrl={xmlUrl} />}
       {/* Pre-built quizzes by category */}
       <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 96%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
         <div className="flex items-center gap-2 mb-3">
@@ -851,6 +850,12 @@ export default function EnquetePage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {user && xmlUrl && (
+        <XmlSection title="XML Enquete">
+          <XmlLinkRow label="XML ENQUETE" permanentUrl={xmlUrl} />
+        </XmlSection>
       )}
     </div>
   );

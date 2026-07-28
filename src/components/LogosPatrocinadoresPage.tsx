@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 
 interface Logo {
   id: string;
@@ -552,11 +553,8 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
             <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Logos de Patrocinadores</h3>
             <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie as logos vinculadas aos programas</p>
           </div>
-          <div className="ml-4 space-y-1 max-w-sm">
-            {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} dark />}
-            {logosAllXmlContent && <XmlLinkRow label="LOGOS ALL" xmlContent={logosAllXmlContent} dark />}
-          </div>
         </div>
+
 
         {/* Form */}
         <form ref={formRef} onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
@@ -1005,6 +1003,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           );
         })}
       </div>
+
+      {(logosXmlUrl || logosAllXmlContent) && (
+        <XmlSection title="XML Logos">
+          {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} />}
+          {logosAllXmlContent && <XmlLinkRow label="Logos ALL" xmlContent={logosAllXmlContent} />}
+        </XmlSection>
+      )}
+
       {restoreLogo && createPortal(
         <div
           onClick={() => { if (!restoring) setRestoreLogo(null); }}

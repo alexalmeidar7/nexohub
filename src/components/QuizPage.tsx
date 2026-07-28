@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { toast } from "sonner";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 
@@ -376,8 +377,6 @@ export default function QuizPage() {
         </div>
       </div>
 
-      {/* XML Link */}
-      {user && <XmlLinkRow label="XML QUIZ" permanentUrl={xmlUrl} />}
 
       {/* Pre-built quizzes by category */}
       <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 96%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
@@ -692,6 +691,12 @@ export default function QuizPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {user && xmlUrl && (
+        <XmlSection title="XML Quiz">
+          <XmlLinkRow label="XML QUIZ" permanentUrl={xmlUrl} />
+        </XmlSection>
       )}
     </div>
   );

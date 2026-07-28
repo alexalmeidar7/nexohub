@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper, CloudSun, Droplets, Thermometer, ArrowUp, ArrowDown } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
@@ -1124,17 +1125,18 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         )}
       </div>
 
-      {/* XML abaixo */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
-        <XmlLinkRow label="XML NOTICIAS" dark xmlContent={(() => {
-          const newsXml = selectedNews.map(sn =>
-            `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
-          ).join("\n");
-          const cotXml = selectedCotacoes.map(sc =>
-            `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
-          ).join("\n");
-          return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
-        })()} />
+        <XmlSection title="XML Notícias">
+          <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
+            const newsXml = selectedNews.map(sn =>
+              `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
+            ).join("\n");
+            const cotXml = selectedCotacoes.map(sc =>
+              `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
+            ).join("\n");
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
+          })()} />
+        </XmlSection>
       )}
       </div>{/* End main card */}
 

@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import BatalhaScheduleTable, { type BatalhaAgendada } from "./batalha/BatalhaScheduleTable";
@@ -600,10 +601,6 @@ export default function BatalhaMusicalPage() {
         </div>
       </div>
 
-      {/* XML Link */}
-      {batalhaXmlUrl && (
-        <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} dark />
-      )}
 
       {/* Schedule Card */}
       {user && (
@@ -667,6 +664,12 @@ export default function BatalhaMusicalPage() {
 
       {/* Scheduled battles table */}
       <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} />
+
+      {batalhaXmlUrl && (
+        <XmlSection title="XML Batalha Musical">
+          <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} />
+        </XmlSection>
+      )}
     </div>
   );
 }

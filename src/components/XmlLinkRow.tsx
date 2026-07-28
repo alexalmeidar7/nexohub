@@ -6,13 +6,16 @@ interface XmlLinkRowProps {
   label: string;
   xmlContent?: string;
   permanentUrl?: string;
+  /** @deprecated Mantido por compatibilidade; visual agora é padronizado. */
   dark?: boolean;
+  /** @deprecated Mantido por compatibilidade; visual agora é padronizado. */
   compact?: boolean;
+  /** Rótulo pequeno acima do nome (default: "XML"). */
+  kicker?: string;
   /**
    * Optional per-user scope key. When provided, the uploaded XML filename is
    * suffixed with this value so that one tenant cannot overwrite another
-   * tenant's public XML in shared storage. Always pass the authenticated
-   * user's id for any XML that contains tenant-specific data.
+   * tenant's public XML in shared storage.
    */
   scopeKey?: string;
 }
@@ -32,21 +35,32 @@ function sanitizeFolder(id: string): string {
   return id.toLowerCase().replace(/[^a-z0-9\-]/g, "");
 }
 
+function prettifyLabel(label: string): string {
+  const cleaned = label.replace(/^xml\s+/i, "").trim();
+  if (!cleaned) return label;
+  return cleaned
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => (w.length ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
 
-export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUrl, dark, compact, scopeKey }: XmlLinkRowProps) {
+export default function XmlLinkRow({
+  label,
+  xmlContent,
+  permanentUrl: externalUrl,
+  scopeKey,
+  kicker,
+}: XmlLinkRowProps) {
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string>(externalUrl || "");
   const [uploading, setUploading] = useState(false);
   const lastUploadSignatureRef = useRef<string>("");
 
-  // If permanentUrl is provided, use it directly (no upload needed)
   useEffect(() => {
-    if (externalUrl) {
-      setUrl(externalUrl);
-    }
+    if (externalUrl) setUrl(externalUrl);
   }, [externalUrl]);
 
-  // Legacy: upload xmlContent to storage if no permanentUrl
   useEffect(() => {
     if (externalUrl || !xmlContent) return;
     const uploadSignature = `${scopeKey || "__global__"}::${xmlContent}`;
@@ -56,8 +70,6 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
     const upload = async () => {
       setUploading(true);
       try {
-        // Storage RLS requires the first folder segment to equal auth.uid().
-        // Prefix path with the authenticated user's id so uploads pass RLS.
         const { data: authData } = await supabase.auth.getUser();
         const uid = authData?.user?.id;
         if (!uid) {
@@ -91,7 +103,6 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
       setUploading(false);
     };
 
-
     upload();
   }, [xmlContent, label, externalUrl, scopeKey]);
 
@@ -106,55 +117,87 @@ export default function XmlLinkRow({ label, xmlContent, permanentUrl: externalUr
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (compact) {
-    return (
-      <div
-        onClick={copy}
-        className="cursor-pointer py-1 transition-opacity hover:opacity-80"
-      >
-        <div className="flex items-center gap-2">
-          <Code2 size={14} className="shrink-0" style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-          <span className="text-[10px] text-white/70 font-bold whitespace-nowrap">{label}</span>
-          {!ready ? (
-            <Loader2 size={12} className="shrink-0 animate-spin text-white/40 ml-auto" />
-          ) : copied ? (
-            <Check size={12} className="shrink-0 text-green-400 ml-auto" />
-          ) : (
-            <Copy size={12} className="shrink-0 text-white/40 ml-auto" />
-          )}
-        </div>
-        <p className="text-[8px] font-mono text-white/40 truncate mt-0.5 pl-5">
-          {!ready ? "Gerando link..." : url}
-        </p>
-      </div>
-    );
-  }
+  const displayName = prettifyLabel(label) || "XML";
+  const displayKicker = (kicker || "XML").toUpperCase();
 
   return (
     <div
       onClick={copy}
-      className="group flex items-center gap-3 rounded-lg px-3.5 py-2.5 cursor-pointer transition-all"
-      style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 94%, var(--layout-border-color, #333))",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)",
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          copy();
+        }
       }}
-      onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #268ffa)"; }}
-      onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)"; }}
+      title={url || "Gerando link..."}
+      className="group flex items-center gap-3 cursor-pointer transition-all"
+      style={{
+        background: "#ffffff",
+        border: "1.5px solid #00BFF0",
+        borderRadius: 999,
+        padding: "10px 10px 10px 14px",
+        fontFamily: "'Montserrat', 'Inter', system-ui, sans-serif",
+      }}
     >
-      <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #268ffa) 12%, transparent)" }}>
-        <Code2 size={14} style={{ color: "var(--layout-accent-color, #268ffa)" }} />
+      {/* Ícone à esquerda */}
+      <div
+        className="shrink-0 flex items-center justify-center"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 999,
+          background: "rgba(0,191,240,0.15)",
+        }}
+      >
+        <Code2 size={15} style={{ color: "#00BFF0" }} strokeWidth={2.5} />
       </div>
-      <span className="text-[10px] font-bold uppercase whitespace-nowrap tracking-wide" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{label}</span>
-      <span className="text-[9px] truncate flex-1 font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}>
-        {!ready ? "Gerando link..." : url}
-      </span>
-      {!ready ? (
-        <Loader2 size={14} className="shrink-0 animate-spin" style={{ color: "var(--layout-accent-color, #268ffa)" }} />
-      ) : copied ? (
-        <Check size={14} className="shrink-0" style={{ color: "#22c55e" }} />
-      ) : (
-        <Copy size={14} className="shrink-0 opacity-40 group-hover:opacity-80 transition-opacity" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-      )}
+
+      {/* Textos */}
+      <div className="flex-1 min-w-0 leading-tight">
+        <div
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+            color: "#6b7280",
+          }}
+        >
+          {displayKicker}
+        </div>
+        <div
+          className="truncate"
+          style={{
+            fontSize: 14,
+            fontWeight: 700,
+            color: "#0f172a",
+          }}
+        >
+          {displayName}
+        </div>
+      </div>
+
+      {/* Botão copiar (pílula lime) */}
+      <div
+        className="shrink-0 flex items-center justify-center transition-transform group-hover:scale-105"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 999,
+          background: copied ? "#22c55e" : "#C6F03C",
+          boxShadow: "0 2px 6px rgba(198,240,60,0.4)",
+        }}
+      >
+        {!ready ? (
+          <Loader2 size={16} className="animate-spin" style={{ color: "#0f172a" }} />
+        ) : copied ? (
+          <Check size={16} style={{ color: "#ffffff" }} strokeWidth={3} />
+        ) : (
+          <Copy size={16} style={{ color: "#0f172a" }} strokeWidth={2.5} />
+        )}
+      </div>
     </div>
   );
 }

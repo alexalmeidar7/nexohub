@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
@@ -691,17 +692,19 @@ export default function PrevisaoTempo() {
             </div>
           </section>
 
-          <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
-            if (!weather) return "";
-            const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
-            const dayToXml = (d: DayWeather, tag: string, night = false) =>
-              `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode, night)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
-            const tomorrow = weather.forecast[0];
-            const amanhaXml = tomorrow
-              ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
-              : "";
-            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual", !!weather.isNight)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
-          })()} />
+          <XmlSection title="XML Tempo">
+            <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+              if (!weather) return "";
+              const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
+              const dayToXml = (d: DayWeather, tag: string, night = false) =>
+                `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode, night)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
+              const tomorrow = weather.forecast[0];
+              const amanhaXml = tomorrow
+                ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
+                : "";
+              return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual", !!weather.isNight)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+            })()} />
+          </XmlSection>
         </>
       )}
     </div>
