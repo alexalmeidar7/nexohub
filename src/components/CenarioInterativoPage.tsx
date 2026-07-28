@@ -76,6 +76,15 @@ interface HomeConfig {
   artistOverlayOpacity?: number;
   showMusicCover?: boolean;
   showProgramThumb?: boolean;
+  colorButtonOff?: string;
+  colorButtonOn?: string;
+  colorClock?: string;
+  colorDate?: string;
+  colorMusicName?: string;
+  colorMusicTitle?: string;
+  colorASeguirLabel?: string;
+  colorNextProgram?: string;
+  colorProgressBar?: string;
 }
 
 interface CenarioConfig {
@@ -1853,7 +1862,89 @@ export default function CenarioInterativoPage() {
                     )}
                   </div>
 
+                  {/* Cores dos Elementos do Preview */}
+                  {(() => {
+                    const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
+                      { key: "colorButtonOff", label: "Botão desligado (inativo)", def: "#000000" },
+                      { key: "colorButtonOn", label: "Botão ativo",                 def: "#00BFF0" },
+                      { key: "colorClock",     label: "Texto — Hora",               def: "#FFFFFF" },
+                      { key: "colorDate",      label: "Texto — Data",               def: "#00BFF0" },
+                      { key: "colorMusicName", label: "Texto — Nome da música",     def: "#FFFFFF" },
+                      { key: "colorMusicTitle",label: "Texto — Título da música",   def: "#00BFF0" },
+                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',      def: "#00BFF0" },
+                      { key: "colorNextProgram",  label: "Texto — Programa a seguir", def: "#FFFFFF" },
+                      { key: "colorProgressBar",  label: "Barra de progresso do programa", def: "#00BFF0" },
+                    ];
+                    const normalizeHex = (v: string) => {
+                      const s = v.trim();
+                      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
+                      if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
+                      const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+                      if (m) {
+                        const toHex = (n: string) => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, "0");
+                        return ("#" + toHex(m[1]) + toHex(m[2]) + toHex(m[3])).toUpperCase();
+                      }
+                      return null;
+                    };
+                    return (
+                      <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                            <Palette size={16} />
+                          </div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider">Cores dos Elementos</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
+                          {colorFields.map(f => {
+                            const current = (config.home[f.key] as string) || f.def;
+                            const displayHex = normalizeHex(current) || f.def;
+                            return (
+                              <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
+                                <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
+                                  <div
+                                    className="w-full h-full rounded-md border-2 border-white shadow"
+                                    style={{ background: current }}
+                                  />
+                                  <input
+                                    type="color"
+                                    value={displayHex}
+                                    onChange={e => updateHome({ [f.key]: e.target.value.toUpperCase() } as Partial<HomeConfig>)}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    aria-label={f.label}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <Label className="text-[10px] font-bold uppercase opacity-70 block leading-tight truncate">{f.label}</Label>
+                                  <input
+                                    type="text"
+                                    value={current}
+                                    onChange={e => updateHome({ [f.key]: e.target.value } as Partial<HomeConfig>)}
+                                    onBlur={e => {
+                                      const n = normalizeHex(e.target.value);
+                                      if (n) updateHome({ [f.key]: n } as Partial<HomeConfig>);
+                                    }}
+                                    placeholder="#RRGGBB ou rgb(r,g,b)"
+                                    className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
+                                  title="Redefinir"
+                                  className="shrink-0 h-6 px-1.5 text-[9px] uppercase font-bold rounded bg-black/5 hover:bg-black/10 text-black/60"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Visibilidade das Capas — movido para fora do box "Programa no ar" */}
+
                   <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
@@ -3064,11 +3155,11 @@ export default function CenarioInterativoPage() {
                       return (
                         <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
                           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
-                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "home" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "home" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                               <Home style={{ width: iS, height: iS }} className="text-white" />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "weather" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "weather" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), border: activeTab === "weather" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                                 <CloudSun style={{ width: iS, height: iS }} className="text-white" />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
@@ -3082,11 +3173,11 @@ export default function CenarioInterativoPage() {
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: activeTab === "traffic" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), opacity: config.traffic.enabled ? 1 : 0.35, border: activeTab === "traffic" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                               <Car style={{ width: iS, height: iS }} className="text-white" />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "currency" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "currency" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), border: activeTab === "currency" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                                 <DollarSign style={{ width: iS, height: iS }} className="text-white" />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
@@ -3096,7 +3187,7 @@ export default function CenarioInterativoPage() {
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "chat" ? "var(--layout-accent-color, rgba(68,68,68,0.85))" : "rgba(0,0,0,0.8)", opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "chat" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), opacity: config.chat.enabled ? 1 : 0.35, border: activeTab === "chat" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                               <MessageCircle style={{ width: iS, height: iS }} className="text-white" />
                             </button>
                             <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: previewDrawActive ? "rgba(128,128,128,0.25)" : "rgba(0,0,0,0.8)", border: previewDrawActive ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
@@ -3205,10 +3296,10 @@ export default function CenarioInterativoPage() {
 
                              {/* ── TOP-LEFT: Clock + date ── */}
                              <div style={{ position: "absolute", top: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20 }}>
-                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em", width: 'max-content' }}>
+                               <div className="font-black" style={{ fontSize: `${pvh(4.2)}px`, fontVariantNumeric: "tabular-nums", lineHeight: 0.9, color: config.home.colorClock || "#fff", textShadow: "0 0 20px rgba(var(--layout-accent-rgb, 68,68,68),0.6), 0 0 40px rgba(var(--layout-accent-rgb, 68,68,68),0.3)", letterSpacing: "-0.02em", width: 'max-content' }}>
                                  {currentTime.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                                </div>
-                               <div className="font-semibold text-left" style={{ fontSize: `${pvh(1.15)}px`, color: "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
+                               <div className="font-semibold text-left" style={{ fontSize: `${pvh(1.15)}px`, color: config.home.colorDate || "var(--layout-accent-color, #888)", marginTop: `${pvh(0.3)}px` }}>
                                  {currentTime.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })}
                                </div>
                              </div>
@@ -3222,11 +3313,11 @@ export default function CenarioInterativoPage() {
                              {/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
                                <div style={{ position: "absolute", bottom: `${pvh(4)}px`, right: `${pvh(5)}px`, zIndex: 20, textAlign: "right" }}>
-                                 <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
-                                   <span style={{ color: "var(--layout-accent-color)" }}>a seguir</span>
-                                 </div>
-                                 <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)" }}>{nextProgram.nome}</div>
-                                 <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
+                                  <div className="font-semibold" style={{ fontSize: `${pvh(1.1)}px`, color: config.home.colorASeguirLabel || "var(--layout-accent-color, #888)", marginBottom: `${pvh(0.5)}px` }}>
+                                    <span style={{ color: config.home.colorASeguirLabel || "var(--layout-accent-color)" }}>a seguir</span>
+                                  </div>
+                                  <div className="font-bold" style={{ fontSize: `${pvh(2.2)}px`, lineHeight: 1.2, textShadow: "0 1px 6px rgba(0,0,0,0.4)", color: config.home.colorNextProgram || "#fff" }}>{nextProgram.nome}</div>
+                                  <div className="font-medium" style={{ fontSize: `${pvh(0.9)}px`, color: config.home.colorNextProgram || "#fff", fontVariantNumeric: "tabular-nums", marginTop: `${pvh(0.2)}px` }}>{nextProgram.horario_inicio.slice(0,5)}h</div>
                                </div>
                              )}
 
@@ -3353,10 +3444,10 @@ export default function CenarioInterativoPage() {
                                        transition: "opacity 0.8s ease, transform 0.8s ease",
                                        visibility: currentPhase === "music" ? "visible" : "hidden"
                                       }}>
-                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
+                                       <div className="font-extrabold" style={{ fontSize: `${pvh(1.3)}px`, color: config.home.colorMusicName || "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)" }}>
                                          {musicData.titulo}
                                        </div>
-                                       <div className="font-bold" style={{ fontSize: `${pvh(1)}px`, color: "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                                       <div className="font-bold" style={{ fontSize: `${pvh(1)}px`, color: config.home.colorMusicTitle || "var(--layout-accent-color, #4ade80)", marginTop: `${pvh(0.2)}px`, textShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
                                          {musicData.artista}
                                        </div>
                                      </div>
@@ -3378,7 +3469,7 @@ export default function CenarioInterativoPage() {
 
                              {/* Progress bar — premium animated */}
                              <div style={{ position: "absolute", bottom: `${pvh(2)}px`, left: `${pvh(2.6)}px`, right: `${pvh(2.6)}px`, height: `${pvh(0.5)}px`, background: "rgba(255,255,255,0.15)", zIndex: 15, overflow: "hidden", borderRadius: `${pvh(0.3)}px` }}>
-                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${pvh(0.3)}px`, background: "linear-gradient(90deg, var(--layout-accent-color, #444), rgba(255,255,255,0.5), var(--layout-accent-color, #444))", backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: "0 0 6px var(--layout-accent-color, #444), 0 0 14px rgba(255,255,255,0.15)" }} />
+                               <div style={{ width: `${progressPct}%`, height: "100%", borderRadius: `${pvh(0.3)}px`, background: config.home.colorProgressBar ? `linear-gradient(90deg, ${config.home.colorProgressBar}, rgba(255,255,255,0.5), ${config.home.colorProgressBar})` : "linear-gradient(90deg, var(--layout-accent-color, #444), rgba(255,255,255,0.5), var(--layout-accent-color, #444))", backgroundSize: "200% 100%", animation: "shimmerProgress 2s linear infinite", transition: "width 1s linear", boxShadow: config.home.colorProgressBar ? `0 0 6px ${config.home.colorProgressBar}, 0 0 14px rgba(255,255,255,0.15)` : "0 0 6px var(--layout-accent-color, #444), 0 0 14px rgba(255,255,255,0.15)" }} />
                              </div>
                              <style>{`
                                @keyframes shimmerProgress { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
