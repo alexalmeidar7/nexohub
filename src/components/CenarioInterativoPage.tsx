@@ -3215,7 +3215,7 @@ export default function CenarioInterativoPage() {
                     })()}
 
                     {/* Content area */}
-                    <div className="flex-1 relative" style={{ zIndex: 1 }}>
+                    <div className="absolute inset-0" style={{ zIndex: 1 }}>
                       <div
                         key={activeTab + (activeTab === "weather" ? `-${weatherSubTab}` : "") + (activeTab === "currency" ? `-${currencySubTab}` : "")}
                         className="absolute inset-0"
