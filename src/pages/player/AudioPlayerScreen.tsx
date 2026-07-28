@@ -2098,13 +2098,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 <button
                   type="button"
                   onClick={() => setPlayedListOpen((v) => !v)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
                   aria-label="Músicas tocadas"
                   title="Músicas tocadas"
                   aria-expanded={playedListOpen}
                   data-focusable
                 >
-                  <ListMusic size={16} />
+                  <ListMusic size={22} />
                 </button>
                 {playedListOpen && (
                   <>
