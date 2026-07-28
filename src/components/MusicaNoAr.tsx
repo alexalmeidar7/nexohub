@@ -615,7 +615,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       // Guard against overwriting a fresher entry from useGlobalMusicSync:
       // if localStorage was updated < 5s ago with a DIFFERENT song, skip writing
       const existingStartStr = localStorage.getItem(MUSIC_START_KEY);
-      if (existingStartStr && prev) {
+      if (source !== "pasta" && existingStartStr && prev) {
         const existingStart = parseInt(existingStartStr, 10);
         const age = Date.now() - existingStart;
         // If localStorage has recent data (< 5s old) with a different song than
@@ -835,6 +835,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const syncingRef = useRef(false);
   const pendingSyncRef = useRef<string | null>(null);
   const readingRef = useRef(false);
+  const lastStorageSyncAttemptRef = useRef(0);
 
   // Keep stable refs to avoid interval restarts
   const processMusicRef = useRef(processMusic);
@@ -854,6 +855,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       return;
     }
     syncingRef.current = true;
+    lastStorageSyncAttemptRef.current = Date.now();
     try {
       // Storage RLS requires foldername[1] = auth.uid() for INSERT and
       // owner = auth.uid() for UPDATE. Prefix path with the authenticated
@@ -867,10 +869,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         .from("xml-files")
         .upload(filePath, utf8Blob, { upsert: true, contentType: "application/xml" });
       if (upErr) throw upErr;
+      await mergeUserDashboardItems(uid, {
+        local_xml_storage_path: filePath,
+        local_xml_uploaded_at: Date.now(),
+        local_xml_upload_error: "",
+      });
       // Do NOT overwrite music_xml_url — the online URL is independent from local sync
       // History logging happens inside processMusic (with real artist/music).
     } catch (err) {
       console.warn("[MusicaNoAr] syncToStorage failed:", err);
+      try {
+        await mergeUserDashboardItems(uid, {
+          local_xml_upload_error: err instanceof Error ? err.message : "Falha ao enviar XML local",
+        });
+      } catch {}
     }
     syncingRef.current = false;
     const queued = pendingSyncRef.current;
@@ -919,11 +931,28 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setLocalActivating(false);
       setLocalLastReadAt(Date.now());
 
-      if (text === localFileContentRef.current) { readingRef.current = false; return; }
+      const parsed = parseXmlString(text);
+      if (text === localFileContentRef.current) {
+        if (parsed) {
+          try {
+            const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
+            const current = currentRaw ? JSON.parse(currentRaw) : null;
+            if (!current || current.titulo !== parsed.titulo || current.artista !== parsed.artista) {
+              processMusicRef.current(parsed, "pasta");
+            }
+          } catch {
+            processMusicRef.current(parsed, "pasta");
+          }
+        }
+        if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
+          syncToStorage(text);
+        }
+        readingRef.current = false;
+        return;
+      }
       localFileContentRef.current = text;
       setLocalFileContent(text);
 
-      const parsed = parseXmlString(text);
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
         processMusicRef.current(parsed, "pasta");
