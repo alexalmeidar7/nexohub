@@ -28,7 +28,10 @@ interface Props {
   coverPalette?: { primary: string; secondary: string } | null;
   /** Tríade de 3 cores amostradas de pontos da capa (preferida no Modo DJ). */
   coverTriad?: { a: string; b: string; c: string } | null;
+  /** Mostra HUD com BPM e "temperatura" (frias/intermediárias/quentes). Default false. */
+  showHud?: boolean;
 }
+
 
 
 // Curva de envelope no beat: attack rápido, decay suave.
@@ -120,7 +123,7 @@ function paletteFromContext(
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null, showHud = false }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
   const coverHueRef = useRef<number | null>(null);
@@ -136,11 +139,13 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
 
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
+  const hudRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const bpmRef = useRef<number>(0);
   const coverTriadRef = useRef<{ a: string; b: string; c: string } | null>(coverTriad ?? null);
   coverTriadRef.current = coverTriad ?? null;
+
 
 
   useEffect(() => {
@@ -348,9 +353,17 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
 
+      // HUD (BPM + temperatura) — atualiza a cada ~4 frames para evitar layout thrash
+      const hud = hudRef.current;
+      if (hud) {
+        const b = bpmRef.current || bpm;
+        const temp = b >= 132 ? "quentes" : b >= 110 ? "intermediárias" : b > 0 ? "frias" : "—";
+        hud.textContent = b > 0 ? `${b} BPM · ${temp}` : "aguardando ritmo…";
+      }
 
       rafRef.current = requestAnimationFrame(loop);
     };
+
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
@@ -389,6 +402,24 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
           zIndex: 1,
         }}
       />
+      {showHud && (
+        <div
+          ref={hudRef}
+          aria-hidden
+          className="absolute top-3 right-3 pointer-events-none select-none rounded-full px-3 py-1 text-[11px] font-medium tracking-wider uppercase text-white/90"
+          style={{
+            zIndex: 2,
+            background: "rgba(0,0,0,0.45)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          aguardando ritmo…
+        </div>
+      )}
     </>
   );
 }
+
