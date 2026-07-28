@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { WeatherIcon } from "@/components/WeatherIcons";
 
-import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import { useCoverPalette, useCoverTriad, getPaletteContrast } from "@/lib/coverPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import {
   isLocutorImageCached,
@@ -489,6 +489,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const musicPalette = useCoverPalette(musicCover);
   const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
   const activePalette = musicCover ? musicPalette : onAirPalette;
+  const djCoverTriad = useCoverTriad(musicCover || onAirImage);
+
   const musicGradient = activePalette
     ? `radial-gradient(ellipse at 20% 20%, ${activePalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${activePalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${activePalette.primary} 0%, ${activePalette.secondary} 100%)`
     : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
@@ -1229,7 +1231,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     >
 
       {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} />
+      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} />
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div

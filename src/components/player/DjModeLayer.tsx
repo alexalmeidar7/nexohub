@@ -24,9 +24,12 @@ interface Props {
   active: boolean;
   /** 0..1 — quanto maior, mais sensível a batidas fracas (mais piscadas). Default 0.5 */
   sensitivity?: number;
-  /** Paleta da capa (hex) — usada como base para mesclar com as cores geradas. */
+  /** Paleta da capa (hex) — fallback quando não há triad. */
   coverPalette?: { primary: string; secondary: string } | null;
+  /** Tríade de 3 cores amostradas de pontos da capa (preferida no Modo DJ). */
+  coverTriad?: { a: string; b: string; c: string } | null;
 }
+
 
 // Curva de envelope no beat: attack rápido, decay suave.
 // t = fase 0..1 do período de beat.
@@ -117,20 +120,28 @@ function paletteFromContext(
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
   const coverHueRef = useRef<number | null>(null);
   coverHueRef.current = (() => {
+    if (coverTriad?.a) {
+      const hsl = hexToHsl(coverTriad.a);
+      if (hsl) return hsl.h;
+    }
     if (!coverPalette?.primary) return null;
     const hsl = hexToHsl(coverPalette.primary);
     return hsl ? hsl.h : null;
   })();
+
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const bpmRef = useRef<number>(0);
+  const coverTriadRef = useRef<{ a: string; b: string; c: string } | null>(coverTriad ?? null);
+  coverTriadRef.current = coverTriad ?? null;
+
 
   useEffect(() => {
     if (!active) return;
@@ -142,8 +153,13 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
     // Estado da paleta (mantido via ref para não recriar por frame)
     let paletteA = "hsl(320 95% 55%)";
     let paletteB = "hsl(190 95% 55%)";
+    let paletteC = "hsl(260 95% 55%)";
     let paletteAngle = 45;
     let seed = Math.floor(Math.random() * 1000);
+
+    const hasTriad = !!coverTriadRef.current?.a && !!coverTriadRef.current?.b && !!coverTriadRef.current?.c;
+
+
 
     // BPM tracking
     let bpm = 0;                        // 0 = desconhecido
@@ -156,11 +172,21 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
 
     const applyPalette = (bassE: number, midE: number, trebleE: number) => {
       seed = (seed + 1 + Math.floor(Math.random() * 3)) % 10000;
-      const p = paletteFromContext(bpm || bpmRef.current, bassE, midE, trebleE, coverHueRef.current, seed);
-      paletteA = p.a;
-      paletteB = p.b;
-      paletteAngle = p.angle;
+      if (hasTriad) {
+        const triad = coverTriadRef.current!;
+        paletteA = triad.a;
+        paletteB = triad.b;
+        paletteC = triad.c;
+        paletteAngle = (seed * 47) % 360;
+      } else {
+        const p = paletteFromContext(bpm || bpmRef.current, bassE, midE, trebleE, coverHueRef.current, seed);
+        paletteA = p.a;
+        paletteB = p.b;
+        paletteAngle = p.angle;
+      }
     };
+
+
 
     const flashBeat = (strength: number) => {
       const el = flashRef.current;
@@ -315,7 +341,9 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.background =
           `radial-gradient(circle at 30% 30%, ${paletteA} 0%, transparent 55%),` +
           `radial-gradient(circle at 70% 75%, ${paletteB} 0%, transparent 55%),` +
-          `linear-gradient(${paletteAngle}deg, ${paletteA} 0%, ${paletteB} 100%)`;
+          `radial-gradient(circle at 50% 100%, ${paletteC} 0%, transparent 60%),` +
+          `linear-gradient(${paletteAngle}deg, ${paletteA} 0%, ${paletteC} 50%, ${paletteB} 100%)`;
+
         bg.style.filter = `saturate(${1.35 + intensity * 0.5}) contrast(${1 + intensity * 0.15}) brightness(${brightness})`;
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
@@ -344,7 +372,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "linear-gradient(45deg, hsl(320 95% 55%), hsl(190 95% 55%))",
+          background: "linear-gradient(45deg, hsl(320 95% 55%), hsl(260 95% 55%), hsl(190 95% 55%))",
           opacity: 0.85,
           transition: "background 260ms linear, filter 120ms linear, opacity 140ms ease-out",
           zIndex: 0,
