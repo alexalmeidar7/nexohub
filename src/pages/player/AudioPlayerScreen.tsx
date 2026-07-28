@@ -249,6 +249,62 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       evs.forEach(e => window.removeEventListener(e, show));
     };
   }, [isVideoChannel]);
+
+  // ---- Relógio (elegante, com segundos) ----
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  const clockTime = useMemo(() => {
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return { hh, mm, ss };
+  }, [now]);
+
+  // ---- Clima (temp + código WMO) do rádio atual ----
+  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
+  useEffect(() => {
+    if (!radioUserId) return;
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const fetchWeather = async (lat: number, lon: number) => {
+      try {
+        const { data } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat, lon, forecast_days: 1 },
+        });
+        const c = (data as any)?.data?.current;
+        if (!cancelled && c && typeof c.temperature_2m === "number") {
+          setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
+        }
+      } catch {}
+    };
+
+    (async () => {
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("weather_lat, weather_lon")
+          .eq("user_id", radioUserId)
+          .maybeSingle();
+        const lat = (settings as any)?.weather_lat;
+        const lon = (settings as any)?.weather_lon;
+        if (typeof lat === "number" && typeof lon === "number") {
+          fetchWeather(lat, lon);
+          intervalId = window.setInterval(() => fetchWeather(lat, lon), 10 * 60 * 1000);
+        }
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [radioUserId]);
+
+
   const controlsStyle: React.CSSProperties = {
     opacity: controlsVisible ? 1 : 0,
     transform: controlsVisible ? "translateY(0)" : undefined,
