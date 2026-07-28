@@ -150,8 +150,12 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
     // Estado da paleta (mantido via ref para não recriar por frame)
     let paletteA = "hsl(320 95% 55%)";
     let paletteB = "hsl(190 95% 55%)";
+    let paletteC = "hsl(260 95% 55%)";
     let paletteAngle = 45;
     let seed = Math.floor(Math.random() * 1000);
+
+    const hasTriad = !!coverTriad?.a && !!coverTriad?.b && !!coverTriad?.c;
+
 
     // BPM tracking
     let bpm = 0;                        // 0 = desconhecido
