@@ -360,7 +360,7 @@ export default function CenarioInterativoPage() {
   const previewIsDrawingRef = useRef(false);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.278);
-  const [previewZoom, setPreviewZoom] = useState(0.6); // Default preview zoom level
+  // previewZoom removed — preview now auto-fits the container at 100%.
   const PREV_W = 1080;
   const PREV_H = 1920;
   const pvh = useCallback((v: number) => v * PREV_H / 100, []);
