@@ -1739,7 +1739,7 @@ export default function CenarioTela() {
                                     <span style={{ fontWeight: 700, fontSize: `${vhToPx(1.1)}${vu}`, color: "#fff", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "normal", textShadow: "0 2px 8px rgba(0,0,0,1)", textAlign: "center", lineHeight: 1.2 }}>{currentProgram?.apresentador || currentProgram?.nome || ""}</span>
                                   </div>
                                   {currentProgram?.apresentadorInstagram && (
-                                    <span style={{ fontSize: `${vhToPx(0.9)}${vu}`, color: accentColor, fontWeight: 600, opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+                                    <span style={{ fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff", fontWeight: 600, opacity: 0.9, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
                                       {currentProgram.apresentadorInstagram}
                                     </span>
                                   )}
