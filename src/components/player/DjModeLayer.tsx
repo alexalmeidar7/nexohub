@@ -402,6 +402,24 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
           zIndex: 1,
         }}
       />
+      {showHud && (
+        <div
+          ref={hudRef}
+          aria-hidden
+          className="absolute top-3 right-3 pointer-events-none select-none rounded-full px-3 py-1 text-[11px] font-medium tracking-wider uppercase text-white/90"
+          style={{
+            zIndex: 2,
+            background: "rgba(0,0,0,0.45)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            border: "1px solid rgba(255,255,255,0.14)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          aguardando ritmo…
+        </div>
+      )}
     </>
   );
 }
+
