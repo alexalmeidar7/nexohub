@@ -916,6 +916,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // ---- Timeshift (buffer nativo do HLS, alvo 5 min = 300s) ----
   const TIMESHIFT_WINDOW = 1800; // segundos (30 min)
+  const TS_SNAP_MARKERS = [0, 900, 1800]; // -30:00, -15:00, AO VIVO
+  const snapToMarkers = (val: number, threshold = 30) => {
+    for (const m of TS_SNAP_MARKERS) {
+      if (Math.abs(val - m) < threshold) return m;
+    }
+    return val;
+  };
   const [ts, setTs] = useState({ offset: 0, back: 0 }); // offset em s (0 = ao vivo), back = seconds available (cap 300)
   const [dragVal, setDragVal] = useState<number | null>(null); // valor local durante arraste do rewind
   const commitDrag = () => {
@@ -1919,7 +1926,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   max={TIMESHIFT_WINDOW}
                   step={1}
                   value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                  onChange={(e) => setDragVal(Number(e.target.value))}
+                  onChange={(e) => setDragVal(snapToMarkers(Number(e.target.value)))}
                   onMouseUp={commitDrag}
                   onTouchEnd={commitDrag}
                   onPointerUp={commitDrag}
