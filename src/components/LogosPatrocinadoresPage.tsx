@@ -1003,6 +1003,14 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
           );
         })}
       </div>
+
+      {(logosXmlUrl || logosAllXmlContent) && (
+        <XmlSection title="XML Logos">
+          {logosXmlUrl && <XmlLinkRow label="XML LOGOS" permanentUrl={logosXmlUrl} />}
+          {logosAllXmlContent && <XmlLinkRow label="Logos ALL" xmlContent={logosAllXmlContent} />}
+        </XmlSection>
+      )}
+
       {restoreLogo && createPortal(
         <div
           onClick={() => { if (!restoring) setRestoreLogo(null); }}
