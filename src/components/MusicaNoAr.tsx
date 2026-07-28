@@ -1906,7 +1906,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       {/* XML Output Link */}
       {/* XML Output Link */}
       {music && (
-        <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} dark />
+        <XmlSection title="XML Música Agora">
+          <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} />
+        </XmlSection>
       )}
     </div>
   );

@@ -1377,14 +1377,18 @@ export default function BroadcastPage() {
         {activeTab === "xml" && (
           <div className="max-w-3xl mx-auto p-6 rounded-2xl space-y-3" style={cardStyle}>
             <SectionHeader n="03" label="Endpoints XML" color={CYAN} />
-            <div className="p-4 rounded-xl" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-              <div className="text-[10px] font-bold uppercase mb-2 tracking-widest" style={{ color: "#ffffff70" }}>Broadcast XML</div>
-              <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`} />
-            </div>
-            <div className="p-4 rounded-xl" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-              <div className="text-[10px] font-bold uppercase mb-2 tracking-widest" style={{ color: "#ffffff70" }}>TClock Shows</div>
-              <XmlLinkRow label="" permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`} />
-            </div>
+            <XmlSection title="Endpoints XML">
+              <XmlLinkRow
+                label="Broadcast XML"
+                kicker="XML"
+                permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`}
+              />
+              <XmlLinkRow
+                label="TClock Shows"
+                kicker="XML"
+                permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`}
+              />
+            </XmlSection>
           </div>
         )}
 

@@ -664,6 +664,12 @@ export default function BatalhaMusicalPage() {
 
       {/* Scheduled battles table */}
       <BatalhaScheduleTable batalhas={batalhas} onEdit={handleEditBatalha} onRefresh={loadBatalhas} />
+
+      {batalhaXmlUrl && (
+        <XmlSection title="XML Batalha Musical">
+          <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} />
+        </XmlSection>
+      )}
     </div>
   );
 }
