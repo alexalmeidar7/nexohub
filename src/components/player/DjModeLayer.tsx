@@ -139,6 +139,9 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const bpmRef = useRef<number>(0);
+  const coverTriadRef = useRef<{ a: string; b: string; c: string } | null>(coverTriad ?? null);
+  coverTriadRef.current = coverTriad ?? null;
+
 
   useEffect(() => {
     if (!active) return;
