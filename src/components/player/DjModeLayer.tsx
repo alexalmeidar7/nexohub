@@ -380,37 +380,6 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
           zIndex: 1,
         }}
       />
-      {/* HUD ao vivo: BPM + temperatura da paleta */}
-      <div
-        aria-hidden
-        className="absolute top-4 right-4 pointer-events-none flex items-center gap-2 px-3 py-1.5 rounded-full"
-        style={{
-          zIndex: 2,
-          background: "rgba(0,0,0,0.42)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          border: "1px solid rgba(255,255,255,0.14)",
-          color: "#fff",
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          fontSize: 12,
-          letterSpacing: 0.4,
-        }}
-      >
-        <span style={{ opacity: 0.7 }}>BPM</span>
-        <span ref={hudBpmRef} style={{ fontWeight: 700, minWidth: 24, textAlign: "center" }}>—</span>
-        <span style={{ opacity: 0.35 }}>·</span>
-        <span
-          ref={hudDotRef}
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 999,
-            background: "hsl(0 0% 70%)",
-            transition: "background 200ms ease, box-shadow 200ms ease",
-          }}
-        />
-        <span ref={hudTempRef} style={{ opacity: 0.9 }}>detectando…</span>
-      </div>
     </>
   );
 }
