@@ -591,12 +591,34 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     let cancelled = false;
     const load = async () => {
       if (!effectiveUserId) return;
-      const { data, error } = await supabase
-        .from("musicas_tocadas")
-        .select("musica, artista, horario, programa")
-        .eq("user_id", effectiveUserId)
-        .order("created_at", { ascending: false })
-        .limit(HIST_MAX * 2);
+      // Use a public edge function so listeners who aren't the station owner
+      // (Google-authenticated players, guests) also see the FULL history —
+      // otherwise RLS on musicas_tocadas returns 0 rows for them and the
+      // "songs played" list only fills up with tracks that started AFTER
+      // they opened the player.
+      let data: any[] | null = null;
+      let error: any = null;
+      try {
+        const resp = await supabase.functions.invoke("public-music-history", {
+          body: null,
+          method: "GET" as any,
+          headers: {},
+        } as any);
+        // functions.invoke doesn't support query strings cleanly; fall back to fetch.
+      } catch {}
+      try {
+        const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/public-music-history?user_id=${encodeURIComponent(effectiveUserId)}&limit=${HIST_MAX * 2}`;
+        const resp = await fetch(url, {
+          headers: {
+            apikey: (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
+          },
+        });
+        const json = await resp.json();
+        if (json?.ok && Array.isArray(json.items)) data = json.items;
+        else error = json?.error || "empty";
+      } catch (e) {
+        error = e;
+      }
       if (cancelled) return;
       // Se der erro OU vier vazio, NÃO limpa o histórico existente — evita colapso do carrossel
       // por hiccups transitórios de RLS/rede/realtime.
