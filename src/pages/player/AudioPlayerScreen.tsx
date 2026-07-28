@@ -2367,7 +2367,7 @@ export function ProgramShowcaseCard({
     : "text-sm font-bold leading-tight truncate";
   const subtitleClass = isLive ? "text-[12px] opacity-80 mt-0.5" : "text-[10px] uppercase tracking-widest text-white/80";
   const badgeLabel = isLive ? "no ar" : "a seguir";
-  const showBadge = isLive || isFirst;
+  const showBadge = !hideBadge && (isLive || isFirst);
 
   const textColor = isLive ? (contrast?.textColor || "#fff") : "#fff";
   const textShadow = isLive ? contrast?.textShadow : "0 2px 8px rgba(0,0,0,0.6)";
