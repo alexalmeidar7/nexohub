@@ -2924,26 +2924,10 @@ export default function CenarioInterativoPage() {
             )}
 
             <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
-              {/* Zoom Control */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full border shadow-2xl z-20 transition-all bg-[var(--layout-page-bg, #ffffff)]" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
-                <Minus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
-                <Slider 
-                  value={[previewZoom]} 
-                  min={0.2} 
-                  max={1.0} 
-                  step={0.05} 
-                  className="w-32 cursor-pointer" 
-                  onValueChange={([val]) => setPreviewZoom(val)} 
-                  style={{ "--primary": accentColor } as any}
-                />
-                <Plus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
-                <span className="text-[10px] font-mono w-8 text-center" style={{ color: textColor }}>{Math.round(previewZoom * 100)}%</span>
-              </div>
-
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
-                  className="relative overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  className="relative overflow-hidden shadow-2xl"
                   data-nexo-skip
                   style={{
                     height: "100%",
@@ -2952,9 +2936,6 @@ export default function CenarioInterativoPage() {
                     borderRadius: 20,
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
                     background: "#000",
-                    transform: `scale(${previewZoom})`,
-                    transformOrigin: "top center",
-                    transition: "transform 0.3s ease-out",
                   }}
                 >
                 <div className="absolute inset-0 overflow-hidden">
