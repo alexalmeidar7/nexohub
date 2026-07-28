@@ -1548,11 +1548,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               {history.slice(0, CAROUSEL_VISIBLE).map((t, i) => {
 
                 const isNow = i === 0;
-                // depth relativa ao activeIndex: 0 = destacada (na frente)
-                // Para a música tocando agora (i=0) forçamos depth=0 visual,
-                // garantindo que a capa atual SEMPRE fique na frente das capas
-                // das músicas já tocadas, independente da navegação do carrossel.
-                const depth = isNow ? 0 : i - activeIndex;
+                // depth relativa ao activeIndex: 0 = destacada (na frente).
+                // A capa "tocando agora" (i=0) também acompanha a navegação para
+                // que o usuário possa deslizar pelas capas das músicas já tocadas
+                // sem que ela fique travada na frente.
+                const depth = i - activeIndex;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
                 const translateX = -depth * 72;
@@ -1567,9 +1567,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 const rewindKey = `${i}-${t.horario}-${t.musica}`;
                 const isPreparing = preparingRewind === rewindKey;
-                // A capa "tocando agora" tem o z-index mais alto de todos,
-                // acima de qualquer capa histórica (que usa 20 - abs, máx 20).
-                const zIndex = isNow ? 40 : 20 - abs;
+                // z-index acompanha proximidade do índice ativo: a capa focada
+                // fica sempre por cima, permitindo navegar entre as capas.
+                const zIndex = 30 - abs;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
