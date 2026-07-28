@@ -2868,22 +2868,31 @@ export default function CenarioInterativoPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+              <div className="flex items-center gap-2 ml-auto">
                 <button
+                  type="button"
+                  title="Cenário interativo Externo"
+                  aria-label="Cenário interativo Externo"
                   onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <ExternalLink size={11} /> Cenário interativo Externo
+                  <ExternalLink size={15} />
                 </button>
                 <button
+                  type="button"
+                  title="Cenário formato Full"
+                  aria-label="Cenário formato Full"
                   onClick={() => window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <MonitorPlay size={11} /> Cenário formato Full
+                  <Maximize2 size={15} />
                 </button>
                 <button
+                  type="button"
+                  title="Rotacionar 90°"
+                  aria-label="Rotacionar 90°"
                   onClick={() => {
                     setExternalRotation(prev => {
                       const val = (prev + 90) % 360;
@@ -2892,10 +2901,10 @@ export default function CenarioInterativoPage() {
                       return val;
                     });
                   }}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <RotateCw size={11} /> Rotacionar 90°
+                  <RotateCw size={15} />
                 </button>
               </div>
             </div>
