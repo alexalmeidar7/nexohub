@@ -545,27 +545,40 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       return;
     }
 
-    if (musicData?.capa) {
+    const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
+
+    // FIX (bug capa travada no canal de áudio):
+    // Antes: quando `musicData.capa` vinha preenchido pelo XML, confiávamos nele
+    // como autoritativo (setávamos resolvedMusicCover, gravávamos no
+    // coverCacheRef e pulávamos o fetchCover). Muitos XMLs de rádio, porém,
+    // repetem a MESMA URL de capa a cada faixa (ou mantêm a URL antiga por
+    // segundos após a troca), então a capa "tocando agora" ficava travada em
+    // uma imagem só. Agora tratamos `musicData.capa` apenas como *placeholder*
+    // visual imediato e SEMPRE disparamos o fetchCover (iTunes/Deezer) na
+    // troca de música — o resultado do fetch sobrescreve o placeholder assim
+    // que chega. Também não gravamos mais o placeholder em coverCacheRef para
+    // evitar poluir o cache com URLs stale.
+    const cached = coverCacheRef.current.get(key);
+    if (cached) {
+      setResolvedMusicCover(cached);
+      warmCover(cached);
+      setHistory((prev) => ensureCurrentAtFront(prev, cached));
+    } else if (musicData?.capa) {
+      // placeholder imediato — NÃO cacheado como autoritativo
       setResolvedMusicCover(musicData.capa);
       warmCover(musicData.capa);
-      const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
-      coverCacheRef.current.set(key, musicData.capa);
       setHistory((prev) => ensureCurrentAtFront(prev, musicData.capa));
-      return;
+    } else {
+      setResolvedMusicCover("");
+      setHistory((prev) => ensureCurrentAtFront(prev, undefined));
     }
-
-    setResolvedMusicCover("");
-    // FIX (bug capa travada): mesmo antes do fetch resolver — ou se ele falhar /
-    // retornar vazio — sobe a música corrente para history[0] imediatamente.
-    // Sem isso, quando musicData.capa vem vazio e o iTunes/fallback não retorna
-    // capa, o histórico continuava com a faixa anterior no topo e o
-    // <NowCoverCrossfade capa={history[0].capa}> ficava congelado na capa antiga.
-    setHistory((prev) => ensureCurrentAtFront(prev, undefined));
 
     fetchCover(artista, musica).then((cover) => {
       if (cancelled) return;
       if (!cover) return;
-      setResolvedMusicCover(cover);
+      // Só atualiza se ainda estamos na mesma música e o cover é diferente
+      // do que já está exibido (evita crossfade desnecessário).
+      setResolvedMusicCover((prev) => (prev === cover ? prev : cover));
       setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
 
