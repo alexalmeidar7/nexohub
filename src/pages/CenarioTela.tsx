@@ -2207,56 +2207,6 @@ export default function CenarioTela() {
           )}
   
 
-          {/* "Telas Conectadas" notification */}
-          {showConnectedMsg && (
-            <div
-              className="absolute left-1/2 flex items-center gap-2 px-4 py-2 rounded-full"
-              style={{
-                top: "3vh",
-                transform: "translateX(-50%)",
-                zIndex: 60,
-                background: "rgba(74,222,128,0.2)",
-                WebkitBackdropFilter: "blur(16px)", backdropFilter: "blur(16px)",
-                border: "1px solid rgba(74,222,128,0.4)",
-                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
-              }}
-            >
-              <div className="rounded-full" style={{ width: "1vh", height: "1vh", background: "#4ade80", boxShadow: "0 0 8px #4ade80" }} />
-              <span className="text-white font-semibold" style={{ fontSize: "1.4vh" }}>Telas conectadas</span>
-            </div>
-          )}
-
-          {/* Backend health indicator (public/unauthenticated only) */}
-          {!isAuthenticated && backendHealth !== "online" && (
-            <div
-              className="absolute flex items-center gap-1.5 rounded-full"
-              style={{
-                bottom: "2vh",
-                left: "2vh",
-                zIndex: 60,
-                padding: "0.4vh 1.2vh",
-                background: backendHealth === "offline" ? "rgba(239,68,68,0.25)" : "rgba(250,204,21,0.2)",
-                WebkitBackdropFilter: "blur(12px)",
-                backdropFilter: "blur(12px)",
-                border: `1px solid ${backendHealth === "offline" ? "rgba(239,68,68,0.5)" : "rgba(250,204,21,0.4)"}`,
-                animation: "cenario-page-enter 0.3s cubic-bezier(0.16,1,0.3,1) both",
-              }}
-            >
-              <div
-                className="rounded-full"
-                style={{
-                  width: "0.8vh",
-                  height: "0.8vh",
-                  background: backendHealth === "offline" ? "#ef4444" : "#facc15",
-                  boxShadow: `0 0 6px ${backendHealth === "offline" ? "#ef4444" : "#facc15"}`,
-                  animation: "dualSourceBlink 2s ease-in-out infinite",
-                }}
-              />
-              <span className="text-white/80 font-medium" style={{ fontSize: "1.1vh" }}>
-                {backendHealth === "offline" ? "Conexão indisponível — tentando reconectar…" : "Conexão lenta — aguarde…"}
-              </span>
-            </div>
-          )}
 
           {debugMode && (
             <style>{`
