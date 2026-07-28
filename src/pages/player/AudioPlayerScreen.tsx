@@ -521,6 +521,28 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => clearTimeout(t);
   }, [bgLayers]);
 
+  // ---- Imagem do artista (Deezer) intercalada com o gradiente a cada 6s ----
+  const [artistBgImage, setArtistBgImage] = useState<string>("");
+  useEffect(() => {
+    const artista = String(musicData?.artista || "").trim();
+    if (!artista) { setArtistBgImage(""); return; }
+    const sync = getArtistImageSync(artista);
+    if (sync) { setArtistBgImage(sync); return; }
+    let cancelled = false;
+    fetchArtistImageCached(artista).then((url) => {
+      if (!cancelled) setArtistBgImage(url || "");
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [musicData?.artista]);
+
+  const [showArtistBg, setShowArtistBg] = useState(false);
+  useEffect(() => {
+    if (!artistBgImage) { setShowArtistBg(false); return; }
+    setShowArtistBg(false);
+    const id = setInterval(() => setShowArtistBg((v) => !v), 6000);
+    return () => clearInterval(id);
+  }, [artistBgImage]);
+
   // ---- Progresso do programa no ar ----
   const [progPct, setProgPct] = useState(0);
   useEffect(() => {
