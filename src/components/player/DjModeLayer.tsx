@@ -28,7 +28,10 @@ interface Props {
   coverPalette?: { primary: string; secondary: string } | null;
   /** Tríade de 3 cores amostradas de pontos da capa (preferida no Modo DJ). */
   coverTriad?: { a: string; b: string; c: string } | null;
+  /** Mostra HUD com BPM e "temperatura" (frias/intermediárias/quentes). Default false. */
+  showHud?: boolean;
 }
+
 
 
 // Curva de envelope no beat: attack rápido, decay suave.
