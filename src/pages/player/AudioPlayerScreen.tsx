@@ -1244,7 +1244,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     >
 
       {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} />
+      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} showHud={djHudEnabled} />
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
