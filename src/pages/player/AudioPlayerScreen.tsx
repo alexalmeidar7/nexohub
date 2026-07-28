@@ -746,6 +746,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
   const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
 
+  // ---- Navegação da grade no card CENTRAL (NO AR) ----
+  // index 0 = programa no ar; >0 avança para os próximos programas mantendo o card focado no centro
+  const programNavList = useMemo(() => {
+    const arr: any[] = [];
+    if (currentProg) arr.push(currentProg);
+    (upcomingProgs || []).forEach((p) => { if (p) arr.push(p); });
+    return arr;
+  }, [currentProg, upcomingProgs]);
+  const [progNavIndex, setProgNavIndex] = useState(0);
+  useEffect(() => { setProgNavIndex(0); }, [currentProg?.id]);
+  const progNavMax = Math.max(0, programNavList.length - 1);
+  const focusedProgram = programNavList[progNavIndex] || currentProg;
+  const isFocusedOnAir = progNavIndex === 0;
+  const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
+  const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
+
   // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
   useEffect(() => {
     upcomingProgs.forEach((p) => {
@@ -1655,6 +1671,40 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
+          {/* Setas de navegação de programas — acima do card, sempre mantendo o programa focado no centro */}
+          {programNavList.length > 1 && (
+            <div
+              className="flex items-center gap-3"
+              style={{
+                transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
+                transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
+            >
+              <button
+                type="button"
+                onClick={goPrevProg}
+                disabled={progNavIndex <= 0}
+                aria-label="Programa anterior"
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                data-focusable
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className="text-[10px] uppercase tracking-widest text-white/75 min-w-[64px] text-center">
+                {isFocusedOnAir ? "no ar" : "a seguir"}
+              </div>
+              <button
+                type="button"
+                onClick={goNextProg}
+                disabled={progNavIndex >= progNavMax}
+                aria-label="Próximo programa"
+                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                data-focusable
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
           <div
             style={{
               width: 368,
@@ -1666,15 +1716,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             data-focusable
           >
             <ProgramShowcaseCard
-              program={currentProg}
+              program={focusedProgram}
               apresentadores={apresentadores}
-              variant="live"
+              variant={isFocusedOnAir ? "live" : "upcoming"}
+              isActive={!isFocusedOnAir}
               radius={40}
               fallbackTitle={canal?.name}
-              progressPct={progPct}
-              liked={programLiked}
-              onToggleLike={toggleProgramLike}
+              progressPct={isFocusedOnAir ? progPct : 0}
+              liked={isFocusedOnAir ? programLiked : false}
+              onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
               onImageLoad={(url) => {
+                if (!isFocusedOnAir) return;
                 loadedLocutorUrlRef.current = url;
                 markLocutorImageLoaded(url);
                 setLocutorImgState("loaded");
