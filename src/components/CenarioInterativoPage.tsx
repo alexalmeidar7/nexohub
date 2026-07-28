@@ -76,6 +76,8 @@ interface HomeConfig {
   artistOverlayOpacity?: number;
   showMusicCover?: boolean;
   showProgramThumb?: boolean;
+  colorButtonBgOff?: string;
+  colorButtonBgOn?: string;
   colorButtonOff?: string;
   colorButtonOn?: string;
   colorClock?: string;
@@ -85,6 +87,7 @@ interface HomeConfig {
   colorASeguirLabel?: string;
   colorNextProgram?: string;
   colorProgressBar?: string;
+
 }
 
 interface CenarioConfig {
@@ -116,7 +119,17 @@ const defaultConfig: CenarioConfig = {
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
   bgType: "none",
-  home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
+  home: {
+    bgImage: "",
+    showArtistImage: true,
+    showMusicCover: true,
+    showProgramThumb: true,
+    colorButtonBgOff: "rgba(0,0,0,0.8)",
+    colorButtonBgOn: "rgba(0,191,240,0.85)",
+    colorButtonOff: "rgba(255,255,255,0.7)",
+    colorButtonOn: "#FFFFFF",
+  },
+
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6, favorites: [] },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
@@ -1865,18 +1878,20 @@ export default function CenarioInterativoPage() {
                   {/* Cores dos Elementos do Preview */}
                   {(() => {
                     const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
-                      { key: "colorButtonOff", label: "Ícone desligado (inativo)", def: "#000000" },
-                      { key: "colorButtonOn", label: "Ícone ativo",                 def: "#00BFF0" },
-                      { key: "colorClock",     label: "Texto — Hora",               def: "#FFFFFF" },
-                      { key: "colorDate",      label: "Texto — Data",               def: "#00BFF0" },
-                      { key: "colorMusicName", label: "Texto — Nome da música",     def: "#FFFFFF" },
-                      { key: "colorMusicTitle",label: "Texto — Título da música",   def: "#00BFF0" },
-                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',      def: "#00BFF0" },
-                      { key: "colorNextProgram",  label: "Texto — Programa a seguir", def: "#FFFFFF" },
-                      { key: "colorProgressBar",  label: "Barra de progresso do programa", def: "#00BFF0" },
+                      { key: "colorButtonBgOff", label: "Fundo do botão desligado (inativo)", def: "rgba(0,0,0,0.8)" },
+                      { key: "colorButtonBgOn",  label: "Fundo do botão ativo",             def: "rgba(0,191,240,0.85)" },
+                      { key: "colorButtonOff",   label: "Ícone do botão desligado (inativo)", def: "rgba(255,255,255,0.7)" },
+                      { key: "colorButtonOn",    label: "Ícone do botão ativo",             def: "#FFFFFF" },
+                      { key: "colorClock",       label: "Texto — Hora",                   def: "#FFFFFF" },
+                      { key: "colorDate",        label: "Texto — Data",                   def: "#00BFF0" },
+                      { key: "colorMusicName",   label: "Texto — Nome da música",         def: "#FFFFFF" },
+                      { key: "colorMusicTitle",  label: "Texto — Título da música",       def: "#00BFF0" },
+                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',            def: "#00BFF0" },
+                      { key: "colorNextProgram",  label: "Texto — Programa a seguir",        def: "#FFFFFF" },
+                      { key: "colorProgressBar",  label: "Barra de progresso do programa",   def: "#00BFF0" },
                     ];
                     const normalizeHex = (v: string) => {
-                      const s = v.trim();
+                      const s = v?.trim?.() || "";
                       if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
                       if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
                       const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
@@ -1886,6 +1901,7 @@ export default function CenarioInterativoPage() {
                       }
                       return null;
                     };
+
                     // WCAG 2.1 relative luminance + contrast ratio
                     const hexToRgb = (hex: string): [number, number, number] | null => {
                       const n = normalizeHex(hex);
@@ -1906,8 +1922,16 @@ export default function CenarioInterativoPage() {
                       const light = Math.max(la, lb); const dark = Math.min(la, lb);
                       return (light + 0.05) / (dark + 0.05);
                     };
-                    const wcagBadge = (bg: string, fg: string = "#FFFFFF") => {
-                      const r = contrastRatio(bg, fg);
+                    const pairFor = (key: string) => {
+                      if (key === "colorButtonBgOff") return { color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", label: "vs ícone" };
+                      if (key === "colorButtonBgOn") return { color: config.home.colorButtonOn || "#FFFFFF", label: "vs ícone" };
+                      if (key === "colorButtonOff") return { color: config.home.colorButtonBgOff || "rgba(0,0,0,0.8)", label: "vs fundo" };
+                      if (key === "colorButtonOn") return { color: config.home.colorButtonBgOn || "rgba(0,191,240,0.85)", label: "vs fundo" };
+                      return { color: "#FFFFFF", label: "vs branco" };
+                    };
+                    const wcagBadge = (bg: string, key: string) => {
+                      const p = pairFor(key);
+                      const r = contrastRatio(bg, p.color);
                       if (r == null) return null;
                       const val = r.toFixed(2);
                       const passAAA = r >= 7;
@@ -1921,10 +1945,11 @@ export default function CenarioInterativoPage() {
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: bgc, color }}>
                             {val}:1 · {level}
                           </span>
-                          <span className="text-[8px] uppercase font-bold opacity-50">vs ícone branco</span>
+                          <span className="text-[8px] uppercase font-bold opacity-50">{p.label}</span>
                         </div>
                       );
                     };
+
 
                     return (
                       <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
@@ -1969,7 +1994,7 @@ export default function CenarioInterativoPage() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
                             {colorFields.map(f => {
                               const current = (config.home[f.key] as string) || f.def;
-                              const displayHex = normalizeHex(current) || f.def;
+                              const displayHex = normalizeHex(current) || normalizeHex(f.def) || "#000000";
                               return (
                                 <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
                                   <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
@@ -1998,20 +2023,12 @@ export default function CenarioInterativoPage() {
                                       placeholder="#RRGGBB ou rgb(r,g,b)"
                                       className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
                                     />
-                                    {(f.key === "colorButtonOff" || f.key === "colorButtonOn") && wcagBadge(current, "#FFFFFF")}
+                                    {wcagBadge(current, f.key as string)}
                                   </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
-                                    title="Redefinir"
-                                    className="shrink-0 h-6 px-1.5 text-[9px] uppercase font-bold rounded bg-black/5 hover:bg-black/10 text-black/60"
-                                  >
-                                    Reset
-                                  </button>
                                 </div>
                               );
                             })}
+
                           </div>
                         )}
                       </div>
@@ -3230,59 +3247,61 @@ export default function CenarioInterativoPage() {
                       const sBS = `${pvh(2.8)}px`;
                       const sFS = `${pvh(1.2)}px`;
                       const sPad = `${pvh(0.6)}px`;
+                      const btnBg = (active: boolean) => active ? (config.home.colorButtonBgOn || "rgba(0,191,240,0.85)") : (config.home.colorButtonBgOff || "rgba(0,0,0,0.8)");
+                      const btnIcon = (active: boolean) => active ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)");
                       return (
                         <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
                           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
-                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "home" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "home"), border: "none", color: btnIcon(activeTab === "home"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Home style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "weather" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather"), border: "none", color: btnIcon(activeTab === "weather"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <CloudSun style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
                                   {config.weather.enabled && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "weather" && weatherSubTab === "today" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "today"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "today"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
                                   )}
                                   {config.weather.enabled && config.weather.showSatellite && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "weather" && weatherSubTab === "satellite" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: "transparent", border: "none", color: activeTab === "traffic" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(activeTab === "traffic"), border: "none", color: btnIcon(activeTab === "traffic"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Car style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "currency" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "currency"), border: "none", color: btnIcon(activeTab === "currency"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <DollarSign style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
-                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "currency" && currencySubTab === "moedas" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
-                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "currency" && currencySubTab === "bolsas" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "currency" && currencySubTab === "moedas"), border: "none", color: btnIcon(activeTab === "currency" && currencySubTab === "moedas"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "currency" && currencySubTab === "bolsas"), border: "none", color: btnIcon(activeTab === "currency" && currencySubTab === "bolsas"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "chat" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "chat"), border: "none", color: btnIcon(activeTab === "chat"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <MessageCircle style={{ width: iS, height: iS }} />
                             </button>
-                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: "transparent", border: "none", color: previewDrawActive ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(previewDrawActive), border: "none", color: btnIcon(previewDrawActive), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Pen style={{ width: iS, height: iS }} />
                             </button>
                             {previewDrawActive && (
                               <>
-                                 <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none" }}>
+                                 <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(showPreviewDrawOptions), border: "none" }}>
                                    <div style={{ width: `${pvh(1.2)}px`, height: `${pvh(1.2)}px`, borderRadius: "50%", background: previewDrawColor, boxShadow: "0 1px 3px rgba(0,0,0,0.5)" }} />
                                  </button>
-                                 <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: previewDrawMode === "eraser" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(previewDrawMode === "eraser"), border: "none", color: btnIcon(previewDrawMode === "eraser"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Eraser size={pvh(1)} />
                                  </button>
-                                 <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(false), border: "none", color: btnIcon(false), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Undo2 size={pvh(1)} />
                                  </button>
-                                 <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: previewDrawMode === "shape" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(previewDrawMode === "shape"), border: "none", color: btnIcon(previewDrawMode === "shape"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Shapes size={pvh(1)} />
                                  </button>
                               </>
@@ -3291,6 +3310,7 @@ export default function CenarioInterativoPage() {
                         </div>
                       );
                     })()}
+
 
                     {/* Content area */}
                     <div className="flex-1 relative" style={{ zIndex: 1 }}>
