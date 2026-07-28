@@ -746,6 +746,22 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevUp = () => setUpcomingIndex((i) => Math.max(0, i - 1));
   const goNextUp = () => setUpcomingIndex((i) => Math.min(upcomingMax, i + 1));
 
+  // ---- Navegação da grade no card CENTRAL (NO AR) ----
+  // index 0 = programa no ar; >0 avança para os próximos programas mantendo o card focado no centro
+  const programNavList = useMemo(() => {
+    const arr: any[] = [];
+    if (currentProg) arr.push(currentProg);
+    (upcomingProgs || []).forEach((p) => { if (p) arr.push(p); });
+    return arr;
+  }, [currentProg, upcomingProgs]);
+  const [progNavIndex, setProgNavIndex] = useState(0);
+  useEffect(() => { setProgNavIndex(0); }, [currentProg?.id]);
+  const progNavMax = Math.max(0, programNavList.length - 1);
+  const focusedProgram = programNavList[progNavIndex] || currentProg;
+  const isFocusedOnAir = progNavIndex === 0;
+  const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
+  const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
+
   // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
   useEffect(() => {
     upcomingProgs.forEach((p) => {
