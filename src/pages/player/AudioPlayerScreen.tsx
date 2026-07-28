@@ -3027,11 +3027,17 @@ function InteractivityMenu({
       </button>
 
 
-      {/* Submenu */}
-      {open && (
+      {/* Submenu via portal para evitar corte por overflow de pais */}
+      {open && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 bottom-[calc(100%+8px)] z-50 min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/85 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]"
+          className={[
+            "fixed z-[100] min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/90 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]",
+            menuLayout === "centered"
+              ? "left-1/2 -translate-x-1/2 bottom-4 max-w-[min(92vw,280px)] w-full"
+              : "right-4 bottom-28",
+          ].join(" ")}
         >
           <MenuItem
             active={chatOpen}
@@ -3056,7 +3062,8 @@ function InteractivityMenu({
             disabled={!activePoll}
             onClick={() => { setPollOpen(true); setOpen(false); }}
           />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Popup da enquete */}
@@ -3078,7 +3085,6 @@ function InteractivityMenu({
             setAlreadyVoted(true);
           }}
         />
-
       )}
 
       <style>{`
