@@ -489,6 +489,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const musicPalette = useCoverPalette(musicCover);
   const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
   const activePalette = musicCover ? musicPalette : onAirPalette;
+  const djCoverTriad = useCoverTriad(musicCover || onAirImage);
+
   const musicGradient = activePalette
     ? `radial-gradient(ellipse at 20% 20%, ${activePalette.primary}cc 0%, transparent 55%), radial-gradient(ellipse at 80% 80%, ${activePalette.secondary}cc 0%, transparent 55%), linear-gradient(135deg, ${activePalette.primary} 0%, ${activePalette.secondary} 100%)`
     : "linear-gradient(135deg, #1a1f2e 0%, #050810 100%)";
