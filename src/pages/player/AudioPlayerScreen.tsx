@@ -2184,39 +2184,108 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
           <div className="flex items-center gap-2 justify-self-end">
             {!isVideoChannel && (
-              <button
-                type="button"
-                onClick={() => setDjModeOn((v) => !v)}
-                className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : "hover:bg-white/12"}`}
-                style={
-                  djModeActive
-                    ? {
-                        background: "linear-gradient(90deg, rgba(255,0,212,0.32), rgba(0,229,255,0.32))",
-                        borderColor: "rgba(255,255,255,0.45)",
-                        boxShadow: "0 0 18px rgba(255,0,212,0.5), 0 0 32px rgba(0,229,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.15)",
-                      }
-                    : {
-                        background: "rgba(255,255,255,0.05)",
-                        borderColor: "rgba(255,255,255,0.12)",
-                      }
-                }
-                title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ"}
-                aria-pressed={djModeActive}
-                aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
-                data-focusable
-                data-active={djModeActive || undefined}
-              >
-                <Disc3
-                  size={24}
-                  strokeWidth={2}
-                  className="text-white transition-all duration-200"
-                  style={{
-                    opacity: djModeActive ? 1 : 0.55,
-                  }}
-                  aria-hidden
-                />
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setDjModeOn((v) => !v)}
+                  onContextMenu={(e) => { e.preventDefault(); setDjPanelOpen((v) => !v); }}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : "hover:bg-white/12"}`}
+                  style={
+                    djModeActive
+                      ? {
+                          background: "linear-gradient(90deg, rgba(255,0,212,0.32), rgba(0,229,255,0.32))",
+                          borderColor: "rgba(255,255,255,0.45)",
+                          boxShadow: "0 0 18px rgba(255,0,212,0.5), 0 0 32px rgba(0,229,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.15)",
+                        }
+                      : {
+                          background: "rgba(255,255,255,0.05)",
+                          borderColor: "rgba(255,255,255,0.12)",
+                        }
+                  }
+                  title={djModeActive ? "Modo DJ ligado — clique para desligar (clique direito: configurações)" : "Ligar Modo DJ (clique direito: configurações)"}
+                  aria-pressed={djModeActive}
+                  aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
+                  data-focusable
+                  data-active={djModeActive || undefined}
+                >
+                  <Disc3
+                    size={24}
+                    strokeWidth={2}
+                    className="text-white transition-all duration-200"
+                    style={{
+                      opacity: djModeActive ? 1 : 0.55,
+                    }}
+                    aria-hidden
+                  />
+                </button>
+                {/* Botão de settings sutil no canto */}
+                <button
+                  type="button"
+                  onClick={() => setDjPanelOpen((v) => !v)}
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/85 transition"
+                  aria-label="Configurações do Modo DJ"
+                  title="Configurações do Modo DJ"
+                >
+                  <Settings size={11} />
+                </button>
+                {djPanelOpen && (
+                  <>
+                    <div className="fixed inset-0 z-[60]" onClick={() => setDjPanelOpen(false)} />
+                    <div
+                      className="absolute right-0 bottom-[calc(100%+10px)] z-[61] w-[260px] rounded-2xl border border-white/10 bg-black/85 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.7)] p-3"
+                      onClick={(e) => e.stopPropagation()}
+                      role="dialog"
+                      aria-label="Configurações do Modo DJ"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <Disc3 size={14} className="text-white/70" />
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-white/60 font-medium flex-1">
+                          Modo DJ
+                        </div>
+                      </div>
+                      <label className="flex items-center justify-between gap-3 py-2 cursor-pointer">
+                        <span className="text-[12px] text-white/85">HUD de BPM / temperatura</span>
+                        <span
+                          role="switch"
+                          aria-checked={djHudEnabled}
+                          onClick={() => setDjHudEnabled((v) => !v)}
+                          className="relative inline-block w-9 h-5 rounded-full transition"
+                          style={{
+                            background: djHudEnabled ? "rgba(0,229,255,0.55)" : "rgba(255,255,255,0.15)",
+                            border: "1px solid rgba(255,255,255,0.18)",
+                          }}
+                        >
+                          <span
+                            className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+                            style={{ left: djHudEnabled ? "18px" : "2px" }}
+                          />
+                        </span>
+                      </label>
+                      <div className="mt-2">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[12px] text-white/85">Sensibilidade</span>
+                          <span className="text-[11px] text-white/50 tabular-nums">{Math.round(djSensitivity * 100)}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={1}
+                          step={0.05}
+                          value={djSensitivity}
+                          onChange={(e) => setDjSensitivity(parseFloat(e.target.value))}
+                          className="w-full accent-white"
+                          aria-label="Sensibilidade do Modo DJ"
+                        />
+                      </div>
+                      <p className="mt-2 text-[10.5px] leading-snug text-white/45">
+                        Dica: clique com o botão direito no ícone do disco para reabrir estas configurações.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             )}
+
             <button
               type="button"
               onClick={toggleFullscreen}
