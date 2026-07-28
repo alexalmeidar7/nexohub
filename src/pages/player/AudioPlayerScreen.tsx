@@ -2801,20 +2801,27 @@ function InteractivityMenu({
             filter: "saturate(1.15)",
           }}
         />
-        {/* halo suave */}
+        {/* halo suave — mais intenso quando o menu está aberto */}
         <span
           aria-hidden
-          className="absolute -inset-[3px] rounded-full opacity-70 blur-[6px] group-hover:opacity-100 transition-opacity duration-300"
+          className={`absolute -inset-[3px] rounded-full blur-[6px] transition-opacity duration-300 group-hover:opacity-100 ${open ? "opacity-100" : "opacity-70"}`}
           style={{
             background:
               "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
             animation: "interactSpin 3.6s linear infinite",
+            filter: open ? "saturate(1.4) brightness(1.15)" : undefined,
           }}
         />
-        {/* núcleo — expande no hover para revelar o texto */}
+        {/* núcleo — expande no hover; recebe tint quando aberto */}
         <span
-          className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
-          style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
+          className="relative z-10 h-full w-full rounded-full flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
+          style={{
+            background: open
+              ? "linear-gradient(135deg, #1a0b1f 0%, #0b0b10 60%)"
+              : "#0b0b10",
+            boxShadow: open ? "inset 0 0 0 1px rgba(255,255,255,0.18)" : "none",
+            transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease-out",
+          }}
         >
           <Sparkles size={16} className="text-white shrink-0" strokeWidth={2.2} />
           <span
