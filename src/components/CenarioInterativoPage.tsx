@@ -1933,6 +1933,30 @@ export default function CenarioInterativoPage() {
                             <Palette size={16} />
                           </div>
                           <h4 className="text-xs font-bold uppercase tracking-wider">Cores dos Elementos</h4>
+                          <div className="ml-auto flex items-center gap-2">
+                            {!saving && savedFlash && (
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">✓ Cores salvas</span>
+                            )}
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={async () => {
+                                if (saveTimeout.current) { clearTimeout(saveTimeout.current); saveTimeout.current = null; }
+                                if (pendingSaveRef.current) {
+                                  await pendingSaveRef.current();
+                                } else {
+                                  const configWithTabs = { ...config, _activeTab: activeTab, _weatherSubTab: weatherSubTab, _currencySubTab: currencySubTab, _screenRotation: externalRotation };
+                                  rtDrawChannelRef.current?.send({ type: "broadcast", event: "config-update", payload: { config: configWithTabs } });
+                                  setSavedFlash(true);
+                                  if (savedFlashTimer.current) clearTimeout(savedFlashTimer.current);
+                                  savedFlashTimer.current = setTimeout(() => setSavedFlash(false), 2500);
+                                }
+                              }}
+                              className="h-7 px-3 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[var(--layout-accent-color)] text-white hover:opacity-90 disabled:opacity-50 shadow-sm"
+                            >
+                              {saving ? "Salvando…" : "Salvar cores"}
+                            </button>
+                          </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
                           {colorFields.map(f => {
