@@ -521,7 +521,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     return () => clearTimeout(t);
   }, [bgLayers]);
 
-  // ---- Imagem do artista (Deezer) intercalada com o gradiente a cada 6s ----
+  // ---- Imagem do artista (Deezer) intercalada com o gradiente a cada 15s ----
   const [artistBgImage, setArtistBgImage] = useState<string>("");
   useEffect(() => {
     const artista = String(musicData?.artista || "").trim();
@@ -539,7 +539,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   useEffect(() => {
     if (!artistBgImage) { setShowArtistBg(false); return; }
     setShowArtistBg(false);
-    const id = setInterval(() => setShowArtistBg((v) => !v), 6000);
+    const id = setInterval(() => setShowArtistBg((v) => !v), 15000);
     return () => clearInterval(id);
   }, [artistBgImage]);
 
@@ -1277,7 +1277,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
-      {/* Imagem do artista (Deezer) intercalada a cada 6s com movimento lento (Ken Burns) */}
+      {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
       {artistBgImage && !djModeActive && (
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
