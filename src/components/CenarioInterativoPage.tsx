@@ -3240,66 +3240,68 @@ export default function CenarioInterativoPage() {
                     })()}
 
                     {/* Sidebar — matches CenarioTela exactly */}
-                    {(() => {
+(() => {
                       const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
                       const bS = `${pvh(3.8)}px`;
                       const iS = `${pvh(1.7)}px`;
                       const sBS = `${pvh(2.8)}px`;
                       const sFS = `${pvh(1.2)}px`;
                       const sPad = `${pvh(0.6)}px`;
+                      const btnBg = (active: boolean) => active ? (config.home.colorButtonBgOn || "rgba(0,191,240,0.85)") : (config.home.colorButtonBgOff || "rgba(0,0,0,0.8)");
+                      const btnIcon = (active: boolean) => active ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)");
                       return (
                         <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
                           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
-                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "home" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "home"), border: "none", color: btnIcon(activeTab === "home"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Home style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "weather" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather"), border: "none", color: btnIcon(activeTab === "weather"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <CloudSun style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
                                   {config.weather.enabled && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "weather" && weatherSubTab === "today" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "today"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "today"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
                                   )}
                                   {config.weather.enabled && config.weather.showSatellite && (
-                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "weather" && weatherSubTab === "satellite" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
+                                    <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                   )}
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: "transparent", border: "none", color: activeTab === "traffic" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(activeTab === "traffic"), border: "none", color: btnIcon(activeTab === "traffic"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Car style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.currency.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "currency" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (!config.currency.enabled) return; if (activeTab === "currency") { handleTabChange("home"); } else { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "currency"), border: "none", color: btnIcon(activeTab === "currency"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <DollarSign style={{ width: iS, height: iS }} />
                               </button>
                               <div style={{ overflow: "hidden", maxHeight: activeTab === "currency" ? `${pvh(10)}px` : "0", transition: "max-height 0.4s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "currency" ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
-                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "currency" && currencySubTab === "moedas" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
-                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: "transparent", border: "none", color: activeTab === "currency" && currencySubTab === "bolsas" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("moedas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "currency" && currencySubTab === "moedas"), border: "none", color: btnIcon(activeTab === "currency" && currencySubTab === "moedas"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
+                                   <button onClick={() => { handleTabChange("currency"); handleCurrencySubTabChange("bolsas"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "currency" && currencySubTab === "bolsas"), border: "none", color: btnIcon(activeTab === "currency" && currencySubTab === "bolsas"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                 </div>
                               </div>
                             </div>
-                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: "transparent", border: "none", color: activeTab === "chat" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => config.chat.enabled && handleTabChange("chat")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "chat"), border: "none", color: btnIcon(activeTab === "chat"), opacity: config.chat.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <MessageCircle style={{ width: iS, height: iS }} />
                             </button>
-                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: "transparent", border: "none", color: previewDrawActive ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                            <button onClick={() => { setPreviewDrawActive(p => { const n = !p; if (!n) { setShowPreviewDrawOptions(false); setShowShapesPanel(false); } else { setPreviewDrawMode("pen"); } return n; }); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(previewDrawActive), border: "none", color: btnIcon(previewDrawActive), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Pen style={{ width: iS, height: iS }} />
                             </button>
                             {previewDrawActive && (
                               <>
-                                 <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none" }}>
+                                 <button onClick={() => { setShowPreviewDrawOptions(p => !p); setShowShapesPanel(false); }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(showPreviewDrawOptions), border: "none" }}>
                                    <div style={{ width: `${pvh(1.2)}px`, height: `${pvh(1.2)}px`, borderRadius: "50%", background: previewDrawColor, boxShadow: "0 1px 3px rgba(0,0,0,0.5)" }} />
                                  </button>
-                                 <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: previewDrawMode === "eraser" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={() => setPreviewDrawMode(m => m === "eraser" ? "pen" : "eraser")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(previewDrawMode === "eraser"), border: "none", color: btnIcon(previewDrawMode === "eraser"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Eraser size={pvh(1)} />
                                  </button>
-                                 <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={undoLastDraw} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(false), border: "none", color: btnIcon(false), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Undo2 size={pvh(1)} />
                                  </button>
-                                 <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: "transparent", border: "none", color: previewDrawMode === "shape" ? (config.home.colorButtonOn || "#fff") : (config.home.colorButtonOff || "rgba(255,255,255,0.7)"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                 <button onClick={() => { setShowShapesPanel(p => !p); setShowPreviewDrawOptions(false); if (previewDrawMode !== "shape") { setPreviewDrawMode("shape"); if (!selectedShape) setSelectedShape("arrow-up"); } else { setPreviewDrawMode("pen"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: sBS, height: sBS, background: btnBg(previewDrawMode === "shape"), border: "none", color: btnIcon(previewDrawMode === "shape"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                    <Shapes size={pvh(1)} />
                                  </button>
                               </>
@@ -3308,6 +3310,7 @@ export default function CenarioInterativoPage() {
                         </div>
                       );
                     })()}
+
 
                     {/* Content area */}
                     <div className="flex-1 relative" style={{ zIndex: 1 }}>
