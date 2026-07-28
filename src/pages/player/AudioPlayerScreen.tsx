@@ -762,6 +762,47 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
   const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
 
+  // ---- Swipe / drag no card do programa ----
+  const [progSwipeDx, setProgSwipeDx] = useState(0);
+  const [progSwiping, setProgSwiping] = useState(false);
+  const progSwipeRef = useRef<{ id: number; x: number; y: number; locked: "x" | "y" | null } | null>(null);
+  const SWIPE_THRESHOLD = 60;
+  const onProgSwipeStart = (e: React.PointerEvent) => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    progSwipeRef.current = { id: e.pointerId, x: e.clientX, y: e.clientY, locked: null };
+    setProgSwiping(true);
+    try { (e.currentTarget as Element).setPointerCapture(e.pointerId); } catch {}
+  };
+  const onProgSwipeMove = (e: React.PointerEvent) => {
+    const s = progSwipeRef.current;
+    if (!s || s.id !== e.pointerId) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (!s.locked) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      s.locked = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+    }
+    if (s.locked === "x") {
+      const atStart = progNavIndex <= 0 && dx > 0;
+      const atEnd = progNavIndex >= progNavMax && dx < 0;
+      const resistance = atStart || atEnd ? 0.3 : 1;
+      setProgSwipeDx(Math.max(-200, Math.min(200, dx * resistance)));
+    }
+  };
+  const onProgSwipeEnd = (e: React.PointerEvent) => {
+    const s = progSwipeRef.current;
+    if (!s || s.id !== e.pointerId) return;
+    const dx = progSwipeDx;
+    progSwipeRef.current = null;
+    setProgSwiping(false);
+    setProgSwipeDx(0);
+    if (s.locked === "x") {
+      if (dx <= -SWIPE_THRESHOLD) goNextProg();
+      else if (dx >= SWIPE_THRESHOLD) goPrevProg();
+    }
+  };
+
+
   // Pré-aquece decode das capas dos próximos programas (crossfade instantâneo ao navegar)
   useEffect(() => {
     upcomingProgs.forEach((p) => {
