@@ -119,7 +119,17 @@ const defaultConfig: CenarioConfig = {
   useProgramThumbAsBg: false,
   programThumbPosition: "center",
   bgType: "none",
-  home: { bgImage: "", showArtistImage: true, showMusicCover: true, showProgramThumb: true },
+  home: {
+    bgImage: "",
+    showArtistImage: true,
+    showMusicCover: true,
+    showProgramThumb: true,
+    colorButtonBgOff: "rgba(0,0,0,0.8)",
+    colorButtonBgOn: "rgba(0,191,240,0.85)",
+    colorButtonOff: "rgba(255,255,255,0.7)",
+    colorButtonOn: "#FFFFFF",
+  },
+
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "", lat: null, lon: null, zoom: 6, favorites: [] },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
