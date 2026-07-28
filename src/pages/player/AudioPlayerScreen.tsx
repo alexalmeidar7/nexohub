@@ -2828,7 +2828,7 @@ function InteractivityMenu({
             transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease-out",
           }}
         >
-          <Sparkles size={16} className="text-white shrink-0" strokeWidth={2.2} />
+          <Sparkles size={22} className="text-white shrink-0" strokeWidth={2.2} />
           <span
             className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
             style={{ transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease-out 100ms" }}
