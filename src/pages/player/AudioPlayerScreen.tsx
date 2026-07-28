@@ -3001,7 +3001,7 @@ function InteractivityMenu({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-[calc(100%+8px)] z-50 min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/85 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeIn_140ms_ease-out]"
+          className="absolute right-0 bottom-[calc(100%+8px)] z-50 min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/85 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]"
         >
           <MenuItem
             active={chatOpen}
@@ -3058,7 +3058,7 @@ function InteractivityMenu({
           70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
           100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       `}</style>
     </div>
   );
