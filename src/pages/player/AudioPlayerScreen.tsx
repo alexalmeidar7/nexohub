@@ -2059,7 +2059,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 <span
                   aria-hidden
                   style={{
-                    fontSize: 14,
+                    fontSize: 22,
                     filter: djModeActive ? "none" : "grayscale(1)",
                     opacity: djModeActive ? 1 : 0.55,
                     transition: "filter 200ms ease-out, opacity 200ms ease-out",
