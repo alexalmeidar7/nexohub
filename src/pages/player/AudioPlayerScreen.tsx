@@ -2777,7 +2777,9 @@ function InteractivityMenu({
         onClick={() => setOpen((v) => !v)}
         aria-label="Interatividade"
         aria-expanded={open}
+        aria-pressed={open}
         data-focusable
+        data-active={open || undefined}
         className="relative h-10 rounded-full flex items-center justify-center outline-none group overflow-hidden"
         style={{
           padding: 2,
