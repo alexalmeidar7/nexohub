@@ -762,6 +762,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
   const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
 
+  // ---- Animação de entrada/saída do card central ao navegar programas ----
+  const [progSwitching, setProgSwitching] = useState(false);
+  const prevFocusRef = useRef<{ program: any; index: number; isOnAir: boolean }>({
+    program: focusedProgram,
+    index: progNavIndex,
+    isOnAir: isFocusedOnAir,
+  });
+  useEffect(() => {
+    if (prevFocusRef.current.program?.id === focusedProgram?.id) return;
+    setProgSwitching(true);
+    const t = setTimeout(() => {
+      prevFocusRef.current = { program: focusedProgram, index: progNavIndex, isOnAir: isFocusedOnAir };
+      setProgSwitching(false);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [focusedProgram, progNavIndex, isFocusedOnAir]);
+
   // ---- Swipe / drag no card do programa ----
   const [progSwipeDx, setProgSwipeDx] = useState(0);
   const [progSwiping, setProgSwiping] = useState(false);
@@ -1174,203 +1191,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <div className="text-base font-semibold">{canal?.name || "—"}</div>
           </div>
 
-          {/* Pills */}
-          <nav className="ml-6 flex items-center gap-2">
-            <button
-              onClick={handleBackHome}
-              className="px-3 h-7 rounded-full flex items-center gap-1.5 text-[11px] transition border bg-white/6 border-white/10 text-white/85 hover:bg-white/15 hover:text-white"
-              aria-label="Voltar para Home"
-              data-focusable
-            >
-              <ArrowLeft size={12} />
-              voltar
-            </button>
-            <PillBtn active label="ao vivo" icon={<Radio size={12} />} onClick={() => seekLive()} />
-            <InteractivityMenu
-              userId={effectiveUserId}
-              chatOpen={chatOpen}
-              onToggleChat={() => setChatOpen(!chatOpen)}
-              karaokeEnabled={karaokeEnabled}
-              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-              showKaraoke={!isVideoChannel}
-            />
-            {!isVideoChannel && (
-            <div className="relative">
-              <PillBtn
-                label="músicas tocadas"
-                icon={<ListMusic size={12} />}
-                onClick={() => setPlayedListOpen((v) => !v)}
-                active={playedListOpen}
-              />
-              {playedListOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[60]"
-                    onClick={() => setPlayedListOpen(false)}
-                  />
-                  <div
-                    className="absolute left-0 top-[calc(100%+8px)] z-[61] w-[380px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-2"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/50 border-b border-white/10 mb-1 sticky top-0 bg-black/80 backdrop-blur-xl">
-                      Últimas {history.length} músicas
-                    </div>
-                    {history.length === 0 ? (
-                      <div className="px-3 py-6 text-center text-[12px] text-white/50">
-                        Nenhuma música registrada ainda.
-                      </div>
-                    ) : (
-                      history.map((t, i) => (
-                        <div
-                          key={`${t.horario}-${i}`}
-                          className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-white/8 transition"
-                        >
-                          <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
-                            {(t.horario || "").slice(0, 5)}
-                          </div>
-                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/8 border border-white/10">
-                            {t.capa ? (
-                              <img
-                                src={t.capa}
-                                alt=""
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center">
-                                <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
-                              </div>
-                            )}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
-                              {t.musica}
-                            </div>
-                            <div className="text-[10.5px] uppercase tracking-[0.1em] text-white/55 truncate mt-0.5" title={t.artista}>
-                              {t.artista}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-            )}
-            <PillBtn
-              label={isFullscreen ? "sair fullscreen" : "fullscreen"}
-              icon={isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-              onClick={toggleFullscreen}
-              active={isFullscreen}
-            />
-            {!isVideoChannel && (
-              <div className="relative flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setDjModeOn((v) => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10.5px] font-semibold uppercase tracking-[0.14em] border transition-all ${djModeActive ? "animate-pulse" : ""}`}
-                  style={
-                    djModeActive
-                      ? {
-                          background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
-                          borderColor: "rgba(255,255,255,0.35)",
-                          color: "#fff",
-                          boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
-                          textShadow: "0 0 8px rgba(255,255,255,0.55)",
-                        }
-                      : {
-                          background: "rgba(255,255,255,0.06)",
-                          borderColor: "rgba(255,255,255,0.18)",
-                          color: "rgba(255,255,255,0.75)",
-                        }
-                  }
-                  title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ (fundo pisca no ritmo)"}
-                  aria-pressed={djModeActive}
-                  aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
-                >
-                  <span aria-hidden style={{ fontSize: 12 }}>🎧</span>
-                  modo dj {djModeActive ? "ligado" : "desligado"}
-                </button>
-                {djModeActive && (
-                  <button
-                    type="button"
-                    onClick={() => setDjPanelOpen((v) => !v)}
-                    className="flex items-center justify-center w-7 h-7 rounded-full border transition-all"
-                    style={{
-                      background: djPanelOpen ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.06)",
-                      borderColor: "rgba(255,255,255,0.22)",
-                      color: "rgba(255,255,255,0.9)",
-                    }}
-                    title="Ajustar sensibilidade do Modo DJ"
-                    aria-label="Ajustar sensibilidade do Modo DJ"
-                    aria-expanded={djPanelOpen}
-                  >
-                    <span aria-hidden style={{ fontSize: 13, lineHeight: 1 }}>⚙</span>
-                  </button>
-                )}
-                {djModeActive && djPanelOpen && (
-                  <div
-                    className="absolute top-full right-0 mt-2 p-3 rounded-xl border backdrop-blur-md z-30"
-                    style={{
-                      background: "rgba(15,15,20,0.82)",
-                      borderColor: "rgba(255,255,255,0.14)",
-                      minWidth: 240,
-                      boxShadow: "0 12px 40px rgba(0,0,0,0.55)",
-                    }}
-                    role="dialog"
-                    aria-label="Sensibilidade do Modo DJ"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-white/85">Sensibilidade</span>
-                      <span className="text-[10.5px] font-mono text-white/70 tabular-nums">
-                        {Math.round(djSensitivity * 100)}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={Math.round(djSensitivity * 100)}
-                      onChange={(e) => setDjSensitivity(parseInt(e.target.value, 10) / 100)}
-                      className="w-full accent-fuchsia-400"
-                      aria-label="Sensibilidade do Modo DJ"
-                    />
-                    <div className="flex items-center justify-between mt-1 text-[9.5px] uppercase tracking-[0.14em] text-white/45">
-                      <span>Suave</span>
-                      <span>Agressivo</span>
-                    </div>
-                    <div className="mt-2 flex gap-1">
-                      {[
-                        { label: "Baixa", v: 0.25 },
-                        { label: "Média", v: 0.5 },
-                        { label: "Alta", v: 0.8 },
-                      ].map((p) => (
-                        <button
-                          key={p.label}
-                          type="button"
-                          onClick={() => setDjSensitivity(p.v)}
-                          className="flex-1 py-1 rounded-md text-[10px] font-semibold uppercase tracking-[0.1em] border transition-colors"
-                          style={{
-                            background: Math.abs(djSensitivity - p.v) < 0.02 ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.05)",
-                            borderColor: "rgba(255,255,255,0.14)",
-                            color: "rgba(255,255,255,0.85)",
-                          }}
-                        >
-                          {p.label}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-2 text-[10px] leading-snug text-white/55">
-                      Aumente para captar batidas fracas; diminua para reagir só aos picos fortes.
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </nav>
         </div>
 
         {/* Channel logo (canto superior direito) */}
@@ -1712,73 +1532,91 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          {/* Setas de navegação de programas — acima do card, sempre mantendo o programa focado no centro */}
-          {programNavList.length > 1 && (
             <div
-              className="flex items-center gap-3"
               style={{
-                transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
-                transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+                width: 368,
+                height: 384,
+                position: "relative",
+                transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
+                transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+                willChange: "transform",
+                touchAction: "pan-y",
               }}
+              onPointerDown={onProgSwipeStart}
+              onPointerMove={onProgSwipeMove}
+              onPointerUp={onProgSwipeEnd}
+              onPointerCancel={onProgSwipeEnd}
+              data-focusable
             >
-              <button
-                type="button"
-                onClick={goPrevProg}
-                disabled={progNavIndex <= 0}
-                aria-label="Programa anterior"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                data-focusable
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <div className="text-[10px] uppercase tracking-widest text-white/75 min-w-[64px] text-center">
-                {isFocusedOnAir ? "no ar" : "a seguir"}
+              {/* Crossfade entre programa anterior e programa em foco */}
+              <div className="absolute inset-0">
+                {progSwitching && (
+                  <div className="absolute inset-0 z-10 animate-exit">
+                    <ProgramShowcaseCard
+                      program={prevFocusRef.current.program}
+                      apresentadores={apresentadores}
+                      variant={prevFocusRef.current.isOnAir ? "live" : "upcoming"}
+                      isActive={!prevFocusRef.current.isOnAir}
+                      radius={40}
+                      fallbackTitle={canal?.name}
+                      progressPct={prevFocusRef.current.isOnAir ? progPct : 0}
+                      liked={prevFocusRef.current.isOnAir ? programLiked : false}
+                      onToggleLike={prevFocusRef.current.isOnAir ? toggleProgramLike : undefined}
+                    />
+                  </div>
+                )}
+                <div key={focusedProgram?.id || progNavIndex} className="absolute inset-0 z-20 animate-enter">
+                  <ProgramShowcaseCard
+                    program={focusedProgram}
+                    apresentadores={apresentadores}
+                    variant={isFocusedOnAir ? "live" : "upcoming"}
+                    isActive={!isFocusedOnAir}
+                    radius={40}
+                    fallbackTitle={canal?.name}
+                    progressPct={isFocusedOnAir ? progPct : 0}
+                    liked={isFocusedOnAir ? programLiked : false}
+                    onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
+                    onImageLoad={(url) => {
+                      if (!isFocusedOnAir) return;
+                      loadedLocutorUrlRef.current = url;
+                      markLocutorImageLoaded(url);
+                      setLocutorImgState("loaded");
+                    }}
+                  />
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={goNextProg}
-                disabled={progNavIndex >= progNavMax}
-                aria-label="Próximo programa"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                data-focusable
-              >
-                <ChevronRight size={20} />
-              </button>
+
+              {/* Setas de navegação de programas — dentro da capa, centralizadas */}
+              {programNavList.length > 1 && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                  <div className="flex items-center gap-2 pointer-events-auto px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                    <button
+                      type="button"
+                      onClick={goPrevProg}
+                      disabled={progNavIndex <= 0}
+                      aria-label="Programa anterior"
+                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-focusable
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center">
+                      {isFocusedOnAir ? "no ar" : "a seguir"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={goNextProg}
+                      disabled={progNavIndex >= progNavMax}
+                      aria-label="Próximo programa"
+                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-focusable
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          <div
-            style={{
-              width: 368,
-              height: 384,
-              transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
-              transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-              willChange: "transform",
-              touchAction: "pan-y",
-            }}
-            onPointerDown={onProgSwipeStart}
-            onPointerMove={onProgSwipeMove}
-            onPointerUp={onProgSwipeEnd}
-            onPointerCancel={onProgSwipeEnd}
-            data-focusable
-          >
-            <ProgramShowcaseCard
-              program={focusedProgram}
-              apresentadores={apresentadores}
-              variant={isFocusedOnAir ? "live" : "upcoming"}
-              isActive={!isFocusedOnAir}
-              radius={40}
-              fallbackTitle={canal?.name}
-              progressPct={isFocusedOnAir ? progPct : 0}
-              liked={isFocusedOnAir ? programLiked : false}
-              onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
-              onImageLoad={(url) => {
-                if (!isFocusedOnAir) return;
-                loadedLocutorUrlRef.current = url;
-                markLocutorImageLoaded(url);
-                setLocutorImgState("loaded");
-              }}
-            />
-          </div>
 
           {/* Botão + centralizado abaixo do card NO AR */}
           <button
@@ -1854,30 +1692,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("right") }}
-            aria-label="Próximos programas — arraste ou use as setas para navegar"
+            aria-label="Próximos programas — arraste para navegar"
           >
-            {upcomingProgs.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={goPrevUp}
-                  disabled={upcomingIndex <= 0}
-                  aria-label="Programa anterior"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={22} />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNextUp}
-                  disabled={upcomingIndex >= upcomingMax}
-                  aria-label="Próximo programa"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight size={22} />
-                </button>
-              </>
-            )}
             <div className="absolute inset-0 flex items-center justify-start pl-4">
               {upcomingProgs.length === 0 && Array.from({ length: 4 }).map((_, i) => {
                 const depth = i;
@@ -2089,94 +1905,219 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         })()}
         </>
 
-        {/* play row */}
+        {/* control row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
-          {/* volume */}
-          {(() => {
-            const vol = muted ? 0 : volume;
-            const expanded = volHover;
-            return (
-              <div
-                className="relative flex items-center"
-                onMouseEnter={() => setVolHover(true)}
-                onMouseLeave={() => setVolHover(false)}
-              >
+          {/* Left: voltar + volume */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBackHome}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0"
+              aria-label="Voltar para Home"
+              title="Voltar para Home"
+              data-focusable
+            >
+              <ArrowLeft size={16} />
+            </button>
+            {(() => {
+              const vol = muted ? 0 : volume;
+              const expanded = volHover;
+              return (
                 <div
-                  className="flex items-center rounded-full backdrop-blur-md transition-all duration-300 ease-out"
-                  style={{
-                    background: expanded ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    paddingRight: expanded ? 14 : 0,
-                    boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
-                  }}
+                  className="relative flex items-center"
+                  onMouseEnter={() => setVolHover(true)}
+                  onMouseLeave={() => setVolHover(false)}
                 >
-                  <button
-                    onClick={() => onSetMuted(!muted)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
-                    data-tv-focusable
-                    data-tv-scroll="center"
-                    data-tv-selected={muted ? "true" : undefined}
-                    aria-label={muted ? "Ativar som" : "Silenciar"}
-                    title={muted ? "Ativar som" : "Silenciar"}
-                  >
-                    {muted || volume === 0
-                      ? <VolumeX size={16} className="text-white/80" />
-                      : <Volume2 size={16} className="text-white" />}
-                  </button>
                   <div
-                    className="overflow-hidden transition-all duration-300 ease-out"
-                    style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
+                    className="flex items-center rounded-full backdrop-blur-md transition-all duration-300 ease-out"
+                    style={{
+                      background: expanded ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      paddingRight: expanded ? 14 : 0,
+                      boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
+                    }}
                   >
-                    <div className="flex items-center gap-3 pl-1">
-                      <SmoothVolumeSlider
-                        value={vol}
-                        onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
-                      />
+                    <button
+                      onClick={() => onSetMuted(!muted)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
+                      data-tv-focusable
+                      data-tv-scroll="center"
+                      data-tv-selected={muted ? "true" : undefined}
+                      aria-label={muted ? "Ativar som" : "Silenciar"}
+                      title={muted ? "Ativar som" : "Silenciar"}
+                    >
+                      {muted || volume === 0
+                        ? <VolumeX size={16} className="text-white/80" />
+                        : <Volume2 size={16} className="text-white" />}
+                    </button>
+                    <div
+                      className="overflow-hidden transition-all duration-300 ease-out"
+                      style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
+                    >
+                      <div className="flex items-center gap-3 pl-1">
+                        <SmoothVolumeSlider
+                          value={vol}
+                          onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
+                        />
+                      </div>
                     </div>
                   </div>
+                </div>
+              );
+            })()}
+          </div>
 
+          {/* Center: play/pause + user identification below */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={onTogglePlay}
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
+              aria-label={playing ? "Pausar" : "Reproduzir"}
+              data-tv-focusable
+              data-tv-scroll="center"
+              data-tv-selected={playing ? "true" : undefined}
+            >
+              {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
+            </button>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
+              <div className="relative group">
+                <button
+                  className="w-5 h-5 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
+                  aria-label="Ajuda"
+                  data-focusable
+                >
+                  <HelpCircle size={11} />
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition w-64 p-4 rounded-xl bg-black/95 border border-white/10 text-[11px] leading-relaxed text-white/85 shadow-2xl">
+                  <div className="text-white font-semibold mb-2">Atalhos</div>
+                  <div>Use as setas ← → ↑ ↓ para navegar entre os botões e cards, Enter para selecionar, Esc para voltar.</div>
                 </div>
               </div>
-            );
-          })()}
+              <img
+                src={nexoPlayerLogo.url}
+                alt="Nexo Player"
+                className="h-4"
+                style={{ opacity: 0.55 }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            </div>
+          </div>
 
-
-          {/* play/pause central */}
-          <button
-            onClick={onTogglePlay}
-            className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
-            aria-label={playing ? "Pausar" : "Reproduzir"}
-            data-tv-focusable
-            data-tv-scroll="center"
-            data-tv-selected={playing ? "true" : undefined}
-          >
-            {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
-          </button>
-
-          {/* Help + logo */}
-          <div className="flex items-center gap-3 justify-self-end">
-            <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
-            <div className="relative group">
+          {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
+          <div className="flex items-center gap-2 justify-self-end">
+            {!isVideoChannel && (
               <button
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
-                aria-label="Ajuda"
+                type="button"
+                onClick={() => setDjModeOn((v) => !v)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : ""}`}
+                style={
+                  djModeActive
+                    ? {
+                        background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
+                        borderColor: "rgba(255,255,255,0.35)",
+                        boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.06)",
+                        borderColor: "rgba(255,255,255,0.14)",
+                      }
+                }
+                title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ"}
+                aria-pressed={djModeActive}
+                aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
                 data-focusable
               >
-                <HelpCircle size={16} />
+                <span aria-hidden style={{ fontSize: 14 }}>🎧</span>
               </button>
-              <div className="absolute bottom-full right-0 mb-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition w-64 p-4 rounded-xl bg-black/95 border border-white/10 text-[11px] leading-relaxed text-white/85 shadow-2xl">
-                <div className="text-white font-semibold mb-2">Atalhos</div>
-                <div>Use as setas ← → ↑ ↓ para navegar entre os botões e cards, Enter para selecionar, Esc para voltar.</div>
+            )}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition shrink-0"
+              aria-label={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
+              title={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
+              data-focusable
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+            {!isVideoChannel && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPlayedListOpen((v) => !v)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
+                  aria-label="Músicas tocadas"
+                  title="Músicas tocadas"
+                  aria-expanded={playedListOpen}
+                  data-focusable
+                >
+                  <ListMusic size={16} />
+                </button>
+                {playedListOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[60]"
+                      onClick={() => setPlayedListOpen(false)}
+                    />
+                    <div
+                      className="absolute right-0 bottom-[calc(100%+8px)] z-[61] w-[380px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/50 border-b border-white/10 mb-1 sticky top-0 bg-black/80 backdrop-blur-xl">
+                        Últimas {history.length} músicas
+                      </div>
+                      {history.length === 0 ? (
+                        <div className="px-3 py-6 text-center text-[12px] text-white/50">
+                          Nenhuma música registrada ainda.
+                        </div>
+                      ) : (
+                        history.map((t, i) => (
+                          <div
+                            key={`${t.horario}-${i}`}
+                            className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-white/8 transition"
+                          >
+                            <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
+                              {(t.horario || "").slice(0, 5)}
+                            </div>
+                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/8 border border-white/10">
+                              {t.capa ? (
+                                <img
+                                  src={t.capa}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
+                                {t.musica}
+                              </div>
+                              <div className="text-[10.5px] uppercase tracking-[0.1em] text-white/55 truncate mt-0.5" title={t.artista}>
+                                {t.artista}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-            <img
-              src={nexoPlayerLogo.url}
-              alt="Nexo Player"
-              className="h-6"
-              style={{ opacity: 0.6 }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            )}
+            <InteractivityMenu
+              userId={effectiveUserId}
+              chatOpen={chatOpen}
+              onToggleChat={() => setChatOpen(!chatOpen)}
+              karaokeEnabled={karaokeEnabled}
+              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              showKaraoke={!isVideoChannel}
             />
-
           </div>
         </div>
       </footer>
@@ -2785,17 +2726,17 @@ function InteractivityMenu({
         aria-label="Interatividade"
         aria-expanded={open}
         data-focusable
-        className="relative h-7 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        className="relative h-10 rounded-full flex items-center justify-center outline-none group overflow-hidden"
         style={{
           padding: 2,
-          width: "28px",
-          maxWidth: "28px",
+          width: "40px",
+          maxWidth: "40px",
           transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "168px"; e.currentTarget.style.width = "168px"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "28px"; e.currentTarget.style.width = "28px"; }}
-        onFocus={(e) => { e.currentTarget.style.maxWidth = "168px"; e.currentTarget.style.width = "168px"; }}
-        onBlur={(e) => { e.currentTarget.style.maxWidth = "28px"; e.currentTarget.style.width = "28px"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "180px"; e.currentTarget.style.width = "180px"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "40px"; e.currentTarget.style.width = "40px"; }}
+        onFocus={(e) => { e.currentTarget.style.maxWidth = "180px"; e.currentTarget.style.width = "180px"; }}
+        onBlur={(e) => { e.currentTarget.style.maxWidth = "40px"; e.currentTarget.style.width = "40px"; }}
       >
         {/* borda animada (conic gradient girando) */}
         <span
@@ -2823,7 +2764,7 @@ function InteractivityMenu({
           className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
           style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         >
-          <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
+          <Sparkles size={16} className="text-white shrink-0" strokeWidth={2.2} />
           <span
             className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
             style={{ transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease-out 100ms" }}
