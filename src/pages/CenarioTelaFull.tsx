@@ -8,6 +8,7 @@ import TrafficMap from "@/components/TrafficMap";
 import SatelliteMap from "@/components/SatelliteMap";
 import CenarioQuotesPanel from "@/components/cenario/CenarioQuotesPanel";
 import { musicDataKey, musicStartKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { extractDominantPair } from "@/lib/dominantColors";
 
 /* ─── types (mirrored from CenarioInterativoPage) ─── */
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
@@ -332,6 +333,18 @@ export default function CenarioTelaFull() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [currentProgram, setCurrentProgram] = useState<{ nome: string; id: string; selo?: string | null; horario_inicio: string; horario_fim: string; apresentador?: string; apresentadorFoto?: string; apresentadoresFotos?: string[]; apresentadorInstagram?: string; tipo_programa?: string | null; thumb?: string | null; capa?: string | null } | null>(null);
   const [presenterIdx, setPresenterIdx] = useState(0);
+  const [presenterGradient, setPresenterGradient] = useState<string | null>(null);
+  useEffect(() => {
+    const fotos = currentProgram?.apresentadoresFotos?.length ? currentProgram.apresentadoresFotos : (currentProgram?.apresentadorFoto ? [currentProgram.apresentadorFoto] : []);
+    const activeFoto = fotos[presenterIdx % (fotos.length || 1)] || null;
+    if (!activeFoto) { setPresenterGradient(null); return; }
+    let cancelled = false;
+    extractDominantPair(activeFoto).then(pair => {
+      if (cancelled || !pair) return;
+      setPresenterGradient(`linear-gradient(145deg, ${pair.primary} 0%, ${pair.secondary} 100%)`);
+    });
+    return () => { cancelled = true; };
+  }, [currentProgram, presenterIdx]);
   const [sponsorLogos, setSponsorLogos] = useState<{ id: string; nome: string; logo_url: string }[]>([]);
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [liveWeather, setLiveWeather] = useState<LiveWeather | null>(null);
