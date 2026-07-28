@@ -1639,13 +1639,6 @@ export default function CenarioTela() {
                       );
                     })()}
 
-                  {/* Status Sync (Bottom Left) */}
-                  <div style={{ position: "absolute", bottom: `${vhToPx(3.5)}${vu}`, left: `${vhToPx(4)}${vu}`, zIndex: 20 }}>
-                     <div style={{ display: "flex", alignItems: "center", gap: `${vhToPx(0.4)}${vu}`, opacity: 0.7 }}>
-                       <div style={{ width: `${vhToPx(0.6)}${vu}`, height: `${vhToPx(0.6)}${vu}`, borderRadius: "50%", background: accentColor, boxShadow: `0 0 6px ${accentColor}` }} />
-                       <span style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: `${vhToPx(0.9)}${vu}`, color: "#fff" }}>SYNC</span>
-                     </div>
-                   </div>
 
                   {/* BOTTOM-RIGHT: "A seguir" */}
                   {nextProgram && (
