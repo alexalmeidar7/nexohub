@@ -1719,6 +1719,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
           <div
+            onWheel={handleProgramWheel}
             onPointerDown={(e) => {
               if ((e.target as HTMLElement).closest("button")) return;
               const el = e.currentTarget as HTMLDivElement;
