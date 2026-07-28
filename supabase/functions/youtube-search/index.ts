@@ -23,10 +23,10 @@ serve(async (req) => {
     // Limit to 10 searches
     const limited = queries.slice(0, 10);
 
-    const results: { query: string; videoId: string; title: string; thumbnail: string }[] = [];
-
-    // Search YouTube via scraping the search results page
-    for (const query of limited) {
+    // Search a single query with an abort timeout so a slow lookup doesn't hold the whole batch.
+    const searchOne = async (query: string): Promise<{ query: string; videoId: string; title: string; thumbnail: string } | null> => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
       try {
         const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + " official video")}&sp=EgIQAQ%3D%3D`;
         const res = await fetch(searchUrl, {
@@ -34,51 +34,40 @@ serve(async (req) => {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8",
           },
+          signal: controller.signal,
         });
-
         if (!res.ok) {
           console.error(`YouTube search failed for "${query}": ${res.status}`);
-          continue;
+          return null;
         }
-
         const html = await res.text();
-
-        // Extract videoId from ytInitialData
         const dataMatch = html.match(/var ytInitialData = ({.*?});<\/script>/s);
         if (dataMatch) {
           const jsonStr = dataMatch[1];
-          // Find first videoId
           const vidMatch = jsonStr.match(/"videoId":"([a-zA-Z0-9_-]{11})"/);
           if (vidMatch) {
             const videoId = vidMatch[1];
-            // Extract title
             const titleMatch = jsonStr.match(new RegExp(`"videoId":"${videoId}"[^}]*?"title":\\{"runs":\\[\\{"text":"(.*?)"\\}`));
             const title = titleMatch ? titleMatch[1].replace(/\\u0026/g, "&").replace(/\\"/g, '"') : query;
-
-            results.push({
-              query,
-              videoId,
-              title,
-              thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
-            });
-            continue;
+            return { query, videoId, title, thumbnail: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` };
           }
         }
-
-        // Fallback: regex for videoId in the page
         const fallbackMatch = html.match(/\/watch\?v=([a-zA-Z0-9_-]{11})/);
         if (fallbackMatch) {
-          results.push({
-            query,
-            videoId: fallbackMatch[1],
-            title: query,
-            thumbnail: `https://i.ytimg.com/vi/${fallbackMatch[1]}/mqdefault.jpg`,
-          });
+          return { query, videoId: fallbackMatch[1], title: query, thumbnail: `https://i.ytimg.com/vi/${fallbackMatch[1]}/mqdefault.jpg` };
         }
+        return null;
       } catch (err) {
         console.error(`Error searching for "${query}":`, String(err));
+        return null;
+      } finally {
+        clearTimeout(timeout);
       }
-    }
+    };
+
+    // Run all lookups in parallel — dramatically faster than the previous sequential loop.
+    const settled = await Promise.all(limited.map((q) => searchOne(q)));
+    const results = settled.filter((r): r is { query: string; videoId: string; title: string; thumbnail: string } => !!r);
 
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
