@@ -252,6 +252,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+  const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
@@ -484,6 +485,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             plano: pd.plano || "",
           };
           setEmpresa(parentCfg);
+          setEmpresaTimezone((pd as any).timezone || null);
           if (parentCfg.plano) {
             supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
               if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
@@ -517,6 +519,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         plano: d.plano || "",
       } : ({} as any);
       setEmpresa(cfg);
+      setEmpresaTimezone((d as any)?.timezone || null);
 
       // Plan modules — fire and forget
       if (cfg.plano) {
@@ -976,7 +979,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           >
             <LogOut size={10} /> Sair
           </button>
-          <ServerClock />
+          <ServerClock timezone={empresaTimezone} />
         </div>
 
         {/* Mobile menu overlay */}
@@ -1276,7 +1279,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
             </Tooltip>
             <div className="w-px h-7 mx-2" style={{ backgroundColor: "rgba(0,33,50,0.10)" }} />
-            <ServerClock />
+            <ServerClock timezone={empresaTimezone} />
             <style>{`
               .nexo-toolbar-btn:hover { background-color: rgba(0,191,240,0.14); color: #0087aa; }
               .nexo-toolbar-btn:active { transform: scale(0.94); }
@@ -1930,7 +1933,7 @@ function ProgramProgressBar({ inicio, fim, nowTick }: { inicio: string; fim: str
   );
 }
 
-function ServerClock() {
+function ServerClock({ timezone }: { timezone?: string | null }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -1938,11 +1941,28 @@ function ServerClock() {
     return () => clearInterval(interval);
   }, []);
 
-  const hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const seconds = String(now.getSeconds()).padStart(2, "0");
+  const tz = timezone && timezone.length > 0 ? timezone : undefined;
+  let hours: string;
+  let seconds: string;
+  try {
+    hours = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(now);
+    seconds = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: tz,
+      second: "2-digit",
+      hour12: false,
+    }).format(now).padStart(2, "0");
+  } catch {
+    hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    seconds = String(now.getSeconds()).padStart(2, "0");
+  }
 
   return (
-    <div className="text-right">
+    <div className="text-right" title={tz ? `Fuso: ${tz}` : undefined}>
       <span className="font-light tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "26px", lineHeight: 1.1, color: "#002132" }}>
         {hours}
         <span className="font-light inline-block" style={{ fontSize: "12px", width: "18px", textAlign: "left", marginTop: "2px", color: "#002132", opacity: 0.7 }}>{seconds}</span>
