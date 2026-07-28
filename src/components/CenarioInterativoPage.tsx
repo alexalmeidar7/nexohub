@@ -3153,7 +3153,7 @@ export default function CenarioInterativoPage() {
                       const sFS = `${pvh(1.2)}px`;
                       const sPad = `${pvh(0.6)}px`;
                       return (
-                        <div className="flex items-center" style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "8%", zIndex: 10, pointerEvents: "none" }}>
+                        <div className="flex-shrink-0 flex items-center relative" style={{ width: "8%", zIndex: 10, pointerEvents: "none" }}>
                           <div className="flex flex-col items-center" style={{ pointerEvents: "auto", gap: sPad, padding: `${sPad} 0`, marginLeft: "-1px" }}>
                             <button onClick={() => handleTabChange("home")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: activeTab === "home" ? (config.home.colorButtonOn || "var(--layout-accent-color, rgba(68,68,68,0.85))") : (config.home.colorButtonOff || "rgba(0,0,0,0.8)"), border: activeTab === "home" ? "2px solid var(--layout-accent-color, #444)" : "2px solid transparent" }}>
                               <Home style={{ width: iS, height: iS }} className="text-white" />
