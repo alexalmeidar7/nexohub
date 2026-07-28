@@ -1766,7 +1766,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 );
               })}
               {upcomingProgs.slice(0, UPCOMING_VISIBLE).map((p, i) => {
-                const depth = i - upcomingIndex;
+                const depth = i - progNavIndex;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
                 const translateX = depth * 72;
