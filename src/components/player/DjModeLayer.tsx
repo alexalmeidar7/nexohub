@@ -120,15 +120,20 @@ function paletteFromContext(
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
   const coverHueRef = useRef<number | null>(null);
   coverHueRef.current = (() => {
+    if (coverTriad?.a) {
+      const hsl = hexToHsl(coverTriad.a);
+      if (hsl) return hsl.h;
+    }
     if (!coverPalette?.primary) return null;
     const hsl = hexToHsl(coverPalette.primary);
     return hsl ? hsl.h : null;
   })();
+
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
