@@ -717,10 +717,24 @@ export default function CenarioInterativoPage() {
   const [externalConnected, setExternalConnected] = useState(false);
   const [externalRotation, setExternalRotation] = useState(0);
   const [showConnectedMsg, setShowConnectedMsg] = useState(false);
+  const fullWindowRef = useRef<Window | null>(null);
+  const [isFullWindowOpen, setIsFullWindowOpen] = useState(false);
   const lastPongRef = useRef(0);
   const presenceConnectedRef = useRef(false);
   const presenceShownRef = useRef(false);
   const previewIsLandscape = externalRotation === 90 || externalRotation === 270;
+
+  /* Track opened external windows so their buttons can show active state */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (fullWindowRef.current && fullWindowRef.current.closed) {
+        fullWindowRef.current = null;
+        setIsFullWindowOpen(false);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   /* Measure preview container to compute scale exactly like CenarioTela */
   useEffect(() => {
