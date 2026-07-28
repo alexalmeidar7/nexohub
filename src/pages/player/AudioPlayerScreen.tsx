@@ -1713,7 +1713,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               if ((e.target as HTMLElement).closest("button")) return;
               const el = e.currentTarget as HTMLDivElement;
               el.dataset.swipeX = String(e.clientX);
-              el.dataset.swipeAnchor = String(upcomingIndex);
+              el.dataset.swipeAnchor = String(progNavIndex);
               el.dataset.swipeActive = "1";
               try { el.setPointerCapture(e.pointerId); } catch {}
             }}
@@ -1725,8 +1725,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               const dx = e.clientX - startX;
               const STEP = 90;
               const delta = Math.round(-dx / STEP);
-              const next = Math.max(0, Math.min(upcomingMax, anchor + delta));
-              if (next !== upcomingIndex) setUpcomingIndex(next);
+              const next = Math.max(0, Math.min(progNavMax, anchor + delta));
+              if (next !== progNavIndex) {
+                navDirRef.current = next > progNavIndex ? 1 : -1;
+                setProgNavIndex(next);
+              }
             }}
             onPointerUp={(e) => {
               const el = e.currentTarget as HTMLDivElement;
