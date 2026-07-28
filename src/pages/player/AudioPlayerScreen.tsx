@@ -1709,10 +1709,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             style={{
               width: 368,
               height: 384,
-              transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : "translateY(0) scale(1)",
-              transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+              transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
+              transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
               willChange: "transform",
+              touchAction: "pan-y",
             }}
+            onPointerDown={onProgSwipeStart}
+            onPointerMove={onProgSwipeMove}
+            onPointerUp={onProgSwipeEnd}
+            onPointerCancel={onProgSwipeEnd}
             data-focusable
           >
             <ProgramShowcaseCard
