@@ -1905,94 +1905,219 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         })()}
         </>
 
-        {/* play row */}
+        {/* control row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
-          {/* volume */}
-          {(() => {
-            const vol = muted ? 0 : volume;
-            const expanded = volHover;
-            return (
-              <div
-                className="relative flex items-center"
-                onMouseEnter={() => setVolHover(true)}
-                onMouseLeave={() => setVolHover(false)}
-              >
+          {/* Left: voltar + volume */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleBackHome}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0"
+              aria-label="Voltar para Home"
+              title="Voltar para Home"
+              data-focusable
+            >
+              <ArrowLeft size={16} />
+            </button>
+            {(() => {
+              const vol = muted ? 0 : volume;
+              const expanded = volHover;
+              return (
                 <div
-                  className="flex items-center rounded-full backdrop-blur-md transition-all duration-300 ease-out"
-                  style={{
-                    background: expanded ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    paddingRight: expanded ? 14 : 0,
-                    boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
-                  }}
+                  className="relative flex items-center"
+                  onMouseEnter={() => setVolHover(true)}
+                  onMouseLeave={() => setVolHover(false)}
                 >
-                  <button
-                    onClick={() => onSetMuted(!muted)}
-                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
-                    data-tv-focusable
-                    data-tv-scroll="center"
-                    data-tv-selected={muted ? "true" : undefined}
-                    aria-label={muted ? "Ativar som" : "Silenciar"}
-                    title={muted ? "Ativar som" : "Silenciar"}
-                  >
-                    {muted || volume === 0
-                      ? <VolumeX size={16} className="text-white/80" />
-                      : <Volume2 size={16} className="text-white" />}
-                  </button>
                   <div
-                    className="overflow-hidden transition-all duration-300 ease-out"
-                    style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
+                    className="flex items-center rounded-full backdrop-blur-md transition-all duration-300 ease-out"
+                    style={{
+                      background: expanded ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.10)",
+                      paddingRight: expanded ? 14 : 0,
+                      boxShadow: expanded ? "0 8px 24px rgba(0,0,0,0.35)" : "none",
+                    }}
                   >
-                    <div className="flex items-center gap-3 pl-1">
-                      <SmoothVolumeSlider
-                        value={vol}
-                        onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
-                      />
+                    <button
+                      onClick={() => onSetMuted(!muted)}
+                      className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
+                      data-tv-focusable
+                      data-tv-scroll="center"
+                      data-tv-selected={muted ? "true" : undefined}
+                      aria-label={muted ? "Ativar som" : "Silenciar"}
+                      title={muted ? "Ativar som" : "Silenciar"}
+                    >
+                      {muted || volume === 0
+                        ? <VolumeX size={16} className="text-white/80" />
+                        : <Volume2 size={16} className="text-white" />}
+                    </button>
+                    <div
+                      className="overflow-hidden transition-all duration-300 ease-out"
+                      style={{ width: expanded ? 132 : 0, opacity: expanded ? 1 : 0 }}
+                    >
+                      <div className="flex items-center gap-3 pl-1">
+                        <SmoothVolumeSlider
+                          value={vol}
+                          onChange={(v) => { onSetVolume(v); if (v > 0 && muted) onSetMuted(false); }}
+                        />
+                      </div>
                     </div>
                   </div>
+                </div>
+              );
+            })()}
+          </div>
 
+          {/* Center: play/pause + user identification below */}
+          <div className="flex flex-col items-center gap-2">
+            <button
+              onClick={onTogglePlay}
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
+              aria-label={playing ? "Pausar" : "Reproduzir"}
+              data-tv-focusable
+              data-tv-scroll="center"
+              data-tv-selected={playing ? "true" : undefined}
+            >
+              {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
+            </button>
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
+              <div className="relative group">
+                <button
+                  className="w-5 h-5 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
+                  aria-label="Ajuda"
+                  data-focusable
+                >
+                  <HelpCircle size={11} />
+                </button>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition w-64 p-4 rounded-xl bg-black/95 border border-white/10 text-[11px] leading-relaxed text-white/85 shadow-2xl">
+                  <div className="text-white font-semibold mb-2">Atalhos</div>
+                  <div>Use as setas ← → ↑ ↓ para navegar entre os botões e cards, Enter para selecionar, Esc para voltar.</div>
                 </div>
               </div>
-            );
-          })()}
+              <img
+                src={nexoPlayerLogo.url}
+                alt="Nexo Player"
+                className="h-4"
+                style={{ opacity: 0.55 }}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+              />
+            </div>
+          </div>
 
-
-          {/* play/pause central */}
-          <button
-            onClick={onTogglePlay}
-            className="w-16 h-16 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-[0_10px_30px_rgba(255,255,255,0.15)]"
-            aria-label={playing ? "Pausar" : "Reproduzir"}
-            data-tv-focusable
-            data-tv-scroll="center"
-            data-tv-selected={playing ? "true" : undefined}
-          >
-            {buffering ? <ElegantLoader size={24} /> : playing ? <Pause size={24} fill="black" /> : <Play size={24} fill="black" className="ml-0.5" />}
-          </button>
-
-          {/* Help + logo */}
-          <div className="flex items-center gap-3 justify-self-end">
-            <PlayerSlugBadge slug={userSlug} radioName={empresaNome} radioUserId={radioUserId} />
-            <div className="relative group">
+          {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
+          <div className="flex items-center gap-2 justify-self-end">
+            {!isVideoChannel && (
               <button
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 transition"
-                aria-label="Ajuda"
+                type="button"
+                onClick={() => setDjModeOn((v) => !v)}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : ""}`}
+                style={
+                  djModeActive
+                    ? {
+                        background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
+                        borderColor: "rgba(255,255,255,0.35)",
+                        boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                      }
+                    : {
+                        background: "rgba(255,255,255,0.06)",
+                        borderColor: "rgba(255,255,255,0.14)",
+                      }
+                }
+                title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ"}
+                aria-pressed={djModeActive}
+                aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
                 data-focusable
               >
-                <HelpCircle size={16} />
+                <span aria-hidden style={{ fontSize: 14 }}>🎧</span>
               </button>
-              <div className="absolute bottom-full right-0 mb-3 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition w-64 p-4 rounded-xl bg-black/95 border border-white/10 text-[11px] leading-relaxed text-white/85 shadow-2xl">
-                <div className="text-white font-semibold mb-2">Atalhos</div>
-                <div>Use as setas ← → ↑ ↓ para navegar entre os botões e cards, Enter para selecionar, Esc para voltar.</div>
+            )}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition shrink-0"
+              aria-label={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
+              title={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
+              data-focusable
+            >
+              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+            </button>
+            {!isVideoChannel && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPlayedListOpen((v) => !v)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
+                  aria-label="Músicas tocadas"
+                  title="Músicas tocadas"
+                  aria-expanded={playedListOpen}
+                  data-focusable
+                >
+                  <ListMusic size={16} />
+                </button>
+                {playedListOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-[60]"
+                      onClick={() => setPlayedListOpen(false)}
+                    />
+                    <div
+                      className="absolute right-0 bottom-[calc(100%+8px)] z-[61] w-[380px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/15 bg-black/80 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.7)] p-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-white/50 border-b border-white/10 mb-1 sticky top-0 bg-black/80 backdrop-blur-xl">
+                        Últimas {history.length} músicas
+                      </div>
+                      {history.length === 0 ? (
+                        <div className="px-3 py-6 text-center text-[12px] text-white/50">
+                          Nenhuma música registrada ainda.
+                        </div>
+                      ) : (
+                        history.map((t, i) => (
+                          <div
+                            key={`${t.horario}-${i}`}
+                            className="flex items-center gap-3 px-2.5 py-2 rounded-lg hover:bg-white/8 transition"
+                          >
+                            <div className="text-[11px] font-semibold tabular-nums text-white/60 w-11 shrink-0">
+                              {(t.horario || "").slice(0, 5)}
+                            </div>
+                            <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/8 border border-white/10">
+                              {t.capa ? (
+                                <img
+                                  src={t.capa}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[12.5px] text-white font-medium truncate leading-tight" title={t.musica}>
+                                {t.musica}
+                              </div>
+                              <div className="text-[10.5px] uppercase tracking-[0.1em] text-white/55 truncate mt-0.5" title={t.artista}>
+                                {t.artista}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-            <img
-              src={nexoPlayerLogo.url}
-              alt="Nexo Player"
-              className="h-6"
-              style={{ opacity: 0.6 }}
-              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            )}
+            <InteractivityMenu
+              userId={effectiveUserId}
+              chatOpen={chatOpen}
+              onToggleChat={() => setChatOpen(!chatOpen)}
+              karaokeEnabled={karaokeEnabled}
+              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+              showKaraoke={!isVideoChannel}
             />
-
           </div>
         </div>
       </footer>
