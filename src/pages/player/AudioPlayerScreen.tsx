@@ -467,6 +467,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     }
   });
   const [djPanelOpen, setDjPanelOpen] = useState<boolean>(false);
+  const [djHudEnabled, setDjHudEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("nexohub_dj_hud") === "1";
+    } catch {
+      return false;
+    }
+  });
   useEffect(() => {
     try {
       localStorage.setItem("nexohub_dj_mode", djModeOn ? "1" : "0");
@@ -477,7 +484,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       localStorage.setItem("nexohub_dj_sensitivity", String(djSensitivity));
     } catch {}
   }, [djSensitivity]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("nexohub_dj_hud", djHudEnabled ? "1" : "0");
+    } catch {}
+  }, [djHudEnabled]);
   const djModeActive = !isVideoChannel && djModeOn;
+
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
 
