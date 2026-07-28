@@ -123,7 +123,7 @@ function paletteFromContext(
   return { a, b, angle };
 }
 
-export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null }: Props) {
+export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, coverPalette = null, coverTriad = null, showHud = false }: Props) {
   const sensRef = useRef<number>(sensitivity);
   sensRef.current = Math.max(0, Math.min(1, sensitivity));
   const coverHueRef = useRef<number | null>(null);
