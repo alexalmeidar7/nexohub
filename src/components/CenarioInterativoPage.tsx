@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play } from "lucide-react";
+import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2 } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -360,7 +360,7 @@ export default function CenarioInterativoPage() {
   const previewIsDrawingRef = useRef(false);
   const previewWrapRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0.278);
-  const [previewZoom, setPreviewZoom] = useState(0.6); // Default preview zoom level
+  // previewZoom removed — preview now auto-fits the container at 100%.
   const PREV_W = 1080;
   const PREV_H = 1920;
   const pvh = useCallback((v: number) => v * PREV_H / 100, []);
@@ -735,7 +735,7 @@ export default function CenarioInterativoPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [previewIsLandscape, previewZoom]);
+  }, [previewIsLandscape]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
@@ -2868,22 +2868,31 @@ export default function CenarioInterativoPage() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+              <div className="flex items-center gap-2 ml-auto">
                 <button
+                  type="button"
+                  title="Cenário interativo Externo"
+                  aria-label="Cenário interativo Externo"
                   onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <ExternalLink size={11} /> Cenário interativo Externo
+                  <ExternalLink size={15} />
                 </button>
                 <button
+                  type="button"
+                  title="Cenário formato Full"
+                  aria-label="Cenário formato Full"
                   onClick={() => window.open(`/cenario-tela-full?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <MonitorPlay size={11} /> Cenário formato Full
+                  <Maximize2 size={15} />
                 </button>
                 <button
+                  type="button"
+                  title="Rotacionar 90°"
+                  aria-label="Rotacionar 90°"
                   onClick={() => {
                     setExternalRotation(prev => {
                       const val = (prev + 90) % 360;
@@ -2892,10 +2901,10 @@ export default function CenarioInterativoPage() {
                       return val;
                     });
                   }}
-                  className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-semibold transition-opacity hover:opacity-80"
+                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
-                  <RotateCw size={11} /> Rotacionar 90°
+                  <RotateCw size={15} />
                 </button>
               </div>
             </div>
@@ -2915,26 +2924,10 @@ export default function CenarioInterativoPage() {
             )}
 
             <div data-nexo-skip className="flex flex-col items-center gap-3 w-full h-[700px] pt-4 min-h-0 overflow-hidden bg-black/5 dark:bg-black/20 rounded-2xl relative">
-              {/* Zoom Control */}
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 px-4 py-2 rounded-full border shadow-2xl z-20 transition-all bg-[var(--layout-page-bg, #ffffff)]" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)" }}>
-                <Minus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.max(0.2, z - 0.1))} />
-                <Slider 
-                  value={[previewZoom]} 
-                  min={0.2} 
-                  max={1.0} 
-                  step={0.05} 
-                  className="w-32 cursor-pointer" 
-                  onValueChange={([val]) => setPreviewZoom(val)} 
-                  style={{ "--primary": accentColor } as any}
-                />
-                <Plus size={14} className="cursor-pointer hover:opacity-100 transition-opacity" style={{ color: accentColor }} onClick={() => setPreviewZoom(z => Math.min(1.0, z + 0.1))} />
-                <span className="text-[10px] font-mono w-8 text-center" style={{ color: textColor }}>{Math.round(previewZoom * 100)}%</span>
-              </div>
-
               <div className="flex-1 w-full flex items-start justify-center overflow-hidden">
                 <div
                   ref={previewWrapRef}
-                  className="relative overflow-hidden shadow-2xl transition-all duration-300 ease-out"
+                  className="relative overflow-hidden shadow-2xl"
                   data-nexo-skip
                   style={{
                     height: "100%",
@@ -2943,9 +2936,6 @@ export default function CenarioInterativoPage() {
                     borderRadius: 20,
                     boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
                     background: "#000",
-                    transform: `scale(${previewZoom})`,
-                    transformOrigin: "top center",
-                    transition: "transform 0.3s ease-out",
                   }}
                 >
                 <div className="absolute inset-0 overflow-hidden">

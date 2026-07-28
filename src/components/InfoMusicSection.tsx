@@ -364,66 +364,33 @@ export default function InfoMusicSection() {
   const loadMissing = async () => {
     setLoadingMissing(true);
     try {
-      // Fetch ALL infomusic rows in chunks — this is the source of truth for
-      // the Tocadas table. Any row here whose curiosidade is empty MUST appear
-      // in the "sem curiosidade" filter, regardless of whether the track also
-      // lives in musicas_tocadas.
-      const CHUNK = 1000;
-      const allInfos: { artista: string | null; musica: string | null; curiosidade: string | null; created_at: string | null }[] = [];
-      for (let from = 0; ; from += CHUNK) {
-        const { data, error } = await supabase
+      const { computeMissingCuriosities, fetchAllInfomusic } = await import("@/lib/missingCuriosities");
+
+      // Fetch ALL infomusic rows in chunks — source of truth.
+      const allInfos = await fetchAllInfomusic(async (from, to) => {
+        const res = await supabase
           .from("infomusic")
           .select("artista, musica, curiosidade, created_at")
           .order("created_at", { ascending: false })
-          .range(from, from + CHUNK - 1);
-        if (error || !data || data.length === 0) break;
-        allInfos.push(...data);
-        if (data.length < CHUNK) break;
-      }
+          .range(from, to);
+        return { data: res.data, error: res.error };
+      });
 
-      // Also pull recent musicas_tocadas so that tracks played but never
-      // written to infomusic still surface as missing.
+      // Recent musicas_tocadas so played-but-never-in-infomusic tracks surface.
       const { data: played } = await supabase
         .from("musicas_tocadas")
         .select("artista, musica, created_at")
         .order("created_at", { ascending: false })
         .limit(5000);
 
-      const norm = (s: string | null | undefined) => (s || "").trim().toLowerCase();
-      const known = new Set(
-        allInfos
-          .filter((i) => (i.curiosidade || "").trim().length > 0)
-          .map((i) => `${norm(i.artista)}::${norm(i.musica)}`),
-      );
-
-      const seen = new Set<string>();
-      const missing: { artista: string; musica: string; ultima: string }[] = [];
-
-      // 1) infomusic rows with empty curiosidade
-      for (const i of allInfos) {
-        if ((i.curiosidade || "").trim().length > 0) continue;
-        const key = `${norm(i.artista)}::${norm(i.musica)}`;
-        if (!key || key === "::" || seen.has(key)) continue;
-        seen.add(key);
-        missing.push({ artista: i.artista || "", musica: i.musica || "", ultima: i.created_at || "" });
-      }
-
-      // 2) musicas_tocadas rows not covered above and without saved curiosidade
-      for (const p of played || []) {
-        const key = `${norm(p.artista)}::${norm(p.musica)}`;
-        if (!key || key === "::" || known.has(key) || seen.has(key)) continue;
-        seen.add(key);
-        missing.push({ artista: p.artista || "", musica: p.musica || "", ultima: p.created_at });
-      }
-
-      // Newest first by "ultima"
-      missing.sort((a, b) => (b.ultima || "").localeCompare(a.ultima || ""));
+      const missing = computeMissingCuriosities(allInfos, played || []);
       setMissingRows(missing);
     } catch (e) {
       toast.error("Erro ao carregar músicas sem curiosidade");
     }
     setLoadingMissing(false);
   };
+
 
   const filteredMissing = useMemo(() => {
     const excLower = excecaoList.map(w => w.trim().toLowerCase()).filter(Boolean);
