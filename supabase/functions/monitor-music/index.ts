@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
     //     is recorded 24/7 as long as the operator has a Nexo tab open somewhere).
     const { data: settings, error: settingsErr } = await supabase
       .from("user_settings")
-      .select("user_id, music_xml_url, music_source_mode");
+      .select("user_id, music_xml_url, music_source_mode, dashboard_items");
 
     if (settingsErr || !settings?.length) {
       return new Response(JSON.stringify({ processed: 0, message: "No users" }), {
@@ -178,10 +178,12 @@ Deno.serve(async (req) => {
           // MusicaNoAr always writes a pseudo-XML (<musica><interprete/><nome_musica/></musica>)
           // regardless of the source format (Jornal FM TXT, Cultura FM PlayList, etc.),
           // so extractTag works uniformly here.
+          const dashboardItems = (setting.dashboard_items || {}) as { local_xml_storage_path?: string };
           const bucketPaths = [
+            dashboardItems.local_xml_storage_path,
             `${setting.user_id}/local-xml-${setting.user_id}.xml`,
             `local-xml-${setting.user_id}.xml`,
-          ];
+          ].filter(Boolean) as string[];
           for (const path of bucketPaths) {
             const { data: pub } = supabase.storage.from("xml-files").getPublicUrl(path);
             if (!pub?.publicUrl) continue;
