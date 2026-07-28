@@ -366,7 +366,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         aria-hidden
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: "linear-gradient(45deg, hsl(320 95% 55%), hsl(190 95% 55%))",
+          background: "linear-gradient(45deg, hsl(320 95% 55%), hsl(260 95% 55%), hsl(190 95% 55%))",
           opacity: 0.85,
           transition: "background 260ms linear, filter 120ms linear, opacity 140ms ease-out",
           zIndex: 0,
