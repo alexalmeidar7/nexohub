@@ -1889,30 +1889,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
             className="relative flex-1 h-[420px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
             style={{ perspective: "1200px", ...sideEnterStyle("right") }}
-            aria-label="Próximos programas — arraste ou use as setas para navegar"
+            aria-label="Próximos programas — arraste para navegar"
           >
-            {upcomingProgs.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={goPrevUp}
-                  disabled={upcomingIndex <= 0}
-                  aria-label="Programa anterior"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronLeft size={22} />
-                </button>
-                <button
-                  type="button"
-                  onClick={goNextUp}
-                  disabled={upcomingIndex >= upcomingMax}
-                  aria-label="Próximo programa"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-50 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronRight size={22} />
-                </button>
-              </>
-            )}
             <div className="absolute inset-0 flex items-center justify-start pl-4">
               {upcomingProgs.length === 0 && Array.from({ length: 4 }).map((_, i) => {
                 const depth = i;
