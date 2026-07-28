@@ -1939,12 +1939,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={handleBackHome}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0"
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0"
               aria-label="Voltar para Home"
               title="Voltar para Home"
               data-focusable
             >
-              <ArrowLeft size={16} />
+              <ArrowLeft size={22} />
             </button>
             {(() => {
               const vol = muted ? 0 : volume;
