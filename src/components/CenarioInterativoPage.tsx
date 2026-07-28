@@ -735,7 +735,7 @@ export default function CenarioInterativoPage() {
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [previewIsLandscape, previewZoom]);
+  }, [previewIsLandscape]);
 
   /* ─── Supabase Realtime Presence for "telas conectadas" ─── */
   useEffect(() => {
