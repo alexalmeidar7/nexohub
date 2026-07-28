@@ -157,7 +157,8 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
     let paletteAngle = 45;
     let seed = Math.floor(Math.random() * 1000);
 
-    const hasTriad = !!coverTriad?.a && !!coverTriad?.b && !!coverTriad?.c;
+    const hasTriad = !!coverTriadRef.current?.a && !!coverTriadRef.current?.b && !!coverTriadRef.current?.c;
+
 
 
     // BPM tracking
