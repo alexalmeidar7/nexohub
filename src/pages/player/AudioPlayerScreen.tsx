@@ -1966,7 +1966,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   >
                     <button
                       onClick={() => onSetMuted(!muted)}
-                      className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
+                      className="w-16 h-16 rounded-full flex items-center justify-center hover:bg-white/10 transition shrink-0"
                       data-tv-focusable
                       data-tv-scroll="center"
                       data-tv-selected={muted ? "true" : undefined}
@@ -1974,8 +1974,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       title={muted ? "Ativar som" : "Silenciar"}
                     >
                       {muted || volume === 0
-                        ? <VolumeX size={16} className="text-white/80" />
-                        : <Volume2 size={16} className="text-white" />}
+                        ? <VolumeX size={22} className="text-white/80" />
+                        : <Volume2 size={22} className="text-white" />}
                     </button>
                     <div
                       className="overflow-hidden transition-all duration-300 ease-out"
