@@ -599,14 +599,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       let data: any[] | null = null;
       let error: any = null;
       try {
-        const resp = await supabase.functions.invoke("public-music-history", {
-          body: null,
-          method: "GET" as any,
-          headers: {},
-        } as any);
-        // functions.invoke doesn't support query strings cleanly; fall back to fetch.
-      } catch {}
-      try {
         const url = `${(import.meta as any).env.VITE_SUPABASE_URL}/functions/v1/public-music-history?user_id=${encodeURIComponent(effectiveUserId)}&limit=${HIST_MAX * 2}`;
         const resp = await fetch(url, {
           headers: {
