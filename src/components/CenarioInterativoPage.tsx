@@ -76,6 +76,8 @@ interface HomeConfig {
   artistOverlayOpacity?: number;
   showMusicCover?: boolean;
   showProgramThumb?: boolean;
+  colorButtonBgOff?: string;
+  colorButtonBgOn?: string;
   colorButtonOff?: string;
   colorButtonOn?: string;
   colorClock?: string;
@@ -85,6 +87,7 @@ interface HomeConfig {
   colorASeguirLabel?: string;
   colorNextProgram?: string;
   colorProgressBar?: string;
+
 }
 
 interface CenarioConfig {
