@@ -1994,7 +1994,7 @@ export default function CenarioInterativoPage() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5 animate-in fade-in slide-in-from-top-2 duration-300">
                             {colorFields.map(f => {
                               const current = (config.home[f.key] as string) || f.def;
-                              const displayHex = normalizeHex(current) || f.def;
+                              const displayHex = normalizeHex(current) || normalizeHex(f.def) || "#000000";
                               return (
                                 <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
                                   <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
@@ -2023,20 +2023,12 @@ export default function CenarioInterativoPage() {
                                       placeholder="#RRGGBB ou rgb(r,g,b)"
                                       className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
                                     />
-                                    {(f.key === "colorButtonOff" || f.key === "colorButtonOn") && wcagBadge(current, "#FFFFFF")}
+                                    {wcagBadge(current, f.key as string)}
                                   </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
-                                    title="Redefinir"
-                                    className="shrink-0 h-6 px-1.5 text-[9px] uppercase font-bold rounded bg-black/5 hover:bg-black/10 text-black/60"
-                                  >
-                                    Reset
-                                  </button>
                                 </div>
                               );
                             })}
+
                           </div>
                         )}
                       </div>
