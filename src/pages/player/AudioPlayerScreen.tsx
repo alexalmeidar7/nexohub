@@ -762,6 +762,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
   const goPrevProg = () => setProgNavIndex((i) => Math.max(0, i - 1));
   const goNextProg = () => setProgNavIndex((i) => Math.min(progNavMax, i + 1));
 
+  // ---- Animação de entrada/saída do card central ao navegar programas ----
+  const [progSwitching, setProgSwitching] = useState(false);
+  const prevFocusRef = useRef<{ program: any; index: number; isOnAir: boolean }>({
+    program: focusedProgram,
+    index: progNavIndex,
+    isOnAir: isFocusedOnAir,
+  });
+  useEffect(() => {
+    if (prevFocusRef.current.program?.id === focusedProgram?.id) return;
+    setProgSwitching(true);
+    const t = setTimeout(() => {
+      prevFocusRef.current = { program: focusedProgram, index: progNavIndex, isOnAir: isFocusedOnAir };
+      setProgSwitching(false);
+    }, 320);
+    return () => clearTimeout(t);
+  }, [focusedProgram, progNavIndex, isFocusedOnAir]);
+
   // ---- Swipe / drag no card do programa ----
   const [progSwipeDx, setProgSwipeDx] = useState(0);
   const [progSwiping, setProgSwiping] = useState(false);
