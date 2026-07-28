@@ -101,10 +101,11 @@ function getCurrentProgram(
 export function useGlobalMusicSync(enabled: boolean = true) {
   const { user } = useAuth();
   const coverCacheRef = useRef<Record<string, string>>({});
-  const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null }>({
+  const cachedSettingsRef = useRef<{ url: string | null; mode: string; localFileName: string | null; localStoragePath: string | null }>({
     url: null,
     mode: "online",
     localFileName: null,
+    localStoragePath: null,
   });
   const settingsFetchedRef = useRef(false);
   const excecoesRef = useRef<string[]>([]);
@@ -404,11 +405,12 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        const dashboardItems = settings?.dashboard_items as { local_xml_filename?: string } | null;
+        const dashboardItems = settings?.dashboard_items as { local_xml_filename?: string; local_xml_storage_path?: string } | null;
         cachedSettingsRef.current = {
           url: settings?.music_xml_url || null,
           mode: settings?.music_source_mode || "online",
           localFileName: dashboardItems?.local_xml_filename || null,
+          localStoragePath: dashboardItems?.local_xml_storage_path || null,
         };
         excecoesRef.current = ((settings?.infomusic_excecoes || "") as string)
           .split(",")
@@ -417,7 +419,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         settingsFetchedRef.current = true;
       }
 
-      const { url, mode, localFileName } = cachedSettingsRef.current;
+      const { url, mode, localFileName, localStoragePath } = cachedSettingsRef.current;
       const useOnline = mode === "online" || mode === "both";
       const useLocal = mode === "pasta" || mode === "both";
 
@@ -426,9 +428,10 @@ export function useGlobalMusicSync(enabled: boolean = true) {
         // Try the new auth-prefixed path first (written by MusicaNoAr.syncToStorage);
         // fall back to the legacy flat path for older tenants.
         const candidates = [
+          localStoragePath,
           `${user.id}/local-xml-${user.id}.xml`,
           `local-xml-${user.id}.xml`,
-        ];
+        ].filter(Boolean) as string[];
         for (const filePath of candidates) {
           try {
             const { data: urlData } = supabase.storage.from("xml-files").getPublicUrl(filePath);
