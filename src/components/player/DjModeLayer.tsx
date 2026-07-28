@@ -335,7 +335,9 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.background =
           `radial-gradient(circle at 30% 30%, ${paletteA} 0%, transparent 55%),` +
           `radial-gradient(circle at 70% 75%, ${paletteB} 0%, transparent 55%),` +
-          `linear-gradient(${paletteAngle}deg, ${paletteA} 0%, ${paletteB} 100%)`;
+          `radial-gradient(circle at 50% 100%, ${paletteC} 0%, transparent 60%),` +
+          `linear-gradient(${paletteAngle}deg, ${paletteA} 0%, ${paletteC} 50%, ${paletteB} 100%)`;
+
         bg.style.filter = `saturate(${1.35 + intensity * 0.5}) contrast(${1 + intensity * 0.15}) brightness(${brightness})`;
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
