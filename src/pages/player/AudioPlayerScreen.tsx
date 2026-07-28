@@ -2091,7 +2091,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               data-focusable
               data-active={isFullscreen || undefined}
             >
-              {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              {isFullscreen ? <Minimize2 size={22} /> : <Maximize2 size={22} />}
             </button>
             {!isVideoChannel && (
               <div className="relative">
