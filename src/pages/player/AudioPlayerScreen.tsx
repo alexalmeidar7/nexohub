@@ -1823,135 +1823,115 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         className="absolute bottom-0 left-0 right-0 z-30 px-8 pb-6"
         style={isVideoChannel ? controlsStyle : undefined}
       >
-        {/* Timeshift disponível para áudio E vídeo — usa videoRef quando isVideoChannel */}
-        <>
-        {/* live pill com rewind interativo por arraste (à direita) */}
-        <div className="flex justify-end mb-2">
-          <div className="relative group/live">
-            <button
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                const startX = e.clientX;
-                const maxBack = Math.max(1, ts.back);
-                const MAX_PX = 220;
-                const startOffset = ts.offset;
-                (e.currentTarget as any)._dragMoved = false;
-                (e.currentTarget as any)._onMove = (ev: PointerEvent) => {
-                  const dx = Math.min(0, ev.clientX - startX); // apenas para esquerda
-                  if (Math.abs(dx) > 4) (e.currentTarget as any)._dragMoved = true;
-                  const addBack = Math.min(maxBack, (-dx / MAX_PX) * maxBack);
-                  const target = Math.max(0, Math.min(maxBack, startOffset + addBack));
-                  setDragVal(TIMESHIFT_WINDOW - target);
-                };
-                window.addEventListener("pointermove", (e.currentTarget as any)._onMove);
-              }}
-              onPointerUp={(e) => {
-                window.removeEventListener("pointermove", (e.currentTarget as any)._onMove);
-                const moved = (e.currentTarget as any)._dragMoved;
-                if (moved && dragVal != null) {
-                  seekBySeconds(TIMESHIFT_WINDOW - dragVal);
-                  setDragVal(null);
-                } else {
-                  setDragVal(null);
-                  seekLive();
-                }
-              }}
-              onPointerCancel={(e) => {
-                window.removeEventListener("pointermove", (e.currentTarget as any)._onMove);
-                setDragVal(null);
-              }}
-              className="group px-3 py-1 rounded-full text-[11px] bg-white/10 hover:bg-white/20 border border-white/10 flex items-center gap-1.5 transition-all duration-300 ease-out overflow-hidden cursor-ew-resize select-none touch-none"
-              aria-label="Voltar ao vivo (arraste para voltar no tempo)"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-300 ${(dragVal != null || ts.offset > 1) ? "bg-white/40" : "bg-red-500 animate-pulse"}`} />
-              {(() => {
-                if (dragVal != null) {
-                  const targetOffset = Math.max(0, TIMESHIFT_WINDOW - dragVal);
-                  const mm = Math.floor(targetOffset / 60);
-                  const ss = String(Math.round(targetOffset % 60)).padStart(2, "0");
-                  const isLive = targetOffset < 1;
-                  return (
-                    <span key="drag" className="inline-flex items-center gap-1 animate-fade-in tabular-nums">
-                      <span>ao vivo</span>
-                      {!isLive && <span className="text-white/70">-{mm}:{ss}</span>}
-                    </span>
-                  );
-                }
-
-                return (
-                  <span key={ts.offset > 1 ? "back" : "live"} className="inline-block animate-fade-in">
-                    {ts.offset > 1 ? "voltar ao vivo" : "ao vivo"}
-                  </span>
-                );
-              })()}
-            </button>
-            <div className="pointer-events-none absolute right-0 bottom-full mb-2 px-2 py-1 rounded-md bg-black/80 backdrop-blur text-[10px] text-white/90 whitespace-nowrap opacity-0 group-hover/live:opacity-100 transition-opacity duration-200 border border-white/10">
-              {"<<"} arraste para voltar no tempo
-            </div>
-          </div>
-        </div>
-
-        {/* timeshift bar (janela fixa 30 min) */}
+        {/* Timeshift — barra intuitiva de "voltar no tempo" (áudio + vídeo) */}
         {(() => {
+          const currentOffset = dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset;
           const bufferPct = Math.max(0, Math.min(100, (ts.back / TIMESHIFT_WINDOW) * 100));
-          const bufferLeft = 100 - bufferPct; // buffer disponível cresce da direita (AO VIVO) para a esquerda
-          const playheadPct = (1 - (dragVal != null ? TIMESHIFT_WINDOW - dragVal : ts.offset) / TIMESHIFT_WINDOW) * 100;
-          const fiveMinPct = (1 - (5 * 60) / TIMESHIFT_WINDOW) * 100; // marcador -5min
+          const bufferLeft = 100 - bufferPct;
+          const playheadPct = Math.max(0, Math.min(100, (1 - currentOffset / TIMESHIFT_WINDOW) * 100));
+          const isLive = currentOffset < 2;
+          const offsetLabel = isLive
+            ? "AO VIVO"
+            : `-${Math.floor(currentOffset / 60)}:${String(Math.round(currentOffset % 60)).padStart(2, "0")}`;
           return (
-        <div className="relative group/timeshift focus-within:scale-[1.01] transition-transform">
-          <div
-            className="relative h-1 rounded-full bg-white/[0.06] overflow-hidden transition-all duration-200 group-focus-within/timeshift:h-2 group-focus-within/timeshift:bg-white/[0.10] group-focus-within/timeshift:shadow-[0_0_0_2px_var(--nexo-accent,#00BFF0),0_0_14px_var(--nexo-accent,#00BFF0)]"
-          >
-            {/* Buffer disponível (janela de seek) */}
-            <div
-              className="absolute top-0 bottom-0 bg-white/20 transition-[left,width] duration-500"
-              style={{ left: `${bufferLeft}%`, width: `${bufferPct}%` }}
-              aria-hidden
-            />
-            {/* Playhead / progresso do seek */}
-            <div
-              className="absolute top-0 bottom-0 left-0 bg-white/85 transition-all duration-500 group-focus-within/timeshift:bg-[var(--nexo-accent,#00BFF0)]"
-              style={{ width: `${playheadPct}%` }}
-            />
-          </div>
-          {/* Marcadores dos limites: -5min e AO VIVO */}
-          <div className="pointer-events-none absolute inset-x-0 -top-1 h-4">
-            <span
-              className="absolute top-0 h-4 w-px bg-white/30"
-              style={{ left: `${fiveMinPct}%` }}
-              aria-hidden
-            />
-            <span className="absolute top-0 h-4 w-px bg-[var(--nexo-accent,#00BFF0)]/80 right-0" aria-hidden />
-          </div>
-          <input
-            type="range"
-            min={0}
-            max={TIMESHIFT_WINDOW}
-            step={1}
-            value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
-            onChange={(e) => setDragVal(Number(e.target.value))}
-            onMouseUp={commitDrag}
-            onTouchEnd={commitDrag}
-            onPointerUp={commitDrag}
-            onKeyUp={commitDrag}
-            className="absolute inset-0 w-full h-4 -top-1.5 opacity-0 cursor-pointer"
-            aria-label="Voltar até 30 minutos"
-            data-tv-focusable
-            data-tv-flat
-            data-tv-scroll="center"
-            data-tv-selected={ts.offset > 1 ? "true" : undefined}
-          />
-          <div className="mt-1 flex justify-between text-[10px] text-white/45">
-            <span className="text-white/55">-5min</span>
-            <span>
-              {ts.offset > 1 ? `-${Math.floor(ts.offset / 60)}:${String(Math.round(ts.offset % 60)).padStart(2, "0")}` : "AO VIVO"}
-            </span>
-            <span>buffer disponível: {Math.floor(ts.back / 60)}:{String(Math.round(ts.back % 60)).padStart(2, "0")}</span>
-          </div>
-        </div>
+            <div className="w-full">
+              {/* Header: hint + return-to-live (só quando afastado do vivo) */}
+              <div className="flex items-center justify-between mb-1.5 h-5">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.14em] text-white/45">
+                  <Rewind size={11} className="opacity-70" />
+                  <span>arraste para voltar no tempo</span>
+                </div>
+                {!isLive && (
+                  <button
+                    type="button"
+                    onClick={() => { setDragVal(null); seekLive(); flashHint("ao vivo"); }}
+                    className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-500/90 hover:bg-red-500 text-white text-[10px] font-semibold uppercase tracking-[0.14em] shadow-[0_2px_10px_rgba(239,68,68,0.4)] animate-fade-in transition"
+                    data-focusable
+                    aria-label="Voltar para transmissão ao vivo"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <span>ao vivo</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Barra */}
+              <div className="relative group/timeshift">
+                {/* trilho */}
+                <div className="relative h-2 rounded-full bg-white/[0.08] overflow-visible transition-all duration-200 group-focus-within/timeshift:h-2.5 group-hover/timeshift:h-2.5">
+                  {/* Buffer disponível (janela onde é possível voltar) */}
+                  <div
+                    className="absolute top-0 bottom-0 rounded-full bg-white/15 transition-[left,width] duration-500"
+                    style={{ left: `${bufferLeft}%`, width: `${bufferPct}%` }}
+                    aria-hidden
+                  />
+                  {/* Progresso do playhead: do playhead até o vivo (à direita) fica preenchido claro */}
+                  <div
+                    className="absolute top-0 bottom-0 rounded-full transition-[left,width] duration-500"
+                    style={{
+                      left: `${playheadPct}%`,
+                      right: 0,
+                      background: isLive
+                        ? "linear-gradient(90deg, rgba(255,255,255,0.6), rgba(239,68,68,0.85))"
+                        : "linear-gradient(90deg, rgba(255,255,255,0.85), var(--nexo-accent,#00BFF0))",
+                    }}
+                    aria-hidden
+                  />
+                  {/* pontinho AO VIVO fixo à direita */}
+                  <span
+                    className={`absolute -right-0.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${isLive ? "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.9)]" : "bg-white/40"}`}
+                    aria-hidden
+                  />
+                  {/* Thumb (playhead) — pílula com tempo, mais claro que é arrastável */}
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-[left] duration-500"
+                    style={{ left: `${playheadPct}%` }}
+                    aria-hidden
+                  >
+                    <div
+                      className={`-translate-x-1/2 flex items-center gap-1 px-2 h-6 rounded-full text-[10px] font-semibold tabular-nums whitespace-nowrap border transition-all ${
+                        isLive
+                          ? "bg-white text-black border-white/40 shadow-[0_2px_10px_rgba(255,255,255,0.35)]"
+                          : "bg-[var(--nexo-accent,#00BFF0)] text-black border-white/50 shadow-[0_2px_14px_rgba(0,191,240,0.5)]"
+                      } ${dragVal != null ? "scale-110" : "group-hover/timeshift:scale-105"}`}
+                    >
+                      {!isLive && <Rewind size={10} strokeWidth={2.5} />}
+                      <span>{offsetLabel}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Range invisível cobre a área — permite clique/arraste em qualquer ponto */}
+                <input
+                  type="range"
+                  min={0}
+                  max={TIMESHIFT_WINDOW}
+                  step={1}
+                  value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
+                  onChange={(e) => setDragVal(Number(e.target.value))}
+                  onMouseUp={commitDrag}
+                  onTouchEnd={commitDrag}
+                  onPointerUp={commitDrag}
+                  onKeyUp={commitDrag}
+                  className="absolute inset-x-0 -top-2 -bottom-2 w-full opacity-0 cursor-pointer"
+                  aria-label="Voltar até 30 minutos na transmissão"
+                  data-tv-focusable
+                  data-tv-flat
+                  data-tv-scroll="center"
+                  data-tv-selected={ts.offset > 1 ? "true" : undefined}
+                />
+              </div>
+
+              {/* Escala inferior */}
+              <div className="mt-1.5 flex justify-between items-center text-[10px] text-white/40 tabular-nums">
+                <span>-30:00</span>
+                <span className="text-white/30">-15:00</span>
+                <span className={isLive ? "text-red-400 font-semibold" : "text-white/60"}>AO VIVO</span>
+              </div>
+            </div>
           );
         })()}
-        </>
+
 
         {/* control row */}
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
