@@ -1922,8 +1922,16 @@ export default function CenarioInterativoPage() {
                       const light = Math.max(la, lb); const dark = Math.min(la, lb);
                       return (light + 0.05) / (dark + 0.05);
                     };
-                    const wcagBadge = (bg: string, fg: string = "#FFFFFF") => {
-                      const r = contrastRatio(bg, fg);
+                    const pairFor = (key: string) => {
+                      if (key === "colorButtonBgOff") return { color: config.home.colorButtonOff || "rgba(255,255,255,0.7)", label: "vs ícone" };
+                      if (key === "colorButtonBgOn") return { color: config.home.colorButtonOn || "#FFFFFF", label: "vs ícone" };
+                      if (key === "colorButtonOff") return { color: config.home.colorButtonBgOff || "rgba(0,0,0,0.8)", label: "vs fundo" };
+                      if (key === "colorButtonOn") return { color: config.home.colorButtonBgOn || "rgba(0,191,240,0.85)", label: "vs fundo" };
+                      return { color: "#FFFFFF", label: "vs branco" };
+                    };
+                    const wcagBadge = (bg: string, key: string) => {
+                      const p = pairFor(key);
+                      const r = contrastRatio(bg, p.color);
                       if (r == null) return null;
                       const val = r.toFixed(2);
                       const passAAA = r >= 7;
@@ -1937,10 +1945,11 @@ export default function CenarioInterativoPage() {
                           <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: bgc, color }}>
                             {val}:1 · {level}
                           </span>
-                          <span className="text-[8px] uppercase font-bold opacity-50">vs ícone branco</span>
+                          <span className="text-[8px] uppercase font-bold opacity-50">{p.label}</span>
                         </div>
                       );
                     };
+
 
                     return (
                       <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
