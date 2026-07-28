@@ -244,9 +244,19 @@ export default function PlayerHub() {
 
 
   const onLoginSuccess = useCallback(() => {
-    // Após login, se o fluxo pediu ?step=home, vai direto para home.
-    transitionTo(skipToHome ? "home" : "welcome");
-  }, [transitionTo, skipToHome]);
+    // Após login bem-sucedido, o usuário deve entrar no player — nunca voltar
+    // para a tela de login. Persiste a preferência de "home" no slug atual
+    // para que reloads/redirects do OAuth não caiam de novo na welcome.
+    if (!tvGuestMode) {
+      try { window.localStorage.setItem(storageKey, "1"); } catch {}
+      const next = new URLSearchParams(searchParams);
+      if (next.get("step") !== "home") {
+        next.set("step", "home");
+        setSearchParams(next, { replace: true });
+      }
+    }
+    transitionTo("home");
+  }, [transitionTo, tvGuestMode, storageKey, searchParams, setSearchParams]);
 
   const onWelcomeContinue = useCallback(() => {
     if (!tvGuestMode) {
