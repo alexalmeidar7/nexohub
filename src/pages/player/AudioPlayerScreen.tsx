@@ -3058,7 +3058,7 @@ function InteractivityMenu({
           70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
           100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       `}</style>
     </div>
   );
