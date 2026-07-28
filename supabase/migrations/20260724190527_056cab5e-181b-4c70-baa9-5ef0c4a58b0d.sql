@@ -1,0 +1,2 @@
+ALTER TABLE public.ouvintes ADD COLUMN IF NOT EXISTS whatsapp_message_id text;
+CREATE INDEX IF NOT EXISTS idx_ouvintes_whatsapp_message_id ON public.ouvintes(whatsapp_message_id) WHERE whatsapp_message_id IS NOT NULL;

@@ -33,6 +33,8 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
   const [novoWhatsapp, setNovoWhatsapp] = useState("");
   const [searchResults, setSearchResults] = useState<{ nome: string; whatsapp: string; cargo: string }[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [pendingUpdateNome, setPendingUpdateNome] = useState<string | null>(null);
+  const [sendingApi, setSendingApi] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +44,14 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
         .map(p => ({ nome: p.nome, whatsapp: p.whatsapp!.trim() }));
       setContatos(existing);
       if (roteiroData._expressFormatted) {
-        setFormattedText(roteiroData._expressFormatted);
+        // Replace the original date with today's date in the pre-formatted text
+        const today = new Date().toLocaleDateString("pt-BR");
+        const originalDate = roteiroData.data;
+        let text = roteiroData._expressFormatted;
+        if (originalDate && originalDate !== today) {
+          text = text.split(originalDate).join(today);
+        }
+        setFormattedText(text);
         setLoading(false);
       } else {
         setFormattedText("");
@@ -86,6 +95,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     if (contatos.some(c => c.nome === r.nome)) { toast.info("Já adicionado"); return; }
     if (!r.whatsapp.trim()) {
       setNovoNome(r.nome);
+      setPendingUpdateNome(r.nome);
       setShowResults(false);
       toast.info("Sem WhatsApp cadastrado, preencha manualmente");
       return;
@@ -105,7 +115,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
           titulo: roteiroData.titulo,
           programaNome: roteiroData.programaNome,
           estudio: roteiroData.estudio,
-          data: roteiroData.data,
+          data: new Date().toLocaleDateString("pt-BR"),
           horario: roteiroData.horario,
           participantes: roteiroData.participantes,
           conteudoTexto: roteiroData.conteudoTexto,
@@ -117,17 +127,29 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch (err: any) {
       console.error("Erro ao formatar:", err);
       toast.error("Erro ao formatar roteiro para WhatsApp");
-      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${roteiroData.data} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
+      setFormattedText(`*${roteiroData.titulo || "Roteiro"}*\n${roteiroData.programaNome} · ${roteiroData.estudio}\n${new Date().toLocaleDateString("pt-BR")} ${roteiroData.horario}\n\n${roteiroData.conteudoTexto.substring(0, 3000)}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const addContato = () => {
+  const addContato = async () => {
     if (!novoNome.trim() && !novoWhatsapp.trim()) return;
     const phone = novoWhatsapp.trim().replace(/\D/g, "");
     if (!phone) { toast.error("Insira um número válido"); return; }
     setContatos(prev => [...prev, { nome: novoNome.trim() || "Sem nome", whatsapp: phone }]);
+
+    // Update apresentador record if this contact came from search without a phone
+    if (pendingUpdateNome && user) {
+      const formatted = phone.length === 11 ? `(${phone.slice(0,2)}) ${phone.slice(2,7)}-${phone.slice(7)}` : phone;
+      await supabase
+        .from("apresentadores")
+        .update({ whatsapp: formatted })
+        .eq("user_id", user.id)
+        .eq("nome", pendingUpdateNome);
+      setPendingUpdateNome(null);
+    }
+
     setNovoNome("");
     setNovoWhatsapp("");
     setSearchResults([]);
@@ -144,6 +166,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     } catch { toast.error("Não foi possível copiar"); }
   };
 
+
   const enviar = async () => {
     if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
     if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
@@ -155,6 +178,30 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
     });
     toast.success(`Abrindo WhatsApp para ${contatos.length} contato(s)`);
     setTimeout(onClose, 1600);
+  };
+
+  const enviarViaAPI = async () => {
+    if (!formattedText.trim()) { toast.error("Aguarde a formatação"); return; }
+    if (contatos.length === 0) { toast.error("Adicione pelo menos um contato"); return; }
+    setSendingApi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp", {
+        body: { contatos, mensagem: formattedText },
+      });
+      if (error) throw error;
+      if (data?.ok) {
+        toast.success(`✅ ${data.enviados}/${data.total} mensagem(ns) enviada(s) via API`);
+        if (data.falhas > 0) toast.warning(`${data.falhas} falha(s) no envio`);
+        setTimeout(onClose, 1200);
+      } else {
+        toast.error(data?.error || "Erro ao enviar via API");
+      }
+    } catch (err: any) {
+      console.error("Erro envio API:", err);
+      toast.error("Falha ao enviar via API. Tente via link.");
+    } finally {
+      setSendingApi(false);
+    }
   };
 
   if (!open) return null;
@@ -181,9 +228,9 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
             <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
               <MessageCircle size={18} style={{ color: "#fff" }} />
             </div>
-            <div>
+          <div>
               <h3 className="text-sm font-bold text-white">Enviar por WhatsApp</h3>
-              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {roteiroData.data}</p>
+              <p className="text-[10px] text-white/70">{roteiroData.programaNome} · {new Date().toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
         </div>
@@ -286,7 +333,7 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
 
               {/* Search results dropdown */}
               {showResults && searchResults.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)" }}>
+                <div className="absolute z-50 w-full bottom-full mb-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)" }}>
                   {searchResults.map((r, i) => (
                     <button
                       key={i}
@@ -329,12 +376,20 @@ export default function WhatsAppSendDialog({ open, onClose, roteiroData }: Whats
               <Copy size={12} /> Copiar
             </button>
             <button
+              onClick={enviarViaAPI}
+              disabled={loading || sendingApi || !formattedText.trim() || contatos.length === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
+              style={{ backgroundColor: "#128c7e" }}
+            >
+              {sendingApi ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />} API ({contatos.length})
+            </button>
+            <button
               onClick={enviar}
               disabled={loading || !formattedText.trim() || contatos.length === 0}
               className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold text-white hover:opacity-90 transition disabled:opacity-30"
               style={{ backgroundColor: "#25d366" }}
             >
-              <Send size={12} /> Enviar ({contatos.length})
+              <Send size={12} /> Link ({contatos.length})
             </button>
           </div>
         </div>

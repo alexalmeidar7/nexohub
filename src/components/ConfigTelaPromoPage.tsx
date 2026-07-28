@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { GradientPicker } from "@/components/ui/GradientPicker";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { toast } from "sonner";
-import { Palette, Image as ImageIcon, Layers, ExternalLink, Save } from "lucide-react";
+import { Palette, Image as ImageIcon, Layers, ExternalLink, Save, Monitor, Type, Square, Sparkles, Sun, Moon } from "lucide-react";
 
 type BgType = "cor" | "imagem" | "degrade";
 type CardStyle = "rounded" | "sharp" | "pill";
@@ -43,39 +44,66 @@ export const defaultTelaPromoConfig: TelaPromoConfig = {
 };
 
 export function buildTelaPromoBgStyle(config: TelaPromoConfig): React.CSSProperties {
+  const gradientFallback = { background: `linear-gradient(${config.gradient_angle}deg, ${config.gradient_color_a}, ${config.gradient_color_b})` };
   switch (config.bg_type) {
     case "cor":
       return { backgroundColor: config.bg_color };
     case "imagem":
       return config.bg_image_url
         ? { backgroundImage: `url(${config.bg_image_url})`, backgroundSize: "cover", backgroundPosition: "center" }
-        : { backgroundColor: "#000" };
+        : gradientFallback;
     case "degrade":
-      return { background: `linear-gradient(${config.gradient_angle}deg, ${config.gradient_color_a}, ${config.gradient_color_b})` };
+      return gradientFallback;
     default:
-      return { backgroundColor: "#000" };
+      return gradientFallback;
   }
 }
 
-const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.25)", border: "1px solid rgba(255,255,255,0.25)" };
+const PRESETS: { name: string; config: Partial<TelaPromoConfig> }[] = [
+  { name: "🔴 Vermelho Clássico", config: { bg_type: "degrade", gradient_color_a: "#1a1a2e", gradient_color_b: "#16213e", gradient_angle: 135, btn_color_a: "#1a1a1a", btn_color_b: "#dc2626", btn_text_color: "#ffffff", card_border_color: "#ffffff", header_text_color: "#ffffff", card_style: "rounded" } },
+  { name: "🔵 Azul Moderno", config: { bg_type: "degrade", gradient_color_a: "#0f172a", gradient_color_b: "#1e3a5f", gradient_angle: 160, btn_color_a: "#1e40af", btn_color_b: "#3b82f6", btn_text_color: "#ffffff", card_border_color: "#93c5fd", header_text_color: "#e0f2fe", card_style: "rounded" } },
+  { name: "🟢 Verde Neon", config: { bg_type: "degrade", gradient_color_a: "#022c22", gradient_color_b: "#064e3b", gradient_angle: 145, btn_color_a: "#065f46", btn_color_b: "#10b981", btn_text_color: "#ffffff", card_border_color: "#34d399", header_text_color: "#d1fae5", card_style: "pill" } },
+  { name: "🟡 Dourado Premium", config: { bg_type: "degrade", gradient_color_a: "#1c1917", gradient_color_b: "#292524", gradient_angle: 135, btn_color_a: "#92400e", btn_color_b: "#f59e0b", btn_text_color: "#1c1917", card_border_color: "#fbbf24", header_text_color: "#fef3c7", card_style: "rounded" } },
+  { name: "🟣 Roxo Vibrante", config: { bg_type: "degrade", gradient_color_a: "#1e1b4b", gradient_color_b: "#312e81", gradient_angle: 150, btn_color_a: "#5b21b6", btn_color_b: "#a78bfa", btn_text_color: "#ffffff", card_border_color: "#c4b5fd", header_text_color: "#ede9fe", card_style: "rounded" } },
+  { name: "⬛ Escuro Minimalista", config: { bg_type: "cor", bg_color: "#0a0a0a", btn_color_a: "#262626", btn_color_b: "#404040", btn_text_color: "#ffffff", card_border_color: "#525252", header_text_color: "#e5e5e5", card_style: "sharp" } },
+];
+
+const inputStyle = { backgroundColor: "rgba(255,255,255,0.06)", color: "var(--layout-text)", borderColor: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.18)" };
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div className="space-y-1.5">
-      <Label className="text-xs" style={{ color: "var(--layout-text)" }}>{label}</Label>
+    <div className="space-y-1">
+      <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>{label}</Label>
       <div className="flex items-center gap-2">
-        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-8 h-8 rounded border-0 cursor-pointer" />
-        <Input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} className="flex-1" />
+        <input type="color" value={value} onChange={e => onChange(e.target.value)} className="w-7 h-7 rounded-md border-0 cursor-pointer shrink-0" style={{ background: "transparent" }} />
+        <Input value={value} onChange={e => onChange(e.target.value)} style={inputStyle} className="h-8 text-xs font-mono" />
       </div>
     </div>
   );
 }
 
-export default function ConfigTelaPromoPage() {
+function SectionCard({ icon: Icon, title, children }: { icon: any; title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl p-4 space-y-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="flex items-center gap-2">
+        <Icon size={14} style={{ color: "var(--layout-accent-color, hsl(var(--primary)))" }} />
+        <h3 className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent-color, hsl(var(--primary)))" }}>{title}</h3>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+interface Props {
+  effectiveUserId?: string | null;
+}
+
+export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const { user } = useAuth();
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewDark, setPreviewDark] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -142,122 +170,164 @@ export default function ConfigTelaPromoPage() {
   const cardRadius = config.card_style === "sharp" ? "4px" : config.card_style === "pill" ? "50px" : "16px";
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="sticky top-0 z-20 rounded-2xl border border-border bg-card p-3 shadow-lg">
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            variant="accent"
-            size="lg"
-            className="min-h-12 flex-1 justify-center rounded-xl text-sm font-bold uppercase tracking-[0.08em] shadow-lg"
-          >
-            <Save size={16} />
-            {saving ? "Salvando..." : "Salvar configurações"}
-          </Button>
+    <div className="nexo-scope flex flex-col gap-4">
+      {/* Action buttons */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+        <Button variant="save"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          <Save size={15} />
+          {saving ? "Salvando..." : "Salvar configurações"}
+        </Button>
 
-          <Button
-            variant="outline"
-            size="lg"
-            className="min-h-12 flex-1 justify-center rounded-xl border-2 border-primary/40 bg-background text-foreground shadow-lg"
-            onClick={() => {
-              const slug = user?.email?.split("@")[0] || "";
-              window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
-            }}
-          >
-            <ExternalLink size={16} /> Abrir Tela Promo
-          </Button>
-        </div>
+        <button
+          className="min-h-10 flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all hover:brightness-110 px-6"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            color: "var(--foreground)",
+            border: "1px solid rgba(255,255,255,0.1)",
+          }}
+          onClick={() => {
+            const targetId = effectiveUserId || user?.id;
+            window.open(`/user/${targetId}/nexohub/locutor`, "_blank");
+          }}
+        >
+          <ExternalLink size={15} /> Abrir Módulo Locutor
+        </button>
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="flex-1 space-y-6 max-w-lg">
-          <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: "var(--layout-accent)" }}>Fundo da Tela</h3>
+      {/* Main layout */}
+      <div className="flex flex-col gap-4 lg:flex-row">
+        {/* Left: config panels */}
+        <div className="flex-1 space-y-4 max-w-xl">
+          {/* Presets section */}
+          <SectionCard icon={Palette} title="Presets de Cores">
+            <div className="grid grid-cols-2 gap-2">
+              {PRESETS.map(preset => (
+                <button
+                  key={preset.name}
+                  onClick={() => setConfig(c => ({ ...c, ...preset.config }))}
+                  className="text-left px-3 py-2 rounded-lg text-xs font-medium transition-all hover:scale-[1.02] hover:brightness-125"
+                  style={{ background: "rgba(255,255,255,0.06)", color: "var(--layout-text)", border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </SectionCard>
 
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Tipo de fundo</Label>
-            <Select value={config.bg_type} onValueChange={v => update({ bg_type: v as BgType })}>
-              <SelectTrigger className="w-full" style={inputStyle}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cor"><span className="flex items-center gap-2"><Palette size={14} /> Cor sólida</span></SelectItem>
-                <SelectItem value="imagem"><span className="flex items-center gap-2"><ImageIcon size={14} /> Imagem</span></SelectItem>
-                <SelectItem value="degrade"><span className="flex items-center gap-2"><Layers size={14} /> Degradê</span></SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {config.bg_type === "cor" && (
-            <ColorField label="Cor de fundo" value={config.bg_color} onChange={v => update({ bg_color: v })} />
-          )}
-
-          {config.bg_type === "imagem" && (
+          {/* Background section */}
+          <SectionCard icon={Monitor} title="Fundo da Tela">
             <div className="space-y-3">
-              <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
-              <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer" style={inputStyle} />
-              <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." style={inputStyle} />
-            </div>
-          )}
-
-          {config.bg_type === "degrade" && (
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <ColorField label="Cor A" value={config.gradient_color_a} onChange={v => update({ gradient_color_a: v })} />
-                <ColorField label="Cor B" value={config.gradient_color_b} onChange={v => update({ gradient_color_b: v })} />
+              <div className="space-y-1">
+                <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Tipo de fundo</Label>
+                <Select value={config.bg_type} onValueChange={v => update({ bg_type: v as BgType })}>
+                  <SelectTrigger className="w-full h-9 text-sm" style={inputStyle}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cor"><span className="flex items-center gap-2"><Palette size={13} /> Cor sólida</span></SelectItem>
+                    <SelectItem value="imagem"><span className="flex items-center gap-2"><ImageIcon size={13} /> Imagem</span></SelectItem>
+                    <SelectItem value="degrade"><span className="flex items-center gap-2"><Layers size={13} /> Degradê</span></SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Ângulo ({config.gradient_angle}°)</Label>
-                <Slider value={[config.gradient_angle]} onValueChange={v => update({ gradient_angle: v[0] })} min={0} max={360} step={1} />
-              </div>
-            </div>
-          )}
 
-          <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Botões de Promoção</h3>
-            <div className="grid grid-cols-2 gap-4">
+              {config.bg_type === "cor" && (
+                <ColorField label="Cor de fundo" value={config.bg_color} onChange={v => update({ bg_color: v })} />
+              )}
+
+              {config.bg_type === "imagem" && (
+                <div className="space-y-2">
+                  <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
+                  <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer h-9 text-sm" style={inputStyle} />
+                  <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." className="h-9 text-sm" style={inputStyle} />
+                </div>
+              )}
+
+              {config.bg_type === "degrade" && (
+                <GradientPicker
+                  colorA={config.gradient_color_a}
+                  colorB={config.gradient_color_b}
+                  angle={config.gradient_angle}
+                  onChangeColorA={v => update({ gradient_color_a: v })}
+                  onChangeColorB={v => update({ gradient_color_b: v })}
+                  onChangeAngle={v => update({ gradient_angle: v })}
+                />
+              )}
+            </div>
+          </SectionCard>
+
+          {/* Buttons section */}
+          <SectionCard icon={Sparkles} title="Botões de Promoção">
+            <div className="grid grid-cols-2 gap-3">
               <ColorField label="Cor início" value={config.btn_color_a} onChange={v => update({ btn_color_a: v })} />
               <ColorField label="Cor fim" value={config.btn_color_b} onChange={v => update({ btn_color_b: v })} />
               <ColorField label="Cor do texto" value={config.btn_text_color} onChange={v => update({ btn_text_color: v })} />
               <ColorField label="Cor da borda (hover)" value={config.card_border_color} onChange={v => update({ card_border_color: v })} />
             </div>
-          </div>
+          </SectionCard>
 
-          <div className="border-t pt-4" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-4" style={{ color: "var(--layout-accent)" }}>Estilo dos Cards</h3>
-            <div className="space-y-3">
-              <Label className="text-sm" style={{ color: "var(--layout-text)" }}>Formato</Label>
-              <Select value={config.card_style} onValueChange={v => update({ card_style: v as CardStyle })}>
-                <SelectTrigger className="w-full" style={inputStyle}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rounded">Arredondado</SelectItem>
-                  <SelectItem value="sharp">Reto</SelectItem>
-                  <SelectItem value="pill">Pílula</SelectItem>
-                </SelectContent>
-              </Select>
-              <ColorField label="Cor do texto do cabeçalho" value={config.header_text_color} onChange={v => update({ header_text_color: v })} />
+          {/* Cards section */}
+          <SectionCard icon={Square} title="Estilo dos Cards">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Formato</Label>
+                <Select value={config.card_style} onValueChange={v => update({ card_style: v as CardStyle })}>
+                  <SelectTrigger className="w-full h-9 text-sm" style={inputStyle}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="rounded">Arredondado</SelectItem>
+                    <SelectItem value="sharp">Reto</SelectItem>
+                    <SelectItem value="pill">Pílula</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <ColorField label="Cor texto cabeçalho" value={config.header_text_color} onChange={v => update({ header_text_color: v })} />
             </div>
-          </div>
+          </SectionCard>
         </div>
 
-        <div className="flex-1 space-y-3">
-          <Label className="text-sm font-semibold" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
+        {/* Right: preview */}
+        <div className="flex-1 space-y-2 lg:sticky lg:top-4 lg:self-start">
+          <div className="flex items-center justify-between">
+            <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Pré-visualização</Label>
+            <button
+              onClick={() => setPreviewDark(d => !d)}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+              style={{
+                background: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                color: previewDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
+                border: `1px solid ${previewDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)"}`,
+              }}
+            >
+              {previewDark ? <Moon size={12} /> : <Sun size={12} />}
+              {previewDark ? "Escuro" : "Claro"}
+            </button>
+          </div>
           <div
-            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-4 p-6"
-            style={{ ...buildTelaPromoBgStyle(config), borderColor: "rgba(255,255,255,0.1)" }}
+            className="rounded-2xl border overflow-hidden aspect-video flex flex-col items-center justify-center gap-5 p-8 transition-all duration-500 ease-in-out"
+            style={{
+              ...buildTelaPromoBgStyle(config),
+              borderColor: previewDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)",
+              backgroundColor: config.bg_type === "cor" ? config.bg_color : undefined,
+              ...(config.bg_type === "cor" ? {} : {}),
+              boxShadow: previewDark ? "inset 0 0 60px rgba(0,0,0,0.3)" : "inset 0 0 60px rgba(255,255,255,0.1)",
+            }}
           >
-            <span className="text-sm font-bold uppercase tracking-widest" style={{ color: config.header_text_color }}>Promoções</span>
+            <span className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: config.header_text_color }}>Promoções</span>
             <div className="flex gap-3">
               {["Promo 1", "Promo 2"].map(label => (
                 <div
                   key={label}
-                  className="px-5 py-2.5 font-bold text-xs shadow-lg flex items-center gap-2"
+                  className="px-5 py-2.5 font-bold text-xs shadow-lg flex items-center gap-2 transition-transform hover:scale-105"
                   style={{
                     background: `linear-gradient(135deg, ${config.btn_color_a}, ${config.btn_color_b})`,
                     color: config.btn_text_color,
                     borderRadius: cardRadius,
+                    border: `2px solid transparent`,
                   }}
                 >
                   {label}
@@ -268,10 +338,10 @@ export default function ConfigTelaPromoPage() {
               {[1, 2].map(i => (
                 <div
                   key={i}
-                  className="w-20 h-28 flex items-center justify-center"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", borderRadius: cardRadius, border: `2px solid transparent` }}
+                  className="w-20 h-28 flex items-center justify-center backdrop-blur-sm"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", borderRadius: cardRadius, border: `2px solid rgba(255,255,255,0.1)` }}
                 >
-                  <span style={{ color: config.header_text_color }} className="text-[10px]">Card</span>
+                  <span style={{ color: config.header_text_color }} className="text-[10px] opacity-60">Card</span>
                 </div>
               ))}
             </div>

@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import CenarioTela from "./CenarioTela";
 
 export default function TelaInterativa() {
   usePageTitle("NexoHub - Tela Interativa");
   const { userSlug } = useParams<{ userSlug: string }>();
+  usePublicHead(userSlug && userSlug !== ":userSlug" ? userSlug : null, "Tela Interativa");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export default function TelaInterativa() {
     return (
       <div className="fixed inset-0 bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-2 border-[#e1f532] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--layout-accent-color)] border-t-transparent rounded-full animate-spin" />
           <span className="text-white/60 text-sm">Buscando conexão...</span>
         </div>
       </div>

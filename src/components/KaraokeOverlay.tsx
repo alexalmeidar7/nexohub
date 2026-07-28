@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Mic, Minus, Plus, Settings, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { musicStartKey } from "@/lib/musicStorageKeys";
 
-const MUSIC_START_KEY = "masterview_music_start";
 const SPEED_OFFSET_KEY = "karaoke_speed_offset";
 
 interface LrcLine {
@@ -55,6 +56,8 @@ export default function KaraokeOverlay({
   onLyricsNotFound,
   onLyricsFound,
 }: KaraokeOverlayProps) {
+  const { user } = useAuth();
+  const MUSIC_START_KEY = musicStartKey(user?.id) || "masterview_music_start::__none__";
   const accentHsl = useMemo(() => getAccentHsl(), []);
   const accent = `hsl(${accentHsl})`;
   const accentA = (a: number) => `hsl(${accentHsl} / ${a})`;
@@ -100,6 +103,12 @@ export default function KaraokeOverlay({
     hideTimerRef.current = setTimeout(() => setControlsVisible(false), 1500);
   };
 
+  // Stable refs for callbacks so the fetch effect doesn't rerun on every parent render
+  const onLyricsFoundRef = useRef(onLyricsFound);
+  const onLyricsNotFoundRef = useRef(onLyricsNotFound);
+  useEffect(() => { onLyricsFoundRef.current = onLyricsFound; }, [onLyricsFound]);
+  useEffect(() => { onLyricsNotFoundRef.current = onLyricsNotFound; }, [onLyricsNotFound]);
+
   // Fetch lyrics when song changes
   useEffect(() => {
     const key = `${artist}||${title}`;
@@ -114,27 +123,59 @@ export default function KaraokeOverlay({
     setSyncMode(false);
     lastElapsedRef.current = null;
 
+    let cancelled = false;
+    const t0 = performance.now();
+    const reqId = Math.random().toString(36).slice(2, 8);
+    const tag = `[karaoke ${reqId}]`;
+    console.info(`${tag} → fetch-lyrics`, { key, duration: duration ? Math.round(duration) : undefined });
+
+    const timeoutWarn = setTimeout(() => {
+      if (!cancelled && lastFetchRef.current === key) {
+        console.warn(`${tag} ⏱ still pending after 8s`, { key });
+      }
+    }, 8000);
+
     supabase.functions.invoke("fetch-lyrics", {
       body: { artist, title, duration: duration ? Math.round(duration) : undefined },
     }).then(({ data, error: err }) => {
+      clearTimeout(timeoutWarn);
+      const ms = Math.round(performance.now() - t0);
+      if (cancelled || lastFetchRef.current !== key) {
+        console.info(`${tag} ⊘ stale response ignored`, { key, ms });
+        return;
+      }
       setLoading(false);
       if (err || !data?.success || !data?.syncedLyrics) {
+        console.warn(`${tag} ✗ no lyrics`, { key, ms, status: err ? "invoke_error" : "no_synced", err: err?.message, providerError: data?.error });
         setError(true);
-        setTimeout(() => setExitAnim(true), 1500);
-        onLyricsNotFound?.();
+        setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
+        onLyricsNotFoundRef.current?.();
         return;
       }
       const parsed = parseLrc(data.syncedLyrics);
       if (parsed.length === 0) {
+        console.warn(`${tag} ✗ empty parse`, { key, ms, lrcLength: data.syncedLyrics?.length });
         setError(true);
-        setTimeout(() => setExitAnim(true), 1500);
-        onLyricsNotFound?.();
+        setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
+        onLyricsNotFoundRef.current?.();
         return;
       }
+      console.info(`${tag} ✓ ok`, { key, ms, lines: parsed.length, source: data?.source });
       setLines(parsed);
-      onLyricsFound?.();
+      onLyricsFoundRef.current?.();
+    }).catch((e) => {
+      clearTimeout(timeoutWarn);
+      const ms = Math.round(performance.now() - t0);
+      if (cancelled || lastFetchRef.current !== key) return;
+      console.error(`${tag} ✗ exception`, { key, ms, message: e?.message });
+      setLoading(false);
+      setError(true);
+      setTimeout(() => { if (lastFetchRef.current === key) setExitAnim(true); }, 1500);
+      onLyricsNotFoundRef.current?.();
     });
-  }, [artist, title, duration, onLyricsNotFound, onLyricsFound]);
+
+    return () => { cancelled = true; clearTimeout(timeoutWarn); };
+  }, [artist, title, duration]);
 
   // Animation loop
   useEffect(() => {

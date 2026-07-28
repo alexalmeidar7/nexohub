@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Trash2, Pencil, Plus, Package } from "lucide-react";
@@ -149,7 +150,7 @@ export default function ShoppingPage() {
   };
 
   return (
-    <div className="animate-fade-in">
+    <div className="nexo-scope animate-fade-in">
       <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-5">
@@ -255,12 +256,11 @@ export default function ShoppingPage() {
               )}
             </div>
 
-            <button type="submit" disabled={saving}
-              className="btn-skyglass-accent px-6 py-2.5 text-sm disabled:opacity-50"
+            <Button variant="save" type="submit" disabled={saving}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editId ? "Salvar Alterações" : "Cadastrar Produto"}
-            </button>
+            </Button>
           </div>
         </form>
 

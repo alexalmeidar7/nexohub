@@ -75,15 +75,18 @@ export default function AudioDualCard({
   // Fetch recent songs when history opens
   useEffect(() => {
     if (!historyOpen || !userId) return;
-    supabase
-      .from("musicas_tocadas")
-      .select("id, horario, programa, artista, musica")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => {
-        if (data) setRecentSongs(data as MusicaTocada[]);
-      });
+    (async () => {
+      const { data } = await supabase
+        .from("musicas_tocadas")
+        .select("id, horario, programa, artista, musica")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      if (!data) return;
+      const { getMusicExceptions, filterOutMusicExceptions } = await import("@/lib/musicExceptions");
+      const excs = await getMusicExceptions(userId);
+      setRecentSongs(filterOutMusicExceptions(excs, data as any[]).slice(0, 20) as MusicaTocada[]);
+    })();
   }, [historyOpen, userId]);
 
   const handleEnter = () => {

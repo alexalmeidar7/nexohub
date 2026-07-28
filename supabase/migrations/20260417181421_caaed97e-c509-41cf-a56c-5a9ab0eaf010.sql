@@ -1,0 +1,5 @@
+CREATE POLICY "Sub-users can insert parent promocoes" ON public.promocoes FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM public.sub_users WHERE sub_users.auth_user_id = auth.uid() AND sub_users.parent_user_id = promocoes.user_id AND sub_users.ativo = true));
+
+CREATE POLICY "Sub-users can update parent promocoes" ON public.promocoes FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.sub_users WHERE sub_users.auth_user_id = auth.uid() AND sub_users.parent_user_id = promocoes.user_id AND sub_users.ativo = true)) WITH CHECK (EXISTS (SELECT 1 FROM public.sub_users WHERE sub_users.auth_user_id = auth.uid() AND sub_users.parent_user_id = promocoes.user_id AND sub_users.ativo = true));
+
+CREATE POLICY "Sub-users can delete parent promocoes" ON public.promocoes FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.sub_users WHERE sub_users.auth_user_id = auth.uid() AND sub_users.parent_user_id = promocoes.user_id AND sub_users.ativo = true));

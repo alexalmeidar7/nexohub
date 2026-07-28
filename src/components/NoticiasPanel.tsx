@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper, CloudSun, Droplets, Thermometer, ArrowUp, ArrowDown } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
@@ -14,6 +16,8 @@ interface NewsItem {
   link: string;
   thumbnail?: string;
   body?: string;
+  journalisticText?: string;
+  resumo?: string;
 }
 
 interface Portal {
@@ -33,6 +37,7 @@ interface SelectedNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface EscaladaNews {
@@ -40,6 +45,7 @@ interface EscaladaNews {
   portal: string;
   title: string;
   imageUrl: string;
+  resumo?: string;
 }
 
 interface SelectedCotacao {
@@ -87,7 +93,9 @@ function parseRss(text: string): NewsItem[] {
   const results: NewsItem[] = [];
   items.forEach((item, i) => {
     if (i >= 10) return;
-    const title = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+    const rawTitle = decodeHtmlEntities(item.querySelector("title")?.textContent || "");
+    let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+    if (title.includes(" - ")) title = title.split(" - ")[0].trim();
     const link = item.querySelector("link")?.textContent || "";
     let thumbnail = "";
     const mediaContent = item.querySelector("content[url]") || item.querySelector("thumbnail[url]");
@@ -137,7 +145,7 @@ async function fetchNews(rssUrl: string): Promise<NewsItem[]> {
       return data.items
         .slice(0, 10)
         .map((item: any) => ({
-          title: decodeHtmlEntities(item.title || ""),
+          title: (() => { const raw = decodeHtmlEntities(item.title || ""); let t = raw.includes("|") ? raw.split("|")[0].trim() : raw; if (t.includes(" - ")) t = t.split(" - ")[0].trim(); return t; })(),
           link: item.link,
           thumbnail: item.thumbnail || item.enclosure?.link || "",
         }));
@@ -437,11 +445,12 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
           const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-            body: JSON.stringify({ url }),
-            signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({ url, generate_journalistic_text: true }),
+            signal: AbortSignal.timeout(20000),
           });
           const data = await res.json();
           if (data.content) html = data.content;
+          if (data.journalisticText) body = data.journalisticText;
         }
         if (!html) {
           const res = await fetch(`${PROXY}${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
@@ -451,21 +460,23 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
         const ogImageMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i);
         if (ogImageMatch) thumbnail = ogImageMatch[1];
-        // Extract article body from <article> or og:description or <p> tags
-        const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
-        const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
-        if (articleMatch) {
-          body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 2000);
-        } else if (ogDescMatch) {
-          body = decodeHtmlEntities(ogDescMatch[1]);
-        } else {
-          // Fallback: extract text from <p> tags
-          const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
-          if (pMatches) {
-            body = pMatches.slice(0, 5).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 2000);
+        // Extract article body from <article> or og:description or <p> tags if not already fetched
+        if (!body) {
+          const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i);
+          const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+          if (articleMatch) {
+            body = articleMatch[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 3000);
+          } else if (ogDescMatch) {
+            body = decodeHtmlEntities(ogDescMatch[1]);
+          } else {
+            // Fallback: extract text from <p> tags
+            const pMatches = html.match(/<p[^>]*>([^<]{40,})<\/p>/gi);
+            if (pMatches) {
+              body = pMatches.slice(0, 15).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
+            }
           }
         }
-        setNoticiasAvulsas(prev => [...prev, { title, link: url, thumbnail, body }]);
+        setNoticiasAvulsas(prev => [{ title, link: url, thumbnail, body, journalisticText: body }, ...prev]);
       } catch {
         setNoticiasAvulsas(prev => [...prev, { title, link: url }]);
       }
@@ -483,8 +494,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
 
   const addToSelected = async (portal: string, news: NewsItem) => {
     if (!user) return;
-    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "" };
-    const { data } = await supabase.from("selected_news").insert({ user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "" }).select().single();
+    const item: SelectedNews = { portal, title: news.title, imageUrl: news.thumbnail || "", resumo: news.resumo };
+    const { data } = await supabase.from("selected_news").insert({ 
+      user_id: user.id, portal, title: news.title, image_url: news.thumbnail || "", resumo: news.resumo 
+    }).select().single();
     if (data) setSelectedNews(prev => [...prev, { ...item, id: data.id }]);
   };
 
@@ -506,9 +519,9 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     if (!user) return;
     if (escaladaNews.some(e => e.title === sn.title && e.portal === sn.portal)) return;
     const { data } = await supabase.from("escalada_news").insert({
-      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl,
+      user_id: user.id, portal: sn.portal, title: sn.title, image_url: sn.imageUrl, resumo: sn.resumo,
     }).select().single();
-    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "" }]);
+    if (data) setEscaladaNews(prev => [...prev, { id: data.id, portal: data.portal, title: data.title, imageUrl: data.image_url || "", resumo: data.resumo || "" }]);
   };
 
   const removeFromEscalada = async (index: number) => {
@@ -543,21 +556,33 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
     setLoadingReading(true);
     setReadingPopup({ ...item, body: "" });
     try {
+      const { data: profile } = await supabase.from("profiles").select("journalistic_prompt").eq("user_id", user?.id).single();
+      const customPrompt = profile?.journalistic_prompt;
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       if (supabaseUrl && supabaseKey) {
         const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-          body: JSON.stringify({ url: item.link }),
-          signal: AbortSignal.timeout(15000),
+          body: JSON.stringify({ 
+            url: item.link,
+            generate_journalistic_text: true,
+            generate_summary: true,
+            custom_prompt: customPrompt
+          }),
+          signal: AbortSignal.timeout(30000),
         });
         const data = await res.json();
         if (data.content) {
           const html = data.content;
           let title = item.title;
           const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-          if (titleMatch) title = decodeHtmlEntities(titleMatch[1].trim());
+          if (titleMatch) {
+            const decoded = decodeHtmlEntities(titleMatch[1].trim());
+            title = decoded.includes("|") ? decoded.split("|")[0].trim() : decoded;
+            if (title.includes(" - ")) title = title.split(" - ")[0].trim();
+          }
 
           let thumbnail = item.thumbnail || "";
           if (!thumbnail) {
@@ -583,7 +608,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
               body = pMatches.slice(0, 8).map(p => p.replace(/<[^>]+>/g, "").trim()).join("\n\n").slice(0, 3000);
             }
           }
-          setReadingPopup({ title, link: item.link, thumbnail, body });
+          setReadingPopup({ title, link: item.link, thumbnail, body, journalisticText: data.journalisticText || body, resumo: data.summary });
         }
       }
     } catch (err) {
@@ -700,14 +725,14 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
             <div className="px-3 py-2.5 font-bold text-xs tracking-wide text-white flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
               <span style={{ color: "var(--layout-header-text, #ffffff)" }}>📰 Portais de Notícias</span>
               <div className="flex items-center gap-1">
-                <button
+                <Button variant="save"
                   onClick={() => setReorderMode(r => !r)}
                   className="px-2 py-0.5 rounded text-[9px] font-semibold transition-colors"
                   style={{ backgroundColor: reorderMode ? "#2ec1f7" : "rgba(255,255,255,0.15)", color: reorderMode ? "var(--layout-header-bg, #1a1a1a)" : "#ffffff" }}
                   title="Reordenar portais"
                 >
                   {reorderMode ? "✓ Salvar ordem" : "⇅ Reordenar"}
-                </button>
+                </Button>
                 <button onClick={() => toggleBox('portais')} className="p-0.5 rounded hover:bg-white/20 transition-colors">
                   {collapsedBoxes['portais'] ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                 </button>
@@ -992,7 +1017,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                             <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                               {news.map((item, idx) => (
                                 <div key={idx} draggable
-                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "", link: item.link || "" })); }}
+                                  onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: site.name, title: item.title, imageUrl: item.thumbnail || "", link: item.link || "", body: item.body || "", journalisticText: item.journalisticText || item.body || "" })); }}
                                   className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                                 >
                                   <GripVertical size={10} className="shrink-0 opacity-20" />
@@ -1041,7 +1066,7 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <div className="divide-y" style={{ borderColor: "rgba(13,4,70,0.04)" }}>
                   {noticiasAvulsas.map((item, idx) => (
                     <div key={idx} draggable
-                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "" })); }}
+                      onDragStart={(e) => { e.dataTransfer.setData("text/plain", JSON.stringify({ portal: "Avulsa", title: item.title, imageUrl: item.thumbnail || "", link: item.link || "", body: item.body || "", journalisticText: item.journalisticText || item.body || "" })); }}
                       className="flex items-center gap-2 px-3 py-1.5 text-[11px] hover:bg-gray-50 cursor-grab active:cursor-grabbing group"
                     >
                       <GripVertical size={10} className="shrink-0 opacity-20" />
@@ -1100,17 +1125,18 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
         )}
       </div>
 
-      {/* XML abaixo */}
       {(selectedNews.length > 0 || selectedCotacoes.length > 0) && (
-        <XmlLinkRow label="XML NOTICIAS" dark xmlContent={(() => {
-          const newsXml = selectedNews.map(sn =>
-            `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
-          ).join("\n");
-          const cotXml = selectedCotacoes.map(sc =>
-            `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
-          ).join("\n");
-          return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
-        })()} />
+        <XmlSection title="XML Notícias">
+          <XmlLinkRow label="XML NOTICIAS" xmlContent={(() => {
+            const newsXml = selectedNews.map(sn =>
+              `  <noticia>\n    <portal>${sn.portal}</portal>\n    <titulo>${sn.title.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</titulo>\n    <imagem>${sn.imageUrl}</imagem>\n  </noticia>`
+            ).join("\n");
+            const cotXml = selectedCotacoes.map(sc =>
+              `  <cotacao>\n    <nome>${sc.name}</nome>\n    <valor>${sc.value}</valor>\n    <variacao>${sc.change}</variacao>\n  </cotacao>`
+            ).join("\n");
+            return `<?xml version="1.0" encoding="UTF-8"?>\n<noticias>\n${newsXml}\n${cotXml}\n</noticias>`;
+          })()} />
+        </XmlSection>
       )}
       </div>{/* End main card */}
 
@@ -1179,8 +1205,10 @@ export default function NoticiasPanel({ defaultJornalConfig }: NoticiasPanelProp
                 <Loader2 size={20} className="animate-spin" style={{ color: "#2ec1f7" }} />
                 <span className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Carregando conteúdo...</span>
               </div>
-            ) : readingPopup.body ? (
-              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{readingPopup.body}</p>
+            ) : (readingPopup.journalisticText || readingPopup.body) ? (
+              <p className="text-sm leading-relaxed whitespace-pre-line" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                {readingPopup.journalisticText || readingPopup.body}
+              </p>
             ) : (
               <p className="text-sm italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>Conteúdo da matéria não disponível. Clique no link acima para ler no site original.</p>
             )}

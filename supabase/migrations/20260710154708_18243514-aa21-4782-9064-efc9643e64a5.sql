@@ -1,0 +1,1 @@
+ALTER TABLE public.ouvintes ADD COLUMN IF NOT EXISTS sexo TEXT;

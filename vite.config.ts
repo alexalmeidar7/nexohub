@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { mcpPlugin } from "@lovable.dev/mcp-js/stacks/supabase/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,7 +13,7 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger(), mcpPlugin()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -24,10 +25,29 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     target: "chrome86",
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         manualChunks: {
           supabase: ["@supabase/supabase-js"],
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          query: ["@tanstack/react-query"],
+          charts: ["recharts"],
+          pdf: ["jspdf", "html2canvas-pro"],
+          xlsx: ["xlsx"],
+          hls: ["hls.js"],
+          ffmpeg: ["@ffmpeg/ffmpeg", "@ffmpeg/util"],
+          emoji: ["emoji-picker-react"],
+          radix: [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-toast",
+          ],
         },
       },
     },

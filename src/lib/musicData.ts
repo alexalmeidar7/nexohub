@@ -1,7 +1,5 @@
 import { normalizeMusicText } from "@/lib/textEncoding";
-
-const MUSIC_DATA_KEY = "masterview_music_data";
-const MUSIC_START_KEY = "masterview_music_start";
+import { musicDataKey, musicStartKey } from "@/lib/musicStorageKeys";
 
 interface MusicData {
   titulo: string;
@@ -10,10 +8,18 @@ interface MusicData {
   capa: string;
 }
 
-export function getMusicData(): { music: MusicData; elapsed: number; finished: boolean } | null {
+/**
+ * Read music data for a specific user. Always pass the authenticated user's id
+ * — never read from a global key, otherwise data from another tenant logged in
+ * on the same browser would leak in.
+ */
+export function getMusicData(userId: string | null | undefined): { music: MusicData; elapsed: number; finished: boolean } | null {
   try {
-    const raw = localStorage.getItem(MUSIC_DATA_KEY);
-    const startStr = localStorage.getItem(MUSIC_START_KEY);
+    const dataKey = musicDataKey(userId);
+    const startKey = musicStartKey(userId);
+    if (!dataKey || !startKey) return null;
+    const raw = localStorage.getItem(dataKey);
+    const startStr = localStorage.getItem(startKey);
     if (!raw || !startStr) return null;
 
     const parsedMusic: MusicData = JSON.parse(raw);
@@ -24,7 +30,7 @@ export function getMusicData(): { music: MusicData; elapsed: number; finished: b
     };
 
     if (music.titulo !== parsedMusic.titulo || music.artista !== parsedMusic.artista) {
-      localStorage.setItem(MUSIC_DATA_KEY, JSON.stringify({ ...parsedMusic, ...music }));
+      localStorage.setItem(dataKey, JSON.stringify({ ...parsedMusic, ...music }));
     }
 
     const elapsed = (Date.now() - parseInt(startStr, 10)) / 1000;

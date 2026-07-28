@@ -42,24 +42,31 @@ serve(async (req) => {
       );
     }
 
-    // Get unique programa_ids
-    const programaIds = [...new Set((logos || []).map((l) => l.programa_id))];
-
-    // Fetch programa names
+    // Fetch ALL active programs for the user, ordered by creation date
+    // to ensure stable XML positions (programa 1, programa 2, etc never change)
     const { data: programas } = await supabase
       .from("programas")
-      .select("id, nome")
-      .in("id", programaIds.length > 0 ? programaIds : ["00000000-0000-0000-0000-000000000000"]);
+      .select("id, nome, created_at")
+      .eq("user_id", userId)
+      .eq("ativo", true)
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true });
 
-    const programaMap = new Map((programas || []).map((p) => [p.id, p.nome]));
+    const origin = `${url.protocol}//${url.host}`;
+    const DEFAULT_LOGO_URL = `https://nexohub.lovable.app/default-sponsor-logo.png`;
 
-    // Group logos by programa
-    const grouped: { programaId: string; programaNome: string; logos: typeof logos }[] = [];
-    for (const pid of programaIds) {
-      const nome = programaMap.get(pid) || "Sem programa";
-      const gl = (logos || []).filter((l) => l.programa_id === pid);
+    // Group logos by programa, using default when none exist
+    const grouped: { programaId: string; programaNome: string; logos: { nome: string; logo_url: string }[] }[] = [];
+    for (const p of programas || []) {
+      const gl = (logos || []).filter((l) => l.programa_id === p.id);
       if (gl.length > 0) {
-        grouped.push({ programaId: pid, programaNome: nome, logos: gl });
+        grouped.push({ programaId: p.id, programaNome: p.nome, logos: gl });
+      } else {
+        grouped.push({
+          programaId: p.id,
+          programaNome: p.nome,
+          logos: [{ nome: "Default", logo_url: DEFAULT_LOGO_URL }],
+        });
       }
     }
 
@@ -93,12 +100,15 @@ ${items}
       headers: {
         ...corsHeaders,
         "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=60",
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0, s-maxage=0, proxy-revalidate",
+        "CDN-Cache-Control": "no-store",
+        "Pragma": "no-cache",
+        "Expires": "0",
       },
     });
   } catch (err) {
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><error>${err.message}</error>`,
+      `<?xml version="1.0" encoding="UTF-8"?><error>${(err as Error).message}</error>`,
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
     );
   }

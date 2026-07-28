@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Save, Loader2, ChevronDown, ChevronUp, Plus, Trash2, Upload, Pencil, X, CheckCircle, Settings, Tv, ImageIcon, Palette, Link2, ShieldCheck, Sparkles } from "lucide-react";
 import { lazy, Suspense } from "react";
 const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
+const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
+const PermissoesSection = lazy(() => import("./PermissoesSection"));
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -20,8 +23,32 @@ export interface EmpresaConfig {
   instagram: string;
   facebook: string;
   youtube: string;
+  instagramSubs?: string;
+  facebookSubs?: string;
+  youtubeSubs?: string;
+  videoStreamApiUrl?: string;
   plano: string;
+  timezone?: string;
 }
+
+export const BRAZIL_TIMEZONES: { value: string; label: string }[] = [
+  { value: "America/Noronha", label: "Fernando de Noronha (Brasília +1h / UTC-2)" },
+  { value: "America/Sao_Paulo", label: "Brasília — horário oficial (UTC-3)" },
+  { value: "America/Belem", label: "Belém / PA (UTC-3)" },
+  { value: "America/Fortaleza", label: "Fortaleza / CE (UTC-3)" },
+  { value: "America/Recife", label: "Recife / PE (UTC-3)" },
+  { value: "America/Araguaina", label: "Araguaína / TO (UTC-3)" },
+  { value: "America/Maceio", label: "Maceió / AL (UTC-3)" },
+  { value: "America/Bahia", label: "Salvador / BA (UTC-3)" },
+  { value: "America/Santarem", label: "Santarém / PA (UTC-3)" },
+  { value: "America/Campo_Grande", label: "Campo Grande / MS (Brasília -1h / UTC-4)" },
+  { value: "America/Cuiaba", label: "Cuiabá / MT (Brasília -1h / UTC-4)" },
+  { value: "America/Manaus", label: "Manaus / AM (Brasília -1h / UTC-4)" },
+  { value: "America/Porto_Velho", label: "Porto Velho / RO (Brasília -1h / UTC-4)" },
+  { value: "America/Boa_Vista", label: "Boa Vista / RR (Brasília -1h / UTC-4)" },
+  { value: "America/Rio_Branco", label: "Rio Branco / AC (Brasília -2h / UTC-5)" },
+  { value: "America/Eirunepe", label: "Eirunepé / AM (Brasília -2h / UTC-5)" },
+];
 
 export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> {
   let query = supabase.from("empresa_config").select("*");
@@ -39,7 +66,12 @@ export async function getEmpresaConfig(userId?: string): Promise<EmpresaConfig> 
     instagram: data.instagram || "",
     facebook: data.facebook || "",
     youtube: data.youtube || "",
+    instagramSubs: (data as any).instagram_subs != null ? String((data as any).instagram_subs) : "",
+    facebookSubs: (data as any).facebook_subs != null ? String((data as any).facebook_subs) : "",
+    youtubeSubs: (data as any).youtube_subs != null ? String((data as any).youtube_subs) : "",
+    videoStreamApiUrl: (data as any).video_stream_api_url || "",
     plano: data.plano || "",
+    timezone: (data as any).timezone || "America/Sao_Paulo",
   };
 }
 
@@ -63,12 +95,20 @@ interface Canal {
   estudio: string;
 }
 
-/* ── Styled input helper ── */
+/* ── Nexo Form Design System (same as Cadastro de Participante) ── */
+const NEXO_CYAN = "#00BFF0";
+const NEXO_LIME = "#C6F03C";
+const NEXO_CARD_BG = "#D6F4FB";
+const NEXO_DARK = "#0A2540";
+const NEXO_FONT = "'Montserrat', sans-serif";
+
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--layout-page-bg, #ffffff)",
-  border: "1px solid var(--layout-border-color, #333333)",
-  color: "var(--layout-page-text, #1a1a1a)",
-  borderRadius: "20px",
+  backgroundColor: "#FFFFFF",
+  border: `2px solid ${NEXO_CYAN}`,
+  color: NEXO_DARK,
+  borderRadius: 999,
+  fontFamily: NEXO_FONT,
+  height: 44,
 };
 
 function StyledInput({ value, onChange, placeholder, type = "text", readOnly = false, className = "" }: {
@@ -81,33 +121,71 @@ function StyledInput({ value, onChange, placeholder, type = "text", readOnly = f
       onChange={onChange}
       placeholder={placeholder}
       readOnly={readOnly}
-      className={`w-full px-4 py-1.5 outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
-      style={inputStyle}
-      onFocus={e => { if (!readOnly) e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
-      onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+      className={`w-full outline-none transition-colors text-sm ${readOnly ? "cursor-not-allowed opacity-60" : ""} ${className}`}
+      style={{ ...inputStyle, padding: "0 20px" }}
     />
   );
 }
 
-function CollapsibleBox({ title, icon, children }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+function CollapsibleBox({ title, icon, children, defaultOpen = false }: { title: string; icon?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 4px 20px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+    <section
+      style={{
+        background: NEXO_CARD_BG,
+        borderRadius: 28,
+        boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        overflow: "hidden",
+        fontFamily: NEXO_FONT,
+      }}
+    >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-6 py-4 transition-colors"
-        style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}
+        className="w-full flex items-center justify-between transition-colors"
+        style={{
+          padding: "18px 28px",
+          background: "transparent",
+          borderBottom: open ? `2px solid ${NEXO_CYAN}` : "none",
+        }}
       >
-        <div className="flex items-center gap-3" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-          {icon}
-          <h3 className="text-sm font-bold">{title}</h3>
+        <div className="flex items-center gap-3" style={{ color: NEXO_DARK }}>
+          <span
+            className="inline-flex items-center justify-center"
+            style={{ width: 34, height: 34, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+          >
+            {icon}
+          </span>
+          <h3
+            style={{
+              fontSize: 14,
+              fontWeight: 800,
+              letterSpacing: 1.5,
+              color: NEXO_DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            {title}
+          </h3>
         </div>
-        {open ? <ChevronUp size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} /> : <ChevronDown size={18} style={{ color: "var(--layout-header-text, #ffffff)", opacity: 0.8 }} />}
+        <span
+          className="inline-flex items-center justify-center"
+          style={{
+            width: 28, height: 28, borderRadius: 999,
+            background: open ? NEXO_LIME : "#FFFFFF",
+            border: `2px solid ${NEXO_CYAN}`,
+            color: NEXO_DARK,
+            transition: "background 0.2s",
+          }}
+        >
+          {open ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </span>
       </button>
-      {open && <div className="p-6 space-y-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)" }}>{children}</div>}
-    </div>
+      {open && <div className="p-7 space-y-5" style={{ background: NEXO_CARD_BG }}>{children}</div>}
+    </section>
   );
 }
+
 
 export default function ConfiguracoesPage({ section = "all" }: { section?: "all" | "empresa" | "player" }) {
   const { user } = useAuth();
@@ -178,13 +256,24 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(async () => {
       if (!user) return;
+      const toBigInt = (v?: string) => {
+        if (!v) return null;
+        const n = parseInt(String(v).replace(/\D/g, ""), 10);
+        return isNaN(n) ? null : n;
+      };
       await supabase.from("empresa_config").upsert({
         user_id: user.id, nome: newConfig.nome, logo: newConfig.logo, background_url: newConfig.backgroundUrl,
         endereco: newConfig.endereco,
         telefone_comercial: newConfig.telefoneComercial, telefone_participacao: newConfig.telefoneParticipacao,
         site: newConfig.site, instagram: newConfig.instagram, facebook: newConfig.facebook,
-        youtube: newConfig.youtube, updated_at: new Date().toISOString(),
-      }, { onConflict: "user_id" });
+        youtube: newConfig.youtube,
+        instagram_subs: toBigInt(newConfig.instagramSubs),
+        facebook_subs: toBigInt(newConfig.facebookSubs),
+        youtube_subs: toBigInt(newConfig.youtubeSubs),
+        video_stream_api_url: newConfig.videoStreamApiUrl || "",
+        timezone: newConfig.timezone || "America/Sao_Paulo",
+        updated_at: new Date().toISOString(),
+      } as any, { onConflict: "user_id" });
     }, 500);
   };
 
@@ -345,18 +434,22 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
   const btnSecondary: React.CSSProperties = { backgroundColor: "var(--layout-page-bg, #ffffff)", color: "var(--layout-page-text, #1a1a1a)", border: "2px solid #0d0446", borderRadius: "20px" };
 
   return (
-    <div className="animate-fade-in">
-      <div className="rounded-2xl" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.10)", padding: "20px" }}>
-        <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
-            <Save size={20} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+    <div className="nexo-scope animate-fade-in" style={{ fontFamily: NEXO_FONT }}>
+      <div style={{ background: "transparent", padding: 0 }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div
+            className="flex items-center justify-center"
+            style={{ width: 44, height: 44, borderRadius: 999, background: NEXO_CYAN, color: "#fff" }}
+          >
+            <Save size={20} />
           </div>
           <div>
-            <h3 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Configurações</h3>
-            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Gerencie os dados dos canais do player</p>
+            <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>Configurações</h3>
+            <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: "uppercase", color: "#64748B", margin: "4px 0 0" }}>Gerencie os dados dos canais do player</p>
           </div>
         </div>
         <div className="space-y-5">
+
 
       {/* Box 1: Configurações da Empresa */}
       {(section === "all" || section === "empresa") && <CollapsibleBox title="Configurações da Empresa" icon={<Settings size={16} style={{ opacity: 0.8 }} />}>
@@ -389,6 +482,24 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             {field("Facebook", "facebook", "https://facebook.com/empresa")}
             {field("YouTube", "youtube", "https://youtube.com/empresa")}
           </div>
+          {field("URL API espectadores de vídeo (Logicahost)", "videoStreamApiUrl", "https://video.logicahost.com.br/api/...")}
+          <div className="space-y-1">
+            <label className="block text-xs mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)", fontWeight: 600 }}>
+              Fuso horário do sistema
+            </label>
+            <select
+              value={config.timezone || "America/Sao_Paulo"}
+              onChange={(e) => saveConfig({ ...config, timezone: e.target.value })}
+              style={{ ...inputStyle, width: "100%", paddingLeft: 16, paddingRight: 16, appearance: "none" }}
+            >
+              {BRAZIL_TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <p className="text-[11px] mt-1" style={{ color: "var(--layout-page-text, #1a1a1a)", opacity: 0.65 }}>
+              Define o fuso horário usado em toda a grade de programação e horários do sistema.
+            </p>
+          </div>
         </div>
 
         {/* Credenciais */}
@@ -408,14 +519,12 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                 placeholder="Nova senha (mín. 6 caracteres)"
                 className="flex-1"
               />
-              <button onClick={handleChangePassword} disabled={savingPassword}
-                className="px-5 py-2 font-bold transition-all text-xs disabled:opacity-50 flex items-center gap-1"
-                style={btnPrimary}
+              <Button variant="save" onClick={handleChangePassword} disabled={savingPassword}
                 onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#ffffff"; e.currentTarget.style.color = "var(--layout-header-bg, #1a1a1a)"; }}
                 onMouseLeave={e => { e.currentTarget.style.backgroundColor = "var(--layout-header-bg, #1a1a1a)"; e.currentTarget.style.color = "#ffffff"; }}
               >
                 {savingPassword ? <Loader2 size={14} className="animate-spin" /> : "Salvar"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -427,11 +536,23 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
       </CollapsibleBox>}
 
       {/* Box 2: Configurações do Player */}
-      {(section === "all" || section === "player") && <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div className="w-full flex items-center justify-between px-5 py-3" style={{ background: "linear-gradient(135deg, var(--layout-button-bg, #2563eb), color-mix(in srgb, var(--layout-button-bg, #2563eb) 70%, black 30%))", color: "var(--layout-button-text, #ffffff)" }}>
-          <h3 className="text-sm font-bold">Configurações do Player</h3>
+      {(section === "all" || section === "player") && <div className="space-y-6">
+        {/* Bento admin header */}
+        <div className="w-full rounded-2xl px-6 py-5 flex items-center justify-between" style={{ backgroundColor: "#1a1a1a", borderBottom: "4px solid #00BFF0", boxShadow: "0 10px 30px rgba(0,0,0,0.18)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#00BFF0" }}>
+              <Tv size={18} className="text-white" />
+            </div>
+            <h3 className="text-xl font-bold tracking-tight text-white">
+              Player <span className="font-light" style={{ color: "#00BFF0" }}>— Configurações</span>
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ backgroundColor: "#C6F03C" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Admin Panel</span>
+          </div>
         </div>
-        <div className="p-5 space-y-4">
+        <div className="space-y-6">
         <div className="space-y-6">
           {/* ── Header + Mode ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4" style={{ borderBottom: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
@@ -485,12 +606,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 1: Informações do Canal ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <Settings size={12} />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</span>
+          <div className="rounded-3xl p-6 space-y-4 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#00BFF0" }} />
+              <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Informações do Canal</h4>
+              <Settings size={14} className="ml-1 opacity-40" />
             </div>
 
             {canalMode === "live" ? (
@@ -551,7 +671,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                         <StyledInput value={canalForm.catalog_name} onChange={(e) => setCanalForm(p => ({ ...p, catalog_name: e.target.value }))} placeholder="Nome do novo catálogo" />
                         {!editingCanal && (
                           <>
-                            <button onClick={() => {
+                            <Button variant="save" onClick={() => {
                               if (!canalForm.catalog_name.trim()) { toast.error("Digite o nome do catálogo."); return; }
                               if (!savedCatalogs.includes(canalForm.catalog_name.trim())) {
                                 setSavedCatalogs(prev => [...prev, canalForm.catalog_name.trim()]);
@@ -562,7 +682,7 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                               className="btn-skyglass-accent px-3 py-1.5 text-xs shrink-0 whitespace-nowrap"
                             >
                               <Save size={12} /> Salvar Catálogo
-                            </button>
+                            </Button>
                             <button onClick={() => { setNewCatalogMode(false); setCanalForm(p => ({ ...p, catalog_name: "" })); }}
                               className="px-3 py-1.5 text-xs font-bold rounded-full transition-all shrink-0"
                               style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)" }}
@@ -769,12 +889,11 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           </div>
 
           {/* ── Seção 2: Imagens ── */}
-          <div className="rounded-2xl p-5 space-y-4" style={{ backgroundColor: "#d9e9fa", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)" }}>
-                <ImageIcon size={12} />
-              </div>
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</span>
+          <div className="rounded-3xl p-6 space-y-4 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: "#C6F03C" }} />
+              <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{canalMode === "catalog" ? "Imagens do Catálogo" : "Imagens do Canal"}</h4>
+              <ImageIcon size={14} className="ml-1 opacity-40" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {([
@@ -837,11 +956,10 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
                   <X size={14} /> Cancelar
                 </button>
               )}
-              <button onClick={handleAddCanal} disabled={savingCanal}
-                className="btn-skyglass-accent px-6 py-2.5 text-sm disabled:opacity-70"
+              <Button variant="save" onClick={handleAddCanal} disabled={savingCanal}
               >
                 {savingCanal ? <Loader2 size={14} className="animate-spin" /> : <><Plus size={14} /> {editingCanal ? "Salvar Alterações" : "Adicionar Canal"}</>}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -856,11 +974,13 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
             <p className="text-[11px] mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}>Use o formulário acima para adicionar seu primeiro canal</p>
           </div>
         ) : (
-          <div className="mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Tv size={16} style={{ color: "var(--layout-icon-color, #888888)" }} />
-              <h4 className="text-base font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais Cadastrados</h4>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>{canais.length}</span>
+          <div className="rounded-3xl p-6 bg-white border border-gray-100" style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-1.5 h-6 rounded-full bg-gray-800" />
+                <h4 className="text-base font-bold tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Canais cadastrados</h4>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{String(canais.length).padStart(2, "0")} cadastrados</span>
             </div>
             <div className="rounded-2xl overflow-hidden shadow-sm" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
               <table className="w-full text-sm" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -922,20 +1042,208 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
         )}
       </div></div>}
 
-      {/* Box 3: Layout */}
-      {(section === "all" || section === "empresa") && <CollapsibleBox title="Layout — Cores e Personalização" icon={<Palette size={16} style={{ opacity: 0.8 }} />}>
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
-          <LayoutCustomizer />
-        </Suspense>
-      </CollapsibleBox>}
-
       {/* Box 4: Player Layout */}
       {(section === "all" || section === "player" || section === "empresa") && <CollapsibleBox title="Layout do Player — Cores e Personalização" icon={<Tv size={16} style={{ opacity: 0.8 }} />}>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
           <PlayerLayoutCustomizer />
         </Suspense>
       </CollapsibleBox>}
+
+
+      {/* Box 5: Permissões */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Permissões — Sub-Usuários" icon={<ShieldCheck size={16} style={{ opacity: 0.8 }} />}>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <PermissoesSection />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EventTypesConfigSection() {
+  const { user } = useAuth();
+  const [config, setConfig] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("event_types_config")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.event_types_config) {
+          setConfig(data.event_types_config);
+        } else {
+          // Fallback to default if not set
+          setConfig({
+            "live": {"color": "#2563eb", "label": "LIVE"},
+            "gravacao": {"color": "#ef4444", "label": "GRAVAÇÃO"},
+            "reuniao": {"color": "#8b5cf6", "label": "REUNIÃO"},
+            "outro": {"color": "#6b7280", "label": "OUTRO"}
+          });
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleUpdate = (type: string, field: string, value: string) => {
+    setConfig((prev: any) => ({
+      ...prev,
+      [type]: {
+        ...prev[type],
+        [field]: field === "label" ? value.toUpperCase() : value
+      }
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ event_types_config: config })
+      .eq("user_id", user.id);
+    
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar configurações.");
+    } else {
+      toast.success("Configurações de eventos salvas!");
+      // Dispatch event to update other components
+      window.dispatchEvent(new Event("layout-colors-updated"));
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-4"><Loader2 className="animate-spin" size={20} /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {Object.keys(config || {}).map((type) => (
+          <div key={type} className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Tipo: {type}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: config[type].color }} />
+                <span className="text-[10px] font-bold" style={{ color: config[type].color }}>{config[type].label}</span>
+              </div>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Rótulo (Texto)</label>
+              <StyledInput 
+                value={config[type].label} 
+                onChange={(e) => handleUpdate(type, "label", e.target.value)} 
+                placeholder="Ex: LIVE" 
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Cor do Evento</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={config[type].color}
+                  onChange={(e) => handleUpdate(type, "color", e.target.value)}
+                  className="w-10 h-10 rounded-lg cursor-pointer border-none p-0 shrink-0"
+                  style={{ WebkitAppearance: "none", background: "none" }}
+                />
+                <StyledInput 
+                  value={config[type].color} 
+                  onChange={(e) => handleUpdate(type, "color", e.target.value)} 
+                  placeholder="#000000"
+                  className="font-mono"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="flex justify-end">
+        <Button variant="save" 
+          onClick={handleSave} 
+          disabled={saving}
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? "Salvando..." : "Salvar Configurações de Eventos"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function JournalisticPromptSection() {
+  const { user } = useAuth();
+  const [prompt, setPrompt] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("journalistic_prompt")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.journalistic_prompt) {
+          setPrompt(data.journalistic_prompt);
+        }
+        setLoading(false);
+      });
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ journalistic_prompt: prompt })
+      .eq("user_id", user.id);
+    
+    setSaving(false);
+    if (error) {
+      toast.error("Erro ao salvar diretrizes.");
+    } else {
+      toast.success("Diretrizes jornalísticas salvas!");
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-4"><Loader2 className="animate-spin" size={20} /></div>;
+
+  return (
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: "rgba(13,4,70,0.02)", border: "1px solid rgba(13,4,70,0.06)" }}>
+        <p className="text-[10px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+          Configure as instruções que a IA deve seguir ao gerar ou melhorar textos de matérias jornalísticas. 
+          Use para definir tom de voz, estrutura, duração e estilo.
+        </p>
+        <textarea
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={6}
+          placeholder="Ex: Você é um redator sênior de telejornalismo. Escreva textos diretos, use linguagem clara e garanta pelo menos 5 parágrafos densos..."
+          className="w-full px-4 py-3 outline-none transition-colors text-sm resize-none"
+          style={inputStyle}
+          onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
+          onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
+        />
+      </div>
+      
+      <div className="flex justify-end">
+        <Button variant="save" 
+          onClick={handleSave} 
+          disabled={saving}
+        >
+          {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+          {saving ? "Salvando..." : "Salvar Diretrizes"}
+        </Button>
       </div>
     </div>
   );

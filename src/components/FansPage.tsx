@@ -144,20 +144,20 @@ export default function FansPage({ radioName }: FansPageProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Star size={24} className="text-yellow-400" fill="currentColor" />
-        <h2 className="text-xl font-bold text-foreground">{title}</h2>
-        <span className="text-sm text-muted-foreground">({fans.length} ouvintes)</span>
+        <Star size={24} style={{ color: "var(--layout-accent-color, #e2b714)" }} fill="currentColor" />
+        <h2 className="text-xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{title}</h2>
+        <span className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>({fans.length} ouvintes)</span>
       </div>
 
       {/* Star filter chips */}
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => setFilterStars(null)}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
-            filterStars === null
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-muted-foreground hover:bg-accent"
-          }`}
+          className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors"
+          style={filterStars === null
+            ? { background: "var(--layout-accent-color, #dc2626)", color: "#fff" }
+            : { background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }
+          }
         >
           Todos ({fans.length})
         </button>
@@ -165,11 +165,11 @@ export default function FansPage({ radioName }: FansPageProps) {
           <button
             key={sc.stars}
             onClick={() => setFilterStars(sc.stars === filterStars ? null : sc.stars)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1 ${
-              filterStars === sc.stars
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent"
-            }`}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold transition-colors flex items-center gap-1"
+            style={filterStars === sc.stars
+              ? { background: "var(--layout-accent-color, #dc2626)", color: "#fff" }
+              : { background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }
+            }
           >
             {Array.from({ length: sc.stars }).map((_, i) => (
               <Star key={i} size={10} fill="currentColor" />
@@ -182,23 +182,28 @@ export default function FansPage({ radioName }: FansPageProps) {
 
       {/* Fan list */}
       {filtered.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Nenhum fã encontrado nesta categoria.</p>
+        <p className="text-sm py-8 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Nenhum fã encontrado nesta categoria.</p>
       ) : (
         <div className="grid gap-3">
           {filtered.map((fan, idx) => (
             <div
               key={fan.user_id}
-              className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card transition-colors hover:bg-accent/30"
+              className="flex items-center gap-4 p-4 rounded-xl transition-colors"
+              style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)" }}
             >
               {/* Rank */}
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                idx < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              }`}>
+              <span
+                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+                style={idx < 3
+                  ? { background: "var(--layout-accent-color, #dc2626)", color: "#fff" }
+                  : { background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }
+                }
+              >
                 {idx + 1}
               </span>
 
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-muted">
+              <div className="w-10 h-10 rounded-full overflow-hidden shrink-0" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <img
                   src={fan.avatar_url || "/avatars/usr-default.png"}
                   alt={fan.nome}
@@ -209,33 +214,33 @@ export default function FansPage({ radioName }: FansPageProps) {
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-foreground truncate">{fan.nome}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-semibold">{fan.label}</span>
+                  <span className="text-sm font-bold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{fan.nome}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #dc2626) 12%, transparent)", color: "var(--layout-accent-color, #dc2626)" }}>{fan.label}</span>
                 </div>
                 <div className="flex items-center gap-1 mt-0.5">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Star
                       key={i}
                       size={11}
-                      fill={i < fan.stars ? "hsl(var(--primary))" : "transparent"}
-                      className={i < fan.stars ? "text-primary" : "text-muted-foreground/30"}
+                      fill={i < fan.stars ? "var(--layout-accent-color, #e2b714)" : "transparent"}
+                      style={{ color: i < fan.stars ? "var(--layout-accent-color, #e2b714)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }}
                     />
                   ))}
-                  {fan.cidade && <span className="text-[10px] text-muted-foreground ml-2">{fan.cidade}</span>}
+                  {fan.cidade && <span className="text-[10px] ml-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{fan.cidade}</span>}
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="hidden sm:flex items-center gap-4 shrink-0">
-                <div className="flex items-center gap-1 text-muted-foreground" title="Curtidas">
+              <div className="hidden sm:flex items-center gap-4 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                <div className="flex items-center gap-1" title="Curtidas">
                   <Heart size={13} />
                   <span className="text-xs font-semibold">{fan.likes}</span>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground" title="Horas ouvindo">
+                <div className="flex items-center gap-1" title="Horas ouvindo">
                   <Clock size={13} />
                   <span className="text-xs font-semibold">{fan.hours}h</span>
                 </div>
-                <div className="flex items-center gap-1 text-muted-foreground" title="Mensagens no chat">
+                <div className="flex items-center gap-1" title="Mensagens no chat">
                   <MessageSquare size={13} />
                   <span className="text-xs font-semibold">{fan.messages}</span>
                 </div>

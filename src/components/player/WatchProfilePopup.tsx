@@ -1,6 +1,21 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, X } from "lucide-react";
+import { Heart, Music, Film, MessageSquare, Clock, Star, LogOut, User, Users, X, Camera, Check } from "lucide-react";
+import { toast } from "sonner";
+import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
+
+const AVATARS = [
+  "/avatars/usr-default.png",
+  "/avatars/usr-1.png",
+  "/avatars/usr-2.png",
+  "/avatars/usr-3.png",
+  "/avatars/usr-4.png",
+  "/avatars/usr-5.png",
+  "/avatars/usr-6.png",
+  "/avatars/usr-7.png",
+  "/avatars/usr-8.png",
+];
 
 interface LikedSong {
   titulo: string;
@@ -11,11 +26,15 @@ interface LikedSong {
 interface WatchProfilePopupProps {
   userId: string;
   userName: string;
+  userEmail?: string | null;
   avatarUrl: string | null;
   radioName?: string;
+  radioUserId?: string | null;
   onClose: () => void;
   onEditProfile?: () => void;
+  onSwitchProfile?: () => void;
   onLogout?: () => void;
+  onAvatarChange?: (url: string) => void;
 }
 
 function computeFanRating(likes: number, hours: number, messages: number, vodCount: number): number {
@@ -41,11 +60,15 @@ function fanLabel(stars: number): string {
 export default function WatchProfilePopup({
   userId,
   userName,
+  userEmail,
   avatarUrl,
   radioName,
+  radioUserId,
   onClose,
   onEditProfile,
+  onSwitchProfile,
   onLogout,
+  onAvatarChange,
 }: WatchProfilePopupProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [likedSongs, setLikedSongs] = useState<LikedSong[]>([]);
@@ -53,6 +76,57 @@ export default function WatchProfilePopup({
   const [totalHours, setTotalHours] = useState(0);
   const [chatCount, setChatCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(avatarUrl);
+  const [savingAvatar, setSavingAvatar] = useState<string | null>(null);
+  // Contador que força refetch quando o perfil ou avatar mudam externamente.
+  const [refreshTick, setRefreshTick] = useState(0);
+  // Cópias locais reativas dos campos exibidos — permitem atualização instantânea
+  // ao receber `nexo:profile:changed` sem esperar props do parent.
+  const [displayName, setDisplayName] = useState(userName);
+  const [displayEmail, setDisplayEmail] = useState<string | null | undefined>(userEmail);
+
+  useEffect(() => { setCurrentAvatar(avatarUrl); }, [avatarUrl]);
+  useEffect(() => { setDisplayName(userName); }, [userName]);
+  useEffect(() => { setDisplayEmail(userEmail); }, [userEmail]);
+
+  // Refetch quando prop `userName` ou `avatarUrl` mudarem (troca de subperfil).
+  useEffect(() => { setRefreshTick(t => t + 1); }, [userName, avatarUrl]);
+
+  // Escuta o barramento global de perfil e atualiza tudo em tempo real.
+  useEffect(() => {
+    const off = onProfileChanged((detail) => {
+      if (detail.nome != null) setDisplayName(detail.nome);
+      if (detail.email !== undefined) setDisplayEmail(detail.email);
+      if (detail.avatar_url != null) setCurrentAvatar(detail.avatar_url);
+      setRefreshTick(t => t + 1);
+    });
+    return off;
+  }, []);
+
+  const handlePickAvatar = async (url: string) => {
+    if (!userId || savingAvatar) return;
+    setSavingAvatar(url);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: url })
+        .eq("user_id", userId);
+      if (radioUserId) {
+        const { error: scopedError } = await upsertPlayerListenerProfile(userId, radioUserId, { avatar_url: url });
+        if (scopedError) throw scopedError;
+      } else if (error) throw error;
+      setCurrentAvatar(url);
+      onAvatarChange?.(url);
+      emitProfileChanged({ userId, radioUserId, avatar_url: url, reason: "avatar" });
+      toast.success("Avatar atualizado");
+      setPickerOpen(false);
+    } catch (err: any) {
+      toast.error("Não foi possível atualizar o avatar");
+    } finally {
+      setSavingAvatar(null);
+    }
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -67,34 +141,37 @@ export default function WatchProfilePopup({
 
     const fetchAll = async () => {
       // Liked songs — last 10
-      const likesP = supabase
+      let likesP: any = supabase
         .from("music_likes")
         .select("titulo, artista, capa")
-        .eq("user_id", userId)
+        .eq("user_id", userId);
+      likesP = radioUserId ? likesP.eq("radio_user_id", radioUserId) : likesP.is("radio_user_id", null);
+      likesP = likesP
         .order("created_at", { ascending: false })
         .limit(10);
 
       // Last VOD watched
-      const vodP = supabase
+      let vodP: any = supabase
         .from("watch_history")
         .select("channel_name, channel_logo_url")
-        .eq("user_id", userId)
+        .eq("user_id", userId);
+      vodP = radioUserId ? vodP.eq("radio_user_id", radioUserId) : vodP.is("radio_user_id", null);
+      vodP = vodP
         .order("watched_at", { ascending: false })
         .limit(1);
 
       // Total watch history entries (estimate hours — 1 entry ≈ 30 min)
-      const hoursP = supabase
+      let hoursP: any = supabase
         .from("watch_history")
         .select("id", { count: "exact", head: true })
         .eq("user_id", userId);
+      hoursP = radioUserId ? hoursP.eq("radio_user_id", radioUserId) : hoursP.is("radio_user_id", null);
 
       // Chat message count
       // player_chat_messages doesn't have user_id, uses nome — approximate by profile name
-      const profileP = supabase
-        .from("profiles")
-        .select("nome")
-        .eq("user_id", userId)
-        .maybeSingle();
+      const profileP = radioUserId
+        ? fetchPlayerListenerProfile({ id: userId } as any, radioUserId)
+        : supabase.from("profiles").select("nome, avatar_url").eq("user_id", userId).maybeSingle().then(({ data }) => data || null);
 
       const [likesRes, vodRes, hoursRes, profileRes] = await Promise.all([likesP, vodP, hoursP, profileP]);
 
@@ -113,20 +190,25 @@ export default function WatchProfilePopup({
       const entryCount = hoursRes.count ?? 0;
       setTotalHours(Math.round(entryCount * 0.5 * 10) / 10); // 30 min per entry
 
-      // Chat count by name
-      if (profileRes.data?.nome) {
+      // Mantém nome/avatar exibidos sincronizados com o que está no banco,
+      // caso tenham mudado em outra aba/tela.
+      if ((profileRes as any)?.nome) {
+        setDisplayName((profileRes as any).nome);
         const chatRes = await supabase
           .from("player_chat_messages")
           .select("id", { count: "exact", head: true })
-          .eq("nome", profileRes.data.nome);
+          .eq("nome", (profileRes as any).nome);
         setChatCount(chatRes.count ?? 0);
+      }
+      if ((profileRes as any)?.avatar_url) {
+        setCurrentAvatar((profileRes as any).avatar_url);
       }
 
       setLoading(false);
     };
 
     fetchAll();
-  }, [userId]);
+  }, [userId, radioUserId, refreshTick]);
 
   const stars = computeFanRating(likedSongs.length, totalHours, chatCount, lastVod ? 1 : 0);
   const label = fanLabel(stars);
@@ -147,32 +229,40 @@ export default function WatchProfilePopup({
       >
         {/* Header */}
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
-          <div
-            className="w-12 h-12 rounded-full overflow-hidden shrink-0"
-            style={{ border: "2px solid hsla(var(--player-accent) / 0.5)" }}
+          <button
+            type="button"
+            onClick={() => setPickerOpen(v => !v)}
+            className="relative w-12 h-12 rounded-full overflow-hidden shrink-0 group"
+            style={{ border: "2px solid #ffffff" }}
+            aria-label="Alterar avatar"
+            title="Alterar avatar"
           >
             <img
-              src={avatarUrl || "/avatars/usr-default.png"}
-              alt={userName}
-              className="w-full h-full object-contain"
+              src={currentAvatar || avatarUrl || "/avatars/usr-default.png"}
+              alt={displayName}
+              className="w-full h-full object-cover"
             />
-          </div>
+            <span
+              className="absolute inset-0 flex items-center justify-center bg-black/55 opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Camera size={14} className="text-white" />
+            </span>
+          </button>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-sm font-bold text-white truncate">{userName}</span>
-            {/* Fan rating */}
-            <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-sm font-bold text-white truncate">{displayName}</span>
+            {displayEmail && (
+              <span className="text-[10px] text-white/50 truncate">{displayEmail}</span>
+            )}
+            {/* Fan rating — mesmo estilo da WelcomeScreen (estrelas brancas) */}
+            <div className="flex items-center gap-0.5 mt-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
                   key={i}
-                  size={12}
-                  className="transition-colors"
-                  fill={i < stars ? "hsl(var(--player-accent))" : "transparent"}
-                  style={{ color: i < stars ? "hsl(var(--player-accent))" : "rgba(255,255,255,0.2)" }}
+                  size={13}
+                  fill={i < stars ? "#ffffff" : "transparent"}
+                  style={{ color: i < stars ? "#ffffff" : "rgba(255,255,255,0.25)" }}
                 />
               ))}
-              <span className="text-[10px] font-semibold ml-1" style={{ color: "hsl(var(--player-accent))" }}>
-                {label}{radioName ? ` ${radioName}` : ""}
-              </span>
             </div>
           </div>
           <button onClick={onClose} className="text-white/40 hover:text-white p-1">
@@ -182,6 +272,54 @@ export default function WatchProfilePopup({
 
         <div className="w-full h-px bg-white/8" />
 
+        {/* Avatar picker */}
+        {pickerOpen && (
+          <div className="px-4 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Escolher avatar</span>
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="text-white/40 hover:text-white text-[10px]"
+              >
+                cancelar
+              </button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {AVATARS.map((av) => {
+                const active = (currentAvatar || avatarUrl) === av;
+                const saving = savingAvatar === av;
+                return (
+                  <button
+                    key={av}
+                    onClick={() => handlePickAvatar(av)}
+                    disabled={!!savingAvatar}
+                    className="relative aspect-square rounded-full overflow-hidden transition-transform hover:scale-105 disabled:opacity-60"
+                    style={{
+                      border: active ? "2px solid #ffffff" : "2px solid rgba(255,255,255,0.15)",
+                    }}
+                    title="Selecionar avatar"
+                  >
+                    <img src={av} alt="" className="w-full h-full object-cover" />
+                    {active && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+                        <Check size={12} className="text-white" />
+                      </span>
+                    )}
+                    {saving && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[9px] text-white">
+                        ...
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {pickerOpen && <div className="w-full h-px bg-white/8" />}
+
+
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-1 px-4 py-3">
           <div className="flex flex-col items-center gap-0.5">
@@ -190,7 +328,7 @@ export default function WatchProfilePopup({
             <span className="text-[9px] text-white/40">ouvindo</span>
           </div>
           <div className="flex flex-col items-center gap-0.5">
-            <Heart size={14} style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={14} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-xs font-bold text-white">{likedSongs.length}</span>
             <span className="text-[9px] text-white/40">curtidas</span>
           </div>
@@ -221,7 +359,7 @@ export default function WatchProfilePopup({
         {/* Liked songs */}
         <div className="px-4 py-2.5">
           <div className="flex items-center gap-1.5 mb-2">
-            <Heart size={12} fill="hsl(var(--player-accent))" style={{ color: "hsl(var(--player-accent))" }} />
+            <Heart size={12} fill="#ffffff" style={{ color: "#ffffff" }} />
             <span className="text-[10px] font-bold uppercase tracking-wide text-white/60">Últimas Curtidas</span>
           </div>
           {loading ? (
@@ -269,6 +407,14 @@ export default function WatchProfilePopup({
               className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
             >
               <User size={13} /> Editar perfil
+            </button>
+          )}
+          {onSwitchProfile && (
+            <button
+              onClick={() => { onClose(); onSwitchProfile(); }}
+              className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
+            >
+              <Users size={13} /> Trocar de perfil
             </button>
           )}
           {onLogout && (

@@ -1,10 +1,20 @@
-import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
-import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense, Fragment } from "react";
+import { createPortal } from "react-dom";
+import { Plus, X, Link2, BarChart3, CalendarDays, Music, Eye, Users, Mic2, PlaySquare, Newspaper, Settings, ShoppingBag, Tag, Image, Film, ShoppingCart, Monitor, Wrench, Scissors, MonitorPlay, ExternalLink, GripVertical, Loader2, Trash2, MessageSquareQuote, Radio, Clock, Tv, FileText, CloudSun, ChevronDown, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Circle, User, Star, Minimize2, Maximize2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { readMusicData, readMusicStart, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
+import AudioSpectrum from "@/components/AudioSpectrum";
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -33,6 +43,7 @@ function TypewriterText({ text, className, style }: { text: string; className?: 
 
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const AudienceWidget = lazy(() => import("./AudienceWidget"));
 
 type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix";
 
@@ -92,6 +103,7 @@ function normalizeDashboardSettings(raw: unknown): DashboardSettingsPayload {
 const linkOptions: { label: string; page?: Page; external?: string; icon: string }[] = [
   { label: "Apresentadores", page: "apresentadores", icon: "Mic2" },
   { label: "Programas", page: "programas", icon: "PlaySquare" },
+  { label: "Roteiro", page: "noticias", icon: "FileText" },
   { label: "Notícias", page: "noticias", icon: "Newspaper" },
   { label: "Música no Ar", page: "musica", icon: "Music" },
   { label: "Agenda", page: "agenda", icon: "CalendarDays" },
@@ -109,16 +121,16 @@ const linkOptions: { label: string; page?: Page; external?: string; icon: string
 ];
 
 const widgetOptions: { label: string; type: "agenda" | "musica" | "stats" | "weather" | "player"; description: string }[] = [
-  { label: "Agenda de Eventos", type: "agenda", description: "Exibe os próximos eventos do calendário" },
-  { label: "Música no Ar + Programa", type: "musica", description: "Mostra a música e programa em exibição" },
   { label: "Dados Estatísticos", type: "stats", description: "Visualizações do pre-roll e audiência do player" },
-  { label: "Previsão do Tempo", type: "weather", description: "Temperatura e previsão para os próximos dias" },
   { label: "Player", type: "player", description: "Ouça ou assista seus canais cadastrados" },
 ];
 
+// Widgets descontinuados — removidos automaticamente ao carregar
+const DEPRECATED_WIDGETS = new Set(["agenda", "musica", "weather"]);
+
 const iconMap: Record<string, React.ComponentType<any>> = {
   Mic2, PlaySquare, Newspaper, Music, CalendarDays, Settings, MonitorPlay, MessageSquareQuote,
-  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users,
+  Tag, Image, Film, ShoppingCart, Monitor, Scissors, ExternalLink, ShoppingBag, Wrench, Users, FileText,
 };
 
 function getIcon(name: string) {
@@ -127,9 +139,10 @@ function getIcon(name: string) {
 
 interface Props {
   onNavigate: (page: Page) => void;
+  effectiveUserId?: string | null;
 }
 
-export default function CustomizableDashboard({ onNavigate }: Props) {
+export default function CustomizableDashboard({ onNavigate, effectiveUserId }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -137,6 +150,23 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const [editMode, setEditMode] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [playerVideoActive, setPlayerVideoActive] = useState<string | null>(null);
+  const [playerCompactMap, setPlayerCompactMap] = useState<Record<string, boolean>>({});
+  // Using effectiveUserId from props if provided, otherwise using internal logic as fallback
+  const [internalEffectiveUserId, setInternalEffectiveUserId] = useState<string | null>(null);
+  const resolvedUserId = effectiveUserId || internalEffectiveUserId || user?.id;
+
+  useEffect(() => {
+    if (!user || effectiveUserId) return;
+    let cancelled = false;
+    supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return;
+        setInternalEffectiveUserId(data?.ativo ? data.parent_user_id : user.id);
+      });
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const dataUserId = effectiveUserId || user?.id;
 
   // On-air program info
   interface OnAirProgram {
@@ -152,7 +182,44 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     is_stereo: boolean;
   }
   const [onAirProgram, setOnAirProgram] = useState<OnAirProgram | null>(null);
-  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string } | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; startedAt: number; duracao: number } | null>(null);
+  const [nowTick, setNowTick] = useState(Date.now());
+  const [onAirSlot, setOnAirSlot] = useState<HTMLElement | null>(null);
+  const [footerEl, setFooterEl] = useState<HTMLElement | null>(null);
+  const [playerMaxHeight, setPlayerMaxHeight] = useState<number>(400);
+  useEffect(() => {
+    const findSlot = () => {
+      setOnAirSlot(document.getElementById("on-air-info-slot"));
+      setFooterEl(document.querySelector("footer"));
+    };
+    findSlot();
+    const obs = new MutationObserver(findSlot);
+    obs.observe(document.body, { childList: true, subtree: true });
+    return () => obs.disconnect();
+  }, []);
+
+  // Dynamically compute player widget height so it fits between the blue on-air box and the page footer
+  useEffect(() => {
+    const compute = () => {
+      const anchorTop = onAirSlot?.getBoundingClientRect().bottom ?? 120;
+      const footerTop = footerEl?.getBoundingClientRect().top ?? window.innerHeight;
+      const isMobile = window.innerWidth < 640;
+      const gap = isMobile ? 16 : 32;
+      const floor = isMobile ? 55 : 138;
+      const ceil = isMobile ? 199 : 260;
+      const raw = (footerTop - anchorTop - gap) * 0.765;
+      const available = Math.min(ceil, Math.max(floor, raw));
+      setPlayerMaxHeight(available);
+    };
+    compute();
+    window.addEventListener("resize", compute);
+    const interval = window.setInterval(compute, 800);
+    return () => {
+      window.removeEventListener("resize", compute);
+      window.clearInterval(interval);
+    };
+  }, [onAirSlot, footerEl]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -162,8 +229,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const { data } = await supabase
         .from("programas")
         .select("nome, selo, thumb, horario_inicio, horario_fim, classificacao_etaria, descricao, dias_semana, ativo, apresentador_id, tipo_programa, estudio, apresentadores(nome)")
-        .eq("user_id", user.id)
-        .eq("ativo", true);
+        .eq("user_id", dataUserId!)
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%");
       if (cancelled || !data) return;
       const now = new Date();
       const diaAtual = DIAS_MAP[now.getDay()];
@@ -185,7 +253,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
         const { data: channels } = await supabase
           .from("streaming_channels")
           .select("is_hd, is_stereo")
-          .eq("user_id", user.id)
+          .eq("user_id", dataUserId!)
           .eq("active", true)
           .ilike("estudio", current.estudio)
           .limit(1);
@@ -197,7 +265,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       setOnAirProgram({
         nome: current.nome,
-        selo: current.selo || current.thumb || "",
+        selo: current.selo || "",
         horario_inicio: current.horario_inicio,
         horario_fim: current.horario_fim,
         classificacao_etaria: current.classificacao_etaria || "L",
@@ -213,17 +281,20 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     return () => { cancelled = true; clearInterval(interval); };
   }, [user]);
 
-  // Poll music from localStorage (masterview_music_data is the canonical key)
+  // Poll music from per-user localStorage (scoped to prevent cross-tenant leak)
   useEffect(() => {
     const pollMusic = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (parsed.titulo) {
-            setCurrentMusic({ titulo: parsed.titulo, artista: parsed.artista || "" });
-            return;
-          }
+        const parsed = readMusicData(dataUserId);
+        if (parsed && parsed.titulo) {
+          const startedAt = readMusicStart(dataUserId);
+          setCurrentMusic({
+            titulo: parsed.titulo,
+            artista: parsed.artista || "",
+            startedAt: startedAt || 0,
+            duracao: typeof parsed.duracao === "number" ? parsed.duracao : 0,
+          });
+          return;
         }
       } catch {}
       setCurrentMusic(null);
@@ -231,17 +302,31 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
     pollMusic();
     const interval = setInterval(pollMusic, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dataUserId]);
+
+  // Tick every second to update elapsed time / progress bar for the current song
+  useEffect(() => {
+    if (!currentMusic) return;
+    const t = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [currentMusic?.titulo, currentMusic?.startedAt]);
+
 
   // Load dashboard items from DB (fallback to localStorage for migration)
   useEffect(() => {
     if (!user) return;
+    const DEFAULT_ITEMS: DashboardItem[] = [
+      { id: "default-player", type: "widget", widgetType: "player" },
+    ];
+    const stripDeprecated = (arr: DashboardItem[]) =>
+      arr.filter(i => !(i.type === "widget" && i.widgetType && DEPRECATED_WIDGETS.has(i.widgetType)));
+
     const loadItems = async () => {
       // Try DB first
       const { data, error } = await supabase
         .from("user_settings")
         .select("dashboard_items")
-        .eq("user_id", user.id)
+        .eq("user_id", dataUserId!)
         .maybeSingle();
 
       if (error) {
@@ -251,28 +336,39 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
       const normalized = normalizeDashboardSettings(data?.dashboard_items);
 
       if (Array.isArray(normalized.items) && normalized.items.length > 0) {
-        setItems(normalized.items);
+        const cleaned = stripDeprecated(normalized.items);
+        setItems(cleaned);
+        // Persist cleanup if we actually removed something
+        if (cleaned.length !== normalized.items.length && user) {
+          try { await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] }); } catch {}
+        }
         return;
       }
 
       // Migrate from localStorage if exists
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        if (!saved) return;
-
-        const parsed = JSON.parse(saved);
-        if (!Array.isArray(parsed) || parsed.length === 0) return;
-
-        setItems(parsed as DashboardItem[]);
-        await mergeUserDashboardItems(user.id, {
-          items: parsed as unknown[],
-        });
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const cleaned = stripDeprecated(parsed as DashboardItem[]);
+            setItems(cleaned);
+            await mergeUserDashboardItems(user.id, { items: cleaned as unknown[] });
+            return;
+          }
+        }
       } catch {
         // ignore invalid local data
       }
+
+      // No items anywhere → seed defaults
+      setItems(DEFAULT_ITEMS);
+      try {
+        await mergeUserDashboardItems(user.id, { items: DEFAULT_ITEMS as unknown[] });
+      } catch {}
     };
     loadItems();
-  }, [user]);
+  }, [user, dataUserId]);
 
   const saveItems = useCallback(async (newItems: DashboardItem[]) => {
     setItems(newItems);
@@ -323,11 +419,9 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   const handleLinkClick = (item: DashboardItem) => {
     if (editMode) return;
     if (item.linkExternal === "player") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/player`, "_blank");
     } else if (item.linkExternal === "telapromo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+      window.open(`/user/${resolvedUserId}/nexohub/telapromo`, "_blank");
     } else if (item.linkPage) {
       onNavigate(item.linkPage);
     }
@@ -371,7 +465,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
   }, [items]);
 
   return (
-    <div ref={scrollRef} className="flex flex-col h-full overflow-hidden relative pt-1">
+    <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
 
 
       {/* Section: Atalhos */}
@@ -395,71 +489,57 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                   onClick={() => handleLinkClick(item)}
                 >
                     <div
-                      className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-start justify-between p-4 transition-all duration-200 hover:scale-[1.04] overflow-hidden"
+                      className="w-[130px] h-[120px] sm:w-[150px] sm:h-[130px] rounded-[22px] flex flex-col items-start justify-between p-5 transition-all duration-300 hover:scale-[1.05] hover:-translate-y-1 overflow-hidden relative isolate"
                       style={{
                         background: isDragOver
-                          ? `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 30%, rgba(0,0,0,0.4))`
-                          : `color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 75%, transparent)`,
-                        backdropFilter: "blur(40px) saturate(1.8)",
-                        WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-                        border: isDragOver
-                          ? `2px solid var(--layout-accent-color, #c8ff00)`
-                          : `1px solid color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`,
-                        boxShadow: `0 4px 20px rgba(0,0,0,0.15)`,
+                          ? `linear-gradient(145deg, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 22%, var(--layout-button-bg, #8b0000)) 0%, color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, var(--layout-button-bg, #8b0000)) 100%)`
+                          : `linear-gradient(145deg, color-mix(in srgb, var(--layout-button-bg, #8b0000) 88%, black 12%) 0%, color-mix(in srgb, var(--layout-button-bg, #8b0000) 76%, black 24%) 100%)`,
+                        boxShadow: isDragOver
+                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
+                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`,
+                        backgroundClip: "padding-box",
                       }}
                       onMouseEnter={e => {
-                        e.currentTarget.style.boxShadow = `0 8px 30px rgba(0,0,0,0.25)`;
-                        e.currentTarget.style.borderColor = `color-mix(in srgb, var(--layout-accent-color, #c8ff00) 40%, transparent)`;
+                        e.currentTarget.style.boxShadow = `0 12px 40px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`;
                       }}
                       onMouseLeave={e => {
-                        e.currentTarget.style.boxShadow = `0 4px 20px rgba(0,0,0,0.15)`;
-                        e.currentTarget.style.borderColor = isDragOver
-                          ? `var(--layout-accent-color, #c8ff00)`
-                          : `color-mix(in srgb, var(--layout-border-color, #333) 30%, transparent)`;
+                        e.currentTarget.style.boxShadow = isDragOver
+                          ? `0 14px 36px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.08)`
+                          : `0 2px 12px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)`;
                       }}
                     >
-                      <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #c8ff00) 20%, transparent)" }}>
-                        <Icon size={18} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
+                      {/* Subtle gradient overlay on top */}
+                      <div className="absolute inset-px rounded-[21px] pointer-events-none" style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 38%, transparent 65%)" }} />
+                      <div className="w-10 h-10 rounded-2xl flex items-center justify-center relative z-[1]" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 12%, transparent)" }}>
+                        <Icon size={20} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />
                       </div>
-                      <div className="w-full">
-                        <span className="text-[11px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
-                        {item.linkExternal && <ExternalLink size={8} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />}
+                      <div className="w-full relative z-[1]">
+                        <span className="text-[12px] font-semibold leading-tight block truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>{item.linkLabel}</span>
+                        {item.linkExternal && <ExternalLink size={9} className="mt-0.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.25 }} />}
                       </div>
                   </div>
                   <button
                     onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
-                    className="absolute top-2 right-2 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    className="absolute top-2.5 right-2.5 w-5 h-5 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                    style={{ background: "rgba(0,0,0,0.6)" }}
                   >
-                    <X size={9} style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }} />
+                    <X size={9} style={{ color: "#fff", opacity: 0.7 }} />
                   </button>
                 </div>
               );
             })}
-            {/* Add button */}
-            <div
-              onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-              className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
-              style={{
-                background: "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)",
-                border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 40%, transparent)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)"; }}
-            >
-              <Plus size={18} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicionar</span>
-            </div>
+            {/* Add button removido */}
           </div>
         </div>
       )}
 
-      {/* On-Air Program Info */}
-      {onAirProgram && (
-        <div className="mb-4 animate-fade-in">
+      {/* On-Air Program Info — rendered into cyan box via portal when slot exists */}
+      {onAirProgram && (() => {
+        const block = (
+        <div className="animate-fade-in">
           <div className="flex items-start gap-5">
             {/* Selo / Logo do programa */}
-            {onAirProgram.selo && (
+            {false && onAirProgram.selo && (
                <img
                  src={onAirProgram.selo}
                  alt={onAirProgram.nome}
@@ -503,43 +583,74 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
             {/* Ícones: Full HD + Stereo + Classificação */}
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               {onAirProgram.is_hd && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                   <span className="text-[7px]">1080p</span> FULL HD
                 </span>
               )}
               {onAirProgram.is_stereo && (
-                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 10v3"/><path d="M6 6v11"/><path d="M10 3v18"/><path d="M14 8v7"/><path d="M18 5v13"/><path d="M22 10v3"/></svg>
                   STEREO
                 </span>
               )}
               {onAirProgram.classificacao_etaria && (
-                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(255,255,255,0.15)", color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-black tracking-wider uppercase" style={{ border: "1px solid rgba(0,0,0,0.2)", color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>
                    {onAirProgram.classificacao_etaria}
                 </span>
               )}
             </div>
 
             {/* Música tocando */}
-            {currentMusic && (
-              <div className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                    <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
-                  </p>
-                  {currentMusic.artista && (
-                    <p className="text-[9px]" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
-                      <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
-                    </p>
+            {currentMusic && (() => {
+              const startMs = currentMusic.startedAt || 0;
+              const startedDate = startMs > 0 ? new Date(startMs) : null;
+              const startedLabel = startedDate
+                ? startedDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+                : "";
+              const totalSec = currentMusic.duracao > 0 ? currentMusic.duracao : 0;
+              const elapsedSec = startMs > 0 ? Math.max(0, Math.floor((nowTick - startMs) / 1000)) : 0;
+              const clampedElapsed = totalSec > 0 ? Math.min(elapsedSec, totalSec) : elapsedSec;
+              const pct = totalSec > 0 ? Math.min(100, (clampedElapsed / totalSec) * 100) : 0;
+              const fmt = (s: number) => {
+                const m = Math.floor(s / 60);
+                const r = s % 60;
+                return `${m}:${String(r).padStart(2, "0")}`;
+              };
+              return (
+                <div className="inline-flex flex-col gap-1 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220, maxWidth: 320 }}>
+                  <div className="flex items-center gap-2">
+                    <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
+                        <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
+                      </p>
+                      {currentMusic.artista && (
+                        <p className="text-[9px] truncate" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
+                          <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {(startedLabel || totalSec > 0) && (
+                    <div className="flex items-center justify-between text-[8.5px] font-mono tabular-nums" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.55 }}>
+                      {startedLabel && <span>Iniciou {startedLabel}</span>}
+                      {totalSec > 0 ? <span>{fmt(clampedElapsed)} / {fmt(totalSec)}</span> : (startMs > 0 && <span>{fmt(elapsedSec)}</span>)}
+                    </div>
+                  )}
+                  {totalSec > 0 && (
+                    <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.12)" }}>
+                      <div className="h-full rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%`, background: "var(--layout-accent-color, #c8ff00)" }} />
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
             </div>
           </div>
         </div>
-      )}
+        );
+        return onAirSlot ? createPortal(block, onAirSlot) : <div className="mb-4">{block}</div>;
+      })()}
 
 
       {/* Spacer to push widgets to bottom */}
@@ -547,93 +658,100 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 
       {items.filter(i => i.type === "widget").length > 0 && (
         <div className="mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-[0.15em] mb-3 animate-fade-in" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.7 }}>Widgets</p>
+          <div className="flex items-center gap-2 mb-3 animate-fade-in">
+            <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: "#002132" }}>Widgets</p>
+            {/* Botão de adicionar widget removido */}
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" style={{ gridAutoRows: "auto" }}>
 
             {items.filter(i => i.type === "widget").map(item => {
               const isDragging = draggedId === item.id;
               const isDragOver = dragOverId === item.id && draggedId !== item.id;
+              const audienceHeight = playerCompactMap[item.id] ? Math.min(96, playerMaxHeight) : playerMaxHeight;
               return (
+                <Fragment key={item.id}>
                 <div
-                  key={item.id}
+                  className={
+                    (item.widgetType === "player"
+                      ? `col-span-full flex ${playerVideoActive === item.id ? "flex-row-reverse" : "flex-row"} items-stretch gap-2 `
+                      : "") +
+                    "relative"
+                  }
+                  style={item.widgetType === "player" ? { height: playerCompactMap[item.id] ? `${Math.min(96, playerMaxHeight)}px` : `${playerMaxHeight}px` } : undefined}
+                >
+                <div
                   className={`relative group rounded-3xl animate-fade-in flex flex-col ${isDragging ? "opacity-40 scale-95" : ""}`}
                   style={{
-                    background: "color-mix(in srgb, var(--layout-widget-bg) 65%, transparent)",
-                    backdropFilter: "blur(40px) saturate(1.8)",
-                    WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-                    border: isDragOver ? "2px solid var(--layout-accent-color)" : "1px solid color-mix(in srgb, var(--layout-border-color) 20%, transparent)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                    background: "var(--layout-widget-bg, #1a1a1a)",
+                    boxShadow: isDragOver ? "0 0 0 2px var(--layout-accent-color), 0 4px 20px rgba(0,0,0,0.12)" : "0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.04)",
                     borderRadius: "24px",
-                    height: item.widgetType === "player" ? "auto" : "280px",
-                    minHeight: item.widgetType === "player" ? "160px" : undefined,
-                    maxHeight: item.widgetType === "player" ? "none" : "280px",
-                    overflow: "hidden",
+                    aspectRatio: item.widgetType === "player" ? (playerVideoActive === item.id ? "16 / 9" : "1 / 1") : undefined,
+                    height: item.widgetType === "player" ? "100%" : "280px",
+                    maxHeight: item.widgetType === "player" ? "100%" : "280px",
+                    flexShrink: item.widgetType === "player" ? 0 : undefined,
+                    overflow: item.widgetType === "player" ? "hidden" : "hidden",
+                    transition: item.widgetType === "player" ? "aspect-ratio 0.4s cubic-bezier(0.4,0,0.2,1), min-height 0.35s cubic-bezier(0.4,0,0.2,1), height 0.35s cubic-bezier(0.4,0,0.2,1), max-height 0.35s cubic-bezier(0.4,0,0.2,1)" : undefined,
                   }}
                   onDragOver={(e) => handleDragOver(e, item.id)}
                   onDrop={() => handleDrop(item.id)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div
-                    className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
-                    style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
-                    draggable
-                    onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
-                  >
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
-                      {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                      {item.widgetType === "player" && <Radio size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
-                    </div>
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
-                      {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : item.widgetType === "player" ? "Player" : "Estatísticas"}
-                    </span>
-                    <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
-                  </div>
-                  <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                      style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
+                  {item.widgetType !== "player" && (
+                    <div
+                      className="flex items-center gap-2 px-5 py-3 cursor-grab active:cursor-grabbing flex-shrink-0"
+                      style={{ borderBottom: `1px solid color-mix(in srgb, var(--layout-border-color, #333) 15%, transparent)` }}
+                      draggable
+                      onDragStart={(e) => { e.stopPropagation(); handleDragStart(item.id); }}
                     >
-                      <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
-                    </button>
-                  </div>
-                  <div className="p-4 flex-1 overflow-y-auto overflow-x-hidden widget-scroll">
+                      <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--layout-accent-color, #c8ff00) 15%, transparent)" }}>
+                        {item.widgetType === "agenda" && <CalendarDays size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "musica" && <Music size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "stats" && <BarChart3 size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                        {item.widgetType === "weather" && <CloudSun size={12} style={{ color: "var(--layout-accent-color, #c8ff00)" }} />}
+                      </div>
+                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.6 }}>
+                        {item.widgetType === "agenda" ? "Agenda" : item.widgetType === "musica" ? "No Ar" : item.widgetType === "weather" ? "Tempo" : "Estatísticas"}
+                      </span>
+                      <GripVertical size={10} className="ml-auto" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.15 }} />
+                    </div>
+                  )}
+                  {/* Handle de arrastar do player removido */}
+                  {item.widgetType !== "player" && (
+                    <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        className="w-6 h-6 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                        style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      >
+                        <X size={10} style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }} />
+                      </button>
+                    </div>
+                  )}
+                  <div className={`${item.widgetType === "player" ? "p-0" : "p-4"} flex-1 ${item.widgetType === "player" ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"} widget-scroll`}>
                     <Suspense fallback={<Loader2 className="animate-spin" size={18} style={{ color: "var(--layout-icon-color, #888)", opacity: 0.4 }} />}>
-                      {item.widgetType === "agenda" && <DashboardAgendaWidget onNavigate={onNavigate} />}
-                      {item.widgetType === "musica" && <MusicProgramWidget />}
-                      {item.widgetType === "stats" && <StatsWidget />}
+                      {item.widgetType === "agenda" && <DashboardAgendaWidget dataUserId={dataUserId || undefined} onNavigate={onNavigate} />}
+                      {item.widgetType === "musica" && <MusicProgramWidget dataUserId={dataUserId || undefined} />}
+                      {item.widgetType === "stats" && <StatsWidget dataUserId={dataUserId || undefined} />}
                       {item.widgetType === "weather" && <DashboardWeatherWidget />}
-                      {item.widgetType === "player" && <DashboardPlayerWidget onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} />}
+                      {item.widgetType === "player" && <DashboardPlayerWidget dataUserId={dataUserId || undefined} onVideoChange={(active) => setPlayerVideoActive(active ? item.id : null)} onCompactChange={(c) => setPlayerCompactMap(m => ({ ...m, [item.id]: c }))} />}
                     </Suspense>
                   </div>
                 </div>
+                {item.widgetType === "player" && (
+                  <div className="flex-1 min-w-0 h-full">
+                    <Suspense fallback={<div style={{ height: "100%", borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
+                      <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
+                    </Suspense>
+                  </div>
+                )}
+                </div>
+                </Fragment>
               );
             })}
           </div>
         </div>
       )}
 
-      {/* Show add button when no links exist */}
-      {items.filter(i => i.type === "link").length === 0 && items.length > 0 && (
-        <div className="mb-6">
-          <div
-            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="w-[120px] h-[100px] sm:w-[140px] sm:h-[110px] rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all hover:scale-[1.04]"
-            style={{
-              background: "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)",
-              border: "1.5px dashed color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)",
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 12%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 40%, transparent)"; }}
-            onMouseLeave={e => { e.currentTarget.style.background = "color-mix(in srgb, var(--layout-nav-text, #fff) 5%, transparent)"; e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-nav-text, #fff) 20%, transparent)"; }}
-          >
-            <Plus size={18} className="mb-1.5" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }} />
-            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicionar</span>
-          </div>
-        </div>
-      )}
 
       {/* Empty state */}
       {items.length === 0 && (
@@ -643,26 +761,17 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
           </div>
           <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
-          <button
-            onClick={() => { setShowAddDialog(true); setAddStep("choose"); }}
-            className="btn-skyglass px-6 py-2.5 text-xs"
-          >
-            <Plus size={12} className="inline mr-1.5" /> Começar a personalizar
-          </button>
         </div>
       )}
 
       {/* Add Dialog */}
       {showAddDialog && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={() => { setShowAddDialog(false); setAddStep("choose"); }}>
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60" />
           <div
             className="relative rounded-2xl p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto"
             style={{
-               background: "rgba(15, 15, 15, 0.75)",
-               backdropFilter: "blur(40px) saturate(1.8)",
-               WebkitBackdropFilter: "blur(40px) saturate(1.8)",
-               border: "1px solid rgba(255,255,255,0.12)",
+               background: "rgba(18, 18, 20, 0.97)",
                boxShadow: "0 24px 80px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15)",
              }}
             onClick={e => e.stopPropagation()}
@@ -681,7 +790,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <button
                   onClick={() => setAddStep("link")}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
@@ -696,7 +805,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                 <button
                   onClick={() => setAddStep("widget")}
                   className="flex flex-col items-center gap-3 p-5 rounded-2xl transition-all hover:scale-[1.03]"
-                  style={{ background: "rgba(255,255,255,0.06)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
+                  style={{ background: "rgba(255,255,255,0.06)", boxShadow: "0 4px 16px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06)" }}
                   onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.12)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.2)"; }}
                   onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
@@ -726,9 +835,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.08)",
                         boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
@@ -758,9 +864,6 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
                       className="w-full flex items-start gap-3 px-4 py-4 rounded-xl text-sm transition-all text-left hover:scale-[1.01]"
                       style={{
                         background: exists ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.06)",
-                        backdropFilter: "blur(12px)",
-                        WebkitBackdropFilter: "blur(12px)",
-                        border: "1px solid rgba(255,255,255,0.08)",
                         boxShadow: exists ? "none" : "inset 0 1px 0 rgba(255,255,255,0.04)",
                         opacity: exists ? 0.4 : 1,
                         color: "#fff",
@@ -838,7 +941,7 @@ export default function CustomizableDashboard({ onNavigate }: Props) {
 function LinkPreview({ page, external }: { page?: Page; external?: string }) {
   switch (page) {
     case "agenda": return <AgendaPreview />;
-    case "musica": return <MusicaPreview />;
+    case "musica": return <MusicaPreview dataUserId={undefined} />;
     case "noticias": return <NoticiasPreview />;
     case "apresentadores": return <ApresentadoresPreview />;
     case "programas": return <ProgramasPreview />;
@@ -900,15 +1003,16 @@ function AgendaPreview() {
   );
 }
 
-function MusicaPreview() {
+function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } = {}) {
+  const { user: previewUser } = useAuth();
+  const dataUserId = dataUserIdProp || previewUser?.id;
   const [music, setMusic] = useState<any>(null);
   const [programa, setPrograma] = useState("");
   useEffect(() => {
     const update = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
+        const d = readMusicData(dataUserId) as any;
+        if (d) {
           if (d.titulo) setMusic(d);
           if (d.programa) setPrograma(d.programa);
         }
@@ -917,7 +1021,7 @@ function MusicaPreview() {
     update();
     const iv = setInterval(update, 3000);
     return () => clearInterval(iv);
-  }, []);
+  }, [dataUserId]);
   return music ? (
     <div className="flex items-center gap-2.5">
       {music.capa ? (
@@ -978,7 +1082,7 @@ function ProgramasPreview() {
   const [count, setCount] = useState(0);
   useEffect(() => {
     if (!user) return;
-    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true)
+    supabase.from("programas").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("ativo", true).ilike("estudio", "%fm%")
       .then(({ count: c }) => setCount(c || 0));
   }, [user]);
   return <p className="text-black/50 text-[10px]">{count} programa{count !== 1 ? "s" : ""} ativo{count !== 1 ? "s" : ""}</p>;
@@ -1019,41 +1123,283 @@ function ShoppingPreview() {
 }
 
 /* ========== WIDGET: Agenda ========== */
-function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => void }) {
+function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string; onNavigate: (page: Page) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [events, setEvents] = useState<any[]>([]);
+  const [now, setNow] = useState(new Date());
+
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date: Date) => {
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
 
   useEffect(() => {
-    if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
-    supabase
-      .from("agenda_eventos")
-      .select("*")
-      .eq("user_id", user.id)
-      .gte("data", today)
-      .order("data", { ascending: true })
-      .limit(5)
-      .then(({ data }) => { if (data) setEvents(data); });
-  }, [user]);
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 30000); // Atualiza a cada 30s para recalcular horários passados
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!user || !uid) return;
+    let cancelled = false;
+    const load = async () => {
+      const today = new Date();
+      const todayStr = today.toISOString().split("T")[0];
+      const [evtsRes, progsRes] = await Promise.all([
+        supabase
+          .from("agenda_eventos")
+          .select("*, programa:programas(horario_inicio, horario_fim)")
+          .eq("user_id", uid)
+          .gte("data", todayStr)
+          .not("status", "in", '("cancelado","concluido")')
+          .order("data", { ascending: true })
+          .limit(20),
+        supabase
+          .from("programas")
+          .select("id, nome, horario_inicio, horario_fim, dias_semana, ativo")
+          .eq("user_id", uid)
+          .eq("ativo", true),
+      ]);
+      if (cancelled) return;
+
+      const evts: any[] = evtsRes.data || [];
+      const progs: any[] = progsRes.data || [];
+
+      // Synthesize upcoming events from programs (next 7 days) so that a
+      // freshly-configured account with programs but no manual events still
+      // shows something in the dashboard agenda widget.
+      const DAY_INDEX: Record<string, number> = {
+        domingo: 0, segunda: 1, terca: 2, "terça": 2,
+        quarta: 3, quinta: 4, sexta: 5, sabado: 6, "sábado": 6,
+      };
+      const synthetic: any[] = [];
+      for (let offset = 0; offset < 7; offset++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + offset);
+        const dow = d.getDay();
+        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        for (const p of progs) {
+          const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+          const matches = dias.some((s: string) => DAY_INDEX[String(s).trim().toLowerCase()] === dow);
+          if (!matches) continue;
+          synthetic.push({
+            id: `prog-${p.id}-${dStr}`,
+            data: dStr,
+            descricao: p.nome,
+            tipo_evento: "live",
+            programa: { horario_inicio: p.horario_inicio, horario_fim: p.horario_fim },
+            _synthetic: true,
+            _sortKey: `${dStr} ${p.horario_inicio || "99:99"}`,
+          });
+        }
+      }
+
+      // Merge: prefer real events; only add synthetic if no real event covers same program+date
+      const seen = new Set(evts.map((e: any) => `${e.data}|${e.programa_id || ""}`));
+      const merged = [
+        ...evts,
+        ...synthetic.filter(s => {
+          const progId = s.id.split("-")[1];
+          return !seen.has(`${s.data}|${progId}`);
+        }),
+      ].sort((a, b) => {
+        const ka = `${a.data} ${a.programa?.horario_inicio || a.horario_gravacao || "99:99"}`;
+        const kb = `${b.data} ${b.programa?.horario_inicio || b.horario_gravacao || "99:99"}`;
+        return ka.localeCompare(kb);
+      });
+
+      setEvents(merged);
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [user, uid]);
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+
+  const filteredEvents = events.filter(ev => {
+    // Filtragem adicional no cliente para horário final da gravação
+    const isToday = ev.data === todayStr;
+    if (isToday && ev.horario_gravacao_fim && ev.horario_gravacao_fim < currentTime) {
+      return false;
+    }
+    return true;
+  }).slice(0, 5); // Mantém o limite visual de 5 itens
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 mb-3">
         <CalendarDays size={14} style={{ color: "var(--layout-accent-color)" }} />
         <p className="font-bold text-sm" style={{ color: "var(--layout-widget-text)" }}>Agenda de Eventos</p>
+        {getFeriadoNome(now) && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-[8px] font-black bg-red-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm shadow-red-500/50 cursor-help">
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="bg-red-600 text-white border-red-500">
+                <p className="text-[10px] font-bold">{getFeriadoNome(now)}</p>
+                <p className="text-[9px] opacity-90">{format(now, "dd/MM")}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {filteredEvents.length > 0 && (
+          <span
+            className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{
+              background: "color-mix(in srgb, var(--layout-accent-color) 20%, transparent)",
+              color: "var(--layout-accent-color)",
+            }}
+          >
+            {filteredEvents.length}
+          </span>
+        )}
       </div>
-      {events.length === 0 ? (
+      {filteredEvents.length === 0 ? (
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 35%, transparent)" }}>Nenhum evento próximo</p>
       ) : (
-        <div className="space-y-2">
-          {events.map(ev => (
-            <div key={ev.id} className="px-3 py-2 rounded-lg" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 10%, transparent)" }}>
-              <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text)" }}>{ev.descricao || "Evento"}</p>
-              <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 45%, transparent)" }}>
-                {new Date(ev.data + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — {ev.local}
-              </p>
-            </div>
-          ))}
+        <div className="space-y-1">
+          {filteredEvents.map(ev => {
+            const _now = new Date();
+            const todayStr = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
+            const _tomorrow = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + 1);
+            const tomorrowStr = `${_tomorrow.getFullYear()}-${String(_tomorrow.getMonth() + 1).padStart(2, "0")}-${String(_tomorrow.getDate()).padStart(2, "0")}`;
+            const isToday = ev.data === todayStr;
+            const isTomorrow = ev.data === tomorrowStr;
+            const evDate = new Date(ev.data + "T12:00:00");
+            const day = evDate.toLocaleDateString("pt-BR", { day: "2-digit" });
+            const month = evDate.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
+            const tipo = (ev.tipo_evento || "").toString().toUpperCase();
+            const titulo = (ev.descricao || "Evento").split("/")[0].trim();
+            return (
+              <div
+                key={ev.id}
+                className={`agenda-event-item flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer ${isToday ? "agenda-today-pulse" : ""}`}
+                style={{
+                  background: "color-mix(in srgb, var(--layout-widget-text) 5%, transparent)",
+                  border: isToday
+                    ? "1px solid color-mix(in srgb, var(--layout-accent-color) 55%, transparent)"
+                    : "1px solid color-mix(in srgb, var(--layout-widget-text) 8%, transparent)",
+                  transition: "all 0.25s ease",
+                }}
+                onClick={() => {
+                  try {
+                    sessionStorage.setItem("agenda_focus_event", JSON.stringify({ id: ev.id, data: ev.data }));
+                  } catch {}
+                  onNavigate("agenda");
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "var(--layout-widget-text)";
+                  e.currentTarget.style.transform = "translateX(4px)";
+                  e.currentTarget.style.borderColor = "var(--layout-widget-text)";
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "color-mix(in srgb, var(--layout-widget-text) 5%, transparent)";
+                  e.currentTarget.style.transform = "translateX(0)";
+                  e.currentTarget.style.borderColor = isToday
+                    ? "color-mix(in srgb, var(--layout-accent-color) 55%, transparent)"
+                    : "color-mix(in srgb, var(--layout-widget-text) 8%, transparent)";
+                }}
+              >
+                <div
+                  className="flex flex-col items-center justify-center shrink-0 rounded-md px-1.5 py-1 leading-none"
+                  style={{
+                    background: "color-mix(in srgb, var(--layout-widget-text) 10%, transparent)",
+                    minWidth: "36px",
+                  }}
+                >
+                  <span className="text-sm font-black" style={{ color: "var(--layout-widget-text)" }}>{day}</span>
+                  <span className="text-[8px] font-semibold tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 55%, transparent)" }}>{month}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold truncate leading-tight" style={{ color: "var(--layout-widget-text)" }}>
+                    {titulo}
+                  </p>
+                  {getFeriadoNome(evDate) && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center gap-1 mt-0.5 cursor-help">
+                            <Star size={8} className="text-red-500 fill-red-500" />
+                            <span className="text-[8px] font-bold text-red-500 uppercase tracking-tight">Feriado</span>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="bg-red-600 text-white border-red-500">
+                          <p className="text-[10px] font-bold">{getFeriadoNome(evDate)}</p>
+                          <p className="text-[9px] opacity-90">{format(evDate, "dd 'de' MMMM", { locale: ptBR })}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  {(() => {
+                    const isGravacao = (ev.tipo_evento || "").toString().toLowerCase() === "gravacao";
+                    const horarioExibido = isGravacao
+                      ? (ev.horario_gravacao || ev.programa?.horario_inicio)
+                      : ev.programa?.horario_inicio;
+                    return (
+                  <div className="flex items-center gap-1.5 mt-1">
+                    {horarioExibido && (
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-px rounded tabular-nums"
+                        style={{
+                          background: "color-mix(in srgb, var(--layout-accent-color) 18%, transparent)",
+                          color: "var(--layout-widget-text)",
+                        }}
+                      >
+                        {String(horarioExibido).slice(0, 5)}
+                      </span>
+                    )}
+                    {tipo && (
+                      <span
+                        className="text-[8px] font-semibold px-1.5 py-px rounded uppercase tracking-wide"
+                        style={{
+                          background: "color-mix(in srgb, var(--layout-widget-text) 12%, transparent)",
+                          color: "color-mix(in srgb, var(--layout-widget-text) 75%, transparent)",
+                        }}
+                      >
+                        {tipo}
+                      </span>
+                    )}
+                    {ev.local && (
+                      <span className="text-[9px] truncate" style={{ color: "color-mix(in srgb, var(--layout-widget-text) 50%, transparent)" }}>
+                        {ev.local}
+                      </span>
+                    )}
+                    {(isToday || isTomorrow) && (
+                      <span
+                        className="text-[8px] font-bold ml-auto shrink-0 px-1.5 py-px rounded-full"
+                        style={{
+                          background: "var(--layout-accent-color)",
+                          color: "#000",
+                        }}
+                      >
+                        {isToday ? "HOJE" : "AMANHÃ"}
+                      </span>
+                    )}
+                  </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
       <div className="mt-auto pt-3">
@@ -1062,10 +1408,7 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
           className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all hover:scale-105"
           style={{
             background: "rgba(255,255,255,0.08)",
-            backdropFilter: "blur(16px) saturate(1.4)",
-            WebkitBackdropFilter: "blur(16px) saturate(1.4)",
             color: "var(--layout-accent-color)",
-            border: "1px solid rgba(255,255,255,0.1)",
             boxShadow: "0 2px 8px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
           onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
@@ -1079,8 +1422,9 @@ function DashboardAgendaWidget({ onNavigate }: { onNavigate: (page: Page) => voi
 }
 
 /* ========== WIDGET: Music + Program ========== */
-function MusicProgramWidget() {
+function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
@@ -1094,9 +1438,8 @@ function MusicProgramWidget() {
     let prevTitle = "";
     const update = () => {
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
+        const d = readMusicData(dataUserId) as any;
+        if (d) {
           if (d.titulo && d.titulo !== prevTitle) {
             prevTitle = d.titulo;
             setMusic(d);
@@ -1109,48 +1452,56 @@ function MusicProgramWidget() {
     update();
     const interval = setInterval(update, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dataUserId]);
 
-  // Fetch current program from DB
+  // Fetch current program from DB — usa fuso horário da empresa (evita
+  // "sem programa" quando o navegador está em fuso diferente do da rádio).
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     let prevProgramId = "";
+    let cancelled = false;
     const fetchProgram = async () => {
-      const now = new Date();
-      const dayMap: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
-      const todayKey = dayMap[now.getDay()];
-      const currentTime = now.toTimeString().slice(0, 5);
-
-      const { data } = await supabase
-        .from("programas")
-        .select("*, apresentadores(nome, foto)")
-        .eq("user_id", user.id)
-        .eq("ativo", true)
-        .lte("horario_inicio", currentTime)
-        .gte("horario_fim", currentTime)
-        .contains("dias_semana", [todayKey])
-        .limit(1)
-        .maybeSingle();
-
-      if (data) {
-        if (data.id !== prevProgramId) {
-          prevProgramId = data.id;
+      const [{ data: empresa }, { data: programas }] = await Promise.all([
+        supabase
+          .from("empresa_config")
+          .select("timezone")
+          .eq("user_id", uid)
+          .maybeSingle(),
+        supabase
+          .from("programas")
+          .select("*, apresentadores(nome, foto)")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+      ]);
+      if (cancelled) return;
+      const tz = empresa?.timezone || null;
+      const { current } = resolveEffectiveOnAir((programas as any[]) || [], new Date(), tz);
+      if (current) {
+        if (current.id !== prevProgramId) {
+          prevProgramId = current.id;
           setProgramKey(k => k + 1);
         }
-        setCurrentProgram(data);
-        const [startH, startM] = data.horario_inicio.split(":").map(Number);
-        const [endH, endM] = data.horario_fim.split(":").map(Number);
+        setCurrentProgram(current);
+        const { hhmm } = getZonedNow(tz);
+        const [nowH, nowM] = hhmm.split(":").map(Number);
+        const [startH, startM] = String(current.horario_inicio).split(":").map(Number);
+        const [endH, endM] = String(current.horario_fim).split(":").map(Number);
         const startMin = startH * 60 + startM;
         const endMin = endH * 60 + endM;
-        const nowMin = now.getHours() * 60 + now.getMinutes();
+        const nowMin = nowH * 60 + nowM;
         setTotal(endMin - startMin);
         setElapsed(nowMin - startMin);
+      } else {
+        prevProgramId = "";
+        setCurrentProgram(null);
       }
     };
     fetchProgram();
     const iv = setInterval(fetchProgram, 30000);
-    return () => clearInterval(iv);
-  }, [user]);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [uid]);
+
 
   // Update elapsed every minute
   useEffect(() => {
@@ -1227,16 +1578,17 @@ function MusicProgramWidget() {
 }
 
 /* ========== WIDGET: Stats ========== */
-function StatsWidget() {
+function StatsWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
   const [prerollCount, setPrerollCount] = useState(0);
   const [channelCount, setChannelCount] = useState(0);
 
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
-      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", user.id).eq("active", true),
+      supabase.from("comercial_preroll").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true),
+      supabase.from("streaming_channels").select("id", { count: "exact", head: true }).eq("user_id", uid!).eq("active", true),
     ]).then(([pr, ch]) => {
       setPrerollCount(pr.count || 0);
       setChannelCount(ch.count || 0);
@@ -1397,30 +1749,144 @@ function DashboardWeatherWidget() {
 }
 
 /* ========== WIDGET: Player ========== */
-function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boolean) => void }) {
+function VolumeSliderControl({ compactMode, isMuted, volume, toggleMute, handleVolume }: { compactMode: boolean; isMuted: boolean; volume: number; toggleMute: () => void; handleVolume: (v: number) => void }) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const cancelClose = () => {
+    if (closeTimerRef.current) { window.clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+  };
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), 700);
+  };
+  useEffect(() => () => cancelClose(), []);
+
+  return (
+    <div className="relative" onMouseEnter={() => { cancelClose(); setOpen(true); }} onMouseLeave={scheduleClose}>
+      <button
+        onClick={toggleMute}
+        className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+        style={{ background: "#c8ff00" }}
+        title={isMuted ? "Ativar som" : "Mudo"}
+      >
+        {isMuted || volume === 0
+          ? <VolumeX size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} />
+          : <Volume2 size={compactMode ? 11 : 12} style={{ color: "#001e2d" }} fill="#001e2d" />}
+      </button>
+      {/* Invisible bridge so cursor can travel from button to slider without gap */}
+      <div
+        className="absolute right-full top-0 h-full"
+        style={{ width: 12, pointerEvents: open ? "auto" : "none" }}
+      />
+      <div
+        className="absolute right-full top-1/2 -translate-y-1/2 mr-1.5 z-30"
+        style={{
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? "auto" : "none",
+          transform: `translateY(-50%) translateX(${open ? "0" : "6px"})`,
+          transition: "opacity 200ms ease, transform 200ms ease",
+        }}
+        onMouseEnter={cancelClose}
+        onMouseLeave={scheduleClose}
+      >
+        <div className="rounded-full px-2 py-1.5 sm:px-3 sm:py-2 flex items-center shadow-lg" style={{ background: "#c8ff00" }}>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={isMuted ? 0 : volume}
+            onChange={e => handleVolume(Number(e.target.value))}
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+            onDragStart={e => { e.stopPropagation(); e.preventDefault(); }}
+            draggable={false}
+            className="volume-slider-lime h-1 appearance-none rounded-full cursor-pointer w-20 sm:w-24"
+            style={{
+              background: `linear-gradient(to right, #001e2d ${(isMuted ? 0 : volume) * 100}%, rgba(0,30,45,0.25) ${(isMuted ? 0 : volume) * 100}%)`,
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: { dataUserId?: string; onVideoChange?: (active: boolean) => void; onCompactChange?: (compact: boolean) => void }) {
   const { user } = useAuth();
+  const uid = dataUserId || user?.id;
+  const volumeStorageKey = uid ? `dashboard_player_volume_${uid}` : "dashboard_player_volume_anon";
+  const mutedStorageKey = uid ? `dashboard_player_muted_${uid}` : "dashboard_player_muted_anon";
+  const compactStorageKey = uid ? `dashboard_player_compact_${uid}` : "dashboard_player_compact_anon";
+  const [compactMode, setCompactMode] = useState(() => {
+    try { return localStorage.getItem(compactStorageKey) === "1"; } catch { return false; }
+  });
   const [channels, setChannels] = useState<any[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(0.8);
+  const [isLoading, setIsLoading] = useState(false);
+  const isPlayingRef = useRef(false);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  const [isMuted, setIsMuted] = useState(() => {
+    try { return localStorage.getItem(mutedStorageKey) === "1"; } catch { return false; }
+  });
+  const [volume, setVolume] = useState(() => {
+    try {
+      const raw = localStorage.getItem(volumeStorageKey);
+      const v = raw != null ? Number(raw) : NaN;
+      return Number.isFinite(v) && v >= 0 && v <= 1 ? v : 0.8;
+    } catch { return 0.8; }
+  });
   const [showVideo, setShowVideo] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
 
-  useEffect(() => { onVideoChange?.(showVideo); }, [showVideo, onVideoChange]);
+  // Persist volume/mute per user
+  useEffect(() => {
+    try { localStorage.setItem(volumeStorageKey, String(volume)); } catch {}
+  }, [volume, volumeStorageKey]);
+  useEffect(() => {
+    try { localStorage.setItem(mutedStorageKey, isMuted ? "1" : "0"); } catch {}
+  }, [isMuted, mutedStorageKey]);
+
+  // Re-hydrate when user id changes (switching accounts)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(volumeStorageKey);
+      const v = raw != null ? Number(raw) : NaN;
+      if (Number.isFinite(v) && v >= 0 && v <= 1) setVolume(v);
+      setIsMuted(localStorage.getItem(mutedStorageKey) === "1");
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
+
+  // Parent passes inline arrow fns for these callbacks, so they change identity
+  // every render. Depending on them here causes an infinite update loop (freezes
+  // the widget on BREAK). Only re-run when the underlying state actually changes.
+  useEffect(() => { onVideoChange?.(showVideo); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [showVideo]);
+  useEffect(() => {
+    try { localStorage.setItem(compactStorageKey, compactMode ? "1" : "0"); } catch {}
+    onCompactChange?.(compactMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compactMode, compactStorageKey]);
+  useEffect(() => {
+    try { setCompactMode(localStorage.getItem(compactStorageKey) === "1"); } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prefetchRef = useRef<{ url: string; audio: HTMLAudioElement } | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const hlsRef = useRef<any>(null);
   const hlsInitUrlRef = useRef<string>("");
+  const audioCleanupRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!uid) return;
     const fetchChannels = async () => {
       let { data, error } = await supabase
         .from("streaming_channels")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .eq("active", true)
         .neq("type", "catalog")
         .order("numero_canal");
@@ -1429,6 +1895,7 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         const fallback = await supabase
           .from("streaming_channels")
           .select("*")
+          .eq("user_id", uid)
           .eq("active", true)
           .neq("type", "catalog")
           .order("numero_canal");
@@ -1440,37 +1907,95 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       if (data && data.length > 0) setChannels(data);
     };
     fetchChannels();
-  }, [user]);
+  }, [uid]);
 
   useEffect(() => {
-    const poll = () => {
+    const effectiveUid = dataUserId || uid;
+    const targetKey = musicDataKey(effectiveUid);
+    let cancelled = false;
+
+    const fetchFromDb = async () => {
+      if (!effectiveUid) return;
       try {
-        const raw = localStorage.getItem("masterview_music_data");
-        if (raw) {
-          const d = JSON.parse(raw);
-          if (d.titulo) {
-            setCurrentMusic(prev => {
-              if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
-              return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
-            });
-            return;
-          }
+        const { data } = await supabase
+          .from("user_settings")
+          .select("dashboard_items")
+          .eq("user_id", effectiveUid)
+          .maybeSingle();
+        if (cancelled) return;
+        const di = (data?.dashboard_items || {}) as any;
+        const titulo = (di.music_current_title || "").toString().trim();
+        const artista = (di.music_current_artist || "").toString().trim();
+        const capa = (di.music_current_cover || "").toString();
+        if (titulo) {
+          setCurrentMusic(prev => {
+            if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa) return prev;
+            return { titulo, artista, capa };
+          });
         }
       } catch {}
-      setCurrentMusic(null);
+    };
+
+    const poll = () => {
+      try {
+        const d = readMusicData(effectiveUid) as any;
+        if (d && d.titulo) {
+          setCurrentMusic(prev => {
+            if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
+            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
+          });
+          return;
+        }
+      } catch {}
+      // localStorage empty → try DB (mirrored fields written by MusicaNoAr / useGlobalMusicSync)
+      void fetchFromDb();
     };
     poll();
-    const iv = setInterval(poll, 1500);
-    return () => clearInterval(iv);
-  }, []);
+    // Cross-tab: fires when another tab writes to localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (!targetKey || e.key === targetKey) poll();
+    };
+    // Same-tab: fires when writeMusicData runs in this window
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !effectiveUid || detail.userId === effectiveUid) poll();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+    // Keep a slow poll as safety net for writers that bypass the helper
+    const iv = setInterval(poll, 3000);
+    // Periodic DB refresh so the widget catches updates written while the user
+    // isn't on the MúsicaNoAr page (which is the only writer of localStorage).
+    const dbIv = setInterval(fetchFromDb, 8000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+      clearInterval(iv);
+      clearInterval(dbIv);
+    };
+  }, [dataUserId, uid]);
+
 
   useEffect(() => {
     if (!audioRef.current) {
       const audio = new Audio();
       audio.preload = "none";
+      // Note: crossOrigin intentionally NOT set — many radio streams lack CORS headers
+      // and setting it would break playback. Analyser will taint silently; we handle that below.
       audioRef.current = audio;
     }
+    return () => {
+      // Cleanup: stop all playback when widget unmounts
+      if (hlsRef.current) { try { hlsRef.current.destroy(); } catch {} hlsRef.current = null; }
+      try { audioCleanupRef.current?.(); } catch {}
+      audioCleanupRef.current = null;
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); audioRef.current = null; }
+      if (prefetchRef.current) { try { prefetchRef.current.audio.pause(); prefetchRef.current.audio.removeAttribute("src"); prefetchRef.current.audio.load(); } catch {} prefetchRef.current = null; }
+      if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
+    };
   }, []);
+
 
   // Attach HLS when showVideo activates
   useEffect(() => {
@@ -1493,7 +2018,11 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       import("hls.js").then(({ default: Hls }) => {
         if (!Hls.isSupported()) {
           el.src = url;
-          el.play().catch(() => {});
+          el.muted = true; // Required for autoplay
+          el.play().then(() => {
+            // Try to unmute if user hasn't muted explicitly
+            if (!isMuted) { el.muted = false; }
+          }).catch((err) => console.warn("[Player video] play failed:", err));
           return;
         }
         const hls = new Hls({ maxBufferLength: 30, maxMaxBufferLength: 60 });
@@ -1502,15 +2031,24 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
         hls.attachMedia(el);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           el.volume = volume;
-          el.muted = isMuted;
-          el.play().catch(() => {});
+          el.muted = true; // Required for autoplay
+          el.play().then(() => {
+            if (!isMuted) {
+              setTimeout(() => { try { el.muted = false; } catch {} }, 150);
+            }
+          }).catch((err) => console.warn("[Player video] play failed:", err));
+        });
+        hls.on(Hls.Events.ERROR, (_e: any, errData: any) => {
+          console.error("[Player video] HLS error:", errData?.type, errData?.details, errData?.fatal);
         });
       });
     } else {
       el.src = url;
       el.volume = volume;
-      el.muted = isMuted;
-      el.play().catch(() => {});
+      el.muted = true; // Required for autoplay
+      el.play().then(() => {
+        if (!isMuted) { el.muted = false; }
+      }).catch((err) => console.warn("[Player video] play failed:", err));
     }
 
     return () => { hlsInitUrlRef.current = ""; el.removeEventListener("playing", onPlaying); };
@@ -1520,25 +2058,226 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   const channelType = activeChannel?.type || "";
   const isVideo = channelType.includes("video");
 
+  // Prefetch: quando o canal muda e não está tocando, pré-carrega o stream de áudio
+  // para que o clique em play seja quase instantâneo.
+  useEffect(() => {
+    if (!activeChannel || isVideo || isPlaying || isLoading) return;
+    const url = activeChannel.url;
+    // Se já temos prefetch para essa URL, reaproveita
+    if (prefetchRef.current?.url === url) return;
+    // Limpa prefetch anterior de outra URL
+    if (prefetchRef.current) {
+      try { prefetchRef.current.audio.pause(); prefetchRef.current.audio.removeAttribute("src"); prefetchRef.current.audio.load(); } catch {}
+      prefetchRef.current = null;
+    }
+    const pre = new Audio();
+    // preload="metadata" apenas para aquecer DNS/TLS sem bufferizar áudio
+    // (buffers de streams ao vivo ficariam obsoletos e causariam repetição)
+    pre.preload = "metadata";
+    pre.muted = true;
+    // Alguns servidores de rádio retornam 400 quando recebem query params extras.
+    pre.src = url;
+    try { pre.load(); } catch {}
+    prefetchRef.current = { url, audio: pre };
+    return () => {
+      // Não descarta imediatamente — o togglePlay pode promovê-lo.
+      // A limpeza real ocorre na próxima troca de canal ou no unmount.
+    };
+  }, [activeChannel?.url, isVideo, isPlaying, isLoading]);
+
+
   const destroyHls = () => {
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     hlsInitUrlRef.current = "";
   };
 
+  const cleanupAudio = () => {
+    try { audioCleanupRef.current?.(); } catch {}
+    audioCleanupRef.current = null;
+    if (audioRef.current) {
+      try { audioRef.current.pause(); } catch {}
+      try { audioRef.current.removeAttribute("src"); audioRef.current.load(); } catch {}
+      audioRef.current = null;
+    }
+  };
+
+  const startAudioChannel = (channel: any) => {
+    if (!channel?.url) return;
+
+    cleanupAudio();
+    if (prefetchRef.current) {
+      try {
+        prefetchRef.current.audio.pause();
+        prefetchRef.current.audio.removeAttribute("src");
+        prefetchRef.current.audio.load();
+      } catch {}
+      prefetchRef.current = null;
+    }
+
+    const streamUrl = String(channel.url);
+    const buildSrc = () => {
+      // Não adicionar cache-busting: muitos servidores Icecast/Shoutcast rejeitam
+      // query strings extras e deixam o widget preso em "carregando...".
+      return streamUrl;
+    };
+
+    const audio = new Audio();
+    audio.preload = "none";
+    audio.volume = volume;
+    audio.muted = isMuted;
+    audio.autoplay = false;
+    audioRef.current = audio;
+    setShowVideo(false);
+    setIsLoading(true);
+
+    let reconnectTimer: number | null = null;
+    let reconnectAttempts = 0;
+    let playStarted = false;
+    let lastTime = 0;
+    let stuckSince = Date.now();
+    let firstResponseTimer: number | null = null;
+
+    const scheduleReconnect = (reason: string) => {
+      if (audioRef.current !== audio) return;
+      if (reconnectTimer !== null) return;
+      reconnectAttempts += 1;
+      const delay = Math.min(600 * reconnectAttempts, 4500);
+      console.warn(`[Player audio] reconectando (${reason}) tentativa ${reconnectAttempts} em ${delay}ms`);
+      setIsLoading(true);
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = null;
+        if (audioRef.current !== audio) return;
+        try {
+          audio.pause();
+          audio.src = buildSrc();
+          audio.load();
+          audio.play().catch(() => scheduleReconnect("play-failed"));
+        } catch {
+          scheduleReconnect("catch");
+        }
+      }, delay);
+    };
+
+    const clearLoading = () => setIsLoading(false);
+    const onPlaying = () => {
+      playStarted = true;
+      reconnectAttempts = 0;
+      if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      setIsLoading(false);
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      try {
+        const seek = audio.seekable;
+        if (seek && seek.length > 0) {
+          const end = seek.end(seek.length - 1);
+          if (isFinite(end) && end - audio.currentTime > 2) audio.currentTime = end;
+        }
+      } catch {}
+    };
+    const onError = () => {
+      // Streams ao vivo podem fechar chunks e disparar error mesmo após iniciar.
+      // Só reconecta imediatamente se ainda não houve nenhum sinal de playback.
+      if (playStarted || audio.currentTime > 0 || audio.readyState >= 2) {
+        setIsLoading(false);
+        setIsPlaying(true);
+        isPlayingRef.current = true;
+        return;
+      }
+      scheduleReconnect("error");
+    };
+    const onEnded = () => scheduleReconnect("ended");
+    const onStalled = () => scheduleReconnect("stalled");
+    const onWaiting = () => setIsLoading(true);
+    const onPause = () => {
+      if (audioRef.current === audio && playStarted) {
+        window.setTimeout(() => {
+          if (audioRef.current === audio && audio.paused && isPlayingRef.current) scheduleReconnect("paused-unexpected");
+        }, 3000);
+      }
+    };
+
+    audio.addEventListener("canplay", clearLoading);
+    audio.addEventListener("loadeddata", clearLoading);
+    audio.addEventListener("timeupdate", onPlaying);
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("error", onError);
+    audio.addEventListener("ended", onEnded);
+    audio.addEventListener("stalled", onStalled);
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("pause", onPause);
+
+    const watchdog = window.setInterval(() => {
+      if (audioRef.current !== audio) { window.clearInterval(watchdog); return; }
+      if (!isPlayingRef.current && !isLoading) return;
+      const t = audio.currentTime;
+      const now = Date.now();
+      if (t !== lastTime) { lastTime = t; stuckSince = now; return; }
+      if (!stuckSince) stuckSince = now;
+      if ((audio.readyState < 2 || audio.paused || t === 0) && now - stuckSince > 7000) {
+        stuckSince = now;
+        scheduleReconnect("watchdog-stuck");
+      }
+    }, 2000);
+
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      if (audioRef.current !== audio) return;
+      if (isPlayingRef.current && (audio.paused || audio.readyState < 2)) scheduleReconnect("visibility");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    audioCleanupRef.current = () => {
+      if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+      if (firstResponseTimer !== null) { clearTimeout(firstResponseTimer); firstResponseTimer = null; }
+      window.clearInterval(watchdog);
+      document.removeEventListener("visibilitychange", onVisibility);
+      audio.removeEventListener("canplay", clearLoading);
+      audio.removeEventListener("loadeddata", clearLoading);
+      audio.removeEventListener("timeupdate", onPlaying);
+      audio.removeEventListener("playing", onPlaying);
+      audio.removeEventListener("error", onError);
+      audio.removeEventListener("ended", onEnded);
+      audio.removeEventListener("stalled", onStalled);
+      audio.removeEventListener("waiting", onWaiting);
+      audio.removeEventListener("pause", onPause);
+    };
+
+    audio.src = buildSrc();
+    audio.load();
+    firstResponseTimer = window.setTimeout(() => {
+      if (audioRef.current !== audio) return;
+      if (audio.readyState > 0 || audio.networkState === HTMLMediaElement.NETWORK_LOADING) {
+        setIsLoading(false);
+        setIsPlaying(true);
+        isPlayingRef.current = true;
+      }
+    }, 3500);
+    audio.play().then(() => {
+      setIsPlaying(true);
+      setIsLoading(false);
+      isPlayingRef.current = true;
+    }).catch((err) => {
+      console.warn("Audio play failed:", err);
+      if (audioRef.current === audio) scheduleReconnect("initial-play-failed");
+    });
+  };
+
   const stopAll = () => {
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    cleanupAudio();
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
     setIsPlaying(false);
+    isPlayingRef.current = false;
+    setIsLoading(false);
   };
 
   const togglePlay = () => {
     if (!activeChannel) return;
-    if (isPlaying) { stopAll(); return; }
+    if (isPlaying || isLoading) { stopAll(); return; }
     // Stop any previous playback without calling stopAll (which resets isPlaying)
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); }
+    cleanupAudio();
     if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
     setShowVideo(false);
 
@@ -1546,33 +2285,44 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
       setShowVideo(true);
       setIsPlaying(true);
     } else {
-      const audio = audioRef.current;
-      if (!audio) return;
-      // Set source and play in user gesture context
-      audio.src = activeChannel.url;
-      audio.volume = volume;
-      audio.muted = isMuted;
-      audio.play().then(() => setIsPlaying(true)).catch((err) => {
-        console.warn("Audio play failed:", err);
-      });
+      startAudioChannel(activeChannel);
     }
   };
 
+  // ── Global bridge: allow other components (nav header) to toggle/observe playback ──
+  const togglePlayRef = useRef(togglePlay);
+  useEffect(() => { togglePlayRef.current = togglePlay; });
+  useEffect(() => {
+    const handler = () => togglePlayRef.current?.();
+    window.addEventListener("player:toggle", handler);
+    return () => window.removeEventListener("player:toggle", handler);
+  }, []);
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("player:state", {
+      detail: {
+        isPlaying,
+        isLoading,
+        hasChannel: !!activeChannel,
+        channelName: activeChannel?.nome || "",
+      },
+    }));
+  }, [isPlaying, isLoading, activeChannel]);
+
+
   const switchTo = (idx: number) => {
     destroyHls();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); audioRef.current.load(); }
+    cleanupAudio();
     setActiveIdx(idx);
     const ch = channels[idx];
     const chIsVideo = (ch?.type || "").includes("video");
-    if (isPlaying) {
+    if (isPlaying || isLoading) {
       if (chIsVideo) {
         // Keep showVideo true, just let useEffect re-init with new URL
         setShowVideo(true);
       } else {
         if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
         setShowVideo(false);
-        const audio = audioRef.current;
-        if (audio) { audio.src = ch.url; audio.play().catch(() => {}); }
+        startAudioChannel(ch);
       }
     } else {
       if (videoRef.current) { videoRef.current.pause(); videoRef.current.removeAttribute("src"); videoRef.current.load(); }
@@ -1599,127 +2349,316 @@ function DashboardPlayerWidget({ onVideoChange }: { onVideoChange?: (active: boo
   };
 
   const channelLogo = activeChannel?.background_url || activeChannel?.logo_url || activeChannel?.cover_url;
-  const displayArt = currentMusic?.capa || channelLogo;
 
-  // Crossfade state for art transitions
+  // Fetch artist image from Deezer for the background
+  const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
+  const artistBgCacheRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const artist = (currentMusic?.artista || "").trim();
+    if (!artist) { setArtistBgUrl(null); return; }
+    const cacheKey = artist.toLowerCase();
+    if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-artist-image", { body: { artist } });
+        if (cancelled) return;
+        if (error || !data?.ok || !data?.url) { setArtistBgUrl(null); return; }
+        artistBgCacheRef.current[cacheKey] = data.url;
+        setArtistBgUrl(data.url);
+      } catch { if (!cancelled) setArtistBgUrl(null); }
+    })();
+    return () => { cancelled = true; };
+  }, [currentMusic?.artista]);
+
+  const displayArt = artistBgUrl || currentMusic?.capa || channelLogo;
+
+  // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
   const [fadingArt, setFadingArt] = useState<string | null>(null);
   const [artOpacity, setArtOpacity] = useState(1);
 
   useEffect(() => {
     if (displayArt === visibleArt) return;
-    // Start crossfade: show old art fading out while new fades in
     setFadingArt(visibleArt || null);
     setVisibleArt(displayArt);
     setArtOpacity(0);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => setArtOpacity(1));
-    });
+    requestAnimationFrame(() => { requestAnimationFrame(() => setArtOpacity(1)); });
     const timer = setTimeout(() => setFadingArt(null), 600);
     return () => clearTimeout(timer);
   }, [displayArt]);
 
+  const BREAK_LABELS = ["break", "ebs curtas"];
+  const _tit = (currentMusic?.titulo || "").trim().toLowerCase();
+  const _art = (currentMusic?.artista || "").trim().toLowerCase();
+  const isBreak = BREAK_LABELS.includes(_tit) || BREAK_LABELS.includes(_art);
+
+  // ===== Web Audio analyser for reactive break wave =====
+  const BAR_COUNT = 56;
+  const barRefs = useRef<Array<HTMLSpanElement | null>>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  // Cache one MediaElementAudioSourceNode PER media element (createMediaElementSource
+  // may only be called once per element per context).
+  const sourceMapRef = useRef<WeakMap<HTMLMediaElement, MediaElementAudioSourceNode>>(new WeakMap());
+  const activeSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const analyserFailedRef = useRef(false);
+
+  // Wave spectrum analyser removed: calling createMediaElementSource on the
+  // radio <audio> element (which lacks CORS) taints the media graph and the
+  // browser silently mutes playback — this caused the widget to appear to
+  // "switch to break and stop the audio" after ~1s of play. Bars now idle.
+  useEffect(() => {
+    if (rafRef.current) { cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+    barRefs.current.forEach((el) => { if (el) el.style.height = "8px"; });
+  }, [isBreak, isPlaying, isVideo, showVideo]);
+
+
+
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      try { activeSourceRef.current?.disconnect(); } catch {}
+      try { analyserRef.current?.disconnect(); } catch {}
+      try { audioCtxRef.current?.close(); } catch {}
+    };
+  }, []);
+
+  // Respect user preference for reduced motion
+  const [reducedMotion, setReducedMotion] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(mq.matches);
+    update();
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  const fadeTransition = reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease";
+  const fadeTransformTransition = reducedMotion
+    ? "opacity 0.01s linear"
+    : "opacity 0.6s ease, transform 0.6s ease";
+  const imgFadeTransition = reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out";
+  const barTransition = reducedMotion ? "height 0.01s linear" : "height 90ms linear";
+
+
+  const [hoverVideo, setHoverVideo] = useState(false);
+  const videoActive = showVideo && isVideo;
+  const hideChromeForVideo = videoActive && !hoverVideo;
+
   return (
-    <div className="flex flex-col h-full relative">
-      {/* Blurred background art with crossfade */}
-      <div className="absolute inset-0 -m-4 overflow-hidden pointer-events-none rounded-2xl">
+    <div
+      className="flex flex-col h-full w-full relative rounded-3xl overflow-hidden"
+      style={{ background: "#000", minHeight: 0, maxHeight: "100%", contain: "layout paint size" }}
+      onMouseEnter={() => setHoverVideo(true)}
+      onMouseLeave={() => setHoverVideo(false)}
+    >
+      {/* Break background color layer — crossfades with artist image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: "#002233",
+          opacity: isBreak && !videoActive ? 1 : 0,
+          transition: fadeTransition,
+        }}
+      />
+
+      {/* Artist image layer — hidden when video is active */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          opacity: isBreak || videoActive ? 0 : 1,
+          transition: fadeTransition,
+        }}
+      >
         {fadingArt && (
-          <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: 0 }} />
+          <img
+            src={fadingArt}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ transition: imgFadeTransition, opacity: 0 }}
+          />
         )}
-        {visibleArt && (
-          <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover" style={{ filter: "blur(20px) brightness(0.3) saturate(1.4)", transform: "scale(1.3)", transition: "opacity 0.6s ease-out", opacity: artOpacity }} />
+        {visibleArt ? (
+          <img
+            src={visibleArt}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-center"
+            style={{ transition: imgFadeTransition, opacity: artOpacity }}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            {isPlaying && !isVideo && audioRef.current ? (
+              <AudioSpectrum audioElement={audioRef.current} style="bars" barColor="#c8ff00" />
+            ) : (
+              <Tv size={40} className="text-white/10" />
+            )}
+          </div>
         )}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(10,10,10,0.6) 0%, rgba(10,10,10,0.9) 100%)" }} />
+        {/* Vignette to guarantee text contrast */}
+        <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.85) 100%)" }} />
       </div>
 
-      {/* Video area - grows above controls */}
-      {showVideo && isVideo && (
-        <div className="relative -mx-4 -mt-4 mb-2 overflow-hidden flex-shrink-0 rounded-t-2xl" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.6)", maxHeight: "280px" }}>
-          <video ref={videoRef} autoPlay muted={isMuted} playsInline className="w-full object-contain" style={{ aspectRatio: "16/9", maxHeight: "280px", background: "#000" }} />
-          {videoLoading && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}>
-              <Loader2 size={20} className="text-white/70 animate-spin" />
-              <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Video layer — fills the widget (which becomes 16:9 when active) */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          opacity: videoActive ? 1 : 0,
+          pointerEvents: videoActive ? "auto" : "none",
+          transition: "opacity 0.35s ease",
+          background: "#000",
+          zIndex: 5,
+        }}
+      >
+        <video
+          ref={videoRef}
+          muted={isMuted}
+          playsInline
+          className="absolute inset-0 w-full h-full"
+          style={{ objectFit: "cover" }}
+        />
+        {videoLoading && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2" style={{ background: "rgba(0,0,0,0.8)" }}>
+            <Loader2 size={20} className="text-white/70 animate-spin" />
+            <span className="text-white/40 text-[9px] font-medium tracking-wider uppercase">Carregando...</span>
+          </div>
+        )}
+        {/* Hover vignette so overlaid chrome stays readable */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            opacity: hoverVideo ? 1 : 0,
+            transition: "opacity 0.35s ease",
+            background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 45%, rgba(0,0,0,0.75) 100%)",
+          }}
+        />
+      </div>
 
-      {/* Spacer to push controls to bottom & center vertically (only when no video) */}
-      {!(showVideo && isVideo) && <div className="flex-1 min-h-0" />}
-
-      {/* Controls row - vertically centered & bottom-aligned */}
       {channels.length === 0 ? (
-        <p className="text-white/30 text-xs relative z-10 my-auto">Nenhum canal cadastrado</p>
+        <p className="text-white/40 text-xs relative z-10 m-auto">Nenhum canal cadastrado</p>
       ) : (
-        <div className="relative z-10 flex items-center gap-2.5 flex-shrink-0 pb-0.5">
-          {channels.length > 1 && (
-            <button onClick={goPrev} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
-              <ChevronLeft size={14} className="text-white/70" />
-            </button>
+        <div
+          className={`relative z-10 flex h-full w-full overflow-hidden ${compactMode ? "flex-row items-center gap-2 p-2 sm:p-2.5" : "flex-col justify-between p-2.5 sm:p-3.5"}`}
+          style={{
+            minHeight: 0,
+            maxHeight: "100%",
+            transition: "min-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.3s ease, opacity 0.3s ease",
+            opacity: hideChromeForVideo ? 0 : 1,
+            pointerEvents: hideChromeForVideo ? "none" : "auto",
+          }}
+        >
+
+
+          {/* Status label — only in standard mode */}
+          {!compactMode && (
+            <div className="flex flex-col min-w-0">
+              <span className="text-[13px] sm:text-[15px] md:text-[17px] font-medium lowercase tracking-tight truncate" style={{ color: "#c8ff00" }}>
+                {isLoading ? "carregando..." : isPlaying ? "tocando" : "pausado"}
+              </span>
+              {isPlaying && !isLoading && (
+                <span className="text-[9px] font-semibold uppercase tracking-[0.15em] text-white/70 leading-none mt-0.5">
+                  {isVideo ? "vídeo" : "áudio"}
+                </span>
+              )}
+            </div>
           )}
 
-          {!showVideo && (
-            <div className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center overflow-hidden relative" style={{ background: "rgba(255,255,255,0.05)", boxShadow: "0 4px 15px rgba(0,0,0,0.5)" }}>
-              {fadingArt && (
-                <img src={fadingArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: 0 }} />
-              )}
-              {visibleArt ? (
-                <img src={visibleArt} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" style={{ transition: "opacity 0.5s ease-out", opacity: artOpacity }} />
+
+          {/* Song info — inline in compact, pinned bottom in standard */}
+          <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-auto pr-16"}>
+            <div className="min-w-0 flex-1">
+              {currentMusic ? (
+                <>
+                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
+                    <TypewriterText text={currentMusic.titulo || ""} />
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
+                    <TypewriterText text={currentMusic.artista || ""} />
+                  </p>
+                </>
               ) : (
-                <Tv size={22} className="text-white/20" />
-              )}
-              {isPlaying && !isVideo && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex items-end gap-[2px] h-4">
-                    {[0, 1, 2, 3].map(i => (
-                      <div key={i} className="w-[3px] rounded-full" style={{ background: "linear-gradient(0deg, var(--layout-button-bg), var(--layout-accent-color))", animation: `eq-bar 0.${4 + i}s ease-in-out infinite alternate`, height: `${6 + Math.random() * 10}px` }} />
-                    ))}
+                <>
+                  <p className="text-[12px] font-extrabold leading-tight truncate text-white">
+                    {activeChannel?.name}
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background: "color-mix(in srgb, #c8ff00 26%, transparent)", color: "#c8ff00" }}>
+                      CH {activeChannel?.numero_canal}
+                    </span>
+                    {isVideo && <span className="text-[8px] font-bold uppercase tracking-wider text-white/60">Vídeo</span>}
                   </div>
-                </div>
+                </>
               )}
-            </div>
-          )}
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              {isPlaying && <Circle size={5} fill="var(--layout-accent-color)" color="var(--layout-accent-color)" className="animate-pulse flex-shrink-0" />}
-              <p className="text-white text-[11px] font-bold truncate">{activeChannel?.name}</p>
-            </div>
-            {currentMusic ? (
-              <div className="mb-1">
-                <p className="text-white/70 text-[9px] truncate"><TypewriterText text={currentMusic.titulo || ""} /></p>
-                <p className="text-white/40 text-[8px] truncate"><TypewriterText text={currentMusic.artista || ""} /></p>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 mb-1">
-                <span className="text-[7px] font-bold px-1.5 py-0.5 rounded" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 26%, transparent)", color: "var(--layout-accent-color)" }}>{activeChannel?.numero_canal}</span>
-                <span className="text-white/30 text-[8px]">{isVideo ? "Vídeo" : "Áudio"}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <button onClick={togglePlay} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all hover:scale-110" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))", backdropFilter: "blur(20px) saturate(1.6)", WebkitBackdropFilter: "blur(20px) saturate(1.6)", border: "1px solid rgba(255,255,255,0.15)", boxShadow: "0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -1px 0 rgba(0,0,0,0.1)" }}>
-                {isPlaying ? <Pause size={13} className="text-white" /> : <Play size={13} className="text-white ml-0.5" />}
-              </button>
-              <button onClick={toggleMute} className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }}>
-                {isMuted || volume === 0 ? <VolumeX size={12} className="text-white/50" /> : <Volume2 size={12} className="text-white/50" />}
-              </button>
-              <input type="range" min={0} max={1} step={0.01} value={isMuted ? 0 : volume} onChange={e => handleVolume(Number(e.target.value))} onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onDragStart={e => { e.stopPropagation(); e.preventDefault(); }} draggable={false} className="w-14 h-1 appearance-none rounded-full cursor-pointer flex-shrink-0" style={{ background: `linear-gradient(to right, var(--layout-accent-color) ${(isMuted ? 0 : volume) * 100}%, rgba(255,255,255,0.15) ${(isMuted ? 0 : volume) * 100}%)`, accentColor: "var(--layout-accent-color)" }} />
-              {isVideo && <span className="text-[7px] font-bold text-white/20 ml-auto"><Tv size={10} className="inline mr-0.5" />VIDEO</span>}
             </div>
           </div>
 
-          {channels.length > 1 && (
-            <button onClick={goNext} className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all hover:scale-110" style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px) saturate(1.4)", WebkitBackdropFilter: "blur(16px) saturate(1.4)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 2px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" }} onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.2)"; }} onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}>
-              <ChevronRight size={14} className="text-white/70" />
-            </button>
+          {/* Channel navigation arrows — bottom-right corner in standard mode */}
+          {!compactMode && channels.length > 1 && (
+            <div className="absolute bottom-2.5 right-2.5 sm:bottom-3.5 sm:right-3.5 flex gap-1 z-20">
+              <button onClick={goPrev} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Canal anterior">
+                <ChevronLeft size={12} className="text-white/80" />
+              </button>
+              <button onClick={goNext} className="w-6 h-6 rounded-full flex items-center justify-center transition-all hover:scale-110" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }} title="Próximo canal">
+                <ChevronRight size={12} className="text-white/80" />
+              </button>
+            </div>
           )}
+
+          {/* Controls stack — vertical in standard, horizontal in compact; positioned top-right in standard */}
+          <div
+            className={`flex-shrink-0 flex ${compactMode ? "flex-row items-center gap-1.5" : "flex-col gap-1 sm:gap-1.5 absolute top-2.5 right-2.5 sm:top-3.5 sm:right-3.5"}`}
+          >
+            <button
+              onClick={togglePlay}
+              className={`${compactMode ? "w-7 h-7" : "w-8 h-8 sm:w-9 sm:h-9"} rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg`}
+              style={{ background: "#001e2d" }}
+              title={isLoading ? "Carregando..." : isPlaying ? "Pausar" : "Reproduzir"}
+            >
+              {isLoading
+                ? <Loader2 size={compactMode ? 12 : 14} className="animate-spin" style={{ color: "#c8ff00" }} />
+                : isPlaying
+                  ? <Pause size={compactMode ? 11 : 12} style={{ color: "#c8ff00" }} fill="#c8ff00" />
+                  : <Play size={compactMode ? 11 : 12} style={{ color: "#c8ff00", marginLeft: 1 }} fill="#c8ff00" />}
+            </button>
+            <VolumeSliderControl
+              compactMode={compactMode}
+              isMuted={isMuted}
+              volume={volume}
+              toggleMute={toggleMute}
+              handleVolume={handleVolume}
+            />
+            {isVideo && videoActive && !compactMode && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const el = videoRef.current as any;
+                  if (!el) return;
+                  const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+                  try { req?.call(el); } catch { /* noop */ }
+                }}
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                style={{ background: "#001e2d" }}
+                title="Tela cheia"
+              >
+                <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+              </button>
+            )}
+
+          </div>
         </div>
       )}
 
       <style>{`
         @keyframes eq-bar { 0% { height: 3px; } 100% { height: 14px; } }
-        @keyframes widget-video-grow { 0% { max-height: 0; opacity: 0; } 100% { max-height: 220px; opacity: 1; } }
+        @keyframes wave-bar { 0% { height: 6px; } 25% { height: 42px; } 50% { height: 14px; } 75% { height: 56px; } 100% { height: 22px; } }
+        .volume-slider-lime::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
+        .volume-slider-lime::-moz-range-thumb { width: 11px; height: 11px; border-radius: 9999px; background: #001e2d; border: 2px solid #c8ff00; cursor: pointer; }
       `}</style>
     </div>
   );

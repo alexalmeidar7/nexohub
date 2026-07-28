@@ -61,7 +61,8 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
         } else {
           for (const n of items) {
             const esc = (s: string) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-            win.document.write(`<div class="news-item"><p class="news-title">${esc(n.title)}</p><span class="news-portal">${esc(n.portal)}</span>${n.body ? `<p class="news-body">${esc(n.body)}</p>` : ""}</div>`);
+            const content = n.journalisticText || n.body || "";
+            win.document.write(`<div class="news-item"><p class="news-title">${esc(n.title)}</p><span class="news-portal">${esc(n.portal)}</span>${content ? `<p class="news-body">${esc(content)}</p>` : ""}</div>`);
           }
         }
         win.document.write(`</div>`);
@@ -174,9 +175,9 @@ export default function JornalExportView({ config, blocks, onClose }: Props) {
                               {n.title}
                             </p>
                             <span className="text-[8px] px-1 rounded mt-1 inline-block" style={{ backgroundColor: "rgba(46,193,247,0.1)", color: "#2ec1f7" }}>{n.portal}</span>
-                            {n.body && (
+                            {(n.journalisticText || n.body) && (
                               <p className="text-[11px] mt-2 leading-relaxed whitespace-pre-line" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 70%, transparent)" }}>
-                                {n.body}
+                                {n.journalisticText || n.body}
                               </p>
                             )}
                           </div>

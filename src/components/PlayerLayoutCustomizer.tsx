@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { GradientPicker } from "@/components/ui/GradientPicker";
 import { Slider } from "@/components/ui/slider";
 import { Palette, Save, RotateCcw, Loader2, Monitor, Play, Home, Tv, Film, LogIn, Image, Paintbrush, Music } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -506,76 +508,22 @@ function BgConfigEditor({ config, onChange, solidColor }: { config: ScreenBgConf
 
       {config.bgType === "gradient" && (
         <div className="space-y-3">
-          {/* Gradient type */}
-          <div className="flex gap-1.5">
-            {(["linear", "radial"] as GradientType[]).map(gt => (
-              <button key={gt} onClick={() => onChange({ ...config, gradientType: gt })}
-                className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
-                style={{
-                  backgroundColor: config.gradientType === gt ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                  color: config.gradientType === gt ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                }}>
-                {gt === "linear" ? "Linear" : "Circular (Radial)"}
-              </button>
-            ))}
-          </div>
-
-          {/* Colors */}
-          <div className="grid grid-cols-2 gap-2">
-            <PColorInput label="Cor 1" value={config.gradientColor1} onChange={(v) => onChange({ ...config, gradientColor1: v })} />
-            <PColorInput label="Cor 2" value={config.gradientColor2} onChange={(v) => onChange({ ...config, gradientColor2: v })} />
-          </div>
-
-          {/* Midpoint slider */}
-          <div className="space-y-1.5">
-            <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Aproximação: {config.gradientMidpoint ?? 50}%
-            </span>
-            <Slider
-              value={[config.gradientMidpoint ?? 50]}
-              onValueChange={([v]) => onChange({ ...config, gradientMidpoint: v })}
-              min={10}
-              max={100}
-              step={1}
-              className="w-full"
-            />
-          </div>
-
-          {/* Position / Angle */}
-          {config.gradientType === "linear" ? (
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ângulo: {config.gradientAngle}°</span>
-              <div className="flex flex-wrap gap-1">
-                {angles.map(a => (
-                  <button key={a} onClick={() => onChange({ ...config, gradientAngle: a })}
-                    className="w-8 h-8 rounded-lg text-[9px] font-bold transition-all"
-                    style={{
-                      backgroundColor: config.gradientAngle === a ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                      color: config.gradientAngle === a ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                    }}>
-                    {a}°
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do centro</span>
-              <div className="grid grid-cols-3 gap-1 w-fit">
-                {positions.map(p => (
-                  <button key={p} onClick={() => onChange({ ...config, gradientPosition: p })}
-                    className="w-8 h-8 rounded-lg text-[8px] font-bold transition-all flex items-center justify-center"
-                    style={{
-                      backgroundColor: config.gradientPosition === p ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                      color: config.gradientPosition === p ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                    }}>
-                    {positionLabels[p].split(" ")[0]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
+          <GradientPicker
+            colorA={config.gradientColor1}
+            colorB={config.gradientColor2}
+            angle={config.gradientAngle}
+            midpoint={config.gradientMidpoint ?? 50}
+            gradientType={config.gradientType}
+            onChangeColorA={v => onChange({ ...config, gradientColor1: v })}
+            onChangeColorB={v => onChange({ ...config, gradientColor2: v })}
+            onChangeAngle={v => onChange({ ...config, gradientAngle: v })}
+            onChangeMidpoint={v => onChange({ ...config, gradientMidpoint: v })}
+            onChangeType={v => onChange({ ...config, gradientType: v })}
+            showType
+            showMidpoint
+            position={config.gradientPosition}
+            onChangePosition={v => onChange({ ...config, gradientPosition: v as GradientPosition })}
+          />
           {/* Preview strip */}
           <div className="h-6 rounded-lg" style={buildBgStyle(solidColor, config)} />
         </div>
@@ -695,7 +643,7 @@ export default function PlayerLayoutCustomizer() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="nexo-scope space-y-5">
       {/* Screen tabs */}
       <div className="flex flex-wrap gap-1.5">
         {screenTabs.map(tab => (
@@ -768,73 +716,22 @@ export default function PlayerLayoutCustomizer() {
               {/* Gradient config when Degradê is selected */}
               {colors.liveAudioBgMode === "gradient" && (
                 <div className="space-y-3 mt-2">
-                  {/* Gradient type */}
-                  <div className="flex gap-1.5">
-                    {(["linear", "radial"] as const).map(gt => (
-                      <button key={gt} onClick={() => updateColor("liveAudioGradientType", gt)}
-                        className="flex-1 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all"
-                        style={{
-                          backgroundColor: colors.liveAudioGradientType === gt ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                          color: colors.liveAudioGradientType === gt ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                        }}>
-                        {gt === "linear" ? "Linear" : "Circular (Radial)"}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Cor 1 / Cor 2 */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <PColorInput label="Cor 1" value={String(colors.liveAudioGradientColor1)} onChange={(v) => updateColor("liveAudioGradientColor1", v)} />
-                    <PColorInput label="Cor 2" value={String(colors.liveAudioGradientColor2)} onChange={(v) => updateColor("liveAudioGradientColor2", v)} />
-                  </div>
-
-                  {/* Midpoint */}
-                  <div className="space-y-1.5">
-                    <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                      Aproximação: {colors.liveAudioGradientMidpoint ?? 62}%
-                    </span>
-                    <Slider
-                      value={[Number(colors.liveAudioGradientMidpoint) || 62]}
-                      onValueChange={([v]) => { setColors(prev => ({ ...prev, liveAudioGradientMidpoint: v })); setHasChanges(true); }}
-                      min={10} max={100} step={1} className="w-full"
-                    />
-                  </div>
-
-                  {/* Position / Angle */}
-                  {colors.liveAudioGradientType === "linear" ? (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Ângulo: {colors.liveAudioGradientAngle}°</span>
-                      <div className="flex flex-wrap gap-1">
-                        {[0, 45, 90, 135, 180, 225, 270, 315].map(a => (
-                          <button key={a} onClick={() => { setColors(prev => ({ ...prev, liveAudioGradientAngle: a })); setHasChanges(true); }}
-                            className="w-8 h-8 rounded-lg text-[9px] font-bold transition-all"
-                            style={{
-                              backgroundColor: Number(colors.liveAudioGradientAngle) === a ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                              color: Number(colors.liveAudioGradientAngle) === a ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                            }}>
-                            {a}°
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1.5">
-                      <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Posição do centro</span>
-                      <div className="grid grid-cols-3 gap-1 w-fit">
-                        {(["top-left", "top", "top-right", "left", "center", "right", "bottom-left", "bottom", "bottom-right"] as GradientPosition[]).map(p => (
-                          <button key={p} onClick={() => updateColor("liveAudioGradientPosition", p)}
-                            className="w-8 h-8 rounded-lg text-[8px] font-bold transition-all flex items-center justify-center"
-                            style={{
-                              backgroundColor: colors.liveAudioGradientPosition === p ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)",
-                              color: colors.liveAudioGradientPosition === p ? "var(--layout-header-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                            }}>
-                            {positionLabels[p].split(" ")[0]}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
+                  <GradientPicker
+                    colorA={String(colors.liveAudioGradientColor1)}
+                    colorB={String(colors.liveAudioGradientColor2)}
+                    angle={Number(colors.liveAudioGradientAngle) || 135}
+                    midpoint={Number(colors.liveAudioGradientMidpoint) || 62}
+                    gradientType={(colors.liveAudioGradientType as "linear" | "radial") || "radial"}
+                    onChangeColorA={v => updateColor("liveAudioGradientColor1", v)}
+                    onChangeColorB={v => updateColor("liveAudioGradientColor2", v)}
+                    onChangeAngle={v => { setColors(prev => ({ ...prev, liveAudioGradientAngle: v })); setHasChanges(true); }}
+                    onChangeMidpoint={v => { setColors(prev => ({ ...prev, liveAudioGradientMidpoint: v })); setHasChanges(true); }}
+                    onChangeType={v => updateColor("liveAudioGradientType", v)}
+                    showType
+                    showMidpoint
+                    position={String(colors.liveAudioGradientPosition)}
+                    onChangePosition={v => updateColor("liveAudioGradientPosition", v)}
+                  />
                   {/* Preview strip */}
                   <div className="h-6 rounded-lg" style={(() => {
                     const mid = Number(colors.liveAudioGradientMidpoint) || 62;
@@ -945,14 +842,13 @@ export default function PlayerLayoutCustomizer() {
         >
           <RotateCcw size={13} /> Restaurar Padrão
         </button>
-        <button
+        <Button variant="save"
           onClick={handleSave}
           disabled={saving || !hasChanges}
-          className="btn-skyglass-accent px-8 py-2.5 text-sm disabled:opacity-40"
         >
           {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />}
           {saving ? "Salvando..." : "Salvar Alterações"}
-        </button>
+        </Button>
       </div>
     </div>
   );

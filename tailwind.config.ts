@@ -12,7 +12,26 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Poppins", "sans-serif"],
+        sans: ["Montserrat", "system-ui", "sans-serif"],
+        heading: ["Sora", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        "tv-card-sub": ["14px", { lineHeight: "20px", letterSpacing: "0.02em" }],
+        "tv-card-title": ["18px", { lineHeight: "24px", letterSpacing: "0.01em" }],
+        "tv-body": ["24px", { lineHeight: "36px", letterSpacing: "0.01em" }],
+        "tv-body-lg": ["28px", { lineHeight: "40px", letterSpacing: "0.01em" }],
+        "tv-section": ["32px", { lineHeight: "44px", letterSpacing: "0.005em" }],
+        "tv-header": ["44px", { lineHeight: "56px", letterSpacing: "-0.01em" }],
+        "tv-display": ["64px", { lineHeight: "76px", letterSpacing: "-0.02em" }],
+      },
+      fontWeight: {
+        "tv-regular": "400",
+        "tv-medium": "500",
+        "tv-bold": "700",
+      },
+      spacing: {
+        "tv-safe": "48px",
+        "tv-safe-lg": "64px",
       },
       colors: {
         border: "hsl(var(--border))",

@@ -1,0 +1,1 @@
+ALTER TABLE public.xml_upload_history ADD COLUMN IF NOT EXISTS artista TEXT, ADD COLUMN IF NOT EXISTS musica TEXT;

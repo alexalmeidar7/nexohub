@@ -30,6 +30,7 @@ function readMusicFromDashboard(dashboardItems: Record<string, any> | null) {
     musicStartTime: typeof dashboardItems.music_start_time === "number"
       ? dashboardItems.music_start_time
       : null,
+    deezerArtistImg: (dashboardItems.music_deezer_artist_img as string) || "",
   };
 }
 
@@ -128,24 +129,113 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    const slugLower = slug.toLowerCase();
-    const { data: matchedProfile, error: profileError } = await supabase
-      .from("profiles")
-      .select("user_id, email")
-      .ilike("email", `${slugLower}@%`)
-      .limit(1)
-      .maybeSingle();
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    
+    let userId: string | null = null;
+    let matchedProfile: any = null;
 
-    if (profileError) throw profileError;
+    if (isUUID(slug)) {
+      userId = slug;
+      // We still need the email for prefix matching logic if we want to be fully backward compatible, 
+      // but for bootstrap we mostly need the userId.
+    } else {
+      const slugLower = slug.toLowerCase().trim();
 
-    if (!matchedProfile?.user_id) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
+      // Regra de resolução ESTRITA e DETERMINÍSTICA — nunca mistura donos.
+      // A ordem de precedência garante que o mesmo slug sempre resolve o mesmo user_id.
+      //
+      // 1) Match exato do local-part do email em profiles: "slug@..."
+      //    Ex.: slug "positivafm" -> "positivafm@positivafm.com.br"
+      let { data, error: profileError } = await supabase
+        .from("profiles")
+        .select("user_id, email")
+        .ilike("email", `${slugLower}@%`)
+        .order("email", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      if (profileError) throw profileError;
+
+      // 2) Match exato do local-part em sub_users: resolve para o pai (herança)
+      if (!data?.user_id) {
+        const { data: sub } = await supabase
+          .from("sub_users")
+          .select("auth_user_id, parent_user_id, ativo")
+          .ilike("email", `${slugLower}@%`)
+          .order("email", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (sub?.auth_user_id) {
+          userId = (sub.ativo && sub.parent_user_id) ? sub.parent_user_id : sub.auth_user_id;
+        }
+      }
+
+      // 3) Prefix largo em profiles: "slug*@..." — ordenado por email para determinismo
+      //    Ex.: slug "interativafm" -> "interativafmgynaovivo@gmail.com"
+      //    IMPORTANTE: NÃO usar substring livre (%slug%) — isso já causou
+      //    o slug "interativafm" resolver para "opec@interativafm.net" (dono errado).
+      if (!userId && !data?.user_id) {
+        const { data: d3 } = await supabase
+          .from("profiles")
+          .select("user_id, email")
+          .ilike("email", `${slugLower}%@%`)
+          .order("email", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (d3?.user_id) data = d3 as any;
+      }
+
+      // 4) Prefix largo em sub_users
+      if (!userId && !data?.user_id) {
+        const { data: sub2 } = await supabase
+          .from("sub_users")
+          .select("auth_user_id, parent_user_id, ativo, email")
+          .ilike("email", `${slugLower}%@%`)
+          .order("email", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        if (sub2?.auth_user_id) {
+          userId = (sub2.ativo && sub2.parent_user_id) ? sub2.parent_user_id : sub2.auth_user_id;
+        }
+      }
+
+      if (!userId && data?.user_id) {
+        userId = data.user_id;
+        matchedProfile = data;
+      }
+
+      console.log(`[public-player-data] slug="${slugLower}" -> userId=${userId ?? "null"}`);
+    }
+
+
+    if (!userId) {
+      console.log(`[public-player-data] User not found for slug="${slug}" section="${section}"`);
+      return new Response(JSON.stringify({ error: "User not found", slug }), {
         status: 404,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = matchedProfile.user_id;
+
+    // ── FAST PATH: active mid-rolls for public Top 10 playback ──────
+    if (section === "active_midrolls") {
+      const now = new Date();
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const { data, error } = await supabase
+        .from("comercial_preroll")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("active", true)
+        .lte("horario_inicio", currentTime)
+        .gte("horario_fim", currentTime)
+        .eq("is_midroll", true)
+        .order("priority", { ascending: true });
+
+      if (error) throw error;
+
+      return new Response(JSON.stringify({ userId, prerolls: data || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // ── FAST PATH: now_playing ──────────────────────────────────────
     if (section === "now_playing") {
@@ -170,6 +260,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({
+          userId,
           musica: musicData?.titulo || "",
           artista: musicData?.artista || "",
           capa: musicData?.capa || "",
@@ -202,6 +293,7 @@ Deno.serve(async (req) => {
 
     // Try dashboard first, and enrich missing cover from XML when needed
     let musicResult = readMusicFromDashboard(dashboardItems);
+    const deezerArtistImgFromDash = (dashboardItems?.music_deezer_artist_img as string) || "";
     if ((!musicResult?.musicData || !musicResult.musicData.capa) && settingsRes.data?.music_xml_url) {
       const xmlMusic = await fetchMusicFromXml(settingsRes.data.music_xml_url);
       const mergedMusic = mergeMusicPayload(musicResult?.musicData ?? null, xmlMusic);
@@ -209,9 +301,33 @@ Deno.serve(async (req) => {
         musicResult = {
           musicData: mergedMusic,
           musicStartTime: typeof dashboardItems?.music_start_time === "number" ? dashboardItems.music_start_time : null,
+          deezerArtistImg: deezerArtistImgFromDash,
         };
       }
     }
+
+    // Encontra locutor do programa NO AR agora
+    const dayNames = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const diaAtual = dayNames[now.getDay()];
+    const todayStr = now.toISOString().slice(0, 10);
+    const currentProgram = (programasRes.data || []).find((p: any) => {
+      const ini = String(p.horario_inicio || "").slice(0, 5);
+      const fim = String(p.horario_fim || "").slice(0, 5);
+      if (!ini || !fim) return false;
+      const inRange = ini <= fim ? (currentTime >= ini && currentTime <= fim) : (currentTime >= ini || currentTime <= fim);
+      if (!inRange) return false;
+      if (p.variavel) return p.data_variavel === todayStr;
+      const dias = Array.isArray(p.dias_semana) ? p.dias_semana : [];
+      return dias.includes(diaAtual);
+    });
+    const presenterIds: string[] = currentProgram
+      ? (Array.isArray(currentProgram.apresentadores_ids) && currentProgram.apresentadores_ids.length
+          ? currentProgram.apresentadores_ids
+          : (currentProgram.apresentador_id ? [currentProgram.apresentador_id] : []))
+      : [];
+    const currentPresenter = presenterIds.length
+      ? (apresentadoresRes.data || []).find((a: any) => a.id === presenterIds[0])
+      : null;
 
     return new Response(
       JSON.stringify({
@@ -225,6 +341,9 @@ Deno.serve(async (req) => {
         shopActive: isShopActive,
         musicData: musicResult?.musicData || null,
         musicStartTime: musicResult?.musicStartTime || null,
+        musicDeezerArtistImg: musicResult?.deezerArtistImg || deezerArtistImgFromDash || null,
+        currentProgram: currentProgram || null,
+        currentPresenter: currentPresenter ? { id: currentPresenter.id, nome: currentPresenter.nome, foto: currentPresenter.foto } : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

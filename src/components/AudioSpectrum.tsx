@@ -26,8 +26,17 @@ function resolveColor(barColor?: string): string {
 // ── Web Audio API helper — shared context to avoid multiple connections ──
 const audioCtxMap = new WeakMap<HTMLAudioElement, { ctx: AudioContext; analyser: AnalyserNode; source: MediaElementAudioSourceNode }>();
 
-function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
+export function getOrCreateAnalyser(audio: HTMLAudioElement): AnalyserNode | null {
   try {
+    // Segurança CRÍTICA: createMediaElementSource desvia o áudio do <audio>
+    // nativo para o grafo Web Audio. Se o stream for cross-origin SEM CORS
+    // (crossOrigin não setado como "anonymous"), o navegador silencia a
+    // saída (tainted output) e o áudio deixa de tocar — mesmo depois de
+    // desativar o DJ Mode. Só faz o hookup quando temos CORS liberado.
+    const isAnonymousCORS = audio.crossOrigin === "anonymous" || audio.getAttribute("crossorigin") === "anonymous";
+    if (!isAnonymousCORS) {
+      return null; // deixa o áudio nativo intacto; DJ Mode usa fallback rítmico
+    }
     if (audioCtxMap.has(audio)) {
       const entry = audioCtxMap.get(audio)!;
       if (entry.ctx.state === "suspended") entry.ctx.resume().catch(() => {});

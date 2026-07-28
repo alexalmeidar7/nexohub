@@ -1,17 +1,21 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useParams, Navigate } from "react-router-dom";
+import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { getEmpresaConfig, type EmpresaConfig } from "@/components/ConfiguracoesPage";
 import { findCurrentProgram } from "@/components/OnAirWidget";
-import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper } from "lucide-react";
+import { ChevronLeft, ChevronRight, Clock, Radio, Globe, Instagram, Youtube, Phone, MessageCircle, Play, Pause, Facebook, X, Maximize, Minimize, Calendar, ImageIcon, Gift, Pizza, Truck, Star, Trophy, Music, Heart, Sparkles, Beer, ShoppingBag, Ticket, Megaphone, PartyPopper, Plus, Minus, Headphones, MonitorPlay, Users } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import PromoSkeleton from "@/components/skeletons/PromoSkeleton";
 import { getApresentadores } from "@/components/ApresentadorForm";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip as RTooltip, CartesianGrid, Legend } from "recharts";
+import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type TelaPromoConfig, defaultTelaPromoConfig, buildTelaPromoBgStyle } from "@/components/ConfigTelaPromoPage";
+import PromoInfoBoxes from "@/components/promo/PromoInfoBoxes";
+import BlitzLocutorPopup from "@/components/BlitzLocutorPopup";
 
 interface Promocao {
   id: string;
@@ -25,6 +29,7 @@ interface Promocao {
 
 interface ProgramaGrade {
   id: string;
+  mergedIds: string[];
   nome: string;
   apresentadorId: string;
   selo: string;
@@ -33,6 +38,7 @@ interface ProgramaGrade {
   horarioInicio: string;
   horarioFim: string;
   descricao: string;
+  schedules: { dias: string[]; horarioInicio: string; horarioFim: string }[];
 }
 
 interface Testemunhal {
@@ -45,7 +51,7 @@ interface Testemunhal {
 }
 
 const PROGRAMAS_VISIVEIS = [
-  "SERTANEJO BOM DEMAIS",
+  "SERTANEJO BOM DEMAIS - 2",
   "PRIMEIRA HORA",
   "BOM DIA POSITIVA",
   "FLASHBACK POSITIVA",
@@ -61,10 +67,20 @@ function renderBoldMarkdown(text: string) {
   );
 }
 
+function colorMix(color: string, amount: number, fallback: string) {
+  return `color-mix(in srgb, ${color || fallback} ${amount}%, transparent)`;
+}
+
 export default function PromocoesKiosk() {
-  usePageTitle("Promoções");
   const { userSlug } = useParams<{ userSlug?: string }>();
-  const isPublicMode = !!userSlug;
+  const validSlug = userSlug && userSlug !== ":userSlug" ? userSlug : undefined;
+  const isPublicMode = !!validSlug;
+  // In public mode we don't want the auth user's empresa name leaking into
+  // the title, so pass empty and override via effect below using config.nome.
+  usePageTitle(isPublicMode ? "" : "Promoções");
+  usePublicHead(isPublicMode ? validSlug : null, "Promoções");
+  useLayoutColors();
+
   const [loading, setLoading] = useState(true);
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [config, setConfig] = useState<EmpresaConfig>({} as EmpresaConfig);
@@ -75,8 +91,59 @@ export default function PromocoesKiosk() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [selectedPromo, setSelectedPromo] = useState<Promocao | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<ProgramaGrade | null>(null);
+  const [programasSectionOpen, setProgramasSectionOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [telaPromoConfig, setTelaPromoConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
+  const [coverIndex, setCoverIndex] = useState<number | null>(null);
+  const [coverSlideDir, setCoverSlideDir] = useState<"left" | "right">("right");
+  const [audienceUserId, setAudienceUserId] = useState<string | null>(null);
+  const [weatherInfo, setWeatherInfo] = useState<{ city: string | null; lat: number | null; lon: number | null }>({ city: null, lat: null, lon: null });
+  const [streamCfg, setStreamCfg] = useState<{ audioUrl: string; audioXpath: string; videoUrl: string; videoXpath: string }>({ audioUrl: "", audioXpath: "", videoUrl: "", videoXpath: "" });
+  const [audioCount, setAudioCount] = useState<number | null>(null);
+  const [videoCount, setVideoCount] = useState<number | null>(null);
+  const peakStorageKey = `promo-peak-audience:${userSlug || "self"}`;
+  const [peakAudience, setPeakAudience] = useState<{ total: number; programa: string; locutor: string; timestamp: string; date: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem(peakStorageKey);
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      const today = new Date().toISOString().split("T")[0];
+      return p?.date === today ? p : null;
+    } catch { return null; }
+  });
+  const [audienceDetailsOpen, setAudienceDetailsOpen] = useState(false);
+  const [audienceChart, setAudienceChart] = useState<Array<{ hora: string; audio: number; video: number; total: number; programa: string }>>([]);
+  const [audienceChartLoading, setAudienceChartLoading] = useState(false);
+
+  useEffect(() => {
+    if (!audienceDetailsOpen || !audienceUserId) return;
+    let cancelled = false;
+    (async () => {
+      setAudienceChartLoading(true);
+      const since = new Date();
+      since.setHours(0, 0, 0, 0);
+      const { data } = await supabase
+        .from("audiencia_historico")
+        .select("programa, audio, video, created_at")
+        .eq("user_id", audienceUserId as any)
+        .gte("created_at", since.toISOString())
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      const rows = (data || []).map((r: any) => {
+        const d = new Date(r.created_at);
+        return {
+          hora: d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+          audio: Number(r.audio) || 0,
+          video: Number(r.video) || 0,
+          total: (Number(r.audio) || 0) + (Number(r.video) || 0),
+          programa: r.programa || "",
+        };
+      });
+      setAudienceChart(rows);
+      setAudienceChartLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [audienceDetailsOpen, audienceUserId]);
 
   // Shared persistent settings
   const getStoredNumber = (key: string, fallback: number, min: number, max: number) => {
@@ -103,6 +170,16 @@ export default function PromocoesKiosk() {
   scrollSpeedRef.current = scrollSpeed;
   const bannerTimerRef = useRef(0);
   const [bannerProgress, setBannerProgress] = useState(0);
+  const promoAccentGradient = `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`;
+  const promoAccentGradientReverse = `linear-gradient(270deg, ${telaPromoConfig.btn_color_b} 0%, ${telaPromoConfig.btn_color_a} 100%)`;
+  const promoDarkGradient = `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, color-mix(in srgb, ${telaPromoConfig.btn_color_b} 35%, black) 100%)`;
+  const promoThemeVars = {
+    "--promo-btn-a": telaPromoConfig.btn_color_a,
+    "--promo-btn-b": telaPromoConfig.btn_color_b,
+    "--promo-text": telaPromoConfig.btn_text_color,
+    "--promo-border": telaPromoConfig.card_border_color,
+    "--promo-header": telaPromoConfig.header_text_color,
+  } as React.CSSProperties;
 
   // Persist font size
   useEffect(() => {
@@ -134,9 +211,23 @@ export default function PromocoesKiosk() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Public-mode title + favicon: refine using the empresa data fully loaded
+  // for this page (usePublicHead already ran a slug-based pass on mount).
+  useEffect(() => {
+    if (!isPublicMode) return;
+    const nome = (config?.nome || "")
+      .replace(/\s*[-–—]\s*promoç(ões|ao|ão)\s*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    applyPublicHead(nome || null, config?.logo || null, "Promoções");
+  }, [isPublicMode, config?.nome, config?.logo]);
+
+
+
   useEffect(() => {
     const loadPublic = async () => {
-      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: userSlug } });
+      if (!validSlug) return;
+      const { data, error } = await supabase.functions.invoke("public-promo-data", { body: { slug: validSlug } });
       if (error || !data) return;
 
       const empresa = data.empresa;
@@ -148,21 +239,39 @@ export default function PromocoesKiosk() {
           instagram: empresa.instagram || "", facebook: empresa.facebook || "", youtube: empresa.youtube || "",
           plano: empresa.plano || "",
         });
+        setStreamCfg({
+          audioUrl: empresa.audio_stream_api_url || "",
+          audioXpath: empresa.audio_stream_xpath || "",
+          videoUrl: empresa.video_stream_api_url || "",
+          videoXpath: empresa.video_stream_xpath || "",
+        });
       }
+      if (data.userId) setAudienceUserId(data.userId);
+      setWeatherInfo({
+        city: data.weather_city || null,
+        lat: data.weather_lat != null ? Number(data.weather_lat) : null,
+        lon: data.weather_lon != null ? Number(data.weather_lon) : null,
+      });
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (data.promocoes || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
+      const activePromos = (data.promocoes || []).filter((p: any) => 
+        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
+      );
       setPromocoes(activePromos);
-      setTestemunhais(data.testemunhais || []);
+      const activeTestemunhais = (data.testemunhais || []).filter((t: any) => 
+        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
+      );
+      setTestemunhais(activeTestemunhais);
 
       if (data.tela_promo_config) {
         setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
       }
 
       const mapped = (data.programas || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -179,9 +288,36 @@ export default function PromocoesKiosk() {
         supabase.from("promocoes").select("*").order("data_inicio"),
         supabase.from("programas").select("*").eq("ativo", true).ilike("estudio", "%fm%"),
         supabase.from("testemunhais").select("*"),
-        supabase.from("user_settings").select("cenario_config").maybeSingle(),
+        supabase.from("user_settings").select("cenario_config, weather_city, weather_lat, weather_lon").maybeSingle(),
       ]);
       setConfig(empresaData);
+      if (settingsData) {
+        setWeatherInfo({
+          city: (settingsData as any).weather_city || null,
+          lat: (settingsData as any).weather_lat != null ? Number((settingsData as any).weather_lat) : null,
+          lon: (settingsData as any).weather_lon != null ? Number((settingsData as any).weather_lon) : null,
+        });
+      }
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        const uid = authData?.user?.id;
+        if (uid) {
+          setAudienceUserId(uid);
+          const { data: ec } = await supabase
+            .from("empresa_config")
+            .select("audio_stream_api_url, audio_stream_xpath, video_stream_api_url, video_stream_xpath")
+            .eq("user_id", uid as any)
+            .maybeSingle();
+          if (ec) {
+            setStreamCfg({
+              audioUrl: (ec as any).audio_stream_api_url || "",
+              audioXpath: (ec as any).audio_stream_xpath || "",
+              videoUrl: (ec as any).video_stream_api_url || "",
+              videoXpath: (ec as any).video_stream_xpath || "",
+            });
+          }
+        }
+      } catch { /* ignore */ }
 
       if (settingsData?.cenario_config) {
         const raw = settingsData.cenario_config as any;
@@ -191,14 +327,20 @@ export default function PromocoesKiosk() {
       }
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (promoData || []).filter((p: any) => p.data_inicio <= today && p.data_fim >= today);
+      const activePromos = (promoData || []).filter((p: any) => 
+        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
+      );
       setPromocoes(activePromos);
-      setTestemunhais(testData || []);
+      const activeTestemunhais = (testData || []).filter((t: any) => 
+        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
+      );
+      setTestemunhais(activeTestemunhais);
 
       const mapped = (progsData || []).map((p: any) => ({
-        id: p.id, nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
+        schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
       }));
       setProgramas(mapped);
 
@@ -208,7 +350,7 @@ export default function PromocoesKiosk() {
 
     const load = isPublicMode ? loadPublic : loadAuth;
     load().finally(() => setLoading(false));
-    const interval = setInterval(load, 30000);
+    const interval = setInterval(load, 10000); // Changed from 30s to 10s for better synchronization
     return () => clearInterval(interval);
   }, [isPublicMode, userSlug]);
 
@@ -241,6 +383,89 @@ export default function PromocoesKiosk() {
     setBannerProgress(0);
   };
 
+  // ---- Audiência ao vivo (áudio x vídeo) ----
+  useEffect(() => {
+    if (!audienceUserId || !streamCfg.audioUrl) { setAudioCount(null); return; }
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const body: Record<string, unknown> = { userId: audienceUserId, urls: [streamCfg.audioUrl] };
+        if (streamCfg.audioXpath) body.xpath = streamCfg.audioXpath;
+        const { data } = await supabase.functions.invoke("count-stream-listeners", { body });
+        if (!cancelled && data && (data as any).ok) {
+          const n = (data as any).listeners;
+          setAudioCount(typeof n === "number" ? n : null);
+        }
+      } catch { /* ignore */ }
+    };
+    tick();
+    const iv = setInterval(tick, 30000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [audienceUserId, streamCfg.audioUrl, streamCfg.audioXpath]);
+
+  useEffect(() => {
+    if (!streamCfg.videoUrl || !streamCfg.videoXpath) { setVideoCount(null); return; }
+    let cancelled = false;
+    const extract = (text: string, rawPath: string): number | null => {
+      const path = rawPath.replace(/^\/+/, "").split("/").map(s => s.trim()).filter(Boolean);
+      if (!path.length) return null;
+      const trimmed = text.trim();
+      if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+          let cur: any = JSON.parse(trimmed);
+          for (const k of path) { if (cur == null) return null; if (Array.isArray(cur)) cur = cur[0]; cur = cur?.[k]; }
+          if (Array.isArray(cur)) cur = cur[0];
+          const n = typeof cur === "string" ? parseInt(cur, 10) : Number(cur);
+          return Number.isFinite(n) ? n : null;
+        } catch { /* fallthrough */ }
+      }
+      let scope = trimmed;
+      for (const tag of path) {
+        const re = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i");
+        const m = scope.match(re);
+        if (!m) return null;
+        scope = m[1];
+      }
+      const inner = scope.replace(/<[^>]+>/g, "").trim();
+      const n = parseInt(inner, 10);
+      return Number.isFinite(n) ? n : null;
+    };
+    const tick = async () => {
+      try {
+        const r = await fetch(streamCfg.videoUrl, { cache: "no-store" });
+        const text = (await r.text()).trim();
+        const n = extract(text, streamCfg.videoXpath);
+        if (!cancelled) setVideoCount(typeof n === "number" ? n : null);
+      } catch { if (!cancelled) setVideoCount(null); }
+    };
+    tick();
+    const iv = setInterval(tick, 30000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [streamCfg.videoUrl, streamCfg.videoXpath]);
+
+  // Rastreia o pico de audiência do dia
+  useEffect(() => {
+    if (audioCount === null && videoCount === null) return;
+    const total = (audioCount ?? 0) + (videoCount ?? 0);
+    if (total <= 0) return;
+    const today = new Date().toISOString().split("T")[0];
+    const presenter = onAirProgram?.apresentadorId
+      ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
+      : null;
+    setPeakAudience(prev => {
+      if (prev && prev.date === today && prev.total >= total) return prev;
+      const next = {
+        total,
+        programa: onAirProgram?.nome || "Programação Musical",
+        locutor: presenter?.nome || "—",
+        timestamp: new Date().toISOString(),
+        date: today,
+      };
+      try { localStorage.setItem(peakStorageKey, JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, [audioCount, videoCount, onAirProgram, apresentadores]);
+
   useEffect(() => {
     const update = () => {
       const current = findCurrentProgram(programas as any);
@@ -270,36 +495,66 @@ export default function PromocoesKiosk() {
     name
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s]/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .toUpperCase();
 
-  const filteredPrograms = Array.from(
-    programas
-      .filter((programa) =>
-        PROGRAMAS_VISIVEIS.some((visibleName) =>
-          normalizeProgramName(programa.nome).includes(normalizeProgramName(visibleName)),
-        ),
-      )
+  // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
+  const canonicalCoverByName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of programas) {
+      if (!p.capa) continue;
+      const key = normalizeProgramName(p.nome);
+      if (!map.has(key)) map.set(key, p.capa);
+    }
+    return map;
+  }, [programas]);
+
+  const mergeProgramList = (list: ProgramaGrade[]) => Array.from(
+    list
+      .slice()
       .sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio))
       .reduce((map, programa) => {
-        const normalizedName = normalizeProgramName(programa.nome);
-        const dedupeKey =
-          PROGRAMAS_VISIVEIS.find((visibleName) =>
-            normalizedName.includes(normalizeProgramName(visibleName)),
-          ) ?? normalizedName;
-
-        if (!map.has(dedupeKey)) {
-          map.set(dedupeKey, programa);
+        const dedupeKey = normalizeProgramName(programa.nome);
+        const mergedIds = Array.from(new Set([...(programa.mergedIds || []), programa.id]));
+        const canonicalCover = canonicalCoverByName.get(dedupeKey) || programa.capa || "";
+        const existing = map.get(dedupeKey);
+        if (!existing) {
+          map.set(dedupeKey, { ...programa, capa: canonicalCover, mergedIds });
+        } else {
+          existing.mergedIds = Array.from(new Set([...existing.mergedIds, ...mergedIds]));
+          existing.diasSemana = [...new Set([...existing.diasSemana, ...programa.diasSemana])];
+          existing.schedules = [...existing.schedules, ...programa.schedules];
+          if (canonicalCover) existing.capa = canonicalCover;
         }
-
         return map;
       }, new Map<string, ProgramaGrade>())
       .values(),
   );
 
-  const banners = promocoes.filter(p => p.imagem_url);
-  const botoes = promocoes.filter(p => p.botao_url);
+  const todayDateStr = new Date().toISOString().split("T")[0];
+  const programIdsWithTestemunhais = new Set(
+    testemunhais
+      .filter(t => 
+        t.programa_id && 
+        t.data_inicio && t.data_fim && 
+        t.data_inicio <= todayDateStr && t.data_fim >= todayDateStr
+      )
+      .map(t => t.programa_id)
+  );
+
+  const filteredPrograms = mergeProgramList(
+    programas.filter(p => programIdsWithTestemunhais.has(p.id))
+  );
+
+  const todayDateNow = new Date().toISOString().split("T")[0];
+  const banners = promocoes.filter(p => 
+    p.imagem_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
+  );
+  const botoes = promocoes.filter(p => 
+    p.botao_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
+  );
 
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -421,32 +676,98 @@ export default function PromocoesKiosk() {
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
 
-  const getTestemunhaisForProgram = (programId: string) => {
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
-    return testemunhais.filter(t => t.programa_id === programId && t.data_inicio <= today && t.data_fim >= today);
+    const ids = new Set(prog.mergedIds);
+    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
   };
 
+  // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
+  const preloadedUrlsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const list = mergeProgramList(programas);
+      if (!list.length) return;
+      const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
+      const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
+      const targets = [
+        list[activeIdx],
+        list[(activeIdx + 1) % list.length],
+        list[(activeIdx - 1 + list.length) % list.length],
+      ].filter(Boolean);
+      const urls = new Set<string>();
+      for (const prog of targets) {
+        if (prog?.capa) urls.add(prog.capa);
+        const tests = getTestemunhaisForProgram(prog!);
+        for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
+      }
+      const cache = preloadedUrlsRef.current;
+      const pending: HTMLImageElement[] = [];
+      urls.forEach(url => {
+        if (cache.has(url)) return;
+        const img = new Image();
+        img.decoding = "async";
+        img.src = url;
+        img.onload = img.onerror = () => cache.add(url);
+        pending.push(img);
+      });
+      // Guarda handles para cancelamento caso o efeito seja limpo antes de terminar
+      (timer as unknown as { pending?: HTMLImageElement[] }).pending = pending;
+    }, 180);
+
+    return () => {
+      window.clearTimeout(timer);
+      const pending = (timer as unknown as { pending?: HTMLImageElement[] }).pending;
+      if (pending) {
+        for (const img of pending) {
+          if (!img.complete) {
+            img.onload = null;
+            img.onerror = null;
+            img.src = ""; // aborta o download em navegadores modernos
+          }
+        }
+      }
+    };
+  }, [coverIndex, onAirProgram, programas, testemunhais]);
+
+
   const ProgressCircle = ({ active, progress }: { active: boolean; progress: number }) => {
-    const r = 5;
-    const circumference = 2 * Math.PI * r;
-    const dashoffset = circumference - (progress / 100) * circumference;
     if (!active) {
       return (
-        <svg width="14" height="14" viewBox="0 0 14 14">
-          <circle cx="7" cy="7" r={r} fill="white" />
-        </svg>
+        <span
+          className="block rounded-full transition-all duration-300"
+          style={{
+            width: 6,
+            height: 6,
+            backgroundColor: "rgba(255,255,255,0.45)",
+            boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+          }}
+        />
       );
     }
     return (
-      <svg width="14" height="14" viewBox="0 0 14 14" style={{ transform: "rotate(-90deg)" }}>
-        <circle cx="7" cy="7" r={r} fill="none" stroke="white" strokeWidth="2" />
-        <circle cx="7" cy="7" r={r} fill="none" stroke="#d70d0e" strokeWidth="2"
-          strokeDasharray={circumference} strokeDashoffset={dashoffset}
-          style={{ transition: "stroke-dashoffset 50ms linear" }}
+      <span
+        className="relative block rounded-full overflow-hidden transition-all duration-300"
+        style={{
+          width: 28,
+          height: 6,
+          backgroundColor: "rgba(255,255,255,0.35)",
+          boxShadow: "0 0 0 1px rgba(0,0,0,0.15)",
+        }}
+      >
+        <span
+          className="absolute inset-y-0 left-0"
+          style={{
+            width: `${Math.min(100, Math.max(0, progress))}%`,
+            backgroundColor: "#ffffff",
+            transition: "width 50ms linear",
+            boxShadow: "0 0 6px rgba(255,255,255,0.5)",
+          }}
         />
-      </svg>
+      </span>
     );
   };
+
 
   // Spacebar to toggle play/pause when a modal is open
   useEffect(() => {
@@ -466,12 +787,12 @@ export default function PromocoesKiosk() {
 
    // Inline teleprompter controls renderer (not a component to avoid remount)
   const renderTeleprompterControls = (target: "promo" | "program") => (
-    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "#1b1b1d" }}>
+    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
       <button
         type="button"
         onClick={() => toggleAutoScroll(target)}
         className="w-8 h-8 rounded-lg flex items-center justify-center text-white hover:brightness-125 transition"
-        style={{ backgroundColor: "#a60101" }}
+        style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
       >
         {autoScrolling && activeScrollTarget === target ? <Pause size={14} /> : <Play size={14} />}
       </button>
@@ -479,45 +800,59 @@ export default function PromocoesKiosk() {
         <Checkbox
           checked={autoPlay}
           onCheckedChange={(v) => handleAutoPlayChange(v === true)}
-          className="border-white/40 data-[state=checked]:bg-[#a60101] data-[state=checked]:border-[#a60101]"
+          className="border-white/40 data-[state=checked]:bg-[var(--layout-accent-color,#a60101)] data-[state=checked]:border-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[10px] text-white/60">Auto</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>Auto</span>
       </div>
       <div className="flex items-center gap-2 flex-1 max-w-[180px]">
-        <span className="text-[10px] text-white/50">Vel.</span>
+        <span className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 50%, transparent)" }}>Vel.</span>
         <Slider
           value={[scrollSpeed]}
           min={1}
           max={100}
           step={1}
           onValueChange={([v]) => setScrollSpeed(v)}
-          className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[#a60101] [&_[role=slider]]:border-[#a60101] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[#a60101]"
+          className="flex-1 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[var(--layout-accent-color,#a60101)] [&_[role=slider]]:border-[var(--layout-accent-color,#a60101)] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[9px] text-white/40 whitespace-nowrap">espaço = play/pause</span>
+        <span className="text-[9px] whitespace-nowrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 40%, transparent)" }}>espaço = play/pause</span>
       </div>
       <div className="flex items-center gap-1 ml-auto">
-        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A-</button>
-        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "#a60101" }}>A+</button>
+        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A-</button>
+        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A+</button>
       </div>
     </div>
   );
 
+  if (userSlug === ":userSlug") {
+    return <Navigate to="/telapromo" replace />;
+  }
   if (loading) {
     return <PromoSkeleton />;
   }
 
+
   return (
-    <div className="text-white min-h-screen p-8 flex flex-col items-center" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), color: telaPromoConfig.header_text_color }}>
+    <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
         .promo-scroll::-webkit-scrollbar{width:10px}
-        .promo-scroll::-webkit-scrollbar-track{background:#a60101;border-radius:5px}
-        .promo-scroll::-webkit-scrollbar-thumb{background:white;border-radius:5px}
-        .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:white;border-radius:2px}
-        .promo-scroll{scrollbar-width:thin;scrollbar-color:white #a60101}
-        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px rgba(251,216,55,1)}50%{box-shadow:0 0 0 3px rgba(251,216,55,0.2)}}
+        .promo-scroll::-webkit-scrollbar-track{background:var(--promo-btn-a);border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-thumb{background:var(--promo-border);border-radius:5px}
+        .promo-scroll::-webkit-scrollbar-button{display:block;height:10px;background:var(--promo-border);border-radius:2px}
+        .promo-scroll{scrollbar-width:thin;scrollbar-color:var(--promo-border) var(--promo-btn-a)}
+        @keyframes pulse-border{0%,100%{box-shadow:0 0 0 3px var(--promo-border)}50%{box-shadow:0 0 0 3px color-mix(in srgb,var(--promo-border) 20%, transparent)}}
         .animate-pulse-border{animation:pulse-border 1.5s ease-in-out infinite}
+        @keyframes audience-shimmer{0%{background-position:0 0}100%{background-position:40px 0}}
+        @keyframes audience-glow-red{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.35),0 0 12px color-mix(in srgb,var(--promo-btn-b) 55%, transparent)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.35),0 0 22px color-mix(in srgb,var(--promo-btn-b) 95%, transparent)}}
+        @keyframes audience-glow-white{0%,100%{box-shadow:inset 0 0 12px rgba(0,0,0,.15),0 0 12px color-mix(in srgb,var(--promo-border) 55%, transparent)}50%{box-shadow:inset 0 0 18px rgba(0,0,0,.15),0 0 22px color-mix(in srgb,var(--promo-border) 95%, transparent)}}
+        @keyframes audience-crown{0%,100%{transform:translateY(-50%) rotate(-8deg) scale(1)}50%{transform:translateY(-70%) rotate(8deg) scale(1.15)}}
+        @keyframes audience-confetti{0%{transform:translateY(-6px) rotate(0);opacity:0}20%{opacity:1}100%{transform:translateY(28px) rotate(360deg);opacity:0}}
+        .audience-winner-stripes{background-image:linear-gradient(115deg,color-mix(in srgb,var(--promo-text) 28%, transparent) 0 12px,transparent 12px 24px);background-size:40px 100%;animation:audience-shimmer 1.1s linear infinite}
+        .audience-winner-red{animation:audience-glow-red 1.4s ease-in-out infinite}
+        .audience-winner-white{animation:audience-glow-white 1.4s ease-in-out infinite}
+        .audience-crown{animation:audience-crown 1.2s ease-in-out infinite;transform-origin:center}
+        .audience-confetti{position:absolute;top:0;width:4px;height:8px;border-radius:1px;animation:audience-confetti 1.6s ease-in infinite}
       `}</style>
 
       <div className="w-full max-w-[1000px] flex flex-col gap-6">
@@ -525,68 +860,73 @@ export default function PromocoesKiosk() {
         {/* Header */}
         <div className="flex justify-between items-center w-full px-2">
           <div className="flex items-center gap-3">
-            <Radio size={16} style={{ color: "#be0101" }} className="animate-pulse" />
-            <div>
-              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: "#be0101" }}>No Ar</span>
-              <p className="text-white text-sm font-semibold truncate max-w-[300px]">
-                {onAirProgram?.nome || "Programação Musical"}
-              </p>
-              {onAirProgram && (
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-white/60 text-[10px]">
-                    {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
-                  </span>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: "#d70d0e" }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-1000"
-                      style={{ width: `${onAirProgram.progress}%`, backgroundColor: "#ffffff" }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            <Radio size={16} style={{ color: telaPromoConfig.btn_color_b, filter: `drop-shadow(0 0 8px ${colorMix(telaPromoConfig.btn_color_b, 70, "#ffffff")})` }} className="animate-pulse" />
 
-            {/* Presenter photo */}
+            {/* Presenter photo - ao lado do ícone de ao vivo */}
             {(() => {
               const presenter = onAirProgram?.apresentadorId
                 ? apresentadores.find(a => a.id === onAirProgram.apresentadorId)
                 : null;
               return presenter?.foto ? (
-                <div className="relative group/presenter ml-2">
-                  <div className="w-14 h-14 rounded-full overflow-hidden" style={{ backgroundColor: "#d70d0e" }}>
+                <div className="relative group/presenter">
+                  <div
+                    className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center"
+                    style={{ background: promoAccentGradient, boxShadow: `0 0 0 2px ${colorMix(telaPromoConfig.card_border_color, 35, "#ffffff")}` }}
+                  >
                     <img src={presenter.foto} alt={presenter.nome} className="w-full h-full object-cover" />
                   </div>
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity">
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover/presenter:opacity-100 transition-opacity z-10" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
                     {presenter.nome}
                   </div>
                 </div>
               ) : null;
             })()}
 
+            <div>
+              <span className="font-bold uppercase tracking-widest text-xs" style={{ color: telaPromoConfig.header_text_color }}>No Ar</span>
+              <p className="text-sm font-semibold truncate max-w-[300px]" style={{ color: telaPromoConfig.header_text_color }}>
+                {onAirProgram?.nome || "Programação Musical"}
+              </p>
+              {onAirProgram && (
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[10px]" style={{ color: colorMix(telaPromoConfig.header_text_color, 60, "#ffffff") }}>
+                    {onAirProgram.horarioInicio.slice(0, 5)} às {onAirProgram.horarioFim.slice(0, 5)}
+                  </span>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ width: 160, backgroundColor: telaPromoConfig.btn_color_a }}>
+                    <div
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${onAirProgram.progress}%`, background: promoAccentGradient }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+
             {/* Contact info */}
             <TooltipProvider delayDuration={200}>
               <div className="flex items-center gap-3 ml-3">
                 {config.site && (
                   <Tooltip>
-                    <TooltipTrigger><Globe size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Globe size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.site}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.instagram && (
                   <Tooltip>
-                    <TooltipTrigger><Instagram size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Instagram size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.instagram}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.youtube && (
                   <Tooltip>
-                    <TooltipTrigger><Youtube size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Youtube size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.youtube}</p></TooltipContent>
                   </Tooltip>
                 )}
                 {config.facebook && (
                   <Tooltip>
-                    <TooltipTrigger><Facebook size={14} className="text-white cursor-pointer" /></TooltipTrigger>
+                    <TooltipTrigger><Facebook size={14} className="cursor-pointer" style={{ color: telaPromoConfig.header_text_color }} /></TooltipTrigger>
                     <TooltipContent><p>{config.facebook}</p></TooltipContent>
                   </Tooltip>
                 )}
@@ -595,19 +935,19 @@ export default function PromocoesKiosk() {
                 {config.telefoneParticipacao && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <MessageCircle size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneParticipacao}</span>
+                      <MessageCircle size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneParticipacao}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>whatsapp ouvinte</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>whatsapp ouvinte</span>
                   </div>
                 )}
                 {config.telefoneComercial && (
                   <div className="flex flex-col items-center ml-2">
                     <div className="flex items-center gap-1">
-                      <Phone size={15} style={{ color: "#FF0000" }} />
-                      <span className="font-bold text-[16px] text-white">{config.telefoneComercial}</span>
+                      <Phone size={15} style={{ color: telaPromoConfig.header_text_color }} />
+                      <span className="font-bold text-[16px]" style={{ color: telaPromoConfig.header_text_color }}>{config.telefoneComercial}</span>
                     </div>
-                    <span className="text-xs" style={{ color: "#FF0000" }}>telefone comercial</span>
+                    <span className="text-xs" style={{ color: telaPromoConfig.header_text_color }}>telefone comercial</span>
                   </div>
                 )}
               </div>
@@ -629,104 +969,370 @@ export default function PromocoesKiosk() {
           </div>
         </div>
 
-        {/* Banner with slide animation */}
-        <div className="w-full overflow-hidden rounded-xl shadow-2xl relative">
-          {banners.length > 0 ? (
-            <div className="relative w-full overflow-hidden">
-              <div
-                className="flex transition-transform duration-700 ease-in-out"
-                style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
-              >
-                {banners.map((banner) => (
-                  <div key={banner.id} className="w-full flex-shrink-0">
-                    <img src={banner.imagem_url} alt={banner.texto} className="w-full h-auto object-contain" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
-          )}
+        {/* Boxes informativos acima da barra de audiência */}
+        <PromoInfoBoxes
+          weatherCity={weatherInfo.city}
+          weatherLat={weatherInfo.lat}
+          weatherLon={weatherInfo.lon}
+        />
 
-          {banners.length > 1 && (
-            <>
-              <button
-                onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+        {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
+        {(() => {
+          const a = Math.max(0, audioCount ?? 0);
+          const v = Math.max(0, videoCount ?? 0);
+          const total = a + v;
+          const hasData = (audioCount !== null) || (videoCount !== null);
+          const audioPct = total > 0 ? (a / total) * 100 : 50;
+          const videoPct = 100 - audioPct;
+          const fmt = (n: number | null) => n === null ? "—" : n.toLocaleString("pt-BR");
+          const audioWins = hasData && a > v;
+          const videoWins = hasData && v > a;
+          const confettiColors = [telaPromoConfig.btn_color_a, telaPromoConfig.btn_color_b, telaPromoConfig.card_border_color, telaPromoConfig.btn_text_color];
+          return (
+            <div className="w-full px-2 -mt-2 flex items-center gap-2">
+              <div
+                className="relative flex-1 min-w-0 h-10 rounded-full overflow-hidden flex items-stretch shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 18, "#0a0a0a"), border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 24, "#ffffff")}` }}
+                title="Audiência ao vivo: áudio × vídeo"
               >
-                <ChevronLeft size={20} />
-              </button>
-              <button
-                onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
-              >
-                <ChevronRight size={20} />
-              </button>
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 items-center">
-                {banners.map((_, i) => (
-                  <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer">
-                    <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
-                  </button>
-                ))}
+                {/* Preenchimento áudio */}
+                <div
+                  className={`absolute inset-y-0 left-0 transition-[width] duration-700 ease-out ${audioWins ? "audience-winner-red" : ""}`}
+                  style={{
+                    width: `${audioPct}%`,
+                    background: promoAccentGradient,
+                    boxShadow: "inset 0 0 12px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {audioWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" />}
+                </div>
+                {/* Preenchimento vídeo */}
+                <div
+                  className={`absolute inset-y-0 right-0 transition-[width] duration-700 ease-out ${videoWins ? "audience-winner-white" : ""}`}
+                  style={{
+                    width: `${videoPct}%`,
+                    background: promoAccentGradientReverse,
+                    boxShadow: "inset 0 0 12px rgba(0,0,0,0.15)",
+                  }}
+                >
+                  {videoWins && <div className="absolute inset-0 audience-winner-stripes pointer-events-none" />}
+                </div>
+                {/* Divisor central animado */}
+                <div
+                  className="absolute top-0 bottom-0 w-[2px] bg-black transition-[left] duration-700 ease-out"
+                  style={{ left: `calc(${audioPct}% - 1px)`, boxShadow: "0 0 6px rgba(0,0,0,0.6)" }}
+                />
+                {/* Confetes festivos sobre o lado vencedor */}
+                {(audioWins || videoWins) && (
+                  <div
+                    className="pointer-events-none absolute top-0 bottom-0 overflow-hidden z-[5]"
+                    style={audioWins ? { left: 0, width: `${audioPct}%` } : { right: 0, width: `${videoPct}%` }}
+                  >
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <span
+                        key={i}
+                        className="audience-confetti"
+                        style={{
+                          left: `${(i * 13 + 5) % 95}%`,
+                          backgroundColor: confettiColors[i % confettiColors.length],
+                          animationDelay: `${(i * 0.18).toFixed(2)}s`,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Conteúdo à esquerda (áudio) */}
+                <div className="relative z-10 flex items-center gap-2 pl-2 pr-4 h-full">
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center relative" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 55, "#000000"), color: telaPromoConfig.btn_text_color }}>
+                    <Headphones size={14} />
+                    {audioWins && (
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: telaPromoConfig.card_border_color, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                    )}
+                  </div>
+                  <div className="flex items-baseline gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 62, "#000000"), color: telaPromoConfig.btn_text_color, backdropFilter: "blur(4px)" }}>
+                    <span className="font-black text-sm leading-none tabular-nums">{fmt(audioCount)}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Áudio</span>
+                  </div>
+                </div>
+                {/* Conteúdo à direita (vídeo) */}
+                <div className="relative z-10 flex items-center gap-2 pr-2 pl-4 h-full ml-auto">
+                  <div className="flex items-baseline gap-1.5 px-2 py-1 rounded-md" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_a, 62, "#000000"), color: telaPromoConfig.btn_text_color, backdropFilter: "blur(4px)" }}>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Vídeo</span>
+                    <span className="font-black text-sm leading-none tabular-nums">{fmt(videoCount)}</span>
+                  </div>
+                  <div className="w-6 h-6 rounded-full flex items-center justify-center relative" style={{ backgroundColor: colorMix(telaPromoConfig.btn_color_b, 55, "#000000"), color: telaPromoConfig.btn_text_color }}>
+                    <MonitorPlay size={14} />
+                    {videoWins && (
+                      <Trophy size={12} className="audience-crown absolute -top-3 left-1/2 -translate-x-1/2" style={{ color: telaPromoConfig.card_border_color, filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.6))" }} />
+                    )}
+                  </div>
+                </div>
               </div>
-            </>
-          )}
-        </div>
+              {/* Total de espectadores + Tooltip com pico do dia */}
+              <TooltipProvider delayDuration={150}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      onClick={() => setAudienceDetailsOpen(true)}
+                      className="flex-shrink-0 h-10 px-3 rounded-full flex items-center gap-2 shadow-[0_4px_16px_rgba(0,0,0,0.45)] cursor-pointer hover:brightness-110 transition"
+                      style={{
+                        background: promoDarkGradient,
+                        border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}`,
+                        color: telaPromoConfig.btn_text_color,
+                      }}
+                    >
+                      <Users size={14} />
+                      <div className="flex items-baseline gap-1">
+                        <span className="font-black text-sm leading-none tabular-nums">{hasData ? total.toLocaleString("pt-BR") : "—"}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold opacity-90">Total</span>
+                      </div>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="bottom"
+                    className="border border-white/15 p-0 overflow-hidden"
+                    style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color, borderColor: colorMix(telaPromoConfig.card_border_color, 32, "#ffffff") }}
+                  >
+                    {peakAudience ? (() => {
+                      const d = new Date(peakAudience.timestamp);
+                      const dataStr = d.toLocaleDateString("pt-BR");
+                      const horaStr = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+                      return (
+                        <div className="min-w-[220px]">
+                          <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ background: promoAccentGradient, borderColor: colorMix(telaPromoConfig.card_border_color, 24, "#ffffff") }}>
+                            <Trophy size={16} style={{ color: telaPromoConfig.btn_text_color }} />
+                            <span className="text-[11px] font-black uppercase tracking-wider" style={{ color: telaPromoConfig.btn_text_color }}>Melhor audiência do dia</span>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-2xl font-black tabular-nums leading-none" style={{ color: telaPromoConfig.btn_text_color }}>{peakAudience.total.toLocaleString("pt-BR")}</span>
+                              <span className="text-[10px] uppercase tracking-wider opacity-70">espectadores</span>
+                            </div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Programa:</span> <span className="font-semibold">{peakAudience.programa}</span></div>
+                            <div className="text-[11px] opacity-90"><span className="opacity-60">Locutor:</span> <span className="font-semibold">{peakAudience.locutor}</span></div>
+                            <div className="text-[11px] opacity-90 flex items-center gap-2 pt-0.5">
+                              <span><span className="opacity-60">Data:</span> {dataStr}</span>
+                              <span><span className="opacity-60">Hora:</span> {horaStr}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setAudienceDetailsOpen(true)}
+                              className="mt-2 w-full py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider transition-all hover:brightness-110"
+                              style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color, border: `1px solid ${colorMix(telaPromoConfig.card_border_color, 32, "#ffffff")}` }}
+                            >
+                              Ver detalhes
+                            </button>
+
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <div className="px-3 py-2.5 flex items-center gap-2 min-w-[200px]">
+                        <Trophy size={14} style={{ color: telaPromoConfig.btn_color_b }} />
+                        <span className="text-[11px] opacity-80">Aguardando primeira medição do dia…</span>
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          );
+        })()}
+
+
+        {/* Banner rotativo + capa do programa no ar */}
+        {(() => {
+          // Programas ordenados pela grade (horário de início), deduplicados por nome
+          const scheduleList = mergeProgramList(programas);
+          const onAirIdx = onAirProgram
+            ? scheduleList.findIndex(p => p.nome === onAirProgram.nome)
+            : -1;
+          const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
+          const currentProg = scheduleList[activeIdx] ?? null;
+          const goPrev = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (!scheduleList.length) return;
+            setCoverSlideDir("left");
+            setCoverIndex((activeIdx - 1 + scheduleList.length) % scheduleList.length);
+          };
+          const goNext = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            e.preventDefault();
+            if (!scheduleList.length) return;
+            setCoverSlideDir("right");
+            setCoverIndex((activeIdx + 1) % scheduleList.length);
+          };
+          return (
+            <div className="w-full flex gap-4 items-stretch">
+              <div className="flex-1 min-w-0 overflow-hidden rounded-xl shadow-2xl relative" style={{ height: 276 }}>
+                {banners.length > 0 ? (
+                  <div className="relative w-full h-full overflow-hidden">
+                    <div
+                      className="flex transition-transform duration-700 ease-in-out h-full"
+                      style={{ transform: `translateX(-${currentBannerIndex * 100}%)` }}
+                    >
+                      {banners.map((banner) => (
+                        <div key={banner.id} className="w-full h-full flex-shrink-0 flex items-center justify-center bg-black/20">
+                          <img src={banner.imagem_url} alt={banner.texto} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-[200px] flex items-center justify-center text-white/30">Nenhum banner ativo</div>
+                )}
+
+                {banners.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => changeBanner((currentBannerIndex - 1 + banners.length) % banners.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      onClick={() => changeBanner((currentBannerIndex + 1) % banners.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white rounded-full w-8 h-8 flex items-center justify-center z-10"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center px-2.5 py-1.5 rounded-full backdrop-blur-md" style={{ backgroundColor: "rgba(0,0,0,0.35)" }}>
+                      {banners.map((_, i) => (
+                        <button key={i} onClick={() => changeBanner(i)} className="cursor-pointer flex items-center justify-center hover:opacity-80 transition-opacity" aria-label={`Ir para banner ${i + 1}`}>
+                          <ProgressCircle active={i === currentBannerIndex} progress={i === currentBannerIndex ? bannerProgress : 0} />
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {currentProg?.capa && (
+                <div
+                  className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
+                  style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
+                  onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
+                  title="Citações"
+                >
+                    <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
+                    Citações
+                  </div>
+                  <div
+                    key={`${normalizeProgramName(currentProg.nome)}-${currentProg.capa}`}
+                    aria-label={currentProg.nome}
+                    className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat"
+                    style={{
+                      backgroundImage: `url(${currentProg.capa})`,
+                      animation: `${coverSlideDir === "right" ? "cover-slide-in-right" : "cover-slide-in-left"} 320ms ease-out`,
+                    }}
+                  />
+                  {scheduleList.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={goPrev}
+                        className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
+                        aria-label="Programa anterior"
+                      >
+                        <ChevronLeft size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={goNext}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/85 text-white rounded-full w-7 h-7 flex items-center justify-center opacity-0 pointer-events-none group-hover/cover:opacity-100 group-hover/cover:pointer-events-auto transition-opacity z-10"
+                        aria-label="Próximo programa"
+                      >
+                        <ChevronRight size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Programação - sem título */}
         {filteredPrograms.length > 0 && (
-          <div className="relative group">
-            <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronLeft size={36} />
-            </div>
-            <div onMouseEnter={() => startScroll(scrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronRight size={36} />
-            </div>
-
-            <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
-              {filteredPrograms.map(prog => (
-                <div
-                  key={prog.id}
-                  className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
-                  onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
-                  onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
-                  onClick={() => setSelectedProgram(prog)}
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <button
+              type="button"
+              onClick={() => setProgramasSectionOpen(v => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors"
+              aria-expanded={programasSectionOpen}
+            >
+              <div className="flex items-center gap-2.5">
+                <span
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-transform duration-200"
+                  style={{
+                    backgroundColor: "var(--layout-accent-color, #a60101)",
+                    transform: programasSectionOpen ? "rotate(45deg)" : "rotate(0deg)",
+                  }}
                 >
-                  {prog.capa ? (
-                    <img src={prog.capa} alt={prog.nome} className="absolute inset-0 w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 w-full h-full bg-zinc-800 flex items-center justify-center">
-                      <Clock size={24} className="text-zinc-600" />
-                    </div>
-                  )}
-                  {onAirProgram?.nome === prog.nome && (
-                    <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ backgroundColor: "#fbd837", color: "#000" }}>
-                      No Ar
-                    </span>
-                  )}
-                  <div className="absolute bottom-1 left-0 right-0 text-center">
-                    <span className="text-[10px] font-bold text-white drop-shadow-lg bg-black/50 px-1.5 py-0.5 rounded">
-                      {prog.horarioInicio.slice(0, 5)} - {prog.horarioFim.slice(0, 5)}
-                    </span>
-                  </div>
+                  <Plus size={16} className="text-white" strokeWidth={2.5} />
+                </span>
+                <span className="text-white font-semibold tracking-wide uppercase text-sm">Programas</span>
+                <span className="text-white/40 text-xs">({filteredPrograms.length})</span>
+              </div>
+              <ChevronRight
+                size={18}
+                className="text-white/60 transition-transform duration-200"
+                style={{ transform: programasSectionOpen ? "rotate(90deg)" : "rotate(0deg)" }}
+              />
+            </button>
+
+            {programasSectionOpen && (
+              <div className="relative group px-4 pb-4 pt-1">
+                <div onMouseEnter={() => startScroll(scrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+                  <ChevronLeft size={36} />
                 </div>
-              ))}
-            </div>
+                <div onMouseEnter={() => startScroll(scrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
+                  <ChevronRight size={36} />
+                </div>
+
+                <div ref={scrollRef} className="flex gap-4 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
+                  {filteredPrograms.map(prog => (
+                    <div
+                      key={prog.id}
+                      className="w-[180px] h-[240px] relative rounded-lg overflow-hidden flex-shrink-0 cursor-pointer transition-all duration-200 outline-4 outline-transparent hover:scale-105"
+                      onMouseEnter={e => { e.currentTarget.style.outline = `4px solid ${telaPromoConfig.card_border_color}`; }}
+                      onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
+                      onClick={() => setSelectedProgram(prog)}
+                    >
+                      {prog.capa ? (
+                        <img src={prog.capa} alt={prog.nome} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 w-full h-full bg-zinc-800 flex items-center justify-center">
+                          <Clock size={24} className="text-zinc-600" />
+                        </div>
+                      )}
+                      {onAirProgram?.nome === prog.nome && (
+                        <span className="absolute top-2 left-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded" style={{ background: promoAccentGradient, color: telaPromoConfig.btn_text_color }}>
+                          No Ar
+                        </span>
+                      )}
+                      <div className="absolute bottom-1 left-0 right-0 text-center flex flex-col items-center gap-0.5">
+                        {prog.schedules.map((s, i) => (
+                          <span key={i} className="text-[10px] font-bold text-white drop-shadow-lg px-1.5 py-0.5 rounded" style={{ backgroundColor: "var(--layout-accent-color, rgba(0,0,0,0.5))" }}>
+                            {s.horarioInicio.slice(0, 5)} - {s.horarioFim.slice(0, 5)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Promoções */}
         {botoes.length > 0 && (
-          <div className="relative group">
-            <h2 className="text-lg font-bold mb-4">Promoções</h2>
-            <div onMouseEnter={() => startScroll(promoScrollRef, "left")} onMouseLeave={stopScroll} className="absolute left-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronLeft size={36} />
-            </div>
-            <div onMouseEnter={() => startScroll(promoScrollRef, "right")} onMouseLeave={stopScroll} className="absolute right-[-45px] top-1/2 -translate-y-1/2 p-2 cursor-pointer opacity-30 hover:opacity-100 transition-opacity z-10">
-              <ChevronRight size={36} />
-            </div>
+          <div>
+            <h2 className="text-lg font-bold mb-4" style={{ color: "white" }}>Promoções</h2>
 
-            <div ref={promoScrollRef} className="flex gap-5 overflow-x-auto scroll-smooth no-scrollbar py-2 -my-2 px-1 -mx-1">
+            <div className="grid grid-cols-4 gap-4">
               {botoes.map(promo => {
                 const title = (promo.botao_url || "").toLowerCase();
                 const PromoIcon =
@@ -748,7 +1354,7 @@ export default function PromocoesKiosk() {
                 return (
                   <div
                     key={promo.id}
-                    className="flex-shrink-0 cursor-pointer transition-all duration-200 flex items-center gap-3 px-6 py-3.5 font-bold text-sm outline-4 outline-transparent hover:scale-105 shadow-lg"
+                    className="w-full h-16 cursor-pointer transition-all duration-200 flex items-center gap-3 px-4 font-bold text-sm outline-4 outline-transparent hover:scale-[1.03] shadow-lg overflow-hidden"
                     style={{
                       background: `linear-gradient(135deg, ${telaPromoConfig.btn_color_a} 0%, ${telaPromoConfig.btn_color_b} 100%)`,
                       color: telaPromoConfig.btn_text_color,
@@ -758,10 +1364,10 @@ export default function PromocoesKiosk() {
                     onMouseLeave={e => { e.currentTarget.style.outline = "4px solid transparent"; }}
                     onClick={() => setSelectedPromo(promo)}
                   >
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
-                    <span className="whitespace-nowrap">{promo.botao_url}</span>
+                    <span className="truncate">{promo.botao_url}</span>
                   </div>
                 );
               })}
@@ -771,8 +1377,90 @@ export default function PromocoesKiosk() {
       </div>
 
       {/* Modal da Promoção */}
+      <style>{`
+        .promo-text-force-white,
+        .promo-text-force-white * {
+          color: white !important;
+        }
+      `}</style>
+
+      {/* Dialog de detalhes de audiência do dia */}
+      <Dialog open={audienceDetailsOpen} onOpenChange={setAudienceDetailsOpen}>
+        <DialogContent className="max-w-3xl text-white border border-white/10 p-0 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+          <DialogHeader className="px-5 py-4 border-b border-white/10" style={{ background: "linear-gradient(90deg, rgba(215,13,14,0.6), rgba(0,0,0,0))" }}>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Trophy size={18} style={{ color: "#ffffff" }} />
+              Audiência do dia
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="px-5 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Programa</div>
+              <div className="text-sm font-bold truncate">{peakAudience?.programa || "—"}</div>
+            </div>
+            <div className="rounded-lg p-3 border border-white/10" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">Locutor</div>
+              <div className="text-sm font-bold truncate">{peakAudience?.locutor || "—"}</div>
+            </div>
+            <div className="rounded-lg p-3 border" style={{ background: "linear-gradient(135deg, #d70d0e 0%, #000 100%)", borderColor: "rgba(255,255,255,0.2)" }}>
+              <div className="text-[10px] uppercase tracking-wider opacity-80 mb-1 text-white">Pico do dia</div>
+              <div className="text-2xl font-black tabular-nums leading-none text-white">{peakAudience ? peakAudience.total.toLocaleString("pt-BR") : "—"}</div>
+              {peakAudience && (
+                <div className="text-[10px] opacity-80 mt-1 text-white">
+                  {new Date(peakAudience.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="px-5 py-4">
+            <div className="text-[11px] uppercase tracking-wider opacity-60 mb-2">Evolução ao longo do dia</div>
+            <div className="w-full h-[300px] rounded-lg border border-white/10 p-2" style={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+              {audienceChartLoading ? (
+                <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">Carregando…</div>
+              ) : audienceChart.length === 0 ? (
+                <div className="w-full h-full flex items-center justify-center text-white/50 text-sm">Sem dados registrados hoje.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={audienceChart} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradAudio" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#d70d0e" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="#d70d0e" stopOpacity={0.05} />
+                      </linearGradient>
+                      <linearGradient id="gradVideo" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.6} />
+                        <stop offset="100%" stopColor="#ffffff" stopOpacity={0.03} />
+                      </linearGradient>
+                      <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#ffffff" stopOpacity={0.35} />
+                        <stop offset="100%" stopColor="#d70d0e" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                    <XAxis dataKey="hora" stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
+                    <YAxis stroke="rgba(255,255,255,0.6)" tick={{ fontSize: 11 }} />
+                    <RTooltip
+                      contentStyle={{ backgroundColor: "#000", border: "1px solid #d70d0e", color: "#fff", borderRadius: 8 }}
+                      labelStyle={{ color: "#ffffff", fontWeight: 700 }}
+                      itemStyle={{ color: "#ffffff" }}
+                    />
+                    <Legend wrapperStyle={{ color: "#fff", fontSize: 12 }} />
+                    <Area type="monotone" dataKey="audio" name="Áudio" stroke="#d70d0e" strokeWidth={2.5} fill="url(#gradAudio)" />
+                    <Area type="monotone" dataKey="video" name="Vídeo" stroke="#ffffff" strokeWidth={2} fill="url(#gradVideo)" />
+                    <Area type="monotone" dataKey="total" name="Total" stroke="#ffffff" strokeWidth={2} strokeDasharray="4 3" fill="none" />
+
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5">
+        <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
             <div className="flex-shrink-0 pt-4 px-4">
@@ -781,7 +1469,7 @@ export default function PromocoesKiosk() {
           )}
 
           {/* Período com ícone de calendário */}
-          <div className="px-4 pt-2 text-xs text-white/60 flex items-center gap-1.5 flex-shrink-0">
+          <div className="px-4 pt-2 text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: "rgba(255, 255, 255, 0.6)" }}>
             <Calendar size={12} />
             <span>Período: {selectedPromo?.data_inicio} a {selectedPromo?.data_fim}</span>
           </div>
@@ -793,26 +1481,31 @@ export default function PromocoesKiosk() {
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
-            <div className="text-white font-bold whitespace-pre-line" style={{ fontSize: `${fontSize}px` }}>
-              {selectedPromo?.texto?.replace(/\/\//g, "\n").split("\n").map((line, i) => (
-                <p
-                  key={i}
-                  className="px-1 py-0.5 rounded transition-colors cursor-default"
-                  onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#a30101")}
-                  onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                >
-                  {line ? renderBoldMarkdown(line) : "\u00A0"}
-                </p>
-              ))}
-            </div>
+            <div
+              className="font-bold promo-html-content"
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
+              dangerouslySetInnerHTML={{
+                __html: (selectedPromo?.texto || "")
+                  .replace(/\/\//g, "<br/>")
+                  .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                  .replace(/color:\s*#000(?:000)?/gi, "color: white"),
+              }}
+            />
 
             {/* Oferecimento dentro do scroll, após o texto */}
             {selectedPromo?.oferecimento && selectedPromo.oferecimento !== "-" && (
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
-              <span className="text-white/50 text-sm uppercase tracking-wider">Oferecimento</span>
-                <p className="text-white text-xl font-bold mt-2">{selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").map((line, i) => (
-                  <span key={i}>{line}{i < selectedPromo.oferecimento.replace(/\/\//g, "\n").split("\n").length - 1 && <br />}</span>
-                ))}</p>
+                <span className="text-sm uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.5)" }}>Oferecimento</span>
+                <div
+                  className="text-xl font-bold mt-2 promo-html-content"
+                  style={{ color: "white" }}
+                  dangerouslySetInnerHTML={{
+                    __html: selectedPromo.oferecimento
+                      .replace(/\/\//g, "<br/>")
+                      .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                      .replace(/color:\s*#000(?:000)?/gi, "color: white"),
+                  }}
+                />
               </div>
             )}
           </div>
@@ -821,23 +1514,27 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="bg-zinc-950 border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5">
+        <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Horário em destaque */}
               <div className="px-4 pt-4 pb-1 flex-shrink-0">
-                <div className="text-lg font-bold text-white">
-                  {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
-                </div>
-                {selectedProgram?.diasSemana && selectedProgram.diasSemana.length > 0 && (
-                  <div className="text-xs text-white/60 mt-0.5">
-                    {selectedProgram.diasSemana.join(", ")}
-                  </div>
-                )}
+                  {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
+                    selectedProgram.schedules.map((s, i) => (
+                      <div key={i} className="text-lg font-bold" style={{ color: "white" }}>
+                        {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
+                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "rgba(255, 255, 255, 0.6)" }}>{s.dias.join(", ")}</span>}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-lg font-bold" style={{ color: "white" }}>
+                      {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                    </div>
+                  )}
               </div>
 
               {/* Rótulo Citações */}
               <div className="px-4 py-1 flex-shrink-0">
-                <span className="text-sm font-bold" style={{ color: "#FF0000" }}>Citações</span>
+                <span className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</span>
               </div>
 
               {/* Controles teleprompter - painel estilizado */}
@@ -848,18 +1545,18 @@ export default function PromocoesKiosk() {
               {/* Testemunhais com scroll, alinhado ao X */}
               <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
                 {(() => {
-                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram.id) : [];
+                  const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
-                    return <p className="text-white/40 text-sm">Nenhum conteúdo disponível.</p>;
+                    return <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhum conteúdo disponível.</p>;
                   }
                   return tests.map(t => (
-                    <div key={t.id} className="mb-4">
+                    <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
                       {t.imagem_url && (
-                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-2 object-contain max-h-[200px]" />
+                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-4 object-contain max-h-[300px]" />
                       )}
                       <div
-                        className="max-w-none text-white leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2 [&_p]:!text-white [&_span]:!text-white"
-                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35 }}
+                        className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
+                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "white" }}
                         dangerouslySetInnerHTML={{
                           __html: t.texto
                             .replace(/\/\//g, "<br/>")
@@ -878,6 +1575,7 @@ export default function PromocoesKiosk() {
             </div>
         </DialogContent>
       </Dialog>
+      <BlitzLocutorPopup userId={audienceUserId} />
     </div>
   );
 }

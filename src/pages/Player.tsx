@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import { toast } from "sonner";
 import type HlsType from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { usePageTitle } from "@/hooks/usePageTitle";
+import { usePageTitle, usePublicHead } from "@/hooks/usePageTitle";
 import { useLayoutColors } from "@/hooks/useLayoutColors";
 import { usePlayerColors } from "@/hooks/usePlayerColors";
 import { useLocation, useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -44,6 +45,7 @@ import {
   Phone,
 } from "lucide-react";
 
+import ElegantLoader from "@/components/player/ElegantLoader";
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const AudioSpectrum = lazy(() => import("@/components/AudioSpectrum"));
 const AudioDualCard = lazy(() => import("@/components/AudioDualCard"));
@@ -54,9 +56,12 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
+import { emitProfileChanged, onProfileChanged } from "@/lib/profileSync";
+import { fetchPlayerListenerProfile } from "@/lib/playerListenerProfile";
 
 function toTitleCase(str: string): string {
   return str.replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
@@ -79,6 +84,7 @@ interface YoutubeVideo {
 
 interface Canal {
   id: string;
+  user_id?: string;
   numero_canal: string;
   name: string;
   logo_url: string;
@@ -351,13 +357,29 @@ export default function PlayerPage() {
   const isTop10Mode = searchParams.get("top10") === "1";
   const navigate = useNavigate();
   const location = useLocation();
-  const isPublicMode = !!userSlug;
-  const playerHomePath = useMemo(() => userSlug ? `/user/${userSlug}/nexohub/player?step=home` : "/user/nexohub/player?step=home", [userSlug]);
+  const isPublicMode = !!userSlug && !userSlug.startsWith(":");
+  usePublicHead(isPublicMode ? userSlug : null, "Player");
+  const playerHomePath = useMemo(() => userSlug ? `/${userSlug}/player?step=home` : "/player?step=home", [userSlug]);
+  const playerWelcomePath = useMemo(() => userSlug ? `/${userSlug}/player` : "/player", [userSlug]);
+  const clearHomeSkipFlag = useCallback(() => {
+    try { window.localStorage.removeItem(`player-step-home:${userSlug || "root"}`); } catch {}
+  }, [userSlug]);
+  const handleEditProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    emitProfileChanged({ reason: "edit" });
+    navigate(`${playerWelcomePath}?edit=1`);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
+  const handleSwitchProfile = useCallback(() => {
+    clearHomeSkipFlag();
+    emitProfileChanged({ reason: "switch" });
+    navigate(playerWelcomePath);
+  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 
   // Top 10 playlist from navigation state
   const top10Playlist = (location.state as any)?.top10Playlist as { videoId: string; title: string; thumbnail: string; artist: string }[] | undefined;
+  const top10OwnerUserId = (location.state as any)?.ownerUserId as string | undefined;
 
   // Diagnostic logs — disabled in production
   // useEffect(() => { console.log("[PLAYER-DIAG] Auth/user state changed", { userId, authLoading }); }, [userId, authLoading]);
@@ -372,11 +394,21 @@ export default function PlayerPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
-  const mutedRef = useRef(false);
+  const [muted, setMuted] = useState<boolean>(() => {
+    try { return localStorage.getItem("player:lastMuted") === "1"; } catch { return false; }
+  });
+  const mutedRef = useRef<boolean>((() => {
+    try { return localStorage.getItem("player:lastMuted") === "1"; } catch { return false; }
+  })());
   const autoplayMutedRef = useRef(false);
-  const [volume, setVolume] = useState(80);
-  const volumeRef = useRef(80);
+  const [volume, setVolume] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem("player:lastVolume");
+      const n = saved != null ? Number(saved) : NaN;
+      return Number.isFinite(n) && n >= 0 && n <= 100 ? n : 80;
+    } catch { return 80; }
+  });
+  const volumeRef = useRef<number>(volume);
   const [volumeHover, setVolumeHover] = useState(false);
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
@@ -411,6 +443,7 @@ export default function PlayerPage() {
   const [empresaNome, setEmpresaNome] = useState<string | null>(null);
   const [artistBgUrl, setArtistBgUrl] = useState<string | null>(null);
   const artistBgCacheRef = useRef<Record<string, string>>({});
+  const profileRadioUserId = isPublicMode ? publicUserId : (user?.id || publicUserId);
 
 
   // Spectrum style preference
@@ -426,18 +459,26 @@ export default function PlayerPage() {
     }
   }, [user]);
 
+  const refreshProfileFromDb = useCallback(async () => {
+    if (!user || !profileRadioUserId) return;
+    const data = await fetchPlayerListenerProfile(user, profileRadioUserId);
+    if (data.nome) setProfileName(data.nome);
+    if (data.avatar_url) setProfileAvatar(data.avatar_url);
+  }, [user, profileRadioUserId]);
+
+  useEffect(() => { void refreshProfileFromDb(); }, [refreshProfileFromDb]);
+
+  // Sincroniza nome/avatar em qualquer aba/tela do player sem recarregar.
   useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("nome, avatar_url")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data?.nome) setProfileName(data.nome);
-        if (data?.avatar_url) setProfileAvatar(data.avatar_url);
-      });
-  }, [user]);
+    return onProfileChanged((detail) => {
+      if (detail.radioUserId && profileRadioUserId && detail.radioUserId !== profileRadioUserId) return;
+      if (detail.nome != null) setProfileName(detail.nome);
+      if (detail.avatar_url != null) setProfileAvatar(detail.avatar_url);
+      if (detail.reason === "switch" || detail.reason === "edit") {
+        void refreshProfileFromDb();
+      }
+    });
+  }, [profileRadioUserId, refreshProfileFromDb]);
 
   // Load spectrum style preference from user_settings
   useEffect(() => {
@@ -486,18 +527,24 @@ export default function PlayerPage() {
   const isVideo = canal?.type === "video" || canal?.type === "video_live";
 
   // Fetch artist background image from Deezer
-  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break";
+  const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
+  const [prevArtistBgUrl, setPrevArtistBgUrl] = useState<string | null>(null);
+  const [artistBgReady, setArtistBgReady] = useState(false);
   useEffect(() => {
-    if (isBreakTrack) { setArtistBgUrl(null); return; }
+    if (artistBgUrl) setPrevArtistBgUrl(artistBgUrl);
+  }, [artistBgUrl]);
+  useEffect(() => {
+    if (isBreakTrack) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const artist = musicData?.artista;
-    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); return; }
+    if (!artist || artist === "Desconhecido" || !isAudio) { setArtistBgUrl(null); setArtistBgReady(false); return; }
     const cacheKey = artist.toLowerCase();
     if (artistBgCacheRef.current[cacheKey]) {
+      setArtistBgReady(false);
       setArtistBgUrl(artistBgCacheRef.current[cacheKey]);
       return;
     }
-    // Clear previous background immediately so gradient shows while loading
-    setArtistBgUrl(null);
+    // Don't clear previous background — keep it visible while loading
+    setArtistBgReady(false);
     let cancelled = false;
     (async () => {
       try {
@@ -539,8 +586,19 @@ export default function PlayerPage() {
   // Record watch history when channel changes
   const watchHistoryRecordedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!canal || !userId || canal.id === watchHistoryRecordedRef.current) return;
+    if (!canal || !userId || !profileRadioUserId || canal.id === watchHistoryRecordedRef.current) return;
     watchHistoryRecordedRef.current = canal.id;
+
+    // Persist last audio channel for auto-resume on PlayerHome "OUVIR"
+    if (canal.type === "audio_live" || canal.type === "audio") {
+      try { localStorage.setItem(`nexo_last_audio_channel_${profileRadioUserId}`, canal.id); } catch {}
+    }
+
+    // Ao entrar em um canal de áudio, força o volume inicial em 40%
+    if (canal.type === "audio_live" || canal.type === "audio") {
+      handleVolumeChange(40);
+    }
+
     
     const recordHistory = async () => {
       const { error } = await supabase.from("watch_history").insert({
@@ -550,6 +608,7 @@ export default function PlayerPage() {
         channel_cover_url: canal.cover_url || "",
         channel_logo_url: canal.logo_url || "",
         channel_type: canal.type,
+        radio_user_id: profileRadioUserId,
       });
       if (error) {
         console.error("[WATCH-HISTORY] Insert error:", error);
@@ -558,7 +617,7 @@ export default function PlayerPage() {
       }
     };
     recordHistory();
-  }, [canal?.id, userId]);
+  }, [canal?.id, userId, profileRadioUserId]);
 
   // Shopping & Pre-Roll state
   const [shopProducts, setShopProducts] = useState<ShopProduct[]>([]);
@@ -617,11 +676,21 @@ export default function PlayerPage() {
   const [midrollIndex, setMidrollIndex] = useState(0);
   const [midrollTotal, setMidrollTotal] = useState(0);
 
-  // Top 10 inter-clip transitions: fade-out 10s before end, pre-roll between clips, fade-in 1.5s
+  // Top 10 inter-clip transitions: play the full clip, then show mid-roll between clips with fade-in/out
   const [top10Fading, setTop10Fading] = useState<"out" | "in" | null>(null);
   const [top10InterPreroll, setTop10InterPreroll] = useState(false); // showing inter-clip preroll
   const top10PendingNextRef = useRef<string | null>(null);
+  // Queue of next clip ids — only drained AFTER the current mid-roll finishes
+  // so we never cut from one song to the next without the ad fully playing.
+  const top10QueueRef = useRef<string[]>([]);
   const top10FadeTriggeredRef = useRef(false);
+  const top10AdvanceStartedRef = useRef(false);
+  const top10AdvanceRef = useRef<(() => void) | null>(null);
+  // Readiness gate: while a transition is awaiting the next clip's media to load,
+  // we keep a black hold overlay up so the previous clip never cuts to a blank
+  // or unbuffered new clip. Cleared when the iframe reports duration > 0.
+  const awaitingNextClipReadyRef = useRef<string | null>(null);
+  const [transitionHold, setTransitionHold] = useState(false);
 
   // Unified buffering detection
   const { buffering, setBuffering } = useBufferingDetection(videoRef, audioRef);
@@ -629,6 +698,62 @@ export default function PlayerPage() {
   const stallTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [streamRequested, setStreamRequested] = useState(false);
   const connectRetryRef = useRef<{ chId: string | null; n: number }>({ chId: null, n: 0 });
+  const playbackSessionRef = useRef(0);
+
+  const stopAllPlayback = useCallback((clearChannelState = false) => {
+    playbackSessionRef.current += 1;
+    destroyMiniAudio();
+    clearMiniPlayerData();
+    if (hlsRef.current) {
+      try { hlsRef.current.destroy(); } catch {}
+      hlsRef.current = null;
+    }
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+    if (warmupAbortRef.current) {
+      try { warmupAbortRef.current.abort(); } catch {}
+      warmupAbortRef.current = null;
+    }
+    resetMediaElement(audioRef.current);
+    resetMediaElement(videoRef.current);
+    setPlaying(false);
+    setBuffering(false);
+    setStreamRequested(false);
+    setStreamStalled(false);
+    setHlsLevels([]);
+    setHlsCurrentLevel(-1);
+    connectRetryRef.current = { chId: null, n: 0 };
+    if (clearChannelState) {
+      setCanais([]);
+      setCurrentIndex(0);
+      setYoutubeVideos([]);
+      setSelectedVideoId(null);
+      setProgramas([]);
+      setApresentadores([]);
+      setShopProducts([]);
+      setMusicData(null);
+      setArtistBgUrl(null);
+      setPublicUserId(null);
+      setPlayerColorUserId(null);
+      setEmpresaLogo(null);
+      setEmpresaNome(null);
+      setWhatsappPhone(null);
+    }
+  }, []);
+
+  const activePublicSlugRef = useRef<string | null>(null);
+  useEffect(() => {
+    const slug = isPublicMode && userSlug && !userSlug.startsWith(":") ? userSlug.toLowerCase().trim() : null;
+    if (activePublicSlugRef.current === slug) return;
+    activePublicSlugRef.current = slug;
+    publicBootstrapRef.current = { slug: null, loaded: false };
+    autoPlayedRef.current = false;
+    warmedPrerollChannelIdRef.current = null;
+    setPrerollDone(!requestedChannelId);
+    stopAllPlayback(true);
+  }, [isPublicMode, requestedChannelId, stopAllPlayback, userSlug]);
 
   // HLS Quality selector state
   const [hlsLevels, setHlsLevels] = useState<{ height: number; bitrate: number; index: number }[]>([]);
@@ -645,11 +770,19 @@ export default function PlayerPage() {
   const playlistRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!playlistOpen || !user) return;
-    supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", user.id)
-      .order("created_at", { ascending: false }).limit(20)
-      .then(({ data }) => { if (data) setRecentTracks(data); });
-  }, [playlistOpen, user]);
+    const playlistOwnerId = isPublicMode ? publicUserId : user?.id;
+    if (!playlistOpen || !playlistOwnerId) return;
+    (async () => {
+      const [{ data }, { getMusicExceptions, filterOutMusicExceptions }] = await Promise.all([
+        supabase.from("musicas_tocadas").select("musica, artista, horario, programa").eq("user_id", playlistOwnerId)
+          .order("created_at", { ascending: false }).limit(40),
+        import("@/lib/musicExceptions"),
+      ]);
+      if (!data) return;
+      const excs = await getMusicExceptions(playlistOwnerId);
+      setRecentTracks(filterOutMusicExceptions(excs, data).slice(0, 20));
+    })();
+  }, [isPublicMode, playlistOpen, publicUserId, user?.id]);
 
   // Close playlist on outside click
   useEffect(() => {
@@ -755,8 +888,8 @@ export default function PlayerPage() {
   }, [musicData?.titulo, musicData?.artista]);
 
   const toggleLike = useCallback(async () => {
-    if (!user || !musicData?.titulo || !musicData?.artista || liked) return;
-    await supabase.from("music_likes").insert({ user_id: user.id, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
+    if (!user || !profileRadioUserId || !musicData?.titulo || !musicData?.artista || liked) return;
+    await supabase.from("music_likes").insert({ user_id: user.id, radio_user_id: profileRadioUserId, titulo: musicData.titulo, artista: musicData.artista, capa: musicData.capa || "" });
     setLiked(true);
     setLikeAnimating(true);
     setTimeout(() => setLikeAnimating(false), 600);
@@ -777,12 +910,12 @@ export default function PlayerPage() {
         }, { onConflict: "user_id,artista,titulo" }).then(() => {});
       }
     }).catch(() => {});
-  }, [user, musicData, liked]);
+  }, [user, profileRadioUserId, musicData, liked]);
 
   // Fetch all initial data — 3 stages for fastest possible first paint
   useEffect(() => {
     let cancelled = false;
-    const slug = userSlug ?? null;
+    const slug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
 
     // Skip fetch if Top 10 mode — playlist comes from navigation state
     if (isTop10Mode) return;
@@ -815,9 +948,13 @@ export default function PlayerPage() {
             return;
           }
 
-          setPublicUserId(data.userId);
-          setPlayerColorUserId(data.userId);
-          setCanais(((data.channels || []) as Canal[]).filter(c => c.type !== "catalog" || c.id === requestedChannelId));
+          const ownerId = typeof data.userId === "string" ? data.userId : null;
+          setPublicUserId(ownerId);
+          setPlayerColorUserId(ownerId);
+          const ownerChannels = ((data.channels || []) as Canal[])
+            .filter((c) => !ownerId || !c.user_id || c.user_id === ownerId)
+            .filter(c => c.type !== "catalog" || c.id === requestedChannelId);
+          setCanais(ownerChannels);
           setProgramas((data.programas || []) as Programa[]);
           setApresentadores((data.apresentadores || []) as Apresentador[]);
           setShopProducts(data.shopProducts || []);
@@ -924,7 +1061,7 @@ export default function PlayerPage() {
 
         // STAGE 2 — Secondary: programas + apresentadores + empresa
         const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
           supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
           supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
@@ -1133,7 +1270,7 @@ export default function PlayerPage() {
     };
 
     if (isPublicMode) {
-      if (!userSlug) return;
+      if (!userSlug || userSlug.startsWith(":")) return;
 
       let cancelled = false;
       let inFlight = false;
@@ -1178,15 +1315,33 @@ export default function PlayerPage() {
         });
       };
 
+      // FIX (capa travada): protege o polling contra deadlocks silenciosos.
+      // Antes: se `supabase.functions.invoke` travasse por rede lenta ou por erro
+      // sem rejeitar, `inFlight` ficava `true` para sempre e nenhuma nova música
+      // era buscada — o player ficava com a mesma capa "tocando agora" por horas.
+      // Agora usamos AbortController+timeout, um watchdog global e forçamos
+      // refresh em focus/online.
+      let inFlightSince = 0;
+      let lastSuccessAt = Date.now();
+      const FETCH_TIMEOUT_MS = 6000;
+
       const fetchPublicMusic = async () => {
-        if (cancelled || inFlight) return;
+        if (cancelled) return;
+        // Se o lock está preso há mais de FETCH_TIMEOUT_MS, libera à força.
+        if (inFlight && Date.now() - inFlightSince < FETCH_TIMEOUT_MS) return;
         inFlight = true;
+        inFlightSince = Date.now();
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
             body: { slug: userSlug, section: "now_playing" },
           });
+          // Aborta manualmente se o timeout disparou
+          if (controller.signal.aborted) return;
           if (cancelled || error || !data) return;
 
+          if (publicUserId && typeof data.userId === "string" && data.userId !== publicUserId) return;
           const incoming = data.musicData || (data.musica
             ? {
                 titulo: data.musica,
@@ -1198,16 +1353,32 @@ export default function PlayerPage() {
             : null);
 
           applyPublicMusic(incoming, typeof data.musicStartTime === "number" ? data.musicStartTime : null);
+          lastSuccessAt = Date.now();
         } catch {
         } finally {
+          window.clearTimeout(timeoutId);
           inFlight = false;
         }
       };
 
       fetchPublicMusic();
       const interval = setInterval(fetchPublicMusic, 3000); // Fallback polling every 3s (Realtime is primary)
+      // Watchdog: se ninguém teve sucesso há >30s e a aba está visível,
+      // força uma nova tentativa (mesmo que `inFlight` esteja preso).
+      const watchdog = setInterval(() => {
+        if (cancelled) return;
+        if (document.hidden) return;
+        if (Date.now() - lastSuccessAt > 30000) {
+          inFlight = false;
+          fetchPublicMusic();
+        }
+      }, 15000);
       const onVisibility = () => { if (!document.hidden && !cancelled) fetchPublicMusic(); };
+      const onFocus = () => { if (!cancelled) fetchPublicMusic(); };
+      const onOnline = () => { if (!cancelled) fetchPublicMusic(); };
       document.addEventListener("visibilitychange", onVisibility);
+      window.addEventListener("focus", onFocus);
+      window.addEventListener("online", onOnline);
 
       // Realtime subscription on user_settings for instant music updates
       let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -1234,7 +1405,10 @@ export default function PlayerPage() {
       return () => {
         cancelled = true;
         clearInterval(interval);
+        clearInterval(watchdog);
         document.removeEventListener("visibilitychange", onVisibility);
+        window.removeEventListener("focus", onFocus);
+        window.removeEventListener("online", onOnline);
         if (realtimeChannel) supabase.removeChannel(realtimeChannel);
       };
     }
@@ -1459,6 +1633,7 @@ export default function PlayerPage() {
   // Play stream
   const playStream = useCallback(
     async (url: string, type: string, forceAutoplay?: boolean, userInitiated?: boolean) => {
+      const sessionId = ++playbackSessionRef.current;
       destroyMiniAudio();
       if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
       resetMediaElement(audioRef.current);
@@ -1484,12 +1659,14 @@ export default function PlayerPage() {
         : mutedRef.current || volumeRef.current === 0;
 
       const handlePlayStarted = () => {
+        if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
         setPlaying(true);
         setBuffering(false);
       };
 
       const handlePlayBlocked = (label: string, error: unknown) => {
+        if (playbackSessionRef.current !== sessionId) return;
         console.warn(label, error);
         // If play was blocked and we weren't muted, retry muted (autoplay policy)
         if (!shouldStartMuted && forceAutoplay) {
@@ -1500,7 +1677,15 @@ export default function PlayerPage() {
           const media = isAudioType ? audioRef.current : videoRef.current;
           if (media) {
             media.muted = true;
-            media.play().then(() => { setPlaying(true); setBuffering(false); }).catch(() => { setPlaying(false); setBuffering(false); });
+            media.play().then(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              setPlaying(true);
+              setBuffering(false);
+            }).catch(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              setPlaying(false);
+              setBuffering(false);
+            });
           }
           return;
         }
@@ -1509,10 +1694,43 @@ export default function PlayerPage() {
       };
 
       const playLabel = isAudioType ? "Audio play blocked:" : "Video play blocked:";
+      const fadeInMedia = (media: HTMLMediaElement) => {
+        if (media.muted) return;
+        const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+        if (target <= 0) return;
+        if (isAudioType) {
+          try { media.volume = target; } catch {}
+          return;
+        }
+        const duration = 900;
+        const start = performance.now();
+        media.volume = 0;
+        const step = (now: number) => {
+          if (playbackSessionRef.current !== sessionId) return;
+          const t = Math.min(1, (now - start) / duration);
+          try { media.volume = target * t; } catch {}
+          if (t < 1) requestAnimationFrame(step);
+          else { try { media.volume = target; } catch {} }
+        };
+        requestAnimationFrame(step);
+      };
       const requestPlay = (media: HTMLMediaElement) => {
-        media.volume = volumeRef.current / 100;
         media.muted = shouldStartMuted;
-        return media.play().then(handlePlayStarted).catch((e) => handlePlayBlocked(playLabel, e));
+        media.volume = (shouldStartMuted || isAudioType) ? volumeRef.current / 100 : 0;
+        return media.play().then(() => {
+          fadeInMedia(media);
+          if (isAudioType && !shouldStartMuted) {
+            const targetVolume = Math.max(0, Math.min(1, volumeRef.current / 100));
+            window.setTimeout(() => {
+              if (playbackSessionRef.current !== sessionId) return;
+              if (media.paused || media.muted) return;
+              if (media.volume < Math.max(0.05, targetVolume * 0.5)) {
+                try { media.volume = targetVolume; } catch {}
+              }
+            }, 1200);
+          }
+          handlePlayStarted();
+        }).catch((e) => handlePlayBlocked(playLabel, e));
       };
 
       const normalizedUrl = normalizeLivePlaylistUrl(url, type);
@@ -1523,6 +1741,7 @@ export default function PlayerPage() {
         : normalizedUrl;
       let Hls: typeof HlsType | null = null;
       if (useHls) Hls = await getHls();
+      if (playbackSessionRef.current !== sessionId) return;
 
       if (isAudioType) {
         const audio = audioRef.current;
@@ -1539,13 +1758,15 @@ export default function PlayerPage() {
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: false,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60,
+            maxBufferLength: 60,
+            maxMaxBufferLength: 120,
             maxBufferHole: 0.5,
             liveSyncDurationCount: 3,
-            liveMaxLatencyDurationCount: 8,
+            liveMaxLatencyDurationCount: 10,
             liveDurationInfinity: true,
-            liveBackBufferLength: 20,
+            // Timeshift: manter 30 min (1800s) de áudio para trás no buffer
+            backBufferLength: 1800,
+            liveBackBufferLength: 1800,
             fragLoadingMaxRetry: 8,
             fragLoadingMaxRetryTimeout: 15000,
             fragLoadingRetryDelay: 500,
@@ -1561,10 +1782,14 @@ export default function PlayerPage() {
           hls.attachMedia(audio);
           if (userInitiated || forceAutoplay) requestAudioPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (!playRequested || audio.paused) requestAudioPlay();
           });
-          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.FRAG_BUFFERED, () => {
+            if (playbackSessionRef.current === sessionId) setBuffering(false);
+          });
           hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (data.fatal) {
               console.warn("HLS fatal error on audio, recovering...", data.type);
               if (data.type === Hls.ErrorTypes.NETWORK_ERROR) hls.startLoad();
@@ -1579,10 +1804,11 @@ export default function PlayerPage() {
           audio.load();
           // Add error handler for reconnection on stream failures
           const onError = () => {
+            if (playbackSessionRef.current !== sessionId) return;
             console.warn("Native audio stream error, will retry...");
             setBuffering(true);
             setTimeout(() => {
-              if (audio.error) {
+              if (playbackSessionRef.current === sessionId && audio.error) {
                 audio.src = normalizedUrl;
                 audio.load();
                 void requestPlay(audio);
@@ -1635,6 +1861,7 @@ export default function PlayerPage() {
           hls.attachMedia(video);
           if (userInitiated || forceAutoplay) requestVideoPlay();
           hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (data.levels && data.levels.length > 0) {
               const levels = data.levels.map((l: any, i: number) => ({
                 height: l.height || 0,
@@ -1646,10 +1873,13 @@ export default function PlayerPage() {
             }
             if (!playRequested || video.paused) requestVideoPlay();
           });
-          hls.on(Hls.Events.FRAG_BUFFERED, () => setBuffering(false));
+          hls.on(Hls.Events.FRAG_BUFFERED, () => {
+            if (playbackSessionRef.current === sessionId) setBuffering(false);
+          });
           let mediaErrorRecoveries = 0;
           let networkRetries = 0;
           hls.on(Hls.Events.ERROR, (_event, data) => {
+            if (playbackSessionRef.current !== sessionId) return;
             if (!data.fatal) {
               if (data.details === "bufferStalledError" && video.readyState >= 2) {
                 const buffered = video.buffered;
@@ -1673,7 +1903,9 @@ export default function PlayerPage() {
                 console.warn("Too many network errors, full restart");
                 hls.destroy();
                 hlsRef.current = null;
-                setTimeout(() => playStream(url, type), 1500);
+                setTimeout(() => {
+                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                }, 1500);
               }
             } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
               mediaErrorRecoveries++;
@@ -1683,7 +1915,9 @@ export default function PlayerPage() {
                 console.warn("Too many media errors, restarting HLS");
                 hls.destroy();
                 hlsRef.current = null;
-                setTimeout(() => playStream(url, type), 1500);
+                setTimeout(() => {
+                  if (playbackSessionRef.current === sessionId) playStream(url, type);
+                }, 1500);
               }
             } else {
               hls.destroy();
@@ -2043,27 +2277,31 @@ export default function PlayerPage() {
     else { document.exitFullscreen?.(); setFullscreen(false); }
   };
 
-  const toggleMute = useCallback(() => {
-    setMuted(prev => {
-      const newMuted = !prev;
-      mutedRef.current = newMuted;
-      if (!newMuted) autoplayMutedRef.current = false;
-      if (videoRef.current) videoRef.current.muted = newMuted;
-      if (audioRef.current) audioRef.current.muted = newMuted;
-      return newMuted;
-    });
+  const setPlayerMuted = useCallback((newMuted: boolean) => {
+    mutedRef.current = newMuted;
+    if (!newMuted) autoplayMutedRef.current = false;
+    setMuted(newMuted);
+    if (videoRef.current) videoRef.current.muted = newMuted;
+    if (audioRef.current) audioRef.current.muted = newMuted;
+    try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
+
+  const toggleMute = useCallback(() => {
+    setPlayerMuted(!mutedRef.current);
+  }, [setPlayerMuted]);
 
   const handleVolumeChange = useCallback((val: number) => {
     setVolume(val);
     volumeRef.current = val;
+    try { localStorage.setItem("player:lastVolume", String(val)); } catch {}
     const v = val / 100;
-    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = false; }
-    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = false; }
-    if (val > 0) autoplayMutedRef.current = false;
     const newMuted = val === 0;
-    setMuted(newMuted);
     mutedRef.current = newMuted;
+    if (val > 0) autoplayMutedRef.current = false;
+    if (videoRef.current) { videoRef.current.volume = v; videoRef.current.muted = newMuted; }
+    if (audioRef.current) { audioRef.current.volume = v; audioRef.current.muted = newMuted; }
+    setMuted(newMuted);
+    try { localStorage.setItem("player:lastMuted", newMuted ? "1" : "0"); } catch {}
   }, []);
 
   // Keep media elements in sync with muted/volume state
@@ -2071,6 +2309,36 @@ export default function PlayerPage() {
     if (videoRef.current) { videoRef.current.muted = muted; videoRef.current.volume = volume / 100; }
     if (audioRef.current) { audioRef.current.muted = muted; audioRef.current.volume = volume / 100; }
   }, [muted, volume]);
+
+  // Safety net for live audio: autoplay retries and DJ/fade effects can leave
+  // the element playing with volume 0. Restore the intended volume on media
+  // readiness/playback events without forcing mute state on video channels.
+  useEffect(() => {
+    if (!isAudio) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const restoreAudibleVolume = () => {
+      const target = Math.max(0, Math.min(1, volumeRef.current / 100));
+      const shouldMute = mutedRef.current || target <= 0;
+      try { audio.muted = shouldMute; } catch {}
+      if (!shouldMute && audio.volume < Math.max(0.05, target * 0.5)) {
+        try { audio.volume = target; } catch {}
+      }
+    };
+
+    restoreAudibleVolume();
+    audio.addEventListener("play", restoreAudibleVolume);
+    audio.addEventListener("playing", restoreAudibleVolume);
+    audio.addEventListener("canplay", restoreAudibleVolume);
+    audio.addEventListener("volumechange", restoreAudibleVolume);
+    return () => {
+      audio.removeEventListener("play", restoreAudibleVolume);
+      audio.removeEventListener("playing", restoreAudibleVolume);
+      audio.removeEventListener("canplay", restoreAudibleVolume);
+      audio.removeEventListener("volumechange", restoreAudibleVolume);
+    };
+  }, [canal?.id, isAudio]);
 
   // OSD volume indicator — shows briefly on mute/volume change
   const [volumeOsd, setVolumeOsd] = useState(false);
@@ -2165,6 +2433,29 @@ export default function PlayerPage() {
     setYtPlaying(true);
   }, []);
 
+  // Drain the Top 10 queue with a readiness gate: keep a black hold overlay
+  // visible until the new YouTube iframe reports a real duration (>0), which
+  // means the media is loaded and ready to start. This prevents cutting from
+  // one clip to a blank/unbuffered next clip.
+  const drainTop10QueueWithGate = useCallback(() => {
+    const nextQueued = top10QueueRef.current.shift() || top10PendingNextRef.current;
+    if (!nextQueued) return;
+    top10PendingNextRef.current = null;
+    awaitingNextClipReadyRef.current = nextQueued;
+    setTransitionHold(true);
+    // Reset duration ref so the gate only lifts when fresh metadata arrives
+    ytDurationRef.current = 0;
+    ytCurrentTimeRef.current = 0;
+    handleSelectVideo(nextQueued);
+    // Safety: never hold the gate for more than 6s
+    setTimeout(() => {
+      if (awaitingNextClipReadyRef.current === nextQueued) {
+        awaitingNextClipReadyRef.current = null;
+        setTransitionHold(false);
+      }
+    }, 6000);
+  }, [handleSelectVideo]);
+
   // YouTube IFrame API: sync volume
   const ytPostMessage = useCallback((command: string, args: any[] = []) => {
     if (ytIframeRef.current?.contentWindow) {
@@ -2190,6 +2481,13 @@ export default function PlayerPage() {
   // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
   const ytNextVideoRef = useRef<() => void>(() => {});
 
+  // Track latest currentTime/duration in refs so the message handler can
+  // validate the natural end of a clip without re-binding on every tick.
+  const ytCurrentTimeRef = useRef(0);
+  const ytDurationRef = useRef(0);
+  useEffect(() => { ytCurrentTimeRef.current = ytCurrentTime; }, [ytCurrentTime]);
+  useEffect(() => { ytDurationRef.current = ytDuration; }, [ytDuration]);
+
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
     if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
@@ -2199,9 +2497,36 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
-          // playerState 0 = ENDED → auto-advance to next video (skip for Top 10 — handled by fade-out logic)
-          if (typeof data.info.playerState === "number" && data.info.playerState === 0 && !isTop10Mode) {
-            ytNextVideoRef.current();
+          // Readiness gate: if we are awaiting the next clip's media to load,
+          // lift the hold overlay only when a real duration (>0) is reported.
+          const reportedDuration = typeof data.info.duration === "number" ? data.info.duration : 0;
+          if (awaitingNextClipReadyRef.current && reportedDuration > 0) {
+            awaitingNextClipReadyRef.current = null;
+            setTransitionHold(false);
+          }
+          // playerState 0 = ENDED — but YouTube sometimes fires it spuriously
+          // (e.g. while the source is still loading or during quality switch),
+          // which would skip clips at ~7 s. Validate against current/duration.
+          if (typeof data.info.playerState === "number" && data.info.playerState === 0) {
+            const dur = ytDurationRef.current;
+            const cur = ytCurrentTimeRef.current;
+            const reachedEnd = dur > 0 && cur > 0 && cur >= dur - 1.5;
+
+            if (!reachedEnd) {
+              // Spurious ENDED — ask YouTube for fresh metadata and ignore.
+              console.log("[player] ignoring spurious ENDED", { cur, dur });
+              ytPostMessage("getDuration");
+              ytPostMessage("getCurrentTime");
+              return;
+            }
+
+            if (isTop10Mode) {
+              // Top 10: advance only after the real natural end of the clip.
+              top10FadeTriggeredRef.current = true;
+              top10AdvanceRef.current?.();
+            } else {
+              ytNextVideoRef.current();
+            }
           }
         }
         // When iframe is ready, start listening and force HD quality
@@ -2209,6 +2534,8 @@ export default function PlayerPage() {
           ytPostMessage("addEventListener", ["onStateChange"]);
           ytPostMessage("setPlaybackQuality", ["hd1080"]);
           ytPostMessage("setPlaybackQualityRange", [{ min: "hd1080", max: "highres" }]);
+          // Prime duration so the ENDED guard above has something to compare to.
+          ytPostMessage("getDuration");
         }
       } catch {}
     };
@@ -2400,64 +2727,89 @@ export default function PlayerPage() {
     setMidrollPreroll(null);
     // Reset Top 10 fade state for new clip
     top10FadeTriggeredRef.current = false;
+    top10AdvanceStartedRef.current = false;
     if (isTop10Mode) {
       setTop10Fading("in"); // Fade-in new clip over 1.5s
       setTimeout(() => setTop10Fading(null), 1600);
     }
   }, [selectedVideoId]);
 
-  // Top 10: fade-out 10 seconds before end and auto-advance with inter-clip pre-roll
-  useEffect(() => {
-    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 20) return;
-    if (top10FadeTriggeredRef.current) return;
-    const timeRemaining = ytDuration - ytCurrentTime;
-    if (timeRemaining <= 10 && timeRemaining > 0) {
-      top10FadeTriggeredRef.current = true;
+  // Top 10: build inter-clip advance routine (mid-roll between songs, with black-fade fallback)
+  const runTop10InterClip = useCallback(() => {
+    if (top10AdvanceStartedRef.current) return;
+    top10AdvanceStartedRef.current = true;
+    ytPostMessage("pauseVideo");
+    const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
+    const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
+    const nextId = youtubeVideos[next]?.videoId;
+    if (!nextId) return;
+    // Enqueue the next clip — it will be played AFTER the mid-roll/black fade ends.
+    top10PendingNextRef.current = nextId;
+    top10QueueRef.current = [nextId];
+
+    const advanceFallback = () => {
+      // Brief black fade between songs when no preroll campaign is configured
+      setTop10InterPreroll(true);
+      setPrerollUrl(null);
+      setPrerollMediaType("video");
       setTop10Fading("out");
-      // Fade volume out over the remaining time
-      ytPostMessage("setVolume", [Math.round(volume * 0.5)]);
-      setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.2)]), 3000);
-      setTimeout(() => ytPostMessage("setVolume", [0]), 6000);
-      // After 8 seconds of fade, pause and show inter-clip preroll then advance
       setTimeout(() => {
-        ytPostMessage("pauseVideo");
-        // Determine next video
-        const idx = youtubeVideos.findIndex(v => v.videoId === selectedVideoId);
-        const next = idx < youtubeVideos.length - 1 ? idx + 1 : 0;
-        const nextId = youtubeVideos[next]?.videoId;
-        if (!nextId) return;
-        top10PendingNextRef.current = nextId;
-        // Fetch and show pre-roll between clips
-        (async () => {
-          if (user) {
-            const now = new Date();
-            const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-            const { data } = await supabase.from("comercial_preroll").select("*").eq("user_id", user.id).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
-            if (data && data.length > 0) {
-              const pool = filterCampaignsByType(data, now, false);
-              if (pool.length > 0) {
-                const selected = pool[Math.floor(Math.random() * pool.length)];
-                setPrerollUrl(selected.video_url);
-                setPrerollLinkUrl((selected as any).link_url || null);
-                setPrerollMediaType((selected as any).media_type || "video");
-                setPrerollYoutubeUrl((selected as any).youtube_url || null);
-                setPrerollBackgroundUrl((selected as any).background_url || null);
-                setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
-                setPrerollVideoPosition((selected as any).video_position || "center");
-                setTop10InterPreroll(true);
-                setPrerollShowing(true);
-                return;
-              }
+        setTop10InterPreroll(false);
+        setTop10Fading(null);
+        drainTop10QueueWithGate();
+      }, 1200);
+    };
+
+    (async () => {
+      try {
+        const ownerId = top10OwnerUserId || effectiveUserId;
+        const validSlug = userSlug && !userSlug.startsWith(":") ? userSlug : null;
+        if (ownerId || (isPublicMode && validSlug)) {
+          const now = new Date();
+          const ct = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+          const { data } = isPublicMode && validSlug
+            ? await supabase.functions.invoke("public-player-data", { body: { slug: validSlug, section: "active_midrolls" } })
+            : await supabase.from("comercial_preroll").select("*").eq("user_id", ownerId).eq("active", true).lte("horario_inicio", ct).gte("horario_fim", ct).order("priority", { ascending: true });
+          const campaigns = isPublicMode && validSlug ? (data?.prerolls || []) : data;
+          if (campaigns && campaigns.length > 0) {
+            const pool = filterCampaignsByType(campaigns, now, true);
+            if (pool.length > 0) {
+              const selected = pool[Math.floor(Math.random() * pool.length)];
+              setPrerollUrl(selected.video_url);
+              setPrerollLinkUrl((selected as any).link_url || null);
+              setPrerollMediaType((selected as any).media_type || "video");
+              setPrerollYoutubeUrl((selected as any).youtube_url || null);
+              setPrerollBackgroundUrl((selected as any).background_url || null);
+              setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
+              setPrerollVideoPosition((selected as any).video_position || "center");
+              setTop10InterPreroll(true);
+              setPrerollShowing(true);
+              // The queued clip will play in onEnded/onSkip below.
+              return;
             }
           }
-          // No preroll available — advance directly
-          setTop10Fading(null);
-          handleSelectVideo(top10PendingNextRef.current!);
-          top10PendingNextRef.current = null;
-        })();
-      }, 8000);
+        }
+      } catch (e) {
+        console.warn("[top10] preroll fetch failed", e);
+      }
+      advanceFallback();
+    })();
+  }, [ytPostMessage, youtubeVideos, selectedVideoId, top10OwnerUserId, effectiveUserId, isPublicMode, userSlug, drainTop10QueueWithGate]);
+
+  // Keep ref in sync so playerState=0 fallback can call latest advance
+  useEffect(() => { top10AdvanceRef.current = runTop10InterClip; }, [runTop10InterClip]);
+
+  // Top 10: do not cut songs early; only fade during the natural ended event.
+  useEffect(() => {
+    if (!isTop10Mode || !isYoutube || !selectedVideoId || ytDuration < 1) return;
+    if (top10FadeTriggeredRef.current) return;
+    const timeRemaining = ytDuration - ytCurrentTime;
+    if (timeRemaining <= 0.6 && timeRemaining >= 0) {
+      top10FadeTriggeredRef.current = true;
+      setTop10Fading("out");
+      ytPostMessage("setVolume", [0]);
     }
-  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, volume, user, ytPostMessage, youtubeVideos, handleSelectVideo]);
+  }, [ytCurrentTime, ytDuration, isTop10Mode, isYoutube, selectedVideoId, ytPostMessage]);
 
   // Monitor currentTime and trigger mid-roll at break points
   useEffect(() => {
@@ -2469,16 +2821,14 @@ export default function PlayerPage() {
       if (Math.abs(ytCurrentTime - bp) < 2) {
         midrollTriggeredRef.current.add(bpIdx);
         setMidrollResumeTime(ytCurrentTime);
-        // Start fade-out, then pause and show mid-roll after 2s
+        // Fast fade-out (~500ms) — black overlay also fades in via midrollFading
         setMidrollFading("out");
-        // Gradually lower YouTube volume during fade-out
-        ytPostMessage("setVolume", [50]);
-        setTimeout(() => ytPostMessage("setVolume", [20]), 800);
-        setTimeout(() => ytPostMessage("setVolume", [0]), 1500);
+        ytPostMessage("setVolume", [30]);
+        setTimeout(() => ytPostMessage("setVolume", [0]), 250);
         setTimeout(() => {
           ytPostMessage("pauseVideo");
-          setMidrollFading(null);
           setMidrollActive(true);
+          // Keep fading="out" so the black overlay stays opaque until the ad mounts
           // Fetch mid-rolls to show (prefer is_midroll=true, up to 3)
           (async () => {
             if (!user) return;
@@ -2500,15 +2850,18 @@ export default function PlayerPage() {
                 setMidrollTotal(queue.length);
                 setMidrollIndex(0);
                 setMidrollPreroll(queue[0]);
+                // Clear fading state once the ad is mounted
+                setTimeout(() => setMidrollFading(null), 50);
                 return;
               }
             }
             // No preroll found, resume immediately
             setMidrollActive(false);
+            setMidrollFading(null);
             ytPostMessage("setVolume", [volume]);
             ytPostMessage("playVideo");
           })();
-        }, 2000);
+        }, 550);
         break;
       }
     }
@@ -2523,23 +2876,33 @@ export default function PlayerPage() {
       setMidrollPreroll(midrollQueue[nextIdx]);
       return;
     }
-    // All ads done — resume video
-    setMidrollActive(false);
+    // All ads done — resume video FROM exact resume time
+    const resumeAt = Math.max(1, midrollResumeTime);
     setMidrollPreroll(null);
     setMidrollQueue([]);
     setMidrollIndex(0);
     setMidrollTotal(0);
-    ytPostMessage("seekTo", [midrollResumeTime, true]);
+    // Pre-seek with mute, allow YT to buffer the correct position before unhiding
     ytPostMessage("setVolume", [0]);
-    setTimeout(() => ytPostMessage("playVideo"), 100);
-    // Fade-in: gradually restore video and volume over 2s
-    setMidrollFading("in");
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.3)]), 400);
-    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.6)]), 1000);
+    ytPostMessage("seekTo", [resumeAt, true]);
+    ytPostMessage("playVideo");
+    // Re-seek after a short delay to defeat the YT "restart from 0" race
+    setTimeout(() => {
+      ytPostMessage("seekTo", [resumeAt, true]);
+      ytPostMessage("playVideo");
+    }, 350);
+    // Only remove the black overlay AFTER the video is actually playing the right frame
+    setTimeout(() => {
+      setMidrollActive(false);
+      setMidrollFading("in");
+    }, 500);
+    // Fade-in volume (~1s)
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.4)]), 700);
+    setTimeout(() => ytPostMessage("setVolume", [Math.round(volume * 0.7)]), 1100);
     setTimeout(() => {
       ytPostMessage("setVolume", [volume]);
       setMidrollFading(null);
-    }, 2000);
+    }, 1500);
   }, [ytPostMessage, midrollResumeTime, volume, midrollIndex, midrollQueue]);
 
   const handleYtHome = useCallback(() => {
@@ -2575,12 +2938,66 @@ export default function PlayerPage() {
   }, [handleHomeClick, user, is991Channel, shopActive]);
 
   if (loading) {
+    // Minimal loading: apenas loader central em fundo preto (sem splash)
     return (
-      <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
-        <div className="absolute inset-y-0 right-0 left-0">
-          <PlayerSkeleton status={loadingStatus} />
-        </div>
+      <div className="h-screen w-screen bg-black flex items-center justify-center animate-fade-in">
+        <ElegantLoader size={44} />
       </div>
+    );
+  }
+
+
+  // ===== New Apple-TV player screen (for audio and video channels) =====
+  if (canal && (isAudio || isVideo) && !isYoutube && !isCatalog) {
+    return (
+      <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
+        <AudioPlayerScreen
+          audioRef={audioRef}
+          videoRef={videoRef}
+          canal={canal}
+          canais={canais}
+          liveChannels={liveChannels}
+          navigateChannel={navigateChannel}
+          programas={programas}
+          currentProg={currentProg}
+          nextProg={nextProg}
+          apresentadores={apresentadores}
+          musicData={musicData}
+          playing={playing}
+          muted={muted}
+          volume={volume}
+          buffering={buffering}
+          onTogglePlay={handlePlayCanal}
+          onSetMuted={setPlayerMuted}
+          onSetVolume={handleVolumeChange}
+          liked={liked}
+          onToggleLike={toggleLike}
+          chatOpen={chatOpen}
+          setChatOpen={setChatOpen}
+          gradeOpen={gradeOpen}
+          setGradeOpen={setGradeOpen}
+          karaokeEnabled={karaokeEnabled}
+          setKaraokeEnabled={setKaraokeEnabled}
+          watchProfileOpen={watchProfileOpen}
+          setWatchProfileOpen={setWatchProfileOpen}
+          empresaLogo={empresaLogo}
+          empresaNome={empresaNome}
+          user={user}
+          profileAvatar={profileAvatar}
+          userDisplayName={userDisplayName}
+          userEmail={user?.email ?? null}
+          signOut={signOut}
+          effectiveUserId={effectiveUserId}
+          isPublicMode={isPublicMode}
+          userSlug={userSlug}
+          onBackHome={handleHomeClick}
+          onEditProfile={handleEditProfile}
+          onSwitchProfile={handleSwitchProfile}
+          radioUserId={profileRadioUserId}
+          onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
+          isVideoChannel={isVideo}
+        />
+      </Suspense>
     );
   }
 
@@ -2604,14 +3021,22 @@ export default function PlayerPage() {
             : `radial-gradient(ellipse ${posMap[gPos] || "at bottom center"}, ${c1} 0%, ${c2} ${gMid}%)`;
           return (
             <>
-              {/* Artist background image from Deezer — full, no blur */}
+              {/* Artist background image from Deezer — crossfade */}
+              {prevArtistBgUrl && prevArtistBgUrl !== artistBgUrl && (
+                <img
+                   src={prevArtistBgUrl}
+                   alt=""
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                   style={{ opacity: artistBgReady ? 0 : 0.55, zIndex: 0, transition: "opacity 1.2s ease-in-out" }}
+                />
+              )}
               {artistBgUrl && (
                 <img
-                  key={artistBgUrl}
                    src={artistBgUrl}
                    alt=""
-                   className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-opacity duration-1000"
-                   style={{ opacity: 0.55, zIndex: 0 }}
+                   className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                   style={{ opacity: artistBgReady ? 0.55 : 0, zIndex: 0, transition: "opacity 1.2s ease-in-out" }}
+                   onLoad={() => setArtistBgReady(true)}
                    onError={() => setArtistBgUrl(null)}
                 />
               )}
@@ -2717,28 +3142,48 @@ export default function PlayerPage() {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollLinkUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              drainTop10QueueWithGate();
             }
           }}
           onEnded={() => {
             const wasTop10Inter = top10InterPreroll;
             setPrerollDone(true); setPrerollShowing(false); setPrerollUrl(null); setPrerollMediaType("video"); setPrerollYoutubeUrl(null); setPrerollBackgroundUrl(null); setPrerollAspectRatio("16:9"); setPrerollVideoPosition("center");
             setTop10InterPreroll(false);
-            if (wasTop10Inter && top10PendingNextRef.current) {
+            if (wasTop10Inter) {
               setTop10Fading(null);
-              handleSelectVideo(top10PendingNextRef.current);
-              top10PendingNextRef.current = null;
+              drainTop10QueueWithGate();
             }
+          }}
+        />
+      )}
+
+      {/* Readiness gate hold: black overlay shown while the next clip's iframe
+          is still loading. Lifted automatically when YouTube reports duration > 0
+          (or after a 6s safety timeout). */}
+      {transitionHold && (
+        <div
+          className="absolute inset-0 z-[60] pointer-events-none"
+          style={{ backgroundColor: "#000", opacity: 1, transition: "opacity 300ms ease" }}
+        />
+      )}
+
+      {/* Mid-Roll Black Backdrop — fades in BEFORE the ad mounts so the program bg never bleeds through */}
+      {(midrollFading || midrollActive) && (
+        <div
+          className="absolute inset-0 z-[55] pointer-events-none"
+          style={{
+            backgroundColor: "#000",
+            opacity: midrollFading === "out" || midrollActive ? 1 : 0,
+            transition: "opacity 0.4s ease-out",
           }}
         />
       )}
 
       {/* Mid-Roll Overlay — fullscreen centered */}
       {midrollActive && midrollPreroll && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: "#000" }}>
+        <div className="absolute inset-0 z-[60] flex items-center justify-center animate-fade-in" style={{ backgroundColor: "#000" }}>
           {/* Counter badge */}
           {midrollTotal > 1 && (
             <div className="absolute top-4 right-4 z-[70] flex items-center gap-2">
@@ -2787,8 +3232,10 @@ export default function PlayerPage() {
             className="absolute pointer-events-none"
             style={{
               width: "100%", height: "100%", top: "0", left: "0", border: "none",
-              transition: top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
-              opacity: midrollFading === "out" || top10Fading === "out" ? 0 : 1,
+              transition: midrollFading || midrollActive
+                ? "opacity 0.4s ease-out"
+                : top10Fading === "in" ? "opacity 1.5s ease-in" : top10Fading === "out" ? "opacity 3s ease-out" : "opacity 2s ease-in-out",
+              opacity: midrollFading === "out" || midrollActive || top10Fading === "out" ? 0 : 1,
             }}
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
             allow="autoplay; encrypted-media"
@@ -2896,7 +3343,7 @@ export default function PlayerPage() {
       {/* Buffering overlay — hidden for catalog channels */}
       {streamStalled && playing && !isCatalog && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
-          <Loader2 className="animate-spin" size={56} style={{ color: "#d30707" }} />
+          <ElegantLoader size={56} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
         </div>
       )}
@@ -3205,11 +3652,20 @@ export default function PlayerPage() {
                   <WatchProfilePopup
                     userId={user.id}
                     userName={userDisplayName}
+                    userEmail={user?.email ?? null}
                     avatarUrl={profileAvatar}
+                    radioUserId={profileRadioUserId}
                     radioName={empresaNome || undefined}
                     onClose={() => setWatchProfileOpen(false)}
-                    onEditProfile={undefined}
-                    onLogout={async () => { await signOut(); navigate("/"); }}
+                    onEditProfile={handleEditProfile}
+                    onSwitchProfile={handleSwitchProfile}
+                    onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
+                    onLogout={async () => {
+                      await signOut();
+                      const dest = userSlug && !userSlug.startsWith(":") ? `/${userSlug}/player` : "/player";
+                      navigate(dest);
+                    }}
+
                   />
                 </Suspense>
               )}
@@ -3237,7 +3693,7 @@ export default function PlayerPage() {
       {gradeOpen && (
         <Suspense fallback={
           <div className="absolute inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: "rgba(0,0,0,0.85)" }}>
-            <Loader2 className="animate-spin" size={32} style={{ color: "#d30707" }} />
+            <ElegantLoader size={40} />
           </div>
         }>
           <PlayerGradeDialog programas={programas} onClose={() => setGradeOpen(false)} />
@@ -3330,12 +3786,55 @@ export default function PlayerPage() {
                     onMouseLeave={(e) => { const tooltip = e.currentTarget.querySelector("[data-seek-tooltip]") as HTMLElement; if (tooltip) tooltip.style.opacity = "0"; }}
                   >
                     <div data-seek-tooltip className="absolute -top-6 text-[10px] font-bold text-white bg-black/90 px-1.5 py-0.5 rounded pointer-events-none -translate-x-1/2 opacity-0 transition-opacity z-10 whitespace-nowrap" />
-                    <div className="w-full h-[3px] rounded-full overflow-visible group-hover:h-[5px] transition-all relative" style={{ backgroundColor: "rgba(255,255,255,0.15)" }}>
-                      <div className="h-full rounded-full transition-all duration-300" style={{ width: `${ytProgressPct}%`, backgroundColor: "hsl(var(--player-accent))", boxShadow: `0 0 8px hsla(var(--player-accent) / 0.5)` }} />
+                    <div className="w-full h-[4px] rounded-full overflow-visible group-hover:h-[7px] transition-all relative" style={{ backgroundColor: "rgba(255,255,255,0.18)" }}>
+                      {/* Filled portion with animated shimmer */}
+                      <div
+                        className="h-full rounded-full transition-[width] duration-300 relative overflow-hidden"
+                        style={{
+                          width: `${ytProgressPct}%`,
+                          background: `linear-gradient(90deg, hsl(var(--player-accent)) 0%, hsl(var(--player-accent) / 0.85) 100%)`,
+                          boxShadow: `0 0 10px hsla(var(--player-accent) / 0.6), 0 0 4px hsla(var(--player-accent) / 0.8)`,
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 pointer-events-none"
+                          style={{
+                            background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%)",
+                            animation: "playerProgressShimmer 2s linear infinite",
+                            backgroundSize: "200% 100%",
+                          }}
+                        />
+                      </div>
+                      {/* Drag handle dot at progress tip */}
+                      <div
+                        className="absolute top-1/2 w-3 h-3 rounded-full -translate-y-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        style={{
+                          left: `${ytProgressPct}%`,
+                          backgroundColor: "hsl(var(--player-accent))",
+                          boxShadow: "0 0 8px hsla(var(--player-accent) / 0.9), 0 0 0 2px rgba(255,255,255,0.95)",
+                        }}
+                      />
                     </div>
-                    {midrollBreakPoints.map((bp, i) => (
-                      <div key={i} className="absolute top-0 w-[6px] rounded-full bg-white" style={{ left: `${(bp / ytDuration) * 100}%`, height: "100%", minHeight: "4px", transform: "translateX(-50%)", opacity: 0.9 }} title={`Intervalo ${i + 1} — ${fmtTime(bp)}`} />
-                    ))}
+                    {midrollBreakPoints.map((bp, i) => {
+                      const passed = ytCurrentTime >= bp;
+                      return (
+                        <div
+                          key={i}
+                          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full pointer-events-none"
+                          style={{
+                            left: `${(bp / ytDuration) * 100}%`,
+                            width: passed ? "8px" : "10px",
+                            height: passed ? "8px" : "10px",
+                            backgroundColor: passed ? "rgba(255,255,255,0.5)" : "#facc15",
+                            boxShadow: passed
+                              ? "0 0 0 2px rgba(0,0,0,0.5)"
+                              : "0 0 0 2px rgba(0,0,0,0.7), 0 0 8px rgba(250,204,21,0.8)",
+                            animation: passed ? undefined : "playerMidrollPulse 1.8s ease-in-out infinite",
+                          }}
+                          title={`Intervalo comercial ${i + 1} — ${fmtTime(bp)}`}
+                        />
+                      );
+                    })}
                   </div>
                   <span className="text-[11px] tabular-nums text-white/60 shrink-0 w-9">{fmtTime(ytDuration)}</span>
                 </div>
@@ -3495,21 +3994,120 @@ export default function PlayerPage() {
                   </button>
                 )}
 
-                {/* Cast / Transmitir */}
-                <button
-                  onClick={() => {
-                    const v = videoRef.current || audioRef.current;
-                    if (!v) return;
-                    if ("remote" in v && (v as any).remote) {
-                      (v as any).remote.prompt().catch(() => {});
-                    }
-                  }}
-                  className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
-                  title="Transmitir"
-                >
-                  <Cast size={16} />
-                </button>
+                {/* Cast / Transmitir — only available for VIDEO channels, transmits media stream only */}
+                {isVideo && (
+                  <button
+                    onClick={async () => {
+                      const v = videoRef.current as any;
+                      const a = audioRef.current as any;
+                      const media = v || a;
+                      const tag = media?.tagName?.toLowerCase();
+                      const meta = {
+                        isVideo,
+                        isAudio: !!a && !v,
+                        mediaTag: tag,
+                        hasMedia: !!media,
+                        currentSrc: media?.currentSrc,
+                        readyState: media?.readyState,
+                        networkState: media?.networkState,
+                        paused: media?.paused,
+                        hasRemote: !!media?.remote,
+                        remoteState: media?.remote?.state,
+                        disableRemote: media?.disableRemotePlayback,
+                        secure: window.isSecureContext,
+                        ua: navigator.userAgent,
+                      };
+                      console.info("[cast] click", meta);
+
+                      if (!media) {
+                        console.warn("[cast] aborted: no media element");
+                        toast.info("Inicie a reprodução antes de transmitir.");
+                        return;
+                      }
+                      if (!media.currentSrc && !media.src) {
+                        console.warn("[cast] aborted: no media source");
+                        toast.info("Inicie a reprodução antes de transmitir.");
+                        return;
+                      }
+
+                      // Ensure remote playback is enabled
+                      try { media.disableRemotePlayback = false; } catch {}
+                      media.removeAttribute?.("disableRemotePlayback");
+
+                      // Wait for media readiness (HAVE_FUTURE_DATA = 3) — important for HLS/MSE
+                      if (media.readyState < 3) {
+                        console.info("[cast] media not ready, waiting for canplay…", { readyState: media.readyState });
+                        try { media.play?.().catch(() => {}); } catch {}
+                        await new Promise<void>((resolve) => {
+                          let done = false;
+                          const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
+                          const cleanup = () => {
+                            media.removeEventListener("canplay", finish);
+                            media.removeEventListener("loadeddata", finish);
+                            clearTimeout(timer);
+                          };
+                          const timer = setTimeout(() => {
+                            console.warn("[cast] readiness wait timed out (3s) — proceeding anyway", { readyState: media.readyState });
+                            finish();
+                          }, 3000);
+                          media.addEventListener("canplay", finish, { once: true });
+                          media.addEventListener("loadeddata", finish, { once: true });
+                        });
+                        console.info("[cast] media now ready", { readyState: media.readyState });
+                      }
+
+                      // 1) Standard Remote Playback API (Chrome/Edge)
+                      if (media.remote && typeof media.remote.prompt === "function") {
+                        console.info("[cast] strategy=remote.prompt");
+                        try {
+                          await media.remote.prompt();
+                          console.info("[cast] remote.prompt resolved");
+                          return;
+                        } catch (err: any) {
+                          console.warn("[cast] remote.prompt failed", { name: err?.name, message: err?.message });
+                          if (err?.name === "NotFoundError") {
+                            toast.info("Nenhum dispositivo de transmissão encontrado nesta rede.");
+                            return;
+                          }
+                          if (err?.name === "NotAllowedError" || err?.name === "AbortError") {
+                            return;
+                          }
+                          // fall through
+                        }
+                      } else {
+                        console.warn("[cast] remote API unavailable on element");
+                      }
+
+                      // 2) Safari / AirPlay
+                      if (typeof media.webkitShowPlaybackTargetPicker === "function") {
+                        console.info("[cast] strategy=airplay");
+                        try { media.webkitShowPlaybackTargetPicker(); return; } catch (e: any) { console.warn("[cast] airplay failed", { name: e?.name, message: e?.message }); }
+                      }
+
+                      // 3) Presentation API fallback (Chromecast via media URL)
+                      try {
+                        const PR = (window as any).PresentationRequest;
+                        if (PR && media.currentSrc) {
+                          console.info("[cast] strategy=presentation", { url: media.currentSrc });
+                          const req = new PR([media.currentSrc]);
+                          await req.start();
+                          return;
+                        }
+                        console.warn("[cast] presentation unavailable", { hasPR: !!PR, hasSrc: !!media.currentSrc });
+                      } catch (e: any) {
+                        console.warn("[cast] presentation failed", { name: e?.name, message: e?.message });
+                      }
+
+                      console.error("[cast] all strategies exhausted");
+                      toast.info("Transmissão indisponível. Verifique se há um dispositivo Chromecast na rede e use o Google Chrome.");
+                    }}
+                    className="hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-full items-center justify-center transition-all hover:scale-105 border-2 border-transparent hover:border-white/70"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "#fff" }}
+                    title="Transmitir mídia"
+                  >
+                    <Cast size={16} />
+                  </button>
+                )}
 
                 {/* Fullscreen */}
                 <button
@@ -3615,8 +4213,8 @@ export default function PlayerPage() {
       )}
 
       {chatOpen && (
-        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><Loader2 className="animate-spin text-white" size={24} /></div>}>
-          <PlayerChat channelId={canal?.id || "default"} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
+        <Suspense fallback={<div className="fixed z-[55] w-[290px] rounded-2xl border border-white/10 flex items-center justify-center" style={{ backgroundColor: "rgba(10,10,10,0.95)", bottom: shopOpen ? "460px" : "165px", right: "20px", height: "400px" }}><ElegantLoader size={32} /></div>}>
+          <PlayerChat channelId={canal?.id || "default"} radioUserId={profileRadioUserId} onClose={() => setChatOpen(false)} shopOpen={shopOpen} />
         </Suspense>
       )}
 

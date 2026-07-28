@@ -1,0 +1,30 @@
+
+CREATE TABLE public.blitz_promocionais (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL,
+  dia DATE NOT NULL,
+  horario TIME NOT NULL,
+  cliente TEXT NOT NULL,
+  equipe TEXT,
+  observacoes TEXT,
+  realizada BOOLEAN NOT NULL DEFAULT false,
+  data_realizacao TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.blitz_promocionais TO authenticated;
+GRANT ALL ON public.blitz_promocionais TO service_role;
+
+ALTER TABLE public.blitz_promocionais ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users manage own blitz"
+  ON public.blitz_promocionais FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE TRIGGER trg_blitz_updated_at
+  BEFORE UPDATE ON public.blitz_promocionais
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE INDEX idx_blitz_user_dia ON public.blitz_promocionais(user_id, dia DESC, horario DESC);

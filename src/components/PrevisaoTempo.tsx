@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
+import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
+import { useAuth } from "@/hooks/useAuth";
 
 interface WeatherData {
   city: string;
@@ -10,6 +13,7 @@ interface WeatherData {
   lon: number;
   current: DayWeather;
   forecast: DayWeather[];
+  isNight?: boolean;
 }
 
 interface DayWeather {
@@ -46,16 +50,17 @@ const weatherLabels: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function weatherCodeToWbIcon(code: number): string {
+function weatherCodeToWbIcon(code: number, isNight = false): string {
+  const suffix = isNight ? "n" : "d";
   const map: Record<number, string> = {
-    0: "c01d", 1: "c02d", 2: "c02d", 3: "c04d",
-    45: "a05d", 48: "a05d", 51: "d01d", 53: "d02d", 55: "d03d",
-    61: "r01d", 63: "r02d", 65: "r03d", 71: "s01d", 73: "s02d", 75: "s03d",
-    80: "r04d", 81: "r05d", 82: "r06d", 95: "t01d", 96: "t04d", 99: "t05d",
+    0: `c01${suffix}`, 1: `c02${suffix}`, 2: `c02${suffix}`, 3: `c04${suffix}`,
+    45: `a05${suffix}`, 48: `a05${suffix}`, 51: `d01${suffix}`, 53: `d02${suffix}`, 55: `d03${suffix}`,
+    61: `r01${suffix}`, 63: `r02${suffix}`, 65: `r03${suffix}`, 71: `s01${suffix}`, 73: `s02${suffix}`, 75: `s03${suffix}`,
+    80: `r04${suffix}`, 81: `r05${suffix}`, 82: `r06${suffix}`, 95: `t01${suffix}`, 96: `t04${suffix}`, 99: `t05${suffix}`,
   };
   const codes = Object.keys(map).map(Number);
   const closest = codes.reduce((prev, curr) => (Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev));
-  return map[closest] || "c01d";
+  return map[closest] || `c01${suffix}`;
 }
 
 function getWeatherLabel(code: number) {
@@ -69,10 +74,41 @@ function formatDay(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "short", day: "numeric", month: "short" });
 }
 
-const STORAGE_KEY = "masterview_last_city";
-const FAVORITES_KEY = "masterview_favorite_cities";
-const PRIMARY_CITY_KEY = "masterview_primary_city";
+// Per-user storage keys — never mix data between users on the same device.
+const lastCityKey = (uid: string) => `masterview_last_city_${uid}`;
+const favoritesKey = (uid: string) => `masterview_favorite_cities_${uid}`;
+const primaryCityKey = (uid: string) => `masterview_primary_city_${uid}`;
 const REFRESH_INTERVAL = 5 * 60 * 1000;
+
+// Palette (nexo-form-design-system)
+const CYAN = "#00BFF0";
+const LIME = "#C6F03C";
+const CARD_BG = "#D6F4FB";
+const DARK = "#0A2540";
+
+const pillInput: React.CSSProperties = {
+  width: "100%",
+  height: 44,
+  borderRadius: 999,
+  background: "#FFFFFF",
+  border: `2px solid ${CYAN}`,
+  padding: "0 20px",
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 13,
+  color: DARK,
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: "'Montserrat', sans-serif",
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: 1,
+  textTransform: "uppercase",
+  color: DARK,
+  marginBottom: 8,
+  display: "block",
+};
 
 interface PrimaryCity {
   name: string;
@@ -80,28 +116,31 @@ interface PrimaryCity {
   lon: number;
 }
 
-function getFavorites(): FavoriteCity[] {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]"); } catch { return []; }
+function getFavorites(uid: string): FavoriteCity[] {
+  try { return JSON.parse(localStorage.getItem(favoritesKey(uid)) || "[]"); } catch { return []; }
 }
-function saveFavorites(list: FavoriteCity[]) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+function saveFavorites(uid: string, list: FavoriteCity[]) {
+  localStorage.setItem(favoritesKey(uid), JSON.stringify(list));
 }
-function getPrimaryCity(): PrimaryCity | null {
-  try { return JSON.parse(localStorage.getItem(PRIMARY_CITY_KEY) || "null"); } catch { return null; }
+function getPrimaryCity(uid: string): PrimaryCity | null {
+  try { return JSON.parse(localStorage.getItem(primaryCityKey(uid)) || "null"); } catch { return null; }
 }
-function savePrimaryCity(city: PrimaryCity | null) {
-  localStorage.setItem(PRIMARY_CITY_KEY, city ? JSON.stringify(city) : "");
+function savePrimaryCity(uid: string, city: PrimaryCity | null) {
+  if (city) localStorage.setItem(primaryCityKey(uid), JSON.stringify(city));
+  else localStorage.removeItem(primaryCityKey(uid));
 }
 
 export default function PrevisaoTempo() {
-  const [city, setCity] = useState(() => localStorage.getItem(STORAGE_KEY) || "");
+  const { user } = useAuth();
+  const uid = user?.id ?? null;
+  const [city, setCity] = useState("");
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [favorites, setFavorites] = useState<FavoriteCity[]>(getFavorites);
+  const [favorites, setFavorites] = useState<FavoriteCity[]>([]);
 
-  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(getPrimaryCity);
+  const [primaryCity, setPrimaryCity] = useState<PrimaryCity | null>(null);
   const [aiDescription, setAiDescription] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [forecastDescription, setForecastDescription] = useState("");
@@ -146,7 +185,7 @@ export default function PrevisaoTempo() {
   }, []);
 
   const fetchWeatherByCoords = useCallback(async (lat: number, lon: number, name: string, silent = false) => {
-    if (!silent) { setLoading(true); setError(""); setWeather(null); }
+    if (!silent) { setLoading(true); setError(""); }
     try {
       const { data: resp, error: fnErr } = await supabase.functions.invoke("fetch-weather", {
         body: { action: "forecast", lat, lon, forecast_days: 6 },
@@ -165,12 +204,13 @@ export default function PrevisaoTempo() {
         humidity: wxData.daily.relative_humidity_2m_max[i + 1] ?? 0, rainChance: wxData.daily.precipitation_probability_max[i + 1] ?? 0,
         weatherCode: wxData.daily.weather_code[i + 1],
       }));
-      localStorage.setItem(STORAGE_KEY, name);
-      setWeather({ city: name, lat, lon, current, forecast });
+      const isNight = wxData.current?.is_day === 0;
+      if (uid) localStorage.setItem(lastCityKey(uid), name);
+      setWeather({ city: name, lat, lon, current, forecast, isNight });
       // AI disabled – skip weather description
     } catch { if (!silent) setError("Erro ao buscar dados meteorológicos."); }
     finally { setLoading(false); }
-  }, []);
+  }, [uid]);
 
   const fetchWeather = useCallback(async (searchCity: string, silent = false) => {
     if (!searchCity.trim()) return;
@@ -189,79 +229,125 @@ export default function PrevisaoTempo() {
   const searchWeather = () => { setShowSuggestions(false); fetchWeather(city); };
 
   useEffect(() => {
-    const primary = getPrimaryCity();
-    if (primary) {
-      setCity(primary.name);
-      fetchWeatherByCoords(primary.lat, primary.lon, primary.name);
-    } else {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) fetchWeather(saved);
+    if (!uid) {
+      // Reset all UI state when logged out or switching users, so we never mix data.
+      setCity("");
+      setWeather(null);
+      setFavorites([]);
+      setPrimaryCity(null);
+      return;
     }
+
+    // Hydrate per-user state from user-scoped localStorage first.
+    setFavorites(getFavorites(uid));
+    const scopedPrimary = getPrimaryCity(uid);
+    setPrimaryCity(scopedPrimary);
+
+    const loadCity = async () => {
+      if (scopedPrimary) {
+        setCity(scopedPrimary.name);
+        fetchWeatherByCoords(scopedPrimary.lat, scopedPrimary.lon, scopedPrimary.name);
+        return;
+      }
+
+      // 2) Fallback: check database for saved city (scoped to this user)
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("weather_city, weather_lat, weather_lon")
+          .eq("user_id", uid)
+          .maybeSingle();
+        if (settings?.weather_city && settings?.weather_lat != null && settings?.weather_lon != null) {
+          const pc = { name: settings.weather_city, lat: settings.weather_lat, lon: settings.weather_lon };
+          savePrimaryCity(uid, pc);
+          setPrimaryCity(pc);
+          setCity(pc.name);
+          localStorage.setItem(lastCityKey(uid), pc.name);
+          fetchWeatherByCoords(pc.lat, pc.lon, pc.name);
+          return;
+        }
+      } catch { /* ignore */ }
+
+      // 3) Last fallback: per-user last city name
+      const saved = localStorage.getItem(lastCityKey(uid));
+      if (saved) {
+        setCity(saved);
+        fetchWeather(saved);
+      }
+    };
+
+    loadCity();
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [fetchWeather, fetchWeatherByCoords]);
+  }, [uid, fetchWeather, fetchWeatherByCoords]);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (weather) {
+    if (weather && uid) {
       intervalRef.current = setInterval(() => {
-        const saved = localStorage.getItem(STORAGE_KEY);
+        const saved = localStorage.getItem(lastCityKey(uid));
         if (saved) fetchWeather(saved, true);
       }, REFRESH_INTERVAL);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [weather, fetchWeather]);
+  }, [weather, fetchWeather, uid]);
 
   const addFavorite = () => {
-    if (!weather) return;
+    if (!weather || !uid) return;
     if (favorites.some(f => f.name === weather.city)) return;
     const updated = [...favorites, { name: weather.city, lat: weather.lat, lon: weather.lon, inXml: false }];
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const toggleFavoriteXml = (name: string) => {
+    if (!uid) return;
     const updated = favorites.map(f => f.name === name ? { ...f, inXml: !f.inXml } : f);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const removeFavorite = (name: string) => {
+    if (!uid) return;
     const updated = favorites.filter(f => f.name !== name);
-    saveFavorites(updated);
+    saveFavorites(uid, updated);
     setFavorites(updated);
   };
 
   const isFavorited = weather ? favorites.some(f => f.name === weather.city) : false;
   const isPrimary = weather ? primaryCity?.name === weather.city : false;
 
-  const togglePrimaryCity = async () => {
-    if (!weather) return;
-    if (isPrimary) {
-      savePrimaryCity(null);
-      setPrimaryCity(null);
-      // Clear from DB
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("user_settings").update({
-          weather_city: null, weather_lat: null, weather_lon: null
-        }).eq("user_id", user.id);
-      }
-    } else {
-      const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
-      savePrimaryCity(pc);
-      setPrimaryCity(pc);
-      // Save to DB for background updates
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const row = { user_id: user.id, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
-        const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).maybeSingle();
-        if (existing) {
-          await supabase.from("user_settings").update(row).eq("user_id", user.id);
-        } else {
-          await supabase.from("user_settings").insert(row);
-        }
-      }
+  const setAsPrimaryCity = async () => {
+    if (!weather || !uid) return;
+    const pc = { name: weather.city, lat: weather.lat, lon: weather.lon };
+    savePrimaryCity(uid, pc);
+    setPrimaryCity(pc);
+    // Remove from favorites if it was there — a city is either primary or secondary.
+    if (favorites.some(f => f.name === pc.name)) {
+      const updated = favorites.filter(f => f.name !== pc.name);
+      saveFavorites(uid, updated);
+      setFavorites(updated);
     }
+    const row = { user_id: uid, weather_city: pc.name, weather_lat: pc.lat, weather_lon: pc.lon };
+    const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", uid).maybeSingle();
+    if (existing) {
+      await supabase.from("user_settings").update(row).eq("user_id", uid);
+    } else {
+      await supabase.from("user_settings").insert(row);
+    }
+  };
+
+  const clearPrimaryCity = async () => {
+    if (!uid) return;
+    savePrimaryCity(uid, null);
+    setPrimaryCity(null);
+    await supabase.from("user_settings").update({
+      weather_city: null, weather_lat: null, weather_lon: null,
+    }).eq("user_id", uid);
+  };
+
+  const togglePrimaryCity = async () => {
+    if (isPrimary) await clearPrimaryCity();
+    else await setAsPrimaryCity();
   };
 
   const fetchForecastDescription = async () => {
@@ -269,253 +355,356 @@ export default function PrevisaoTempo() {
     return;
   };
 
+  const today = new Date().toLocaleDateString("pt-BR");
+
   return (
-    <div className="animate-fade-in space-y-6">
-      {/* Favorite cities chips */}
-      {(primaryCity || favorites.length > 0) && (
-        <div className="flex gap-2 flex-wrap items-center">
-          {primaryCity && (
-            <button
-              onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
-              className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
-            >
-              <Star size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-              {primaryCity.name}
-            </button>
-          )}
-          {favorites.map(f => (
-            <div key={f.name} className="flex items-center gap-2 rounded-full px-3 py-1.5 transition-all hover:shadow-md"
-              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}>
-              <input type="checkbox" checked={f.inXml} onChange={() => toggleFavoriteXml(f.name)}
-                className="w-3 h-3" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} title="Incluir no XML" />
-              <button onClick={() => { setCity(f.name); fetchWeather(f.name); }}
-                className="text-xs font-medium transition-colors"
-                style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-              >{f.name}</button>
-              <button onClick={() => removeFavorite(f.name)}
-                className="text-xs transition-colors hover:text-red-500"
-                style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}
-              >✕</button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Search with autocomplete */}
-      <div className="relative" ref={suggestionsRef}>
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <MapPin size={16} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }} />
-            <input value={city} onChange={(e) => handleCityChange(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && searchWeather()}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-              placeholder="Buscar cidade..."
-              className="w-full pl-10 pr-4 py-2.5 outline-none transition-all text-sm"
-              style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "16px" }}
-              onFocusCapture={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.boxShadow = "0 0 0 3px color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)"; }}
-              onBlur={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
-            />
-          </div>
-          <button onClick={searchWeather} disabled={loading}
-            className="px-6 py-2.5 font-bold transition-all flex items-center gap-2 disabled:opacity-50 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", color: "var(--layout-header-text, #ffffff)", borderRadius: "16px", boxShadow: "0 4px 15px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 25%, transparent)" }}
+    <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* FORM CARD — Cadastro de Cidade / Tempo */}
+      <section
+        style={{
+          background: CARD_BG,
+          borderRadius: 28,
+          padding: "28px 32px 32px",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
           >
-            <Search size={16} /> Buscar
-          </button>
-        </div>
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-2 rounded-xl overflow-hidden"
-            style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))", marginRight: "110px", boxShadow: "0 10px 40px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)" }}>
-            {suggestions.map((s, i) => (
-              <button key={i} onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-3 transition-all flex items-center justify-between text-xs border-b border-white/5 last:border-0 hover:bg-white/10"
-                style={{ color: "var(--layout-header-text, #ffffff)" }}
-              >
-                <span className="flex items-center gap-2">
-                  <MapPin size={12} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
-                  {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
-                </span>
-                <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "10px" }}>{s.country}</span>
-              </button>
-            ))}
+            Cadastro de Cidade / Tempo
+          </h3>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Data: <span style={{ color: CYAN }}>{today}</span>
           </div>
-        )}
-      </div>
+        </div>
 
-      {error && <p className="text-sm font-medium" style={{ color: "#dc2626" }}>{error}</p>}
-
-      {/* Loading skeleton */}
-      {loading && (
-        <div className="animate-pulse space-y-6">
-          <div className="rounded-2xl p-6" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a) 0%, color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%) 100%)" }}>
-            <div className="flex items-center justify-between mb-6">
-              <div className="space-y-3">
-                <div className="h-6 w-36 rounded-lg bg-white/10" />
-                <div className="h-3 w-24 rounded bg-white/5" />
-              </div>
-              <div className="h-16 w-16 rounded-full bg-white/10" />
+        {/* Search field pill */}
+        <div className="relative" ref={suggestionsRef}>
+          <label style={labelStyle}>Buscar cidade</label>
+          <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <MapPin size={16} style={{ position: "absolute", left: 18, top: "50%", transform: "translateY(-50%)", color: CYAN }} />
+              <input
+                value={city}
+                onChange={(e) => handleCityChange(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchWeather()}
+                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                placeholder="Digite o nome da cidade..."
+                style={{ ...pillInput, paddingLeft: 42 }}
+              />
             </div>
-            <div className="h-14 w-32 rounded-lg bg-white/15 mb-6" />
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-white/8" />
+            <button
+              onClick={searchWeather}
+              disabled={loading}
+              style={{
+                height: 44,
+                padding: "0 26px",
+                borderRadius: 999,
+                background: LIME,
+                border: "none",
+                color: DARK,
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 2,
+                textTransform: "uppercase",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: loading ? "wait" : "pointer",
+                opacity: loading ? 0.7 : 1,
+                boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+              }}
+            >
+              <Search size={16} /> Buscar
+            </button>
+          </div>
+          {showSuggestions && suggestions.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                zIndex: 50,
+                top: "100%",
+                left: 0,
+                right: 120,
+                marginTop: 8,
+                background: "#FFFFFF",
+                borderRadius: 20,
+                overflow: "hidden",
+                border: `2px solid ${CYAN}`,
+                boxShadow: "0 10px 30px rgba(10,37,64,0.15)",
+              }}
+            >
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => selectSuggestion(s)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "10px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: i < suggestions.length - 1 ? `1px solid ${CARD_BG}` : "none",
+                    cursor: "pointer",
+                    color: DARK,
+                    fontFamily: "'Montserrat', sans-serif",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <MapPin size={12} style={{ color: CYAN }} />
+                    {s.name}{s.admin1 ? `, ${s.admin1}` : ""}
+                  </span>
+                  <span style={{ fontSize: 10, color: "#94A3B8", fontWeight: 700 }}>{s.country}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Favorites chips */}
+        {(primaryCity || favorites.length > 0) && (
+          <div style={{ marginTop: 20 }}>
+            <label style={labelStyle}>Cidades cadastradas</label>
+            <div className="flex gap-2 flex-wrap">
+              {primaryCity && (
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 8px 8px 16px",
+                    borderRadius: 999,
+                    background: DARK,
+                    color: "#FFFFFF",
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <button
+                    onClick={() => { setCity(primaryCity.name); fetchWeatherByCoords(primaryCity.lat, primaryCity.lon, primaryCity.name); }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: "#FFFFFF", cursor: "pointer", fontWeight: 700 }}
+                  >
+                    <Star size={12} style={{ color: LIME }} fill={LIME} />
+                    {primaryCity.name}
+                  </button>
+                  <button
+                    onClick={() => { if (confirm(`Remover "${primaryCity.name}" como cidade principal?`)) clearPrimaryCity(); }}
+                    style={{ width: 22, height: 22, borderRadius: 999, background: "rgba(255,255,255,0.15)", border: "none", color: "#FFFFFF", cursor: "pointer", fontSize: 12 }}
+                    title="Remover cidade principal"
+                  >✕</button>
+                </div>
+              )}
+              {favorites.map(f => (
+                <div
+                  key={f.name}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "8px 12px",
+                    borderRadius: 999,
+                    background: "#FFFFFF",
+                    border: `2px solid ${CYAN}`,
+                    color: DARK,
+                    fontSize: 12,
+                    fontWeight: 700,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={f.inXml}
+                    onChange={() => toggleFavoriteXml(f.name)}
+                    style={{ width: 12, height: 12, accentColor: CYAN }}
+                    title="Incluir no XML"
+                  />
+                  <button
+                    onClick={() => { setCity(f.name); fetchWeather(f.name); }}
+                    style={{ background: "transparent", border: "none", color: DARK, cursor: "pointer", fontWeight: 700, fontSize: 12 }}
+                  >{f.name}</button>
+                  <button
+                    onClick={() => { if (confirm(`Remover "${f.name}" dos favoritos?`)) removeFavorite(f.name); }}
+                    style={{ background: "transparent", border: "none", color: "#94A3B8", cursor: "pointer", fontSize: 12 }}
+                    title="Remover"
+                  >✕</button>
+                </div>
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="rounded-xl p-5 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}>
-                <div className="h-3 w-14 mx-auto rounded bg-[var(--layout-header-bg)]/8" />
-                <div className="h-10 w-10 mx-auto rounded-full bg-[var(--layout-header-bg)]/5" />
-                <div className="h-4 w-16 mx-auto rounded bg-[var(--layout-header-bg)]/5" />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
+
+        {error && (
+          <p style={{ marginTop: 16, fontSize: 12, fontWeight: 700, color: "#dc2626" }}>{error}</p>
+        )}
+      </section>
+
+      {/* Loading skeleton */}
+      {loading && <ModulePageSkeleton variant="list" />}
 
       {weather && (
         <>
-          {/* Current weather — hero card */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 12%, var(--layout-page-bg, #ffffff) 88%)", boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-5">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <h3 className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.city}</h3>
-                    {(!primaryCity || isPrimary) && (
-                      <label className="flex items-center gap-2 cursor-pointer select-none rounded-full px-3 py-1 transition-all"
-                        style={{ backgroundColor: isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", border: `1px solid ${isPrimary ? "var(--layout-header-bg, #1a1a1a)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 15%, transparent)"}` }}>
-                        <input type="checkbox" checked={isPrimary} onChange={togglePrimaryCity}
-                          className="w-3.5 h-3.5" style={{ accentColor: "var(--layout-accent-color, #2563eb)" }} />
-                        <span className="text-[11px] font-semibold" style={{ color: isPrimary ? "var(--layout-header-text, #ffffff)" : "var(--layout-header-bg, #1a1a1a)" }}>Cidade Principal</span>
-                      </label>
-                    )}
-                    {!isFavorited && (
-                      <button onClick={addFavorite} disabled={isPrimary}
-                        className="flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold transition-all disabled:opacity-40"
-                        style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
-                      >
-                        <Star size={12} /> Secundária
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                      {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-                    </span>
-                  </div>
-                  <p className="text-sm" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>{getWeatherLabel(weather.current.weatherCode)}</p>
-                </div>
-                <div className="flex items-center">
-                  <WeatherIcon code={weather.current.weatherCode} size={72} />
-                </div>
-              </div>
-
-              <div className="flex items-start gap-6 mb-6">
-                <div className="text-6xl font-bold flex-shrink-0" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{weather.current.temp}°C</div>
-                <div className="flex-1 space-y-3 pt-2">
-                  {aiLoading ? (
-                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                      <Sparkles size={14} className="animate-pulse" />
-                      <span className="text-xs italic">Gerando descrição...</span>
-                    </div>
-                  ) : aiDescription ? (
-                    <div className="flex items-start gap-2">
-                      <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-                      <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{aiDescription}</p>
-                    </div>
-                  ) : null}
-
-                  {!forecastDescription && !forecastLoading && aiDescription && (
-                    <button onClick={fetchForecastDescription}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all hover:scale-105"
-                      style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 40%, transparent)" }}
+          {/* Current weather card */}
+          <section
+            style={{
+              background: "#FFFFFF",
+              borderRadius: 28,
+              padding: "24px 28px",
+              border: `1px solid ${CARD_BG}`,
+              boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+            }}
+          >
+            <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <h3 style={{ fontSize: 22, fontWeight: 800, color: DARK, margin: 0 }}>{weather.city}</h3>
+                  {isPrimary ? (
+                    <span
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: DARK, color: "#FFFFFF",
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                      }}
                     >
-                      <Sparkles size={12} /> Quer que eu te fale como será os próximos 5 dias?
+                      <Star size={11} fill={LIME} style={{ color: LIME }} /> Cidade Principal
+                    </span>
+                  ) : (
+                    <button
+                      onClick={setAsPrimaryCity}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: "#FFFFFF", color: DARK,
+                        border: `2px solid ${CYAN}`,
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Star size={11} style={{ color: CYAN }} />
+                      {primaryCity ? "Tornar Principal" : "Definir como Principal"}
                     </button>
                   )}
-                  {forecastLoading && (
-                    <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-                      <Sparkles size={14} className="animate-pulse" />
-                      <span className="text-xs italic">Analisando os próximos dias...</span>
-                    </div>
-                  )}
-                  {forecastDescription && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Veja como fica o tempo nos próximos 5 dias</span>
-                        <button onClick={() => setForecastDescription("")}
-                          className="text-xs px-2 py-0.5 rounded-full transition-all hover:bg-[var(--layout-header-bg)]/10"
-                          style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
-                        >✕</button>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Sparkles size={14} className="mt-0.5 flex-shrink-0" style={{ color: "var(--layout-icon-color, #888888)" }} />
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{forecastDescription}</p>
-                      </div>
-                    </div>
+                  {!isFavorited && !isPrimary && (
+                    <button
+                      onClick={addFavorite}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 6,
+                        padding: "6px 14px", borderRadius: 999,
+                        background: CARD_BG, color: DARK,
+                        border: "none",
+                        fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <Star size={11} /> Adicionar Secundária
+                    </button>
                   )}
                 </div>
+                <p style={{ fontSize: 11, color: "#64748B", fontWeight: 600, textTransform: "capitalize", margin: 0 }}>
+                  {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                </p>
+                <p style={{ fontSize: 13, color: DARK, fontWeight: 600, margin: 0 }}>{getWeatherLabel(weather.current.weatherCode)}</p>
               </div>
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard icon={<Thermometer size={18} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
-                <StatCard icon={<Thermometer size={18} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
-                <StatCard icon={<Droplets size={18} />} label="Humidade" value={`${weather.current.humidity}%`} color="var(--layout-accent-color, #2563eb)" />
-                <StatCard icon={<CloudRain size={18} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
-              </div>
+              <WeatherIcon code={weather.current.weatherCode} size={72} />
             </div>
-          </div>
+
+            <div className="flex items-center gap-6 mb-6 flex-wrap">
+              <div style={{ fontSize: 60, fontWeight: 800, color: DARK, lineHeight: 1 }}>{weather.current.temp}°C</div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard icon={<Thermometer size={16} />} label="Mínima" value={`${weather.current.tempMin}°C`} color="#60a5fa" />
+              <StatCard icon={<Thermometer size={16} />} label="Máxima" value={`${weather.current.tempMax}°C`} color="#f97316" />
+              <StatCard icon={<Droplets size={16} />} label="Humidade" value={`${weather.current.humidity}%`} color={CYAN} />
+              <StatCard icon={<CloudRain size={16} />} label="Chuva" value={`${weather.current.rainChance}%`} color="#a78bfa" />
+            </div>
+          </section>
 
           {/* Forecast 5 days */}
-          <div>
-            <h4 className="text-lg font-bold mb-4" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Próximos 5 dias</h4>
+          <section
+            style={{
+              background: CARD_BG,
+              borderRadius: 28,
+              padding: "24px 28px",
+              boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+            }}
+          >
+            <h4 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: "0 0 16px" }}>
+              Próximos 5 dias
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
               {weather.forecast.map((day) => (
-                <div key={day.date}
-                  className="rounded-xl p-5 text-center space-y-2 transition-all hover:shadow-lg hover:-translate-y-1 group"
-                  style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "2px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; e.currentTarget.style.boxShadow = "0 8px 25px color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)"; e.currentTarget.style.boxShadow = "none"; }}
+                <div
+                  key={day.date}
+                  style={{
+                    background: "#FFFFFF",
+                    borderRadius: 20,
+                    padding: 16,
+                    textAlign: "center",
+                    border: `2px solid ${CYAN}`,
+                  }}
                 >
-                  <p className="text-[11px] font-semibold uppercase tracking-wider capitalize" style={{ color: "rgba(13,4,70,0.45)" }}>{formatDay(day.date)}</p>
-                  <div className="flex justify-center py-1">
+                  <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, color: CYAN, textTransform: "uppercase", margin: 0 }}>
+                    {formatDay(day.date)}
+                  </p>
+                  <div style={{ display: "flex", justifyContent: "center", padding: "8px 0" }}>
                     <WeatherIcon code={day.weatherCode} size={44} forceDay />
                   </div>
-                  <p className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{getWeatherLabel(day.weatherCode)}</p>
-                  <p className="text-2xl font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{day.temp}°C</p>
-                  <div className="text-[11px] space-y-1.5 pt-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                    <p className="flex items-center justify-center gap-1">
-                      <span style={{ color: "#60a5fa" }}>↓{day.tempMin}°</span>
-                      <span className="mx-1">/</span>
-                      <span style={{ color: "#f97316" }}>↑{day.tempMax}°</span>
+                  <p style={{ fontSize: 10, color: "#64748B", fontWeight: 600, margin: "0 0 4px" }}>{getWeatherLabel(day.weatherCode)}</p>
+                  <p style={{ fontSize: 22, fontWeight: 800, color: DARK, margin: "4px 0" }}>{day.temp}°C</p>
+                  <div style={{ fontSize: 11, color: "#64748B", display: "flex", flexDirection: "column", gap: 4, paddingTop: 4 }}>
+                    <p style={{ margin: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+                      <span style={{ color: "#60a5fa", fontWeight: 700 }}>↓{day.tempMin}°</span>
+                      <span style={{ color: "#f97316", fontWeight: 700 }}>↑{day.tempMax}°</span>
                     </p>
-                    <p className="flex items-center justify-center gap-1">
-                      <Droplets size={11} style={{ color: "var(--layout-accent-color, #2563eb)" }} />{day.humidity}%
+                    <p style={{ margin: 0, display: "inline-flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
+                      <Droplets size={11} style={{ color: CYAN }} />{day.humidity}%
                     </p>
-                    <p className="flex items-center justify-center gap-1">
+                    <p style={{ margin: 0, display: "inline-flex", justifyContent: "center", alignItems: "center", gap: 4 }}>
                       <CloudRain size={11} style={{ color: "#a78bfa" }} />{day.rainChance}%
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <XmlLinkRow label="XML TEMPO" dark xmlContent={(() => {
-            if (!weather) return "";
-            const iconUrl = (code: number) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code)}.png`;
-            const dayToXml = (d: DayWeather, tag: string) =>
-              `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
-            const tomorrow = weather.forecast[0];
-            const amanhaXml = tomorrow
-              ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
-              : "";
-            return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual")}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
-          })()} />
+          <XmlSection title="XML Tempo">
+            <XmlLinkRow label="XML TEMPO" xmlContent={(() => {
+              if (!weather) return "";
+              const iconUrl = (code: number, night = false) => `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(code, night)}.png`;
+              const dayToXml = (d: DayWeather, tag: string, night = false) =>
+                `  <${tag} date="${d.date}">\n    <cidade>${weather.city}</cidade>\n    <temperatura>${d.temp}Cº</temperatura>\n    <descricao>${getWeatherLabel(d.weatherCode)}</descricao>\n    <icone_url>${iconUrl(d.weatherCode, night)}</icone_url>\n    <minima>${d.tempMin}Cº</minima>\n    <maxima>${d.tempMax}Cº</maxima>\n    <humidade>${d.humidity}%</humidade>\n    <precipitacao>${d.rainChance}%</precipitacao>\n  </${tag}>`;
+              const tomorrow = weather.forecast[0];
+              const amanhaXml = tomorrow
+                ? `  <amanha date="${tomorrow.date}">\n    <temperatura_minima>${tomorrow.tempMin}Cº</temperatura_minima>\n    <temperatura_maxima>${tomorrow.tempMax}Cº</temperatura_maxima>\n    <url_imagem_icone>${iconUrl(tomorrow.weatherCode)}</url_imagem_icone>\n    <descricao_tempo>${getWeatherLabel(tomorrow.weatherCode)}</descricao_tempo>\n  </amanha>`
+                : "";
+              return `<?xml version="1.0" encoding="UTF-8"?>\n<previsao>\n  <cidade>${weather.city}</cidade>\n${dayToXml(weather.current, "atual", !!weather.isNight)}\n${amanhaXml}\n${weather.forecast.map((d) => dayToXml(d, "dia")).join("\n")}\n</previsao>`;
+            })()} />
+          </XmlSection>
         </>
       )}
     </div>
@@ -524,13 +713,20 @@ export default function PrevisaoTempo() {
 
 function StatCard({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) {
   return (
-    <div className="rounded-xl p-3.5 text-center transition-all hover:shadow-md"
-      style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 50%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 30%, transparent)" }}>
-      <div className="flex items-center justify-center gap-1.5 mb-1.5" style={{ color }}>
+    <div
+      style={{
+        background: CARD_BG,
+        borderRadius: 18,
+        padding: "12px 14px",
+        textAlign: "center",
+        fontFamily: "'Montserrat', sans-serif",
+      }}
+    >
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 6, color }}>
         {icon}
-        <span className="text-[11px] font-medium" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>{label}</span>
+        <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "#64748B" }}>{label}</span>
       </div>
-      <p className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{value}</p>
+      <p style={{ fontSize: 18, fontWeight: 800, color: DARK, margin: 0 }}>{value}</p>
     </div>
   );
 }

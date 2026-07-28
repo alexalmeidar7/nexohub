@@ -1,0 +1,657 @@
+import { useEffect, useRef, useState, useCallback } from "react";
+
+interface Props {
+  videoUrl: string;          // for thumbnail extraction (local blob URL)
+  duration: number;          // total seconds
+  startSec: number;
+  endSec: number;
+  onChange: (start: number, end: number) => void;
+  thumbCount?: number;
+  /** When provided, real audio waveform is drawn from this file. Otherwise placeholder. */
+  audioFile?: File | null;
+  videoTitle?: string;
+  /** Optional external video element to control (so playback shows in the visible player). */
+  externalVideoRef?: React.RefObject<HTMLVideoElement | null>;
+}
+
+function fmt(sec: number, ms = false) {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const base = h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  if (!ms) return base;
+  const mss = Math.floor((sec - Math.floor(sec)) * 1000);
+  return `${base}.${String(mss).padStart(3, "0")}`;
+}
+
+export default function PremiereTimeline({
+  videoUrl, duration, startSec, endSec, onChange,
+  thumbCount = 12, audioFile, videoTitle, externalVideoRef,
+}: Props) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const audioCanvasRef = useRef<HTMLCanvasElement>(null);
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const previewVideoRef = (externalVideoRef ?? internalVideoRef) as React.RefObject<HTMLVideoElement>;
+  const [thumbs, setThumbs] = useState<{ t: number; url: string }[]>([]);
+  const [waveform, setWaveform] = useState<number[] | null>(null);
+  const [dragging, setDragging] = useState<"start" | "end" | "range" | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [playhead, setPlayhead] = useState(0);
+  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapGuide, setSnapGuide] = useState<number | null>(null);
+  const dragOffsetRef = useRef(0);
+  const reverseRef = useRef<number | null>(null);
+  const shiftHeldRef = useRef(false);
+  // Viewport (zoom/pan window) in seconds
+  const [viewStart, setViewStart] = useState(0);
+  const [viewEnd, setViewEnd] = useState(0);
+  const panRef = useRef<{ x: number; vs: number; ve: number } | null>(null);
+
+
+  // Initialize / reset viewport when duration changes
+  useEffect(() => {
+    if (duration > 0) { setViewStart(0); setViewEnd(duration); }
+  }, [duration]);
+
+  const viewSpan = Math.max(0.5, viewEnd - viewStart);
+
+  // Generate thumbnails covering the current viewport, density adapts to track width
+  useEffect(() => {
+    if (!videoUrl || duration <= 0) { setThumbs([]); return; }
+    let cancelled = false;
+    const v = document.createElement("video");
+    v.src = videoUrl;
+    v.crossOrigin = "anonymous";
+    v.muted = true;
+    v.preload = "metadata";
+
+    const span = Math.max(0.001, viewEnd - viewStart);
+    const trackW = trackRef.current?.clientWidth || 800;
+    const tileW = 80; // px per thumb
+    const count = Math.max(8, Math.min(60, Math.ceil(trackW / tileW)));
+
+    const captureAt = (t: number) => new Promise<string>((resolve) => {
+      const onSeeked = () => {
+        const c = document.createElement("canvas");
+        const w = 160, h = 90;
+        c.width = w; c.height = h;
+        const ctx = c.getContext("2d");
+        if (ctx) ctx.drawImage(v, 0, 0, w, h);
+        v.removeEventListener("seeked", onSeeked);
+        try { resolve(c.toDataURL("image/jpeg", 0.6)); } catch { resolve(""); }
+      };
+      v.addEventListener("seeked", onSeeked);
+      v.currentTime = Math.min(Math.max(0.05, t), Math.max(0.1, duration - 0.1));
+    });
+
+    v.addEventListener("loadedmetadata", async () => {
+      const out: { t: number; url: string }[] = [];
+      for (let i = 0; i < count; i++) {
+        if (cancelled) return;
+        const t = viewStart + (span / count) * (i + 0.5);
+        try {
+          const url = await captureAt(t);
+          if (cancelled) return;
+          out.push({ t, url });
+          setThumbs([...out]);
+        } catch { /* ignore frame errors */ }
+      }
+    });
+
+    return () => { cancelled = true; v.src = ""; };
+  }, [videoUrl, duration, viewStart, viewEnd]);
+
+  // Decode audio waveform from local file
+  useEffect(() => {
+    if (!audioFile) { setWaveform(null); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const buf = await audioFile.arrayBuffer();
+        const audio = await ctx.decodeAudioData(buf.slice(0));
+        if (cancelled) return;
+        const ch = audio.getChannelData(0);
+        const samples = 400;
+        const block = Math.floor(ch.length / samples);
+        const peaks: number[] = [];
+        for (let i = 0; i < samples; i++) {
+          let max = 0;
+          const start = i * block;
+          for (let j = 0; j < block; j += 50) {
+            const v = Math.abs(ch[start + j] || 0);
+            if (v > max) max = v;
+          }
+          peaks.push(max);
+        }
+        setWaveform(peaks);
+        ctx.close();
+      } catch (e) {
+        console.warn("waveform decode failed", e);
+        setWaveform(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [audioFile]);
+
+  // Draw waveform — uses accent color from layout
+  useEffect(() => {
+    const canvas = audioCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const w = canvas.width = canvas.clientWidth * window.devicePixelRatio;
+    const h = canvas.height = canvas.clientHeight * window.devicePixelRatio;
+    ctx.clearRect(0, 0, w, h);
+
+    const fullPeaks = waveform || (() => {
+      const arr: number[] = [];
+      for (let i = 0; i < 400; i++) arr.push(0.2 + Math.abs(Math.sin(i * 0.3) * Math.cos(i * 0.07)) * 0.7);
+      return arr;
+    })();
+    // Slice peaks to current viewport
+    const total = fullPeaks.length;
+    const dur = duration > 0 ? duration : viewSpan;
+    const i0 = Math.max(0, Math.floor((viewStart / dur) * total));
+    const i1 = Math.max(i0 + 1, Math.ceil((viewEnd / dur) * total));
+    const peaks = fullPeaks.slice(i0, i1);
+
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--layout-accent-hex").trim() || "#888888";
+    const barW = w / Math.max(1, peaks.length);
+    ctx.fillStyle = accent;
+    ctx.globalAlpha = waveform ? 0.85 : 0.35;
+    peaks.forEach((p, i) => {
+      const bh = Math.max(1, p * h * 0.9);
+      ctx.fillRect(i * barW, (h - bh) / 2, Math.max(1, barW - 1), bh);
+    });
+    ctx.globalAlpha = 1;
+  }, [waveform, viewStart, viewEnd, viewSpan, duration]);
+
+  const tToPct = useCallback((t: number) => ((t - viewStart) / viewSpan) * 100, [viewStart, viewSpan]);
+  const pctStart = tToPct(startSec);
+  const pctEnd = tToPct(endSec);
+  const pctPlay = tToPct(playhead);
+
+  const xToTime = useCallback((clientX: number) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return 0;
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return viewStart + ratio * viewSpan;
+  }, [viewStart, viewSpan]);
+
+  // Wheel zoom (around cursor) + Shift-wheel horizontal pan
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    if (!duration) return;
+    e.preventDefault();
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const cursorT = viewStart + ratio * viewSpan;
+    if (e.shiftKey) {
+      const delta = (e.deltaY || e.deltaX) * (viewSpan / rect.width);
+      let ns = viewStart + delta, ne = viewEnd + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    } else {
+      const factor = e.deltaY > 0 ? 1.25 : 0.8;
+      let newSpan = Math.max(0.5, Math.min(duration, viewSpan * factor));
+      let ns = cursorT - ratio * newSpan;
+      let ne = ns + newSpan;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(Math.max(0, ns)); setViewEnd(Math.min(duration, ne));
+    }
+  }, [duration, viewStart, viewEnd, viewSpan]);
+
+  // Middle-mouse / Alt drag to pan
+  const onPointerDownPan = (e: React.PointerEvent) => {
+    if (!(e.button === 1 || e.altKey)) return;
+    e.preventDefault();
+    panRef.current = { x: e.clientX, vs: viewStart, ve: viewEnd };
+  };
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      const p = panRef.current;
+      if (!p) return;
+      const rect = trackRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const delta = ((p.x - e.clientX) / rect.width) * (p.ve - p.vs);
+      let ns = p.vs + delta, ne = p.ve + delta;
+      if (ns < 0) { ne -= ns; ns = 0; }
+      if (ne > duration) { ns -= (ne - duration); ne = duration; }
+      setViewStart(ns); setViewEnd(ne);
+    };
+    const up = () => { panRef.current = null; };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    return () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+  }, [duration]);
+
+  const resetZoom = () => { setViewStart(0); setViewEnd(duration); };
+  const zoomToSelection = () => {
+    if (endSec <= startSec) return;
+    const pad = (endSec - startSec) * 0.2;
+    setViewStart(Math.max(0, startSec - pad));
+    setViewEnd(Math.min(duration, endSec + pad));
+  };
+  const zoomPct = duration > 0 ? Math.round((duration / viewSpan) * 10) / 10 : 1;
+
+  // Snap a candidate time to nearby targets (playhead, playback bounds, whole seconds, half-seconds).
+  // Threshold is in pixels, converted to seconds via current viewport width.
+  const snapTime = useCallback((t: number, exclude: number[] = []): { t: number; snapped: number | null } => {
+    if (!snapEnabled || shiftHeldRef.current) return { t, snapped: null };
+    const rect = trackRef.current?.getBoundingClientRect();
+    const pxPerSec = rect ? rect.width / viewSpan : 100;
+    const threshPx = 8;
+    const thresh = threshPx / Math.max(1, pxPerSec);
+    const targets: number[] = [0, duration, playhead];
+    // Whole seconds within viewport
+    const s0 = Math.max(0, Math.floor(viewStart));
+    const s1 = Math.min(duration, Math.ceil(viewEnd));
+    const step = viewSpan > 60 ? 5 : viewSpan > 20 ? 1 : 0.5;
+    for (let s = s0; s <= s1; s += step) targets.push(s);
+    let best: number | null = null;
+    let bestDist = thresh;
+    for (const tg of targets) {
+      if (exclude.some((ex) => Math.abs(ex - tg) < 1e-6)) continue;
+      const d = Math.abs(tg - t);
+      if (d < bestDist) { bestDist = d; best = tg; }
+    }
+    return best != null ? { t: best, snapped: best } : { t, snapped: null };
+  }, [snapEnabled, viewSpan, viewStart, viewEnd, duration, playhead]);
+
+  const handleMove = useCallback((e: PointerEvent) => {
+    shiftHeldRef.current = e.shiftKey;
+    const raw = xToTime(e.clientX);
+    if (dragging === "start") {
+      const { t, snapped } = snapTime(raw, [startSec]);
+      setSnapGuide(snapped);
+      onChange(Math.min(t, endSec - 0.5), endSec);
+    } else if (dragging === "end") {
+      const { t, snapped } = snapTime(raw, [endSec]);
+      setSnapGuide(snapped);
+      onChange(startSec, Math.max(t, startSec + 0.5));
+    } else if (dragging === "range") {
+      const len = endSec - startSec;
+      let newStart = Math.max(0, Math.min(duration - len, raw - dragOffsetRef.current));
+      // Try snapping either edge of the range
+      const snapS = snapTime(newStart);
+      const snapE = snapTime(newStart + len);
+      const dS = snapS.snapped != null ? Math.abs(snapS.t - newStart) : Infinity;
+      const dE = snapE.snapped != null ? Math.abs(snapE.t - (newStart + len)) : Infinity;
+      if (dS < dE && dS !== Infinity) { newStart = snapS.t; setSnapGuide(snapS.snapped); }
+      else if (dE !== Infinity) { newStart = snapE.t - len; setSnapGuide(snapE.snapped); }
+      else setSnapGuide(null);
+      newStart = Math.max(0, Math.min(duration - len, newStart));
+      onChange(newStart, newStart + len);
+    }
+  }, [dragging, duration, endSec, startSec, onChange, xToTime, snapTime]);
+
+  useEffect(() => {
+    if (!dragging) return;
+    const up = () => { setDragging(null); setSnapGuide(null); };
+    window.addEventListener("pointermove", handleMove);
+    window.addEventListener("pointerup", up);
+    return () => {
+      window.removeEventListener("pointermove", handleMove);
+      window.removeEventListener("pointerup", up);
+    };
+  }, [dragging, handleMove]);
+
+
+  const startHandle = (kind: "start" | "end" | "range") => (e: React.PointerEvent) => {
+    e.preventDefault();
+    if (kind === "range") {
+      const t = xToTime(e.clientX);
+      dragOffsetRef.current = t - startSec;
+    }
+    setDragging(kind);
+  };
+
+  // Toggle play/pause inside selected range
+  const togglePlay = useCallback(() => {
+    const v = previewVideoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      if (v.currentTime < startSec || v.currentTime >= endSec) v.currentTime = startSec;
+      v.play().catch(() => {});
+    } else {
+      v.pause();
+    }
+  }, [startSec, endSec]);
+
+  // Keyboard shortcuts: Space play/pause, ←/→ frame step (Shift = 1s), J/K/L Premiere-style
+  useEffect(() => {
+    const FRAME = 1 / 30;
+    const seekBy = (delta: number) => {
+      const v = previewVideoRef.current;
+      if (!v) return;
+      const t = Math.max(startSec, Math.min(endSec, (v.currentTime || startSec) + delta));
+      v.currentTime = t;
+      setPlayhead(t);
+    };
+    const setRate = (r: number) => {
+      const v = previewVideoRef.current;
+      if (!v) return;
+      if (reverseRef.current) { window.clearInterval(reverseRef.current); reverseRef.current = null; }
+      if (r === 0) { v.pause(); return; }
+      if (r < 0) {
+        v.pause();
+        const id = window.setInterval(() => {
+          const nt = (v.currentTime || 0) - FRAME * Math.abs(r);
+          if (nt <= startSec) { v.currentTime = startSec; window.clearInterval(id); reverseRef.current = null; return; }
+          v.currentTime = nt;
+        }, 33);
+        reverseRef.current = id;
+      } else {
+        v.playbackRate = r;
+        if (v.currentTime < startSec || v.currentTime >= endSec) v.currentTime = startSec;
+        v.play().catch(() => {});
+      }
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const tgt = e.target as HTMLElement;
+      const tag = tgt?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tgt?.isContentEditable) return;
+      switch (e.code) {
+        case "Space": e.preventDefault(); togglePlay(); break;
+        case "ArrowLeft": e.preventDefault(); seekBy(e.shiftKey ? -1 : -FRAME); break;
+        case "ArrowRight": e.preventDefault(); seekBy(e.shiftKey ? 1 : FRAME); break;
+        case "KeyJ": e.preventDefault(); setRate(-1); break;
+        case "KeyK": e.preventDefault(); setRate(0); break;
+        case "KeyL": e.preventDefault(); setRate(1); break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      if (reverseRef.current) { window.clearInterval(reverseRef.current); reverseRef.current = null; }
+    };
+  }, [togglePlay, startSec, endSec]);
+
+  // Track playhead — LOOP within selected range
+  useEffect(() => {
+    const v = previewVideoRef.current;
+    if (!v) return;
+    const onTime = () => {
+      setPlayhead(v.currentTime);
+      if (v.currentTime >= endSec) {
+        try { v.currentTime = startSec; } catch { /* ignore */ }
+        if (v.paused) v.play().catch(() => {});
+      }
+    };
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
+    v.addEventListener("timeupdate", onTime);
+    v.addEventListener("play", onPlay);
+    v.addEventListener("pause", onPause);
+    return () => {
+      v.removeEventListener("timeupdate", onTime);
+      v.removeEventListener("play", onPlay);
+      v.removeEventListener("pause", onPause);
+    };
+  }, [startSec, endSec, previewVideoRef]);
+
+  // Layout-derived colors via CSS variables
+  const bg = "var(--layout-page-bg, #ffffff)";
+  const headerBg = "var(--layout-header-bg, #1a1a1a)";
+  const headerText = "var(--layout-header-text, #ffffff)";
+  const accent = "var(--layout-accent-color, #444444)";
+  const accentText = "var(--layout-button-text, #ffffff)";
+  const border = "var(--layout-border-color, #333333)";
+  const text = "var(--layout-page-text, #1a1a1a)";
+  const muted = "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)";
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: bg, border: `1px solid color-mix(in srgb, ${border} 40%, transparent)`, boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+      {/* Hidden controllable video — only when no external player is provided */}
+      {!externalVideoRef && <video ref={internalVideoRef} src={videoUrl} className="hidden" preload="metadata" />}
+
+      {/* Header bar */}
+      <div className="px-3 py-2 flex items-center justify-between text-[10px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: headerText }}>
+        <div className="flex items-center gap-2 truncate max-w-[60%]">
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="rounded-full w-6 h-6 flex items-center justify-center transition-transform hover:scale-110"
+            style={{ backgroundColor: accent, color: accentText }}
+            title="Espaço para Play/Pause"
+          >
+            {playing ? "❚❚" : "▶"}
+          </button>
+          <span className="font-bold truncate">{videoTitle || "Timeline"}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="opacity-90">{fmt(startSec, true)} → {fmt(endSec, true)} • {fmt(endSec - startSec, true)}</span>
+          <div className="flex items-center gap-1 ml-2">
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.max(0.5, viewSpan*0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom +">＋</button>
+            <span className="text-[9px] opacity-80 w-10 text-center">{zoomPct}x</span>
+            <button type="button" onClick={() => { const c = (viewStart+viewEnd)/2, ns = Math.min(duration, viewSpan/0.6); setViewStart(Math.max(0, c-ns/2)); setViewEnd(Math.min(duration, c+ns/2)); }} className="w-5 h-5 rounded text-[11px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Zoom −">−</button>
+            <button type="button" onClick={zoomToSelection} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">⛶</button>
+            <button type="button" onClick={resetZoom} className="px-1.5 h-5 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset zoom">⟲</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Transport & precision controls */}
+      <div
+        className="px-3 py-2 flex items-center gap-3 flex-wrap"
+        style={{
+          backgroundColor: `color-mix(in srgb, ${headerBg} 92%, black)`,
+          color: headerText,
+          borderBottom: `1px solid color-mix(in srgb, ${border} 30%, transparent)`,
+        }}
+      >
+        {/* Transport buttons */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (v) { v.currentTime = startSec; setPlayhead(startSec); } }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Ir para o início do trecho"
+          >⏮</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (!v) return; const t = Math.max(startSec, (v.currentTime || startSec) - 1/30); v.currentTime = t; setPlayhead(t); }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Frame anterior (←)"
+          >◀|</button>
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="w-9 h-7 rounded flex items-center justify-center text-[12px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: accent, color: accentText }}
+            title="Play/Pause (Espaço)"
+          >{playing ? "❚❚" : "▶"}</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (!v) return; const t = Math.min(endSec, (v.currentTime || startSec) + 1/30); v.currentTime = t; setPlayhead(t); }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Próximo frame (→)"
+          >|▶</button>
+          <button
+            type="button"
+            onClick={() => { const v = previewVideoRef.current; if (v) { v.currentTime = Math.max(startSec, endSec - 0.05); setPlayhead(endSec); } }}
+            className="w-7 h-7 rounded flex items-center justify-center text-[11px] font-bold transition-transform hover:scale-110"
+            style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }}
+            title="Ir para o fim do trecho"
+          >⏭</button>
+        </div>
+
+        {/* Seek scrubber (within selected range) */}
+        <div className="flex items-center gap-2 flex-1 min-w-[180px]">
+          <span className="text-[9px] font-mono opacity-80 w-14 text-right">{fmt(playhead, true)}</span>
+          <input
+            type="range"
+            min={startSec}
+            max={endSec}
+            step={1/30}
+            value={Math.min(endSec, Math.max(startSec, playhead))}
+            onChange={(e) => { const t = parseFloat(e.target.value); const v = previewVideoRef.current; if (v) v.currentTime = t; setPlayhead(t); }}
+            className="flex-1 h-1 accent-current cursor-pointer"
+            style={{ accentColor: accent }}
+            title="Seek dentro do trecho"
+          />
+          <span className="text-[9px] font-mono opacity-80 w-14">{fmt(endSec, true)}</span>
+        </div>
+
+        {/* Zoom slider */}
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-mono opacity-80">Zoom</span>
+          <input
+            type="range"
+            min={1}
+            max={Math.max(1, Math.round(duration / 0.5))}
+            step={0.1}
+            value={zoomPct}
+            onChange={(e) => {
+              const z = parseFloat(e.target.value);
+              const c = (viewStart + viewEnd) / 2;
+              const ns = Math.max(0.5, Math.min(duration, duration / z));
+              let s = Math.max(0, c - ns / 2);
+              let en = Math.min(duration, s + ns);
+              if (en - s < ns) s = Math.max(0, en - ns);
+              setViewStart(s); setViewEnd(en);
+            }}
+            className="w-28 h-1 cursor-pointer"
+            style={{ accentColor: accent }}
+            title="Zoom da timeline"
+          />
+          <span className="text-[9px] font-mono opacity-80 w-10 text-right">{zoomPct}x</span>
+          <button type="button" onClick={zoomToSelection} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: accent, color: accentText }} title="Zoom no trecho">Trecho</button>
+          <button type="button" onClick={resetZoom} className="px-2 h-6 rounded text-[9px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${headerText} 15%, transparent)`, color: headerText }} title="Reset">Reset</button>
+          <button
+            type="button"
+            onClick={() => setSnapEnabled((s) => !s)}
+            className="px-2 h-6 rounded text-[9px] font-bold ml-1"
+            style={{
+              backgroundColor: snapEnabled ? accent : `color-mix(in srgb, ${headerText} 15%, transparent)`,
+              color: snapEnabled ? accentText : headerText,
+            }}
+            title="Snap magnético (segure Shift ao arrastar para desativar temporariamente)"
+          >🧲 Snap {snapEnabled ? "ON" : "OFF"}</button>
+
+        </div>
+      </div>
+
+
+      <div ref={trackRef} onWheel={onWheel} onPointerDown={onPointerDownPan} className="relative select-none overflow-hidden" style={{ touchAction: "none" }}>
+        {/* Video layer — frames positioned at exact timestamps within viewport */}
+        <div className="relative h-16 overflow-hidden" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 90%, black)` }}>
+          {thumbs.map((th, i) => {
+            const left = ((th.t - viewStart) / viewSpan) * 100;
+            const next = thumbs[i + 1]?.t ?? (th.t + viewSpan / Math.max(1, thumbs.length));
+            const width = ((next - th.t) / viewSpan) * 100;
+            if (left + width < 0 || left > 100) return null;
+            return (
+              <div key={i} className="absolute top-0 bottom-0 overflow-hidden" style={{ left: `${left}%`, width: `${Math.max(0.5, width)}%`, borderRight: `1px solid color-mix(in srgb, ${border} 30%, transparent)` }} title={fmt(th.t, true)}>
+                <img src={th.url} alt="" className="w-full h-full object-cover" draggable={false} />
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Audio layer */}
+        <div className="h-12" style={{ backgroundColor: `color-mix(in srgb, ${headerBg} 95%, black)` }}>
+          <canvas ref={audioCanvasRef} className="w-full h-full block" />
+        </div>
+
+        {/* Time ruler */}
+        <div className="h-5 flex items-center text-[8px] font-mono" style={{ background: `linear-gradient(135deg, ${headerBg}, color-mix(in srgb, ${headerBg} 80%, white 20%))`, color: `color-mix(in srgb, ${headerText} 70%, transparent)` }}>
+          {Array.from({ length: 11 }).map((_, i) => (
+            <div key={i} className="flex-1 pl-1" style={{ borderLeft: `1px solid color-mix(in srgb, ${headerText} 15%, transparent)` }}>
+              {fmt(viewStart + (viewSpan / 10) * i, viewSpan < 5)}
+            </div>
+          ))}
+        </div>
+
+        {/* Selection overlay */}
+        {duration > 0 && (
+          <>
+            <div className="absolute top-0 bottom-0 left-0 pointer-events-none" style={{ width: `${pctStart}%`, backgroundColor: "rgba(0,0,0,0.55)" }} />
+            <div className="absolute top-0 bottom-0 right-0 pointer-events-none" style={{ width: `${100 - pctEnd}%`, backgroundColor: "rgba(0,0,0,0.55)" }} />
+
+            {/* Range bar */}
+            <div
+              onPointerDown={startHandle("range")}
+              className="absolute top-0 bottom-0 cursor-grab active:cursor-grabbing"
+              style={{
+                left: `${pctStart}%`,
+                width: `${pctEnd - pctStart}%`,
+                border: `2px solid ${accent}`,
+                background: `color-mix(in srgb, ${accent} 12%, transparent)`,
+                boxShadow: `inset 0 0 0 1px rgba(0,0,0,0.4), 0 0 0 1px color-mix(in srgb, ${accent} 40%, transparent)`,
+              }}
+            />
+
+            {/* Playhead */}
+            {playing && (
+              <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: `${pctPlay}%`, width: 2, backgroundColor: accentText, boxShadow: `0 0 6px ${accent}` }} />
+            )}
+
+            {/* Snap guide line (visible while snapping during drag) */}
+            {snapGuide != null && dragging && (
+              <div
+                className="absolute top-0 bottom-0 pointer-events-none"
+                style={{
+                  left: `${tToPct(snapGuide)}%`,
+                  width: 0,
+                  borderLeft: `1px dashed ${accentText}`,
+                  boxShadow: `0 0 8px ${accent}`,
+                }}
+              >
+                <div
+                  className="absolute -top-4 -translate-x-1/2 px-1 py-0.5 rounded text-[8px] font-mono font-bold whitespace-nowrap"
+                  style={{ backgroundColor: accentText, color: headerBg }}
+                >
+                  {fmt(snapGuide, true)}
+                </div>
+              </div>
+            )}
+
+
+            {/* Start handle */}
+            <div
+              onPointerDown={startHandle("start")}
+              className="absolute top-0 bottom-0 flex items-center justify-center cursor-ew-resize"
+              style={{ left: `calc(${pctStart}% - 8px)`, width: 16 }}
+            >
+              <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
+              <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
+                style={{ backgroundColor: accent, color: accentText }}>
+                {fmt(startSec, true)}
+              </div>
+            </div>
+
+            {/* End handle */}
+            <div
+              onPointerDown={startHandle("end")}
+              className="absolute top-0 bottom-0 flex items-center justify-center cursor-ew-resize"
+              style={{ left: `calc(${pctEnd}% - 8px)`, width: 16 }}
+            >
+              <div style={{ width: 4, height: "100%", backgroundColor: accent, borderRadius: 2, boxShadow: `0 0 4px ${accent}` }} />
+              <div className="absolute -top-5 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold whitespace-nowrap"
+                style={{ backgroundColor: accent, color: accentText }}>
+                {fmt(endSec, true)}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="px-3 py-1.5 text-[9px] font-mono flex items-center gap-3 flex-wrap" style={{ backgroundColor: `color-mix(in srgb, ${bg} 92%, ${border})`, color: muted, borderTop: `1px solid color-mix(in srgb, ${border} 25%, transparent)` }}>
+        <span>🎬 Vídeo</span>
+        <span>🔊 Áudio {waveform ? "(real)" : "(preview)"}</span>
+        <span className="hidden sm:inline">⌨️ Espaço = Play/Pause • ←/→ frame • J/K/L</span>
+        <span className="hidden sm:inline">🔍 Scroll = Zoom • Shift+Scroll / Alt+Drag = Pan</span>
+        <span className="ml-auto">Arraste as alças para ajustar o corte</span>
+      </div>
+    </div>
+  );
+}

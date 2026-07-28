@@ -49,8 +49,12 @@ export function extractRoteiroHtml(html: string): string {
   const div = document.createElement("div");
   div.innerHTML = html;
 
-  const rows = div.querySelectorAll("tr[data-pergunta], table tr");
-  const lines: string[] = [];
+  const rows = div.querySelectorAll("tr[data-pergunta], table tr, p[data-news-item]");
+  const blocks: string[] = [];
+
+  const labelStyle = "display:block;font-size:0.45em;opacity:0.5;letter-spacing:3px;margin-bottom:0.35em;font-weight:400";
+  const contentStyle = "display:block;line-height:1.5";
+  const blockStyle = "display:block;margin-bottom:1.4em";
 
   if (rows.length > 0) {
     rows.forEach((row) => {
@@ -59,27 +63,83 @@ export function extractRoteiroHtml(html: string): string {
       if (row.querySelector("[contenteditable='false']") && !row.getAttribute("data-pergunta")) return;
 
       const cells = row.querySelectorAll("td");
-      if (cells.length < 3) return;
+      if (cells.length < 2) return;
 
-      const elemento = (cells[1]?.textContent || "").trim();
-      const descricaoHtml = sanitizeInlineHtml(cells[2]).trim();
-      const descricaoText = (cells[2]?.textContent || "").trim();
+      // Try to detect: [tempo, elemento, descricao] or [elemento, descricao]
+      let elemento = "";
+      let descricaoCell: Element | null = null;
+      let descricaoText = "";
+
+      if (cells.length >= 3) {
+        elemento = (cells[1]?.textContent || "").trim();
+        descricaoCell = cells[2];
+        descricaoText = (cells[2]?.textContent || "").trim();
+      } else {
+        elemento = (cells[0]?.textContent || "").trim();
+        descricaoCell = cells[1];
+        descricaoText = (cells[1]?.textContent || "").trim();
+      }
 
       if (!elemento && !descricaoText) return;
       if (descricaoText === "[Insira a pergunta aqui]" || descricaoText === "[Insira o texto aqui]") return;
 
-      if (elemento) lines.push(`<span style="font-size:0.6em;opacity:0.55;letter-spacing:2px">${elemento.toUpperCase()}</span>`);
-      if (descricaoHtml) lines.push(descricaoHtml);
-      lines.push("");
+      const descricaoHtml = descricaoCell ? sanitizeInlineHtml(descricaoCell).trim() : "";
+
+      const parts: string[] = [];
+      if (elemento) parts.push(`<span style="${labelStyle}">${elemento.toUpperCase()}</span>`);
+      if (descricaoHtml) parts.push(`<span style="${contentStyle}">${descricaoHtml}</span>`);
+      
+      // If there's a summary/resumo column in the row (e.g. from ProgramaExpress)
+      // but standard TP rows only have 2 or 3 columns usually.
+      // For NxHub scripts, we might have extra data.
+      if (cells.length >= 4) {
+        const resumoText = (cells[3]?.textContent || "").trim();
+        if (resumoText) {
+          parts.push(`<div style="display:block;margin-top:0.4em;font-size:0.8em;opacity:0.85;line-height:1.4">${resumoText}</div>`);
+        }
+      }
+
+      if (parts.length > 0) {
+        blocks.push(`<div style="${blockStyle}">${parts.join("")}</div>`);
+      }
     });
   }
 
-  if (lines.filter((l) => l.trim()).length > 0) {
-    lines.push('<br/><br/><span style="opacity:0.4;font-size:0.5em;letter-spacing:3px">*** FIM DO TEXTO ***</span>');
-    return lines.join("<br/>").trim();
+  if (blocks.length > 0) {
+    blocks.push('<div style="display:block;margin-top:2em;text-align:center"><span style="opacity:0.35;font-size:0.5em;letter-spacing:4px">*** FIM DO TEXTO ***</span></div>');
+    return blocks.join("");
   }
 
-  return sanitizeInlineHtml(div) || div.textContent || "";
+  // Fallback: plain text / paragraph content (e.g. Podcast / Express scripts)
+  // Split by numbered question markers (1), 2), 3)...) and double line breaks
+  const rawHtml = sanitizeInlineHtml(div) || div.textContent || "";
+  const plain = (div.textContent || "").trim();
+
+  if (plain) {
+    // Insert paragraph breaks before "N)" markers and after "?" / "."
+    let parts: string[] = [];
+
+    // Split on numbered markers like "1)", "2)" — keep the marker with the question
+    const numberedSplit = plain.split(/(?=\b\d{1,2}\)\s)/g).map(s => s.trim()).filter(Boolean);
+
+    if (numberedSplit.length > 1) {
+      parts = numberedSplit;
+    } else {
+      // Otherwise split on blank lines or sentence-ending punctuation followed by capital
+      parts = plain.split(/\n\s*\n+/).map(s => s.trim()).filter(Boolean);
+      if (parts.length <= 1) {
+        parts = plain.split(/(?<=[.?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])/g).map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    if (parts.length > 1) {
+      const paraStyle = "display:block;margin-bottom:1.2em;line-height:1.5";
+      const out = parts.map(p => `<div style="${paraStyle}">${p.replace(/</g, "&lt;")}</div>`).join("");
+      return out + '<div style="display:block;margin-top:2em;text-align:center"><span style="opacity:0.35;font-size:0.5em;letter-spacing:4px">*** FIM DO TEXTO ***</span></div>';
+    }
+  }
+
+  return rawHtml;
 }
 
 export function stripHtml(html: string): string {

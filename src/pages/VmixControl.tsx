@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
-import logoMixControl from "@/assets/logo-mixcontrol.png";
+import logoMixControl from "@/assets/logo-mixcontrol.png"; // User requested logo change, but the asset is managed by Lovable. I will keep using the project's logo variable.
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
 export default function VmixControl() {
@@ -90,7 +90,7 @@ export default function VmixControl() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2"
-              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0", focusRingColor: "#268ffa" } as React.CSSProperties}
+              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" }}
             />
           </div>
 
@@ -103,7 +103,7 @@ export default function VmixControl() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition-all focus:ring-2"
-              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" } as React.CSSProperties}
+              style={{ backgroundColor: "#f0f4fa", color: "#0d0446", border: "1px solid #e2e8f0" }}
             />
           </div>
 
@@ -125,11 +125,11 @@ export default function VmixControl() {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-3 px-4 py-2 rounded-xl" style={{ backgroundColor: "#111115", border: "1px solid #2a2a30", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)" }}>
-            <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626", boxShadow: "0 0 6px #dc262660" }} />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#111115", border: "1px solid #2a2a30", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)" }}>
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626", boxShadow: "0 0 6px #dc262660" }} />
             <div className="flex flex-col items-end">
-              <span className="text-lg font-mono font-black tracking-[0.3em] tabular-nums leading-none" style={{ color: "#22c55e", textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>{clock.time}</span>
-              <span className="text-[9px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "#666" }}>{clock.date}</span>
+              <span className="text-xs font-mono font-black tracking-[0.3em] tabular-nums leading-none" style={{ color: "#22c55e", textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>{clock.time}</span>
+              <span className="text-[7px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "#666" }}>{clock.date}</span>
             </div>
           </div>
           <button
@@ -142,7 +142,7 @@ export default function VmixControl() {
           </button>
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={logoMixControl} alt="Mix Control" className="h-5" />
+          <img src={logoMixControl} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>

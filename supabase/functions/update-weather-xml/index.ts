@@ -16,26 +16,122 @@ const weatherLabelsMap: Record<number, string> = {
   95: "Tempestade", 96: "Tempestade com granizo", 99: "Tempestade severa",
 };
 
-function weatherCodeToWbIcon(code: number): string {
-  const map: Record<number, string> = {
-    0: "c01d", 1: "c02d", 2: "c02d", 3: "c04d",
-    45: "a05d", 48: "a05d", 51: "d01d", 53: "d02d", 55: "d03d",
-    61: "r01d", 63: "r02d", 65: "r03d", 71: "s01d", 73: "s02d", 75: "s03d",
-    80: "r04d", 81: "r05d", 82: "r06d", 95: "t01d", 96: "t04d", 99: "t05d",
-  };
-  const codes = Object.keys(map).map(Number);
-  const closest = codes.reduce((prev, curr) =>
-    Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev
-  );
-  return map[closest] || "c01d";
-}
-
 function getLabel(code: number): string {
   const codes = Object.keys(weatherLabelsMap).map(Number);
   const closest = codes.reduce((prev, curr) =>
     Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev
   );
   return weatherLabelsMap[closest] || "Desconhecido";
+}
+
+/* ── Flat white-line SVG weather icons (matching CenarioTela WeatherIcons) ── */
+function weatherIconSvg(code: number, isNight = false): string {
+  const S = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">`;
+  const E = `</svg>`;
+
+  const sun = `<circle cx="32" cy="26" r="8"/>${[0,45,90,135,180,225,270,315].map(a=>{const r=a*Math.PI/180;return`<line x1="${(32+13*Math.cos(r)).toFixed(1)}" y1="${(26+13*Math.sin(r)).toFixed(1)}" x2="${(32+18*Math.cos(r)).toFixed(1)}" y2="${(26+18*Math.sin(r)).toFixed(1)}"/>`}).join("")}`;
+  const moon = `<path d="M36 16a12 12 0 1 0 0 20 10 10 0 0 1 0-20z"/>`;
+  const cloud = `<path d="M20 44a8 8 0 0 1 0-16h1a12 12 0 0 1 22 4h1a7 7 0 0 1 0 14H20z"/>`;
+  const smallCloud = `<path d="M24 50a6 6 0 0 1 0-12h1a9 9 0 0 1 16 3h1a5 5 0 0 1 0 10H24z"/>`;
+  const rain = (n: number) => Array.from({length: n}, (_, i) => {
+    const x = 26 + i * 6;
+    return `<line x1="${x}" y1="50" x2="${x-2}" y2="58"/>`;
+  }).join("");
+  const heavyRain = Array.from({length: 4}, (_, i) => {
+    const x = 22 + i * 7;
+    return `<line x1="${x}" y1="48" x2="${x-3}" y2="60"/>`;
+  }).join("");
+  const snow = (n: number) => Array.from({length: n}, (_, i) => {
+    const x = 26 + i * 7;
+    const y = i % 2 === 0 ? 52 : 56;
+    return `<circle cx="${x}" cy="${y}" r="1.5" fill="white"/>`;
+  }).join("");
+  const bolt = `<polyline points="34,42 30,50 36,50 32,60" stroke-width="2.5"/>`;
+  const fog = `<line x1="16" y1="48" x2="48" y2="48"/><line x1="20" y1="54" x2="44" y2="54"/><line x1="18" y1="60" x2="46" y2="60"/>`;
+
+  const codes = Object.keys(weatherLabelsMap).map(Number);
+  const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+
+  let body = "";
+  if (c === 0) {
+    body = isNight ? moon : sun;
+  } else if (c <= 2) {
+    body = (isNight ? `<g transform="translate(-4,-10) scale(0.7)">${moon}</g>` : `<g transform="translate(-4,-10) scale(0.7)">${sun}</g>`) + smallCloud;
+  } else if (c === 3) {
+    body = cloud;
+  } else if (c <= 48) {
+    body = cloud + fog;
+  } else if (c <= 55) {
+    body = cloud + rain(2);
+  } else if (c <= 63) {
+    body = cloud + rain(3);
+  } else if (c <= 65) {
+    body = cloud + heavyRain;
+  } else if (c <= 75) {
+    body = cloud + snow(3);
+  } else if (c <= 82) {
+    body = cloud + heavyRain;
+  } else {
+    body = cloud + bolt;
+  }
+
+  return `${S}${body}${E}`;
+}
+
+// Map WMO code → basmilius/weather-icons name (colored set)
+function basmiliusIconName(code: number, isNight: boolean): string {
+  const codes = Object.keys(weatherLabelsMap).map(Number);
+  const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+  if (c === 0) return isNight ? "clear-night" : "clear-day";
+  if (c <= 2) return isNight ? "partly-cloudy-night" : "partly-cloudy-day";
+  if (c === 3) return "cloudy";
+  if (c <= 48) return "fog";
+  if (c <= 55) return "drizzle";
+  if (c <= 65) return "rain";
+  if (c <= 75) return "snow";
+  if (c <= 82) return "rain";
+  return "thunderstorms-rain";
+}
+
+function weatherIconKey(code: number, isNight = false): string {
+  const suffix = isNight ? "n" : "d";
+  const codes = Object.keys(weatherLabelsMap).map(Number);
+  const c = codes.reduce((prev, curr) => Math.abs(curr - code) < Math.abs(prev - code) ? curr : prev);
+  return `weather-icon-static-${c}-${suffix}`;
+}
+
+const uploadedIcons: Record<string, string> = {};
+
+async function ensureIconUploaded(
+  supabase: ReturnType<typeof createClient>,
+  code: number,
+  isNight: boolean,
+): Promise<string> {
+  const key = weatherIconKey(code, isNight);
+  if (uploadedIcons[key]) return uploadedIcons[key];
+
+  const pngFileName = `weather-icons/${key}.png`;
+  const iconName = basmiliusIconName(code, isNight);
+  const svgSource = `cdn.jsdelivr.net/gh/basmilius/weather-icons@dev/production/fill/svg-static/${iconName}.svg`;
+  const pngFetchUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgSource)}&output=png&w=256&h=256`;
+
+  let pngPublicUrl = "";
+  try {
+    const res = await fetch(pngFetchUrl);
+    if (res.ok) {
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      await supabase.storage
+        .from("xml-files")
+        .upload(pngFileName, bytes, { upsert: true, contentType: "image/png", cacheControl: "3600" });
+      const { data: pngUrlData } = supabase.storage.from("xml-files").getPublicUrl(pngFileName);
+      pngPublicUrl = (pngUrlData?.publicUrl || "").split("?")[0];
+    }
+  } catch (err) {
+    console.error("Colored icon fetch failed:", err);
+  }
+
+  uploadedIcons[key] = pngPublicUrl;
+  return pngPublicUrl;
 }
 
 serve(async (req) => {
@@ -48,7 +144,6 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch all users with weather city configured
     const { data: settings, error: settingsErr } = await supabase
       .from("user_settings")
       .select("user_id, weather_city, weather_lat, weather_lon")
@@ -69,7 +164,6 @@ serve(async (req) => {
         let lon = s.weather_lon;
         let name = s.weather_city;
 
-        // If no coords, geocode
         if (!lat || !lon) {
           const geoRes = await fetch(
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=pt`
@@ -81,26 +175,28 @@ serve(async (req) => {
           name = geo.results[0].name;
         }
 
-        // Fetch weather
         const wxRes = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=2`
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,apparent_temperature,wind_speed_10m,is_day&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code,sunrise,sunset,relative_humidity_2m_max&timezone=auto&forecast_days=6`
         );
         const d = await wxRes.json();
 
-        const wbIcon = weatherCodeToWbIcon(d.current.weather_code);
-        const iconUrl = `https://www.weatherbit.io/static/img/icons/${wbIcon}.png`;
+        // Reliable day/night via Open-Meteo's is_day flag (1 = day, 0 = night)
+        const isNight = d.current?.is_day === 0;
+
+        const iconUrl = await ensureIconUploaded(supabase as any, d.current.weather_code, isNight);
         const condLabel = getLabel(d.current.weather_code);
 
+        // ─── Build weather-{user_id}.xml (legacy <tempo> format) ───
         let amanhaXml = "";
         if (d.daily.temperature_2m_min[1] != null) {
           const twCode = d.daily.weather_code[1] ?? 0;
-          const twIcon = `https://www.weatherbit.io/static/img/icons/${weatherCodeToWbIcon(twCode)}.png`;
+          const twIconUrl = await ensureIconUploaded(supabase as any, twCode, false);
           const twLabel = getLabel(twCode);
           amanhaXml = `
     <amanha>
       <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}Cº</temperatura_minima>
       <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}Cº</temperatura_maxima>
-      <url_imagem_icone>${twIcon}</url_imagem_icone>
+      <url_imagem_icone>${twIconUrl}</url_imagem_icone>
       <descricao_tempo>${twLabel}</descricao_tempo>
     </amanha>`;
         }
@@ -119,12 +215,72 @@ serve(async (req) => {
     <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>${amanhaXml}
 </tempo>`;
 
-        // Upload to storage
         const fileName = `weather-${s.user_id}.xml`;
         const file = new Blob([weatherXml], { type: "application/xml" });
         await supabase.storage
           .from("xml-files")
           .upload(fileName, file, { upsert: true, contentType: "application/xml" });
+
+        // ─── Build xml-tempo-{user_id}.xml (<previsao> format used by client) ───
+        const dailyLen = d.daily?.time?.length || 0;
+        const dayBlocks: string[] = [];
+        for (let i = 0; i < dailyLen; i++) {
+          const code = d.daily.weather_code[i] ?? 0;
+          const iconU = await ensureIconUploaded(supabase as any, code, false);
+          const lbl = getLabel(code);
+          const tempAvg = Math.round(((d.daily.temperature_2m_max[i] ?? 0) + (d.daily.temperature_2m_min[i] ?? 0)) / 2);
+          const tag = i === 0 ? "atual" : "dia";
+          const dateAttr = i === 0 ? "Agora" : d.daily.time[i];
+          // For "atual" use current temp + day/night icon
+          const temp = i === 0 ? Math.round(d.current.temperature_2m) : tempAvg;
+          const icon = i === 0 ? iconUrl : iconU;
+          const desc = i === 0 ? condLabel : lbl;
+          const humid = i === 0 ? d.current.relative_humidity_2m : (d.daily.relative_humidity_2m_max?.[i] ?? 0);
+          dayBlocks.push(
+            `  <${tag} date="${dateAttr}">\n` +
+            `    <cidade>${name}</cidade>\n` +
+            `    <temperatura>${temp}Cº</temperatura>\n` +
+            `    <descricao>${desc}</descricao>\n` +
+            `    <icone_url>${icon}</icone_url>\n` +
+            `    <minima>${Math.round(d.daily.temperature_2m_min[i] ?? 0)}Cº</minima>\n` +
+            `    <maxima>${Math.round(d.daily.temperature_2m_max[i] ?? 0)}Cº</maxima>\n` +
+            `    <humidade>${humid}%</humidade>\n` +
+            `    <precipitacao>${d.daily.precipitation_probability_max[i] ?? 0}%</precipitacao>\n` +
+            `  </${tag}>`
+          );
+        }
+
+        let amanhaPrevisao = "";
+        if (dailyLen > 1) {
+          const code = d.daily.weather_code[1] ?? 0;
+          const iconU = await ensureIconUploaded(supabase as any, code, false);
+          amanhaPrevisao =
+            `  <amanha date="${d.daily.time[1]}">\n` +
+            `    <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}Cº</temperatura_minima>\n` +
+            `    <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}Cº</temperatura_maxima>\n` +
+            `    <url_imagem_icone>${iconU}</url_imagem_icone>\n` +
+            `    <descricao_tempo>${getLabel(code)}</descricao_tempo>\n` +
+            `  </amanha>`;
+        }
+
+        const previsaoXml =
+          `<?xml version="1.0" encoding="UTF-8"?>\n` +
+          `<previsao>\n` +
+          `  <cidade>${name}</cidade>\n` +
+          `${dayBlocks[0] ?? ""}\n` +
+          `${amanhaPrevisao}\n` +
+          `${dayBlocks.slice(1).join("\n")}\n` +
+          `</previsao>`;
+
+        const previsaoFile = new Blob([previsaoXml], { type: "application/xml" });
+        // Per-user file
+        await supabase.storage
+          .from("xml-files")
+          .upload(`xml-tempo-${s.user_id}.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
+        // Legacy shared file (kept in sync for clients still pointing to xml-tempo.xml)
+        await supabase.storage
+          .from("xml-files")
+          .upload(`xml-tempo.xml`, previsaoFile, { upsert: true, contentType: "application/xml" });
 
         updated++;
       } catch (err) {
@@ -139,7 +295,7 @@ serve(async (req) => {
   } catch (err) {
     console.error("update-weather-xml error:", err);
     return new Response(
-      JSON.stringify({ error: err.message }),
+      JSON.stringify({ error: (err as Error).message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

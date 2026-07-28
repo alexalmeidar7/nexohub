@@ -11,10 +11,10 @@ export default function NavItem({ icon, label, active, onClick }: NavItemProps) 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-4 px-6 py-4 transition-all ${
+      className={`w-full flex items-center gap-4 px-6 py-4 transition-all duration-200 rounded-lg mx-2 ${
         active
-          ? "text-primary bg-sidebar-accent border-r-2 border-primary"
-          : "text-sidebar-foreground hover:text-foreground"
+          ? "text-primary bg-primary/10 shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.2)]"
+          : "text-sidebar-foreground hover:text-foreground hover:bg-white/5"
       }`}
     >
       {icon}

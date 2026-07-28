@@ -1,27 +1,40 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren } from "lucide-react";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
 import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
+import { HouseMixIcon, BusinessIcon, ChatbotIcon, SocialDesignIcon, TvAppIcon } from "@/components/ProductIcons";
+
 import {
   Tooltip,
   TooltipContent,
+  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BackButton } from "@/components/ui/back-button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLayoutColors, defaultLayoutColors } from "@/hooks/useLayoutColors";
 import { useGlobalMusicSync } from "@/hooks/useGlobalMusicSync";
+import { AnimatedFlyout } from "@/components/AnimatedFlyout";
+import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
+
 
 // Lazy-load all tab pages for faster initial render
 const ApresentadorForm = lazy(() => import("./ApresentadorForm"));
+const OuvintesPage = lazy(() => import("./OuvintesPage"));
+const SorteiosPage = lazy(() => import("./SorteiosPage"));
+const BlitzPage = lazy(() => import("./BlitzPage"));
 const ProgramaForm = lazy(() => import("./ProgramaForm"));
 const PrevisaoTempo = lazy(() => import("./PrevisaoTempo"));
 const RoteiroPrograma = lazy(() => import("./RoteiroPrograma"));
 const WeatherWidget = lazy(() => import("./WeatherWidget"));
 const OnAirWidget = lazy(() => import("./OnAirWidget"));
+const UpcomingEventsWidget = lazy(() => import("./UpcomingEventsWidget"));
+
 const MusicaNoAr = lazy(() => import("./MusicaNoAr"));
 const AgendaPage = lazy(() => import("./AgendaPage"));
 const MusicWidget = lazy(() => import("./MusicWidget"));
@@ -36,22 +49,32 @@ const VideoPlayer = lazy(() => import("./VideoPlayer"));
 const TopLikedSongs = lazy(() => import("./TopLikedSongs"));
 const MusicasCurtidasPage = lazy(() => import("./MusicasCurtidasPage"));
 const ShoppingPage = lazy(() => import("./ShoppingPage"));
-const PreRollPage = lazy(() => import("./PreRollPage"));
+const PreRollPage = lazy(() => import("./AdsPage"));
 const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
+const ChatbotHome = lazy(() => import("./ChatbotHome"));
+
 const PropostasPage = lazy(() => import("./PropostasPage"));
 const ConfigTelaPromoPage = lazy(() => import("./ConfigTelaPromoPage"));
-const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
+const CenariosPage = lazy(() => import("./CenariosPage"));
 const MessageNotification = lazy(() => import("./MessageNotification"));
 const FansPage = lazy(() => import("./FansPage"));
+const BroadcastPage = lazy(() => import("./BroadcastPage"));
+const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
+const EnquetePage = lazy(() => import("./EnquetePage"));
+const QuizPage = lazy(() => import("./QuizPage"));
+const SitePage = lazy(() => import("./site/SitePage"));
+const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import BotsStatusBox from "./BotsStatusBox";
+import InlineNotification from "./InlineNotification";
+import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -59,6 +82,8 @@ interface MenuChild {
   label: string;
   page: Page;
   separator?: boolean;
+  permKey?: string;
+  children?: MenuChild[];
 }
 interface MenuItem {
   icon: typeof Home;
@@ -71,37 +96,46 @@ const sidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
   {
     icon: Users, label: "cadastros", children: [
-      { icon: Mic2, label: "apresentadores", page: "apresentadores" },
+      { icon: Mic2, label: "participantes", page: "apresentadores" },
+      { icon: Users, label: "ouvintes", page: "ouvintes" },
       { icon: PlaySquare, label: "programas", page: "programas" },
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
+  { icon: Gift, label: "sorteio", page: "sorteios" },
+  { icon: Siren, label: "blitz", page: "blitz" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
   { icon: Music, label: "música no ar", page: "musica" },
   { icon: CalendarDays, label: "agenda", page: "agenda" },
   {
-    icon: MonitorPlay, label: "player", children: [
-      { icon: Settings, label: "configurações", page: "playerconfig" },
-      { icon: Film, label: "roll", page: "preroll" },
-      { icon: Heart, label: "fãs", page: "fans" },
-      { icon: ExternalLink, label: "módulo externo", page: undefined as unknown as Page },
+    icon: Globe, label: "site", children: [
+      { icon: Globe, label: "site", page: "site" },
+      { icon: MonitorPlay, label: "player", page: undefined as unknown as Page, children: [
+        { icon: Settings, label: "configurações", page: "playerconfig" },
+        { icon: ExternalLink, label: "módulo player", page: undefined as unknown as Page },
+      ] },
     ]
   },
   {
     icon: ShoppingBag, label: "comercial", children: [
-      { icon: MessageSquareQuote, label: "testemunhais", page: "testemunhais" },
+      { icon: Film, label: "ADS", page: "preroll" },
+      { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
       { icon: Tag, label: "promoções", page: "promocoes" },
-      { icon: ExternalLink, label: "tela promo", page: undefined as unknown as Page },
-      { icon: Settings, label: "config tela promo", page: "configtelapromo", separator: true },
-      { icon: ShoppingCart, label: "shopping", page: "shopping", separator: true },
-      { icon: FileText, label: "propostas comerciais", page: "propostas" },
+      { icon: Image, label: "logos", page: "logos" },
+      { icon: ExternalLink, label: "módulo locutor", page: undefined as unknown as Page, permKey: "telapromo", children: [
+        { icon: Settings, label: "config módulo locutor", page: "configtelapromo" },
+      ] },
+      { icon: ShoppingCart, label: "shopping", page: "shopping" },
     ]
   },
   {
     icon: Monitor, label: "vmix", children: [
       { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
-      { icon: Image, label: "logos", page: "logos" },
-      { icon: MonitorPlay, label: "cenário interativo", page: "cenario" },
+      { icon: Radio, label: "broadcast", page: "broadcast" },
+      { icon: MonitorPlay, label: "cenários", page: "cenario" },
+      { icon: Swords, label: "batalha musical", page: "batalha" },
+      { icon: HelpCircle, label: "enquete", page: "enquete" },
+      { icon: HelpCircle, label: "quiz", page: "quiz" },
     ]
   },
   {
@@ -129,26 +163,33 @@ const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
   noticias: "Roteiro de Programa",
-  apresentadores: "Cadastro de Apresentadores",
+  apresentadores: "Cadastro de Participantes",
+  ouvintes: "Cadastro de Ouvintes",
   programas: "Cadastro de Programas",
   musica: "Música no Ar",
   agenda: "Agenda",
   curtidas: "Músicas Curtidas",
   configuracoes: "Configurações",
-  testemunhais: "Comercial — Testemunhais",
+  testemunhais: "Comercial — Citações",
   promocoes: "Comercial — Promoções",
   logos: "Comercial — Logos Patrocinadores",
   shopping: "Comercial — Shopping",
-  preroll: "Comercial — Pré-Roll",
+  preroll: "ADS",
   propostas: "Comercial — Propostas Comerciais",
   cortevideo: "Ferramentas — Cortes de Vídeo",
   tp: "Ferramentas — TP",
   playerconfig: "Player — Configurações",
   vmix: "vMix — Controle de Transmissão",
-  cenario: "vMix — Cenário Interativo",
+  cenario: "vMix — Cenários",
+  broadcast: "vMix — Broadcast",
   fans: "Player — Fãs",
   configtelapromo: "Comercial — Config Tela Promo",
-  
+  batalha: "vMix — Batalha Musical",
+  enquete: "vMix — Enquete",
+  quiz: "vMix — Quiz",
+  site: "Site",
+  sorteios: "Sorteios",
+  blitz: "Blitz Promocionais",
 };
 
 interface DashboardProps {
@@ -158,10 +199,45 @@ interface DashboardProps {
 export default function Dashboard({ onLogout }: DashboardProps) {
   const { user } = useAuth();
   const layoutColors = useLayoutColors();
-  const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
+    setCurrentPageState((prev) => {
+      const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
+      if (resolved !== prev) {
+        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+      }
+      return resolved;
+    });
+  }, []);
+
+  useEffect(() => {
+    (window as any).setCurrentPageGlobal = setCurrentPage;
+  }, [setCurrentPage]);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>(() => {
+    try { return localStorage.getItem("nexohub_home_pill") || "nexohub"; } catch { return "nexohub"; }
+  });
+  const [hoveredHeaderPill, setHoveredHeaderPill] = useState<string | null>(null);
+  useEffect(() => {
+    try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
+  }, [selectedHeaderPill]);
+  // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
+  const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
+  const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
+  useEffect(() => {
+    if (selectedHeaderPill === displayedPill) return;
+    setPillPhase("out");
+    const t = setTimeout(() => {
+      setDisplayedPill(selectedHeaderPill);
+      setPillPhase("in");
+    }, 260);
+    return () => clearTimeout(t);
+  }, [selectedHeaderPill, displayedPill]);
+  const pillAnimClass = pillPhase === "in" ? "animate-fade-in" : "animate-fade-out";
+
+
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const menuLeaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clearMenuLeaveTimer = useCallback(() => {
@@ -176,45 +252,198 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+  const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
+  const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
+  const [parentEmail, setParentEmail] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
+  const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [nextProgram, setNextProgram] = useState<{ foto: string | null; apresentador: string; programa: string; inicio: string; fim: string } | null>(null);
+  const [showNext, setShowNext] = useState(false);
+  const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  // Global player state (mirrored from CustomizableDashboard via window events)
+  const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
+  useEffect(() => {
+    const onState = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d) setPlayerState(d);
+    };
+    window.addEventListener("player:state", onState);
+    return () => window.removeEventListener("player:state", onState);
+  }, []);
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, []);
   const prevThumbRef = useRef<string | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+  const [contentScrollProgress, setContentScrollProgress] = useState(0);
+  const [showContentScrollIndicator, setShowContentScrollIndicator] = useState(false);
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
 
+  // Trava scroll do body enquanto o menu mobile estiver aberto
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [mobileMenuOpen]);
+
+
+  // Fetch on-air presenter photo
+  useEffect(() => {
+    const uid = effectiveUserId || user?.id;
+    if (!uid) return;
+    let cancelled = false;
+    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
+    const load = async () => {
+      const [progRes, empRes] = await Promise.all([
+        supabase
+          .from("programas")
+          .select("id, nome, apresentador_id, dias_semana, horario_inicio, horario_fim")
+          .eq("user_id", uid)
+          .eq("ativo", true)
+          .ilike("estudio", "%fm%"),
+        supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+      ]);
+      const data = progRes.data;
+      const tz: string | null = (empRes.data as any)?.timezone || null;
+      if (cancelled || !data) return;
+      const now = new Date();
+
+      // Pré-carrega o próximo programa 60s antes da virada, evitando "flash sem programa"
+      const { current } = resolveEffectiveOnAir(data as any[], now, tz);
+
+      // Próximo programa (após o current efetivo) — usa dia/hora no fuso da emissora
+      const { weekday, hhmm: hora } = getZonedNow(tz, now);
+      const dia = DIAS_MAP[weekday];
+      const todays = (data as any[]).filter((p) => (p.dias_semana || []).includes(dia));
+      const afterHora = current?.horario_fim || hora;
+      let next: any = todays
+        .filter((p) => p.horario_inicio >= afterHora && (!current || p.id !== current.id))
+        .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio))[0];
+      if (!next) {
+        for (let i = 1; i <= 7; i++) {
+          const d = DIAS_MAP[(weekday + i) % 7];
+          const arr = (data as any[])
+            .filter((p) => (p.dias_semana || []).includes(d))
+            .sort((a, b) => a.horario_inicio.localeCompare(b.horario_inicio));
+          if (arr[0]) { next = arr[0]; break; }
+        }
+      }
+
+      if (!current) { setOnAirLocutorFoto(null); setOnAirTimes(null); }
+      else {
+        setOnAirTimes({ inicio: current.horario_inicio, fim: current.horario_fim });
+        if (current.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("foto").eq("id", current.apresentador_id).maybeSingle();
+          if (!cancelled) setOnAirLocutorFoto((ap as any)?.foto || null);
+        } else setOnAirLocutorFoto(null);
+      }
+
+      if (next) {
+        let apNome = "";
+        let apFoto: string | null = null;
+        if (next.apresentador_id) {
+          const { data: ap } = await supabase.from("apresentadores").select("nome, foto").eq("id", next.apresentador_id).maybeSingle();
+          apNome = (ap as any)?.nome || "";
+          apFoto = (ap as any)?.foto || null;
+        }
+        if (!cancelled) setNextProgram({ foto: apFoto, apresentador: apNome, programa: next.nome, inicio: next.horario_inicio, fim: next.horario_fim });
+      } else if (!cancelled) setNextProgram(null);
+    };
+    load();
+    // Poll a cada 10s para pegar a virada com precisão
+    const iv = setInterval(load, 10000);
+    return () => { cancelled = true; clearInterval(iv); };
+  }, [user, effectiveUserId]);
+
   // Helper: find current on-air program and fetch only its thumb
-  const findCurrentOnAirThumb = useCallback(async () => {
-    if (!user) return null;
-    // First: lightweight query WITHOUT thumb column
-    const { data } = await supabase
-      .from("programas")
-      .select("id, dias_semana, horario_inicio, horario_fim")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .ilike("estudio", "%fm%");
+  const findCurrentOnAirThumb = useCallback(async (overrideUserId?: string) => {
+    const uid = overrideUserId || effectiveUserId || user?.id;
+    if (!uid) return null;
+    const [{ data }, { data: emp }] = await Promise.all([
+      supabase
+        .from("programas")
+        .select("id, dias_semana, horario_inicio, horario_fim")
+        .eq("user_id", uid)
+        .eq("ativo", true)
+        .ilike("estudio", "%fm%"),
+      supabase.from("empresa_config").select("timezone").eq("user_id", uid).maybeSingle(),
+    ]);
     if (!data) return null;
 
-    const now = new Date();
-    const DIAS_MAP: Record<number, string> = { 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado", 0: "Domingo" };
-    const diaAtual = DIAS_MAP[now.getDay()];
-    const horaAtual = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-    const current = data.find((p: any) =>
-      (p.dias_semana || []).includes(diaAtual) && horaAtual >= p.horario_inicio && horaAtual < p.horario_fim
-    );
+    // Usa o mesmo resolver com pré-carga do próximo na última minutagem, no fuso da emissora
+    const { current } = resolveEffectiveOnAir(data as any[], new Date(), (emp as any)?.timezone || null);
     if (!current) return null;
 
-    // Second: fetch thumb ONLY for the matched program
     const { data: thumbData } = await supabase
       .from("programas")
-      .select("thumb")
-      .eq("id", current.id)
+      .select("selo")
+      .eq("id", (current as any).id)
       .maybeSingle();
-    // Fallback to empresa background if no program thumb
-    if (thumbData?.thumb) return thumbData.thumb;
+    if ((thumbData as any)?.selo) return (thumbData as any).selo;
     return null;
-  }, [user]);
+  }, [user, effectiveUserId]);
+
+  const updateContentScrollIndicator = useCallback(() => {
+    const el = contentScrollRef.current;
+
+    if (!el || currentPage === "dashboard") {
+      setShowContentScrollIndicator(false);
+      setContentScrollProgress(0);
+      return;
+    }
+
+    const maxScroll = Math.max(el.scrollHeight - el.clientHeight, 0);
+
+    if (maxScroll <= 4) {
+      setShowContentScrollIndicator(false);
+      setContentScrollProgress(0);
+      return;
+    }
+
+    setShowContentScrollIndicator(true);
+    setContentScrollProgress(Math.min(Math.max(el.scrollTop / maxScroll, 0), 1));
+  }, [currentPage]);
+
+  useEffect(() => {
+    const el = contentScrollRef.current;
+    if (!el) return;
+
+    let frame = 0;
+    const syncIndicator = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateContentScrollIndicator);
+    };
+
+    syncIndicator();
+
+    el.addEventListener("scroll", syncIndicator, { passive: true });
+    window.addEventListener("resize", syncIndicator);
+
+    const resizeObserver = new ResizeObserver(syncIndicator);
+    resizeObserver.observe(el);
+    if (el.firstElementChild instanceof HTMLElement) {
+      resizeObserver.observe(el.firstElementChild);
+    }
+
+    const mutationObserver = new MutationObserver(syncIndicator);
+    mutationObserver.observe(el, { childList: true, subtree: true });
+
+    return () => {
+      cancelAnimationFrame(frame);
+      el.removeEventListener("scroll", syncIndicator);
+      window.removeEventListener("resize", syncIndicator);
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
+  }, [currentPage, updateContentScrollIndicator]);
 
   // Single batched initial load — all queries in parallel (NO thumb in batch)
   useEffect(() => {
@@ -222,12 +451,58 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     let cancelled = false;
 
     const loadAll = async () => {
-      const [modulesRes, empresaRes] = await Promise.all([
+      const [modulesRes, empresaRes, subUserRes] = await Promise.all([
         supabase.from("client_modules").select("module_key, enabled").eq("user_id", user.id),
         supabase.from("empresa_config").select("*").eq("user_id", user.id).maybeSingle(),
+        supabase.from("sub_users").select("allowed_modules, parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle(),
       ]);
 
       if (cancelled) return;
+
+      // Check if this user is a sub-user
+      if (subUserRes.data && subUserRes.data.ativo) {
+        const parentId = subUserRes.data.parent_user_id;
+        setSubUserModules(new Set(subUserRes.data.allowed_modules || []));
+        setEffectiveUserId(parentId);
+        // For sub-users, load the PARENT's modules and empresa config
+        const [parentModulesRes, parentEmpresaRes, parentProfileRes] = await Promise.all([
+          supabase.from("client_modules").select("module_key, enabled").eq("user_id", parentId),
+          supabase.from("empresa_config").select("*").eq("user_id", parentId).maybeSingle(),
+          supabase.from("profiles").select("email").eq("user_id", parentId).maybeSingle(),
+        ]);
+        if (cancelled) return;
+        if (parentProfileRes.data?.email) setParentEmail(parentProfileRes.data.email);
+        if (parentModulesRes.data && parentModulesRes.data.length > 0) {
+          setEnabledModules(new Set(parentModulesRes.data.filter((m: any) => m.enabled).map((m: any) => m.module_key)));
+        }
+        const pd = parentEmpresaRes.data;
+        if (pd) {
+          const parentCfg = {
+            nome: pd.nome || "", logo: pd.logo || "", backgroundUrl: pd.background_url || "",
+            endereco: pd.endereco || "", telefoneComercial: pd.telefone_comercial || "",
+            telefoneParticipacao: pd.telefone_participacao || "", site: pd.site || "",
+            instagram: pd.instagram || "", facebook: pd.facebook || "", youtube: pd.youtube || "",
+            plano: pd.plano || "",
+          };
+          setEmpresa(parentCfg);
+          setEmpresaTimezone((pd as any).timezone || null);
+          if (parentCfg.plano) {
+            supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
+              if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
+            });
+          }
+          setInitialLoading(false);
+
+          // Fetch thumb for sub-user using parent's data
+          const thumb = await findCurrentOnAirThumb(parentId);
+          if (!cancelled) {
+            const finalThumb = thumb || parentCfg.backgroundUrl || null;
+            prevThumbRef.current = finalThumb;
+            setOnAirThumb(finalThumb);
+          }
+          return;
+        }
+      }
 
       // Modules
       if (modulesRes.data && modulesRes.data.length > 0) {
@@ -244,6 +519,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         plano: d.plano || "",
       } : ({} as any);
       setEmpresa(cfg);
+      setEmpresaTimezone((d as any)?.timezone || null);
 
       // Plan modules — fire and forget
       if (cfg.plano) {
@@ -278,18 +554,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         setOnAirThumb(thumb);
       }
     };
-    const interval = setInterval(poll, 30000);
+    const interval = setInterval(poll, 10000);
     return () => clearInterval(interval);
   }, [user, initialLoading, findCurrentOnAirThumb]);
 
   const isModuleEnabled = (page: Page): boolean => {
+    // Pages that are always accessible regardless of plan
+    if (page === "dashboard") return true;
+
+    // Sub-users: only allow modules explicitly assigned + always-accessible pages
+    if (subUserModules !== null) {
+      if (page === "configuracoes") return false;
+      // Granular check: the page key itself is stored in allowed_modules
+      return subUserModules.has(page);
+    }
+
+    // Normal user flow
     if (
-      page === "dashboard" ||
       page === "configuracoes" ||
       page === "playerconfig" ||
       page === "cortevideo" ||
       page === "tp" ||
-      page === "fans"
+      page === "fans" ||
+      page === "apresentadores" ||
+      page === "ouvintes" ||
+      page === "programas" ||
+      page === "previsao" ||
+      page === "site" ||
+      page === "sorteios"
     ) {
       return true;
     }
@@ -301,7 +593,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return modulesSource.has("comercial");
     }
 
-    if (page === "cenario" || page === "vmix") {
+    if (page === "cenario" || page === "vmix" || page === "broadcast" || page === "batalha" || page === "enquete" || page === "quiz") {
       return modulesSource.has("vmix");
     }
 
@@ -309,17 +601,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   useEffect(() => {
+    // Only redirect if initial loading is complete and modules are loaded
+    if (initialLoading || (!enabledModules && !planModules)) return;
+
     if (
       currentPage !== "dashboard" &&
       currentPage !== "configuracoes" &&
       currentPage !== "playerconfig" &&
       currentPage !== "fans" &&
-      
       !isModuleEnabled(currentPage)
     ) {
       setCurrentPage("dashboard");
     }
-  }, [currentPage, enabledModules, planModules]);
+  }, [currentPage, initialLoading, enabledModules, planModules]);
 
   const toggleMenu = (label: string) => {
     setExpandedMenus(prev => {
@@ -341,15 +635,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
-    if (parentLabel === "player" && child.label === "módulo externo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/player`, "_blank");
+    const masterEmail = parentEmail || user?.email || "";
+    const masterSlug = masterEmail.includes("@") ? masterEmail.split("@")[0].toLowerCase() : (effectiveUserId || user?.id || "");
+    if (parentLabel === "player" && child.label === "módulo player") {
+      const url = masterSlug ? `/${masterSlug}/player` : "/player";
+      window.open(url, "_blank");
       setHoveredMenu(null);
       return;
     }
-    if ((parentLabel === "ferramentas" || parentLabel === "comercial") && child.label === "tela promo") {
-      const slug = user?.email?.split("@")[0] || "";
-      window.open(`/user/${slug}/nexohub/telapromo`, "_blank");
+    if ((parentLabel === "ferramentas" || parentLabel === "comercial") && (child.label === "tela promo" || child.label === "módulo locutor")) {
+      // URL padronizada do módulo locutor
+      const path = child.label === "módulo locutor" ? "locutor" : "telapromo";
+      const url = masterSlug ? `/${masterSlug}/${path}` : `/${path}`;
+      window.open(url, "_blank");
       setHoveredMenu(null);
       return;
     }
@@ -402,54 +700,64 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   })();
 
   const isDashboard = currentPage === "dashboard";
-
+ 
   return (
-    <div className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: layoutColors.pageBg }}>
-      <DashboardRuntimeEffects />
+    <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
+      <DashboardRuntimeEffects pauseMusicSync={currentPage === "musica"} />
 
       {/* Background layers (full page, behind sidebar) */}
       {isDashboard && (
-        <>
-          <div
-            className="absolute inset-0 z-0 transition-opacity duration-1000"
-            style={{ ...layoutBg, opacity: onAirThumb ? 0 : 1 }}
-          />
-          {onAirThumb && (
-            <div
-              key={onAirThumb}
-              className="absolute inset-0 z-0 animate-fade-in"
-              style={{
-                backgroundImage: `url(${onAirThumb})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            />
-          )}
-          <div className="absolute inset-0 z-0" style={{ background: "rgba(0,0,0,0.3)" }} />
-        </>
+        <div className="absolute inset-0 z-0" style={{ backgroundColor: "#e4fcff" }} />
       )}
 
+
       {/* ===== LEFT SIDEBAR (desktop) ===== */}
-      <div className="hidden lg:flex flex-shrink-0 z-[60] items-stretch py-3 pl-3 overflow-visible">
+      <div className="hidden lg:flex flex-shrink-0 z-[60] flex-col items-center py-3 pl-3 gap-2 overflow-visible">
+        <img
+          src={nexoCantoLogo}
+          alt="Nexo"
+          style={{ width: 40, height: "auto", display: "block", marginBottom: 4 }}
+        />
         <aside
-          className="flex flex-col items-center py-4 gap-2 rounded-2xl relative overflow-visible"
+          className="flex flex-col items-center py-4 gap-2 rounded-full relative overflow-visible"
           style={{
             width: "58px",
-            backgroundColor: layoutColors.navBg,
+            backgroundColor: `color-mix(in srgb, ${layoutColors.navBg} 95%, transparent)`,
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
           }}
         >
 
-        <div className="flex-1 flex flex-col items-center gap-1 px-1 overflow-visible">
-          {sidebarMenu.filter(item => {
+        {(() => {
+          const isChatbotMode = displayedPill === "Chatbot";
+          const chatbotAllowedTop = new Set(["home", "cadastros", "sorteio"]);
+          const chatbotCadastroChildren = new Set(["ouvintes"]);
+          const effectiveMenu: MenuItem[] = isChatbotMode
+            ? sidebarMenu
+                .filter(i => chatbotAllowedTop.has(i.label))
+                .map(i => i.label === "cadastros" && i.children
+                  ? { ...i, children: i.children.filter(c => chatbotCadastroChildren.has(c.label)) }
+                  : i)
+            : sidebarMenu;
+          return (
+        <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
+          {effectiveMenu.filter(item => {
+            // Sub-user: only show menus for allowed modules
+            if (subUserModules !== null) {
+              if (item.label === "home") return true;
+              // For items with children, show if any child page is allowed
+              if (item.children) {
+                return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
+              }
+              // For standalone items, check the page directly
+              return item.page ? subUserModules.has(item.page) : false;
+            }
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
             if (!modKey) return true;
             if (planModules) return planModules.has(modKey);
             if (enabledModules) return enabledModules.has(modKey);
             return true;
-          }).map((item) => {
+          }).map((item, itemIdx, arr) => {
             const active = isItemActive(item);
             const Icon = item.icon;
             const isOpen = hoveredMenu === item.label;
@@ -457,12 +765,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             return (
               <div
                 key={item.label}
+                data-menu-item-root
                 className="relative"
+
                 onMouseEnter={() => {
-                  clearMenuLeaveTimer();
-                  if (item.children) setHoveredMenu(item.label);
-                }}
-                onMouseLeave={scheduleCloseMenu}
+                   clearMenuLeaveTimer();
+                   if (item.children) {
+                     setHoveredMenu(item.label);
+                   } else {
+                     // Fecha imediatamente qualquer submenu aberto de outro ícone
+                     // para não prejudicar a visibilidade do tooltip deste item.
+                     setHoveredMenu(null);
+                   }
+                 }}
+                 onMouseLeave={scheduleCloseMenu}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -474,97 +790,177 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setCurrentPage(item.page);
                         }
                       }}
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
-                      style={{
-                        backgroundColor: active ? layoutColors.accentColor : "transparent",
+                      onFocus={() => { if (item.children) { clearMenuLeaveTimer(); setHoveredMenu(item.label); } }}
+                      onKeyDown={(e) => {
+                        if (!item.children) return;
+                        if (e.key === "ArrowRight" || (e.key === "ArrowDown" && isOpen)) {
+                          e.preventDefault();
+                          clearMenuLeaveTimer();
+                          setHoveredMenu(item.label);
+                          requestAnimationFrame(() => {
+                            const first = document.querySelector<HTMLButtonElement>(`[data-submenu="${item.label}"] [data-submenu-item]`);
+                            first?.focus();
+                          });
+                        } else if (e.key === "Escape" && isOpen) {
+                          setHoveredMenu(null);
+                        }
                       }}
-                      onMouseEnter={(e) => { if (!active) e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                      onMouseLeave={(e) => { if (!active) e.currentTarget.style.backgroundColor = "transparent"; }}
+                      aria-haspopup={item.children ? "menu" : undefined}
+                      aria-expanded={item.children ? isOpen : undefined}
+                      aria-label={item.label === "home" ? "Home nexohub" : item.label}
+                      className="nexo-focus w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+                      style={{
+                        backgroundColor: active && item.label !== "home" ? layoutColors.accentColor : "transparent",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
+                      }}
+                      onMouseEnter={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
+                      onMouseLeave={(e) => { if (!active || item.label === "home") e.currentTarget.style.backgroundColor = "transparent"; }}
                     >
-                      <Icon size={18} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
+                      {item.label === "home" ? (
+                        <HouseMixIcon size={28} />
+                      ) : (
+                        <Icon size={22} style={{ color: active ? layoutColors.navText : `${layoutColors.navText}99` }} />
+                      )}
+
                     </button>
+
                   </TooltipTrigger>
-                  <TooltipContent side="right"><p className="text-xs capitalize">{item.label}</p></TooltipContent>
+                  {!item.children && (
+                    <TooltipContent side="right">
+                      <p className="text-xs capitalize">
+                        {item.label === "home" ? "Home nexohub" : item.label}
+                      </p>
+                    </TooltipContent>
+                  )}
+
                 </Tooltip>
 
-                {/* Sidebar flyout submenu */}
-                {item.children && isOpen && (
-                  <div
-                    className="absolute left-full top-0 ml-2 z-[70] animate-in fade-in slide-in-from-left-2 duration-200"
+                {/* Sidebar flyout submenu — destacado da barra com gap, blur e sombra suave */}
+                {item.children && (() => {
+                  const flipUp = itemIdx >= Math.ceil(arr.length / 2);
+                  return (
+                  <AnimatedFlyout
+                    open={isOpen}
+                    className="absolute left-full z-[70]"
+                    style={{ ...(flipUp ? { bottom: 0 } : { top: 0 }), marginLeft: 18, paddingLeft: 4 }}
                     onMouseEnter={clearMenuLeaveTimer}
                     onMouseLeave={scheduleCloseMenu}
                   >
+
+                    {/* ponte invisível para não perder hover no gap */}
+                    <div style={{ position: "absolute", left: -18, top: 0, width: 22, height: "100%" }} />
                     <div
-                      className="rounded-2xl py-2 min-w-[190px]"
+                      data-submenu={item.label}
+                      role="menu"
+                      aria-label={`Submenu ${item.label}`}
+                      onKeyDown={(e) => {
+                        const items = Array.from(
+                          (e.currentTarget as HTMLElement).querySelectorAll<HTMLButtonElement>("[data-submenu-item]")
+                        ).filter(el => !el.hasAttribute("disabled"));
+                        const currentIndex = items.findIndex(el => el === document.activeElement);
+                        if (e.key === "ArrowDown") {
+                          e.preventDefault();
+                          const next = items[(currentIndex + 1 + items.length) % items.length];
+                          next?.focus();
+                        } else if (e.key === "ArrowUp") {
+                          e.preventDefault();
+                          const prev = items[(currentIndex - 1 + items.length) % items.length];
+                          prev?.focus();
+                        } else if (e.key === "Home") {
+                          e.preventDefault();
+                          items[0]?.focus();
+                        } else if (e.key === "End") {
+                          e.preventDefault();
+                          items[items.length - 1]?.focus();
+                        } else if (e.key === "Escape" || e.key === "ArrowLeft") {
+                          e.preventDefault();
+                          setHoveredMenu(null);
+                          // devolve o foco ao botão-pai
+                          const parentBtn = (e.currentTarget.closest("[data-menu-item-root]") as HTMLElement | null)?.querySelector<HTMLButtonElement>("button");
+                          parentBtn?.focus();
+                        }
+                      }}
+                      className="rounded-2xl py-3 min-w-[210px] overflow-y-auto backdrop-blur-xl"
                       style={{
-                        backgroundColor: layoutColors.navBg,
-                        border: `1px solid ${layoutColors.borderColor}33`,
-                        boxShadow: "0 16px 48px rgba(0,0,0,0.3)",
+                        background: `linear-gradient(180deg, ${layoutColors.navBg}f2 0%, ${layoutColors.navBg}e6 100%)`,
+                        border: `1px solid ${layoutColors.navText}1f`,
+                        boxShadow: `0 20px 60px rgba(0,0,0,0.45), 0 0 0 1px ${layoutColors.accentColor}14, inset 0 1px 0 ${layoutColors.navText}0f`,
+                        maxHeight: "calc(100vh - 24px)",
+                        ["--nexo-accent" as any]: layoutColors.accentColor,
                       }}
                     >
-                      <p className="px-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: `${layoutColors.navText}66` }}>{item.label}</p>
-                      {item.children.map((child, ci) => {
-                        const ChildIcon = child.icon;
-                        const childActive = currentPage === child.page;
-                        return (
-                          <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 30}ms`, animationFillMode: "both" }}>
-                            {child.separator && ci > 0 && (
-                              <div className="mx-3 my-1" style={{ borderTop: `1px solid ${layoutColors.navText}15` }} />
-                            )}
-                            <button
-                              onClick={() => handleChildClick(child, item.label)}
-                              className="w-full text-left px-4 py-2 text-xs flex items-center gap-2 transition-all"
-                              style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}cc` }}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.accentColor; }}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = childActive ? layoutColors.accentColor : `${layoutColors.navText}cc`; }}
-                            >
-                              <ChildIcon size={13} />
-                              <span>{child.label}</span>
-                            </button>
-                          </div>
-                        );
-                      })}
+                      <div className="flex items-center gap-2 px-4 pb-2">
+                        <span className="inline-block rounded-full" style={{ width: 4, height: 12, background: layoutColors.accentColor }} />
+                        <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: `${layoutColors.navText}80` }}>{item.label}</p>
+                      </div>
+                      <div className="px-2">
+                        {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map((child, ci) => {
+                          const ChildIcon = child.icon;
+                          const childActive = currentPage === child.page;
+                          return (
+                            <div key={child.label} className="animate-in fade-in slide-in-from-left-1" style={{ animationDelay: `${ci * 25}ms`, animationFillMode: "both" }}>
+                              {child.separator && ci > 0 && (
+                                <div className="mx-2 my-1.5" style={{ borderTop: `1px solid ${layoutColors.navText}12` }} />
+                              )}
+                              <button
+                                data-submenu-item
+                                role="menuitem"
+                                onClick={() => handleChildClick(child, item.label)}
+                                className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
+                                style={{
+                                  color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
+                                  backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
+                                }}
+                                onMouseEnter={e => { if (!childActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}10`; e.currentTarget.style.color = layoutColors.navText; } }}
+                                onMouseLeave={e => { if (!childActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}d9`; } }}
+                              >
+                                {childActive && (
+                                  <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-full" style={{ width: 3, height: 14, background: layoutColors.accentColor }} />
+                                )}
+                                <ChildIcon size={14} />
+                                <span className="font-medium">{child.label}</span>
+                              </button>
+                              {child.children && child.children.map(grand => {
+                                const GrandIcon = grand.icon;
+                                const grandActive = currentPage === grand.page;
+                                return (
+                                  <button
+                                    key={grand.label}
+                                    data-submenu-item
+                                    role="menuitem"
+                                    onClick={() => handleChildClick(grand, child.label)}
+                                    className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
+                                    style={{
+                                      color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
+                                      backgroundColor: grandActive ? `${layoutColors.accentColor}10` : "transparent",
+                                    }}
+                                    onMouseEnter={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = `${layoutColors.navText}0d`; e.currentTarget.style.color = layoutColors.navText; } }}
+                                    onMouseLeave={e => { if (!grandActive) { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = `${layoutColors.navText}a6`; } }}
+                                  >
+                                    <GrandIcon size={12} />
+                                    <span>{grand.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+
+                  </AnimatedFlyout>
+
+                  );
+                })()}
               </div>
             );
           })}
         </div>
+          );
+        })()}
 
-        <div className="flex flex-col items-center gap-2 mt-auto pb-2">
-          <Suspense fallback={<div className="w-10 h-10" />}>
-            <MessageNotification />
-          </Suspense>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={() => setCurrentPage("configuracoes")}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
-                style={{ color: `${layoutColors.navText}80` }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                <Settings size={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right"><p className="text-xs">Configurações</p></TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onLogout}
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all"
-                style={{ color: layoutColors.accentColor }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${layoutColors.navText}1a`; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-              >
-                <LogOut size={18} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right"><p className="text-xs">Sair</p></TooltipContent>
-          </Tooltip>
-        </div>
+        
+
         </aside>
       </div>
 
@@ -583,21 +979,54 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           >
             <LogOut size={10} /> Sair
           </button>
-          <ServerClock />
+          <ServerClock timezone={empresaTimezone} />
         </div>
 
         {/* Mobile menu overlay */}
         {mobileMenuOpen && (
           <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div className="w-[280px] flex flex-col h-full overflow-y-auto" style={{ backgroundColor: layoutColors.navBg }}>
-              <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                <img src={seloNexohub} alt="NexoHUB" className="h-4" />
-                <button onClick={() => setMobileMenuOpen(false)} className="p-1.5 rounded-full" style={{ backgroundColor: layoutColors.buttonBg }}>
-                  <X size={16} className="text-white" />
+            {/* Backdrop escurecido com fade */}
+            <div
+              className="absolute inset-0 animate-in fade-in duration-200"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <div
+              className="relative w-[85vw] max-w-[320px] flex flex-col h-full overflow-y-auto shadow-2xl animate-in slide-in-from-left duration-300"
+              style={{
+                backgroundColor: layoutColors.navBg,
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: "env(safe-area-inset-bottom)",
+                paddingTop: "env(safe-area-inset-top)",
+              }}
+            >
+              <div className="flex items-center justify-between px-4 pt-3 pb-2 sticky top-0 z-10" style={{ backgroundColor: layoutColors.navBg }}>
+                <img src={logoMenu} alt="nexohub" className="h-6 w-auto" />
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 rounded-full active:scale-95 transition-transform"
+                  style={{ backgroundColor: layoutColors.buttonBg, minWidth: 40, minHeight: 40 }}
+                  aria-label="Fechar menu"
+                >
+                  <X size={18} className="text-white" />
                 </button>
               </div>
-              <nav className="flex-1 overflow-y-auto px-3 space-y-0.5 py-2">
-                {sidebarMenu.filter(item => {
+              <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-1 py-2 animate-fade-in">
+                {(displayedPill === "Chatbot"
+                  ? sidebarMenu
+                      .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
+                      .map(i => i.label === "cadastros" && i.children
+                        ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
+                        : i)
+                  : sidebarMenu
+                ).filter(item => {
+                  if (subUserModules !== null) {
+                    if (item.label === "home") return true;
+                    if (item.children) {
+                      return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
+                    }
+                    return item.page ? subUserModules.has(item.page) : false;
+                  }
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
                   if (!modKey) return true;
@@ -611,35 +1040,79 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   return (
                     <div key={item.label}>
                       <button onClick={() => handleMenuClick(item)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs transition-all"
-                        style={{ color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`, backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent" }}
+                        className="w-full flex items-center gap-3 px-3 rounded-xl text-sm transition-all active:scale-[0.98]"
+                        style={{
+                          minHeight: 44,
+                          color: active ? layoutColors.accentColor : `${layoutColors.navText}cc`,
+                          backgroundColor: active ? `${layoutColors.accentColor}1a` : "transparent",
+                        }}
                       >
-                        <Icon size={16} />
+                        <Icon size={18} />
                         <span className="flex-1 text-left capitalize">{item.label}</span>
-                        {item.children && (expanded ? <ChevronUp size={12} style={{ color: `${layoutColors.navText}40` }} /> : <ChevronDown size={12} style={{ color: `${layoutColors.navText}40` }} />)}
+                        {item.children && (
+                          <ChevronDown
+                            size={14}
+                            style={{
+                              color: `${layoutColors.navText}66`,
+                              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                              transition: "transform 220ms cubic-bezier(0.22,1,0.36,1)",
+                            }}
+                          />
+                        )}
                       </button>
-                      {item.children && expanded && (
-                        <div className="ml-6 space-y-0.5 mt-0.5">
-                          {item.children.map(child => {
-                            const ChildIcon = child.icon;
-                            const childActive = currentPage === child.page;
-                            return (
-                              <button key={child.label} onClick={() => handleChildClick(child, item.label)}
-                                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] transition-all"
-                                style={{ color: childActive ? layoutColors.accentColor : `${layoutColors.navText}99` }}
-                              >
-                                <ChildIcon size={12} />
-                                <span>{child.label}</span>
-                              </button>
-                            );
-                          })}
+                      {item.children && (
+                        <div
+                          className="overflow-hidden"
+                          style={{
+                            maxHeight: expanded ? 800 : 0,
+                            opacity: expanded ? 1 : 0,
+                            transition: "max-height 280ms cubic-bezier(0.22,1,0.36,1), opacity 200ms ease",
+                          }}
+                        >
+                          <div className="ml-6 space-y-0.5 mt-1 mb-1">
+                            {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
+                              const ChildIcon = child.icon;
+                              const childActive = currentPage === child.page;
+                              return (
+                                <div key={child.label}>
+                                  <button onClick={() => handleChildClick(child, item.label)}
+                                    className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
+                                    style={{
+                                      minHeight: 40,
+                                      color: childActive ? layoutColors.accentColor : `${layoutColors.navText}b3`,
+                                      backgroundColor: childActive ? `${layoutColors.accentColor}14` : "transparent",
+                                    }}
+                                  >
+                                    <ChildIcon size={14} />
+                                    <span>{child.label}</span>
+                                  </button>
+                                  {child.children && child.children.map(grand => {
+                                    const GrandIcon = grand.icon;
+                                    const grandActive = currentPage === grand.page;
+                                    return (
+                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
+                                        className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
+                                        style={{
+                                          minHeight: 36,
+                                          color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}80`,
+                                        }}
+                                      >
+                                        <GrandIcon size={12} />
+                                        <span>{grand.label}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
               </nav>
-              <div className="px-4 py-4" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a` }}>
+              <div className="px-4 py-4 sticky bottom-0" style={{ borderTop: `1px solid ${layoutColors.borderColor}1a`, backgroundColor: layoutColors.navBg }}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0" style={{ backgroundColor: layoutColors.buttonBg, color: layoutColors.buttonText }}>
                     {empresa.nome ? empresa.nome.charAt(0).toUpperCase() : "U"}
@@ -651,93 +1124,468 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
             </div>
-            <div className="flex-1" onClick={() => setMobileMenuOpen(false)} />
           </div>
+
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
         <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
-            <img src={logoMenu} alt="NexoHUB" className="h-10 w-auto" />
             <div>
               {!isDashboard && (
                 <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
                   {pageTitle[currentPage]}
                 </p>
               )}
-              <h1 className="text-2xl font-light" style={{ color: isDashboard ? layoutColors.navText : layoutColors.pageText }}>
-                {empresa.nome || "NexoHUB"}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
+                  {empresa.nome || "NexoHUB"}
+                </h1>
+                {isDashboard && (
+                  <div className="flex items-center gap-1.5 rounded-full px-1 py-1" style={{ backgroundColor: "#D6F4FB" }}>
+                    {[
+                      { Icon: HouseMixIcon, name: "nexohub", label: "HouseMix" },
+                      { Icon: ChatbotIcon, name: "Chatbot", label: "Chatbot" },
+                      { Icon: BusinessIcon, name: "Business", label: "Business" },
+                      { Icon: TvAppIcon, name: "TV App", label: "App" },
+                      { Icon: SocialDesignIcon, name: "Social Design", label: "Social Design" },
+                    ].map(({ Icon, name, label }) => {
+                      const isSelected = selectedHeaderPill === name;
+                      const isOpen = isSelected || hoveredHeaderPill === name;
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => setSelectedHeaderPill(name)}
+                          onMouseEnter={() => setHoveredHeaderPill(name)}
+                          onMouseLeave={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
+                          onFocus={() => setHoveredHeaderPill(name)}
+                          onBlur={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
+                          className="header-pill inline-flex items-center justify-start rounded-full overflow-hidden"
+                          style={{
+                            backgroundColor: "#00dbff",
+                            color: "#002132",
+                            height: 34,
+                            paddingLeft: 0,
+                            paddingRight: isOpen ? 12 : 0,
+                            maxWidth: isOpen ? 220 : 34,
+                            minWidth: 34,
+                            transition:
+                              "max-width 260ms cubic-bezier(0.34, 1.3, 0.5, 1), padding 220ms cubic-bezier(0.34, 1.3, 0.5, 1), transform 180ms cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 220ms ease",
+                            transform: isOpen ? "scale(1.04)" : "scale(1)",
+                            boxShadow: isOpen
+                              ? "0 6px 18px rgba(0, 219, 255, 0.45)"
+                              : "0 1px 3px rgba(0, 33, 50, 0.08)",
+                            willChange: "max-width, padding, transform",
+                          }}
+                          data-selected={isSelected ? "true" : "false"}
+                          aria-label={name}
+                        >
+                          <span className="inline-flex items-center justify-center shrink-0" style={{ width: 34, height: 34 }}>
+                            <Icon size={22} />
+                          </span>
+                          <span
+                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap overflow-hidden"
+                            style={{
+                              maxWidth: isOpen ? 160 : 0,
+                              marginLeft: isOpen ? 6 : 0,
+                              opacity: isOpen ? 1 : 0,
+                              transform: isOpen ? "translateX(0)" : "translateX(-6px)",
+                              transition:
+                                "max-width 240ms cubic-bezier(0.34, 1.3, 0.5, 1), margin 220ms cubic-bezier(0.34, 1.3, 0.5, 1), opacity 160ms ease-out 70ms, transform 220ms cubic-bezier(0.34, 1.3, 0.5, 1) 50ms",
+                            }}
+                          >
+                            {label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Notificações agora são centralizadas no topo via App.tsx */}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ServerClock />
+
+          <div
+            className="flex items-center gap-1 rounded-full pl-2 pr-3 py-1"
+            style={{
+              backgroundColor: "#ffffff",
+              border: "1px solid rgba(0,191,240,0.22)",
+              boxShadow: "0 6px 18px rgba(0,33,50,0.06)",
+            }}
+          >
+            {playerState.hasChannel && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("player:toggle"))}
+                    className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                    style={{ color: "#002132" }}
+                    aria-label={playerState.isPlaying ? "Pausar player" : "Reproduzir player"}
+                  >
+                    {playerState.isLoading ? (
+                      <Loader2 size={18} className="animate-spin" />
+                    ) : playerState.isPlaying ? (
+                      <Pause size={18} />
+                    ) : (
+                      <Play size={18} />
+                    )}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p className="text-xs">{playerState.isPlaying ? `Pausar${playerState.channelName ? ` – ${playerState.channelName}` : ""}` : "Reproduzir player"}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                  style={{ color: "#002132" }}
+                >
+                  <Radio size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
+            </Tooltip>
+            <Suspense fallback={<div className="w-9 h-9" />}>
+              <MessageNotification />
+            </Suspense>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setCurrentPage("configuracoes")}
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                  style={{ color: "#002132" }}
+                >
+                  <Settings size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Configurações</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onLogout}
+                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                  style={{ color: "#002132" }}
+                >
+                  <LogOut size={18} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom"><p className="text-xs">Sair</p></TooltipContent>
+            </Tooltip>
+            <div className="w-px h-7 mx-2" style={{ backgroundColor: "rgba(0,33,50,0.10)" }} />
+            <ServerClock timezone={empresaTimezone} />
+            <style>{`
+              .nexo-toolbar-btn:hover { background-color: rgba(0,191,240,0.14); color: #0087aa; }
+              .nexo-toolbar-btn:active { transform: scale(0.94); }
+            `}</style>
           </div>
         </div>
+
+        {isDashboard && displayedPill !== "Chatbot" && (
+          <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
+
+            <div className="flex flex-row gap-4 items-stretch">
+            <div
+              className="rounded-3xl relative shrink min-w-0"
+              style={{
+                width: "778px",
+                flexShrink: 1,
+                flexBasis: "778px",
+                minWidth: "520px",
+                maxWidth: "100%",
+                height: "461px",
+                backgroundColor: "#00d6f9",
+              }}
+            >
+              <div
+                className="absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
+                style={{
+                  top: "20px",
+                  left: "18px",
+                  backgroundColor: "#c3f628",
+                  color: "#002132",
+                }}
+              >
+                no ar
+              </div>
+              {onAirThumb && (
+                <img
+                  src={onAirThumb}
+                  alt="Programa no ar"
+                  className="absolute object-contain"
+                  style={{ top: "60px", left: "8px", height: "208px", width: "auto" }}
+                />
+              )}
+              <div
+                id="on-air-info-slot"
+                style={{
+                  position: "absolute",
+                  bottom: "20px",
+                  left: "18px",
+                  right: "18px",
+                  ["--layout-nav-text" as any]: "#002132",
+                  ["--layout-icon-color" as any]: "#002132",
+                  ["--layout-accent-color" as any]: "#002132",
+                }}
+              />
+              {/* BOX DO LOCUTOR */}
+              <div
+                className="absolute rounded-2xl overflow-hidden group"
+                style={{
+                  top: "20px",
+                  right: "20px",
+                  bottom: "20px",
+                  width: "320px",
+                  backgroundColor: "#c3f628",
+                }}
+              >
+                {onAirLocutorFoto && (
+                  <>
+                    <style>{`
+                      @keyframes locutorEntrada {
+                        0%   { opacity: 0; transform: scale(1.18) translateY(24px); filter: blur(6px); }
+                        60%  { opacity: 1; filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+                      }
+                      @keyframes locutorGlow {
+                        0%   { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
+                        50%  { box-shadow: inset 0 0 60px 10px rgba(195,246,40,0.35); }
+                        100% { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
+                      }
+                    `}</style>
+                    <img
+                      src={onAirLocutorFoto}
+                      alt="Locutor no ar"
+                      className="w-full h-full object-cover"
+                      style={{
+                        animation: "locutorEntrada 0.95s cubic-bezier(0.22,1,0.36,1) both",
+                        transformOrigin: "center 65%",
+                        willChange: "transform, opacity, filter",
+                      }}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none rounded-2xl"
+                      style={{ animation: "locutorGlow 1.1s ease-out both" }}
+                    />
+                  </>
+                )}
+
+                {onAirTimes && <ProgramProgressBar inicio={onAirTimes.inicio} fim={onAirTimes.fim} nowTick={nowTick} />}
+
+                {/* Overlay: Próximo programa/locutor */}
+                {nextProgram && (
+                  <div
+                    className={`absolute inset-0 transition-all duration-500 ${showNext ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                    style={{ backgroundColor: "#c3f628" }}
+                  >
+                    {nextProgram.foto && (
+                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-cover" />
+                    )}
+                    <div
+                      className="absolute left-0 right-0 bottom-0 px-5 pt-8 pb-6"
+                      style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,33,50,0.85) 100%)", color: "#e4fcff" }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">A seguir</p>
+                      <p className="text-base font-bold leading-tight truncate">{nextProgram.programa}</p>
+                      {nextProgram.apresentador && (
+                        <p className="text-xs opacity-80 truncate">{nextProgram.apresentador}</p>
+                      )}
+                      <p className="text-[11px] opacity-70 mt-1">{nextProgram.inicio} — {nextProgram.fim}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Botão toggle próximo */}
+                {nextProgram && (
+                  <button
+                    onClick={() => setShowNext((v) => !v)}
+                    aria-label={showNext ? "Voltar" : "Ver a seguir"}
+                    className="absolute rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 shadow-md"
+                    style={{
+                      top: "12px",
+                      right: "12px",
+                      width: "34px",
+                      height: "34px",
+                      backgroundColor: "#d7faff",
+                      color: "#002132",
+                      zIndex: 2,
+                    }}
+                  >
+                    {showNext ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
+            <div
+              className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
+              style={{
+                minWidth: "260px",
+                height: "461px",
+                backgroundColor: "#00d6f9",
+                padding: "20px",
+                ["--layout-widget-text" as any]: "#002132",
+                ["--layout-accent-color" as any]: "#002132",
+                ["--layout-header-text" as any]: "#c3f628",
+                ["--layout-widget-bg" as any]: "#002132",
+                ["--layout-border-color" as any]: "#002132",
+              }}
+            >
+              <Suspense fallback={<div className="w-full h-full" />}>
+                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
+              </Suspense>
+            </div>
+            </div>
+
+          </div>
+        )}
+
+
 
         {/* ===== MAIN CONTENT AREA ===== */}
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <button
-                onClick={() => setCurrentPage("dashboard")}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold transition-all hover:scale-[1.02]"
-                style={{
-                  backgroundColor: `${layoutColors.accentColor}15`,
-                  color: layoutColors.accentColor,
-                  border: `1px solid ${layoutColors.accentColor}30`,
-                }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}25`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${layoutColors.accentColor}15`; }}
-              >
-                <ChevronUp size={14} className="rotate-[-90deg]" /> Voltar
-              </button>
+              <BackButton onClick={() => setCurrentPage("dashboard")} />
+              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
+                <span>Home</span>
+                <span className="opacity-50">/</span>
+                <span style={{ color: layoutColors.accentColor, opacity: 1 }}>{pageTitle[currentPage]}</span>
+              </div>
             </div>
           )}
-          <div className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
+          <div className="relative flex-1 h-full">
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {currentPage === "dashboard" && <CustomizableDashboard onNavigate={setCurrentPage} />}
+              {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
+              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+                {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
+                <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
+                  <ChatbotHome />
+                </div>
+                <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
+                  <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                </div>
+              </div>
+
+
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
+              {currentPage === "ouvintes" && <OuvintesPage />}
+              {currentPage === "sorteios" && <SorteiosPage />}
+              {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
-              {currentPage === "musica" && <MusicaNoAr />}
+              {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
+              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+                <MusicaNoAr effectiveUserId={effectiveUserId} />
+              </div>
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
               {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
-              {currentPage === "testemunhais" && <TestemunhaisPage />}
-              {currentPage === "promocoes" && <PromocoesPage />}
+              {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
+              {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
               {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
-              {currentPage === "logos" && <LogosPatrocinadoresPage />}
+              {currentPage === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
               {currentPage === "shopping" && <ShoppingPage />}
               {currentPage === "preroll" && <PreRollPage />}
               {currentPage === "cortevideo" && <CortesVideoPage />}
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
-              {currentPage === "cenario" && <CenarioInterativoPage />}
+              {currentPage === "cenario" && <CenariosPage />}
+              {currentPage === "broadcast" && <BroadcastPage />}
+              {currentPage === "batalha" && <BatalhaMusicalPage />}
+              {currentPage === "enquete" && <EnquetePage />}
+              {currentPage === "quiz" && <QuizPage />}
+              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
+            </div>
+            {currentPage !== "dashboard" && showContentScrollIndicator && (
+              <div
+                className="absolute inset-y-4 right-1 z-20 flex items-stretch"
+                style={{ width: "14px", cursor: "pointer", pointerEvents: "auto" }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const track = e.currentTarget;
+                  const rect = track.getBoundingClientRect();
+                  const scrollEl = contentScrollRef.current;
+                  if (!scrollEl) return;
+                  const setScrollFromY = (clientY: number) => {
+                    const ratio = Math.min(Math.max((clientY - rect.top) / rect.height, 0), 1);
+                    scrollEl.scrollTop = ratio * (scrollEl.scrollHeight - scrollEl.clientHeight);
+                  };
+                  setScrollFromY(e.clientY);
+                  const onMove = (ev: MouseEvent) => { ev.preventDefault(); setScrollFromY(ev.clientY); };
+                  const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                }}
+              >
+                <div className="relative h-full w-full flex items-stretch justify-center">
+                  <div
+                    className="absolute top-0 bottom-0 w-[2px]"
+                    style={{ background: "color-mix(in srgb, var(--layout-page-text, hsl(var(--background))) 25%, transparent)", borderRadius: "1px" }}
+                  />
+                  <div
+                    className="absolute transition-[top] duration-100 hover:scale-110"
+                    style={{
+                      width: "8px",
+                      height: "28px",
+                      borderRadius: "4px",
+                      top: `clamp(0px, calc(${contentScrollProgress * 100}% - 14px), calc(100% - 28px))`,
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      background: "var(--layout-accent-color, hsl(var(--destructive)))",
+                      boxShadow: "0 1px 6px rgba(0,0,0,0.3)",
+                      cursor: "grab",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <footer className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 relative z-[1]">
-          <img src={logoFooter} alt="Nexo" className="h-4 opacity-60" />
+          <img src={logoFooter} alt="Nexo" className="h-4" style={{ opacity: 0.5, filter: (() => {
+            const bg = layoutColors.pageBg?.toLowerCase() || "#ffffff";
+            const isLight = bg === "#ffffff" || bg === "#fff" || bg === "white" || (() => {
+              const m = bg.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+              if (!m) return false;
+              const lum = (parseInt(m[1],16)*0.299 + parseInt(m[2],16)*0.587 + parseInt(m[3],16)*0.114);
+              return lum > 186;
+            })();
+            return isLight ? "grayscale(1) brightness(0.85) opacity(0.5)" : isDashboard ? "none" : "brightness(0) opacity(0.4)";
+          })() }} />
           <span className="text-[9px]" style={{ color: `${isDashboard ? layoutColors.navText : layoutColors.pageText}66` }}>© 2026 Todos os direitos reservados.</span>
         </footer>
       </div>
 
-      <BotsStatusBox />
+      {subUserModules === null && isDashboard && (
+        <>
+          <Suspense fallback={null}><IntercomWidget /></Suspense>
+          <BotsStatusBox />
+        </>
+      )}
     </div>
   );
 }
 
-function DashboardRuntimeEffects() {
+function DashboardRuntimeEffects({ pauseMusicSync = false }: { pauseMusicSync?: boolean }) {
   useGlobalMusicXmlUpload();
-  useGlobalMusicSync();
+  useGlobalMusicSync(!pauseMusicSync);
   return null;
 }
 
@@ -753,26 +1601,45 @@ interface WidgetCard {
 const defaultWidgets: WidgetCard[] = [
   { id: "weather", bg: "glass", render: (nav) => <WeatherWidget onNavigate={nav} /> },
   { id: "top10", bg: "glass", render: () => <TopLikedSongs /> },
-  { id: "agenda", bg: "glass", render: () => <DashboardAgenda /> },
+  { id: "agenda", bg: "glass", render: (onNav: any) => <DashboardAgendaOld onNavigate={onNav} setCurrentPage={(window as any).setCurrentPageGlobal} /> },
   { id: "noar", bg: "glass-dark", render: () => <OnAirWidget /> },
+  
   { id: "comercial", bg: "glass", render: () => <ComercialWidgets /> },
+
 ];
 
 function DashboardHome({ empresa, onNavigate }: { empresa: import("./ConfiguracoesPage").EmpresaConfig; onNavigate: (page: Page) => void }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [widgetOrder, setWidgetOrder] = useState<string[]>(() => {
+    const defaultOrder = defaultWidgets.map(w => w.id);
     try {
       const saved = localStorage.getItem(WIDGETS_ORDER_KEY);
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed: string[] = JSON.parse(saved);
+        const filtered = parsed.filter(id => defaultOrder.includes(id));
+        // Insert any newly added widget IDs at their default position
+        // (relative to the widget that precedes them in the default order).
+        const missing = defaultOrder.filter(id => !filtered.includes(id));
+        const merged = [...filtered];
+        for (const id of missing) {
+          const defIdx = defaultOrder.indexOf(id);
+          const prev = defaultOrder.slice(0, defIdx).reverse().find(p => merged.includes(p));
+          const insertAt = prev ? merged.indexOf(prev) + 1 : 0;
+          merged.splice(insertAt, 0, id);
+        }
+        return merged;
+      }
     } catch {}
-    return defaultWidgets.map(w => w.id);
+    return defaultOrder;
   });
+
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   const orderedWidgets = widgetOrder
     .map(id => defaultWidgets.find(w => w.id === id))
     .filter(Boolean) as WidgetCard[];
+
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id);
@@ -886,8 +1753,187 @@ function DashboardHome({ empresa, onNavigate }: { empresa: import("./Configuraco
   );
 }
 
+const DashboardAgendaWithStyles = ({ onNavigate, feriadoHoje, selectedDate, dayEvents, eventDates, feriadoDates, calMonth, setCalMonth, setSelectedDate, getFeriadoNome, eventTypesConfig, onExportFeriados }: any) => (
+  <div className="flex flex-col h-full w-full">
+    <style>{`
+      .dashboard-calendar .has-event-dot { position: relative; }
+      .dashboard-calendar .has-event-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 2px; height: 2px; background: var(--layout-accent-color, #2563eb); border-radius: 50%; }
+      .dashboard-calendar .is-feriado-dot { position: relative; }
+      .dashboard-calendar .is-feriado-dot::after { content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; background: var(--layout-accent-color, #ef4444); border-radius: 50%; }
+      .dashboard-calendar .rdp-day_today { border: 1px solid var(--layout-accent-color, #2563eb); font-weight: bold; }
+    `}</style>
+    <div className="flex items-center justify-between mb-2 shrink-0">
+      <div className="flex items-center gap-2">
+        <p className="text-[11px] font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>📅 Agenda {selectedDate && `— ${format(selectedDate, "dd/MM")}`}</p>
+        {feriadoHoje && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span 
+                  className="text-[8px] font-black text-white px-1.5 py-0.5 rounded-full uppercase tracking-tighter animate-pulse shadow-sm cursor-help"
+                  style={{ backgroundColor: "var(--layout-accent-color, #ef4444)", boxShadow: "0 2px 8px color-mix(in srgb, var(--layout-accent-color, #ef4444) 50%, transparent)" }}
+                  onClick={(e) => { e.stopPropagation(); onExportFeriados(); }}
+                >
+                  Feriado
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : ""}</p>
+                <p className="text-[8px] mt-1 italic border-t border-white/20 pt-1">Clique para exportar feriados</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+      <button
+        onClick={() => onNavigate("agenda")}
+        className="text-[10px] font-semibold hover:opacity-70 flex items-center gap-1"
+        style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.6 }}
+      >
+        ver tudo <ExternalLink size={10} />
+      </button>
+    </div>
+
+    <div className="flex gap-2 flex-1 min-h-0">
+      <div className="w-[105px] lg:w-[125px] shrink-0">
+        <DashboardCalendar
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          eventDates={eventDates}
+          feriadoDates={feriadoDates}
+          month={calMonth}
+          onMonthChange={setCalMonth}
+          getFeriadoNome={getFeriadoNome}
+        />
+      </div>
+
+      <div className="flex-1 min-w-0 overflow-y-auto pr-1 space-y-1.5 scrollbar-hide">
+        {feriadoHoje && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div 
+                  className="p-1.5 rounded-lg mb-1 cursor-help"
+                  style={{ 
+                    backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 15%, transparent)",
+                    border: "1px solid color-mix(in srgb, var(--layout-accent-color, #ef4444) 30%, transparent)"
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    <Star size={9} style={{ color: "var(--layout-accent-color, #ef4444)", fill: "var(--layout-accent-color, #ef4444)" }} />
+                    <p className="text-[9px] font-black uppercase tracking-tight" style={{ color: "var(--layout-accent-color, #ef4444)" }}>Feriado Nacional</p>
+                  </div>
+                  <p className="text-[10px] font-bold leading-tight mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-accent-color, #ef4444) 80%, white 20%)" }}>{feriadoHoje}</p>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-white border-none" style={{ backgroundColor: "var(--layout-accent-color, #ef4444)" }}>
+                <p className="text-[10px] font-bold">{feriadoHoje}</p>
+                <p className="text-[9px] opacity-90">{selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : ""}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {dayEvents.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center opacity-30">
+            <CalendarDays size={18} className="mb-1" style={{ color: "var(--layout-widget-text, #ffffff)" }} />
+            <p className="text-[9px]" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Vazio</p>
+          </div>
+        ) : (
+          dayEvents.map((evt: any) => (
+            <div
+              key={evt.id}
+              onClick={() => {
+                sessionStorage.setItem("agenda_focus_event", evt.id);
+                onNavigate("agenda");
+              }}
+              className="p-1.5 rounded-lg cursor-pointer transition-all hover:bg-white/10 active:scale-[0.98] border border-white/5"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              <p className="text-[10px] font-bold truncate" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{evt.programa?.nome}</p>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-[8px] opacity-60" style={{ color: "var(--layout-widget-text, #ffffff)" }}>
+                  {evt.tipo_evento === "gravacao" ? `🎬 ${evt.horario_gravacao || ""}` : evt.programa?.horario_inicio}
+                </span>
+                <span 
+                  className="text-[7px] font-black px-1 rounded-sm"
+                  style={{ 
+                    backgroundColor: `${eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "#ffffff"}33`, 
+                    color: eventTypesConfig?.[evt.tipo_evento || "live"]?.color || "rgba(255,255,255,0.5)" 
+                  }}
+                >
+                  {eventTypesConfig?.[evt.tipo_evento || "live"]?.label || evt.prioridade?.toUpperCase()}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  </div>
+);
+
 /* ========== SERVER CLOCK ========== */
-function ServerClock() {
+function ProgramProgressBar({ inicio, fim, nowTick }: { inicio: string; fim: string; nowTick: number }) {
+  const fillRef = useRef<HTMLDivElement>(null);
+  const [sh, sm] = inicio.split(":").map(Number);
+  const [eh, em] = fim.split(":").map(Number);
+  const now = new Date(nowTick);
+  const startDate = new Date(now); startDate.setHours(sh, sm, 0, 0);
+  const endDate = new Date(now); endDate.setHours(eh, em, 0, 0);
+  if (endDate <= startDate) endDate.setDate(endDate.getDate() + 1);
+  const totalMs = endDate.getTime() - startDate.getTime();
+  const elapsedMs = Math.min(Math.max(now.getTime() - startDate.getTime(), 0), totalMs);
+  const elapsedSec = Math.floor(elapsedMs / 1000);
+  const totalSec = Math.floor(totalMs / 1000);
+
+  // Sync a Web Animations API animation with wall-clock time
+  useEffect(() => {
+    const el = fillRef.current;
+    if (!el) return;
+    const anim = el.animate(
+      [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+      { duration: totalMs, easing: "linear", fill: "forwards" }
+    );
+    anim.currentTime = elapsedMs;
+    return () => anim.cancel();
+    // Re-sync when program window changes (not on every second)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inicio, fim, totalMs]);
+
+  const fmt = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
+  };
+
+  return (
+    <div className="absolute group/bar" style={{ left: "20px", right: "20px", bottom: "10px", height: "10px" }}>
+      <div
+        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 rounded-full overflow-hidden"
+        style={{ height: "2px", backgroundColor: "rgba(0,33,50,0.15)" }}
+      >
+        <div
+          ref={fillRef}
+          className="h-full w-full rounded-full origin-left"
+          style={{ backgroundColor: "#d7faff", willChange: "transform" }}
+        />
+      </div>
+      <div
+        className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/bar:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap rounded-md px-2 py-1 text-[10px] font-medium shadow-lg"
+        style={{ backgroundColor: "#002132", color: "#e4fcff" }}
+      >
+        {fmt(elapsedSec)} / {fmt(totalSec)}
+      </div>
+    </div>
+  );
+}
+
+function ServerClock({ timezone }: { timezone?: string | null }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -895,14 +1941,31 @@ function ServerClock() {
     return () => clearInterval(interval);
   }, []);
 
-  const hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-  const seconds = String(now.getSeconds()).padStart(2, "0");
+  const tz = timezone && timezone.length > 0 ? timezone : undefined;
+  let hours: string;
+  let seconds: string;
+  try {
+    hours = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: tz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(now);
+    seconds = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: tz,
+      second: "2-digit",
+      hour12: false,
+    }).format(now).padStart(2, "0");
+  } catch {
+    hours = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    seconds = String(now.getSeconds()).padStart(2, "0");
+  }
 
   return (
-    <div className="text-right">
-      <span className="font-light tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "45px", lineHeight: 1.1, color: "var(--layout-nav-text, #ffffff)" }}>
+    <div className="text-right" title={tz ? `Fuso: ${tz}` : undefined}>
+      <span className="font-light tracking-wider inline-flex items-start" style={{ fontFamily: "Poppins, sans-serif", fontSize: "26px", lineHeight: 1.1, color: "#002132" }}>
         {hours}
-        <span className="font-light inline-block" style={{ fontSize: "18px", width: "28px", textAlign: "left", marginTop: "4px", color: "var(--layout-nav-text, #ffffff)", opacity: 0.7 }}>{seconds}</span>
+        <span className="font-light inline-block" style={{ fontSize: "12px", width: "18px", textAlign: "left", marginTop: "2px", color: "#002132", opacity: 0.7 }}>{seconds}</span>
       </span>
     </div>
   );
@@ -933,6 +1996,7 @@ function weatherCodeToWbIcon(code: number): string {
 }
 
 function UnifiedXmlField() {
+  const { user } = useAuth();
   const [xmlContent, setXmlContent] = useState("");
 
   useEffect(() => {
@@ -981,7 +2045,7 @@ function UnifiedXmlField() {
         }
       } catch {}
 
-      const m = getMusicData();
+      const m = getMusicData(user?.id);
       if (m) {
         musicXml = `  <musica_agora>\n    <titulo>${m.music.titulo}</titulo>\n    <interprete>${m.music.artista}</interprete>\n    <capa>${m.music.capa || ""}</capa>\n  </musica_agora>`;
       }
@@ -1025,7 +2089,7 @@ function useGlobalMusicXmlUpload() {
       if (!settings?.music_xml_url) return;
 
       try {
-        const m = getMusicData();
+        const m = getMusicData(user.id);
         const titulo = m?.music?.titulo || "Sem titulo";
         const interprete = m?.music?.artista || "Desconhecido";
         let capa = m?.music?.capa || "";
@@ -1085,39 +2149,113 @@ function ComercialWidgets() {
   }, [user]);
 
   if (loading) return (
-    <div className="animate-pulse">
+    <div className="animate-pulse h-full">
       <div className="flex items-center gap-1.5 mb-2">
-        <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.2 }} />
-        <div className="w-28 h-3 rounded bg-white/10" />
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
       </div>
-      <div className="w-12 h-8 rounded bg-white/10 mb-1" />
-      <div className="w-36 h-2.5 rounded bg-white/5" />
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
     </div>
   );
 
+  return null;
+}
+
+function DashboardAgenda({ onNavigate }: { onNavigate: (p: Page) => void }) {
   return (
-    <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>🏆 Patrocinadores Ativos</p>
-        <span className="text-[10px] font-semibold" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.7 }}>no ar</span>
-      </div>
-      <p className="text-3xl font-bold" style={{ color: "var(--layout-widget-text, #ffffff)" }}>{totalLogos}</p>
-      <p className="text-[10px] mt-1" style={{ color: "var(--layout-widget-text, #ffffff)", opacity: 0.5 }}>logos vinculadas a programas</p>
-    </div>
+    <DashboardAgendaOld 
+      onNavigate={onNavigate}
+      setCurrentPage={(window as any).setCurrentPageGlobal}
+    />
   );
 }
 
-/* ========== DASHBOARD AGENDA ========== */
-function DashboardAgenda() {
+function DashboardAgendaOld({ onNavigate, setCurrentPage }: { onNavigate: (p: Page) => void; setCurrentPage: (p: Page) => void }) {
   const { user } = useAuth();
+  const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<any[]>([]);
+  const [eventTypesConfig, setEventTypesConfig] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
+
+  const feriadosNacionais = [
+    { dia: 1, mes: 1, nome: "Confraternização Universal" },
+    { dia: 21, mes: 4, nome: "Tiradentes" },
+    { dia: 1, mes: 5, nome: "Dia do Trabalhador" },
+    { dia: 7, mes: 9, nome: "Independência do Brasil" },
+    { dia: 12, mes: 10, nome: "Nossa Senhora Aparecida" },
+    { dia: 2, mes: 11, nome: "Finados" },
+    { dia: 15, mes: 11, nome: "Proclamação da República" },
+    { dia: 20, mes: 11, nome: "Consciência Negra" },
+    { dia: 25, mes: 12, nome: "Natal" },
+  ];
+
+  const getFeriadoNome = (date?: Date) => {
+    if (!date) return null;
+    const f = feriadosNacionais.find(h => h.dia === date.getDate() && h.mes === (date.getMonth() + 1));
+    return f ? f.nome : null;
+  };
+
+  const feriadoDates = feriadosNacionais.map(f => {
+    const d = new Date();
+    return new Date(d.getFullYear(), f.mes - 1, f.dia);
+  });
+
+  const eventMatchesDate = (evt: any, dateStr: string) => {
+    if (evt.data === dateStr) return true;
+    const evtDate = new Date(evt.data + "T12:00:00");
+    const checkDate = new Date(dateStr + "T12:00:00");
+    if (checkDate < evtDate) return false;
+    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
+    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
+    return false;
+  };
+
+  const getCalendarDates = () => {
+    const dates: Date[] = [];
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    for (const evt of eventos) {
+      if (evt.recorrencia === "unico") {
+        dates.push(new Date(evt.data + "T12:00:00"));
+      } else {
+        const d = new Date(start);
+        while (d <= end) {
+          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
+      // Fetch user profile for event types config
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("event_types_config")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (profile?.event_types_config) {
+        setEventTypesConfig(profile.event_types_config);
+      }
+
       const { data: evts } = await supabase
         .from("agenda_eventos")
         .select("*")
@@ -1137,121 +2275,141 @@ function DashboardAgenda() {
     fetchData();
   }, [user]);
 
-  const eventMatchesDate = (evt: any, dateStr: string) => {
-    if (evt.data === dateStr) return true;
-    const evtDate = new Date(evt.data + "T12:00:00");
-    const checkDate = new Date(dateStr + "T12:00:00");
-    if (checkDate < evtDate) return false;
-    if (evt.recorrencia === "semanal") return evtDate.getDay() === checkDate.getDay();
-    if (evt.recorrencia === "mensal") return evtDate.getDate() === checkDate.getDate();
-    return false;
+  if (loading) return (
+    <div className="animate-pulse h-full">
+      <div className="flex items-center gap-1.5 mb-2">
+        <div className="w-3.5 h-3.5 rounded bg-white/10" />
+        <div className="w-20 h-3 rounded bg-white/10" />
+      </div>
+      <div className="flex gap-2 flex-1 min-h-0">
+        <div className="w-[105px] rounded bg-white/5" />
+        <div className="flex-1 space-y-1.5">
+          <div className="h-10 rounded bg-white/5" />
+          <div className="h-10 rounded bg-white/5" />
+        </div>
+      </div>
+    </div>
+  );
+
+  const todayStr = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
+  const selDateStr = selectedDate ? format(selectedDate, "yyyy-MM-dd") : "";
+
+  const dayEvents = eventos.filter((e) => {
+    const matchesDate = eventMatchesDate(e, selDateStr);
+    if (!matchesDate) return false;
+    if (e.status === "concluido" || e.status === "cancelado") return false;
+    const isToday = selDateStr === todayStr;
+    if (isToday && e.horario_gravacao_fim && e.horario_gravacao_fim < currentTime) return false;
+    return true;
+  });
+  const handleExportFeriados = () => {
+    let icsContent = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//NexoHub//Dashboard//BR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH"
+    ].join("\r\n");
+
+    const year = now.getFullYear();
+    feriadosNacionais.forEach(f => {
+      const month = String(f.mes).padStart(2, '0');
+      const day = String(f.dia).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+      
+      icsContent += "\r\n" + [
+        "BEGIN:VEVENT",
+        `UID:feriado-${dateStr}@nexohub.com`,
+        `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z`,
+        `DTSTART;VALUE=DATE:${dateStr}`,
+        `DTEND;VALUE=DATE:${year}${month}${String(f.dia + 1).padStart(2, '0')}`,
+        `SUMMARY:Feriado: ${f.nome}`,
+        "DESCRIPTION:Feriado Nacional Brasileiro",
+        "STATUS:CONFIRMED",
+        "TRANSP:TRANSPARENT",
+        "END:VEVENT"
+      ].join("\r\n");
+    });
+
+    icsContent += "\r\nEND:VCALENDAR";
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `feriados_${year}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const getCalendarDates = () => {
-    const dates: Date[] = [];
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-    for (const evt of eventos) {
-      if (evt.recorrencia === "unico") {
-        dates.push(new Date(evt.data + "T12:00:00"));
-      } else {
-        const d = new Date(start);
-        while (d <= end) {
-          const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-          if (eventMatchesDate(evt, ds)) dates.push(new Date(d));
-          d.setDate(d.getDate() + 1);
-        }
-      }
-    }
-    return dates;
-  };
+
+  const feriadoHoje = getFeriadoNome(selectedDate || new Date());
   const eventDates = getCalendarDates();
 
-  const selDateStr = selectedDate
-    ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`
-    : "";
-  const dayEvents = eventos.filter((e) => eventMatchesDate(e, selDateStr));
-
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full animate-pulse">
-        <div className="flex items-center gap-1.5 mb-1">
-          <div className="w-3.5 h-3.5 rounded bg-white/10" />
-          <div className="w-14 h-3 rounded bg-white/10" />
-        </div>
-        <div className="grid grid-cols-7 gap-0.5 mb-1">
-          {Array.from({ length: 35 }).map((_, i) => (
-            <div key={i} className="w-full aspect-square rounded bg-white/5" />
-          ))}
-        </div>
-        <div className="mt-1 space-y-1">
-          <div className="h-6 rounded-lg" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", opacity: 0.15 }} />
-        </div>
-      </div>
-    );
-  }
-
-
-
-  const prevMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1));
-  const nextMonth = () => setCalMonth(new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1));
-
-  const monthLabel = calMonth.toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
-
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      {/* Header: icon + AGENDA + month nav */}
-      <div className="flex items-center gap-1.5 mb-1">
-        <CalendarDays size={14} style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-        <span className="font-bold text-xs uppercase tracking-wide" style={{ color: "var(--layout-widget-text, #ffffff)" }}>Agenda</span>
-        <div className="flex items-center gap-1 ml-auto">
-          <button onClick={prevMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-          </button>
-          <span className="text-[9px] font-semibold capitalize" style={{ color: "var(--layout-button-bg, #0f1058333)", minWidth: "55px", textAlign: "center" }}>{monthLabel}</span>
-          <button onClick={nextMonth} className="w-4 h-4 flex items-center justify-center rounded hover:opacity-70">
-            <ChevronDown size={10} className="-rotate-90" style={{ color: "var(--layout-button-bg, #0f1058333)" }} />
-          </button>
-        </div>
-      </div>
-      <DashboardCalendar
-        selected={selectedDate}
-        onSelect={setSelectedDate}
-        eventDates={eventDates}
-        month={calMonth}
-        onMonthChange={setCalMonth}
-      />
-      {dayEvents.length > 0 && (
-        <div className="mt-1 space-y-1 overflow-y-auto flex-1 scrollbar-hide">
-          {dayEvents.map((evt: any) => (
-            <div key={evt.id} className="rounded-lg px-2 py-1 text-[10px]" style={{ backgroundColor: "var(--layout-button-bg, #0f1058333)", color: "var(--layout-button-text, #fff)" }}>
-              <p className="font-semibold">{evt.programa?.nome || "Evento"}</p>
-              {evt.programa && <p className="opacity-70">{evt.programa.horario_inicio} - {evt.programa.horario_fim}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <DashboardAgendaWithStyles
+      onNavigate={onNavigate}
+      feriadoHoje={feriadoHoje}
+      selectedDate={selectedDate}
+      dayEvents={dayEvents}
+      eventDates={eventDates}
+      feriadoDates={feriadoDates}
+      calMonth={calMonth}
+      setCalMonth={setCalMonth}
+      setSelectedDate={setSelectedDate}
+      getFeriadoNome={getFeriadoNome}
+      eventTypesConfig={eventTypesConfig}
+      onExportFeriados={handleExportFeriados}
+    />
   );
 }
 
-function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChange }: {
+function DashboardCalendar({ selected, onSelect, eventDates, feriadoDates, month, onMonthChange, getFeriadoNome }: {
   selected: Date | undefined;
   onSelect: (d: Date | undefined) => void;
   eventDates: Date[];
+  feriadoDates: Date[];
   month: Date;
   onMonthChange: (d: Date) => void;
+  getFeriadoNome: (d: Date) => string | null;
 }) {
   return (
-    <CalendarUI
-      mode="single"
-      selected={selected}
-      onSelect={onSelect}
-      month={month}
-      onMonthChange={onMonthChange}
-      locale={ptBR}
-      className="p-0 pointer-events-auto"
+    <TooltipProvider>
+      <CalendarUI
+        mode="single"
+        selected={selected}
+        onSelect={onSelect}
+        month={month}
+        onMonthChange={onMonthChange}
+        locale={ptBR}
+        modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
+        modifiersClassNames={{ 
+          hasEvent: "has-event-dot",
+          isFeriado: "is-feriado-dot"
+        }}
+        components={{
+          DayContent: ({ date, ...props }) => {
+            const feriado = getFeriadoNome(date);
+            const content = <span>{date.getDate()}</span>;
+            
+            if (feriado) {
+              return (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="cursor-help w-full h-full flex items-center justify-center">{content}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-red-600 text-white border-red-500 z-[100]">
+                    <p className="text-[10px] font-bold">{feriado}</p>
+                    <p className="text-[9px] opacity-90">{format(date, "dd/MM")}</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            }
+            return content;
+          }
+        }}
+      className="p-0 pointer-events-auto dashboard-calendar"
       classNames={{
         months: "w-full",
         month: "w-full space-y-0",
@@ -1267,14 +2425,18 @@ function DashboardCalendar({ selected, onSelect, eventDates, month, onMonthChang
         day_today: "font-bold",
         day_outside: "opacity-30",
       }}
-      modifiers={{ hasEvent: eventDates }}
       modifiersStyles={{
-        hasEvent: { backgroundColor: "var(--layout-button-bg, #0f1058333)", fontWeight: "bold", color: "var(--layout-button-text, #fff)", borderRadius: "50%" },
+        isFeriado: { color: "#ef4444" },
       }}
       styles={{
         day: { color: "var(--layout-widget-text, #ffffff)", fontSize: "14px" },
         head_cell: { color: "var(--layout-widget-text, #ffffff)", opacity: 0.5, fontSize: "10px", padding: 0 },
       }}
     />
+    </TooltipProvider>
   );
+}
+
+function DashboardAgendaFlyoutPlaceholder() {
+  return null;
 }

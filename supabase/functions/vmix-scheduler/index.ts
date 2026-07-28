@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isPrivateOrLocalUrl } from "../_shared/auth.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -147,6 +149,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!settings?.vmix_url) continue;
+        if (isPrivateOrLocalUrl(settings.vmix_url)) { console.log(`[scheduler] skip preset (private URL) user=${preset.user_id}`); continue; }
+
+
 
         console.log(`[scheduler] Executing preset for "${programa.nome}" (user: ${preset.user_id})`);
         const result = await executeVmixCommands(
@@ -180,6 +185,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (!settings?.vmix_url) continue;
+        if (isPrivateOrLocalUrl(settings.vmix_url)) { console.log(`[scheduler] skip button (private URL) user=${btn.user_id}`); continue; }
+
+
 
         console.log(`[scheduler] Executing button "${btn.nome}" (user: ${btn.user_id})`);
         const result = await executeVmixCommands(

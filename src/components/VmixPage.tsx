@@ -1,16 +1,25 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
-  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp
+  Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { getIconForName } from "./CustomVmixButtonEditor";
-import logoMixControl from "@/assets/logo-mixcontrol.png";
+import logoMixControl from "@/assets/logo-mixcontrol.png"; // Keeping reference to the main logo asset.
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import PresetCommandEditor from "./PresetCommandEditor";
 import CustomVmixButtonEditor from "./CustomVmixButtonEditor";
@@ -26,6 +35,19 @@ interface VmixInput {
   loop?: string;
   muted?: boolean;
 }
+
+
+// Robust detection: vMix strictly uses "NDI" as the type for NDI inputs.
+// We also accept titles starting with "NDI (" as a fallback for some vMix versions/configurations.
+const isNdiInput = (inp: VmixInput) => {
+  if (!inp) return false;
+  const title = (inp.title || "").toUpperCase();
+  const type = (inp.type || "").toUpperCase();
+  return type === "NDI" || 
+         title.includes("NDI") || 
+         type.includes("NDI") ||
+         title.startsWith("NDI (");
+};
 
 interface SceneCommand {
   id: string;
@@ -79,18 +101,259 @@ interface Programa {
 // Helper to detect private/local IPs
 function isPrivateIp(url: string): boolean {
   try {
-    const hostname = new URL(url).hostname;
+    const u = url.startsWith("http") ? url : "http://" + url;
+    const hostname = new URL(u).hostname;
     return /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.|localhost|::1)/i.test(hostname);
   } catch { return false; }
 }
 
 function isInsecureHttpUrl(url: string): boolean {
   try {
-    return new URL(url).protocol === "http:";
+    const u = url.startsWith("http") ? url : "http://" + url;
+    return new URL(u).protocol === "http:";
   } catch {
     return false;
   }
 }
+
+function normalizeVmixBaseUrl(rawUrl: string): string {
+  let baseUrl = rawUrl.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(baseUrl)) baseUrl = "http://" + baseUrl;
+  return baseUrl;
+}
+
+function isLoopbackUrl(rawUrl: string): boolean {
+  try {
+    const hostname = new URL(normalizeVmixBaseUrl(rawUrl)).hostname.toLowerCase();
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]" || hostname === "::1";
+  } catch {
+    return false;
+  }
+}
+
+function isMixedContentBlockedByPage(targetUrl: string): boolean {
+  try {
+    const url = new URL(targetUrl);
+    return typeof window !== "undefined"
+      && window.location.protocol === "https:"
+      && url.protocol === "http:"
+      && !isLoopbackUrl(targetUrl);
+  } catch {
+    return false;
+  }
+}
+
+function buildLoopbackFallbackUrls(rawBaseUrl: string): string[] {
+  try {
+    const url = new URL(normalizeVmixBaseUrl(rawBaseUrl));
+    const port = url.port || "8088";
+    return [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
+  } catch {
+    return ["http://127.0.0.1:8088", "http://localhost:8088"];
+  }
+}
+
+function parseVmixUrlParts(raw: string): { protocol: "http" | "https"; host: string; port: string } {
+  const fallback = { protocol: "http" as const, host: "", port: "8088" };
+  if (!raw) return fallback;
+  let str = raw.trim();
+  if (!/^https?:\/\//i.test(str)) str = "http://" + str;
+  try {
+    const u = new URL(str);
+    return {
+      protocol: (u.protocol.replace(":", "") as "http" | "https") || "http",
+      host: u.hostname,
+      port: u.port || (u.protocol === "https:" ? "443" : "8088"),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function composeVmixUrl(protocol: "http" | "https", host: string, port: string): string {
+  const h = (host || "").trim();
+  const p = (port || "").trim();
+  if (!h) return "";
+  return `${protocol}://${h}${p ? ":" + p : ""}`;
+}
+
+function validateVmixParts(protocol: string, host: string, port: string): string | null {
+  if (!host || !host.trim()) return "Host/IP obrigatório";
+  if (/\s/.test(host)) return "Host não pode conter espaços";
+  if (!/^([a-zA-Z0-9.\-]+|\[[0-9a-fA-F:]+\])$/.test(host)) return "Host inválido";
+  if (!port || !/^\d+$/.test(port)) return "Porta obrigatória (numérica)";
+  const n = Number(port);
+  if (n < 1 || n > 65535) return "Porta deve estar entre 1 e 65535";
+  if (protocol !== "http" && protocol !== "https") return "Protocolo inválido";
+  return null;
+}
+
+function buildNdiSuggestions(machines: string[]): string[] {
+  const suggestions: string[] = [];
+  for (const machine of machines.map(m => m.trim()).filter(Boolean)) {
+    suggestions.push(
+      `${machine} (vMix - Output 1)`,
+      `${machine} (vMix - Output 2)`,
+      `${machine} (vMix - Output 3)`,
+      `${machine} (vMix - Output 4)`,
+      `${machine} (vMix Video)`,
+      `${machine} (vMix Audio - Master)`,
+      `${machine} (vMix Audio - Headphones)`,
+      `${machine} (Screen 1)`,
+      `${machine} (Screen 2)`,
+    );
+  }
+  return Array.from(new Set(suggestions));
+}
+
+function extractNdiMachinesFromInputs(vmixInputs: VmixInput[]): string[] {
+  const machines = new Set<string>();
+  vmixInputs.forEach(inp => {
+    if (isNdiInput(inp)) {
+      const title = inp.title || "";
+      const match = title.match(/(?:NDI\s*[\(-]?\s*)?([A-Z0-9_-]+)/i);
+      if (match?.[1] && match[1].length > 2) machines.add(match[1]);
+    }
+  });
+  return Array.from(machines);
+}
+
+function vmixTagText(xml: Document, tagName: string): string | null {
+  return xml.getElementsByTagName(tagName)[0]?.textContent?.trim() || null;
+}
+
+function normalizeVmixXmlText(xmlText: string): string {
+  let text = (xmlText || "")
+    .replace(/^\uFEFF/, "")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "")
+    .trim();
+
+  const start = text.toLowerCase().indexOf("<vmix");
+  const end = text.toLowerCase().lastIndexOf("</vmix>");
+  if (start >= 0 && end >= start) {
+    text = text.slice(start, end + "</vmix>".length).trim();
+  }
+
+  return text;
+}
+
+function escapeLooseXmlAmpersands(text: string): string {
+  return text.replace(/&(?!#\d+;|#x[0-9a-fA-F]+;|[a-zA-Z][a-zA-Z0-9]+;)/g, "&amp;");
+}
+
+function decodeXmlEntities(value: string): string {
+  if (!value) return "";
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(`<x>${escapeLooseXmlAmpersands(value)}</x>`, "text/xml");
+  return xml.documentElement?.textContent || value;
+}
+
+function readXmlAttr(attrs: string, name: string): string {
+  const match = attrs.match(new RegExp(`${name}=["']([^"']*)["']`, "i"));
+  return match ? decodeXmlEntities(match[1]) : "";
+}
+
+function parseVmixXmlFallback(text: string) {
+  if (!/<vmix[\s>]/i.test(text)) {
+    throw new Error("Conectou, mas a resposta não é da API XML do vMix. Verifique protocolo, host e porta do Web Controller.");
+  }
+
+  const parsedInputs: VmixInput[] = Array.from(text.matchAll(/<input\b([^>]*)>([\s\S]*?)<\/input>/gi)).map((match) => {
+    const attrs = match[1] || "";
+    const body = (match[2] || "").replace(/<[^>]+>/g, "").trim();
+    return {
+      key: readXmlAttr(attrs, "key") || readXmlAttr(attrs, "guid") || readXmlAttr(attrs, "number"),
+      number: readXmlAttr(attrs, "number"),
+      title: readXmlAttr(attrs, "title") || decodeXmlEntities(body) || "Sem título",
+      type: readXmlAttr(attrs, "type"),
+      state: readXmlAttr(attrs, "state") || "Paused",
+      duration: readXmlAttr(attrs, "duration") || undefined,
+      position: readXmlAttr(attrs, "position") || undefined,
+      loop: readXmlAttr(attrs, "loop") || undefined,
+      muted: /true/i.test(readXmlAttr(attrs, "muted")),
+    };
+  }).filter((input) => input.number || input.key || input.title);
+
+  const readTag = (tag: string) => {
+    const match = text.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+    return match ? decodeXmlEntities(match[1].replace(/<[^>]+>/g, "").trim()) : null;
+  };
+
+  const overlayStates: Record<number, boolean> = {};
+  for (const match of text.matchAll(/<overlay\b([^>]*)>([\s\S]*?)<\/overlay>/gi)) {
+    const n = Number(readXmlAttr(match[1] || "", "number"));
+    if (n >= 1 && n <= 4) {
+      const ovInput = decodeXmlEntities((match[2] || "").replace(/<[^>]+>/g, "").trim()) || readXmlAttr(match[1] || "", "input");
+      overlayStates[n] = ovInput !== "" && ovInput !== "0";
+    }
+  }
+
+  return {
+    inputs: parsedInputs,
+    active: readTag("active"),
+    preview: readTag("preview"),
+    streaming: readTag("streaming"),
+    recording: readTag("recording"),
+    overlays: overlayStates,
+  };
+}
+
+function parseVmixXml(xmlText: string) {
+  const text = normalizeVmixXmlText(xmlText);
+  if (!text) throw new Error("Resposta vazia do vMix. Verifique URL/porta e Web Controller.");
+  if (text === "{}" || text === "[object Blob]" || text === "[object Object]") {
+    throw new Error("Resposta do proxy não veio como XML. Atualize a conexão e tente novamente.");
+  }
+
+  const parser = new DOMParser();
+  let xml = parser.parseFromString(text, "text/xml");
+  const parserError = xml.getElementsByTagName("parsererror")[0];
+  if (parserError) {
+    const repairedText = escapeLooseXmlAmpersands(text);
+    xml = parser.parseFromString(repairedText, "text/xml");
+    const repairedParserError = xml.getElementsByTagName("parsererror")[0];
+    if (repairedParserError) {
+      return parseVmixXmlFallback(text);
+    }
+  }
+
+  const rootName = xml.documentElement?.nodeName?.toLowerCase() || "";
+  const hasVmixRoot = rootName === "vmix" || xml.getElementsByTagName("vmix").length > 0;
+  if (!hasVmixRoot) {
+    throw new Error("Conectou, mas a resposta não é da API XML do vMix. Verifique protocolo, host e porta do Web Controller.");
+  }
+
+  const parsedInputs: VmixInput[] = Array.from(xml.getElementsByTagName("input")).map((el) => ({
+    key: el.getAttribute("key") || el.getAttribute("guid") || el.getAttribute("number") || "",
+    number: el.getAttribute("number") || "",
+    title: el.getAttribute("title") || el.textContent?.trim() || "Sem título",
+    type: el.getAttribute("type") || "",
+    state: el.getAttribute("state") || "Paused",
+    duration: el.getAttribute("duration") || undefined,
+    position: el.getAttribute("position") || undefined,
+    loop: el.getAttribute("loop") || undefined,
+    muted: /true/i.test(el.getAttribute("muted") || ""),
+  })).filter((input) => input.number || input.key || input.title);
+
+  const overlayStates: Record<number, boolean> = {};
+  for (let n = 1; n <= 4; n++) {
+    const ovEl = Array.from(xml.getElementsByTagName("overlay")).find((el) => el.getAttribute("number") === String(n));
+    if (ovEl) {
+      const ovInput = ovEl.textContent?.trim() || ovEl.getAttribute("input") || "";
+      overlayStates[n] = ovInput !== "" && ovInput !== "0";
+    }
+  }
+
+  return {
+    inputs: parsedInputs,
+    active: vmixTagText(xml, "active"),
+    preview: vmixTagText(xml, "preview"),
+    streaming: vmixTagText(xml, "streaming"),
+    recording: vmixTagText(xml, "recording"),
+    overlays: overlayStates,
+  };
+}
+
 // Format keyboard event to a readable key name, distinguishing numpad from top-row numbers
 function formatKeyName(e: KeyboardEvent): string {
   const parts: string[] = [];
@@ -125,24 +388,166 @@ function formatKeyName(e: KeyboardEvent): string {
   return parts.join(" + ");
 }
 
+interface NetworkInterfaceInfo {
+  type: string;
+  effectiveType: string;
+  recommendation?: string;
+}
+
 export default function VmixPage() {
+  const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
+  const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
   const { toast } = useToast();
   const [vmixUrl, setVmixUrl] = useState("");
   const [vmixUser, setVmixUser] = useState("");
   const [vmixPass, setVmixPass] = useState("");
   const [savedUrl, setSavedUrl] = useState("");
+  const directBaseUrlRef = useRef<string | null>(null);
+  const loopbackFallbackNotifiedRef = useRef(false);
+  const [vmixConnections, setVmixConnections] = useState<any[]>([]);
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [directTesting, setDirectTesting] = useState(false);
+  const [directTestResult, setDirectTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+  
+  // Logic to check LAN connectivity
+  useEffect(() => {
+    if (!savedUrl || !isPrivateIp(savedUrl)) {
+      setLanStatus("unknown");
+      return;
+    }
+
+    const checkLan = async () => {
+      setLanStatus("checking");
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      try {
+        // Try a very quick fetch to the vMix API with a short timeout
+        // This only works if the user is on the same network
+        const controller = new AbortController();
+        timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const candidates = Array.from(new Set([
+          normalizeVmixBaseUrl(savedUrl),
+          ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+        ]));
+
+        let reached = false;
+        for (const baseUrl of candidates) {
+          if (isMixedContentBlockedByPage(baseUrl + "/api/")) continue;
+          try {
+            await fetch(baseUrl + "/api/", {
+              mode: 'no-cors',
+              cache: "no-store",
+              signal: controller.signal
+            });
+            reached = true;
+            break;
+          } catch {
+            // try next candidate
+          }
+        }
+
+        if (!reached) throw new Error("LAN not reachable");
+
+        setLanStatus("same_lan");
+      } catch (err) {
+        setLanStatus("different_network");
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    };
+
+    checkLan();
+  }, [savedUrl]);
+
+  // Network Interface Detection (Wi-Fi/Ethernet)
+  useEffect(() => {
+    const updateNetworkInfo = () => {
+      const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+      if (!conn) {
+        setNetworkInfo(null);
+        return;
+      }
+
+      const type = conn.type || "unknown";
+      const effectiveType = conn.effectiveType || "unknown";
+      
+      let recommendation = "";
+      if (type === "wifi") {
+        recommendation = "Você está via Wi-Fi. Recomendamos usar cabo Ethernet para controle vMix profissional com menor latência.";
+      } else if (type === "cellular") {
+        recommendation = "Rede móvel (3G/4G/5G) detectada. Recomendamos Wi-Fi ou Ethernet para estabilidade no controle.";
+      } else if (type === "ethernet") {
+        recommendation = "Conexão via cabo detectada. Excelente escolha para estabilidade e performance no vMix.";
+      } else if (type === "other" || type === "unknown") {
+        recommendation = "Tipo de conexão não identificado. Para melhor experiência, priorize o uso de cabos.";
+      }
+
+      setNetworkInfo({ type, effectiveType, recommendation });
+    };
+
+    updateNetworkInfo();
+    const conn = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (conn && conn.addEventListener) {
+      conn.addEventListener('change', updateNetworkInfo);
+      return () => conn.removeEventListener('change', updateNetworkInfo);
+    }
+  }, []);
+
+  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
+    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
+    catch { return "direct"; }
+  });
+
+  // Automatic mode switching based on network detection
+  useEffect(() => {
+    if (!savedUrl) return;
+    
+    const isLocal = isPrivateIp(savedUrl);
+    
+    // We check the condition but we only want to auto-switch when the network context changes
+    if (isLocal && lanStatus === "same_lan") {
+      setConnectionMode(prev => {
+        if (prev === "proxy") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "Rede local detectada. Alternado para modo Direto." 
+          });
+          return "direct";
+        }
+        return prev;
+      });
+    } else if (!isLocal && savedUrl) {
+      setConnectionMode(prev => {
+        if (prev === "direct") {
+          toast({ 
+            title: "Modo Automático", 
+            description: "IP Público detectado. Alternado para modo Proxy." 
+          });
+          return "proxy";
+        }
+        return prev;
+      });
+    }
+  }, [lanStatus, savedUrl, toast]); 
+
+
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [inputs, setInputs] = useState<VmixInput[]>([]);
+  const [reloadingInputs, setReloadingInputs] = useState(false);
+  const [reloadFallback, setReloadFallback] = useState<string | null>(null);
   const [activeInput, setActiveInput] = useState<string | null>(null);
   const [previewInput, setPreviewInput] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [recording, setRecording] = useState(false);
   const [overlays, setOverlays] = useState<Record<number, boolean>>({ 1: false, 2: false, 3: false, 4: false });
+  const [transitionStyle, setTransitionStyle] = useState<string>(() => localStorage.getItem("vmix_transition_style") || "Fade");
+  const [transitionDuration, setTransitionDuration] = useState<number>(() => Number(localStorage.getItem("vmix_transition_duration") || 1000));
   const [minimizedInputs, setMinimizedInputs] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"controls" | "scenes">("controls");
+  const [activeTab, setActiveTab] = useState<"controls" | "ndi" | "scenes">("controls");
+  const [studioName, setStudioName] = useState("");
   // Keyboard shortcuts per input (persisted in localStorage)
   const [inputShortcuts, setInputShortcuts] = useState<Record<string, string>>(() => {
     try {
@@ -157,10 +562,6 @@ export default function VmixPage() {
   const [customButtons, setCustomButtons] = useState<any[]>([]);
   const [editingCustomButtonId, setEditingCustomButtonId] = useState<string | null | "new">(null);
   const [activeCustomButton, setActiveCustomButton] = useState<string | null>(null);
-  const [connectionMode, setConnectionMode] = useState<"direct" | "proxy">(() => {
-    try { return (localStorage.getItem("vmix_conn_mode") as "direct" | "proxy") || "direct"; }
-    catch { return "direct"; }
-  });
   // HLS stream URLs per input (for NDI live preview)
   const [inputHlsUrls, setInputHlsUrls] = useState<Record<string, string>>(() => {
     try { const s = localStorage.getItem("vmix_input_hls"); return s ? JSON.parse(s) : {}; } catch { return {}; }
@@ -177,7 +578,8 @@ export default function VmixPage() {
   const [monitorIframeMode, setMonitorIframeMode] = useState<{ preview: boolean; output: boolean }>(() => {
     try { const s = localStorage.getItem("vmix_monitor_iframe"); return s ? JSON.parse(s) : { preview: false, output: false }; } catch { return { preview: false, output: false }; }
   });
-  const [monitorsCollapsed, setMonitorsCollapsed] = useState(true);
+  const [monitorsCollapsed, setMonitorsCollapsed] = useState(false);
+  const [showStudioSelector, setShowStudioSelector] = useState(false);
 
   // Command log panel
   interface VmixLogEntry { id: number; time: string; command: string; status: "ok" | "error" | "pending"; detail: string; source: "local" | "server" | "scheduler"; }
@@ -188,6 +590,41 @@ export default function VmixPage() {
     const entry: VmixLogEntry = { id: ++logIdRef.current, time: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }), command, status, detail, source };
     setVmixLogs(prev => [entry, ...prev].slice(0, 200));
   }, []);
+
+  const applyVmixState = useCallback((vmixState: ReturnType<typeof parseVmixXml>) => {
+    setInputs(vmixState.inputs);
+    if (vmixState.active) setActiveInput(vmixState.active);
+    if (vmixState.preview) setPreviewInput(vmixState.preview);
+    if (vmixState.streaming) setStreaming(/true/i.test(vmixState.streaming));
+    if (vmixState.recording) setRecording(/true/i.test(vmixState.recording));
+    if (Object.keys(vmixState.overlays).length > 0) setOverlays(prev => ({ ...prev, ...vmixState.overlays }));
+  }, []);
+
+  const persistVmixSnapshot = useCallback(async (vmixState: ReturnType<typeof parseVmixXml>) => {
+    if (!selectedConnectionId) return;
+    const ndiSnapshot = vmixState.inputs.filter(isNdiInput).map(inp => ({
+      key: inp.key,
+      number: inp.number,
+      title: inp.title,
+      type: inp.type,
+      state: inp.state,
+    }));
+
+    await (supabase.from("vmix_connections" as any) as any)
+      .update({
+        last_inputs: vmixState.inputs as any,
+        last_state: {
+          active: vmixState.active,
+          preview: vmixState.preview,
+          streaming: vmixState.streaming,
+          recording: vmixState.recording,
+          overlays: vmixState.overlays,
+        },
+        ndi_sources: ndiSnapshot as any,
+        last_synced_at: new Date().toISOString(),
+      })
+      .eq("id", selectedConnectionId);
+  }, [selectedConnectionId]);
 
   // Programas from DB
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -215,6 +652,7 @@ export default function VmixPage() {
   const [ndiUrl, setNdiUrl] = useState("");
   const [ndiSources, setNdiSources] = useState<string[]>([]);
   const [ndiScanning, setNdiScanning] = useState(false);
+  const [manualNdiHost, setManualNdiHost] = useState("");
 
   // Diagnostic state
   interface DiagResult {
@@ -230,6 +668,15 @@ export default function VmixPage() {
   }
   const [diagRunning, setDiagRunning] = useState(false);
   const [diagResult, setDiagResult] = useState<DiagResult | null>(null);
+
+  // Input mapping for name-based fallback (key -> title and title -> key)
+  const [inputMapping, setInputMapping] = useState<Record<string, { title: string; key: string }>>(() => {
+    try {
+      const saved = localStorage.getItem("vmix_input_mapping");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+  
   const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
   const silentFailCountRef = useRef(0);
@@ -267,7 +714,7 @@ export default function VmixPage() {
     if (!user) return;
     supabase
       .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(foto)")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true)
       .order("horario_inicio")
@@ -292,6 +739,38 @@ export default function VmixPage() {
       });
   }, [user]);
 
+  // Load programas from DB
+  const loadProgramas = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("programas")
+      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
+      .eq("user_id", user.id)
+      .eq("ativo", true)
+      .ilike("estudio", "%fm%")
+      .order("horario_inicio");
+    
+    if (data) {
+      const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
+      try {
+        const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
+        if (savedOrder.length > 0) {
+          mapped.sort((a: any, b: any) => {
+            const ai = savedOrder.indexOf(a.id);
+            const bi = savedOrder.indexOf(b.id);
+            if (ai === -1 && bi === -1) return 0;
+            if (ai === -1) return 1;
+            if (bi === -1) return 1;
+            return ai - bi;
+          });
+        }
+      } catch {}
+      setProgramas(mapped);
+    }
+  }, [user]);
+
+  useEffect(() => { loadProgramas(); }, [loadProgramas]);
+
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
@@ -306,25 +785,122 @@ export default function VmixPage() {
 
   useEffect(() => {
     if (!user) return;
-    const loadUrl = async () => {
-      const { data } = await supabase
+    const loadSettings = async () => {
+      // Load global shortcuts and input mapping
+      const { data: settings } = await supabase
         .from("user_settings")
-        .select("vmix_url, vmix_user, vmix_pass, vmix_shortcuts")
+        .select("vmix_shortcuts, vmix_input_mapping")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.vmix_url) {
-        setVmixUrl(data.vmix_url);
-        setSavedUrl(data.vmix_url);
+      
+      if (settings?.vmix_shortcuts && typeof settings.vmix_shortcuts === "object") {
+        setInputShortcuts(settings.vmix_shortcuts as Record<string, string>);
       }
-      if (data?.vmix_user) setVmixUser(data.vmix_user);
-      if (data?.vmix_pass) setVmixPass(data.vmix_pass);
-      if (data?.vmix_shortcuts && typeof data.vmix_shortcuts === "object") {
-        setInputShortcuts(data.vmix_shortcuts as Record<string, string>);
+
+      if (settings?.vmix_input_mapping && typeof settings.vmix_input_mapping === "object") {
+        const mapping = settings.vmix_input_mapping as Record<string, { title: string; key: string }>;
+        setInputMapping(prev => ({ ...prev, ...mapping }));
       }
-      setLoading(false);
+
+      // Load all connections
+      const { data: connections } = await (supabase.from("vmix_connections" as any) as any)
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (connections && connections.length > 0) {
+        setVmixConnections(connections);
+        
+        // Prefer last-active connection from localStorage, then is_default, then most recent
+        let lastActiveId: string | null = null;
+        try { lastActiveId = localStorage.getItem(`vmix_active_conn_${user.id}`); } catch {}
+        const def =
+          (lastActiveId && (connections as any[]).find((c: any) => c.id === lastActiveId)) ||
+          (connections as any[]).find((c: any) => c.is_default) ||
+          connections[0];
+        setSelectedConnectionId(def.id);
+        setVmixUrl(def.url);
+        setSavedUrl(def.url);
+        setVmixUser(def.username || "");
+        setVmixPass(def.password || "");
+        setStudioName(def.name);
+        if (Array.isArray(def.last_inputs) && def.last_inputs.length > 0) {
+          setInputs(def.last_inputs as VmixInput[]);
+          if (def.last_state?.active) setActiveInput(def.last_state.active);
+          if (def.last_state?.preview) setPreviewInput(def.last_state.preview);
+          if (Array.isArray(def.ndi_sources)) setNdiSources(def.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+        }
+        
+        setLoading(false);
+        
+        // Auto-connect
+        setTimeout(() => {
+          connectToVmixRef.current?.();
+        }, 800);
+      } else {
+        // Fallback to old user_settings if no connections in new table yet
+        const { data: oldData } = await supabase
+          .from("user_settings")
+          .select("vmix_url, vmix_user, vmix_pass")
+          .eq("user_id", user.id)
+          .maybeSingle();
+          
+        if (oldData?.vmix_url) {
+          setVmixUrl(oldData.vmix_url);
+          setSavedUrl(oldData.vmix_url);
+          setVmixUser(oldData.vmix_user || "");
+          setVmixPass(oldData.vmix_pass || "");
+          setStudioName("Estúdio Padrão");
+        }
+        setLoading(false);
+      }
     };
-    loadUrl();
+    loadSettings();
   }, [user]);
+
+  const loadConnections = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("vmix_connections" as any)
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+    if (data) setVmixConnections(data);
+  };
+
+  // Persist the active connection so it auto-applies on every future visit
+  const persistActiveConnection = useCallback(async (connId: string) => {
+    if (!user || !connId) return;
+    try { localStorage.setItem(`vmix_active_conn_${user.id}`, connId); } catch {}
+    try {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: false })
+        .eq("user_id", user.id)
+        .neq("id", connId);
+      await (supabase.from("vmix_connections" as any) as any)
+        .update({ is_default: true })
+        .eq("id", connId);
+    } catch {}
+  }, [user]);
+
+  const handleSelectConnection = (conn: any) => {
+    setSelectedConnectionId(conn.id);
+    setVmixUrl(conn.url);
+    setSavedUrl(conn.url);
+    setVmixUser(conn.username || "");
+    setVmixPass(conn.password || "");
+    setStudioName(conn.name);
+    if (Array.isArray(conn.last_inputs) && conn.last_inputs.length > 0) {
+      setInputs(conn.last_inputs as VmixInput[]);
+      if (conn.last_state?.active) setActiveInput(conn.last_state.active);
+      if (conn.last_state?.preview) setPreviewInput(conn.last_state.preview);
+      if (Array.isArray(conn.ndi_sources)) setNdiSources(conn.ndi_sources.map((src: any) => src.title || src.name || String(src)).filter(Boolean));
+    }
+    setConnected(false);
+    persistActiveConnection(conn.id);
+    // Auto connect when switching
+    setTimeout(() => connectToVmix(), 300);
+  };
 
   // Persist connection mode
   useEffect(() => {
@@ -333,55 +909,169 @@ export default function VmixPage() {
 
   const saveUrl = async () => {
     if (!user || !vmixUrl.trim()) return;
-    const trimmed = vmixUrl.trim();
-    const { data: existing } = await supabase
-      .from("user_settings")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const payload = { vmix_url: trimmed, vmix_user: vmixUser.trim(), vmix_pass: vmixPass };
-    if (existing) {
-      await supabase.from("user_settings").update(payload).eq("user_id", user.id);
-    } else {
-      await supabase.from("user_settings").insert({ user_id: user.id, ...payload });
+    let trimmed = vmixUrl.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      trimmed = "http://" + trimmed;
     }
-    setSavedUrl(trimmed);
-    localStorage.setItem(`vmix_url_${user.id}`, trimmed);
+    try {
+      const urlObj = new URL(trimmed);
+      if (!urlObj.port && (/^[0-9.]+$/.test(urlObj.hostname) || urlObj.hostname === "localhost")) {
+        urlObj.port = "8088";
+        trimmed = urlObj.toString().replace(/\/$/, "");
+      }
+    } catch {}
 
-    // Auto-detect best mode
+    const payload = { 
+      user_id: user.id,
+      name: studioName || "vMix Studio",
+      url: trimmed, 
+      username: vmixUser.trim(), 
+      password: vmixPass,
+      is_default: true 
+    };
+
+    if (selectedConnectionId) {
+      await (supabase.from("vmix_connections" as any) as any)
+        .update(payload)
+        .eq("id", selectedConnectionId);
+    } else {
+      const { data } = await (supabase.from("vmix_connections" as any) as any)
+        .insert(payload)
+        .select()
+        .single();
+      if (data) setSelectedConnectionId(data.id);
+    }
+    
+    // Also update global settings for backward compatibility if needed
+    await supabase.from("user_settings").upsert({ 
+      user_id: user.id, 
+      vmix_url: trimmed, 
+      vmix_user: vmixUser.trim(), 
+      vmix_pass: vmixPass 
+    });
+
+    setSavedUrl(trimmed);
+    loadConnections();
+
     if (isPrivateIp(trimmed) && connectionMode === "proxy") {
       setConnectionMode("direct");
-      toast({ title: "Modo alterado para Direto", description: "IP local detectado. Proxy em nuvem não alcança rede local." });
+      toast({ title: "Modo alterado para Direto", description: "IP local detectado." });
     } else if (!isPrivateIp(trimmed) && connectionMode === "direct") {
       setConnectionMode("proxy");
-      toast({ title: "Modo alterado para Proxy", description: "IP público detectado. Usando conexão via proxy." });
+      toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
     }
-    toast({ title: "Configuração salva", description: "URL e credenciais do vMix salvas." });
+    toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
   };
+
+  useEffect(() => {
+    directBaseUrlRef.current = null;
+    loopbackFallbackNotifiedRef.current = false;
+  }, [savedUrl]);
 
   // Direct fetch to vMix (browser → vMix, no edge function)
   const vmixDirectFetch = useCallback(async (path: string): Promise<string> => {
     if (!savedUrl) throw new Error("URL não configurada");
-    const baseUrl = savedUrl.replace(/\/+$/, "");
-    const targetUrl = baseUrl + path;
+    const configuredBaseUrl = normalizeVmixBaseUrl(savedUrl);
+    const candidateBaseUrls = Array.from(new Set([
+      directBaseUrlRef.current,
+      configuredBaseUrl,
+      ...(isPrivateIp(savedUrl) && !isLoopbackUrl(savedUrl) ? buildLoopbackFallbackUrls(savedUrl) : []),
+    ].filter(Boolean) as string[]));
+
     const headers: Record<string, string> = {
       "Accept": "application/xml, text/xml, text/html, */*",
     };
     if (vmixUser) {
       headers["Authorization"] = `Basic ${btoa(`${vmixUser}:${vmixPass || ""}`)}`;
     }
-    const response = await fetch(targetUrl, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(10000),
-    });
-    return await response.text();
-  }, [savedUrl, vmixUser, vmixPass]);
+
+    // Client-side retry loop instead of a single long AbortSignal — network hiccups
+    // and vMix not-yet-ready both surface as short failures, not a 10s hang.
+    const MAX_ATTEMPTS = 3;
+    const PER_ATTEMPT_MS = 6000;
+    let lastErr: unknown = null;
+    let skippedMixedContent = false;
+
+    for (const baseUrl of candidateBaseUrls) {
+      const targetUrl = baseUrl + path;
+
+      // HTTPS pages cannot fetch HTTP LAN IPs. Loopback is tried as an automatic
+      // local fallback because Chrome treats localhost/127.0.0.1 as trustworthy.
+      if (isMixedContentBlockedByPage(targetUrl)) {
+        skippedMixedContent = true;
+        lastErr = new Error("Mixed Content bloqueado para IP LAN HTTP");
+        continue;
+      }
+
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), PER_ATTEMPT_MS);
+        try {
+          const response = await fetch(targetUrl, {
+            method: "GET",
+            headers,
+            mode: "cors",
+            cache: "no-store",
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (!response.ok && response.status === 401) {
+            throw new Error("Autenticação vMix falhou (401). Verifique usuário/senha do Web Controller.");
+          }
+          directBaseUrlRef.current = baseUrl;
+          if (baseUrl !== configuredBaseUrl && !loopbackFallbackNotifiedRef.current) {
+            loopbackFallbackNotifiedRef.current = true;
+            toast({
+              title: "vMix local conectado",
+              description: "O modo Direto usou localhost para evitar o bloqueio HTTPS → HTTP.",
+            });
+          }
+          return await response.text();
+        } catch (err) {
+          clearTimeout(timer);
+          lastErr = err;
+          const msg = err instanceof Error ? err.message : String(err);
+          const isAbort = err instanceof DOMException && err.name === "AbortError";
+          const isNet = /Failed to fetch|NetworkError|network/i.test(msg);
+          // Don't retry on auth or fatal errors for this target.
+          if (/401|Autenticação/.test(msg)) throw err;
+          // Retry only on transient network/timeout errors.
+          if (!isAbort && !isNet) break;
+          if (attempt < MAX_ATTEMPTS) {
+            await new Promise((r) => setTimeout(r, 400 * attempt));
+          }
+        }
+      }
+    }
+
+    if (skippedMixedContent) {
+      throw new Error(
+        "Mixed Content bloqueado: o painel está em HTTPS e o vMix em HTTP em outro IP da rede. " +
+        "Se o vMix estiver neste mesmo computador, deixe o app usar localhost/127.0.0.1. " +
+        "Se estiver em outro PC, use um túnel HTTPS/IP público com Proxy — navegadores não permitem HTTPS → HTTP LAN."
+      );
+    }
+
+    // Produce a specific, actionable error instead of "signal timed out"
+    const finalMsg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+    if (lastErr instanceof DOMException && lastErr.name === "AbortError") {
+      throw new Error(
+        "Sem resposta do vMix em modo Direto. Verifique: (1) vMix aberto com Web Controller habilitado na porta 8088; " +
+        "(2) IP e porta corretos; (3) firewall do Windows permitindo entrada na porta 8088; (4) navegador na mesma rede do vMix."
+      );
+    }
+    if (/Failed to fetch|NetworkError/i.test(finalMsg)) {
+      throw new Error(
+        "Não foi possível alcançar o vMix (rede inacessível ou Mixed Content). Confirme IP/porta, mesma rede LAN, e se o painel está em HTTP quando o vMix é HTTP."
+      );
+    }
+    throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  }, [savedUrl, vmixUser, vmixPass, toast]);
 
   // Proxy fetch via Edge Function (browser → cloud → vMix)
   const vmixProxyFetch = useCallback(async (path: string): Promise<string> => {
     const { data, error } = await supabase.functions.invoke("vmix-proxy", {
-      body: { path },
+      body: { path, connectionId: selectedConnectionId },
     });
 
     if (error) {
@@ -398,17 +1088,33 @@ export default function VmixPage() {
     }
 
     if (typeof data === "string") return data;
+    if (data instanceof Blob) return await data.text();
+    if (data instanceof ArrayBuffer) return new TextDecoder().decode(data);
     return typeof data === "object" ? JSON.stringify(data) : String(data);
-  }, []);
+  }, [selectedConnectionId]);
 
   // Unified fetch that uses the selected mode (or an explicit override)
   const vmixFetch = useCallback(async (path: string, modeOverride?: "direct" | "proxy"): Promise<string> => {
     const effectiveMode = modeOverride ?? connectionMode;
-    if (effectiveMode === "direct") {
-      return vmixDirectFetch(path);
+    try {
+      if (effectiveMode === "direct") {
+        return await vmixDirectFetch(path);
+      }
+      return await vmixProxyFetch(path);
+    } catch (err) {
+      // Auto-fallback: If proxy fails and it's a local IP, try direct (might work if user is in same LAN)
+      if (effectiveMode === "proxy" && savedUrl && isPrivateIp(savedUrl)) {
+        console.log("Proxy failed for local IP, trying direct fallback...");
+        return await vmixDirectFetch(path);
+      }
+      // If direct fails and it's a public IP, try proxy automatically
+      if (effectiveMode === "direct" && savedUrl && !isPrivateIp(savedUrl)) {
+        console.log("Direct failed for public IP, trying proxy fallback...");
+        return await vmixProxyFetch(path);
+      }
+      throw err;
     }
-    return vmixProxyFetch(path);
-  }, [connectionMode, vmixDirectFetch, vmixProxyFetch]);
+  }, [connectionMode, vmixDirectFetch, vmixProxyFetch, savedUrl]);
 
    // ── Input type visual placeholders (SnapshotInput removed — it saves to disk on vMix!) ──
   const inputTypeColors: Record<string, string> = {
@@ -427,7 +1133,10 @@ export default function VmixPage() {
     const isLocal = isPrivateIp(savedUrl);
     const isEmbeddedPreview = window.self !== window.top;
     let protocol: "http" | "https" | "unknown" = "unknown";
-    try { protocol = new URL(savedUrl).protocol === "https:" ? "https" : "http"; } catch {}
+    try { 
+      const u = savedUrl.startsWith("http") ? savedUrl : "http://" + savedUrl;
+      protocol = new URL(u).protocol === "https:" ? "https" : "http"; 
+    } catch {}
     const secureCtx = window.isSecureContext;
 
     const result: DiagResult = {
@@ -445,18 +1154,18 @@ export default function VmixPage() {
     // Test Direct
     try {
       const text = await vmixDirectFetch("/api/");
-      result.directResult = text.includes("<vmix>") || text.includes("<inputs>") ? "ok" : "fail";
-      if (result.directResult === "fail") result.directError = "Resposta não é XML do vMix";
+      parseVmixXml(text);
+      result.directResult = "ok";
     } catch (e) {
       result.directResult = "fail";
       const msg = e instanceof Error ? e.message : String(e);
       result.directError = msg;
-      if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+      if (/failed to fetch|networkerror|load failed|mixed content/i.test(msg)) {
         if (secureCtx && protocol === "http") {
           result.mixedContentBlocked = true;
-          result.directError = "Bloqueado por Mixed Content (HTTPS → HTTP)";
+          result.directError = "HTTPS bloqueou HTTP do vMix; localhost foi testado automaticamente.";
         } else {
-          result.directError = "Rede inacessível ou CORS bloqueado pelo vMix";
+          result.directError = "Rede inacessível, IP incorreto ou Firewall";
         }
       }
     }
@@ -468,8 +1177,8 @@ export default function VmixPage() {
     } else {
       try {
         const text = await vmixProxyFetch("/api/");
-        result.proxyResult = text.includes("<vmix>") || text.includes("<inputs>") || text.includes("version") ? "ok" : "fail";
-        if (result.proxyResult === "fail") result.proxyError = "Resposta não é XML do vMix";
+        parseVmixXml(text);
+        result.proxyResult = "ok";
       } catch (e) {
         result.proxyResult = "fail";
         const msg = e instanceof Error ? e.message : String(e);
@@ -487,10 +1196,12 @@ export default function VmixPage() {
       autoFixMode = "proxy";
     } else if (isLocal && result.mixedContentBlocked) {
       result.recommendation = isEmbeddedPreview
-        ? "⚠️ O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' no navegador para esse domínio."
-        : "⚠️ O navegador bloqueia HTTP dentro de HTTPS (Mixed Content). Permita 'Conteúdo inseguro' para este site e tente novamente.";
+        ? "⚠️ O preview interno bloqueia HTTP local. Abra o app publicado em nova aba; se o vMix estiver neste PC, use localhost:8088."
+        : "⚠️ O navegador bloqueia HTTPS → HTTP em IP LAN. Se o vMix está neste PC, use localhost:8088/127.0.0.1:8088. Se está em outro PC, use túnel HTTPS/IP público + Proxy ou permita 'Conteúdo inseguro' no site.";
+      if (!isEmbeddedPreview && result.directResult === "fail") {
+      }
     } else if (isLocal) {
-      result.recommendation = "⚠️ IP local detectado. Use modo Direto na mesma rede local; o modo Proxy só funciona com URL pública/túnel.";
+      result.recommendation = "⚠️ IP local detectado. O modo Proxy (nuvem) não funciona com IPs locais. 1) Verifique se o vMix está aberto e o Web Controller ativo na porta 8088; 2) Se você estiver no preview do Lovable, abra /vmix-control em uma nova aba para permitir a conexão direta local.";
     } else {
       result.recommendation = "❌ Nenhum modo conectou. Verifique: 1) Port forwarding configurado no roteador (porta 8088 → IP do PC)? 2) vMix Web Controller ativo? 3) Firewall permite conexões na porta 8088?";
     }
@@ -516,66 +1227,46 @@ export default function VmixPage() {
     const isEmbeddedPreview = window.self !== window.top;
     const effectiveMode = connectionMode;
 
+    // In the embedded preview iframe, mixed content blocks HTTP to local IPs.
+    // Open a real tab so the user can connect there — it will land straight on the Nexo Control panel.
+    if (isEmbeddedPreview && isLocal) {
+      window.open("/vmix-control", "_blank", "noopener,noreferrer");
+      toast({
+        title: "Abrindo em nova aba",
+        description: "O preview interno bloqueia HTTP local. A conexão será feita na nova aba e você já cai direto no painel do Nexo Control.",
+      });
+      return;
+    }
+
     if (effectiveMode === "proxy" && isLocal) {
       setConnected(false);
       setConnectionMode("direct");
       toast({
-        title: "Proxy indisponível para IP local",
-        description: isEmbeddedPreview
-          ? "No preview interno, abra /vmix-control em nova aba e use o modo Direto."
-          : "IP local não é acessível pelo proxy em nuvem. Mudamos para Direto automaticamente.",
+        title: "IP Local detectado",
+        description: "IP local não é acessível pelo proxy em nuvem. Mudamos para o modo Direto automaticamente.",
         variant: "destructive",
       });
-      if (isEmbeddedPreview) {
-        window.open("/vmix-control", "_blank", "noopener,noreferrer");
-      }
       return;
     }
 
     setConnecting(true);
     try {
       const xmlText = await vmixFetch("/api/", effectiveMode);
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
-
-      const inputElements = xml.querySelectorAll("input");
-      const parsedInputs: VmixInput[] = [];
-      inputElements.forEach((el) => {
-        parsedInputs.push({
-          key: el.getAttribute("key") || "",
-          number: el.getAttribute("number") || "",
-          title: el.getAttribute("title") || el.textContent || "",
-          type: el.getAttribute("type") || "",
-          state: el.getAttribute("state") || "Paused",
-          duration: el.getAttribute("duration") || undefined,
-          position: el.getAttribute("position") || undefined,
-          loop: el.getAttribute("loop") || undefined,
-          muted: el.getAttribute("muted") === "True",
-        });
-      });
-      setInputs(parsedInputs);
-
-      const active = xml.querySelector("active");
-      const preview = xml.querySelector("preview");
-      if (active) setActiveInput(active.textContent);
-      if (preview) setPreviewInput(preview.textContent);
-
-      const streamingEl = xml.querySelector("streaming");
-      const recordingEl = xml.querySelector("recording");
-      if (streamingEl) setStreaming(streamingEl.textContent === "True");
-      if (recordingEl) setRecording(recordingEl.textContent === "True");
-
-      // Parse overlay states
-      for (let n = 1; n <= 4; n++) {
-        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
-        if (ovEl) {
-          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
-          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
-        }
-      }
+      const vmixState = parseVmixXml(xmlText);
+      const parsedInputs = vmixState.inputs;
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
 
       setConnected(true);
-      toast({ title: "Conectado!", description: `${parsedInputs.length} inputs (modo ${effectiveMode === "direct" ? "direto" : "proxy"}).` });
+      if (selectedConnectionId) persistActiveConnection(selectedConnectionId);
+      // Auto-navigate to main Nexo Control panel (switcher) once connected
+      setActiveTab("controls");
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
+      const inputCount = parsedInputs.length;
+      toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+
+      // Auto-reload inputs + NDI sources with retry/fallback
+      setTimeout(() => reloadInputsAndSources(), 400);
     } catch (err) {
       setConnected(false);
       const message = err instanceof Error ? err.message : "Verifique se o vMix Web Controller está ativo.";
@@ -584,10 +1275,14 @@ export default function VmixPage() {
         isLocal &&
         /failed to fetch|networkerror|mixed content|cors/i.test(message);
 
+      if (isMixedOrCorsLikely) {
+        
+      }
+
       const hint = isMixedOrCorsLikely
         ? (isEmbeddedPreview
-          ? " O preview interno bloqueia HTTP local. Abra /vmix-control em nova aba e permita 'Conteúdo inseguro' nesse domínio."
-          : " No modo Direto (rede local), permita 'Conteúdo inseguro' para este site no navegador.")
+          ? " O preview interno bloqueia HTTP local. Abra o app em nova aba; se o vMix estiver neste PC, use localhost:8088."
+          : " Se o vMix está neste PC, salve como localhost:8088. Se está em outro PC da LAN, o navegador só libera com túnel HTTPS ou permissão manual de conteúdo inseguro.")
         : effectiveMode === "direct" && !isLocal
         ? " IP público detectado — tente o modo 'Proxy'."
         : "";
@@ -596,7 +1291,7 @@ export default function VmixPage() {
     } finally {
       setConnecting(false);
     }
-  }, [savedUrl, toast, vmixFetch, connectionMode]);
+  }, [savedUrl, toast, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, selectedConnectionId, persistActiveConnection]);
 
   // Keep ref in sync for diagnostic auto-connect
   useEffect(() => { connectToVmixRef.current = connectToVmix; }, [connectToVmix]);
@@ -606,44 +1301,11 @@ export default function VmixPage() {
     if (!savedUrl) return;
     try {
       const xmlText = await vmixFetch("/api/");
-      const parser = new DOMParser();
-      const xml = parser.parseFromString(xmlText, "text/xml");
-
-      const inputElements = xml.querySelectorAll("input");
-      const parsedInputs: VmixInput[] = [];
-      inputElements.forEach((el) => {
-        parsedInputs.push({
-          key: el.getAttribute("key") || "",
-          number: el.getAttribute("number") || "",
-          title: el.getAttribute("title") || el.textContent || "",
-          type: el.getAttribute("type") || "",
-          state: el.getAttribute("state") || "Paused",
-          duration: el.getAttribute("duration") || undefined,
-          position: el.getAttribute("position") || undefined,
-          loop: el.getAttribute("loop") || undefined,
-          muted: el.getAttribute("muted") === "True",
-        });
-      });
-      setInputs(parsedInputs);
-
-      const active = xml.querySelector("active");
-      const preview = xml.querySelector("preview");
-      if (active) setActiveInput(active.textContent);
-      if (preview) setPreviewInput(preview.textContent);
-
-      const streamingEl = xml.querySelector("streaming");
-      const recordingEl = xml.querySelector("recording");
-      if (streamingEl) setStreaming(streamingEl.textContent === "True");
-      if (recordingEl) setRecording(recordingEl.textContent === "True");
-
-      for (let n = 1; n <= 4; n++) {
-        const ovEl = xml.querySelector(`overlay[number="${n}"]`);
-        if (ovEl) {
-          const ovInput = ovEl.textContent || ovEl.getAttribute("input") || "";
-          setOverlays(prev => ({ ...prev, [n]: ovInput !== "" && ovInput !== "0" }));
-        }
-      }
-      // Reset fail counter on success
+      const vmixState = parseVmixXml(xmlText);
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
+      // Reset fail counter and ensure status is connected on success
+      if (!connected) setConnected(true);
       silentFailCountRef.current = 0;
     } catch {
       // Only disconnect after 3 consecutive failures
@@ -653,25 +1315,88 @@ export default function VmixPage() {
         silentFailCountRef.current = 0;
       }
     }
-  }, [savedUrl, vmixFetch]);
+  }, [savedUrl, vmixFetch, applyVmixState, persistVmixSnapshot]);
+
+  // Update input mapping whenever inputs change
+  useEffect(() => {
+    if (inputs.length === 0) return;
+    
+    setInputMapping(prev => {
+      const next = { ...prev };
+      let changed = false;
+      
+      inputs.forEach(inp => {
+        // Map key to its title
+        if (next[inp.key]?.title !== inp.title) {
+          next[inp.key] = { title: inp.title, key: inp.key };
+          changed = true;
+        }
+        // Also ensure title maps to key for reverse lookup
+        // We use a special prefix for title lookups or just keep it separate
+        // For simplicity, we just ensure every key we currently have is up to date
+      });
+      
+      if (changed) {
+        localStorage.setItem("vmix_input_mapping", JSON.stringify(next));
+        // Also persist to DB
+        if (user) {
+          supabase.from("user_settings")
+            .update({ vmix_input_mapping: next as any })
+            .eq("user_id", user.id)
+            .then(({ error }) => {
+              if (error) console.error("Error saving input mapping to DB:", error);
+            });
+        }
+        return next;
+      }
+      return prev;
+    });
+  }, [inputs, user]);
 
   useEffect(() => {
-    if (!connected || !savedUrl) return;
-    silentFailCountRef.current = 0;
-    const id = setInterval(silentRefresh, 5000);
+    if (!savedUrl) return;
+    
+    const pollInterval = connected ? 5000 : 20000;
+    const id = setInterval(() => {
+      silentRefresh();
+    }, pollInterval);
+    
     return () => clearInterval(id);
   }, [connected, savedUrl, silentRefresh]);
 
+  const resolveInputKey = useCallback((inputKey: string | undefined): string | undefined => {
+    if (!inputKey || !inputKey.includes("-")) return inputKey;
+    const exists = inputs.some(i => i.key === inputKey);
+    if (exists) return inputKey;
+    
+    const mapped = inputMapping[inputKey];
+    if (mapped) {
+      const fallback = inputs.find(i => i.title === mapped.title);
+      if (fallback) {
+        console.log(`Input ${inputKey} not found, falling back to ${fallback.title} (Key: ${fallback.key})`);
+        return fallback.key;
+      }
+    }
+    return inputKey;
+  }, [inputs, inputMapping]);
+
   const sendCommand = async (fn: string, input?: string, value?: string) => {
     if (!savedUrl) return;
-    const cmdLabel = `${fn}${input ? ` Input=${input}` : ""}${value ? ` Value=${value}` : ""}`;
+
+    const effectiveInput = resolveInputKey(input);
+
+    const cmdLabel = `${fn}${effectiveInput ? ` Input=${effectiveInput}` : ""}${value ? ` Value=${value}` : ""}`;
     try {
       let path = `/api/?Function=${encodeURIComponent(fn)}`;
-      if (input) path += `&Input=${encodeURIComponent(input)}`;
+      if (effectiveInput) path += `&Input=${encodeURIComponent(effectiveInput)}`;
       if (value) path += `&Value=${encodeURIComponent(value)}`;
-      await vmixFetch(path);
+      
+      const forceMode: "direct" | "proxy" | undefined = isPrivateIp(savedUrl) ? "direct" : undefined;
+      await vmixFetch(path, forceMode);
       addLog(cmdLabel, "ok", "Enviado com sucesso", "local");
-      setTimeout(() => connectToVmix(), 300);
+      
+      // Refresh state after command
+      setTimeout(() => silentRefresh(), 300);
     } catch (err: any) {
       addLog(cmdLabel, "error", err?.message || "Falha ao enviar", "local");
       toast({ title: "Erro", description: "Falha ao enviar comando.", variant: "destructive" });
@@ -692,14 +1417,31 @@ export default function VmixPage() {
   }, []);
 
   const runCommandsUnified = useCallback(async (cmds: any[], label: string) => {
-    const normalized = normalizeCommands(cmds);
+    const normalized = normalizeCommands(cmds).map(cmd => ({
+      ...cmd,
+      input: resolveInputKey(cmd.input)
+    }));
+    
     if (!normalized.length) return;
 
     const batchLabel = `[${label}] ${normalized.length} cmd(s)`;
+
+    // For private/local IPs, skip server attempt — the cloud cannot reach LAN.
+    // Send directly from the browser to vMix.
+    if (savedUrl && isPrivateIp(savedUrl)) {
+      addLog(batchLabel, "pending", "Enviando direto (LAN)...", "local");
+      for (const cmd of normalized) {
+        await sendCommand(cmd.fn, cmd.input, cmd.value);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      toast({ title: label, description: `${normalized.length} ação(ões) enviada(s) ao vMix.` });
+      return;
+    }
+
     addLog(batchLabel, "pending", "Enviando via servidor...", "server");
 
     try {
-      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized } });
+      const res = await supabase.functions.invoke("execute-vmix-commands", { body: { commands: normalized, connectionId: selectedConnectionId } });
       if (res.error) throw res.error;
 
       const results = Array.isArray((res.data as { results?: Array<{ ok?: boolean }> } | null)?.results)
@@ -722,7 +1464,7 @@ export default function VmixPage() {
       }
       toast({ title: label, description: `${normalized.length} ação(ões) executada(s) localmente.` });
     }
-  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog]);
+  }, [connectToVmix, normalizeCommands, sendCommand, toast, addLog, savedUrl, selectedConnectionId]);
 
   const runScene = async (scene: VmixScene) => {
     setRunningScene(scene.id);
@@ -869,18 +1611,9 @@ export default function VmixPage() {
   }, [connected, savedUrl, user, sendCommand]);
 
   // Extract machine names from existing NDI inputs to suggest common sources
-  const detectedMachines = useMemo(() => {
-    const machines = new Set<string>();
-    inputs.forEach(inp => {
-      if (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi")) {
-        const match = inp.title.match(/^(?:NDI\s+)?([A-Z0-9_-]+)\s*\(/i);
-        if (match) machines.add(match[1]);
-      }
-    });
-    return Array.from(machines);
-  }, [inputs]);
+  const detectedMachines = useMemo(() => extractNdiMachinesFromInputs(inputs), [inputs]);
 
-  const scanNdiSources = useCallback(async () => {
+  const scanNdiSources = useCallback(async (customHost?: string) => {
     if (!savedUrl || !connected) {
       setNdiSources([]);
       return;
@@ -888,32 +1621,18 @@ export default function VmixPage() {
 
     setNdiScanning(true);
     try {
-      // IMPORTANT: vMix HTTP API does not expose live NDI network discovery (mDNS-only).
-      // We build suggestions from machine names already seen in current NDI inputs.
-      const machineList = [...detectedMachines];
-      const suggestions: string[] = [];
+      // Build suggestions from current inputs AND manual host
+      const machineList = new Set([...detectedMachines]);
+      if (customHost) machineList.add(customHost);
+      if (manualNdiHost) machineList.add(manualNdiHost);
 
-      for (const machine of machineList) {
-        suggestions.push(
-          `${machine} (vMix - Output 1)`,
-          `${machine} (vMix - Output 2)`,
-          `${machine} (vMix - Output 3)`,
-          `${machine} (vMix - Output 4)`,
-          `${machine} (vMix Video)`,
-          `${machine} (vMix Audio - Master)`,
-          `${machine} (vMix Audio - Headphones)`,
-          `${machine} (Radeon RX 460 Series 1)`,
-          `${machine} (Radeon RX 460 Series 2)`,
-        );
-      }
-
-      const uniqueSuggestions = Array.from(new Set(suggestions));
+      const uniqueSuggestions = buildNdiSuggestions(Array.from(machineList));
       setNdiSources(uniqueSuggestions);
 
-      if (uniqueSuggestions.length === 0) {
+      if (uniqueSuggestions.length === 0 && (customHost || manualNdiHost)) {
         toast({
           title: "Busca NDI",
-          description: "Nenhum host NDI detectado nos inputs atuais. Adicione uma fonte manual para iniciar a detecção assistida.",
+          description: "Nenhuma fonte sugerida para este host. Verifique se o nome/IP está correto.",
         });
       }
     } catch {
@@ -922,9 +1641,43 @@ export default function VmixPage() {
     } finally {
       setNdiScanning(false);
     }
-  }, [savedUrl, connected, detectedMachines, toast]);
+  }, [savedUrl, connected, detectedMachines, manualNdiHost, toast]);
 
   // NDI auto-scan removed (NDI tab removed)
+
+  // Auto-reload inputs + NDI sources on connection with retry/fallback
+  const reloadInputsAndSources = useCallback(async () => {
+    if (!savedUrl) return;
+    setReloadingInputs(true);
+    setReloadFallback(null);
+    const attempt = async () => {
+      const xmlText = await vmixFetch("/api/", connectionMode);
+      const vmixState = parseVmixXml(xmlText);
+      applyVmixState(vmixState);
+      persistVmixSnapshot(vmixState);
+      return vmixState.inputs.length;
+    };
+    try {
+      let count = 0;
+      try {
+        count = await attempt();
+      } catch {
+        await new Promise(r => setTimeout(r, 1200));
+        count = await attempt();
+      }
+      // Scan NDI sources after inputs are up to date
+      try { await scanNdiSources(); } catch {}
+      if (count === 0) {
+        setReloadFallback("Nenhum input encontrado — usando último snapshot salvo.");
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao recarregar inputs.";
+      setReloadFallback(`${msg} Exibindo último snapshot salvo.`);
+      toast({ title: "Recarga parcial", description: msg, variant: "destructive" });
+    } finally {
+      setReloadingInputs(false);
+    }
+  }, [savedUrl, vmixFetch, connectionMode, applyVmixState, persistVmixSnapshot, scanNdiSources, toast]);
 
   const addNdiInput = async (source?: string) => {
     const ndiName = source || ndiUrl.trim();
@@ -1056,6 +1809,10 @@ export default function VmixPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [effectiveConnected, capturingShortcut]);
 
+  // Group inputs for combo: regular inputs and NDI inputs
+  const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
+  const regularInputs = useMemo(() => inputs.filter(i => !isNdiInput(i)), [inputs]);
+
   if (loading) return <ModulePageSkeleton />;
 
   const hasLocalHttpUrl = savedUrl && isPrivateIp(savedUrl) && isInsecureHttpUrl(savedUrl);
@@ -1065,13 +1822,9 @@ export default function VmixPage() {
 
   // Helper: get input label with type indicator
   const inputLabel = (inp: VmixInput) => {
-    const isNdi = inp.type === "NDI" || inp.title.toLowerCase().includes("ndi");
+    const isNdi = isNdiInput(inp);
     return `${inp.number} – ${isNdi ? "🟢 " : ""}${inp.title}${isNdi ? " (NDI)" : ""}`;
   };
-
-  // Group inputs for combo: regular inputs and NDI inputs
-  const ndiInputs = inputs.filter(i => i.type === "NDI" || i.title.toLowerCase().includes("ndi"));
-  const regularInputs = inputs.filter(i => i.type !== "NDI" && !i.title.toLowerCase().includes("ndi"));
 
   // ── Styles ──
   const sectionBox = (title: string, icon: React.ReactNode, children: React.ReactNode, _color = "#888") => (
@@ -1101,32 +1854,26 @@ export default function VmixPage() {
     </button>
   );
 
-  // Render the select combo with grouped inputs (regular + NDI)
+  // Render the select combo with all vMix inputs
   const renderInputSelect = (value: string | null, onChange: (val: string) => void) => (
     <select
       value={value || ""}
       onChange={e => onChange(e.target.value)}
-      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none"
-      style={{ backgroundColor: "#222228", color: "#ccc" }}
+      className="flex-1 text-[10px] rounded px-2 py-1 border-none outline-none font-bold"
+      style={{ backgroundColor: "#222228", color: "#ccc", border: "1px solid #333" }}
     >
-      <option value="">— Selecione —</option>
-      {regularInputs.length > 0 && (
-        <optgroup label="Inputs">
-          {regularInputs.map(inp => (
-            <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-          ))}
-        </optgroup>
+      <option value="">— Selecione um Input —</option>
+      {inputs.map(inp => {
+        const isNdi = isNdiInput(inp);
+        return (
+          <option key={inp.key || inp.number} value={inp.number}>
+            {isNdi ? "🟢 " : ""}{inp.number} – {inp.title}
+          </option>
+        );
+      })}
+      {inputs.length === 0 && (
+        <option disabled>Nenhum input encontrado</option>
       )}
-      {ndiInputs.length > 0 && (
-        <optgroup label="NDI Sources">
-          {ndiInputs.map(inp => (
-            <option key={inp.key || inp.number} value={inp.number}>🟢 {inp.number} – {inp.title}</option>
-          ))}
-        </optgroup>
-      )}
-      {regularInputs.length === 0 && ndiInputs.length === 0 && inputs.map(inp => (
-        <option key={inp.key || inp.number} value={inp.number}>{inp.number} – {inp.title}</option>
-      ))}
     </select>
   );
 
@@ -1155,29 +1902,48 @@ export default function VmixPage() {
   // MJPEG/JPEG rapid-refresh image component (for vmix-snapshot-proxy, NDI HX Camera, etc.)
   const MjpegPlayer = ({ src, className = "" }: { src: string; className?: string }) => {
     const [imgSrc, setImgSrc] = useState(src);
+    const [hasError, setHasError] = useState(false);
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    
     useEffect(() => {
+      setHasError(false);
       if (!src) return;
-      // If it looks like an MJPEG stream (contains /stream or is multipart), use as-is
-      // Otherwise, refresh the image every 500ms with cache-busting
+      
       const isMjpeg = /stream|mjpeg|motion/i.test(src);
       if (isMjpeg) {
         setImgSrc(src);
         return;
       }
-      // JPEG rapid refresh
+      
       const update = () => setImgSrc(`${src}${src.includes("?") ? "&" : "?"}_t=${Date.now()}`);
       update();
       intervalRef.current = setInterval(update, 500);
       return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
     }, [src]);
+
+    if (hasError) {
+      return (
+        <div className={`flex flex-col items-center justify-center p-4 text-center gap-2 ${className}`} style={{ backgroundColor: "#111" }}>
+          <AlertTriangle size={24} className="text-amber-500" />
+          <p className="text-[10px] text-white/70">Erro ao carregar vídeo.</p>
+          <p className="text-[8px] text-white/40 max-w-[150px]">Certifique-se que o vMix está ativo e você permitiu 'Conteúdo Inseguro' no cadeado do navegador.</p>
+          <button 
+            onClick={() => { setHasError(false); setImgSrc(src + (src.includes("?") ? "&" : "?") + "retry=" + Date.now()); }}
+            className="mt-1 px-2 py-1 bg-white/10 rounded text-[9px]"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      );
+    }
+
     return (
       <img
         src={imgSrc}
         className={className}
         style={{ objectFit: "contain", backgroundColor: "#000" }}
         alt="Monitor"
-        onError={() => {}}
+        onError={() => setHasError(true)}
       />
     );
   };
@@ -1185,14 +1951,17 @@ export default function VmixPage() {
   // Monitor content helper — returns JSX or null
   const getMonitorContent = (type: "preview" | "output") => {
     const streamUrl = monitorStreamUrls[type];
+    const isIframe = monitorIframeMode[type];
+
     if (streamUrl) {
       if (streamUrl.includes(".m3u8")) {
         return <HlsPlayer src={streamUrl} className="w-full h-full" />;
       }
       return <MjpegPlayer src={streamUrl} className="w-full h-full" />;
     }
+
     // Iframe mode — embed vMix Web Controller
-    if (monitorIframeMode[type] && savedUrl) {
+    if (isIframe && savedUrl) {
       const baseUrl = savedUrl.replace(/\/+$/, "");
       return (
         <div className="w-full h-full relative" style={{ backgroundColor: "#000" }}>
@@ -1210,22 +1979,42 @@ export default function VmixPage() {
         </div>
       );
     }
-    // When connected, show input info placeholder
+
+    // When connected, show input info placeholder with "Live" button
     const inputNum = type === "preview" ? previewInput : activeInput;
     if (connected && inputNum) {
       const inp = inputs.find(i => i.number === inputNum);
       const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
       return (
         <div className="w-full h-full flex flex-col items-center justify-center relative" style={{ backgroundColor: bgColor }}>
-          <div className="text-center space-y-1">
+          <div className="text-center space-y-1 z-10">
             <span className="text-[11px] font-bold text-white/70 uppercase tracking-wider">{inp?.type || "Input"}</span>
             <p className="text-[13px] font-semibold text-white/90 max-w-[80%] mx-auto truncate">{inp?.title || `Input ${inputNum}`}</p>
             <p className="text-[9px] text-white/40">Input {inputNum} • {inp?.state || "—"}</p>
+            
+            <button 
+              onClick={() => {
+                const baseUrl = savedUrl.replace(/\/+$/, "");
+                const url = type === "preview" ? `${baseUrl}/mjpeg?Input=Preview` : `${baseUrl}/mjpeg`;
+                setMonitorStreamUrls(prev => ({ ...prev, [type]: url }));
+                setMonitorIframeMode(prev => ({ ...prev, [type]: false }));
+              }}
+              className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold text-white transition-all hover:scale-105 active:scale-95"
+              style={{ backgroundColor: "#dc2626", boxShadow: "0 0 15px rgba(220, 38, 38, 0.4)" }}
+            >
+              <Monitor size={12} /> ATIVAR VÍDEO NDI (MJPEG)
+            </button>
           </div>
+          
           <div className="absolute bottom-2 left-0 right-0 flex justify-center">
             <span className="text-[8px] px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(0,0,0,0.5)", color: "#888" }}>
               📡 URL de stream ou ⬛ Iframe para preview ao vivo
             </span>
+          </div>
+          
+          {/* Background decoration */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
+             <div className="absolute -inset-10 bg-gradient-to-br from-white/20 to-transparent blur-3xl transform rotate-12" />
           </div>
         </div>
       );
@@ -1239,7 +2028,7 @@ export default function VmixPage() {
     const bgColor = inp ? getInputColor(inp.type) : "#1e1e24";
     const label = inp ? inp.type : "Input";
     const hlsUrl = inputHlsUrls[inputNumber];
-    const isNdi = inp && (inp.type === "NDI" || inp.title.toLowerCase().includes("ndi"));
+    const isNdi = inp && isNdiInput(inp);
     // If this input has an HLS/MJPEG URL configured, show the video player
     if (hlsUrl) {
       if (hlsUrl.includes(".m3u8")) {
@@ -1247,6 +2036,16 @@ export default function VmixPage() {
       }
       return <MjpegPlayer src={hlsUrl} className={className} />;
     }
+
+    // vMix already renders NDI inputs in its own MJPEG endpoint, so the control
+    // panel can show NDI sources in motion without a separate HLS bridge.
+    if (isNdi && savedUrl) {
+      const ndiStreamUrl = `${normalizeVmixBaseUrl(savedUrl)}/mjpeg?Input=${encodeURIComponent(inputNumber)}`;
+      if (!isMixedContentBlockedByPage(ndiStreamUrl)) {
+        return <MjpegPlayer src={ndiStreamUrl} className={className} />;
+      }
+    }
+
     return (
       <div className={`flex flex-col items-center justify-center ${className}`} style={{ backgroundColor: bgColor }}>
         <span className="text-[10px] font-bold text-white/50 uppercase tracking-wider">{label}</span>
@@ -1279,51 +2078,278 @@ export default function VmixPage() {
 
           {/* Card Body */}
           <div className="p-6 space-y-5">
-            {/* URL Input Group */}
+            {/* Studio Name Input */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Endereço do vMix</label>
-              <div className="flex gap-2 items-center flex-wrap">
-                <div className="flex-1 min-w-[200px] flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                  <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
-                  <input
-                    type="text"
-                    value={vmixUrl}
-                    onChange={e => setVmixUrl(e.target.value)}
-                    placeholder="http://192.168.x.x:8088"
-                    className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
-                  />
-                </div>
-                <button onClick={saveUrl} className="px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110" style={{ backgroundColor: "#3a3a44" }}>
-                  Salvar
-                </button>
-                {savedUrl && (
-                  <button
-                    onClick={connectToVmix}
-                    disabled={connecting}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                    style={{ backgroundColor: "#22c55e" }}
-                  >
-                    {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                    {connecting ? "Conectando..." : "Conectar"}
-                  </button>
-                )}
-                <div className="relative group">
-                  <button className="p-2 rounded-lg text-white/20 hover:text-white/50 transition-colors">
-                    <HelpCircle size={14} />
-                  </button>
-                  <div className="absolute left-0 top-full mt-2 w-80 p-4 rounded-xl text-[11px] text-white/70 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50"
-                    style={{ backgroundColor: "#2a2a3a", border: "1px solid #ffffff15", boxShadow: "0 8px 24px rgba(0,0,0,0.5)" }}
-                  >
-                    <p className="font-bold text-white/90 mb-2">Conexão Direta:</p>
-                    <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                      <p className="font-bold text-[#22c55e] mb-1">🟢 Rede Local</p>
-                      <p className="text-white/50">Use o IP local do computador com vMix (ex: <strong className="text-white/70">http://192.168.x.x:8088</strong>).</p>
-                    </div>
-                    <p className="text-white/30 text-[10px]">💡 Certifique-se de estar na mesma rede que o vMix.</p>
-                  </div>
-                </div>
+              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Nome do Estúdio</label>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                <input
+                  type="text"
+                  value={studioName}
+                  onChange={e => setStudioName(e.target.value)}
+                  placeholder="Ex: Estúdio A, Control Room..."
+                  className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                />
               </div>
             </div>
+
+            {/* LAN Status & Connection Hint */}
+            {savedUrl && isPrivateIp(savedUrl) && (
+              <div className={`mb-4 rounded-xl p-4 flex items-start gap-3 border ${
+                lanStatus === "same_lan" 
+                  ? "bg-green-500/10 border-green-500/20 text-green-400" 
+                  : lanStatus === "different_network"
+                  ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                  : "bg-white/5 border-white/10 text-white/40"
+              }`}>
+                {lanStatus === "checking" ? <Loader2 size={16} className="animate-spin mt-0.5" /> : 
+                 lanStatus === "same_lan" ? <CheckCircle size={16} className="mt-0.5" /> : 
+                 <WifiOff size={16} className="mt-0.5" />}
+                <div className="flex-1">
+                  <p className="text-[11px] font-bold uppercase tracking-wider mb-1">
+                    {lanStatus === "checking" ? "Verificando rede..." :
+                     lanStatus === "same_lan" ? "Rede Local Detectada" :
+                     "Rede vMix Não Encontrada"}
+                  </p>
+                  <p className="text-[10px] leading-relaxed opacity-80">
+                    {lanStatus === "checking" ? "Testando se seu dispositivo consegue ver o vMix diretamente." :
+                     lanStatus === "same_lan" ? "Você está na mesma rede LAN que o vMix. O controle direto deve funcionar perfeitamente." :
+                     "Não detectamos o vMix na sua rede local atual. Certifique-se de estar no mesmo Wi-Fi/Rede do vMix ou use um IP público com modo Proxy."}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Network Interface Recommendation */}
+            {networkInfo && (
+              <div className={`rounded-xl p-4 flex items-start gap-3 border ${
+                networkInfo.type === 'ethernet' 
+                  ? "bg-blue-500/10 border-blue-500/20 text-blue-400" 
+                  : "bg-white/5 border-white/10 text-white/50"
+              }`}>
+                {networkInfo.type === 'ethernet' ? <Zap size={16} className="mt-0.5" /> : <Network size={16} className="mt-0.5" />}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-[11px] font-bold uppercase tracking-wider">
+                      Interface: {
+                        networkInfo.type === 'wifi' ? 'Wi-Fi' : 
+                        networkInfo.type === 'ethernet' ? 'Ethernet (Cabo)' : 
+                        networkInfo.type === 'cellular' ? 'Dados Móveis' : 
+                        'Rede Ativa'
+                      }
+                    </p>
+                    <span className="px-1.5 py-0.5 rounded text-[8px] bg-white/10 text-white/60 font-mono">
+                      {networkInfo.effectiveType}
+                    </span>
+                  </div>
+                  {networkInfo.recommendation && (
+                    <p className="text-[10px] leading-relaxed opacity-80 italic">
+                      {networkInfo.recommendation}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* URL Input Group */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Endereço do vMix</label>
+                <div className="flex bg-[#111115] p-0.5 rounded-lg border border-white/5">
+                  <button
+                    onClick={() => {
+                      setConnectionMode("direct");
+                      toast({ title: "Modo Direto selecionado", description: "Conexão direta pelo navegador." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "direct" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão direta pelo navegador (Ideal para rede local/LAN)"
+                  >
+                    DIRETO
+                  </button>
+                  <button
+                    onClick={() => {
+                      setConnectionMode("proxy");
+                      toast({ title: "Modo Proxy selecionado", description: "Conexão via servidor na nuvem." });
+                    }}
+                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "proxy" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
+                    title="Conexão via Proxy (Ideal para IPs públicos ou evitar erros de SSL/CORS)"
+                  >
+                    PROXY
+                  </button>
+                </div>
+              </div>
+              {(() => {
+                const parts = parseVmixUrlParts(vmixUrl);
+                const validationError = validateVmixParts(parts.protocol, parts.host, parts.port);
+                const updateParts = (next: Partial<typeof parts>) => {
+                  const merged = { ...parts, ...next };
+                  setVmixUrl(composeVmixUrl(merged.protocol, merged.host, merged.port));
+                  setDirectTestResult(null);
+                };
+                const testDirect = async () => {
+                  if (validationError) {
+                    setDirectTestResult({ ok: false, message: validationError });
+                    return;
+                  }
+                  setDirectTesting(true);
+                  setDirectTestResult(null);
+                  const base = composeVmixUrl(parts.protocol, parts.host, parts.port);
+                  try {
+                    if (window.location.protocol === "https:" && parts.protocol === "http") {
+                      throw new Error("Mixed Content: página HTTPS não permite testar vMix em HTTP. Abra o painel em HTTP ou use o Modo Proxy.");
+                    }
+                    const res = await fetch(`${base}/api/`, { mode: "cors", cache: "no-store", signal: AbortSignal.timeout(6000) });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const text = await res.text();
+                    const vmixState = parseVmixXml(text);
+                    setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base} (${vmixState.inputs.length} inputs)` });
+                  } catch (e) {
+                    const msg = e instanceof Error ? e.message : String(e);
+                    setDirectTestResult({ ok: false, message: msg.length > 160 ? msg.slice(0, 160) + "…" : msg });
+                  } finally {
+                    setDirectTesting(false);
+                  }
+                };
+                return (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 items-stretch flex-wrap">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Protocolo</span>
+                        <select
+                          value={parts.protocol}
+                          onChange={e => updateParts({ protocol: e.target.value as "http" | "https" })}
+                          className="px-3 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30"
+                        >
+                          <option value="http">http</option>
+                          <option value="https">https</option>
+                        </select>
+                      </div>
+                      <div className="flex-1 min-w-[180px] flex flex-col gap-1">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Host / IP</span>
+                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
+                          <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
+                          <input
+                            type="text"
+                            value={parts.host}
+                            onChange={e => updateParts({ host: e.target.value.trim() })}
+                            placeholder="192.168.x.x ou localhost"
+                            className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1 w-[110px]">
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Porta</span>
+                        <input
+                          type="number"
+                          min={1}
+                          max={65535}
+                          value={parts.port}
+                          onChange={e => updateParts({ port: e.target.value.replace(/\D/g, "").slice(0, 5) })}
+                          placeholder="8088"
+                          className="px-4 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30 placeholder:text-white/20"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center flex-wrap">
+                      <button
+                        onClick={testDirect}
+                        disabled={directTesting || !!validationError}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: "#4a4a56" }}
+                        title={validationError || "Testa a conexão direta com o vMix sem salvar"}
+                      >
+                        {directTesting ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
+                        {directTesting ? "Testando…" : "Testar Conexão"}
+                      </button>
+                      <Button variant="save"
+                        onClick={saveUrl}
+                        disabled={!!validationError}
+                      >
+                        {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
+                      </Button>
+                      {savedUrl && (
+                        <button
+                          onClick={connectToVmix}
+                          disabled={connecting}
+                          className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
+                          style={{ backgroundColor: "#22c55e" }}
+                        >
+                          {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                          {connecting ? "Conectando..." : "Conectar"}
+                        </button>
+                      )}
+                      <span className="text-[10px] font-mono text-white/30 truncate">
+                        {composeVmixUrl(parts.protocol, parts.host, parts.port) || "—"}
+                      </span>
+                    </div>
+                    {validationError && (
+                      <p className="text-[10px] text-amber-400/80">⚠ {validationError}</p>
+                    )}
+                    {directTestResult && (
+                      <p className={`text-[10px] leading-relaxed ${directTestResult.ok ? "text-emerald-400/90" : "text-red-400/90"}`}>
+                        {directTestResult.ok ? "✅" : "❌"} {directTestResult.message}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Saved Connections List */}
+            {vmixConnections.length > 0 && (
+              <div className="pt-4 border-t border-white/5">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-3">Conexões Salvas</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {vmixConnections.map((conn) => (
+                    <div 
+                      key={conn.id}
+                      onClick={() => handleSelectConnection(conn)}
+                      className={`group relative p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                        selectedConnectionId === conn.id 
+                          ? "bg-blue-500/10 border-blue-500/50" 
+                          : "bg-white/5 border-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden">
+                        <div className={`w-2 h-2 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-white/20"}`} />
+                        <div className="overflow-hidden">
+                          <p className="text-[11px] font-bold text-white/90 truncate">{conn.name}</p>
+                          <p className="text-[9px] text-white/40 truncate">{conn.url}</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (confirm(`Excluir conexão "${conn.name}"?`)) {
+                            await (supabase.from("vmix_connections" as any) as any).delete().eq("id", conn.id);
+                            if (selectedConnectionId === conn.id) setSelectedConnectionId(null);
+                            loadConnections();
+                            toast({ title: "Conexão excluída" });
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => {
+                      setSelectedConnectionId(null);
+                      setStudioName("");
+                      setVmixUrl("");
+                      setVmixUser("");
+                      setVmixPass("");
+                      setConnected(false);
+                    }}
+                    className="p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Plus size={12} className="text-white/40" />
+                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nova Conexão</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Diagnostic Button */}
             {savedUrl && (
@@ -1485,109 +2511,218 @@ export default function VmixPage() {
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   const tabs = [
-    { key: "controls" as const, label: "Inputs", icon: <Layers size={13} /> },
-    { key: "scenes" as const, label: "Cenas", icon: <Wand2 size={13} /> },
+    { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
+    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
+    { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
 
+  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
+  const activeTitle = activeInputObj?.title || "Sem programa";
+  const previewTitle = previewInputObj?.title || "Sem preview";
+
+  const connStatus: "online" | "connecting" | "offline" = connecting
+    ? "connecting"
+    : connected
+    ? "online"
+    : "offline";
+  const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
+  const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
+  const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
+
+  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+    <div
+      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
+      style={{ backgroundColor: "#0c0c0e", border: `1px solid ${statusColor}30` }}
+    >
+      <span
+        className={`w-2 h-2 rounded-full ${connStatus === "connecting" ? "animate-pulse" : ""}`}
+        style={{ backgroundColor: statusColor, boxShadow: `0 0 10px ${statusColor}b0` }}
+      />
+      <span className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: statusColor }}>
+        {statusLabel}
+      </span>
+      {!compact && (
+        <>
+          <span className="w-px h-3 bg-white/10" />
+          <span
+            className="text-[9px] font-mono text-white/50 truncate max-w-[220px]"
+            title={savedUrl || undefined}
+          >
+            {endpointLabel}
+          </span>
+          {connectionRouteLabel && (
+            <span className="text-[8px] font-black uppercase tracking-widest text-white/30">
+              · {connectionRouteLabel}
+            </span>
+          )}
+        </>
+      )}
+      {connStatus !== "online" && (savedUrl || vmixUrl) && (
+        <button
+          onClick={connectToVmix}
+          disabled={connecting}
+          className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
+          style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
+          title="Tentar reconectar ao vMix"
+        >
+          {connStatus === "connecting" ? "…" : "Reconectar"}
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="space-y-2 max-w-full" style={{ color: "#e0e0e0" }}>
-      {/* ── URL + GO LIVE / RECORD row ── */}
-      <div className="flex items-center gap-2 flex-wrap">
-        {/* URL section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: connected ? "#22c55e" : "#666", boxShadow: connected ? "0 0 6px #22c55e60" : "none" }} />
-          <input
-            type="text"
-            value={vmixUrl}
-            onChange={e => setVmixUrl(e.target.value)}
-            placeholder="http://SEU_IP_PUBLICO:8088"
-            className="w-52 px-3 py-1.5 rounded text-xs outline-none transition-all focus:ring-1 focus:ring-white/10"
-            style={{ backgroundColor: "#111114", color: "#fff", border: "1px solid #ffffff10" }}
-          />
-          <button onClick={saveUrl} className="px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200 hover:scale-[1.02]"
-            style={{ backgroundColor: "#ffffff08", border: "1px solid #ffffff10" }}
-          >
-            Salvar
-          </button>
-          <button
-            onClick={connectToVmix}
-            disabled={connecting}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[10px] font-bold text-white/70 hover:text-white transition-all duration-200"
-            style={{ backgroundColor: connected ? "#22c55e18" : "#ffffff08", border: `1px solid ${connected ? "#22c55e30" : "#ffffff10"}` }}
-          >
-            {connecting ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} style={{ color: connected ? "#22c55e" : "#666" }} />}
-            {connected ? "Conectado" : "Conectar"}
-          </button>
-        </div>
-        {/* GO LIVE / RECORD section */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08", boxShadow: "0 2px 8px #00000040" }}>
-          {/* GO LIVE group */}
-          <div className="group/live flex items-center gap-1">
+    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
+      {/* ── Operator Header ── */}
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
+              <img src={logoMixControl} alt="Mix Control" className="h-5" />
+              <div className="w-px h-5 bg-white/10" />
+              <StatusPill />
+            </div>
+
+            {connected && selectedConnectionId ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
+                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{studioName || "vMix Studio"}</p>
+                </div>
+                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Rota</p>
+                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{connectionRouteLabel}</p>
+                </div>
+                <button
+                  onClick={() => setShowStudioSelector(true)}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12" }}
+                >
+                  Trocar
+                </button>
+                <button
+                  onClick={() => {
+                    setConnected(false);
+                    setSelectedConnectionId(null);
+                    setVmixUrl("");
+                    setStudioName("");
+                    setSavedUrl("");
+                  }}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#dc26261a", color: "#f87171", border: "1px solid #dc262640" }}
+                  title="Desconectar"
+                >
+                  Sair
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={vmixUrl}
+                  onChange={e => setVmixUrl(e.target.value)}
+                  placeholder="IP vMix"
+                  className="h-10 w-44 px-3 rounded-xl text-[11px] outline-none bg-[#0a0a0d] text-white border border-white/10 font-mono"
+                />
+                <button
+                  onClick={connectToVmix}
+                  disabled={connecting}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
+                  style={{ backgroundColor: "#dc2626", color: "#fff" }}
+                >
+                  {connecting ? "Conectando" : "Conectar"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Program</p>
+              <p className="text-xs font-black uppercase text-white truncate">{activeTitle}</p>
+            </div>
+            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Preview</p>
+              <p className="text-xs font-black uppercase text-white truncate">{previewTitle}</p>
+            </div>
             <button
               onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-              style={{
-                backgroundColor: streaming ? "#6b1010" : "#2a2a30",
-                color: streaming ? "#fff" : "#aaa",
-                boxShadow: streaming ? "0 0 16px #6b101060" : "none",
-                border: `1px solid ${streaming ? "#8b2020" : "#3a3a40"}`,
-              }}
+              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
+              style={{ backgroundColor: streaming ? "#dc2626" : "#0f0f12", border: streaming ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
             >
-              {streaming ? "● LIVE" : "GO LIVE"}
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Stream</p>
+              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><span className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/25"}`} />{streaming ? "On Air" : "Go Live"}</p>
             </button>
-            <div className="flex items-center gap-1 max-w-0 overflow-hidden opacity-0 transition-all duration-200 group-hover/live:max-w-[300px] group-hover/live:opacity-100">
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 1
-              </button>
-              <button
-                onClick={() => sendCommand("StartStreaming")}
-                className="px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05] whitespace-nowrap"
-                style={{ backgroundColor: "#333338", color: "#ccc", border: "1px solid #444448" }}
-                onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 14px #33333860"; }}
-                onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-              >
-                STREAMING 2
-              </button>
-            </div>
+            <button
+              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
+              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
+              style={{ backgroundColor: recording ? "#dc2626" : "#0f0f12", border: recording ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
+            >
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Gravação</p>
+              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><Disc size={12} className={recording ? "animate-spin" : "opacity-40"} />{recording ? "REC" : "Standby"}</p>
+            </button>
           </div>
-          {/* RECORD button (independent) */}
-          <button
-            onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-            className="px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.03]"
-            style={{
-              backgroundColor: recording ? "#6b1010" : "#2a2a30",
-              color: recording ? "#fff" : "#aaa",
-              border: `1px solid ${recording ? "#8b2020" : "#3a3a40"}`,
-            }}
-            onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = "0 0 16px #3a3a3a60"; }}
-            onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-          >
-            {recording ? "● REC" : "RECORD"}
-          </button>
-          <button onClick={() => connectToVmix()} className="text-white/40 hover:text-white transition-colors" title="Atualizar">
-            <RefreshCw size={14} />
-          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ backgroundColor: "#111114" }}>
+          <div className="flex flex-wrap items-center gap-2">
+            {tabs.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
+                style={{
+                  color: activeTab === tab.key ? "#fff" : "#777",
+                  backgroundColor: activeTab === tab.key ? "#2a2a30" : "#18181c",
+                  border: activeTab === tab.key ? "1px solid #dc262655" : "1px solid #ffffff0a",
+                  boxShadow: activeTab === tab.key ? "inset 0 1px 0 #ffffff14, 0 0 20px rgba(220,38,38,0.14)" : "none",
+                }}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={runDiagnostic}
+              disabled={diagRunning}
+              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
+              style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b35" }}
+            >
+              {diagRunning ? <Loader2 size={13} className="animate-spin" /> : <Activity size={13} />}
+              Diagnóstico
+            </button>
+            <button
+              onClick={() => connectToVmix()}
+              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
+              style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}
+              title="Atualizar estado do vMix"
+            >
+              <RefreshCw size={13} className={connecting ? "animate-spin" : ""} />
+              Sync
+            </button>
+          </div>
         </div>
       </div>
 
       {/* ── Preview / Transitions / Output ── */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
-        <button
-          onClick={() => setMonitorsCollapsed(prev => !prev)}
-          className="w-full flex items-center justify-between px-4 py-2 transition-colors hover:brightness-110"
+        <div
+          className="w-full flex items-center justify-between gap-3 px-4 py-2"
           style={{ backgroundColor: "#18181c", borderBottom: monitorsCollapsed ? "none" : "1px solid #ffffff08" }}
         >
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-            🖥 Monitores Preview / Output
-          </span>
-          <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
-        </button>
+          <button
+            onClick={() => setMonitorsCollapsed(prev => !prev)}
+            className="flex items-center gap-2 transition-colors hover:brightness-110"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
+              🖥 Monitores Preview / Output
+            </span>
+            <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
+          </button>
+          <StatusPill />
+        </div>
         {!monitorsCollapsed && (
         <div className="flex items-stretch gap-[1px]">
         <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
@@ -1598,6 +2733,23 @@ export default function VmixPage() {
               setPreviewInput(val);
             })}
             <div className="ml-auto flex gap-1">
+              <button
+                onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, preview: `${baseUrl}/mjpeg?Input=Preview` }));
+                  setMonitorIframeMode(prev => ({ ...prev, preview: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Preview." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Preview (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
               <button
                 onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
@@ -1621,11 +2773,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.preview ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.preview ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.preview ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
@@ -1734,6 +2886,23 @@ export default function VmixPage() {
             <div className="ml-auto flex gap-1">
               <button
                 onClick={() => {
+                  const baseUrl = savedUrl.replace(/\/+$/, "");
+                  setMonitorStreamUrls(prev => ({ ...prev, output: `${baseUrl}/mjpeg` }));
+                  setMonitorIframeMode(prev => ({ ...prev, output: false }));
+                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Output." });
+                }}
+                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                style={{
+                  backgroundColor: monitorStreamUrls.output?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
+                  color: monitorStreamUrls.output?.includes("mjpeg") ? "#dc2626" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
+                }}
+                title="Ativar Live Output (vMix NDI/MJPEG)"
+              >
+                <Monitor size={10} /> LIVE
+              </button>
+              <button
+                onClick={() => {
                   setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
                   if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
                 }}
@@ -1755,11 +2924,11 @@ export default function VmixPage() {
                 }}
                 className="text-[8px] px-1.5 py-0.5 rounded transition-all"
                 style={{
-                  backgroundColor: monitorStreamUrls.output ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.output ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.output ? "#3b82f640" : "#ffffff10"}`,
+                  backgroundColor: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
+                  color: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f6" : "#666",
+                  border: `1px solid ${monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
                 }}
-                title="Configurar URL de stream (MJPEG/HLS)"
+                title="Configurar URL de stream manual (HLS/NDI Bridge)"
               >
                 📡
               </button>
@@ -1806,209 +2975,489 @@ export default function VmixPage() {
               </div>
             )}
           </div>
+          {/* NDI Network Sources Strip (Quick Access) */}
+          {ndiSources.length > 0 && (
+            <div className="flex gap-2 p-2 overflow-x-auto bg-black/40 border-t border-white/5 scrollbar-hide">
+              {ndiSources.map(source => (
+                <button
+                  key={source}
+                  onClick={() => addNdiInput(source)}
+                  className="whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[8px] font-black text-green-500 hover:bg-green-500/20 transition-all uppercase tracking-tighter"
+                  title={`Adicionar ${source} ao vMix`}
+                >
+                  <Radio size={10} /> {source}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        </div>
+      </div>
         )}
       </div>
 
-
-      {/* ── Tab Bar ── */}
-      <div className="flex rounded-t-xl overflow-hidden" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff06" }}>
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className="relative flex items-center gap-1.5 px-6 py-3 text-[11px] font-bold uppercase tracking-widest transition-all duration-300"
-            style={{
-              color: activeTab === tab.key ? "#fff" : "#555",
-              backgroundColor: activeTab === tab.key ? "#222228" : "transparent",
-            }}
-          >
-            {activeTab === tab.key && <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: "#dc2626" }} />}
-            {tab.icon} {tab.label}
-          </button>
-        ))}
-      </div>
-
       {/* ── Tab Content ── */}
-      <div className="rounded-b-xl p-5 space-y-4" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
+      <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
-          <div className="flex flex-wrap gap-2 items-start">
-            {inputs.map(input => {
-              const isActive = activeInput === input.number;
-              const isPreview = previewInput === input.number;
-              const isNdi = input.type === "NDI" || input.title.toLowerCase().includes("ndi");
-              const isMin = minimizedInputs[input.number];
-              const borderColor = isActive ? "#dc2626" : isPreview ? "#777" : "#333338";
-              const headerBg = isActive ? "#dc262630" : isPreview ? "#ffffff10" : "#222228";
-
-              if (isMin) {
-                return (
-                  <div
-                    key={input.key || input.number}
-                    className="flex flex-col items-center rounded-lg overflow-hidden cursor-pointer transition-all duration-200 hover:brightness-110"
-                    style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 32, minHeight: 120 }}
-                    onClick={() => setMinimizedInputs(prev => ({ ...prev, [input.number]: false }))}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher — Broadcast Console</span>
+              <StatusPill />
+            </div>
+            {(reloadingInputs || reloadFallback) && (
+              <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
+                reloadingInputs
+                  ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                  : "bg-amber-500/10 border-amber-500/30 text-amber-300"
+              }`}>
+                <div className="flex items-center gap-2">
+                  {reloadingInputs ? (
+                    <>
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-cyan-300 border-t-transparent animate-spin" />
+                      Recarregando inputs e fontes NDI…
+                    </>
+                  ) : (
+                    <>⚠ {reloadFallback}</>
+                  )}
+                </div>
+                {!reloadingInputs && (
+                  <button
+                    onClick={() => reloadInputsAndSources()}
+                    className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-100 text-[9px]"
                   >
-                    <div
-                      className="w-full flex items-center justify-center py-1"
-                      style={{ backgroundColor: headerBg }}
-                      onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: false })); }}
-                    >
-                      <span className="text-[8px] font-bold" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ccc" : "#777" }}>{input.number}</span>
-                    </div>
-                    <div className="flex-1 flex items-center justify-center" style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}>
-                      <span className="text-[8px] font-bold text-white/50 truncate" style={{ maxHeight: 90 }}>{input.title}</span>
-                    </div>
-                  </div>
-                );
-              }
+                    Tentar novamente
+                  </button>
+                )}
+              </div>
+            )}
 
-              return (
-                <div
-                  key={input.key || input.number}
-                  className="rounded-lg overflow-hidden transition-all duration-200 hover:brightness-110 cursor-pointer"
-                  style={{ backgroundColor: "#1a1a1f", border: `2px solid ${borderColor}`, width: 180 }}
-                  onClick={() => {
-                    sendCommand("CutDirect", input.number);
-                    setActiveInput(input.number);
-                  }}
-                >
-                  <div
-                    className="flex items-center gap-1 px-2 py-1"
-                    style={{ backgroundColor: headerBg }}
-                    onContextMenu={e => { e.preventDefault(); setMinimizedInputs(prev => ({ ...prev, [input.number]: true })); }}
-                  >
-                    <span className="text-[9px] font-bold px-1 rounded" style={{
-                      backgroundColor: isActive ? "#dc2626" : isPreview ? "#555" : "#333338",
-                      color: isActive || isPreview ? "#fff" : "#888",
-                    }}>{input.number}</span>
-                    <span className="text-[10px] font-bold truncate flex-1 min-w-0" style={{ color: isActive ? "#ff6b6b" : isPreview ? "#ddd" : "#999" }}>
-                      {isNdi && <span style={{ color: "#22c55e" }}>● </span>}
-                      {input.title}
-                    </span>
-                    {/* PGM / PVW badge in header */}
-                    {isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0 animate-pulse" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.05em" }}>PGM</span>
-                    )}
-                    {isPreview && !isActive && (
-                      <span className="text-[7px] font-black px-1.5 py-0.5 rounded flex-shrink-0" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.05em" }}>PVW</span>
-                    )}
-                    {/* Keyboard shortcut badge/capture */}
-                    <div className="relative group/shortcut flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCapturingShortcut(capturingShortcut === input.number ? null : input.number);
-                        }}
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setInputShortcuts(prev => {
-                            const copy = { ...prev };
-                            delete copy[input.number];
-                            return copy;
-                          });
-                        }}
-                        className="text-[7px] font-mono font-bold px-1.5 py-0.5 rounded transition-all"
-                        style={{
-                          backgroundColor: capturingShortcut === input.number ? "#f59e0b30" : inputShortcuts[input.number] ? "#ffffff10" : "#ffffff06",
-                          color: capturingShortcut === input.number ? "#f59e0b" : inputShortcuts[input.number] ? "#aaa" : "#555",
-                          border: `1px solid ${capturingShortcut === input.number ? "#f59e0b40" : "#ffffff08"}`,
-                          minWidth: 20,
-                          textAlign: "center",
-                        }}
-                      >
-                        {capturingShortcut === input.number ? "⌨ ..." : inputShortcuts[input.number] || "⌨"}
-                      </button>
-                      {/* Tooltip on hover */}
-                      {inputShortcuts[input.number] && capturingShortcut !== input.number && (
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg opacity-0 group-hover/shortcut:opacity-100 pointer-events-none transition-opacity duration-200 whitespace-nowrap z-50"
-                          style={{ backgroundColor: "#111118", border: "1px solid #333", boxShadow: "0 4px 20px rgba(0,0,0,0.5)" }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Keyboard size={14} style={{ color: "#f59e0b" }} />
-                            <span className="text-sm font-mono font-black tracking-wider" style={{ color: "#f59e0b" }}>{inputShortcuts[input.number]}</span>
-                          </div>
-                          <div className="text-[8px] mt-0.5 text-center" style={{ color: "#666" }}>clique direito para limpar</div>
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0" style={{ borderLeft: "5px solid transparent", borderRight: "5px solid transparent", borderTop: "5px solid #333" }} />
-                        </div>
+            {/* ATEM-style console */}
+            <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px]">
+                {/* LEFT: Program + Preview + Style + CUT/AUTO */}
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
+                  {/* PROGRAM row */}
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
+                      {inputs.length === 0 && (
+                        <span className="col-span-full text-[10px] text-white/30">Nenhum input encontrado no vMix.</span>
                       )}
+                      {inputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        return (
+                          <button
+                            key={`pgm-${input.key || input.number}`}
+                            onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }}
+                            title={input.title}
+                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
+                              color: isActive ? "#fff" : "#ddd",
+                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
+                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                            }}
+                          >
+                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  </div>
-                   <div className="relative" style={{ aspectRatio: "3/2", backgroundColor: "#111114" }}>
-                    <ThumbnailImg inputNumber={input.number} className="w-full h-full object-contain" alt={input.title} />
-                    {isNdi && (
-                      <div className="absolute top-1 left-1 flex gap-1">
-                        <span className="text-[7px] font-bold px-1 rounded" style={{ backgroundColor: "#22c55e30", color: "#22c55e", border: "1px solid #22c55e40" }}>NDI</span>
-                        {inputHlsUrls[input.number] && (
-                          <span className="text-[7px] font-bold px-1 rounded animate-pulse" style={{ backgroundColor: "#dc262630", color: "#dc2626", border: "1px solid #dc262640" }}>LIVE</span>
-                        )}
+                  </section>
+
+                  {/* PREVIEW row */}
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
+                      {inputs.map(input => {
+                        const isPreview = previewInput === input.number;
+                        const isActive = activeInput === input.number;
+                        return (
+                          <button
+                            key={`pvw-${input.key || input.number}`}
+                            onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }}
+                            title={input.title}
+                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
+                              color: isPreview ? "#fff" : "#ddd",
+                              borderColor: isPreview ? "#86efac" : "#4a4a4a",
+                              boxShadow: isPreview ? "0 0 18px rgba(22,163,74,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              opacity: isActive && !isPreview ? 0.55 : 1,
+                            }}
+                          >
+                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* Style + CUT/AUTO */}
+                  <section className="grid grid-cols-[1fr_auto] gap-6 items-end">
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Estilo de Transição</h3>
+                      <div className="grid grid-cols-6 gap-2">
+                        {[
+                          { label: "MIX", fn: "Fade" },
+                          { label: "DIP", fn: "Merge" },
+                          { label: "WIPE", fn: "Wipe" },
+                          { label: "STING", fn: "Stinger1" },
+                          { label: "DVE", fn: "Zoom" },
+                          { label: "SLIDE", fn: "Slide" },
+                        ].map(s => {
+                          const active = transitionStyle === s.fn;
+                          return (
+                            <button
+                              key={s.fn}
+                              onClick={() => { setTransitionStyle(s.fn); localStorage.setItem("vmix_transition_style", s.fn); }}
+                              className="h-10 rounded border text-[10px] font-black tracking-wider transition-all"
+                              style={{
+                                backgroundColor: active ? "#f59e0b" : "#3a3a3a",
+                                color: active ? "#111" : "#ddd",
+                                borderColor: active ? "#fcd34d" : "#4a4a4a",
+                                boxShadow: active ? "0 0 12px rgba(245,158,11,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                              }}
+                            >
+                              {s.label}
+                            </button>
+                          );
+                        })}
                       </div>
-                    )}
-                    {/* Stream URL config button for all inputs */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingHlsInput(editingHlsInput === input.number ? null : input.number);
-                        setHlsTempUrl(inputHlsUrls[input.number] || "");
-                      }}
-                      className="absolute bottom-1 right-1 text-[7px] px-1 py-0.5 rounded transition-all"
-                      style={{
-                        backgroundColor: inputHlsUrls[input.number] ? "#22c55e20" : "#ffffff10",
-                        color: inputHlsUrls[input.number] ? "#22c55e" : "#888",
-                        border: `1px solid ${inputHlsUrls[input.number] ? "#22c55e30" : "#ffffff15"}`,
-                      }}
-                      title="Configurar URL de stream (HLS/MJPEG/JPEG)"
-                    >
-                      {inputHlsUrls[input.number] ? "📡" : "🔗 Stream"}
-                    </button>
-                  </div>
-                  {/* HLS URL editor inline */}
-                  {editingHlsInput === input.number && (
-                    <div className="flex gap-1 px-1.5 py-1.5" style={{ backgroundColor: "#111114", borderTop: "1px solid #ffffff08" }} onClick={e => e.stopPropagation()}>
-                      <input
-                        type="text"
-                        value={hlsTempUrl}
-                        onChange={e => setHlsTempUrl(e.target.value)}
-                        placeholder="URL do stream (HLS .m3u8, MJPEG, ou JPEG)"
-                        className="flex-1 text-[9px] px-1.5 py-1 rounded outline-none"
-                        style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
-                        onKeyDown={e => {
-                          if (e.key === "Enter") {
-                            setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
-                            setEditingHlsInput(null);
-                          }
-                        }}
-                      />
+                      <div className="flex items-center gap-2 mt-3">
+                        <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
+                        <input
+                          type="range"
+                          min={200} max={4000} step={100}
+                          value={transitionDuration}
+                          onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
+                          className="flex-1 accent-amber-500"
+                        />
+                        <span className="text-[10px] font-mono text-amber-400 w-14 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 min-w-[280px]">
                       <button
-                        onClick={() => {
-                          setInputHlsUrls(prev => hlsTempUrl.trim() ? { ...prev, [input.number]: hlsTempUrl.trim() } : (() => { const c = { ...prev }; delete c[input.number]; return c; })());
-                          setEditingHlsInput(null);
-                        }}
-                        className="text-[8px] px-1.5 rounded"
-                        style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}
-                      >✓</button>
-                      {inputHlsUrls[input.number] && (
+                        onClick={() => sendCommand("Cut")}
+                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), 0 0 12px rgba(220,38,38,0.35)" }}
+                      >
+                        CUT
+                      </button>
+                      <button
+                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
+                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
+                      >
+                        AUTO
+                      </button>
+                      <button
+                        onClick={() => sendCommand("FadeToBlack")}
+                        className="h-16 rounded border text-[11px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#111", color: "#dc2626", borderColor: "#7f1d1d", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6)" }}
+                      >
+                        FTB
+                      </button>
+                    </div>
+                  </section>
+                </div>
+
+                {/* RIGHT: Próxima Transição + Overlays (Keys) */}
+                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#252525" }}>
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Próxima Transição</h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="h-12 rounded border flex items-center justify-center text-[10px] font-black"
+                        style={{ backgroundColor: "#f59e0b", color: "#111", borderColor: "#fcd34d", boxShadow: "0 0 10px rgba(245,158,11,0.35)" }}>
+                        BKGD
+                      </div>
+                      {[1, 2, 3, 4].map(n => {
+                        const isOn = overlays[n];
+                        return (
+                          <button
+                            key={`key-${n}`}
+                            onClick={() => {
+                              const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
+                              sendCommand(cmd);
+                              setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
+                            }}
+                            className="h-12 rounded border text-[10px] font-black tracking-wider transition-all"
+                            style={{
+                              backgroundColor: isOn ? "#dc2626" : "#3a3a3a",
+                              color: isOn ? "#fff" : "#ddd",
+                              borderColor: isOn ? "#fca5a5" : "#4a4a4a",
+                              boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                            }}
+                            title={`Overlay ${n} — ${isOn ? "ON AIR" : "OFF"}`}
+                          >
+                            KEY {n}
+                            {isOn && <span className="block text-[7px] mt-0.5 opacity-90">ON AIR</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Atalhos & Status</h3>
+                    <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Estilo ativo</span>
+                        <span className="font-mono text-amber-400 font-bold">{transitionStyle}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Duração</span>
+                        <span className="font-mono text-amber-400 font-bold">{(transitionDuration/1000).toFixed(1)}s</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Inputs</span>
+                        <span className="font-mono text-white/70 font-bold">{inputs.length}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-white/40 uppercase tracking-wider">Fontes NDI</span>
+                        <span className="font-mono text-emerald-400 font-bold">{ndiSources.length}</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      {inputs.slice(0, 6).map(input => (
                         <button
-                          onClick={() => {
-                            setInputHlsUrls(prev => { const c = { ...prev }; delete c[input.number]; return c; });
-                            setEditingHlsInput(null);
+                          key={`sc-${input.key || input.number}`}
+                          onClick={() => setCapturingShortcut(input.number)}
+                          className="h-8 rounded border text-[9px] font-black uppercase tracking-wider transition-all truncate px-2"
+                          style={{
+                            backgroundColor: "#1d1d1d",
+                            color: inputShortcuts[input.number] ? "#fbbf24" : "#666",
+                            borderColor: inputShortcuts[input.number] ? "#f59e0b60" : "#333",
                           }}
-                          className="text-[8px] px-1.5 rounded"
-                          style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}
-                        >✕</button>
-                      )}
+                          title={`Atalho para ${input.title}`}
+                        >
+                          {input.number}: {inputShortcuts[input.number] || "—"}
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+            {/* NDI Network Sources Discovery Section */}
+            <div className="mt-2 pt-4 border-t border-white/5 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Fontes NDI na Rede</h3>
+                </div>
+                <div className="flex gap-2 flex-1 max-w-sm ml-auto">
+                   <input
+                     type="text"
+                     placeholder="Nome do PC ou IP (Ex: DESKTOP-123)"
+                     className="flex-1 bg-[#111115] border border-white/10 rounded-lg px-3 py-1.5 text-[10px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                     value={manualNdiHost}
+                     onChange={e => setManualNdiHost(e.target.value)}
+                     onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                   />
+                   <Button
+                     size="sm"
+                     variant="outline"
+                     className="h-9 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                     onClick={() => scanNdiSources()}
+                     disabled={ndiScanning}
+                   >
+                     {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                     BUSCAR
+                   </Button>
+                </div>
+              </div>
+
+              {ndiSources.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {ndiSources.map(source => (
+                    <button
+                      key={source}
+                      onClick={() => addNdiInput(source)}
+                      className="group relative flex flex-col items-center justify-center p-4 rounded-xl bg-[#111115] border border-white/5 hover:border-green-500/40 hover:bg-green-500/5 transition-all duration-300"
+                    >
+                      <Radio size={18} className="text-white/10 group-hover:text-green-500 transition-colors mb-2.5" />
+                      <span className="text-[9px] font-black text-white/40 group-hover:text-white text-center leading-tight line-clamp-2 uppercase tracking-tight">{source}</span>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-1 group-hover:translate-y-0">
+                        <Plus size={12} className="text-green-500" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 rounded-2xl bg-[#111115]/40 border border-dashed border-white/5">
+                   <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
+                     <HelpCircle size={20} className="text-white/20" />
+                   </div>
+                   <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest text-center max-w-[220px] leading-relaxed">
+                     Insira o nome de um PC ou IP na rede para detectar fontes NDI disponíveis
+                   </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ══ NDI TAB ══ */}
+        {activeTab === "ndi" && (
+          <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] gap-4">
+            <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+              <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                <div className="flex items-center gap-2">
+                  <Network size={16} style={{ color: "#22c55e" }} />
+                  <span className="text-xs font-black uppercase tracking-[0.2em]" style={{ color: "#22c55e" }}>Fontes NDI</span>
+                </div>
+                <p className="text-[10px] text-white/35 mt-1 leading-relaxed">
+                  O painel lê os inputs NDI que o próprio vMix já reconheceu e permite cadastrar novas fontes pelo nome NDI da rede.
+                </p>
+              </div>
+
+              <div className="p-5 space-y-4">
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-2">Busca manual</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="DESKTOP-123 ou NDI Source"
+                      className="flex-1 bg-[#111115] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      value={manualNdiHost}
+                      onChange={e => setManualNdiHost(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && scanNdiSources()}
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-10 px-4 text-[10px] font-black gap-2 border-white/10 hover:bg-white/5"
+                      onClick={() => scanNdiSources()}
+                      disabled={ndiScanning}
+                    >
+                      {ndiScanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      Buscar
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">NDI no vMix</p>
+                    <p className="text-2xl font-black text-white">{ndiInputs.length}</p>
+                  </div>
+                  <div className="rounded-xl p-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0a" }}>
+                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Sugestões</p>
+                    <p className="text-2xl font-black text-white">{ndiSources.length}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b25" }}>
+                  <p className="text-[10px] leading-relaxed" style={{ color: "#fbbf24" }}>
+                    Navegadores não conseguem descobrir NDI puro via mDNS/Bonjour diretamente. O fluxo confiável é: vMix detecta/adiciona NDI → o painel sincroniza os inputs pela API → o vídeo aparece pelo MJPEG do vMix.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="flex items-center justify-between px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">NDI reconhecidos no vMix</p>
+                    <p className="text-[10px] text-white/30 mt-1">Inputs NDI já carregados e exibidos com vídeo via MJPEG quando o navegador permitir acesso local.</p>
+                  </div>
+                  <Button size="sm" variant="outline" className="h-9 px-3 text-[10px] font-black gap-2 border-white/10" onClick={() => connectToVmix()}>
+                    <RefreshCw size={12} className={connecting ? "animate-spin" : ""} /> Sincronizar
+                  </Button>
+                </div>
+
+                <div className="p-5">
+                  {ndiInputs.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {ndiInputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        const isPreview = previewInput === input.number;
+                        return (
+                          <div key={input.key || input.number} className="group rounded-xl overflow-hidden" style={{ backgroundColor: "#0c0c0e", border: isActive ? "1px solid #dc2626" : isPreview ? "1px solid #3b82f6" : "1px solid #ffffff0d" }}>
+                            <div className="relative aspect-video bg-black">
+                              <ThumbnailImg inputNumber={input.number} className="w-full h-full object-cover" alt={input.title} />
+                              <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ backgroundColor: "rgba(0,0,0,0.7)" }}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]" />
+                                <span className="text-[8px] font-black uppercase tracking-widest text-green-400">NDI</span>
+                              </div>
+                              {(isActive || isPreview) && (
+                                <div className="absolute top-2 right-2 px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest" style={{ backgroundColor: isActive ? "#dc2626" : "#3b82f6", color: "#fff" }}>
+                                  {isActive ? "PGM" : "PVW"}
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-3 space-y-3">
+                              <div>
+                                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/25">Input {input.number}</p>
+                                <p className="text-sm font-black text-white truncate">{input.title}</p>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#3b82f61a", color: "#93c5fd", border: "1px solid #3b82f640" }}>Preview</button>
+                                <button onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }} className="py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110" style={{ backgroundColor: "#dc26261a", color: "#fca5a5", border: "1px solid #dc262640" }}>Take</button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 rounded-2xl" style={{ backgroundColor: "#0c0c0e", border: "1px dashed #ffffff14" }}>
+                      <Radio size={30} className="text-white/15 mb-3" />
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-white/35">Nenhum input NDI sincronizado</p>
+                      <p className="text-[10px] text-white/25 mt-1">Adicione uma fonte no vMix ou use a busca manual abaixo.</p>
                     </div>
                   )}
                 </div>
-              );
-            })}
-            {inputs.length === 0 && (
-              <p className="text-[11px] text-white/30 py-4">Conecte ao vMix para ver os inputs</p>
-            )}
+              </div>
+
+              <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#111114", border: "1px solid #ffffff0d" }}>
+                <div className="px-5 py-4" style={{ backgroundColor: "#18181c", borderBottom: "1px solid #ffffff0a" }}>
+                  <p className="text-xs font-black uppercase tracking-[0.2em] text-white/60">Adicionar novas fontes</p>
+                  <p className="text-[10px] text-white/30 mt-1">Use o nome exato NDI ou escolha uma sugestão gerada a partir dos hosts conhecidos.</p>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={ndiUrl}
+                      onChange={e => setNdiUrl(e.target.value)}
+                      placeholder="Ex: STUDIO-PC (Camera 1)"
+                      className="flex-1 bg-[#0c0c0e] border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none focus:ring-1 ring-white/30 transition-all"
+                      onKeyDown={e => e.key === "Enter" && addNdiInput()}
+                    />
+                    <Button size="sm" className="h-10 px-4 text-[10px] font-black gap-2" onClick={() => addNdiInput()} disabled={!ndiUrl.trim()}>
+                      <Plus size={12} /> Adicionar
+                    </Button>
+                  </div>
+
+                  {ndiSources.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+                      {ndiSources.map(source => (
+                        <button
+                          key={source}
+                          onClick={() => addNdiInput(source)}
+                          className="group flex items-center gap-3 p-3 rounded-xl text-left transition-all hover:brightness-110"
+                          style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff0d" }}
+                          title={`Adicionar ${source} ao vMix`}
+                        >
+                          <Radio size={15} className="text-green-500" />
+                          <span className="text-[10px] font-black text-white/55 group-hover:text-white uppercase tracking-tight line-clamp-2">{source}</span>
+                          <Plus size={12} className="ml-auto text-white/20 group-hover:text-green-500" />
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-white/25 py-3 text-center">Nenhuma sugestão gerada ainda.</p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2115,18 +3564,26 @@ export default function VmixPage() {
 
           return (
             <>
-              {/* ── Programa no Ar + A Seguir (compact) ── */}
-              <div className="flex gap-2 items-center">
-                {/* NO AR */}
-                <div className="flex-1 flex items-center gap-3 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #dc262640" }}>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#dc2626" }}>No Ar</span>
+              {/* ── Dynamic Schedule Header ── */}
+              <div className="flex items-stretch gap-3">
+                {/* CURRENTLY ON AIR - LARGE RED INDICATOR */}
+                <div className="flex-1 rounded-xl p-4 border border-[#dc2626] bg-[#dc262610] shadow-[0_0_30px_rgba(220,38,38,0.15)] flex flex-col justify-between">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#dc2626] text-white animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">NO AR</span>
+                    </div>
+                    {onAir && (
+                      <span className="text-[10px] font-bold text-white/50 font-mono tracking-tighter">
+                        {onAir.horario_inicio?.slice(0,5)} — {onAir.horario_fim?.slice(0,5)}
+                      </span>
+                    )}
                   </div>
+
                   {onAir ? (
-                    <>
-                      <span className="text-[11px] font-bold text-white truncate shrink-0 max-w-[140px]">{onAir.nome}</span>
-                      <span className="text-[9px] text-white/40 shrink-0">{onAir.horario_inicio?.slice(0,5)} – {onAir.horario_fim?.slice(0,5)}</span>
+                    <div className="space-y-3">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight leading-none truncate">{onAir.nome}</h2>
+                      
                       {(() => {
                         const remSec = secondsUntilEnd(onAir);
                         const totalSec = programDurationSec(onAir);
@@ -2139,34 +3596,49 @@ export default function VmixPage() {
                           ? `${String(rh).padStart(2, "0")}:${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`
                           : `${String(rm).padStart(2, "0")}:${String(rs).padStart(2, "0")}`;
                         return (
-                          <div className="flex-1 flex items-center gap-2 min-w-0">
-                            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#333" }}>
-                              <div className="h-full rounded-full transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, backgroundColor: "#dc2626" }} />
+                          <div className="space-y-1.5">
+                            <div className="flex items-end justify-between">
+                              <span className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Restante</span>
+                              <span className="text-xl font-mono font-black tabular-nums tracking-widest" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
+                                {remSec <= 0 ? "00:00" : timeStr}
+                              </span>
                             </div>
-                            <span className="text-[11px] font-mono font-black tracking-wider shrink-0" style={{ color: remSec <= 300 ? "#dc2626" : "#fff" }}>
-                              {remSec <= 0 ? "00:00" : timeStr}
-                            </span>
+                            <div className="h-1.5 rounded-full bg-[#ffffff08] overflow-hidden">
+                              <div className="h-full rounded-full bg-[#dc2626] transition-all duration-1000 ease-linear" style={{ width: `${progress}%`, boxShadow: "0 0 10px rgba(220,38,38,0.5)" }} />
+                            </div>
                           </div>
                         );
                       })()}
-                    </>
+                    </div>
                   ) : (
-                    <span className="text-[10px] text-white/30">Nenhum programa no ar</span>
+                    <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-lg bg-black/20">
+                      <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Aguardando programação</span>
+                    </div>
                   )}
                 </div>
 
-                {/* A SEGUIR - only 1 program */}
-                <div className="shrink-0 flex items-center gap-2 rounded-lg px-3 py-2" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <Eye size={10} style={{ color: "#666" }} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#666" }}>A seguir</span>
-                  {upcoming.length > 0 ? (
-                    <>
-                      <span className="text-[10px] font-medium text-white/70 truncate max-w-[120px]">{upcoming[0].nome}</span>
-                      <span className="text-[9px] text-white/30">{upcoming[0].horario_inicio?.slice(0,5)}</span>
-                    </>
-                  ) : (
-                    <span className="text-[9px] text-white/30">—</span>
-                  )}
+                {/* UPCOMING - COMPACT SIDEBAR */}
+                <div className="w-80 rounded-xl p-4 border border-[#ffffff08] bg-[#1a1a1f] flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Eye size={14} className="text-white/40" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">A Seguir</span>
+                  </div>
+
+                  <div className="flex-1 space-y-3">
+                    {upcoming.length > 0 ? upcoming.slice(0, 2).map((up, i) => (
+                      <div key={up.id} className={`p-3 rounded-lg border bg-black/20 ${i === 0 ? "border-white/10" : "border-white/5 opacity-50"}`}>
+                        <div className="flex justify-between items-start gap-2 mb-1">
+                          <span className="text-xs font-black text-white/90 uppercase truncate">{up.nome}</span>
+                          <span className="text-[10px] font-mono font-bold text-blue-400 shrink-0">{up.horario_inicio?.slice(0,5)}</span>
+                        </div>
+                        <p className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Estúdio: {up.estudio || "—"}</p>
+                      </div>
+                    )) : (
+                      <div className="flex-1 flex items-center justify-center">
+                        <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest">Sem próximos eventos</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2174,9 +3646,69 @@ export default function VmixPage() {
               <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-4">
                 {/* Left: Programas Preset */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <Radio size={14} style={{ color: "#999" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
+                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <div className="flex items-center gap-2">
+                      <Radio size={14} style={{ color: "#999" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>programas preset</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          const data = JSON.stringify(programas, null, 2);
+                          const blob = new Blob([data], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `presets-programas-${new Date().toISOString().split("T")[0]}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast({ title: "Exportado", description: "Lista de programas exportada com sucesso." });
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Exportar programas"
+                      >
+                        <Download size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".json";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                              const text = await file.text();
+                              const imported = JSON.parse(text);
+                              if (Array.isArray(imported)) {
+                                // Simple import: we just show them, they are not saved to DB yet unless edited/saved individually
+                                // or we could batch insert. For now, let's just toast and suggest manual re-save if needed
+                                // or better: offer to merge/replace.
+                                setProgramas(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
+                                toast({ title: "Importado", description: `${imported.length} programas carregados na lista.` });
+                              }
+                            } catch (err) {
+                              toast({ title: "Erro na importação", variant: "destructive" });
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Importar programas"
+                      >
+                        <Upload size={12} />
+                      </button>
+                      <button
+                        onClick={() => setEditingPresetId("new")}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#22c55e" }}
+                        title="Criar novo programa"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-4 space-y-4">
                     {(() => {
@@ -2247,9 +3779,22 @@ export default function VmixPage() {
                                 .eq("user_id", user?.id)
                                 .eq("programa_id", prog.id)
                                 .maybeSingle();
-                              const cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
-                                ? presetData.commands
+                              
+                              let cmds = presetData?.commands && Array.isArray(presetData.commands) && presetData.commands.length > 0
+                                ? [...presetData.commands]
                                 : [{ fn: "ScriptStart", input: prog.nome }];
+
+                              // Always carry the current presenter's name to vMix Titler if available
+                              const apresentadorNome = (prog as any).apresentadores?.nome;
+                              if (apresentadorNome) {
+                                cmds.push({
+                                  fn: "SetText",
+                                  input: "TITULO APRESENTADOR", // Assumed titler input name in vMix
+                                  value: apresentadorNome,
+                                  label: "Apresentador Automático"
+                                });
+                              }
+
                               await runCommandsUnified(cmds as any[], `Preset: ${prog.nome}`);
                             }}
                           >
@@ -2328,11 +3873,23 @@ export default function VmixPage() {
                                 title="Editar ações"
                               ><Wand2 size={10} /></button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setProgramas(prev => prev.filter(p => p.id !== prog.id)); }}
+                                onClick={async (e) => { 
+                                  e.stopPropagation(); 
+                                  if (confirm(`Excluir o programa "${prog.nome}" permanentemente?`)) {
+                                    const { error } = await supabase.from("programas").delete().eq("id", prog.id);
+                                    if (!error) {
+                                      setProgramas(prev => prev.filter(p => p.id !== prog.id));
+                                      toast({ title: "Excluído", description: "Programa removido com sucesso." });
+                                    } else {
+                                      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+                                    }
+                                  }
+                                }}
                                 className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
                                 style={{ color: "#f87171" }}
                                 title="Excluir"
                               ><Trash2 size={10} /></button>
+
                             </div>
                           </div>
                         );
@@ -2349,9 +3906,66 @@ export default function VmixPage() {
 
                 {/* Right: Botões de Efeitos */}
                 <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#1a1a1f", border: "1px solid #ffffff08" }}>
-                  <div className="flex items-center gap-2 px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
-                    <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
+                  <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
+                    <div className="flex items-center gap-2">
+                      <Wand2 size={14} style={{ color: "#f59e0b" }} />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>botões de efeitos</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          const data = JSON.stringify(customButtons, null, 2);
+                          const blob = new Blob([data], { type: "application/json" });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = url;
+                          a.download = `botoes-efeitos-${new Date().toISOString().split("T")[0]}.json`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                          toast({ title: "Exportado", description: "Lista de efeitos exportada com sucesso." });
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Exportar efeitos"
+                      >
+                        <Download size={12} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = ".json";
+                          input.onchange = async (e) => {
+                            const file = (e.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            try {
+                              const text = await file.text();
+                              const imported = JSON.parse(text);
+                              if (Array.isArray(imported)) {
+                                setCustomButtons(prev => [...imported, ...prev.filter(p => !imported.find((i: any) => i.id === p.id))]);
+                                toast({ title: "Importado", description: `${imported.length} efeitos carregados na lista.` });
+                              }
+                            } catch (err) {
+                              toast({ title: "Erro na importação", variant: "destructive" });
+                            }
+                          };
+                          input.click();
+                        }}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#888" }}
+                        title="Importar efeitos"
+                      >
+                        <Upload size={12} />
+                      </button>
+                      <button
+                        onClick={() => setEditingCustomButtonId("new")}
+                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        style={{ color: "#22c55e" }}
+                        title="Criar novo efeito"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
                   </div>
                   <div className="p-4 space-y-4">
                     <div className="grid grid-cols-3 gap-2">
@@ -2432,16 +4046,17 @@ export default function VmixPage() {
           );
         })()}
 
+
         {/* NDI tab removed */}
       </div>
       {/* Preset Command Editor */}
-      {editingPresetId && (() => {
-        const prog = programas.find(p => p.id === editingPresetId);
-        if (!prog || !user) return null;
+      {editingPresetId && user && (() => {
+        const prog = editingPresetId === "new" ? { id: "new", nome: "Novo Programa", horario_inicio: "00:00", horario_fim: "00:00" } : programas.find(p => p.id === editingPresetId);
+        if (!prog) return null;
         return (
           <PresetCommandEditor
             open={true}
-            onClose={() => setEditingPresetId(null)}
+            onClose={() => { setEditingPresetId(null); loadProgramas(); }}
             programaId={prog.id}
             programaNome={prog.nome}
             programaHorario={`${prog.horario_inicio?.slice(0,5) || ""} – ${prog.horario_fim?.slice(0,5) || ""}`}
@@ -2450,6 +4065,7 @@ export default function VmixPage() {
             onRunCommands={async (cmds) => {
               await runCommandsUnified(cmds as any[], "Teste concluído");
             }}
+            inputMapping={inputMapping}
           />
         );
       })()}
@@ -2535,6 +4151,61 @@ export default function VmixPage() {
           )}
         </div>
       </div>
+
+      {/* ── Studio Selector Dialog ── */}
+      <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
+        <DialogContent className="bg-[#1e1e24] border-[#ffffff10] text-white max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Trocar Estúdio</DialogTitle>
+            <DialogDescription className="text-white/40">
+              Selecione qual estúdio você deseja controlar agora.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 mt-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
+            {vmixConnections.map((conn) => (
+              <div 
+                key={conn.id}
+                onClick={() => {
+                  handleSelectConnection(conn);
+                  setShowStudioSelector(false);
+                  // Trigger connection automatically after selection
+                  setTimeout(() => connectToVmix(), 300);
+                }}
+                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
+                  selectedConnectionId === conn.id 
+                    ? "bg-blue-600/20 border-blue-500/50" 
+                    : "bg-white/5 border-white/5 hover:bg-white/10"
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-3 h-3 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" : "bg-white/10"}`} />
+                  <div>
+                    <p className="text-sm font-bold text-white/90">{conn.name || "Estúdio sem nome"}</p>
+                    <p className="text-[10px] text-white/30 font-mono mt-0.5">{conn.url}</p>
+                  </div>
+                </div>
+                {selectedConnectionId === conn.id && <CheckCircle size={16} className="text-blue-500" />}
+              </div>
+            ))}
+            
+            {vmixConnections.length === 0 && (
+              <div className="text-center py-10 text-white/20">
+                <Monitor size={32} className="mx-auto mb-2 opacity-20" />
+                <p className="text-xs">Nenhum estúdio salvo encontrado.</p>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="mt-4 border-t border-white/5 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowStudioSelector(false)} 
+              className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
+            >
+              Cancelar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -49,37 +49,76 @@ export type Database = {
       }
       agenda_eventos: {
         Row: {
+          artes_urls: string[] | null
           created_at: string
           data: string
           descricao: string | null
+          edicao_concluida: boolean
+          edicao_notas: string
+          excecoes: Json
+          horario_gravacao: string | null
+          horario_gravacao_fim: string | null
           id: string
           local: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
           prioridade: string
           programa_id: string | null
           recorrencia: string
+          status: string
+          tipo_evento: string
           user_id: string
+          youtube_descricao: string
+          youtube_titulo: string
+          youtube_url: string | null
         }
         Insert: {
+          artes_urls?: string[] | null
           created_at?: string
           data: string
           descricao?: string | null
+          edicao_concluida?: boolean
+          edicao_notas?: string
+          excecoes?: Json
+          horario_gravacao?: string | null
+          horario_gravacao_fim?: string | null
           id?: string
           local?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          status?: string
+          tipo_evento?: string
           user_id: string
+          youtube_descricao?: string
+          youtube_titulo?: string
+          youtube_url?: string | null
         }
         Update: {
+          artes_urls?: string[] | null
           created_at?: string
           data?: string
           descricao?: string | null
+          edicao_concluida?: boolean
+          edicao_notas?: string
+          excecoes?: Json
+          horario_gravacao?: string | null
+          horario_gravacao_fim?: string | null
           id?: string
           local?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
           prioridade?: string
           programa_id?: string | null
           recorrencia?: string
+          status?: string
+          tipo_evento?: string
           user_id?: string
+          youtube_descricao?: string
+          youtube_titulo?: string
+          youtube_url?: string | null
         }
         Relationships: [
           {
@@ -162,6 +201,36 @@ export type Database = {
         }
         Relationships: []
       }
+      audiencia_historico: {
+        Row: {
+          audio: number
+          created_at: string
+          id: string
+          programa: string | null
+          user_id: string
+          video: number
+          youtube: number
+        }
+        Insert: {
+          audio?: number
+          created_at?: string
+          id?: string
+          programa?: string | null
+          user_id: string
+          video?: number
+          youtube?: number
+        }
+        Update: {
+          audio?: number
+          created_at?: string
+          id?: string
+          programa?: string | null
+          user_id?: string
+          video?: number
+          youtube?: number
+        }
+        Relationships: []
+      }
       available_modules: {
         Row: {
           created_at: string
@@ -188,6 +257,263 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      batalhas_agendadas: {
+        Row: {
+          artista1_imagem: string
+          artista1_musica: string
+          artista1_nome: string
+          artista1_porcentagem: number
+          artista2_imagem: string
+          artista2_musica: string
+          artista2_nome: string
+          artista2_porcentagem: number
+          created_at: string
+          data_batalha: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artista1_imagem?: string
+          artista1_musica?: string
+          artista1_nome?: string
+          artista1_porcentagem?: number
+          artista2_imagem?: string
+          artista2_musica?: string
+          artista2_nome?: string
+          artista2_porcentagem?: number
+          created_at?: string
+          data_batalha: string
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artista1_imagem?: string
+          artista1_musica?: string
+          artista1_nome?: string
+          artista1_porcentagem?: number
+          artista2_imagem?: string
+          artista2_musica?: string
+          artista2_nome?: string
+          artista2_porcentagem?: number
+          created_at?: string
+          data_batalha?: string
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      blitz_promocionais: {
+        Row: {
+          agenda_evento_id: string | null
+          cliente: string
+          created_at: string
+          data_realizacao: string | null
+          dia: string
+          equipe: string | null
+          horario: string
+          horario_fim: string | null
+          id: string
+          observacoes: string | null
+          realizada: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agenda_evento_id?: string | null
+          cliente: string
+          created_at?: string
+          data_realizacao?: string | null
+          dia: string
+          equipe?: string | null
+          horario: string
+          horario_fim?: string | null
+          id?: string
+          observacoes?: string | null
+          realizada?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agenda_evento_id?: string | null
+          cliente?: string
+          created_at?: string
+          data_realizacao?: string | null
+          dia?: string
+          equipe?: string | null
+          horario?: string
+          horario_fim?: string | null
+          id?: string
+          observacoes?: string | null
+          realizada?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      blitz_promocionais_historico: {
+        Row: {
+          acao: string
+          blitz_id: string | null
+          changed_by: string | null
+          changed_by_email: string | null
+          cliente: string | null
+          created_at: string
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: string
+          motivo: string | null
+          user_id: string
+        }
+        Insert: {
+          acao: string
+          blitz_id?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          cliente?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          motivo?: string | null
+          user_id: string
+        }
+        Update: {
+          acao?: string
+          blitz_id?: string | null
+          changed_by?: string | null
+          changed_by_email?: string | null
+          cliente?: string | null
+          created_at?: string
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          motivo?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      broadcast_assuntos: {
+        Row: {
+          bg_color: string
+          created_at: string
+          font_family: string
+          id: string
+          mensagens: Json
+          mensagens_enabled: boolean[]
+          programa_id: string
+          rotation_seconds: number
+          text_color: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bg_color?: string
+          created_at?: string
+          font_family?: string
+          id?: string
+          mensagens?: Json
+          mensagens_enabled?: boolean[]
+          programa_id: string
+          rotation_seconds?: number
+          text_color?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          font_family?: string
+          id?: string
+          mensagens?: Json
+          mensagens_enabled?: boolean[]
+          programa_id?: string
+          rotation_seconds?: number
+          text_color?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cenario_estudio_grupos: {
+        Row: {
+          cols: number
+          created_at: string
+          id: string
+          nome: string
+          programa_ids: string[]
+          rows: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cols?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          programa_ids?: string[]
+          rows?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cols?: number
+          created_at?: string
+          id?: string
+          nome?: string
+          programa_ids?: string[]
+          rows?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cenario_estudio_tvs: {
+        Row: {
+          created_at: string
+          grupo_id: string
+          id: string
+          imagem_url: string
+          posicao: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          grupo_id: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          grupo_id?: string
+          id?: string
+          imagem_url?: string
+          posicao?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cenario_estudio_tvs_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "cenario_estudio_grupos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_modules: {
         Row: {
@@ -221,6 +547,33 @@ export type Database = {
           },
         ]
       }
+      comercial_mockups: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          fields: Json | null
+          id: string
+          image_url: string | null
+          name: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          fields?: Json | null
+          id?: string
+          image_url?: string | null
+          name: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          fields?: Json | null
+          id?: string
+          image_url?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
       comercial_preroll: {
         Row: {
           active: boolean
@@ -238,6 +591,7 @@ export type Database = {
           link_url: string | null
           media_type: string
           nome: string
+          placements: string[]
           priority: number
           skip_enabled: boolean
           updated_at: string
@@ -263,6 +617,7 @@ export type Database = {
           link_url?: string | null
           media_type?: string
           nome?: string
+          placements?: string[]
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
@@ -288,6 +643,7 @@ export type Database = {
           link_url?: string | null
           media_type?: string
           nome?: string
+          placements?: string[]
           priority?: number
           skip_enabled?: boolean
           updated_at?: string
@@ -299,26 +655,138 @@ export type Database = {
         }
         Relationships: []
       }
-      custom_news_sites: {
+      comercial_propostas: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          final_art_url: string | null
+          id: string
+          mockup_id: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          final_art_url?: string | null
+          id?: string
+          mockup_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          final_art_url?: string | null
+          id?: string
+          mockup_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercial_propostas_mockup_id_fkey"
+            columns: ["mockup_id"]
+            isOneToOne: false
+            referencedRelation: "comercial_mockups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_enquete_categories: {
         Row: {
           created_at: string
+          generated_date: string
           id: string
-          name: string
-          rss_url: string
+          nome: string
+          quizzes: Json
           user_id: string
         }
         Insert: {
           created_at?: string
+          generated_date?: string
           id?: string
-          name: string
-          rss_url: string
+          nome: string
+          quizzes?: Json
           user_id: string
         }
         Update: {
           created_at?: string
+          generated_date?: string
+          id?: string
+          nome?: string
+          quizzes?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_news_sites: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          rss_url: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          rss_url: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
           id?: string
           name?: string
+          parent_id?: string | null
           rss_url?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_news_sites_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "custom_news_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_quiz_categories: {
+        Row: {
+          created_at: string
+          generated_date: string
+          id: string
+          nome: string
+          quizzes: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generated_date?: string
+          id?: string
+          nome: string
+          quizzes?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generated_date?: string
+          id?: string
+          nome?: string
+          quizzes?: Json
           user_id?: string
         }
         Relationships: []
@@ -328,6 +796,7 @@ export type Database = {
           color: string | null
           commands: Json
           created_at: string
+          data_especifica: string | null
           dias_semana: string[] | null
           horario: string | null
           id: string
@@ -339,6 +808,7 @@ export type Database = {
           color?: string | null
           commands?: Json
           created_at?: string
+          data_especifica?: string | null
           dias_semana?: string[] | null
           horario?: string | null
           id?: string
@@ -350,6 +820,7 @@ export type Database = {
           color?: string | null
           commands?: Json
           created_at?: string
+          data_especifica?: string | null
           dias_semana?: string[] | null
           horario?: string | null
           id?: string
@@ -362,54 +833,138 @@ export type Database = {
       empresa_config: {
         Row: {
           ativo: boolean
+          audio_sources: Json
+          audio_stream_api_url: string | null
+          audio_stream_xpath: string | null
           background_url: string | null
           endereco: string | null
           facebook: string | null
+          facebook_subs: number | null
           id: string
           instagram: string | null
+          instagram_subs: number | null
           logo: string | null
           nome: string | null
           plano: string
           site: string | null
           telefone_comercial: string | null
           telefone_participacao: string | null
+          timezone: string
           updated_at: string
           user_id: string
+          video_sources: Json
+          video_stream_api_url: string | null
+          video_stream_xpath: string | null
           youtube: string | null
+          youtube_api_key: string | null
+          youtube_channel_id: string | null
+          youtube_subs: number | null
         }
         Insert: {
           ativo?: boolean
+          audio_sources?: Json
+          audio_stream_api_url?: string | null
+          audio_stream_xpath?: string | null
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
+          facebook_subs?: number | null
           id?: string
           instagram?: string | null
+          instagram_subs?: number | null
           logo?: string | null
           nome?: string | null
           plano?: string
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
+          timezone?: string
           updated_at?: string
           user_id: string
+          video_sources?: Json
+          video_stream_api_url?: string | null
+          video_stream_xpath?: string | null
           youtube?: string | null
+          youtube_api_key?: string | null
+          youtube_channel_id?: string | null
+          youtube_subs?: number | null
         }
         Update: {
           ativo?: boolean
+          audio_sources?: Json
+          audio_stream_api_url?: string | null
+          audio_stream_xpath?: string | null
           background_url?: string | null
           endereco?: string | null
           facebook?: string | null
+          facebook_subs?: number | null
           id?: string
           instagram?: string | null
+          instagram_subs?: number | null
           logo?: string | null
           nome?: string | null
           plano?: string
           site?: string | null
           telefone_comercial?: string | null
           telefone_participacao?: string | null
+          timezone?: string
           updated_at?: string
           user_id?: string
+          video_sources?: Json
+          video_stream_api_url?: string | null
+          video_stream_xpath?: string | null
           youtube?: string | null
+          youtube_api_key?: string | null
+          youtube_channel_id?: string | null
+          youtube_subs?: number | null
+        }
+        Relationships: []
+      }
+      enquetes_agendadas: {
+        Row: {
+          created_at: string
+          data_enquete: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          pergunta: string
+          resposta_correta: number
+          resposta1: string
+          resposta2: string
+          resposta3: string
+          resposta4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_enquete: string
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_enquete?: string
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -419,6 +974,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -427,6 +983,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -435,6 +992,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
@@ -470,6 +1028,39 @@ export type Database = {
         }
         Relationships: []
       }
+      infomusic: {
+        Row: {
+          artista: string
+          created_at: string
+          curiosidade: string
+          deezer_artist_img: string | null
+          expires_at: string
+          id: string
+          musica: string
+          user_id: string
+        }
+        Insert: {
+          artista: string
+          created_at?: string
+          curiosidade: string
+          deezer_artist_img?: string | null
+          expires_at?: string
+          id?: string
+          musica: string
+          user_id: string
+        }
+        Update: {
+          artista?: string
+          created_at?: string
+          curiosidade?: string
+          deezer_artist_img?: string | null
+          expires_at?: string
+          id?: string
+          musica?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       logos_patrocinadores: {
         Row: {
           ativo: boolean
@@ -480,7 +1071,7 @@ export type Database = {
           id: string
           logo_url: string
           nome: string
-          programa_id: string
+          programa_id: string | null
           user_id: string
         }
         Insert: {
@@ -492,7 +1083,7 @@ export type Database = {
           id?: string
           logo_url?: string
           nome?: string
-          programa_id: string
+          programa_id?: string | null
           user_id: string
         }
         Update: {
@@ -504,7 +1095,7 @@ export type Database = {
           id?: string
           logo_url?: string
           nome?: string
-          programa_id?: string
+          programa_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -523,6 +1114,7 @@ export type Database = {
           capa: string | null
           created_at: string
           id: string
+          radio_user_id: string | null
           titulo: string
           user_id: string
         }
@@ -531,6 +1123,7 @@ export type Database = {
           capa?: string | null
           created_at?: string
           id?: string
+          radio_user_id?: string | null
           titulo: string
           user_id: string
         }
@@ -539,6 +1132,7 @@ export type Database = {
           capa?: string | null
           created_at?: string
           id?: string
+          radio_user_id?: string | null
           titulo?: string
           user_id?: string
         }
@@ -607,6 +1201,107 @@ export type Database = {
         }
         Relationships: []
       }
+      news_cache: {
+        Row: {
+          items: Json
+          last_error: string | null
+          site_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          items?: Json
+          last_error?: string | null
+          site_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          items?: Json
+          last_error?: string | null
+          site_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_cache_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "custom_news_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ouvintes: {
+        Row: {
+          banido: boolean
+          banido_at: string | null
+          banido_motivo: string | null
+          cidade: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          escolaridade: string | null
+          id: string
+          nome: string
+          origem_cadastro: string
+          pontuacao: number | null
+          renda: string | null
+          setor: string | null
+          sexo: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          banido?: boolean
+          banido_at?: string | null
+          banido_motivo?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          escolaridade?: string | null
+          id?: string
+          nome: string
+          origem_cadastro?: string
+          pontuacao?: number | null
+          renda?: string | null
+          setor?: string | null
+          sexo?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          banido?: boolean
+          banido_at?: string | null
+          banido_motivo?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          escolaridade?: string | null
+          id?: string
+          nome?: string
+          origem_cadastro?: string
+          pontuacao?: number | null
+          renda?: string | null
+          setor?: string | null
+          sexo?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: []
+      }
       planos: {
         Row: {
           created_at: string
@@ -664,6 +1359,81 @@ export type Database = {
         }
         Relationships: []
       }
+      player_heartbeats: {
+        Row: {
+          last_seen: string
+          master_user_id: string
+          session_id: string
+        }
+        Insert: {
+          last_seen?: string
+          master_user_id: string
+          session_id: string
+        }
+        Update: {
+          last_seen?: string
+          master_user_id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
+      player_listener_profiles: {
+        Row: {
+          auth_user_id: string
+          avatar_url: string | null
+          cidade: string | null
+          cpf: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          estado: string | null
+          id: string
+          nome: string | null
+          radio_user_id: string
+          setor: string | null
+          sexo: string | null
+          sub_profiles: Json
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          auth_user_id: string
+          avatar_url?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          radio_user_id: string
+          setor?: string | null
+          sexo?: string | null
+          sub_profiles?: Json
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          auth_user_id?: string
+          avatar_url?: string | null
+          cidade?: string | null
+          cpf?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          estado?: string | null
+          id?: string
+          nome?: string | null
+          radio_user_id?: string
+          setor?: string | null
+          sexo?: string | null
+          sub_profiles?: Json
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       preset_commands: {
         Row: {
           commands: Json
@@ -696,48 +1466,119 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ai_enabled: boolean | null
           avatar_url: string | null
           cidade: string | null
+          cpf: string | null
           created_at: string
+          data_nascimento: string | null
           email: string | null
           estado: string | null
+          event_types_config: Json | null
           id: string
+          journalistic_prompt: string | null
           nome: string | null
           pais: string | null
+          setor: string | null
           sexo: string | null
+          sub_profiles: Json
           updated_at: string
           user_id: string
           whatsapp: string | null
         }
         Insert: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id: string
           whatsapp?: string | null
         }
         Update: {
+          ai_enabled?: boolean | null
           avatar_url?: string | null
           cidade?: string | null
+          cpf?: string | null
           created_at?: string
+          data_nascimento?: string | null
           email?: string | null
           estado?: string | null
+          event_types_config?: Json | null
           id?: string
+          journalistic_prompt?: string | null
           nome?: string | null
           pais?: string | null
+          setor?: string | null
           sexo?: string | null
+          sub_profiles?: Json
           updated_at?: string
           user_id?: string
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      programa_automacoes: {
+        Row: {
+          ativo: boolean
+          briefing: string
+          created_at: string
+          dias_semana: string[]
+          horario: string
+          id: string
+          programa_id: string
+          sites_source: string[]
+          updated_at: string
+          use_custom_news_sites: boolean
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          briefing?: string
+          created_at?: string
+          dias_semana?: string[]
+          horario?: string
+          id?: string
+          programa_id: string
+          sites_source?: string[]
+          updated_at?: string
+          use_custom_news_sites?: boolean
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          briefing?: string
+          created_at?: string
+          dias_semana?: string[]
+          horario?: string
+          id?: string
+          programa_id?: string
+          sites_source?: string[]
+          updated_at?: string
+          use_custom_news_sites?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "programa_automacoes_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       programas: {
         Row: {
@@ -815,6 +1656,7 @@ export type Database = {
       }
       promocoes: {
         Row: {
+          banner_l_url: string | null
           botao_url: string | null
           created_at: string
           data_fim: string
@@ -826,6 +1668,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          banner_l_url?: string | null
           botao_url?: string | null
           created_at?: string
           data_fim: string
@@ -837,6 +1680,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          banner_l_url?: string | null
           botao_url?: string | null
           created_at?: string
           data_fim?: string
@@ -849,9 +1693,91 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_templates: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          name: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_agendados: {
+        Row: {
+          created_at: string
+          data_quiz: string
+          explicacao: string
+          horario_fim: string
+          horario_inicio: string
+          id: string
+          imagem_resposta: string
+          pergunta: string
+          resposta_correta: number
+          resposta1: string
+          resposta2: string
+          resposta3: string
+          resposta4: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_quiz: string
+          explicacao?: string
+          horario_fim: string
+          horario_inicio: string
+          id?: string
+          imagem_resposta?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_quiz?: string
+          explicacao?: string
+          horario_fim?: string
+          horario_inicio?: string
+          id?: string
+          imagem_resposta?: string
+          pergunta?: string
+          resposta_correta?: number
+          resposta1?: string
+          resposta2?: string
+          resposta3?: string
+          resposta4?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       roteiros: {
         Row: {
           apresentador_editado: boolean | null
+          configuracoes: Json | null
           conteudo_html: string
           created_at: string
           data_programa: string
@@ -866,13 +1792,16 @@ export type Database = {
           share_token: string | null
           status: string
           subtitulo: string
+          tickertitulos: string | null
           tipo_programa: string
           titulo: string
           updated_at: string
           user_id: string
+          xml_pushed_at: string | null
         }
         Insert: {
           apresentador_editado?: boolean | null
+          configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
@@ -887,13 +1816,16 @@ export type Database = {
           share_token?: string | null
           status?: string
           subtitulo?: string
+          tickertitulos?: string | null
           tipo_programa?: string
           titulo?: string
           updated_at?: string
           user_id: string
+          xml_pushed_at?: string | null
         }
         Update: {
           apresentador_editado?: boolean | null
+          configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
@@ -908,10 +1840,12 @@ export type Database = {
           share_token?: string | null
           status?: string
           subtitulo?: string
+          tickertitulos?: string | null
           tipo_programa?: string
           titulo?: string
           updated_at?: string
           user_id?: string
+          xml_pushed_at?: string | null
         }
         Relationships: []
       }
@@ -948,6 +1882,7 @@ export type Database = {
           id: string
           image_url: string | null
           portal: string
+          resumo: string | null
           title: string
           user_id: string
         }
@@ -956,6 +1891,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal: string
+          resumo?: string | null
           title: string
           user_id: string
         }
@@ -964,6 +1900,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           portal?: string
+          resumo?: string | null
           title?: string
           user_id?: string
         }
@@ -1018,6 +1955,433 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_banners: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          data_final: string | null
+          data_inicial: string | null
+          id: string
+          image_url: string
+          link_url: string | null
+          nome: string
+          posicao: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
+          id?: string
+          image_url: string
+          link_url?: string | null
+          nome: string
+          posicao?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          data_final?: string | null
+          data_inicial?: string | null
+          id?: string
+          image_url?: string
+          link_url?: string | null
+          nome?: string
+          posicao?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_categorias: {
+        Row: {
+          cor: string | null
+          created_at: string
+          id: string
+          nome: string
+          ordem: number
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          ordem?: number
+          slug: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          ordem?: number
+          slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_config: {
+        Row: {
+          cidade_clima: string | null
+          cidade_lat: number | null
+          cidade_lon: number | null
+          cor_primaria: string | null
+          favicon_url: string | null
+          fonte_noticias: string
+          logo_url: string | null
+          meta_description: string | null
+          meta_keywords: string | null
+          og_image_url: string | null
+          show_clima: boolean
+          show_economia: boolean
+          show_grade: boolean
+          show_no_ar: boolean
+          show_noticias: boolean
+          show_promocoes: boolean
+          site_descricao: string | null
+          site_dominio: string | null
+          site_nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cidade_clima?: string | null
+          cidade_lat?: number | null
+          cidade_lon?: number | null
+          cor_primaria?: string | null
+          favicon_url?: string | null
+          fonte_noticias?: string
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          og_image_url?: string | null
+          show_clima?: boolean
+          show_economia?: boolean
+          show_grade?: boolean
+          show_no_ar?: boolean
+          show_noticias?: boolean
+          show_promocoes?: boolean
+          site_descricao?: string | null
+          site_dominio?: string | null
+          site_nome?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cidade_clima?: string | null
+          cidade_lat?: number | null
+          cidade_lon?: number | null
+          cor_primaria?: string | null
+          favicon_url?: string | null
+          fonte_noticias?: string
+          logo_url?: string | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          og_image_url?: string | null
+          show_clima?: boolean
+          show_economia?: boolean
+          show_grade?: boolean
+          show_no_ar?: boolean
+          show_noticias?: boolean
+          show_promocoes?: boolean
+          site_descricao?: string | null
+          site_dominio?: string | null
+          site_nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_deploy_config: {
+        Row: {
+          auto_publish: boolean
+          host: string
+          password: string
+          port: number
+          protocol: string
+          remote_path: string
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          auto_publish?: boolean
+          host?: string
+          password?: string
+          port?: number
+          protocol?: string
+          remote_path?: string
+          updated_at?: string
+          user_id: string
+          username?: string
+        }
+        Update: {
+          auto_publish?: boolean
+          host?: string
+          password?: string
+          port?: number
+          protocol?: string
+          remote_path?: string
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      site_deploy_history: {
+        Row: {
+          bytes_sent: number | null
+          created_at: string
+          duration_ms: number | null
+          files_count: number | null
+          id: string
+          message: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          bytes_sent?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          files_count?: number | null
+          id?: string
+          message?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          bytes_sent?: number | null
+          created_at?: string
+          duration_ms?: number | null
+          files_count?: number | null
+          id?: string
+          message?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      site_noticias: {
+        Row: {
+          categoria_id: string | null
+          conteudo: string | null
+          created_at: string
+          id: string
+          imagem_url: string | null
+          publicado: boolean
+          resumo: string | null
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean
+          resumo?: string | null
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria_id?: string | null
+          conteudo?: string | null
+          created_at?: string
+          id?: string
+          imagem_url?: string | null
+          publicado?: boolean
+          resumo?: string | null
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_noticias_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "site_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sorteio_premio_programas: {
+        Row: {
+          created_at: string
+          id: string
+          premio_id: string
+          programa_id: string
+          quantidade: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          premio_id: string
+          programa_id: string
+          quantidade?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          premio_id?: string
+          programa_id?: string
+          quantidade?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_premio_programas_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_premios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_premio_programas_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sorteio_premios: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          descricao: string | null
+          dias_validade: number
+          id: string
+          imagem_url: string | null
+          nome: string
+          programa_id: string | null
+          quantidade_estoque: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          dias_validade?: number
+          id?: string
+          imagem_url?: string | null
+          nome: string
+          programa_id?: string | null
+          quantidade_estoque?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          descricao?: string | null
+          dias_validade?: number
+          id?: string
+          imagem_url?: string | null
+          nome?: string
+          programa_id?: string | null
+          quantidade_estoque?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_premios_programa_id_fkey"
+            columns: ["programa_id"]
+            isOneToOne: false
+            referencedRelation: "programas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sorteio_sorteios: {
+        Row: {
+          apresentador_nome: string | null
+          created_at: string
+          data_entrega: string | null
+          data_expiracao: string | null
+          data_sorteio: string
+          entregue: boolean
+          expirado: boolean
+          id: string
+          nome_ganhador: string
+          observacoes: string | null
+          ouvinte_id: string | null
+          premio_id: string
+          programa_id: string | null
+          programa_nome: string | null
+          telefone_ganhador: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apresentador_nome?: string | null
+          created_at?: string
+          data_entrega?: string | null
+          data_expiracao?: string | null
+          data_sorteio?: string
+          entregue?: boolean
+          expirado?: boolean
+          id?: string
+          nome_ganhador: string
+          observacoes?: string | null
+          ouvinte_id?: string | null
+          premio_id: string
+          programa_id?: string | null
+          programa_nome?: string | null
+          telefone_ganhador?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apresentador_nome?: string | null
+          created_at?: string
+          data_entrega?: string | null
+          data_expiracao?: string | null
+          data_sorteio?: string
+          entregue?: boolean
+          expirado?: boolean
+          id?: string
+          nome_ganhador?: string
+          observacoes?: string | null
+          ouvinte_id?: string | null
+          premio_id?: string
+          programa_id?: string | null
+          programa_nome?: string | null
+          telefone_ganhador?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sorteio_sorteios_ouvinte_id_fkey"
+            columns: ["ouvinte_id"]
+            isOneToOne: false
+            referencedRelation: "ouvintes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sorteio_sorteios_premio_id_fkey"
+            columns: ["premio_id"]
+            isOneToOne: false
+            referencedRelation: "sorteio_premios"
             referencedColumns: ["id"]
           },
         ]
@@ -1088,6 +2452,42 @@ export type Database = {
           updated_at?: string
           url?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sub_users: {
+        Row: {
+          allowed_modules: string[]
+          ativo: boolean
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          parent_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          allowed_modules?: string[]
+          ativo?: boolean
+          auth_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+          nome?: string
+          parent_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          allowed_modules?: string[]
+          ativo?: boolean
+          auth_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          parent_user_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1168,6 +2568,99 @@ export type Database = {
           },
         ]
       }
+      tv_pairing_codes: {
+        Row: {
+          claimed_at: string | null
+          code: string
+          created_at: string
+          expires_at: string
+          paired_avatar: string | null
+          paired_email: string | null
+          paired_name: string | null
+          paired_user_id: string | null
+          slug_user_id: string
+          status: string
+          tv_session_id: string
+          user_slug: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          code: string
+          created_at?: string
+          expires_at?: string
+          paired_avatar?: string | null
+          paired_email?: string | null
+          paired_name?: string | null
+          paired_user_id?: string | null
+          slug_user_id: string
+          status?: string
+          tv_session_id: string
+          user_slug: string
+        }
+        Update: {
+          claimed_at?: string | null
+          code?: string
+          created_at?: string
+          expires_at?: string
+          paired_avatar?: string | null
+          paired_email?: string | null
+          paired_name?: string | null
+          paired_user_id?: string | null
+          slug_user_id?: string
+          status?: string
+          tv_session_id?: string
+          user_slug?: string
+        }
+        Relationships: []
+      }
+      tv_pairing_events: {
+        Row: {
+          code: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          meta: Json
+          paired_email: string | null
+          paired_user_id: string | null
+          reason: string | null
+          slug_user_id: string | null
+          tv_session_id: string | null
+          user_agent: string | null
+          user_slug: string | null
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          paired_email?: string | null
+          paired_user_id?: string | null
+          reason?: string | null
+          slug_user_id?: string | null
+          tv_session_id?: string | null
+          user_agent?: string | null
+          user_slug?: string | null
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip?: string | null
+          meta?: Json
+          paired_email?: string | null
+          paired_user_id?: string | null
+          reason?: string | null
+          slug_user_id?: string | null
+          tv_session_id?: string | null
+          user_agent?: string | null
+          user_slug?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1194,11 +2687,17 @@ export type Database = {
           cenario_config: Json | null
           dashboard_items: Json | null
           id: string
+          infomusic_ai_enabled: boolean
+          infomusic_ai_last_reset: string | null
+          infomusic_ai_monthly_count: number | null
+          infomusic_excecoes: string | null
+          last_manual_curiosity_id: string | null
           music_source_mode: string
           music_xml_url: string | null
           shopping_active: boolean
           updated_at: string
           user_id: string
+          vmix_input_mapping: Json | null
           vmix_pass: string | null
           vmix_shortcuts: Json | null
           vmix_url: string | null
@@ -1211,11 +2710,17 @@ export type Database = {
           cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
+          infomusic_ai_enabled?: boolean
+          infomusic_ai_last_reset?: string | null
+          infomusic_ai_monthly_count?: number | null
+          infomusic_excecoes?: string | null
+          last_manual_curiosity_id?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
           updated_at?: string
           user_id: string
+          vmix_input_mapping?: Json | null
           vmix_pass?: string | null
           vmix_shortcuts?: Json | null
           vmix_url?: string | null
@@ -1228,11 +2733,17 @@ export type Database = {
           cenario_config?: Json | null
           dashboard_items?: Json | null
           id?: string
+          infomusic_ai_enabled?: boolean
+          infomusic_ai_last_reset?: string | null
+          infomusic_ai_monthly_count?: number | null
+          infomusic_excecoes?: string | null
+          last_manual_curiosity_id?: string | null
           music_source_mode?: string
           music_xml_url?: string | null
           shopping_active?: boolean
           updated_at?: string
           user_id?: string
+          vmix_input_mapping?: Json | null
           vmix_pass?: string | null
           vmix_shortcuts?: Json | null
           vmix_url?: string | null
@@ -1241,7 +2752,304 @@ export type Database = {
           weather_lat?: number | null
           weather_lon?: number | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_last_manual_curiosity_id_fkey"
+            columns: ["last_manual_curiosity_id"]
+            isOneToOne: false
+            referencedRelation: "infomusic"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vmix_connections: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          last_inputs: Json
+          last_state: Json
+          last_synced_at: string | null
+          name: string
+          ndi_sources: Json
+          password: string | null
+          updated_at: string
+          url: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          last_inputs?: Json
+          last_state?: Json
+          last_synced_at?: string | null
+          name: string
+          ndi_sources?: Json
+          password?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          last_inputs?: Json
+          last_state?: Json
+          last_synced_at?: string | null
+          name?: string
+          ndi_sources?: Json
+          password?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          username?: string | null
+        }
         Relationships: []
+      }
+      wa_broadcasts: {
+        Row: {
+          audience_filter: Json
+          created_at: string
+          fail_count: number
+          finished_at: string | null
+          id: string
+          image_url: string | null
+          message: string
+          name: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          total_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience_filter?: Json
+          created_at?: string
+          fail_count?: number
+          finished_at?: string | null
+          id?: string
+          image_url?: string | null
+          message: string
+          name: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience_filter?: Json
+          created_at?: string
+          fail_count?: number
+          finished_at?: string | null
+          id?: string
+          image_url?: string | null
+          message?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          total_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_config: {
+        Row: {
+          active: boolean
+          created_at: string
+          display_phone: string | null
+          id: string
+          phone_number_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          display_phone?: string | null
+          id?: string
+          phone_number_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          display_phone?: string | null
+          id?: string
+          phone_number_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_contacts: {
+        Row: {
+          blocked: boolean
+          created_at: string
+          flow_id: string | null
+          flow_state: Json
+          human_takeover: boolean
+          id: string
+          last_inbound_at: string | null
+          last_message_at: string | null
+          name: string | null
+          ouvinte_id: string | null
+          phone: string
+          profile_name: string | null
+          tags: string[]
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          blocked?: boolean
+          created_at?: string
+          flow_id?: string | null
+          flow_state?: Json
+          human_takeover?: boolean
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          name?: string | null
+          ouvinte_id?: string | null
+          phone: string
+          profile_name?: string | null
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          blocked?: boolean
+          created_at?: string
+          flow_id?: string | null
+          flow_state?: Json
+          human_takeover?: boolean
+          id?: string
+          last_inbound_at?: string | null
+          last_message_at?: string | null
+          name?: string | null
+          ouvinte_id?: string | null
+          phone?: string
+          profile_name?: string | null
+          tags?: string[]
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_contacts_ouvinte_id_fkey"
+            columns: ["ouvinte_id"]
+            isOneToOne: false
+            referencedRelation: "ouvintes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wa_flows: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          steps: Json
+          trigger: string
+          trigger_value: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          steps?: Json
+          trigger?: string
+          trigger_value?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          steps?: Json
+          trigger?: string
+          trigger_value?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wa_messages: {
+        Row: {
+          automation_id: string | null
+          body: string | null
+          contact_id: string
+          created_at: string
+          direction: string
+          error: string | null
+          id: string
+          media_url: string | null
+          status: string
+          type: string
+          user_id: string
+          wa_message_id: string | null
+        }
+        Insert: {
+          automation_id?: string | null
+          body?: string | null
+          contact_id: string
+          created_at?: string
+          direction: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          status?: string
+          type?: string
+          user_id: string
+          wa_message_id?: string | null
+        }
+        Update: {
+          automation_id?: string | null
+          body?: string | null
+          contact_id?: string
+          created_at?: string
+          direction?: string
+          error?: string | null
+          id?: string
+          media_url?: string | null
+          status?: string
+          type?: string
+          user_id?: string
+          wa_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wa_messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "wa_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       watch_history: {
         Row: {
@@ -1251,6 +3059,7 @@ export type Database = {
           channel_name: string
           channel_type: string
           id: string
+          radio_user_id: string | null
           user_id: string
           watched_at: string
         }
@@ -1261,6 +3070,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id: string
           watched_at?: string
         }
@@ -1271,6 +3081,7 @@ export type Database = {
           channel_name?: string
           channel_type?: string
           id?: string
+          radio_user_id?: string | null
           user_id?: string
           watched_at?: string
         }
@@ -1286,20 +3097,26 @@ export type Database = {
       }
       xml_upload_history: {
         Row: {
+          artista: string | null
           created_at: string
           id: string
+          musica: string | null
           source: string
           user_id: string
         }
         Insert: {
+          artista?: string | null
           created_at?: string
           id?: string
+          musica?: string | null
           source?: string
           user_id: string
         }
         Update: {
+          artista?: string | null
           created_at?: string
           id?: string
+          musica?: string | null
           source?: string
           user_id?: string
         }
@@ -1310,15 +3127,91 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_audiencia_historico: { Args: never; Returns: undefined }
       cleanup_comercial: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
+      expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
+      get_roteiro_by_share_token: {
+        Args: { _token: string }
+        Returns: {
+          apresentador_editado: boolean | null
+          configuracoes: Json | null
+          conteudo_html: string
+          created_at: string
+          data_programa: string
+          editado_at: string | null
+          estudio: string
+          horario: string
+          id: string
+          numero_roteiro: number | null
+          participantes: Json
+          programa_nome: string
+          share_login: string | null
+          share_token: string | null
+          status: string
+          subtitulo: string
+          tickertitulos: string | null
+          tipo_programa: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          xml_pushed_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "roteiros"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      is_ouvinte_banido: {
+        Args: { _identifier: string; _radio_user_id: string }
+        Returns: boolean
+      }
+      list_roteiros_historico_by_share_token: {
+        Args: { _limit?: number; _token: string }
+        Returns: {
+          apresentador_editado: boolean | null
+          configuracoes: Json | null
+          conteudo_html: string
+          created_at: string
+          data_programa: string
+          editado_at: string | null
+          estudio: string
+          horario: string
+          id: string
+          numero_roteiro: number | null
+          participantes: Json
+          programa_nome: string
+          share_login: string | null
+          share_token: string | null
+          status: string
+          subtitulo: string
+          tickertitulos: string | null
+          tipo_programa: string
+          titulo: string
+          updated_at: string
+          user_id: string
+          xml_pushed_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "roteiros"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      update_roteiro_by_share_token: {
+        Args: { _conteudo_html: string; _participantes: Json; _token: string }
+        Returns: undefined
       }
     }
     Enums: {

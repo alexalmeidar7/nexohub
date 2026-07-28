@@ -4,9 +4,95 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// In-memory cache — survives across warm invocations (typically 5-10 min)
 const cache = new Map<string, { url: string; ts: number }>();
-const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_TTL = 60 * 60 * 1000;
+
+const PLACEHOLDER_HASHES = [
+  "d41d8cd98f00b204e9800998ecf8427e",
+  "2a7c75fe7e249e43eb37b1e84b8ba8ba",
+];
+
+const isValidImage = (url: string | undefined): url is string =>
+  !!url && !PLACEHOLDER_HASHES.some(h => url.includes(h));
+
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+
+/** Find the best-matching artist (exact name match) to avoid feats/collaborators. */
+async function findArtist(artist: string): Promise<{ id: number; name: string; picture_xl?: string } | null> {
+  const query = encodeURIComponent(artist);
+  const res = await fetch(`https://api.deezer.com/search/artist?q=${query}&limit=10`, {
+    signal: AbortSignal.timeout(4000),
+  });
+  if (!res.ok) return null;
+  const data = await res.json();
+  const list = (data?.data ?? []) as Array<{ id: number; name: string; picture_xl?: string }>;
+  if (!list.length) return null;
+  const target = norm(artist);
+  // Prefer exact normalized name match
+  const exact = list.find(a => norm(a.name) === target);
+  return exact ?? list[0];
+}
+
+/** Verify an album's main artist matches the expected id (rejects compilations/feats). */
+async function albumBelongsToArtist(albumId: number, expectedArtistId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`https://api.deezer.com/album/${albumId}`, {
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    // Reject if album type is "compile" (compilation) — often multi-artist
+    if (typeof data?.record_type === "string" && data.record_type.toLowerCase() === "compile") {
+      return false;
+    }
+    const mainArtistId = Number(data?.artist?.id);
+    if (mainArtistId !== expectedArtistId) return false;
+    // Extra safety: if "contributors" exists and includes others as "Main", reject
+    const contributors = Array.isArray(data?.contributors) ? data.contributors : [];
+    const otherMain = contributors.some(
+      (c: { id?: number; role?: string }) =>
+        c?.role?.toLowerCase() === "main" && Number(c?.id) !== expectedArtistId
+    );
+    if (otherMain) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Get alternate images of the SAME artist from their albums (cover art). */
+async function getArtistAlbumCovers(artistId: number): Promise<string[]> {
+  try {
+    const res = await fetch(`https://api.deezer.com/artist/${artistId}/albums?limit=50`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    const albums = (data?.data ?? []) as Array<{
+      id: number;
+      cover_xl?: string;
+      cover_big?: string;
+      artist?: { id?: number };
+      record_type?: string;
+    }>;
+
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const a of albums) {
+      const url = a.cover_xl || a.cover_big;
+      if (!isValidImage(url)) continue;
+      if (typeof a.record_type === "string" && a.record_type.toLowerCase() === "compile") continue;
+      if (a.artist?.id !== undefined && Number(a.artist.id) !== artistId) continue;
+      if (seen.has(url)) continue;
+      seen.add(url);
+      result.push(url);
+    }
+    return result;
+  } catch {
+    return [];
+  }
+}
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,12 +101,16 @@ Deno.serve(async (req) => {
 
   try {
     let artist = "";
+    let skip = 0;
 
     if (req.method === "GET") {
-      artist = new URL(req.url).searchParams.get("artist") || "";
+      const u = new URL(req.url);
+      artist = u.searchParams.get("artist") || "";
+      skip = Number(u.searchParams.get("skip") || "0") || 0;
     } else {
       const body = await req.json().catch(() => ({}));
       artist = typeof body?.artist === "string" ? body.artist : "";
+      skip = Number(body?.skip || 0) || 0;
     }
 
     artist = artist.trim();
@@ -33,46 +123,48 @@ Deno.serve(async (req) => {
 
     const cacheKey = artist.toLowerCase();
 
-    // Check cache
-    const cached = cache.get(cacheKey);
-    if (cached && Date.now() - cached.ts < CACHE_TTL) {
-      return new Response(
-        JSON.stringify({ ok: true, url: cached.url, cached: true }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (skip === 0) {
+      const cached = cache.get(cacheKey);
+      if (cached && Date.now() - cached.ts < CACHE_TTL) {
+        return new Response(
+          JSON.stringify({ ok: true, url: cached.url, cached: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
-    // Fetch from Deezer (no auth needed)
-    const query = encodeURIComponent(artist);
-    const res = await fetch(
-      `https://api.deezer.com/search/artist?q=${query}&limit=1`,
-      { signal: AbortSignal.timeout(3000) }
-    );
-
-    if (!res.ok) {
-      return new Response(
-        JSON.stringify({ ok: false, error: `Deezer returned ${res.status}` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const data = await res.json();
-    const artistData = data?.data?.[0];
-
-    if (!artistData?.picture_xl) {
+    const matched = await findArtist(artist);
+    if (!matched) {
       return new Response(
         JSON.stringify({ ok: false, error: "Artist not found" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const imageUrl = artistData.picture_xl;
+    // Build candidate pool: official artist photo first, then album covers (same artist).
+    const candidates: string[] = [];
+    if (isValidImage(matched.picture_xl)) candidates.push(matched.picture_xl);
 
-    // Store in cache
-    cache.set(cacheKey, { url: imageUrl, ts: Date.now() });
+    if (skip > 0 || candidates.length === 0) {
+      const covers = await getArtistAlbumCovers(matched.id);
+      for (const c of covers) {
+        if (!candidates.includes(c)) candidates.push(c);
+      }
+    }
+
+    if (!candidates.length) {
+      return new Response(
+        JSON.stringify({ ok: false, error: "No real artist image" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const imageUrl = candidates[skip % candidates.length];
+
+    if (skip === 0) cache.set(cacheKey, { url: imageUrl, ts: Date.now() });
 
     return new Response(
-      JSON.stringify({ ok: true, url: imageUrl, name: artistData.name }),
+      JSON.stringify({ ok: true, url: imageUrl, name: matched.name, total: candidates.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {

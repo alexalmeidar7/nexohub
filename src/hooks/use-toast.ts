@@ -156,6 +156,20 @@ function toast({ ...props }: Toast) {
     },
   });
 
+  // Broadcast padronizado para InlineNotification (regra geral do projeto)
+  if (typeof window !== "undefined") {
+    const title = typeof props.title === "string" ? props.title : "";
+    const description = typeof props.description === "string" ? props.description : "";
+    const text = [title, description].filter(Boolean).join(" — ");
+    if (text) {
+      window.dispatchEvent(
+        new CustomEvent("nexo-notify", {
+          detail: { text, variant: (props as any).variant === "destructive" ? "error" : "info" },
+        })
+      );
+    }
+  }
+
   return {
     id: id,
     dismiss,

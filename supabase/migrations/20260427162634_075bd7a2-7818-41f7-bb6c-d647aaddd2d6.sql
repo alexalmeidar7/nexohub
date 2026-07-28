@@ -1,0 +1,1 @@
+ALTER TABLE public.agenda_eventos ADD COLUMN IF NOT EXISTS horario_gravacao TEXT;

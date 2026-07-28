@@ -135,7 +135,7 @@ export default function PlayerSidebar({
                       onClick={() => { setProfileOpen(false); onEditProfile(); }}
                       className="flex items-center gap-2 text-white/70 text-xs hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
                     >
-                      <User className="h-3.5 w-3.5" /> Editar perfil
+                      <User className="icon icon-xs" /> Editar perfil
                     </button>
                   )}
                   {showLogout && onLogout && (
@@ -143,8 +143,9 @@ export default function PlayerSidebar({
                       onClick={() => { setProfileOpen(false); onLogout(); }}
                       className="flex items-center gap-2 text-white/50 text-xs hover:text-red-400 transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
                     >
-                      <LogOut className="h-3.5 w-3.5" /> Sair
+                      <LogOut className="icon icon-xs" /> Sair
                     </button>
+
                   )}
                   {showSignup && onSignup && (
                     <button
@@ -182,10 +183,11 @@ export default function PlayerSidebar({
                 aria-label={item.label}
               >
                 <item.icon
-                  className={`h-[18px] w-[18px] transition-colors duration-200 ${
+                  className={`icon icon-sm transition-colors duration-200 ${
                     isActive ? "text-white" : "text-white/40 group-hover/btn:text-white/80"
                   }`}
                 />
+
 
                 {/* Label tooltip on hover */}
                 <div

@@ -14,6 +14,7 @@ export interface JornalNewsItem {
   title: string;
   imageUrl: string;
   body?: string;
+  journalisticText?: string;
   link?: string;
 }
 
@@ -53,16 +54,24 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     if (item.body) return item.body;
     if (!item.link) return "";
     try {
+      const { data: profile } = await supabase.from("profiles").select("journalistic_prompt").single();
+      const customPrompt = profile?.journalistic_prompt;
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       if (!supabaseUrl || !supabaseKey) return "";
       const res = await fetch(`${supabaseUrl}/functions/v1/fetch-rss`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${supabaseKey}` },
-        body: JSON.stringify({ url: item.link }),
-        signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ 
+          url: item.link,
+          generate_journalistic_text: true,
+          custom_prompt: customPrompt
+        }),
+        signal: AbortSignal.timeout(30000),
       });
       const data = await res.json();
+      if (data.journalisticText) return data.journalisticText;
       if (data.content) {
         const html = data.content;
         const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
@@ -131,7 +140,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
               body = await fetchBodyForItem(item);
               setFetchingBody(null);
             }
-            setBlocks(prev => ({ ...prev, [blockNum]: [...(prev[blockNum] || []), { ...item, body }] }));
+            setBlocks(prev => ({ ...prev, [blockNum]: [...(prev[blockNum] || []), { ...item, body, journalisticText: item.journalisticText || body }] }));
           }
           dragItem.current = null;
           return;
@@ -180,15 +189,41 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
     const { blockNum, index } = editingItem;
     setBlocks(prev => {
       const updated = [...prev[blockNum]];
-      updated[index] = { ...updated[index], title: editTitle, imageUrl: editImageUrl, body: editBody };
+      updated[index] = { ...updated[index], title: editTitle, imageUrl: editImageUrl, body: editBody, journalisticText: editBody };
       return { ...prev, [blockNum]: updated };
     });
     setEditingItem(null);
   };
 
   const handleImproveText = async () => {
-    // AI disabled
-    return;
+    setAiImproving(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("improve-text", {
+        body: { text: editBody }
+      });
+
+      if (error) throw error;
+      
+      if (data?.improvedText) {
+        setOriginalBody(editBody);
+        setEditBody(data.improvedText);
+      }
+    } catch (err: any) {
+      console.error("Erro ao melhorar texto:", err);
+      // Fallback: If OpenAI key is missing or any error occurs, 
+      // we still have the original text, but we can try a simple local "cleanup"
+      // to not leave the user with nothing.
+      const localImproved = editBody
+        .replace(/\n\s*\n/g, '\n\n') // Normalize paragraphs
+        .trim();
+      
+      if (localImproved !== editBody) {
+        setOriginalBody(editBody);
+        setEditBody(localImproved);
+      }
+    } finally {
+      setAiImproving(false);
+    }
   };
 
   const undoAiText = () => {
@@ -284,12 +319,17 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
                       <GripVertical size={12} className="shrink-0 mt-0.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 20%, transparent)" }} />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold line-clamp-2 leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{n.title}</p>
-                        {n.body && (
+                        {n.journalisticText && (
+                          <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", fontSize: "10px" }}>
+                            {n.journalisticText}
+                          </p>
+                        )}
+                        {!n.journalisticText && n.body && (
                           <p className="line-clamp-3 mt-0.5 leading-snug" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)", fontSize: "10px" }}>
                             {n.body}
                           </p>
                         )}
-                        {!n.body && n.link && (
+                        {!n.journalisticText && !n.body && n.link && (
                           <p className="mt-0.5 italic" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)", fontSize: "10px" }}>
                             Texto não disponível
                           </p>
@@ -383,7 +423,7 @@ export default function JornalBlockBuilder({ config, selectedNews, onClose }: Pr
             </div>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setEditingItem(null)} style={{ borderColor: "#2ec1f7", borderRadius: "9999px", color: "var(--layout-page-text, #1a1a1a)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>Cancelar</Button>
-              <Button size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "9999px" }}>Salvar</Button>
+              <Button variant="save" size="sm" onClick={saveEdit} style={{ backgroundColor: "#2ec1f7", color: "var(--layout-page-text, #1a1a1a)", borderRadius: "9999px" }}>Salvar</Button>
             </div>
           </div>
         </DialogContent>

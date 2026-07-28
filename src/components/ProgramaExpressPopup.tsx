@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -29,6 +30,7 @@ interface NewsItem {
   imagemUrl: string;
   escalada: boolean;
   link?: string;
+  resumo?: string;
 }
 
 interface Bloco {
@@ -400,6 +402,23 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
   const updateNoticia = (bi: number, ni: number, field: keyof NewsItem, value: any) => {
     setBlocos(prev => {
+      const noticia = prev[bi].noticias[ni];
+      
+      // Se estiver marcando como escalada, adiciona o resumo à lista de escaladas
+      if (field === "escalada" && value === true) {
+        const textToUse = noticia.resumo || noticia.titulo;
+        if (textToUse && !escaladaList.includes(textToUse)) {
+          setEscaladaList(current => [...current, textToUse]);
+        }
+      } 
+      // Se estiver desmarcando, removemos da lista se o texto for exatamente igual
+      else if (field === "escalada" && value === false) {
+        const textToRemove = noticia.resumo || noticia.titulo;
+        if (textToRemove) {
+          setEscaladaList(current => current.filter(item => item !== textToRemove));
+        }
+      }
+
       const copy = prev.map((b, i) => i === bi ? { ...b, noticias: b.noticias.map((n, j) => j === ni ? { ...n, [field]: value } : n) } : b);
       return copy;
     });
@@ -436,7 +455,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
     setFetchingLink(key);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-rss", {
-        body: { url },
+        body: { url, generate_summary: true },
       });
       if (!error && data?.ok && data.content) {
         const html = data.content as string;
@@ -455,8 +474,11 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           return "";
         };
 
-        const title = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        const rawTitle = getMetaContent("og:title") || getMetaContent("twitter:title") || (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || "").trim();
+        let title = rawTitle.includes("|") ? rawTitle.split("|")[0].trim() : rawTitle;
+        if (title.includes(" - ")) title = title.split(" - ")[0].trim();
         const image = getMetaContent("og:image") || getMetaContent("twitter:image");
+        const summary = data.summary;
 
         const decodeFull = (v: string) => {
           let s = v;
@@ -469,6 +491,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         };
         if (title) updateNoticia(bi, ni, "titulo", decodeFull(title));
         if (image) updateNoticia(bi, ni, "imagemUrl", decodeFull(image));
+        if (summary) updateNoticia(bi, ni, "resumo", decodeFull(summary));
         updateNoticia(bi, ni, "link", url);
         if (title) toast.success("Dados extraídos do link!");
         else toast.warning("Link carregado, mas não foi possível extrair o título");
@@ -489,12 +512,12 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
 
     if (participantes.length > 0) {
       xml += `  <participantes>\n`;
-      participantes.forEach((p, pi) => {
-        xml += `    <participante${pi + 1}>\n`;
+      participantes.forEach((p) => {
+        xml += `    <item>\n`;
         xml += `      <nome>${escXml(p.nome)}</nome>\n`;
         xml += `      <cargo>${escXml(p.cargo)}</cargo>\n`;
         xml += `      <instagram>${escXml(p.instagram)}</instagram>\n`;
-        xml += `    </participante${pi + 1}>\n`;
+        xml += `    </item>\n`;
       });
       xml += `  </participantes>\n`;
     }
@@ -558,10 +581,10 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
         });
       });
 
-      const blob = new Blob([xmlContent], { type: "application/xml" });
+      const blob = new Blob([xmlContent], { type: "application/xml; charset=utf-8" });
       const fileName = `express_${programaId}_${Date.now()}.xml`;
       const filePath = `express/${user.id}/${fileName}`;
-      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+      await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml; charset=utf-8" });
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(filePath);
       const xmlUrl = urlData.publicUrl;
 
@@ -577,7 +600,9 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           subtitulo: `express_xml::${xmlUrl}`,
           conteudo_html: html,
           participantes: blocosJson,
+          updated_at: new Date().toISOString(),
         }).eq("id", editingId);
+
         if (error) throw error;
       } else {
         // Insert new
@@ -625,7 +650,7 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
           <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
               <Zap size={20} style={{ color: "var(--layout-accent-color, #2ec1f7)" }} />
-              {editingId ? "Editar Programa Express" : "Programa Express"}
+              {editingId ? "Monte seu Roteiro" : "Monte seu Roteiro"}
             </DialogTitle>
             <button
               onClick={() => setShowPastePopup(true)}
@@ -796,15 +821,13 @@ export default function ProgramaExpressPopup({ open, onOpenChange, programas, es
                 <input value={newContact.whatsapp} onChange={e => setNewContact(p => ({ ...p, whatsapp: e.target.value }))} placeholder="(00) 00000-0000" className="w-full px-2.5 py-1.5 rounded-lg text-[11px] outline-none" style={inputStyle} />
               </div>
             </div>
-            <button
+            <Button variant="save"
               onClick={saveNewContact}
               disabled={savingContact || !newContact.nome.trim()}
-              className="w-full py-2 rounded-lg text-[11px] font-bold transition-all hover:opacity-90 flex items-center justify-center gap-1.5 disabled:opacity-40"
-              style={{ backgroundColor: "var(--layout-accent-color, #2ec1f7)", color: "var(--layout-header-text, #fff)" }}
             >
               {savingContact ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
               Salvar e Incluir
-            </button>
+            </Button>
           </div>
         )}
 
@@ -1031,7 +1054,21 @@ function NoticiaItem({ noticia, bi, ni, inputStyle, fetchingLink, onUpdate, onRe
         <div className="flex items-center gap-1 mb-1">
           <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
           <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Título / Tarja</span>
+      </div>
+      
+      <div className="w-full min-w-0 max-w-full overflow-hidden">
+        <div className="flex items-center gap-1 mb-1">
+          <Type size={10} style={{ color: "var(--layout-icon-color)" }} />
+          <span className="text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Resumo (p/ Escalada)</span>
         </div>
+        <textarea
+          value={noticia.resumo || ""}
+          onChange={e => onUpdate(bi, ni, "resumo", e.target.value)}
+          placeholder="Resumo curto para a escalada..."
+          className="block w-full min-w-0 max-w-full px-3 py-1.5 rounded-lg text-[11px] outline-none h-12 resize-none"
+          style={{ ...inputStyle, width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
+        />
+      </div>
         <input
           value={noticia.titulo}
           onChange={e => onUpdate(bi, ni, "titulo", e.target.value)}
