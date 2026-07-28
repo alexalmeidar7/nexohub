@@ -1277,7 +1277,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
-      {/* Imagem do artista (Deezer) intercalada a cada 6s com movimento lento (Ken Burns) */}
+      {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
       {artistBgImage && !djModeActive && (
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
