@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
+import { WeatherIcon } from "@/components/WeatherIcons";
 
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
@@ -248,6 +249,62 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       evs.forEach(e => window.removeEventListener(e, show));
     };
   }, [isVideoChannel]);
+
+  // ---- Relógio (elegante, com segundos) ----
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  const clockTime = useMemo(() => {
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    return { hh, mm, ss };
+  }, [now]);
+
+  // ---- Clima (temp + código WMO) do rádio atual ----
+  const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
+  useEffect(() => {
+    if (!radioUserId) return;
+    let cancelled = false;
+    let intervalId: number | undefined;
+
+    const fetchWeather = async (lat: number, lon: number) => {
+      try {
+        const { data } = await supabase.functions.invoke("fetch-weather", {
+          body: { action: "forecast", lat, lon, forecast_days: 1 },
+        });
+        const c = (data as any)?.data?.current;
+        if (!cancelled && c && typeof c.temperature_2m === "number") {
+          setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
+        }
+      } catch {}
+    };
+
+    (async () => {
+      try {
+        const { data: settings } = await supabase
+          .from("user_settings")
+          .select("weather_lat, weather_lon")
+          .eq("user_id", radioUserId)
+          .maybeSingle();
+        const lat = (settings as any)?.weather_lat;
+        const lon = (settings as any)?.weather_lon;
+        if (typeof lat === "number" && typeof lon === "number") {
+          fetchWeather(lat, lon);
+          intervalId = window.setInterval(() => fetchWeather(lat, lon), 10 * 60 * 1000);
+        }
+      } catch {}
+    })();
+
+    return () => {
+      cancelled = true;
+      if (intervalId) window.clearInterval(intervalId);
+    };
+  }, [radioUserId]);
+
+
   const controlsStyle: React.CSSProperties = {
     opacity: controlsVisible ? 1 : 0,
     transform: controlsVisible ? "translateY(0)" : undefined,
@@ -1240,17 +1297,53 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <div className="text-[1.2rem] font-semibold">{canal?.name || "—"}</div>
           </div>
 
-        </div>
-
-        {/* Channel logo (canto superior direito) */}
-        <div className="flex items-center gap-3">
+          {/* Logo do canal — ao lado das setas / nome do canal */}
           {(canal?.background_url || canal?.logo_url) && (
             <img
               src={canal.background_url || canal.logo_url}
               alt=""
-              className="h-16 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+              className="h-14 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] ml-2"
             />
           )}
+        </div>
+
+        {/* Área direita: clima + relógio + perfil */}
+        <div className="flex items-center gap-4">
+          {/* Clima (temperatura + ícone) */}
+          {weather && (
+            <div
+              className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+              title="Tempo agora"
+            >
+              <WeatherIcon code={weather.code} size={34} />
+              <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
+                {weather.temp}°
+              </span>
+            </div>
+          )}
+
+          {/* Relógio elegante com segundos */}
+          <div
+            className="flex items-baseline gap-1 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+            aria-label="Horário atual"
+          >
+            <span
+              className="text-white font-light tabular-nums tracking-[0.02em] leading-none"
+              style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: 28, fontVariantNumeric: "tabular-nums" }}
+            >
+              {clockTime.hh}
+              <span className="opacity-60 mx-[2px]">:</span>
+              {clockTime.mm}
+            </span>
+            <span
+              className="text-white/60 font-light tabular-nums leading-none"
+              style={{ fontFamily: '"Sora", system-ui, sans-serif', fontSize: 16 }}
+            >
+              {clockTime.ss}
+            </span>
+          </div>
+
+
           {/* Avatar do usuário — abre o mesmo popup do Home Player */}
           {user && (
             <div className="relative">
