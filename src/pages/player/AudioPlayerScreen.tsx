@@ -265,12 +265,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // ---- Clima (temp + código WMO) do rádio atual ----
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   useEffect(() => {
     if (!radioUserId) return;
     let cancelled = false;
     let intervalId: number | undefined;
 
     const fetchWeather = async (lat: number, lon: number) => {
+      setWeatherLoading(true);
       try {
         const { data } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat, lon, forecast_days: 1 },
@@ -279,7 +281,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         if (!cancelled && c && typeof c.temperature_2m === "number") {
           setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
         }
-      } catch {}
+      } catch {} finally {
+        setWeatherLoading(false);
+      }
     };
 
     (async () => {
@@ -293,7 +297,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         const lon = (settings as any)?.weather_lon;
         if (typeof lat === "number" && typeof lon === "number") {
           fetchWeather(lat, lon);
-          intervalId = window.setInterval(() => fetchWeather(lat, lon), 10 * 60 * 1000);
+          intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
         }
       } catch {}
     })();
