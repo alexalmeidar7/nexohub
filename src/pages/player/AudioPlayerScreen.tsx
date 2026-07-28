@@ -1277,6 +1277,30 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
+      {/* Imagem do artista (Deezer) intercalada a cada 6s com movimento lento (Ken Burns) */}
+      {artistBgImage && !djModeActive && (
+        <div
+          className="absolute inset-0 pointer-events-none overflow-hidden"
+          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
+          aria-hidden
+        >
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${artistBgImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "saturate(1.1) brightness(0.85)",
+              animation: "playerBgKenBurns 24s ease-in-out infinite",
+              willChange: "transform",
+            }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{ background: "linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.75) 100%)" }}
+          />
+        </div>
+      )}
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }} />
 
 
