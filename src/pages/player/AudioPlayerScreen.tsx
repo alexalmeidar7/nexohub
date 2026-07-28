@@ -2036,34 +2036,59 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <button
                 type="button"
                 onClick={() => setDjModeOn((v) => !v)}
-                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : ""}`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${djModeActive ? "animate-pulse" : "hover:bg-white/12"}`}
                 style={
                   djModeActive
                     ? {
-                        background: "linear-gradient(90deg, rgba(255,0,212,0.28), rgba(0,229,255,0.28))",
-                        borderColor: "rgba(255,255,255,0.35)",
-                        boxShadow: "0 0 18px rgba(255,0,212,0.45), 0 0 32px rgba(0,229,255,0.25)",
+                        background: "linear-gradient(90deg, rgba(255,0,212,0.32), rgba(0,229,255,0.32))",
+                        borderColor: "rgba(255,255,255,0.45)",
+                        boxShadow: "0 0 18px rgba(255,0,212,0.5), 0 0 32px rgba(0,229,255,0.3), inset 0 0 0 1px rgba(255,255,255,0.15)",
                       }
                     : {
-                        background: "rgba(255,255,255,0.06)",
-                        borderColor: "rgba(255,255,255,0.14)",
+                        background: "rgba(255,255,255,0.05)",
+                        borderColor: "rgba(255,255,255,0.12)",
                       }
                 }
                 title={djModeActive ? "Modo DJ ligado — clique para desligar" : "Ligar Modo DJ"}
                 aria-pressed={djModeActive}
                 aria-label={djModeActive ? "Desligar Modo DJ" : "Ligar Modo DJ"}
                 data-focusable
+                data-active={djModeActive || undefined}
               >
-                <span aria-hidden style={{ fontSize: 14 }}>🎧</span>
+                <span
+                  aria-hidden
+                  style={{
+                    fontSize: 14,
+                    filter: djModeActive ? "none" : "grayscale(1)",
+                    opacity: djModeActive ? 1 : 0.55,
+                    transition: "filter 200ms ease-out, opacity 200ms ease-out",
+                  }}
+                >
+                  🎧
+                </span>
               </button>
             )}
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="w-10 h-10 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition shrink-0"
+              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${isFullscreen ? "" : "hover:bg-white/15"}`}
+              style={
+                isFullscreen
+                  ? {
+                      background: "rgba(255,255,255,0.22)",
+                      borderColor: "rgba(255,255,255,0.45)",
+                      boxShadow: "0 0 0 1px rgba(255,255,255,0.18) inset, 0 0 14px rgba(255,255,255,0.18)",
+                    }
+                  : {
+                      background: "rgba(255,255,255,0.06)",
+                      borderColor: "rgba(255,255,255,0.12)",
+                    }
+              }
               aria-label={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
               title={isFullscreen ? "Sair fullscreen" : "Fullscreen"}
+              aria-pressed={isFullscreen}
               data-focusable
+              data-active={isFullscreen || undefined}
             >
               {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             </button>
