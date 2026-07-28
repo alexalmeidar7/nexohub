@@ -27,7 +27,8 @@ function buildHomeGradient(h: HomeConfig): string {
 }
 
 const defaultConfig: CenarioConfig = {
-  city: "", home: { bgImage: "" },
+  city: "", home: { bgImage: "", colorButtonBgOff: "rgba(0,0,0,0.8)", colorButtonBgOn: "rgba(0,191,240,0.85)", colorButtonOff: "rgba(255,255,255,0.7)", colorButtonOn: "#FFFFFF" },
+
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
