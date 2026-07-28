@@ -85,6 +85,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     setNoCity(false);
 
     const fetchData = async () => {
+      setLoading(true);
       try {
         let latitude = lat;
         let longitude = lon;
@@ -118,7 +119,9 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           feelsLike: Math.round(wxData.current.apparent_temperature),
           windSpeed: Math.round(wxData.current.wind_speed_10m),
         });
-      } catch { /* silent */ }
+      } catch { /* silent */ } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
