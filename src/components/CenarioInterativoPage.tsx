@@ -1778,12 +1778,16 @@ export default function CenarioInterativoPage() {
                     {currentProgram ? (
                       <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/20 bg-muted shrink-0">
-                            <img 
-                              src={currentProgram.thumb || currentProgram.capa || "https://images.unsplash.com/photo-1478737270239-2fccd27ee086?w=100&h=100&fit=crop"} 
-                              className="h-full w-full object-cover"
-                              alt={currentProgram.nome}
-                            />
+                          <div className="h-12 w-12 rounded-lg overflow-hidden border border-white/10 shrink-0 flex items-center justify-center" style={{ background: "#0d0446" }}>
+                            {currentProgram.selo || currentProgram.capa || currentProgram.thumb ? (
+                              <img 
+                                src={currentProgram.selo || currentProgram.capa || currentProgram.thumb || ""} 
+                                className="h-full w-full object-contain p-1"
+                                alt={currentProgram.nome}
+                              />
+                            ) : (
+                              <MonitorPlay size={20} className="text-white/60" />
+                            )}
                           </div>
                           <div>
                             <div className="text-sm font-extrabold line-clamp-1">{currentProgram.nome}</div>
@@ -1797,18 +1801,32 @@ export default function CenarioInterativoPage() {
                         {sponsorLogos.length > 0 && (
                           <div className="pt-3 border-t border-dashed border-black/5 dark:border-white/5">
                             <p className="text-[10px] font-bold opacity-50 mb-2 uppercase tracking-tighter">Patrocinadores vinculados</p>
-                            <div className="flex flex-wrap gap-2">
-                              {sponsorLogos.map(l => (
-                                <div key={l.id} className="group relative flex items-center gap-2 rounded-lg pl-1 pr-3 py-1 text-xs border transition-all hover:bg-white/50" 
-                                     style={{ background: "white", borderColor: "rgba(0,0,0,0.05)" }}>
-                                  {l.logo_url ? (
-                                    <img src={l.logo_url} alt={l.nome} className="w-6 h-6 object-contain rounded-md bg-white p-0.5" />
-                                  ) : (
-                                    <div className="w-6 h-6 rounded-md bg-muted flex items-center justify-center text-[8px] font-bold">L</div>
-                                  )}
-                                  <span className="font-semibold text-[11px] truncate max-w-[100px]">{l.nome}</span>
+                            <div className="relative inline-block group">
+                              <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs border cursor-help transition-all hover:bg-white/70"
+                                   style={{ background: "white", borderColor: "rgba(0,0,0,0.08)" }}>
+                                <div className="w-7 h-7 rounded-md flex items-center justify-center text-[11px] font-extrabold text-white" style={{ background: "var(--layout-accent-color, #00BFF0)" }}>
+                                  {sponsorLogos.length}
                                 </div>
-                              ))}
+                                <span className="font-bold text-[11px] uppercase tracking-wider">
+                                  {sponsorLogos.length === 1 ? "Patrocinador" : "Patrocinadores"}
+                                </span>
+                              </div>
+                              <div className="pointer-events-none absolute left-0 top-full mt-2 z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-150 min-w-[220px] max-w-[320px] rounded-lg shadow-lg border p-3"
+                                   style={{ background: "white", borderColor: "rgba(0,0,0,0.08)" }}>
+                                <p className="text-[9px] font-bold opacity-50 mb-2 uppercase tracking-wider">Vinculados</p>
+                                <div className="flex flex-col gap-1.5 max-h-[240px] overflow-auto">
+                                  {sponsorLogos.map(l => (
+                                    <div key={l.id} className="flex items-center gap-2">
+                                      {l.logo_url ? (
+                                        <img src={l.logo_url} alt={l.nome} className="w-5 h-5 object-contain rounded bg-white shrink-0" />
+                                      ) : (
+                                        <div className="w-5 h-5 rounded bg-muted flex items-center justify-center text-[8px] font-bold shrink-0">L</div>
+                                      )}
+                                      <span className="text-[11px] font-semibold truncate">{l.nome}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1819,32 +1837,32 @@ export default function CenarioInterativoPage() {
                         <span className="text-xs font-semibold opacity-40">Nenhum programa detectado no Estúdio FM</span>
                       </div>
                     )}
-                    {/* Visibilidade das Capas */}
-                    <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
-                          <Eye size={16} />
-                        </div>
-                        <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
+                  </div>
+
+                  {/* Visibilidade das Capas — movido para fora do box "Programa no ar" */}
+                  <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                        <Eye size={16} />
                       </div>
-                      
-                      <div className="space-y-2 pt-1 border-t border-black/5">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
-                          <Switch 
-                            checked={config.home.showMusicCover !== false} 
-                            onCheckedChange={v => updateHome({ showMusicCover: v })}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
-                          <Switch 
-                            checked={config.home.showProgramThumb !== false} 
-                            onCheckedChange={v => updateHome({ showProgramThumb: v })}
-                            className="data-[state=checked]:bg-[var(--layout-accent-color)]"
-                          />
-                        </div>
+                      <h4 className="text-xs font-bold uppercase tracking-wider">Visibilidade das Capas</h4>
+                    </div>
+                    <div className="space-y-2 pt-1 border-t border-black/5">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa da Música</Label>
+                        <Switch 
+                          checked={config.home.showMusicCover !== false} 
+                          onCheckedChange={v => updateHome({ showMusicCover: v })}
+                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-bold uppercase opacity-70">Exibir Capa do Programa</Label>
+                        <Switch 
+                          checked={config.home.showProgramThumb !== false} 
+                          onCheckedChange={v => updateHome({ showProgramThumb: v })}
+                          className="data-[state=checked]:bg-[var(--layout-accent-color)]"
+                        />
                       </div>
                     </div>
                   </div>
