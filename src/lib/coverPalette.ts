@@ -232,3 +232,143 @@ export function useCoverPalette(url: string | null | undefined): CoverPalette | 
 
   return palette;
 }
+
+// ============================================================================
+// Triad — 3 cores amostradas de pontos estratégicos da capa (usado no Modo DJ)
+// ============================================================================
+
+export interface CoverTriad {
+  a: string; // topo/esquerda
+  b: string; // centro
+  c: string; // base/direita
+}
+
+const triadCache = new Map<string, CoverTriad | null>();
+const triadInflight = new Map<string, Promise<CoverTriad | null>>();
+const TRIAD_LS_PREFIX = "nexo:coverTriad:v1:";
+
+function triadLsGet(key: string): CoverTriad | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = window.localStorage.getItem(TRIAD_LS_PREFIX + key);
+    if (!raw) return undefined;
+    const parsed = JSON.parse(raw);
+    if (parsed === null) return null;
+    if (parsed && typeof parsed.a === "string" && typeof parsed.b === "string" && typeof parsed.c === "string") {
+      return parsed;
+    }
+    return undefined;
+  } catch { return undefined; }
+}
+
+function triadLsSet(key: string, value: CoverTriad | null) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(TRIAD_LS_PREFIX + key, JSON.stringify(value));
+    const keys = Object.keys(window.localStorage).filter((k) => k.startsWith(TRIAD_LS_PREFIX));
+    if (keys.length > LS_MAX_ENTRIES) {
+      keys.slice(0, Math.floor(LS_MAX_ENTRIES * 0.25)).forEach((k) => window.localStorage.removeItem(k));
+    }
+  } catch { /* quota / privado */ }
+}
+
+function averageColor(
+  data: Uint8ClampedArray,
+  width: number,
+  x0: number,
+  y0: number,
+  w: number,
+  h: number,
+): [number, number, number] | null {
+  let r = 0, g = 0, b = 0, count = 0;
+  for (let y = y0; y < y0 + h; y++) {
+    for (let x = x0; x < x0 + w; x++) {
+      const i = (y * width + x) * 4;
+      const a = data[i + 3];
+      if (a < 128) continue;
+      const rr = data[i], gg = data[i + 1], bb = data[i + 2];
+      const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
+      if (max < 20 || min > 245) continue; // ignora preto/branco puro
+      r += rr; g += gg; b += bb; count++;
+    }
+  }
+  if (count === 0) return null;
+  return [Math.round(r / count), Math.round(g / count), Math.round(b / count)];
+}
+
+function extractTriadFromUrl(url: string): Promise<CoverTriad | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 48;
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0, size, size);
+        const { data } = ctx.getImageData(0, 0, size, size);
+
+        // Três regiões de amostra: topo-esquerda, centro, base-direita
+        const regionSize = 10;
+        const a = averageColor(data, size, 2, 2, regionSize, regionSize);
+        const b = averageColor(data, size, 19, 19, regionSize, regionSize);
+        const c = averageColor(data, size, 36, 36, regionSize, regionSize);
+
+        if (!a || !b || !c) return resolve(null);
+
+        resolve({
+          a: rgbToHex(a[0], a[1], a[2]),
+          b: rgbToHex(b[0], b[1], b[2]),
+          c: rgbToHex(c[0], c[1], c[2]),
+        });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+export function useCoverTriad(url: string | null | undefined): CoverTriad | null {
+  const initial = (() => {
+    if (!url) return null;
+    const k = cacheKey(url);
+    if (triadCache.has(k)) return triadCache.get(k) ?? null;
+    const ls = triadLsGet(k);
+    if (ls !== undefined) { triadCache.set(k, ls); return ls; }
+    return null;
+  })();
+  const [triad, setTriad] = useState<CoverTriad | null>(initial);
+  const activeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeRef.current = url ?? null;
+    if (!url) { setTriad(null); return; }
+    const k = cacheKey(url);
+    if (triadCache.has(k)) { setTriad(triadCache.get(k) ?? null); return; }
+    const ls = triadLsGet(k);
+    if (ls !== undefined) { triadCache.set(k, ls); setTriad(ls); return; }
+
+    let cancelled = false;
+    let promise = triadInflight.get(k);
+    if (!promise) {
+      promise = extractTriadFromUrl(url).then((p) => {
+        triadCache.set(k, p);
+        triadLsSet(k, p);
+        triadInflight.delete(k);
+        return p;
+      });
+      triadInflight.set(k, promise);
+    }
+    void promise.then((p) => {
+      if (!cancelled && activeRef.current === url) setTriad(p);
+    });
+    return () => { cancelled = true; };
+  }, [url]);
+
+  return triad;
+}
+
