@@ -1926,7 +1926,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   max={TIMESHIFT_WINDOW}
                   step={1}
                   value={dragVal ?? Math.round(TIMESHIFT_WINDOW - ts.offset)}
-                  onChange={(e) => setDragVal(Number(e.target.value))}
+                  onChange={(e) => setDragVal(snapToMarkers(Number(e.target.value)))}
                   onMouseUp={commitDrag}
                   onTouchEnd={commitDrag}
                   onPointerUp={commitDrag}
