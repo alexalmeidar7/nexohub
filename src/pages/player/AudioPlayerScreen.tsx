@@ -2056,17 +2056,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 data-focusable
                 data-active={djModeActive || undefined}
               >
-                <span
-                  aria-hidden
+                <Disc3
+                  size={24}
+                  strokeWidth={2}
+                  className="text-white transition-all duration-200"
                   style={{
-                    fontSize: 22,
-                    filter: djModeActive ? "none" : "grayscale(1)",
                     opacity: djModeActive ? 1 : 0.55,
-                    transition: "filter 200ms ease-out, opacity 200ms ease-out",
                   }}
-                >
-                  🎧
-                </span>
+                  aria-hidden
+                />
               </button>
             )}
             <button
