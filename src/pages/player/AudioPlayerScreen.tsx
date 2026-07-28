@@ -1729,73 +1729,91 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
-          {/* Setas de navegação de programas — acima do card, sempre mantendo o programa focado no centro */}
-          {programNavList.length > 1 && (
             <div
-              className="flex items-center gap-3"
               style={{
-                transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
-                transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+                width: 368,
+                height: 384,
+                position: "relative",
+                transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
+                transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
+                willChange: "transform",
+                touchAction: "pan-y",
               }}
+              onPointerDown={onProgSwipeStart}
+              onPointerMove={onProgSwipeMove}
+              onPointerUp={onProgSwipeEnd}
+              onPointerCancel={onProgSwipeEnd}
+              data-focusable
             >
-              <button
-                type="button"
-                onClick={goPrevProg}
-                disabled={progNavIndex <= 0}
-                aria-label="Programa anterior"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                data-focusable
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <div className="text-[10px] uppercase tracking-widest text-white/75 min-w-[64px] text-center">
-                {isFocusedOnAir ? "no ar" : "a seguir"}
+              {/* Crossfade entre programa anterior e programa em foco */}
+              <div className="absolute inset-0">
+                {progSwitching && (
+                  <div className="absolute inset-0 z-10 animate-exit">
+                    <ProgramShowcaseCard
+                      program={prevFocusRef.current.program}
+                      apresentadores={apresentadores}
+                      variant={prevFocusRef.current.isOnAir ? "live" : "upcoming"}
+                      isActive={!prevFocusRef.current.isOnAir}
+                      radius={40}
+                      fallbackTitle={canal?.name}
+                      progressPct={prevFocusRef.current.isOnAir ? progPct : 0}
+                      liked={prevFocusRef.current.isOnAir ? programLiked : false}
+                      onToggleLike={prevFocusRef.current.isOnAir ? toggleProgramLike : undefined}
+                    />
+                  </div>
+                )}
+                <div key={focusedProgram?.id || progNavIndex} className="absolute inset-0 z-20 animate-enter">
+                  <ProgramShowcaseCard
+                    program={focusedProgram}
+                    apresentadores={apresentadores}
+                    variant={isFocusedOnAir ? "live" : "upcoming"}
+                    isActive={!isFocusedOnAir}
+                    radius={40}
+                    fallbackTitle={canal?.name}
+                    progressPct={isFocusedOnAir ? progPct : 0}
+                    liked={isFocusedOnAir ? programLiked : false}
+                    onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
+                    onImageLoad={(url) => {
+                      if (!isFocusedOnAir) return;
+                      loadedLocutorUrlRef.current = url;
+                      markLocutorImageLoaded(url);
+                      setLocutorImgState("loaded");
+                    }}
+                  />
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={goNextProg}
-                disabled={progNavIndex >= progNavMax}
-                aria-label="Próximo programa"
-                className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                data-focusable
-              >
-                <ChevronRight size={20} />
-              </button>
+
+              {/* Setas de navegação de programas — dentro da capa, centralizadas */}
+              {programNavList.length > 1 && (
+                <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+                  <div className="flex items-center gap-2 pointer-events-auto px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10">
+                    <button
+                      type="button"
+                      onClick={goPrevProg}
+                      disabled={progNavIndex <= 0}
+                      aria-label="Programa anterior"
+                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-focusable
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center">
+                      {isFocusedOnAir ? "no ar" : "a seguir"}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={goNextProg}
+                      disabled={progNavIndex >= progNavMax}
+                      aria-label="Próximo programa"
+                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                      data-focusable
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          <div
-            style={{
-              width: 368,
-              height: 384,
-              transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
-              transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-              willChange: "transform",
-              touchAction: "pan-y",
-            }}
-            onPointerDown={onProgSwipeStart}
-            onPointerMove={onProgSwipeMove}
-            onPointerUp={onProgSwipeEnd}
-            onPointerCancel={onProgSwipeEnd}
-            data-focusable
-          >
-            <ProgramShowcaseCard
-              program={focusedProgram}
-              apresentadores={apresentadores}
-              variant={isFocusedOnAir ? "live" : "upcoming"}
-              isActive={!isFocusedOnAir}
-              radius={40}
-              fallbackTitle={canal?.name}
-              progressPct={isFocusedOnAir ? progPct : 0}
-              liked={isFocusedOnAir ? programLiked : false}
-              onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
-              onImageLoad={(url) => {
-                if (!isFocusedOnAir) return;
-                loadedLocutorUrlRef.current = url;
-                markLocutorImageLoaded(url);
-                setLocutorImgState("loaded");
-              }}
-            />
-          </div>
 
           {/* Botão + centralizado abaixo do card NO AR */}
           <button
