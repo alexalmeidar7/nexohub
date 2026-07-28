@@ -2072,7 +2072,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <button
               type="button"
               onClick={toggleFullscreen}
-              className={`w-10 h-10 rounded-full flex items-center justify-center border transition-all shrink-0 ${isFullscreen ? "" : "hover:bg-white/15"}`}
+              className={`w-16 h-16 rounded-full flex items-center justify-center border transition-all shrink-0 ${isFullscreen ? "" : "hover:bg-white/15"}`}
               style={
                 isFullscreen
                   ? {
