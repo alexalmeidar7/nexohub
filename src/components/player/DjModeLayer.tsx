@@ -128,9 +128,6 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
   })();
   const bgRef = useRef<HTMLDivElement | null>(null);
   const flashRef = useRef<HTMLDivElement | null>(null);
-  const hudBpmRef = useRef<HTMLSpanElement | null>(null);
-  const hudTempRef = useRef<HTMLSpanElement | null>(null);
-  const hudDotRef = useRef<HTMLSpanElement | null>(null);
   const rafRef = useRef<number | null>(null);
   const fallbackRef = useRef<number | null>(null);
   const bpmRef = useRef<number>(0);
