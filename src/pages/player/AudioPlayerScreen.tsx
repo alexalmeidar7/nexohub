@@ -1548,11 +1548,48 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* NOW PLAYING CARD + Botão grade */}
           <div className="flex flex-col items-center gap-3 flex-shrink-0">
+            {/* Setas de navegação de programas — ACIMA do card */}
+            {programNavList.length > 1 && (
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10"
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerMove={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); goPrevProg(); }}
+                  disabled={progNavIndex <= 0}
+                  aria-label="Programa anterior"
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                  data-focusable
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center select-none">
+                  {isFocusedOnAir ? "no ar" : "a seguir"}
+                </div>
+                <button
+                  type="button"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => { e.stopPropagation(); goNextProg(); }}
+                  disabled={progNavIndex >= progNavMax}
+                  aria-label="Próximo programa"
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
+                  data-focusable
+                >
+                  <ChevronRight size={18} />
+                </button>
+              </div>
+            )}
             <div
               style={{
                 width: 368,
                 height: 384,
                 position: "relative",
+                overflow: "hidden",
+                borderRadius: 40,
                 transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
                 transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
                 willChange: "transform",
@@ -1564,12 +1601,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               onPointerCancel={onProgSwipeEnd}
               data-focusable
             >
-              {/* Crossfade puro (opacity) entre programa anterior e programa em foco */}
+              {/* Slide horizontal: capa lateral "entra" no box do meio */}
               <div className="absolute inset-0">
                 {progSwitching && (
                   <div
                     className="absolute inset-0 z-10 prog-card-exit"
                     key={`exit-${prevFocusRef.current.program?.id ?? "none"}`}
+                    style={{ ["--dir" as any]: navDirRef.current }}
                   >
                     <ProgramShowcaseCard
                       program={prevFocusRef.current.program}
@@ -1581,12 +1619,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       progressPct={prevFocusRef.current.isOnAir ? progPct : 0}
                       liked={prevFocusRef.current.isOnAir ? programLiked : false}
                       onToggleLike={prevFocusRef.current.isOnAir ? toggleProgramLike : undefined}
+                      hideBadge
                     />
                   </div>
                 )}
                 <div
                   key={`enter-${focusedProgram?.id || progNavIndex}`}
                   className="absolute inset-0 z-20 prog-card-enter"
+                  style={{ ["--dir" as any]: navDirRef.current }}
                 >
                   <ProgramShowcaseCard
                     program={focusedProgram}
@@ -1598,6 +1638,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     progressPct={isFocusedOnAir ? progPct : 0}
                     liked={isFocusedOnAir ? programLiked : false}
                     onToggleLike={isFocusedOnAir ? toggleProgramLike : undefined}
+                    hideBadge
                     onImageLoad={(url) => {
                       if (!isFocusedOnAir) return;
                       loadedLocutorUrlRef.current = url;
@@ -1608,50 +1649,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </div>
               </div>
               <style>{`
-                @keyframes progCardIn { from { opacity: 0 } to { opacity: 1 } }
-                @keyframes progCardOut { from { opacity: 1 } to { opacity: 0 } }
-                .prog-card-enter { animation: progCardIn 220ms ease-out both; will-change: opacity; }
-                .prog-card-exit { animation: progCardOut 220ms ease-out both; will-change: opacity; }
+                @keyframes progCardIn {
+                  from { opacity: 0; transform: translateX(calc(var(--dir, 1) * 100%)); }
+                  to   { opacity: 1; transform: translateX(0); }
+                }
+                @keyframes progCardOut {
+                  from { opacity: 1; transform: translateX(0); }
+                  to   { opacity: 0; transform: translateX(calc(var(--dir, 1) * -100%)); }
+                }
+                .prog-card-enter { animation: progCardIn 320ms cubic-bezier(0.22, 1, 0.36, 1) both; will-change: transform, opacity; }
+                .prog-card-exit  { animation: progCardOut 320ms cubic-bezier(0.22, 1, 0.36, 1) both; will-change: transform, opacity; }
               `}</style>
-
-              {/* Setas de navegação de programas — dentro da capa, centralizadas */}
-              {programNavList.length > 1 && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
-                  <div
-                    className="flex items-center gap-2 pointer-events-auto px-3 py-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onPointerMove={(e) => e.stopPropagation()}
-                    onPointerUp={(e) => e.stopPropagation()}
-                  >
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); goPrevProg(); }}
-                      disabled={progNavIndex <= 0}
-                      aria-label="Programa anterior"
-                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                      data-focusable
-                    >
-                      <ChevronLeft size={20} />
-                    </button>
-                    <div className="text-[10px] uppercase tracking-widest text-white/90 min-w-[64px] text-center select-none">
-                      {isFocusedOnAir ? "no ar" : "a seguir"}
-                    </div>
-                    <button
-                      type="button"
-                      onPointerDown={(e) => e.stopPropagation()}
-                      onClick={(e) => { e.stopPropagation(); goNextProg(); }}
-                      disabled={progNavIndex >= progNavMax}
-                      aria-label="Próximo programa"
-                      className="w-10 h-10 rounded-full flex items-center justify-center bg-black/55 hover:bg-black/80 border border-white/15 backdrop-blur-md text-white transition disabled:opacity-30 disabled:cursor-not-allowed"
-                      data-focusable
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
+
 
           {/* Botão + centralizado abaixo do card NO AR */}
           <button
