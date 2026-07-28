@@ -1221,7 +1221,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           </div>
           <div className="leading-tight">
             <div className="text-[11px] uppercase tracking-widest text-white/50">canal</div>
-            <div className="text-base font-semibold">{canal?.name || "—"}</div>
+            <div className="text-[1.2rem] font-semibold">{canal?.name || "—"}</div>
           </div>
 
         </div>
