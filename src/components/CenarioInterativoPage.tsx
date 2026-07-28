@@ -3240,7 +3240,7 @@ export default function CenarioInterativoPage() {
                     })()}
 
                     {/* Sidebar — matches CenarioTela exactly */}
-(() => {
+                    {(() => {
                       const isMapTab = (activeTab === "weather" && weatherSubTab === "satellite" && config.weather.showSatellite) || (activeTab === "traffic" && config.traffic.enabled);
                       const bS = `${pvh(3.8)}px`;
                       const iS = `${pvh(1.7)}px`;
