@@ -1886,6 +1886,46 @@ export default function CenarioInterativoPage() {
                       }
                       return null;
                     };
+                    // WCAG 2.1 relative luminance + contrast ratio
+                    const hexToRgb = (hex: string): [number, number, number] | null => {
+                      const n = normalizeHex(hex);
+                      if (!n) return null;
+                      return [parseInt(n.slice(1,3),16), parseInt(n.slice(3,5),16), parseInt(n.slice(5,7),16)];
+                    };
+                    const relLum = (rgb: [number,number,number]) => {
+                      const c = rgb.map(v => {
+                        const s = v/255;
+                        return s <= 0.03928 ? s/12.92 : Math.pow((s+0.055)/1.055, 2.4);
+                      });
+                      return 0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2];
+                    };
+                    const contrastRatio = (a: string, b: string): number | null => {
+                      const ra = hexToRgb(a); const rb = hexToRgb(b);
+                      if (!ra || !rb) return null;
+                      const la = relLum(ra); const lb = relLum(rb);
+                      const light = Math.max(la, lb); const dark = Math.min(la, lb);
+                      return (light + 0.05) / (dark + 0.05);
+                    };
+                    const wcagBadge = (bg: string, fg: string = "#FFFFFF") => {
+                      const r = contrastRatio(bg, fg);
+                      if (r == null) return null;
+                      const val = r.toFixed(2);
+                      const passAAA = r >= 7;
+                      const passAA = r >= 4.5;
+                      const passAA_lg = r >= 3;
+                      const level = passAAA ? "AAA" : passAA ? "AA" : passAA_lg ? "AA Large" : "Falha";
+                      const color = passAA ? "#0a7d3a" : passAA_lg ? "#a66200" : "#b42318";
+                      const bgc = passAA ? "#dcfce7" : passAA_lg ? "#fef3c7" : "#fee2e2";
+                      return (
+                        <div className="mt-1 flex items-center gap-1 flex-wrap">
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded font-bold" style={{ background: bgc, color }}>
+                            {val}:1 · {level}
+                          </span>
+                          <span className="text-[8px] uppercase font-bold opacity-50">vs ícone branco</span>
+                        </div>
+                      );
+                    };
+
                     return (
                       <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                         <div className="flex items-center gap-2 mb-1">
@@ -1926,7 +1966,9 @@ export default function CenarioInterativoPage() {
                                     placeholder="#RRGGBB ou rgb(r,g,b)"
                                     className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
                                   />
+                                  {(f.key === "colorButtonOff" || f.key === "colorButtonOn") && wcagBadge(current, "#FFFFFF")}
                                 </div>
+
                                 <button
                                   type="button"
                                   onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
