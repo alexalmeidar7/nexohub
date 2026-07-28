@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Droplets, CloudRain, Thermometer, Star, Sparkles, MapPin, Wind } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { WeatherIcon } from "./WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";

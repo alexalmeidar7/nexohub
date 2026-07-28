@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 
 interface Logo {
   id: string;

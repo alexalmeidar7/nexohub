@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react"
 import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { findCurrentProgram } from "./OnAirWidget";

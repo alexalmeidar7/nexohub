@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RefreshCw, ExternalLink, Plus, TrendingUp, TrendingDown, Minus, Trash2, ChevronDown, ChevronUp, ListPlus, GripVertical, BookOpen, Loader2, X, Image as ImageIcon, Link as LinkIcon, Newspaper, CloudSun, Droplets, Thermometer, ArrowUp, ArrowDown } from "lucide-react";
 import XmlLinkRow from "./XmlLinkRow";
+import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import MontarJornalInline, { type JornalConfig } from "./MontarJornalInline";
