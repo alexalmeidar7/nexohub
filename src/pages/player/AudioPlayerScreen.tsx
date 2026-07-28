@@ -1893,7 +1893,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         isLive
                           ? "bg-white text-black shadow-[0_2px_12px_rgba(255,255,255,0.35)]"
                           : "bg-white/95 text-black"
-                      } ${dragVal != null ? "scale-115 shadow-[0_4px_20px_rgba(255,255,255,0.45)]" : "group-hover/timeshift:scale-105"}`}
+                      } ${dragVal != null ? "scale-110 shadow-[0_4px_20px_rgba(255,255,255,0.45)]" : "group-hover/timeshift:scale-105"}`}
                     >
                       {!isLive && <Rewind size={10} strokeWidth={2.5} className="text-black/70" />}
                       <span>{offsetLabel}</span>
