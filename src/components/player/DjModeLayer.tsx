@@ -353,9 +353,17 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         bg.style.opacity = String(0.82 + intensity * 0.18);
       }
 
+      // HUD (BPM + temperatura) — atualiza a cada ~4 frames para evitar layout thrash
+      const hud = hudRef.current;
+      if (hud) {
+        const b = bpmRef.current || bpm;
+        const temp = b >= 132 ? "quentes" : b >= 110 ? "intermediárias" : b > 0 ? "frias" : "—";
+        hud.textContent = b > 0 ? `${b} BPM · ${temp}` : "aguardando ritmo…";
+      }
 
       rafRef.current = requestAnimationFrame(loop);
     };
+
     rafRef.current = requestAnimationFrame(loop);
 
     return () => {
