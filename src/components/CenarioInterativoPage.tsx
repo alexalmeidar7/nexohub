@@ -3402,11 +3402,6 @@ export default function CenarioInterativoPage() {
                                </div>
                              </div>
 
-                             {/* ── SYNC (Bottom Left) ── */}
-                             <div className="flex items-center" style={{ position: "absolute", bottom: `${pvh(4)}px`, left: `${pvh(5)}px`, zIndex: 20, gap: `${pvh(0.4)}px`, opacity: 0.8 }}>
-                               <div style={{ width: `${pvh(0.7)}px`, height: `${pvh(0.7)}px`, borderRadius: "50%", background: "var(--layout-accent-color, #4ade80)", boxShadow: "0 0 8px var(--layout-accent-color, #4ade80)" }} />
-                               <span className="font-semibold uppercase" style={{ letterSpacing: "0.1em", fontSize: `${pvh(1)}px` }}>SYNC</span>
-                             </div>
 
                              {/* ── BOTTOM-RIGHT: "A seguir" ── */}
                              {nextProgram && (
