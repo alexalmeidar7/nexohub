@@ -173,9 +173,10 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
     const applyPalette = (bassE: number, midE: number, trebleE: number) => {
       seed = (seed + 1 + Math.floor(Math.random() * 3)) % 10000;
       if (hasTriad) {
-        paletteA = coverTriad!.a;
-        paletteB = coverTriad!.b;
-        paletteC = coverTriad!.c;
+        const triad = coverTriadRef.current!;
+        paletteA = triad.a;
+        paletteB = triad.b;
+        paletteC = triad.c;
         paletteAngle = (seed * 47) % 360;
       } else {
         const p = paletteFromContext(bpm || bpmRef.current, bassE, midE, trebleE, coverHueRef.current, seed);
@@ -184,6 +185,7 @@ export default function DjModeLayer({ audioRef, active, sensitivity = 0.5, cover
         paletteAngle = p.angle;
       }
     };
+
 
 
     const flashBeat = (strength: number) => {
