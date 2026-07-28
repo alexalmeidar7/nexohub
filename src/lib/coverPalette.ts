@@ -8,7 +8,9 @@ import { useEffect, useRef, useState } from "react";
 export interface CoverPalette {
   primary: string;   // cor dominante
   secondary: string; // segunda cor mais distinta
+  tertiary?: string; // terceira cor amostrada de outro ponto da capa
 }
+
 
 /** Contraste automático derivado da paleta para garantir legibilidade. */
 export interface PaletteContrast {
