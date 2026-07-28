@@ -24,9 +24,12 @@ interface Props {
   active: boolean;
   /** 0..1 — quanto maior, mais sensível a batidas fracas (mais piscadas). Default 0.5 */
   sensitivity?: number;
-  /** Paleta da capa (hex) — usada como base para mesclar com as cores geradas. */
+  /** Paleta da capa (hex) — fallback quando não há triad. */
   coverPalette?: { primary: string; secondary: string } | null;
+  /** Tríade de 3 cores amostradas de pontos da capa (preferida no Modo DJ). */
+  coverTriad?: { a: string; b: string; c: string } | null;
 }
+
 
 // Curva de envelope no beat: attack rápido, decay suave.
 // t = fase 0..1 do período de beat.
