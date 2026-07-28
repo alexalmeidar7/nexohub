@@ -1966,7 +1966,9 @@ export default function CenarioInterativoPage() {
                                     placeholder="#RRGGBB ou rgb(r,g,b)"
                                     className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
                                   />
+                                  {(f.key === "colorButtonOff" || f.key === "colorButtonOn") && wcagBadge(current, "#FFFFFF")}
                                 </div>
+
                                 <button
                                   type="button"
                                   onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
