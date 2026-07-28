@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { WeatherIcon } from "@/components/WeatherIcons";
 
-import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
+import { useCoverPalette, useCoverTriad, getPaletteContrast } from "@/lib/coverPalette";
 import { fetchArtistImageCached, getArtistImageSync } from "@/lib/artistImageCache";
 import {
   isLocutorImageCached,
