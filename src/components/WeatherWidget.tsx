@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Settings } from "lucide-react";
+import { Loader2, Settings } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -51,6 +51,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
   const { user } = useAuth();
   const uid = user?.id ?? null;
   const [weather, setWeather] = useState<WidgetWeather | null>(null);
+  const [loading, setLoading] = useState(false);
   const [noCity, setNoCity] = useState(false);
 
   useEffect(() => {
@@ -84,6 +85,7 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
     setNoCity(false);
 
     const fetchData = async () => {
+      setLoading(true);
       try {
         let latitude = lat;
         let longitude = lon;
@@ -117,7 +119,9 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           feelsLike: Math.round(wxData.current.apparent_temperature),
           windSpeed: Math.round(wxData.current.wind_speed_10m),
         });
-      } catch { /* silent */ }
+      } catch { /* silent */ } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -182,7 +186,11 @@ export default function WeatherWidget({ onNavigate }: { onNavigate?: (page: any)
           <span className="text-[9px] font-bold tracking-wider text-white/40 uppercase">Agora</span>
           <div className="flex items-center gap-1.5 mt-0.5">
             <WeatherIcon code={weather.weatherCode} size={32} />
-            <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-icon-color, #888888)" }}>{weather.temp}°</p>
+            {loading ? (
+              <Loader2 size={24} className="animate-spin text-white/70" />
+            ) : (
+              <p className="text-2xl font-bold leading-none" style={{ color: "var(--layout-icon-color, #888888)" }}>{weather.temp}°</p>
+            )}
           </div>
           <p className="font-semibold text-[11px] text-white truncate mt-0.5">{weather.city}</p>
           <p className="text-[9px] text-white/50 truncate">{getLabel(weather.weatherCode)}</p>

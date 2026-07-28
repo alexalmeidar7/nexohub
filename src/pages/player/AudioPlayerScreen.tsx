@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2 } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { WeatherIcon } from "@/components/WeatherIcons";
@@ -265,12 +265,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   // ---- Clima (temp + código WMO) do rádio atual ----
   const [weather, setWeather] = useState<{ temp: number; code: number } | null>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   useEffect(() => {
     if (!radioUserId) return;
     let cancelled = false;
     let intervalId: number | undefined;
 
     const fetchWeather = async (lat: number, lon: number) => {
+      setWeatherLoading(true);
       try {
         const { data } = await supabase.functions.invoke("fetch-weather", {
           body: { action: "forecast", lat, lon, forecast_days: 1 },
@@ -279,7 +281,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         if (!cancelled && c && typeof c.temperature_2m === "number") {
           setWeather({ temp: Math.round(c.temperature_2m), code: Number(c.weather_code) || 0 });
         }
-      } catch {}
+      } catch {} finally {
+        setWeatherLoading(false);
+      }
     };
 
     (async () => {
@@ -293,7 +297,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         const lon = (settings as any)?.weather_lon;
         if (typeof lat === "number" && typeof lon === "number") {
           fetchWeather(lat, lon);
-          intervalId = window.setInterval(() => fetchWeather(lat, lon), 10 * 60 * 1000);
+          intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
         }
       } catch {}
     })();
@@ -1312,13 +1316,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           {/* Clima (temperatura + ícone) */}
           {weather && (
             <div
-              className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl"
+              className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-xl transition-opacity ${weatherLoading ? "opacity-60" : "opacity-100"}`}
               title="Tempo agora"
             >
               <WeatherIcon code={weather.code} size={34} />
-              <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
-                {weather.temp}°
-              </span>
+              {weatherLoading ? (
+                <Loader2 size={20} className="animate-spin text-white/80" />
+              ) : (
+                <span className="text-white font-semibold text-[18px] leading-none tabular-nums">
+                  {weather.temp}°
+                </span>
+              )}
             </div>
           )}
 
