@@ -2878,9 +2878,28 @@ function InteractivityMenu({
   const [pollOpen, setPollOpen] = useState(false);
   const [activePoll, setActivePoll] = useState<ActivePoll | null>(null);
   const [alreadyVoted, setAlreadyVoted] = useState(false);
+  const [menuLayout, setMenuLayout] = useState<"centered" | "aligned">("aligned");
   const wrapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const hasNotif = !!activePoll && !alreadyVoted;
+
+  // Detecta layout pequeno/retrato para posicionar o menu sem cortar
+  useEffect(() => {
+    const update = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const isPortrait = vh > vw;
+      setMenuLayout(vw < 768 || isPortrait ? "centered" : "aligned");
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
 
   // Busca enquete ativa (data = hoje, horário dentro do intervalo)
   useEffect(() => {
@@ -2920,11 +2939,14 @@ function InteractivityMenu({
     return () => { cancelled = true; window.clearInterval(id); };
   }, [userId]);
 
-  // Fecha submenu ao clicar fora
+  // Fecha submenu ao clicar fora (incluindo o menu renderizado via portal)
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (wrapRef.current && wrapRef.current.contains(t)) return;
+      if (menuRef.current && menuRef.current.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
