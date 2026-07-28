@@ -2764,7 +2764,7 @@ function InteractivityMenu({
           className="relative z-10 h-full w-full rounded-full bg-[#0b0b10] flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
           style={{ transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1)" }}
         >
-          <Sparkles size={12} className="text-white shrink-0" strokeWidth={2.2} />
+          <Sparkles size={16} className="text-white shrink-0" strokeWidth={2.2} />
           <span
             className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
             style={{ transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease-out 100ms" }}
