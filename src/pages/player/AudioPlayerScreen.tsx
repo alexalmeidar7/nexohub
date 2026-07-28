@@ -2287,6 +2287,7 @@ export function ProgramShowcaseCard({
   liked,
   onToggleLike,
   onImageLoad,
+  hideBadge = false,
 }: {
   program: any;
   apresentadores: any[];
@@ -2299,6 +2300,7 @@ export function ProgramShowcaseCard({
   liked?: boolean;
   onToggleLike?: () => void;
   onImageLoad?: (url: string) => void;
+  hideBadge?: boolean;
 }) {
   const isLive = variant === "live";
 
