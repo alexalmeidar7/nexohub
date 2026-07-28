@@ -2783,17 +2783,17 @@ function InteractivityMenu({
         aria-pressed={open}
         data-focusable
         data-active={open || undefined}
-        className="relative h-10 rounded-full flex items-center justify-center outline-none group overflow-hidden"
+        className="relative h-16 rounded-full flex items-center justify-center outline-none group overflow-hidden"
         style={{
           padding: 2,
-          width: "40px",
-          maxWidth: "40px",
+          width: "64px",
+          maxWidth: "64px",
           transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "180px"; e.currentTarget.style.width = "180px"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "40px"; e.currentTarget.style.width = "40px"; }}
-        onFocus={(e) => { e.currentTarget.style.maxWidth = "180px"; e.currentTarget.style.width = "180px"; }}
-        onBlur={(e) => { e.currentTarget.style.maxWidth = "40px"; e.currentTarget.style.width = "40px"; }}
+        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "200px"; e.currentTarget.style.width = "200px"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "64px"; e.currentTarget.style.width = "64px"; }}
+        onFocus={(e) => { e.currentTarget.style.maxWidth = "200px"; e.currentTarget.style.width = "200px"; }}
+        onBlur={(e) => { e.currentTarget.style.maxWidth = "64px"; e.currentTarget.style.width = "64px"; }}
       >
         {/* borda animada (conic gradient girando) */}
         <span
