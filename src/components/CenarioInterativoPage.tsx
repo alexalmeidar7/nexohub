@@ -1862,7 +1862,89 @@ export default function CenarioInterativoPage() {
                     )}
                   </div>
 
+                  {/* Cores dos Elementos do Preview */}
+                  {(() => {
+                    const colorFields: { key: keyof HomeConfig; label: string; def: string }[] = [
+                      { key: "colorButtonOff", label: "Botão desligado (inativo)", def: "#000000" },
+                      { key: "colorButtonOn", label: "Botão ativo",                 def: "#00BFF0" },
+                      { key: "colorClock",     label: "Texto — Hora",               def: "#FFFFFF" },
+                      { key: "colorDate",      label: "Texto — Data",               def: "#00BFF0" },
+                      { key: "colorMusicName", label: "Texto — Nome da música",     def: "#FFFFFF" },
+                      { key: "colorMusicTitle",label: "Texto — Título da música",   def: "#00BFF0" },
+                      { key: "colorASeguirLabel", label: 'Texto — "a seguir"',      def: "#00BFF0" },
+                      { key: "colorNextProgram",  label: "Texto — Programa a seguir", def: "#FFFFFF" },
+                      { key: "colorProgressBar",  label: "Barra de progresso do programa", def: "#00BFF0" },
+                    ];
+                    const normalizeHex = (v: string) => {
+                      const s = v.trim();
+                      if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toUpperCase();
+                      if (/^#[0-9a-fA-F]{3}$/.test(s)) return ("#" + s.slice(1).split("").map(c => c + c).join("")).toUpperCase();
+                      const m = s.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+                      if (m) {
+                        const toHex = (n: string) => Math.max(0, Math.min(255, parseInt(n, 10))).toString(16).padStart(2, "0");
+                        return ("#" + toHex(m[1]) + toHex(m[2]) + toHex(m[3])).toUpperCase();
+                      }
+                      return null;
+                    };
+                    return (
+                      <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
+                            <Palette size={16} />
+                          </div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider">Cores dos Elementos</h4>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-black/5">
+                          {colorFields.map(f => {
+                            const current = (config.home[f.key] as string) || f.def;
+                            const displayHex = normalizeHex(current) || f.def;
+                            return (
+                              <div key={f.key as string} className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-black/5">
+                                <div className="relative shrink-0" style={{ width: 30, height: 30 }}>
+                                  <div
+                                    className="w-full h-full rounded-md border-2 border-white shadow"
+                                    style={{ background: current }}
+                                  />
+                                  <input
+                                    type="color"
+                                    value={displayHex}
+                                    onChange={e => updateHome({ [f.key]: e.target.value.toUpperCase() } as Partial<HomeConfig>)}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    aria-label={f.label}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <Label className="text-[10px] font-bold uppercase opacity-70 block leading-tight truncate">{f.label}</Label>
+                                  <input
+                                    type="text"
+                                    value={current}
+                                    onChange={e => updateHome({ [f.key]: e.target.value } as Partial<HomeConfig>)}
+                                    onBlur={e => {
+                                      const n = normalizeHex(e.target.value);
+                                      if (n) updateHome({ [f.key]: n } as Partial<HomeConfig>);
+                                    }}
+                                    placeholder="#RRGGBB ou rgb(r,g,b)"
+                                    className="w-full mt-0.5 text-[11px] font-mono px-2 py-1 rounded border border-black/10 bg-white uppercase tracking-tight focus:outline-none focus:border-[var(--layout-accent-color)]"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => updateHome({ [f.key]: f.def } as Partial<HomeConfig>)}
+                                  title="Redefinir"
+                                  className="shrink-0 h-6 px-1.5 text-[9px] uppercase font-bold rounded bg-black/5 hover:bg-black/10 text-black/60"
+                                >
+                                  Reset
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Visibilidade das Capas — movido para fora do box "Programa no ar" */}
+
                   <div className="p-4 rounded-xl border-2 border-[var(--layout-accent-color)]/60 bg-white/40 space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                       <div className="p-1.5 rounded-lg bg-[var(--layout-accent-color)]/10 text-[var(--layout-accent-color)]">
