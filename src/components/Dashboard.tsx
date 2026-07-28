@@ -485,6 +485,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             plano: pd.plano || "",
           };
           setEmpresa(parentCfg);
+          setEmpresaTimezone((pd as any).timezone || null);
           if (parentCfg.plano) {
             supabase.from("planos").select("enabled_modules").eq("name", parentCfg.plano).maybeSingle().then(({ data }) => {
               if (!cancelled && data?.enabled_modules) setPlanModules(new Set(data.enabled_modules));
