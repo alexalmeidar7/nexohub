@@ -2878,9 +2878,28 @@ function InteractivityMenu({
   const [pollOpen, setPollOpen] = useState(false);
   const [activePoll, setActivePoll] = useState<ActivePoll | null>(null);
   const [alreadyVoted, setAlreadyVoted] = useState(false);
+  const [menuLayout, setMenuLayout] = useState<"centered" | "aligned">("aligned");
   const wrapRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const hasNotif = !!activePoll && !alreadyVoted;
+
+  // Detecta layout pequeno/retrato para posicionar o menu sem cortar
+  useEffect(() => {
+    const update = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const isPortrait = vh > vw;
+      setMenuLayout(vw < 768 || isPortrait ? "centered" : "aligned");
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+    };
+  }, []);
 
   // Busca enquete ativa (data = hoje, horário dentro do intervalo)
   useEffect(() => {
@@ -2920,11 +2939,14 @@ function InteractivityMenu({
     return () => { cancelled = true; window.clearInterval(id); };
   }, [userId]);
 
-  // Fecha submenu ao clicar fora
+  // Fecha submenu ao clicar fora (incluindo o menu renderizado via portal)
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (wrapRef.current && wrapRef.current.contains(t)) return;
+      if (menuRef.current && menuRef.current.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -3005,11 +3027,17 @@ function InteractivityMenu({
       </button>
 
 
-      {/* Submenu */}
-      {open && (
+      {/* Submenu via portal para evitar corte por overflow de pais */}
+      {open && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 bottom-[calc(100%+8px)] z-50 min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/85 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]"
+          className={[
+            "fixed z-[100] min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/90 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]",
+            menuLayout === "centered"
+              ? "left-1/2 -translate-x-1/2 bottom-4 max-w-[min(92vw,280px)] w-full"
+              : "right-4 bottom-28",
+          ].join(" ")}
         >
           <MenuItem
             active={chatOpen}
@@ -3034,7 +3062,8 @@ function InteractivityMenu({
             disabled={!activePoll}
             onClick={() => { setPollOpen(true); setOpen(false); }}
           />
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Popup da enquete */}
@@ -3056,7 +3085,6 @@ function InteractivityMenu({
             setAlreadyVoted(true);
           }}
         />
-
       )}
 
       <style>{`
