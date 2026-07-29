@@ -18,6 +18,7 @@ interface Props {
   weatherCity: string | null;
   weatherLat: number | null;
   weatherLon: number | null;
+  userId?: string | null;
 }
 
 // ------- Shared card style (elegante / clean, combinando com a barra de audiência) -------
