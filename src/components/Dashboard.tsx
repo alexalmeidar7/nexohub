@@ -253,6 +253,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => {
     try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
   }, [selectedHeaderPill]);
+  // Super admin abre por padrão o painel Business
+  useEffect(() => {
+    if (!isAdmin) return;
+    try {
+      if (localStorage.getItem("nexohub_admin_pill_init") === "1") return;
+      localStorage.setItem("nexohub_admin_pill_init", "1");
+    } catch { /* noop */ }
+    setSelectedHeaderPill("Business");
+  }, [isAdmin]);
   // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
   const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
   const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
@@ -1080,6 +1089,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     }
                     return item.page ? subUserModules.has(item.page) : false;
                   }
+                  if (isAdmin) return true;
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
                   if (!modKey) return true;
