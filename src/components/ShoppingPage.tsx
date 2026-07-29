@@ -177,11 +177,12 @@ export default function ShoppingPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden mb-5" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
-            <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
-              {editId ? "✏️ Editar Produto" : "➕ Novo Produto"}
-            </h3>
+        <div className="relative mb-5">
+          <form onSubmit={handleSubmit} className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+            <div className="px-4 py-2.5 flex items-center justify-between" style={{ background: "linear-gradient(135deg, var(--layout-header-bg, #1a1a1a), color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 80%, white 20%))" }}>
+              <h3 className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>
+                {editId ? "✏️ Editar Produto" : "➕ Novo Produto"}
+              </h3>
             {editId && (
               <button type="button" onClick={resetForm}
                 className="flex items-center gap-1 px-3 py-1 text-[10px] font-bold rounded-full transition-all"
