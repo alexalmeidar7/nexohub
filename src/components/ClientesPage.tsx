@@ -312,9 +312,20 @@ export default function ClientesPage() {
         ))}
       </div>
 
+      <div className="flex justify-end">
+        <button
+          onClick={() => { setNovoOpen(true); setSelected(null); }}
+          className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]"
+          style={{ backgroundColor: "#C6F03C" }}
+        >
+          <UserPlus size={14} /> Novo cliente
+        </button>
+      </div>
+
       <div className="grid lg:grid-cols-[320px_1fr] gap-4">
         {/* Lista */}
         <div className="rounded-2xl bg-white/85 border border-black/5 overflow-hidden">
+
           <div className="p-3 border-b border-black/5 flex items-center gap-2">
             <Search size={14} className="text-[#002132]/40" />
             <input
