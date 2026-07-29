@@ -298,14 +298,14 @@ export default function AdminClientsDashboard() {
           Nenhum cliente encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
           {filtrados.map(c => (
-            <div key={c.user_id} className="rounded-2xl border border-border/60 bg-card p-4 space-y-3 hover:border-primary/40 transition">
+            <div key={c.user_id} className="rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-3 hover:border-primary/40 hover:shadow-sm transition">
               <div className="flex items-center gap-3">
                 {c.logo ? (
-                  <img src={c.logo} alt={c.nome} className="w-9 h-9 rounded-lg object-contain bg-muted/50" />
+                  <img src={c.logo} alt={c.nome} className="w-10 h-10 rounded-lg object-contain bg-muted/50" />
                 ) : (
-                  <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-muted-foreground" />
                   </div>
                 )}
@@ -319,15 +319,20 @@ export default function AdminClientsDashboard() {
                 </span>
               </div>
 
-              <ClientVideoFrame canal={c.canaisVideo[0] || null} />
+              <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2">
+                <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold leading-none truncate">{c.plano || "—"}</div>
+                  <div className="text-[10px] text-muted-foreground">{c.plano ? "pacote vinculado" : "sem pacote"}</div>
+                </div>
+                <span className="shrink-0 text-[10px] text-muted-foreground">{c.modules} módulos</span>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Stat icon={Layers} label={c.plano ? "pacote" : "sem pacote"} value={c.plano || "—"} />
-                <Stat icon={Layers} label="módulos ativos" value={c.modules} />
                 <Stat icon={Users} label="subusuários" value={c.subUsers} />
+                <Stat icon={Music} label="seguidores" value={c.social ? c.social.toLocaleString("pt-BR") : "—"} />
                 <Stat icon={Radio} label="canais áudio" value={c.canaisAudio} />
                 <Stat icon={MonitorPlay} label="canais vídeo" value={c.canaisVideo.length} />
-                <Stat icon={Music} label="seguidores" value={c.social ? c.social.toLocaleString("pt-BR") : "—"} />
               </div>
             </div>
           ))}
