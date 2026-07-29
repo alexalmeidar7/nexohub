@@ -369,9 +369,98 @@ export default function ClientesPage() {
 
         {/* Detalhe do cliente */}
         <div className="rounded-2xl bg-white/85 border border-black/5 p-4">
-          {!selected ? (
+          {novoOpen ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus size={16} style={{ color: CYAN }} />
+                  <p className="text-lg font-semibold text-[#002132]">Novo cliente</p>
+                </div>
+                <button
+                  onClick={() => setNovoOpen(false)}
+                  className="p-1.5 rounded-lg text-[#002132]/50 hover:bg-black/5"
+                  title="Fechar"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-2">
+                {[
+                  { k: "nome", label: "Nome da empresa", type: "text", ph: "Rádio Exemplo FM" },
+                  { k: "email", label: "E-mail de acesso", type: "email", ph: "contato@radio.com" },
+                  { k: "password", label: "Senha (mín. 8 caracteres)", type: "password", ph: "••••••••" },
+                  { k: "plano", label: "Plano (opcional)", type: "text", ph: "básico / premium" },
+                ].map(f => (
+                  <div key={f.k} className="rounded-xl px-3 py-2 border border-black/5 bg-[#F6F8F9]">
+                    <label className="block text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                      {f.label}
+                    </label>
+                    <input
+                      type={f.type}
+                      autoComplete="off"
+                      value={(novo as Record<string, string>)[f.k]}
+                      placeholder={f.ph}
+                      onChange={e => setNovo(prev => ({ ...prev, [f.k]: e.target.value }))}
+                      className="w-full bg-transparent text-sm outline-none text-[#002132] mt-0.5"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>
+                  Módulos liberados
+                </p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {modules.map(m => {
+                    const on = novoModules.has(m.key);
+                    return (
+                      <div
+                        key={m.key}
+                        className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-black/5"
+                        style={{ backgroundColor: on ? "#D6F4FB" : "#F6F8F9" }}
+                      >
+                        <span className="text-sm text-[#002132]">{m.name}</span>
+                        <Switch
+                          checked={on}
+                          onCheckedChange={v =>
+                            setNovoModules(prev => {
+                              const next = new Set(prev);
+                              if (v) next.add(m.key);
+                              else next.delete(m.key);
+                              return next;
+                            })
+                          }
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={criarCliente}
+                  disabled={criando}
+                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                  style={{ backgroundColor: CYAN }}
+                >
+                  {criando ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                  Cadastrar cliente
+                </button>
+                <button
+                  onClick={() => setNovoOpen(false)}
+                  className="rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]/60 border border-black/10"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : !selected ? (
             <p className="text-sm text-[#002132]/50">Selecione um cliente para ver os dados de acesso e liberar módulos.</p>
           ) : (
+
             <>
               {(() => {
                 const cli = clientes.find(c => c.user_id === selected);
