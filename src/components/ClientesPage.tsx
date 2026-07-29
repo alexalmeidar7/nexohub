@@ -142,6 +142,51 @@ export default function ClientesPage() {
     return data;
   };
 
+  const criarCliente = async () => {
+    const nome = novo.nome.trim();
+    const email = novo.email.trim().toLowerCase();
+    if (!nome || !email || !novo.password) {
+      toast.error("Preencha nome, e-mail e senha.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    if (novo.password.length < 8) {
+      toast.error("A senha deve ter ao menos 8 caracteres.");
+      return;
+    }
+    setCriando(true);
+    try {
+      const data = await callAdmin({
+        action: "create",
+        nome,
+        email,
+        password: novo.password,
+        plano: novo.plano.trim() || undefined,
+        modules: Array.from(novoModules),
+      });
+      const newId = String(data?.user_id || "");
+      if (newId) {
+        setClientes(prev => [...prev, { user_id: newId, nome, plano: novo.plano.trim() || null, ativo: true, logo: null }]);
+        setEmails(prev => ({ ...prev, [newId]: email }));
+        setClientModules(prev => ({ ...prev, [newId]: new Set(novoModules) }));
+        setSelected(newId);
+      }
+      setNovo({ nome: "", email: "", password: "", plano: "" });
+      setNovoModules(new Set());
+      setNovoOpen(false);
+      toast.success("Cliente cadastrado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível cadastrar o cliente.");
+    } finally {
+      setCriando(false);
+    }
+  };
+
+
+
   const excluirCliente = async (userId: string, nome?: string | null) => {
     const ok = await confirmDialog({
       title: "Excluir cliente",
