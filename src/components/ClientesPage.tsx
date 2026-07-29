@@ -51,6 +51,10 @@ export default function ClientesPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [expandedSub, setExpandedSub] = useState<string | null>(null);
+  const [subBusy, setSubBusy] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
 
   useEffect(() => {
