@@ -19,6 +19,53 @@ const STORAGE_KEY = "nexo_subuser_role_templates";
 
 const emptyPerms = (): Perms => ({ full: [], recepcao: [], locutor: [], producao: [], comercial: [] });
 
+// Perfis padrão definidos pelo administrador
+const DEFAULT_PERMS: Perms = {
+  full: [
+    "g:cadastros",
+    "g:sorteio",
+    "g:blitz",
+    "g:roteiro de programa",
+    "g:música no ar",
+    "g:agenda",
+    "g:site",
+    "g:comercial",
+    "g:vmix",
+    "g:ferramentas",
+  ],
+  recepcao: [
+    "c:cadastros:ouvintes",
+    "g:sorteio",
+    "g:blitz",
+  ],
+  locutor: [
+    "c:comercial:módulo locutor",
+  ],
+  producao: [
+    "g:roteiro de programa",
+    "g:agenda",
+    "c:site:site",
+    "c:vmix:batalha musical",
+    "c:vmix:enquete",
+    "c:vmix:quiz",
+    "c:ferramentas:corte de vídeo",
+    "c:ferramentas:abrir TP externo",
+  ],
+  comercial: [
+    "c:cadastros:participantes",
+    "g:sorteio",
+    "g:blitz",
+    "g:agenda",
+    "c:comercial:ADS",
+    "c:comercial:citações",
+    "c:comercial:promoções",
+    "c:comercial:logos",
+    "c:comercial:config módulo locutor",
+    "c:comercial:shopping",
+  ],
+};
+
+
 interface Props {
   groups: ModuloGroup[];
   accentColor?: string;
