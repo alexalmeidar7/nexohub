@@ -327,13 +327,22 @@ export default function ClientesPage() {
                           <Building2 size={18} style={{ color: CYAN }} />
                         )}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-lg font-semibold text-[#002132] truncate">{cli?.nome || "Sem nome"}</p>
                         <p className="text-[11px] text-[#002132]/50">
                           {cli?.plano || "sem plano"} · {cli?.ativo === false ? "inativo" : "ativo"}
                         </p>
                       </div>
+                      <button
+                        onClick={() => excluirCliente(selected, cli?.nome)}
+                        disabled={deleting}
+                        className="shrink-0 flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
+                      >
+                        {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                        Excluir cliente
+                      </button>
                     </div>
+
 
                     <div className="grid sm:grid-cols-2 gap-2">
                       <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
