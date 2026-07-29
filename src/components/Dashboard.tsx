@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import seloNexohub from "@/assets/selo-nexohub.png";
 import logoMenu from "@/assets/logo-menu.png";
 import logoFooter from "@/assets/logo-footer.png";
-import { HouseMixIcon, BusinessIcon, ChatbotIcon, SocialDesignIcon, TvAppIcon } from "@/components/ProductIcons";
+import { HouseMixIcon } from "@/components/ProductIcons";
 
 import {
   Tooltip,
@@ -112,7 +112,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
-  { icon: ChatbotIcon, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
+  { icon: Bot, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
   { icon: Gift, label: "sorteio", page: "sorteios" },
   { icon: Siren, label: "blitz", page: "blitz" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
@@ -155,9 +155,9 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
-  { icon: BusinessIcon, label: "business", page: "dashboard", pillMode: "Business" },
-  { icon: TvAppIcon, label: "app", page: "dashboard", pillMode: "TV App" },
-  { icon: SocialDesignIcon, label: "social design", page: "dashboard", pillMode: "Social Design" },
+  { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
+  { icon: Smartphone, label: "app", page: "dashboard", pillMode: "TV App" },
+  { icon: Palette, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
 
 
@@ -171,7 +171,7 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
-  { icon: ChatbotIcon, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
+  { icon: Bot, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
   { icon: Layers, label: "modulos", page: "modulos" },
   {
     icon: Wrench, label: "ferramentas", children: [
@@ -179,9 +179,9 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
-  { icon: BusinessIcon, label: "business", page: "dashboard", pillMode: "Business" },
-  { icon: TvAppIcon, label: "app", page: "dashboard", pillMode: "TV App" },
-  { icon: SocialDesignIcon, label: "social design", page: "dashboard", pillMode: "Social Design" },
+  { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
+  { icon: Smartphone, label: "app", page: "dashboard", pillMode: "TV App" },
+  { icon: Palette, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
 
 
