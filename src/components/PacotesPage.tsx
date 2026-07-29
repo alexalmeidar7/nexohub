@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Package, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { Loader2, Package, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 
 const CYAN = "#00BFF0";
 
