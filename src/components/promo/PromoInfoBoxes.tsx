@@ -473,19 +473,43 @@ function DatasBox() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-1 mt-auto">
-            {items.slice(0, 8).map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: 999,
-                  background: i === idx % 8 ? PROMO_ACCENT_B : `color-mix(in srgb, ${PROMO_BORDER} 20%, transparent)`,
-                  transition: "background 300ms ease",
-                }}
-              />
-            ))}
+          <div className="flex items-center justify-between mt-auto">
+            <button
+              type="button"
+              onClick={() => setIdx((v) => (v - 1 + items.length) % items.length)}
+              disabled={items.length <= 1}
+              className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: items.length <= 1 ? 0.35 : 1 }}
+              title="Data anterior"
+            >
+              <ChevronLeft size={13} />
+            </button>
+
+            <div className="flex items-center justify-center gap-1">
+              {items.slice(0, 8).map((_, i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 4,
+                    height: 4,
+                    borderRadius: 999,
+                    background: i === idx % 8 ? PROMO_ACCENT_B : `color-mix(in srgb, ${PROMO_BORDER} 20%, transparent)`,
+                    transition: "background 300ms ease",
+                  }}
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIdx((v) => (v + 1) % items.length)}
+              disabled={items.length <= 1}
+              className="w-6 h-6 rounded-full flex items-center justify-center transition-colors"
+              style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: items.length <= 1 ? 0.35 : 1 }}
+              title="Próxima data"
+            >
+              <ChevronRight size={13} />
+            </button>
           </div>
         </>
       ) : (
