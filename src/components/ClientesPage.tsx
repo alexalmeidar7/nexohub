@@ -366,25 +366,95 @@ export default function ClientesPage() {
                       {subs.length === 0 ? (
                         <p className="px-3 py-2.5 text-xs text-[#002132]/50">Nenhum subusuário cadastrado.</p>
                       ) : (
-                        <div className="divide-y divide-black/5 max-h-52 overflow-y-auto">
-                          {subs.map(s => (
-                            <div key={s.id} className="px-3 py-2 flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</p>
-                                <p className="text-[11px] text-[#002132]/50 truncate">{s.email}</p>
+                        <div className="divide-y divide-black/5 max-h-72 overflow-y-auto">
+                          {subs.map(s => {
+                            const open = expandedSub === s.id;
+                            const allowed = new Set(s.allowed_modules || []);
+                            return (
+                              <div key={s.id}>
+                                <div className="px-3 py-2 flex items-center justify-between gap-3">
+                                  <button
+                                    onClick={() => setExpandedSub(open ? null : s.id)}
+                                    className="min-w-0 flex items-center gap-2 text-left flex-1"
+                                  >
+                                    <ChevronDown
+                                      size={13}
+                                      className="shrink-0 text-[#002132]/40 transition-transform"
+                                      style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</span>
+                                      <span className="block text-[11px] text-[#002132]/50 truncate">
+                                        {s.email} · {allowed.size} módulos
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {subBusy === `${s.id}:ativo` ? (
+                                      <Loader2 size={14} className="animate-spin text-[#002132]/40" />
+                                    ) : (
+                                      <Switch
+                                        checked={s.ativo}
+                                        onCheckedChange={v => toggleSubAtivo(selected, s, v)}
+                                      />
+                                    )}
+                                    <button
+                                      onClick={() => excluirSub(selected, s)}
+                                      disabled={subBusy === `${s.id}:del`}
+                                      className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                      title="Excluir subusuário"
+                                    >
+                                      {subBusy === `${s.id}:del` ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Trash2 size={13} />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {open && (
+                                  <div className="px-3 pb-3 pt-1 bg-white/60">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#002132]/45 mb-2">
+                                      Permissões de módulos
+                                    </p>
+                                    <div className="grid sm:grid-cols-2 gap-1.5">
+                                      {modules.map(m => {
+                                        const on = allowed.has(m.key);
+                                        const busy = subBusy === `${s.id}:${m.key}`;
+                                        return (
+                                          <button
+                                            key={m.key}
+                                            onClick={() => !busy && toggleSubModule(selected, s, m.key, !on)}
+                                            className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 border border-black/5 text-left transition-colors"
+                                            style={{ backgroundColor: on ? "#D6F4FB" : "#F6F8F9" }}
+                                          >
+                                            <span className="text-[12px] text-[#002132] truncate">{m.name}</span>
+                                            {busy ? (
+                                              <Loader2 size={12} className="animate-spin text-[#002132]/40 shrink-0" />
+                                            ) : (
+                                              <span
+                                                className="w-3.5 h-3.5 rounded-full shrink-0 border"
+                                                style={{
+                                                  backgroundColor: on ? CYAN : "transparent",
+                                                  borderColor: on ? CYAN : "#C9D2D6",
+                                                }}
+                                              />
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    {modules.length === 0 && (
+                                      <p className="text-xs text-[#002132]/50">Nenhum módulo disponível.</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <span
-                                className="text-[10px] font-bold uppercase px-2 py-1 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: s.ativo ? "#D6F4FB" : "#EFEFEF",
-                                  color: s.ativo ? "#00789A" : "#8A9298",
-                                }}
-                              >
-                                {s.ativo ? "ativo" : "inativo"}
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
+
                       )}
                     </div>
                   </div>
