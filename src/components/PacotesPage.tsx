@@ -238,7 +238,18 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
                   style={{ backgroundColor: `${accentColor}14`, color: accentColor }}>
                   <Users size={12} /> {clientes}
                 </span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition-colors"
+                  style={{
+                    backgroundColor: isOpen ? accentColor : "#ffffff",
+                    borderColor: isOpen ? accentColor : "#e2e8f0",
+                    color: isOpen ? "#ffffff" : "#475569",
+                  }}
+                >
+                  {isOpen ? <X size={12} /> : <Pencil size={12} />} {isOpen ? "Fechar" : "Editar"}
+                </span>
               </button>
+
 
               {isOpen && (
                 <div className="border-t border-slate-100 p-4 space-y-4">
