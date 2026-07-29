@@ -53,6 +53,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
 
     const planosData = (pl || []) as Plano[];
     setPlanos(planosData);
+    setNomesOriginais(Object.fromEntries(planosData.map((p) => [p.id, p.name])));
 
     const base = (mods || []) as ModuleDef[];
     const known = new Set(base.map((m) => m.key));
