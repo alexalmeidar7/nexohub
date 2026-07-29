@@ -6,6 +6,8 @@ const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 const PermissoesSection = lazy(() => import("./PermissoesSection"));
+const AISection = lazy(() => import("./AISection"));
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
