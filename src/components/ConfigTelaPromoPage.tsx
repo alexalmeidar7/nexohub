@@ -258,6 +258,32 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                 <div className="space-y-2">
                   <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
                   <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer h-9 text-sm" style={inputStyle} />
+                  {uploadStatus !== "idle" && (
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full rounded-full overflow-hidden bg-black/10">
+                        <div
+                          className="h-full transition-all duration-200"
+                          style={{
+                            width: `${uploadProgress}%`,
+                            background:
+                              uploadStatus === "failed"
+                                ? "#ef4444"
+                                : uploadStatus === "done"
+                                ? "#22c55e"
+                                : "var(--layout-primary, #00BFF0)",
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]" style={{ color: "var(--layout-text)" }}>
+                        <span className="opacity-80">
+                          {uploadStatus === "sending" && "Enviando imagem..."}
+                          {uploadStatus === "done" && "Upload concluído"}
+                          {uploadStatus === "failed" && `Falhou${uploadError ? `: ${uploadError}` : ""}`}
+                        </span>
+                        <span className="opacity-60 font-mono">{uploadProgress}%</span>
+                      </div>
+                    </div>
+                  )}
                   <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." className="h-9 text-sm" style={inputStyle} />
                 </div>
               )}
