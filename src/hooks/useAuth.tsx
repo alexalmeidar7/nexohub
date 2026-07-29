@@ -279,10 +279,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const onVisibility = () => {
       if (document.hidden) return;
+      reconnectRealtime();
       const idleMs = Date.now() - lastRefreshAt;
       if (idleMs > 2 * 60 * 1000) void proactiveRefresh("visibility");
     };
-    const onOnline = () => { void proactiveRefresh("online"); };
+    const onOnline = () => { reconnectRealtime(); void proactiveRefresh("online"); };
     const refreshInterval = setInterval(() => {
       if (!document.hidden) void proactiveRefresh("interval");
     }, 20 * 60 * 1000);
