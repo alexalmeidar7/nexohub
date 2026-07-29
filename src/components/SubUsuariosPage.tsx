@@ -104,8 +104,16 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
         </button>
       </div>
 
-      {/* Boxes dos perfis padrão */}
-      <div className="grid gap-4 grid-cols-5 mb-8">
+      {/* Boxes dos perfis padrão (barra fixa no topo ao rolar) */}
+      <div
+        className="sticky top-0 z-30 -mx-1 px-1 pt-1 pb-4 mb-6"
+        style={{
+          backgroundColor: "var(--layout-page-bg, #ffffff)",
+          boxShadow: "0 12px 16px -12px rgba(15,23,42,0.18)",
+        }}
+      >
+      <div className="grid gap-4 grid-cols-5">
+
         {PERFIS.map((p) => {
           const items = perms[p.key];
           const isHover = hover === p.key;
@@ -120,7 +128,7 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
                 const id = e.dataTransfer.getData("text/plain") || dragging?.id;
                 if (id) addTo(p.key, id);
               }}
-              className="rounded-2xl border-2 shadow-sm flex flex-col min-h-[220px] transition-all"
+              className="rounded-2xl border-2 shadow-sm flex flex-col min-h-[150px] max-h-[42vh] overflow-y-auto transition-all"
               style={{
                 backgroundColor: accentColor,
                 borderColor: isHover ? "#ffffff" : accentColor,
@@ -191,6 +199,8 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
           );
         })}
       </div>
+      </div>
+
 
       {/* Módulos disponíveis (mesmo layout da página Módulos) */}
       <div className="mb-4">
