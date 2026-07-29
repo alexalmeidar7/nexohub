@@ -1268,7 +1268,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           }}
                         >
                           <div className="ml-6 space-y-0.5 mt-1 mb-1">
-                            {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
+                            {filterMenuChildren(item.children).map(child => {
                               const ChildIcon = child.icon;
                               const childActive = currentPage === child.page;
                               return (
