@@ -208,23 +208,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // DELETE CLIENT (and all its sub-users)
-    if (action === "delete_client") {
-      const { user_id } = body;
-      if (!user_id || typeof user_id !== "string") {
-        return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (user_id === callerId) {
-        return new Response(JSON.stringify({ error: "Você não pode excluir o próprio usuário" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      // Remove sub-users (auth + rows)
+    const hardDeleteClient = async (user_id: string) => {
       const { data: subs } = await adminClient
         .from("sub_users")
         .select("id, auth_user_id")
@@ -238,26 +222,156 @@ Deno.serve(async (req) => {
         }
       }
       await adminClient.from("sub_users").delete().eq("parent_user_id", user_id);
-
-      // Remove client scoped rows
       await adminClient.from("client_modules").delete().eq("user_id", user_id);
       await adminClient.from("empresa_config").delete().eq("user_id", user_id);
       await adminClient.from("user_roles").delete().eq("user_id", user_id);
       await adminClient.from("profiles").delete().eq("user_id", user_id);
+      await adminClient.from("client_trash").delete().eq("user_id", user_id);
+      const { error } = await adminClient.auth.admin.deleteUser(user_id);
+      return error?.message || null;
+    };
 
-      const { error: delErr } = await adminClient.auth.admin.deleteUser(user_id);
-      if (delErr) {
-        return new Response(JSON.stringify({ error: delErr.message }), {
+    // DELETE CLIENT -> move to trash (60 days) or purge permanently
+    if (action === "delete_client" || action === "purge_client") {
+      const { user_id, permanent } = body;
+      if (!user_id || typeof user_id !== "string") {
+        return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      if (user_id === callerId) {
+        return new Response(JSON.stringify({ error: "Você não pode excluir o próprio usuário" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (action === "purge_client" || permanent === true) {
+        const errMsg = await hardDeleteClient(user_id);
+        if (errMsg) {
+          return new Response(JSON.stringify({ error: errMsg }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        return new Response(JSON.stringify({ success: true, purged: true }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Soft delete: keep data for 60 days
+      const { data: authUser } = await adminClient.auth.admin.getUserById(user_id);
+      const { data: empresa } = await adminClient
+        .from("empresa_config")
+        .select("nome")
+        .eq("user_id", user_id)
+        .maybeSingle();
+
+      const purgeAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: trashErr } = await adminClient.from("client_trash").upsert(
+        {
+          user_id,
+          email: authUser?.user?.email ?? null,
+          nome: empresa?.nome ?? null,
+          deleted_by: callerId,
+          deleted_at: new Date().toISOString(),
+          purge_at: purgeAt,
+        },
+        { onConflict: "user_id" },
+      );
+      if (trashErr) {
+        return new Response(JSON.stringify({ error: trashErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient.from("empresa_config").update({ ativo: false }).eq("user_id", user_id);
+      await adminClient.from("sub_users").update({ ativo: false }).eq("parent_user_id", user_id);
+      await adminClient.auth.admin
+        .updateUserById(user_id, { ban_duration: "876000h" })
+        .catch(() => {});
+
+      const { data: subsBan } = await adminClient
+        .from("sub_users")
+        .select("auth_user_id")
+        .eq("parent_user_id", user_id);
+      for (const s of subsBan || []) {
+        if (s.auth_user_id) {
+          await adminClient.auth.admin
+            .updateUserById(s.auth_user_id, { ban_duration: "876000h" })
+            .catch(() => {});
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, purge_at: purgeAt }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // RESTORE CLIENT FROM TRASH
+    if (action === "restore_client") {
+      const { user_id } = body;
+      if (!user_id || typeof user_id !== "string") {
+        return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await adminClient.auth.admin.updateUserById(user_id, { ban_duration: "none" }).catch(() => {});
+      await adminClient.from("empresa_config").update({ ativo: true }).eq("user_id", user_id);
+
+      const { data: subsUnban } = await adminClient
+        .from("sub_users")
+        .select("auth_user_id")
+        .eq("parent_user_id", user_id);
+      for (const s of subsUnban || []) {
+        if (s.auth_user_id) {
+          await adminClient.auth.admin
+            .updateUserById(s.auth_user_id, { ban_duration: "none" })
+            .catch(() => {});
+        }
+      }
+
+      await adminClient.from("client_trash").delete().eq("user_id", user_id);
 
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // LIST TRASH (auto purges expired entries)
+    if (action === "list_trash") {
+      const nowIso = new Date().toISOString();
+      const { data: expired } = await adminClient
+        .from("client_trash")
+        .select("user_id")
+        .lt("purge_at", nowIso);
+      for (const row of expired || []) {
+        await hardDeleteClient(row.user_id).catch(() => null);
+      }
+
+      const { data: items, error } = await adminClient
+        .from("client_trash")
+        .select("user_id, email, nome, deleted_at, purge_at")
+        .order("deleted_at", { ascending: false });
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ items: items || [] }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // ADMIN: UPDATE SUB-USER (modules / ativo)
     if (action === "admin_sub_update") {
