@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,6 +66,7 @@ const BatalhaMusicalPage = lazy(() => import("./BatalhaMusicalPage"));
 const EnquetePage = lazy(() => import("./EnquetePage"));
 const QuizPage = lazy(() => import("./QuizPage"));
 const SitePage = lazy(() => import("./site/SitePage"));
+const ClientesPage = lazy(() => import("./ClientesPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
@@ -74,7 +75,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -146,6 +147,33 @@ const sidebarMenu: MenuItem[] = [
   },
 ];
 
+// Menu exclusivo do super admin: apenas Cadastro > Clientes e o agrupador MODULOS
+const adminSidebarMenu: MenuItem[] = [
+  { icon: Home, label: "home", page: "dashboard" },
+  {
+    icon: Users, label: "cadastros", children: [
+      { icon: Building2, label: "clientes", page: "clientes" },
+    ]
+  },
+  {
+    icon: Layers, label: "modulos", children: [
+      { icon: Home, label: "housemix", page: undefined as unknown as Page },
+      { icon: Bot, label: "chatbot", page: undefined as unknown as Page },
+      { icon: Smartphone, label: "app", page: undefined as unknown as Page },
+      { icon: Palette, label: "social design", page: undefined as unknown as Page, separator: false },
+      ...sidebarMenu
+        .filter(i => i.label !== "home" && i.label !== "cadastros")
+        .map((i, idx) => ({
+          icon: i.icon,
+          label: i.label,
+          page: (i.page ?? (undefined as unknown as Page)),
+          separator: idx === 0,
+          children: i.children,
+        }) as MenuChild),
+    ]
+  },
+];
+
 // Map menu items to module keys for plan filtering
 const menuToModuleKey: Record<string, string> = {
   "cadastros": "cadastros",
@@ -190,6 +218,7 @@ const pageTitle: Record<Page, string> = {
   site: "Site",
   sorteios: "Sorteios",
   blitz: "Blitz Promocionais",
+  clientes: "Cadastro de Clientes",
 };
 
 interface DashboardProps {
@@ -197,7 +226,8 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ onLogout }: DashboardProps) {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
@@ -223,6 +253,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   useEffect(() => {
     try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
   }, [selectedHeaderPill]);
+  // Super admin abre por padrão o painel Business
+  useEffect(() => {
+    if (!isAdmin) return;
+    try {
+      if (localStorage.getItem("nexohub_admin_pill_init") === "1") return;
+      localStorage.setItem("nexohub_admin_pill_init", "1");
+    } catch { /* noop */ }
+    setSelectedHeaderPill("Business");
+  }, [isAdmin]);
   // Animação de entrada/saída ao trocar de modo (nexohub <-> Chatbot ...)
   const [displayedPill, setDisplayedPill] = useState<string>(selectedHeaderPill);
   const [pillPhase, setPillPhase] = useState<"in" | "out">("in");
@@ -609,6 +648,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "configuracoes" &&
       currentPage !== "playerconfig" &&
       currentPage !== "fans" &&
+      currentPage !== "clientes" &&
+      !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
       setCurrentPage("dashboard");
@@ -635,6 +676,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
+    if (parentLabel === "modulos") {
+      const pillByLabel: Record<string, string> = {
+        "housemix": "nexohub",
+        "chatbot": "Chatbot",
+        "app": "TV App",
+        "social design": "Social Design",
+      };
+      const pill = pillByLabel[child.label];
+      if (pill) {
+        setSelectedHeaderPill(pill);
+        setCurrentPage("dashboard");
+        setMobileMenuOpen(false);
+        setHoveredMenu(null);
+        return;
+      }
+    }
     const masterEmail = parentEmail || user?.email || "";
     const masterSlug = masterEmail.includes("@") ? masterEmail.split("@")[0].toLowerCase() : (effectiveUserId || user?.id || "");
     if (parentLabel === "player" && child.label === "módulo player") {
@@ -731,7 +788,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           const isChatbotMode = displayedPill === "Chatbot";
           const chatbotAllowedTop = new Set(["home", "cadastros", "sorteio"]);
           const chatbotCadastroChildren = new Set(["ouvintes"]);
-          const effectiveMenu: MenuItem[] = isChatbotMode
+          const effectiveMenu: MenuItem[] = isAdmin
+            ? adminSidebarMenu
+            : isChatbotMode
             ? sidebarMenu
                 .filter(i => chatbotAllowedTop.has(i.label))
                 .map(i => i.label === "cadastros" && i.children
@@ -751,6 +810,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               // For standalone items, check the page directly
               return item.page ? subUserModules.has(item.page) : false;
             }
+            if (isAdmin) return true;
             if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
             const modKey = menuToModuleKey[item.label];
             if (!modKey) return true;
@@ -1012,7 +1072,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </button>
               </div>
               <nav key={displayedPill === "Chatbot" ? "mob-chat" : "mob-nexo"} className="flex-1 overflow-y-auto px-3 space-y-1 py-2 animate-fade-in">
-                {(displayedPill === "Chatbot"
+                {(isAdmin
+                  ? adminSidebarMenu
+                  : displayedPill === "Chatbot"
                   ? sidebarMenu
                       .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
                       .map(i => i.label === "cadastros" && i.children
@@ -1027,6 +1089,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     }
                     return item.page ? subUserModules.has(item.page) : false;
                   }
+                  if (isAdmin) return true;
                   if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
                   const modKey = menuToModuleKey[item.label];
                   if (!modKey) return true;
@@ -1507,6 +1570,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
+              {currentPage === "clientes" && <ClientesPage />}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
