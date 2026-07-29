@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown, UserPlus, X } from "lucide-react";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown, UserPlus, X, RotateCcw } from "lucide-react";
 
 
 interface Cliente {
@@ -27,6 +27,14 @@ interface SubUser {
   nome: string | null;
   ativo: boolean;
   allowed_modules: string[] | null;
+}
+
+interface TrashItem {
+  user_id: string;
+  email: string | null;
+  nome: string | null;
+  deleted_at: string;
+  purge_at: string;
 }
 
 const CYAN = "#00BFF0";
@@ -58,6 +66,10 @@ export default function ClientesPage() {
   const [criando, setCriando] = useState(false);
   const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "" });
   const [novoModules, setNovoModules] = useState<Set<string>>(new Set());
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trash, setTrash] = useState<TrashItem[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [trashBusy, setTrashBusy] = useState<string | null>(null);
 
 
 
@@ -104,14 +116,16 @@ export default function ClientesPage() {
   }, [role]);
 
   const filtrados = useMemo(() => {
+    const naLixeira = new Set(trash.map(t => t.user_id));
+    const base = clientes.filter(c => !naLixeira.has(c.user_id));
     const q = busca.trim().toLowerCase();
-    if (!q) return clientes;
-    return clientes.filter(c =>
+    if (!q) return base;
+    return base.filter(c =>
       (c.nome || "").toLowerCase().includes(q) ||
       (emails[c.user_id] || "").toLowerCase().includes(q) ||
       slugFromEmail(emails[c.user_id], c.nome).includes(q)
     );
-  }, [clientes, busca, emails]);
+  }, [clientes, busca, emails, trash]);
 
 
   const toggleModule = async (userId: string, key: string, enabled: boolean) => {
@@ -187,11 +201,28 @@ export default function ClientesPage() {
 
 
 
+  const carregarLixeira = async () => {
+    setTrashLoading(true);
+    try {
+      const res = await callAdmin({ action: "list_trash" });
+      setTrash(((res as any)?.items as TrashItem[]) || []);
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível carregar a lixeira.");
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (role === "admin") carregarLixeira();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
+
   const excluirCliente = async (userId: string, nome?: string | null) => {
     const ok = await confirmDialog({
-      title: "Excluir cliente",
-      message: `Excluir definitivamente "${nome || "este cliente"}"? Todos os subusuários e acessos serão removidos. Esta ação não pode ser desfeita.`,
-      confirmLabel: "Excluir",
+      title: "Mover para a lixeira",
+      message: `Enviar "${nome || "este cliente"}" para a lixeira? O acesso do cliente e dos subusuários será bloqueado e os dados ficarão disponíveis para restauração por 60 dias.`,
+      confirmLabel: "Mover para a lixeira",
       destructive: true,
     });
     if (!ok) return;
@@ -205,13 +236,54 @@ export default function ClientesPage() {
         return next;
       });
       setSelected(null);
-      toast.success("Cliente excluído.");
+      await carregarLixeira();
+      toast.success("Cliente movido para a lixeira (60 dias para restaurar).");
     } catch (e) {
       toast.error((e as Error).message || "Não foi possível excluir o cliente.");
     } finally {
       setDeleting(false);
     }
   };
+
+  const restaurarCliente = async (item: TrashItem) => {
+    setTrashBusy(`${item.user_id}:restore`);
+    try {
+      await callAdmin({ action: "restore_client", user_id: item.user_id });
+      setTrash(prev => prev.filter(t => t.user_id !== item.user_id));
+      const { data } = await supabase
+        .from("empresa_config")
+        .select("user_id, nome, plano, ativo, logo")
+        .eq("user_id", item.user_id)
+        .maybeSingle();
+      if (data) setClientes(prev => [...prev, data as Cliente].sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      toast.success("Cliente restaurado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível restaurar o cliente.");
+    } finally {
+      setTrashBusy(null);
+    }
+  };
+
+  const excluirDefinitivo = async (item: TrashItem) => {
+    const ok = await confirmDialog({
+      title: "Excluir definitivamente",
+      message: `Excluir permanentemente "${item.nome || item.email || "este cliente"}"? Todos os dados e subusuários serão apagados. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir para sempre",
+      destructive: true,
+    });
+    if (!ok) return;
+    setTrashBusy(`${item.user_id}:purge`);
+    try {
+      await callAdmin({ action: "purge_client", user_id: item.user_id });
+      setTrash(prev => prev.filter(t => t.user_id !== item.user_id));
+      toast.success("Cliente excluído definitivamente.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o cliente.");
+    } finally {
+      setTrashBusy(null);
+    }
+  };
+
 
   const patchSub = (parentId: string, subId: string, patch: Partial<SubUser>) => {
     setSubUsers(prev => ({
@@ -312,15 +384,101 @@ export default function ClientesPage() {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button
-          onClick={() => { setNovoOpen(true); setSelected(null); }}
+          onClick={() => { setTrashOpen(v => !v); if (!trashOpen) carregarLixeira(); }}
+          title="Lixeira de clientes"
+          className="relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide border border-black/10 text-[#002132]"
+          style={{ backgroundColor: trashOpen ? "#D6F4FB" : "rgba(255,255,255,0.85)" }}
+        >
+          <Trash2 size={14} /> Lixeira
+          {trash.length > 0 && (
+            <span
+              className="ml-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+              style={{ backgroundColor: CYAN }}
+            >
+              {trash.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => { setNovoOpen(true); setSelected(null); setTrashOpen(false); }}
           className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]"
           style={{ backgroundColor: "#C6F03C" }}
         >
           <UserPlus size={14} /> Novo cliente
         </button>
       </div>
+
+      {trashOpen && (
+        <div className="rounded-2xl bg-white/85 border border-black/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-black/5 flex items-center gap-2">
+            <Trash2 size={14} className="text-[#002132]/50" />
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#002132]/60">
+              Clientes excluídos — restauráveis por 60 dias
+            </p>
+          </div>
+          {trashLoading ? (
+            <div className="p-6 flex items-center gap-2 text-sm text-[#002132]/60">
+              <Loader2 className="animate-spin" size={16} /> Carregando lixeira...
+            </div>
+          ) : trash.length === 0 ? (
+            <p className="p-6 text-sm text-[#002132]/50">A lixeira está vazia.</p>
+          ) : (
+            <div className="divide-y divide-black/5">
+              {trash.map(item => {
+                const dias = Math.max(
+                  0,
+                  Math.ceil((new Date(item.purge_at).getTime() - Date.now()) / 86400000),
+                );
+                return (
+                  <div key={item.user_id} className="px-4 py-3 flex items-center gap-3 flex-wrap">
+                    <div className="flex-1 min-w-[200px]">
+                      <p className="text-sm font-semibold text-[#002132]">{item.nome || "Sem nome"}</p>
+                      <p className="text-[11px] text-[#002132]/50">{item.email || "—"}</p>
+                    </div>
+                    <span className="text-[11px] text-[#002132]/60">
+                      Excluído em {new Date(item.deleted_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: "#D6F4FB", color: "#002132" }}
+                    >
+                      {dias} dia{dias === 1 ? "" : "s"} restantes
+                    </span>
+                    <button
+                      onClick={() => restaurarCliente(item)}
+                      disabled={trashBusy === `${item.user_id}:restore`}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-[#002132] disabled:opacity-60"
+                      style={{ backgroundColor: "#C6F03C" }}
+                    >
+                      {trashBusy === `${item.user_id}:restore` ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={13} />
+                      )}
+                      Restaurar
+                    </button>
+                    <button
+                      onClick={() => excluirDefinitivo(item)}
+                      disabled={trashBusy === `${item.user_id}:purge`}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 disabled:opacity-60"
+                    >
+                      {trashBusy === `${item.user_id}:purge` ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={13} />
+                      )}
+                      Excluir
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
 
       <div className="grid lg:grid-cols-[320px_1fr] gap-4">
         {/* Lista */}
@@ -489,7 +647,7 @@ export default function ClientesPage() {
                         className="shrink-0 flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
                       >
                         {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                        Excluir cliente
+                        Mover para lixeira
                       </button>
                     </div>
 
