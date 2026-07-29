@@ -54,6 +54,11 @@ export default function ClientesPage() {
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [subBusy, setSubBusy] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [criando, setCriando] = useState(false);
+  const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "" });
+  const [novoModules, setNovoModules] = useState<Set<string>>(new Set());
+
 
 
 
