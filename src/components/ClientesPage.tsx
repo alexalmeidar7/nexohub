@@ -92,14 +92,16 @@ export default function ClientesPage() {
     })();
   }, [role]);
 
-  const filtradosBase = useMemo(() => clientes, [clientes]);
-
-
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return clientes;
-    return clientes.filter(c => (c.nome || "").toLowerCase().includes(q));
-  }, [clientes, busca]);
+    return clientes.filter(c =>
+      (c.nome || "").toLowerCase().includes(q) ||
+      (emails[c.user_id] || "").toLowerCase().includes(q) ||
+      slugFromEmail(emails[c.user_id], c.nome).includes(q)
+    );
+  }, [clientes, busca, emails]);
+
 
   const toggleModule = async (userId: string, key: string, enabled: boolean) => {
     setSaving(`${userId}:${key}`);
