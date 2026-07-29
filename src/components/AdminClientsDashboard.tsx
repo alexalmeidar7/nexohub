@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-};
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Building2, Users, Radio, MonitorPlay, Layers, CheckCircle2, XCircle,
+  Music, Search, Sparkles,
+} from "lucide-react";
+
 
 interface Empresa {
   user_id: string;
