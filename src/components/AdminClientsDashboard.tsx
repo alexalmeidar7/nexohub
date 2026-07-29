@@ -142,7 +142,7 @@ export default function AdminClientsDashboard() {
             Painel Super Admin
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Visão geral de todos os clientes e seus canais de vídeo ao vivo
+            Visão geral de todos os clientes, pacotes e canais
           </p>
         </div>
 
@@ -178,7 +178,7 @@ export default function AdminClientsDashboard() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-2xl border border-border/60 bg-card p-4 animate-pulse space-y-3">
               <div className="h-4 w-1/2 bg-muted rounded" />
-              <div className="w-full bg-muted rounded-xl" style={{ paddingBottom: "56.25%" }} />
+              <div className="h-10 bg-muted rounded-lg" />
               <div className="h-8 bg-muted rounded" />
             </div>
           ))}
