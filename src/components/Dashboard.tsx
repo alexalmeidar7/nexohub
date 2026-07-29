@@ -743,6 +743,42 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return modulesSource.has(page);
   };
 
+  // ---- Menu visibility driven by the plan (pacote) linked to the client ----
+  const planKeyAllowed = (node: { label: string; page?: unknown }): boolean => {
+    const src = planModules ?? enabledModules;
+    if (!src) return true;
+    const key = moduleKeyOfNode(node);
+    if (!KNOWN_MODULE_KEYS.has(key)) return true;
+    return src.has(key);
+  };
+
+  const filterMenuChildren = (children: MenuChild[]): MenuChild[] =>
+    children
+      .filter(c => {
+        if (subUserModules !== null) {
+          return c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page));
+        }
+        if (isAdmin) return true;
+        return planKeyAllowed(c);
+      })
+      .map(c => (c.children ? { ...c, children: filterMenuChildren(c.children) } : c));
+
+  const isMenuItemVisible = (item: MenuItem): boolean => {
+    if (item.label === "home") return true;
+    if (subUserModules !== null) {
+      if (item.children) {
+        return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
+      }
+      return item.page ? subUserModules.has(item.page) : false;
+    }
+    if (isAdmin) return true;
+    if (!planKeyAllowed(item)) return false;
+    if (item.children) return filterMenuChildren(item.children).length > 0;
+    return true;
+  };
+
+
+
   useEffect(() => {
     // Only redirect if initial loading is complete and modules are loaded
     if (initialLoading || (!enabledModules && !planModules)) return;
