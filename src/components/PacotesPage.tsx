@@ -106,14 +106,30 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
 
   const planoSel = useMemo(() => planos.find((p) => p.id === selected) || null, [planos, selected]);
 
-  const toggleModule = (planoId: string, key: string) => {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const setKeys = (planoId: string, keys: string[], on: boolean) => {
     setPlanos((prev) => prev.map((p) => {
       if (p.id !== planoId) return p;
       const list = new Set(p.enabled_modules || []);
-      if (list.has(key)) list.delete(key); else list.add(key);
+      keys.forEach((k) => (on ? list.add(k) : list.delete(k)));
       return { ...p, enabled_modules: Array.from(list) };
     }));
   };
+
+  const toggleModule = (planoId: string, key: string) => {
+    const p = planos.find((x) => x.id === planoId);
+    const on = (p?.enabled_modules || []).includes(key);
+    setKeys(planoId, [key], !on);
+  };
+
+  const toggleNode = (planoId: string, node: TreeNode) => {
+    const p = planos.find((x) => x.id === planoId);
+    const list = new Set(p?.enabled_modules || []);
+    const on = list.has(node.key);
+    setKeys(planoId, collectKeys(node), !on);
+  };
+
 
   const salvar = async (plano: Plano) => {
     const nome = (plano.name || "").trim();
