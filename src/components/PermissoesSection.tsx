@@ -68,6 +68,60 @@ const MODULE_GROUPS = [
 // Flat list for counting
 const ALL_MODULE_KEYS = MODULE_GROUPS.flatMap(g => g.items.map(i => i.key));
 
+// ---- Perfis padrão de sub-usuário ----
+const PERFIS = [
+  {
+    key: "recepcao",
+    label: "RECEPÇÃO",
+    desc: "Atendimento e cadastros",
+    modules: ["fans", "agenda", "promocoes"],
+  },
+  {
+    key: "locutor",
+    label: "LOCUTOR",
+    desc: "Estúdio e no ar",
+    modules: ["musica", "noticias", "telapromo", "testemunhais"],
+  },
+  {
+    key: "producao",
+    label: "PRODUÇÃO",
+    desc: "Conteúdo e pauta",
+    modules: [
+      "apresentadores", "programas", "previsao", "noticias", "musica", "agenda",
+      "broadcast", "cenario", "batalha", "enquete", "cortevideo",
+    ],
+  },
+  {
+    key: "comercial",
+    label: "COMERCIAL",
+    desc: "Vendas e patrocínios",
+    modules: [
+      "testemunhais", "promocoes", "configtelapromo", "telapromo",
+      "shopping", "propostas", "logos", "preroll",
+    ],
+  },
+] as const;
+
+type PerfilKey = (typeof PERFIS)[number]["key"];
+
+const PERFIL_STORAGE_KEY = "nexo_subuser_perfis";
+
+const readPerfilMap = (): Record<string, PerfilKey> => {
+  try {
+    return JSON.parse(localStorage.getItem(PERFIL_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const writePerfilMap = (map: Record<string, PerfilKey>) => {
+  try {
+    localStorage.setItem(PERFIL_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+};
+
 interface SubUser {
   id: string;
   auth_user_id: string;
@@ -76,6 +130,7 @@ interface SubUser {
   allowed_modules: string[];
   ativo: boolean;
 }
+
 
 export default function PermissoesSection() {
   const { user } = useAuth();
