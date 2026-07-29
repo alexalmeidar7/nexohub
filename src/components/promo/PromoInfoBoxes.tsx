@@ -214,31 +214,56 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
         </div>
       ) : data ? (
         <>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 min-w-0">
-              {weatherIcon(code ?? 0, 32)}
-              <div className="min-w-0">
-                <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
-                  {temp != null ? Math.round(temp) : "—"}°
-                  <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>C</span>
+          {idx === 0 ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                {weatherIcon(code ?? 0, 32)}
+                <div className="min-w-0">
+                  <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
+                    {temp != null ? Math.round(temp) : "—"}°
+                    <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>C</span>
+                  </div>
+                  <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, marginTop: 2 }}>
+                    {weatherLabel(code ?? 0)}
+                  </div>
                 </div>
-                <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, marginTop: 2 }}>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[110px]">
+                  <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
+                  {weatherCity}
+                </div>
+                <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>
+                  {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
+                </div>
+                <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 flex-1 min-h-0">
+              <div className="shrink-0 flex items-center justify-center" style={{ width: 56, height: 56 }}>
+                {weatherIcon(code ?? 0, 48)}
+              </div>
+
+              <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>
+                  {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : "—"}
+                </div>
+                <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, marginTop: 3 }}>
                   {weatherLabel(code ?? 0)}
                 </div>
+                <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>💧 {rain}%</div>
               </div>
-            </div>
 
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[110px]">
-                <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
-                {weatherCity}
+              <div style={{ textAlign: "right" }} className="shrink-0">
+                <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[100px]">
+                  <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
+                  {weatherCity}
+                </div>
               </div>
-              <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>
-                {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
-              </div>
-              <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
             </div>
-          </div>
+          )}
 
           <div className="flex items-center justify-between mt-auto">
             <button
