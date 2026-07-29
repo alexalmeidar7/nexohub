@@ -116,14 +116,16 @@ export default function ClientesPage() {
   }, [role]);
 
   const filtrados = useMemo(() => {
+    const naLixeira = new Set(trash.map(t => t.user_id));
+    const base = clientes.filter(c => !naLixeira.has(c.user_id));
     const q = busca.trim().toLowerCase();
-    if (!q) return clientes;
-    return clientes.filter(c =>
+    if (!q) return base;
+    return base.filter(c =>
       (c.nome || "").toLowerCase().includes(q) ||
       (emails[c.user_id] || "").toLowerCase().includes(q) ||
       slugFromEmail(emails[c.user_id], c.nome).includes(q)
     );
-  }, [clientes, busca, emails]);
+  }, [clientes, busca, emails, trash]);
 
 
   const toggleModule = async (userId: string, key: string, enabled: boolean) => {
