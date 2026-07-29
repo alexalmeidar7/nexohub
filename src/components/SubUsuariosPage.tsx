@@ -128,7 +128,7 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
                 const id = e.dataTransfer.getData("text/plain") || dragging?.id;
                 if (id) addTo(p.key, id);
               }}
-              className="rounded-2xl border-2 shadow-sm flex flex-col min-h-[220px] transition-all"
+              className="rounded-2xl border-2 shadow-sm flex flex-col min-h-[150px] max-h-[42vh] overflow-y-auto transition-all"
               style={{
                 backgroundColor: accentColor,
                 borderColor: isHover ? "#ffffff" : accentColor,
