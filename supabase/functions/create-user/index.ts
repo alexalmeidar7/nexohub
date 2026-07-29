@@ -185,6 +185,121 @@ Deno.serve(async (req) => {
       });
     }
 
+    // DELETE CLIENT (and all its sub-users)
+    if (action === "delete_client") {
+      const { user_id } = body;
+      if (!user_id || typeof user_id !== "string") {
+        return new Response(JSON.stringify({ error: "user_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (user_id === callerId) {
+        return new Response(JSON.stringify({ error: "Você não pode excluir o próprio usuário" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Remove sub-users (auth + rows)
+      const { data: subs } = await adminClient
+        .from("sub_users")
+        .select("id, auth_user_id")
+        .eq("parent_user_id", user_id);
+
+      for (const s of subs || []) {
+        if (s.auth_user_id) {
+          await adminClient.from("user_roles").delete().eq("user_id", s.auth_user_id);
+          await adminClient.from("profiles").delete().eq("user_id", s.auth_user_id);
+          await adminClient.auth.admin.deleteUser(s.auth_user_id).catch(() => {});
+        }
+      }
+      await adminClient.from("sub_users").delete().eq("parent_user_id", user_id);
+
+      // Remove client scoped rows
+      await adminClient.from("client_modules").delete().eq("user_id", user_id);
+      await adminClient.from("empresa_config").delete().eq("user_id", user_id);
+      await adminClient.from("user_roles").delete().eq("user_id", user_id);
+      await adminClient.from("profiles").delete().eq("user_id", user_id);
+
+      const { error: delErr } = await adminClient.auth.admin.deleteUser(user_id);
+      if (delErr) {
+        return new Response(JSON.stringify({ error: delErr.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ADMIN: UPDATE SUB-USER (modules / ativo)
+    if (action === "admin_sub_update") {
+      const { sub_user_id, allowed_modules, ativo } = body;
+      if (!sub_user_id || typeof sub_user_id !== "string") {
+        return new Response(JSON.stringify({ error: "sub_user_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const patch: Record<string, any> = {};
+      if (Array.isArray(allowed_modules)) {
+        patch.allowed_modules = allowed_modules
+          .filter((m: unknown) => typeof m === "string")
+          .slice(0, 200);
+      }
+      if (typeof ativo === "boolean") patch.ativo = ativo;
+      if (Object.keys(patch).length === 0) {
+        return new Response(JSON.stringify({ error: "Nada para atualizar" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error } = await adminClient.from("sub_users").update(patch).eq("id", sub_user_id);
+      if (error) {
+        return new Response(JSON.stringify({ error: error.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ADMIN: DELETE SUB-USER
+    if (action === "admin_sub_delete") {
+      const { sub_user_id } = body;
+      if (!sub_user_id || typeof sub_user_id !== "string") {
+        return new Response(JSON.stringify({ error: "sub_user_id obrigatório" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: sub } = await adminClient
+        .from("sub_users")
+        .select("auth_user_id")
+        .eq("id", sub_user_id)
+        .maybeSingle();
+
+      await adminClient.from("sub_users").delete().eq("id", sub_user_id);
+      if (sub?.auth_user_id) {
+        await adminClient.from("user_roles").delete().eq("user_id", sub.auth_user_id);
+        await adminClient.from("profiles").delete().eq("user_id", sub.auth_user_id);
+        await adminClient.auth.admin.deleteUser(sub.auth_user_id).catch(() => {});
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+
     return new Response(JSON.stringify({ error: "Ação inválida" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
