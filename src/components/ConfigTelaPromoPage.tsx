@@ -152,20 +152,32 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!user || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
     setUploading(true);
+    setUploadStatus("sending");
+    setUploadError("");
+    setUploadProgress(5);
+    // Simulated progressive indicator (Supabase JS doesn't expose native progress)
+    const timer = setInterval(() => {
+      setUploadProgress(p => (p < 90 ? p + Math.max(1, Math.round((90 - p) / 8)) : p));
+    }, 200);
     try {
-      const file = e.target.files[0];
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${user.id}/tela-promo/bg-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type || undefined });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
       setConfig(c => ({ ...c, bg_image_url: urlData.publicUrl }));
+      setUploadProgress(100);
+      setUploadStatus("done");
       toast.success("Imagem enviada!");
     } catch (err: any) {
       console.error("[ConfigTelaPromo] upload error", err);
+      setUploadStatus("failed");
+      setUploadError(err?.message || "Falha desconhecida");
       toast.error(err?.message ? `Erro ao enviar imagem: ${err.message}` : "Erro ao enviar imagem");
     } finally {
+      clearInterval(timer);
       setUploading(false);
     }
   }
