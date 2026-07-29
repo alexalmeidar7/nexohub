@@ -20,6 +20,13 @@ interface ModuleDef {
   name: string;
 }
 
+interface PlanoDef {
+  id: string;
+  name: string;
+  price: number | null;
+  enabled_modules: string[] | null;
+}
+
 interface SubUser {
   id: string;
   parent_user_id: string;
