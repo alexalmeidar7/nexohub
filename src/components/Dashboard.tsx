@@ -742,14 +742,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
-    if (parentLabel === "modulos" || parentLabel === "plataformas") {
+    {
       const pillByLabel: Record<string, string> = {
         "housemix": "nexohub",
+        "business": "nexohub",
         "chatbot": "Chatbot",
         "app": "TV App",
         "social design": "Social Design",
+        "social media": "Social Design",
       };
-      const pill = pillByLabel[child.label];
+      const pill = !child.page ? pillByLabel[child.label] : undefined;
       if (pill) {
         setSelectedHeaderPill(pill);
         setCurrentPage("dashboard");
