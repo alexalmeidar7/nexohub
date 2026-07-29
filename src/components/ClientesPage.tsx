@@ -199,11 +199,28 @@ export default function ClientesPage() {
 
 
 
+  const carregarLixeira = async () => {
+    setTrashLoading(true);
+    try {
+      const res = await callAdmin({ action: "list_trash" });
+      setTrash(((res as any)?.items as TrashItem[]) || []);
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível carregar a lixeira.");
+    } finally {
+      setTrashLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (role === "admin") carregarLixeira();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role]);
+
   const excluirCliente = async (userId: string, nome?: string | null) => {
     const ok = await confirmDialog({
-      title: "Excluir cliente",
-      message: `Excluir definitivamente "${nome || "este cliente"}"? Todos os subusuários e acessos serão removidos. Esta ação não pode ser desfeita.`,
-      confirmLabel: "Excluir",
+      title: "Mover para a lixeira",
+      message: `Enviar "${nome || "este cliente"}" para a lixeira? O acesso do cliente e dos subusuários será bloqueado e os dados ficarão disponíveis para restauração por 60 dias.`,
+      confirmLabel: "Mover para a lixeira",
       destructive: true,
     });
     if (!ok) return;
@@ -217,13 +234,54 @@ export default function ClientesPage() {
         return next;
       });
       setSelected(null);
-      toast.success("Cliente excluído.");
+      await carregarLixeira();
+      toast.success("Cliente movido para a lixeira (60 dias para restaurar).");
     } catch (e) {
       toast.error((e as Error).message || "Não foi possível excluir o cliente.");
     } finally {
       setDeleting(false);
     }
   };
+
+  const restaurarCliente = async (item: TrashItem) => {
+    setTrashBusy(`${item.user_id}:restore`);
+    try {
+      await callAdmin({ action: "restore_client", user_id: item.user_id });
+      setTrash(prev => prev.filter(t => t.user_id !== item.user_id));
+      const { data } = await supabase
+        .from("empresa_config")
+        .select("user_id, nome, plano, ativo, logo")
+        .eq("user_id", item.user_id)
+        .maybeSingle();
+      if (data) setClientes(prev => [...prev, data as Cliente].sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
+      toast.success("Cliente restaurado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível restaurar o cliente.");
+    } finally {
+      setTrashBusy(null);
+    }
+  };
+
+  const excluirDefinitivo = async (item: TrashItem) => {
+    const ok = await confirmDialog({
+      title: "Excluir definitivamente",
+      message: `Excluir permanentemente "${item.nome || item.email || "este cliente"}"? Todos os dados e subusuários serão apagados. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir para sempre",
+      destructive: true,
+    });
+    if (!ok) return;
+    setTrashBusy(`${item.user_id}:purge`);
+    try {
+      await callAdmin({ action: "purge_client", user_id: item.user_id });
+      setTrash(prev => prev.filter(t => t.user_id !== item.user_id));
+      toast.success("Cliente excluído definitivamente.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o cliente.");
+    } finally {
+      setTrashBusy(null);
+    }
+  };
+
 
   const patchSub = (parentId: string, subId: string, patch: Partial<SubUser>) => {
     setSubUsers(prev => ({
