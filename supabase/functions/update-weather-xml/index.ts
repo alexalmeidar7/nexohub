@@ -194,8 +194,8 @@ serve(async (req) => {
           const twLabel = getLabel(twCode);
           amanhaXml = `
     <amanha>
-      <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}Cº</temperatura_minima>
-      <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}Cº</temperatura_maxima>
+      <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}ºC</temperatura_minima>
+      <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}ºC</temperatura_maxima>
       <url_imagem_icone>${twIconUrl}</url_imagem_icone>
       <descricao_tempo>${twLabel}</descricao_tempo>
     </amanha>`;
@@ -204,13 +204,13 @@ serve(async (req) => {
         const weatherXml = `<?xml version="1.0" encoding="UTF-8"?>
 <tempo>
     <cidade>${name}</cidade>
-    <temperatura>${Math.round(d.current.temperature_2m)}Cº</temperatura>
+    <temperatura>${Math.round(d.current.temperature_2m)}ºC</temperatura>
     <descricao>${condLabel}</descricao>
     <icone_url>${iconUrl}</icone_url>
-    <minima>${Math.round(d.daily.temperature_2m_min[0])}Cº</minima>
-    <maxima>${Math.round(d.daily.temperature_2m_max[0])}Cº</maxima>
+    <minima>${Math.round(d.daily.temperature_2m_min[0])}ºC</minima>
+    <maxima>${Math.round(d.daily.temperature_2m_max[0])}ºC</maxima>
     <humidade>${d.current.relative_humidity_2m}%</humidade>
-    <sensacao_termica>${Math.round(d.current.apparent_temperature)}Cº</sensacao_termica>
+    <sensacao_termica>${Math.round(d.current.apparent_temperature)}ºC</sensacao_termica>
     <vento>${Math.round(d.current.wind_speed_10m)} km/h</vento>
     <precipitacao>${d.daily.precipitation_probability_max[0] ?? 0}%</precipitacao>${amanhaXml}
 </tempo>`;
@@ -239,11 +239,11 @@ serve(async (req) => {
           dayBlocks.push(
             `  <${tag} date="${dateAttr}">\n` +
             `    <cidade>${name}</cidade>\n` +
-            `    <temperatura>${temp}Cº</temperatura>\n` +
+            `    <temperatura>${temp}ºC</temperatura>\n` +
             `    <descricao>${desc}</descricao>\n` +
             `    <icone_url>${icon}</icone_url>\n` +
-            `    <minima>${Math.round(d.daily.temperature_2m_min[i] ?? 0)}Cº</minima>\n` +
-            `    <maxima>${Math.round(d.daily.temperature_2m_max[i] ?? 0)}Cº</maxima>\n` +
+            `    <minima>${Math.round(d.daily.temperature_2m_min[i] ?? 0)}ºC</minima>\n` +
+            `    <maxima>${Math.round(d.daily.temperature_2m_max[i] ?? 0)}ºC</maxima>\n` +
             `    <humidade>${humid}%</humidade>\n` +
             `    <precipitacao>${d.daily.precipitation_probability_max[i] ?? 0}%</precipitacao>\n` +
             `  </${tag}>`
@@ -256,8 +256,8 @@ serve(async (req) => {
           const iconU = await ensureIconUploaded(supabase as any, code, false);
           amanhaPrevisao =
             `  <amanha date="${d.daily.time[1]}">\n` +
-            `    <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}Cº</temperatura_minima>\n` +
-            `    <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}Cº</temperatura_maxima>\n` +
+            `    <temperatura_minima>${Math.round(d.daily.temperature_2m_min[1])}ºC</temperatura_minima>\n` +
+            `    <temperatura_maxima>${Math.round(d.daily.temperature_2m_max[1])}ºC</temperatura_maxima>\n` +
             `    <url_imagem_icone>${iconU}</url_imagem_icone>\n` +
             `    <descricao_tempo>${getLabel(code)}</descricao_tempo>\n` +
             `  </amanha>`;
