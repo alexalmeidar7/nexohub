@@ -5,6 +5,7 @@ export interface ModuloChild {
   icon: LucideIcon;
   label: string;
   page?: string;
+  children?: ModuloChild[];
 }
 
 export interface ModuloGroup {
@@ -66,20 +67,37 @@ export default function ModulosPage({ groups, onSelectGroup, onSelectChild, acce
                 <div className="border-t border-slate-100 bg-slate-50/60 px-2 py-2 flex flex-col gap-1">
                   {children.map((child) => {
                     const CIcon = child.icon;
+                    const grandchildren = child.children ?? [];
                     return (
-                      <button
-                        key={child.label}
-                        type="button"
-                        onClick={() => onSelectChild(child, group.label)}
-                        className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
-                      >
-                        <CIcon size={15} style={{ color: accentColor }} className="shrink-0" />
-                        <span className="capitalize truncate">{child.label}</span>
-                      </button>
+                      <div key={child.label} className="flex flex-col gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onSelectChild(child, group.label)}
+                          className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] text-slate-600 hover:bg-white hover:text-slate-900 transition-colors"
+                        >
+                          <CIcon size={15} style={{ color: accentColor }} className="shrink-0" />
+                          <span className="capitalize truncate">{child.label}</span>
+                        </button>
+                        {grandchildren.map((grand) => {
+                          const GIcon = grand.icon;
+                          return (
+                            <button
+                              key={grand.label}
+                              type="button"
+                              onClick={() => onSelectChild(grand, child.label)}
+                              className="w-full flex items-center gap-2 rounded-lg pl-7 pr-2.5 py-1.5 text-left text-[12px] text-slate-500 hover:bg-white hover:text-slate-900 transition-colors"
+                            >
+                              <GIcon size={13} style={{ color: accentColor }} className="shrink-0" />
+                              <span className="capitalize truncate">{grand.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                 </div>
               )}
+
             </div>
           );
         })}

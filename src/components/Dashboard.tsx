@@ -164,21 +164,65 @@ const adminSidebarMenu: MenuItem[] = [
 // Conteúdo da página MODULOS (boxes principais + subitens)
 export const adminModulosGroups: MenuItem[] = [
   {
-    icon: Layers, label: "plataformas", children: [
-      { icon: Home, label: "housemix", page: undefined as unknown as Page },
-      { icon: Bot, label: "chatbot", page: undefined as unknown as Page },
-      { icon: Smartphone, label: "app", page: undefined as unknown as Page },
-      { icon: Palette, label: "social design", page: undefined as unknown as Page, separator: false },
+    icon: Users, label: "cadastros", children: [
+      { icon: Mic2, label: "participantes", page: "apresentadores" },
+      { icon: Users, label: "ouvintes", page: "ouvintes" },
+      { icon: PlaySquare, label: "programas", page: "programas" },
+      { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
-  ...sidebarMenu
-    .filter(i => i.label !== "home" && i.label !== "cadastros")
-    .map(i => ({
-      icon: i.icon,
-      label: i.label,
-      page: (i.page ?? (undefined as unknown as Page)),
-      children: i.children,
-    }) as MenuItem),
+  { icon: Gift, label: "sorteios", page: "sorteios" },
+  { icon: Siren, label: "blitz", page: "blitz" },
+  { icon: FileText, label: "roteiro de programa", page: "noticias" },
+  { icon: Music, label: "música no ar", page: "musica" },
+  { icon: CalendarDays, label: "agenda", page: "agenda" },
+  {
+    icon: Globe, label: "site", children: [
+      { icon: Globe, label: "site", page: "site" },
+      { icon: MonitorPlay, label: "player", page: undefined as unknown as Page, children: [
+        { icon: Settings, label: "configurações", page: "playerconfig" },
+        { icon: ExternalLink, label: "módulo player", page: undefined as unknown as Page },
+      ] },
+    ]
+  },
+  {
+    icon: ShoppingBag, label: "comercial", children: [
+      { icon: Film, label: "ADS", page: "preroll" },
+      { icon: MessageSquareQuote, label: "citações", page: "testemunhais" },
+      { icon: Tag, label: "promoções", page: "promocoes" },
+      { icon: Image, label: "logos", page: "logos" },
+    ]
+  },
+  {
+    icon: Mic2, label: "locutor", children: [
+      { icon: Settings, label: "config módulo locutor", page: "configtelapromo" },
+      { icon: ShoppingCart, label: "shopping", page: "shopping" },
+    ]
+  },
+  {
+    icon: Monitor, label: "vmix", children: [
+      { icon: Monitor, label: "vmix control", page: undefined as unknown as Page },
+      { icon: Radio, label: "broadcast", page: "broadcast" },
+      { icon: MonitorPlay, label: "cenários", page: "cenario" },
+      { icon: Swords, label: "batalha musical", page: "batalha" },
+      { icon: HelpCircle, label: "enquete", page: "enquete" },
+      { icon: HelpCircle, label: "quiz", page: "quiz" },
+    ]
+  },
+  {
+    icon: Wrench, label: "ferramentas", children: [
+      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
+    ]
+  },
+  {
+    icon: Bot, label: "atendimento", children: [
+      { icon: Bot, label: "chatbot", page: undefined as unknown as Page },
+    ]
+  },
+  { icon: Building2, label: "business", page: undefined as unknown as Page },
+  { icon: Smartphone, label: "app", page: undefined as unknown as Page },
+  { icon: Palette, label: "social media", page: undefined as unknown as Page },
 ];
 
 // Conteúdo da página SUBUSUÁRIOS (inclui cadastros, que não aparece em MODULOS)
@@ -698,14 +742,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
-    if (parentLabel === "modulos" || parentLabel === "plataformas") {
+    {
       const pillByLabel: Record<string, string> = {
         "housemix": "nexohub",
+        "business": "nexohub",
         "chatbot": "Chatbot",
         "app": "TV App",
         "social design": "Social Design",
+        "social media": "Social Design",
       };
-      const pill = pillByLabel[child.label];
+      const pill = !child.page ? pillByLabel[child.label] : undefined;
       if (pill) {
         setSelectedHeaderPill(pill);
         setCurrentPage("dashboard");
@@ -1603,12 +1649,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   onSelectGroup={(g) => {
                     const item = adminModulosGroups.find(i => i.label === g.label);
                     if (item?.page) { setCurrentPage(item.page); return; }
-                    if (item?.children?.length) handleChildClick(item.children[0], item.label);
+                    if (item?.children?.length) {
+                      const first = item.children[0];
+                      if (!first.page && first.children?.length) { handleChildClick(first.children[0], first.label); return; }
+                      handleChildClick(first, item.label);
+                      return;
+                    }
+                    handleChildClick({ label: g.label }, "modulos");
                   }}
                   onSelectChild={(c, parent) => {
-                    const item = adminModulosGroups.find(i => i.label === parent);
-                    const child = item?.children?.find(ch => ch.label === c.label);
-                    if (child) handleChildClick(child, parent);
+                    const findChild = (list: typeof adminModulosGroups[number]["children"]): { label: string; page?: Page } | undefined => {
+                      for (const ch of list ?? []) {
+                        if (ch.label === c.label) return ch;
+                        const deep = findChild(ch.children);
+                        if (deep) return deep;
+                      }
+                      return undefined;
+                    };
+                    const group = adminModulosGroups.find(i => i.label === parent)
+                      ?? adminModulosGroups.find(i => (i.children ?? []).some(ch => ch.label === parent));
+                    const child = findChild(group?.children) ?? { label: c.label };
+                    handleChildClick(child, parent);
                   }}
                 />
               )}
