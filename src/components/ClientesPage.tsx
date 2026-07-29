@@ -384,15 +384,101 @@ export default function ClientesPage() {
         ))}
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button
-          onClick={() => { setNovoOpen(true); setSelected(null); }}
+          onClick={() => { setTrashOpen(v => !v); if (!trashOpen) carregarLixeira(); }}
+          title="Lixeira de clientes"
+          className="relative flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide border border-black/10 text-[#002132]"
+          style={{ backgroundColor: trashOpen ? "#D6F4FB" : "rgba(255,255,255,0.85)" }}
+        >
+          <Trash2 size={14} /> Lixeira
+          {trash.length > 0 && (
+            <span
+              className="ml-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+              style={{ backgroundColor: CYAN }}
+            >
+              {trash.length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => { setNovoOpen(true); setSelected(null); setTrashOpen(false); }}
           className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]"
           style={{ backgroundColor: "#C6F03C" }}
         >
           <UserPlus size={14} /> Novo cliente
         </button>
       </div>
+
+      {trashOpen && (
+        <div className="rounded-2xl bg-white/85 border border-black/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-black/5 flex items-center gap-2">
+            <Trash2 size={14} className="text-[#002132]/50" />
+            <p className="text-[11px] font-bold uppercase tracking-wide text-[#002132]/60">
+              Clientes excluídos — restauráveis por 60 dias
+            </p>
+          </div>
+          {trashLoading ? (
+            <div className="p-6 flex items-center gap-2 text-sm text-[#002132]/60">
+              <Loader2 className="animate-spin" size={16} /> Carregando lixeira...
+            </div>
+          ) : trash.length === 0 ? (
+            <p className="p-6 text-sm text-[#002132]/50">A lixeira está vazia.</p>
+          ) : (
+            <div className="divide-y divide-black/5">
+              {trash.map(item => {
+                const dias = Math.max(
+                  0,
+                  Math.ceil((new Date(item.purge_at).getTime() - Date.now()) / 86400000),
+                );
+                return (
+                  <div key={item.user_id} className="px-4 py-3 flex items-center gap-3 flex-wrap">
+                    <div className="flex-1 min-w-[200px]">
+                      <p className="text-sm font-semibold text-[#002132]">{item.nome || "Sem nome"}</p>
+                      <p className="text-[11px] text-[#002132]/50">{item.email || "—"}</p>
+                    </div>
+                    <span className="text-[11px] text-[#002132]/60">
+                      Excluído em {new Date(item.deleted_at).toLocaleDateString("pt-BR")}
+                    </span>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded-full"
+                      style={{ backgroundColor: "#D6F4FB", color: "#002132" }}
+                    >
+                      {dias} dia{dias === 1 ? "" : "s"} restantes
+                    </span>
+                    <button
+                      onClick={() => restaurarCliente(item)}
+                      disabled={trashBusy === `${item.user_id}:restore`}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-[#002132] disabled:opacity-60"
+                      style={{ backgroundColor: "#C6F03C" }}
+                    >
+                      {trashBusy === `${item.user_id}:restore` ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={13} />
+                      )}
+                      Restaurar
+                    </button>
+                    <button
+                      onClick={() => excluirDefinitivo(item)}
+                      disabled={trashBusy === `${item.user_id}:purge`}
+                      className="flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 disabled:opacity-60"
+                    >
+                      {trashBusy === `${item.user_id}:purge` ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={13} />
+                      )}
+                      Excluir
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
 
       <div className="grid lg:grid-cols-[320px_1fr] gap-4">
         {/* Lista */}
