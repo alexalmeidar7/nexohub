@@ -341,7 +341,7 @@ export default function ClientesPage() {
               return (
                 <button
                   key={c.user_id}
-                  onClick={() => setSelected(c.user_id)}
+                  onClick={() => { setSelected(c.user_id); setNovoOpen(false); }}
                   className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-black/5"
                   style={{ backgroundColor: isSel ? "#D6F4FB" : "transparent" }}
                 >
