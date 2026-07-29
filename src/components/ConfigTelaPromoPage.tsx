@@ -152,15 +152,16 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
     setUploading(true);
     try {
       const file = e.target.files[0];
-      const ext = file.name.split(".").pop();
-      const path = `${user.id}/tela-promo-bg.${ext}`;
-      const { error } = await supabase.storage.from("backgrounds").upload(path, file, { upsert: true });
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `${user.id}/tela-promo/bg-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type || undefined });
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("backgrounds").getPublicUrl(path);
+      const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
       setConfig(c => ({ ...c, bg_image_url: urlData.publicUrl }));
       toast.success("Imagem enviada!");
-    } catch {
-      toast.error("Erro ao enviar imagem");
+    } catch (err: any) {
+      console.error("[ConfigTelaPromo] upload error", err);
+      toast.error(err?.message ? `Erro ao enviar imagem: ${err.message}` : "Erro ao enviar imagem");
     } finally {
       setUploading(false);
     }
