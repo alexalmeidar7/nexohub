@@ -103,6 +103,9 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "sending" | "done" | "failed">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string>("");
   const [previewDark, setPreviewDark] = useState(true);
 
   useEffect(() => {
