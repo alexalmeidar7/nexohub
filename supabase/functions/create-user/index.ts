@@ -69,9 +69,15 @@ Deno.serve(async (req) => {
 
     // CREATE USER
     if (action === "create") {
-      const { email, password, nome } = body;
+      const { email, password, nome, plano, modules } = body;
       if (!email || !password || !nome) {
         return new Response(JSON.stringify({ error: "Preencha todos os campos" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof password !== "string" || password.length < 8) {
+        return new Response(JSON.stringify({ error: "A senha deve ter ao menos 8 caracteres" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -90,14 +96,31 @@ Deno.serve(async (req) => {
         });
       }
 
-      await adminClient.from("empresa_config").insert({ user_id: newUser.user!.id, nome });
-      await adminClient.from("user_roles").insert({ user_id: newUser.user!.id, role: "user" });
+      const newId = newUser.user!.id;
+      const empresaRow: Record<string, any> = { user_id: newId, nome };
+      if (typeof plano === "string" && plano.trim()) empresaRow.plano = plano.trim();
 
-      return new Response(JSON.stringify({ success: true, user_id: newUser.user!.id }), {
+      await adminClient.from("empresa_config").insert(empresaRow);
+      await adminClient.from("user_roles").insert({ user_id: newId, role: "user" });
+
+      const keys = Array.isArray(modules)
+        ? modules.filter((m: unknown) => typeof m === "string").slice(0, 200)
+        : [];
+      if (keys.length > 0) {
+        await adminClient
+          .from("client_modules")
+          .upsert(
+            keys.map((k: string) => ({ user_id: newId, module_key: k, enabled: true })),
+            { onConflict: "user_id,module_key" },
+          );
+      }
+
+      return new Response(JSON.stringify({ success: true, user_id: newId }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
 
     // UPDATE USER
     if (action === "update") {
