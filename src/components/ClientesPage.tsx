@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog } from "lucide-react";
+import { confirmDialog } from "@/lib/confirmDialog";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown } from "lucide-react";
+
 
 interface Cliente {
   user_id: string;
