@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Building2, Search, ShieldCheck, Users } from "lucide-react";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog } from "lucide-react";
 
 interface Cliente {
   user_id: string;
@@ -18,7 +18,25 @@ interface ModuleDef {
   name: string;
 }
 
+interface SubUser {
+  id: string;
+  parent_user_id: string;
+  email: string;
+  nome: string | null;
+  ativo: boolean;
+  allowed_modules: string[] | null;
+}
+
 const CYAN = "#00BFF0";
+
+// Mesma regra usada pelo player para resolver o cliente pela URL:
+// o slug é o "local-part" do e-mail de acesso (antes do @).
+function slugFromEmail(email?: string | null, nome?: string | null) {
+  const local = (email || "").split("@")[0]?.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (local) return local;
+  const fromName = (nome || "").toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 32);
+  return fromName || "—";
+}
 
 export default function ClientesPage() {
   const { role } = useAuth();
@@ -26,9 +44,12 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [modules, setModules] = useState<ModuleDef[]>([]);
   const [clientModules, setClientModules] = useState<Record<string, Set<string>>>({});
+  const [emails, setEmails] = useState<Record<string, string>>({});
+  const [subUsers, setSubUsers] = useState<Record<string, SubUser[]>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (role !== "admin") {
