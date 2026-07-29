@@ -57,10 +57,12 @@ export default function ClientesPage() {
       return;
     }
     (async () => {
-      const [empresasRes, modsRes, cmRes] = await Promise.all([
+      const [empresasRes, modsRes, cmRes, profRes, subRes] = await Promise.all([
         supabase.from("empresa_config").select("user_id, nome, plano, ativo, logo").order("nome"),
         supabase.from("available_modules").select("key, name").order("name"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
+        supabase.from("profiles").select("user_id, email"),
+        supabase.from("sub_users").select("id, parent_user_id, email, nome, ativo, allowed_modules"),
       ]);
 
       if (empresasRes.error) toast.error("Não foi possível carregar os clientes.");
@@ -73,9 +75,25 @@ export default function ClientesPage() {
         (map[row.user_id] ||= new Set()).add(row.module_key);
       }
       setClientModules(map);
+
+      const em: Record<string, string> = {};
+      for (const p of (profRes.data as any[]) || []) {
+        if (p.email) em[p.user_id] = p.email;
+      }
+      setEmails(em);
+
+      const su: Record<string, SubUser[]> = {};
+      for (const s of (subRes.data as any[]) || []) {
+        (su[s.parent_user_id] ||= []).push(s as SubUser);
+      }
+      setSubUsers(su);
+
       setLoading(false);
     })();
   }, [role]);
+
+  const filtradosBase = useMemo(() => clientes, [clientes]);
+
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
