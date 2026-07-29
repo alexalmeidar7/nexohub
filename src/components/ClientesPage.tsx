@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown } from "lucide-react";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown, UserPlus, X } from "lucide-react";
 
 
 interface Cliente {
@@ -54,6 +54,11 @@ export default function ClientesPage() {
   const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [subBusy, setSubBusy] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(false);
+  const [criando, setCriando] = useState(false);
+  const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "" });
+  const [novoModules, setNovoModules] = useState<Set<string>>(new Set());
+
 
 
 
@@ -136,6 +141,51 @@ export default function ClientesPage() {
     if (data?.error) throw new Error(String(data.error));
     return data;
   };
+
+  const criarCliente = async () => {
+    const nome = novo.nome.trim();
+    const email = novo.email.trim().toLowerCase();
+    if (!nome || !email || !novo.password) {
+      toast.error("Preencha nome, e-mail e senha.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Informe um e-mail válido.");
+      return;
+    }
+    if (novo.password.length < 8) {
+      toast.error("A senha deve ter ao menos 8 caracteres.");
+      return;
+    }
+    setCriando(true);
+    try {
+      const data = await callAdmin({
+        action: "create",
+        nome,
+        email,
+        password: novo.password,
+        plano: novo.plano.trim() || undefined,
+        modules: Array.from(novoModules),
+      });
+      const newId = String(data?.user_id || "");
+      if (newId) {
+        setClientes(prev => [...prev, { user_id: newId, nome, plano: novo.plano.trim() || null, ativo: true, logo: null }]);
+        setEmails(prev => ({ ...prev, [newId]: email }));
+        setClientModules(prev => ({ ...prev, [newId]: new Set(novoModules) }));
+        setSelected(newId);
+      }
+      setNovo({ nome: "", email: "", password: "", plano: "" });
+      setNovoModules(new Set());
+      setNovoOpen(false);
+      toast.success("Cliente cadastrado.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível cadastrar o cliente.");
+    } finally {
+      setCriando(false);
+    }
+  };
+
+
 
   const excluirCliente = async (userId: string, nome?: string | null) => {
     const ok = await confirmDialog({
@@ -262,9 +312,20 @@ export default function ClientesPage() {
         ))}
       </div>
 
+      <div className="flex justify-end">
+        <button
+          onClick={() => { setNovoOpen(true); setSelected(null); }}
+          className="flex items-center gap-2 rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]"
+          style={{ backgroundColor: "#C6F03C" }}
+        >
+          <UserPlus size={14} /> Novo cliente
+        </button>
+      </div>
+
       <div className="grid lg:grid-cols-[320px_1fr] gap-4">
         {/* Lista */}
         <div className="rounded-2xl bg-white/85 border border-black/5 overflow-hidden">
+
           <div className="p-3 border-b border-black/5 flex items-center gap-2">
             <Search size={14} className="text-[#002132]/40" />
             <input
@@ -280,7 +341,7 @@ export default function ClientesPage() {
               return (
                 <button
                   key={c.user_id}
-                  onClick={() => setSelected(c.user_id)}
+                  onClick={() => { setSelected(c.user_id); setNovoOpen(false); }}
                   className="w-full text-left px-4 py-3 flex items-center gap-3 transition-colors border-b border-black/5"
                   style={{ backgroundColor: isSel ? "#D6F4FB" : "transparent" }}
                 >
@@ -308,9 +369,98 @@ export default function ClientesPage() {
 
         {/* Detalhe do cliente */}
         <div className="rounded-2xl bg-white/85 border border-black/5 p-4">
-          {!selected ? (
+          {novoOpen ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <UserPlus size={16} style={{ color: CYAN }} />
+                  <p className="text-lg font-semibold text-[#002132]">Novo cliente</p>
+                </div>
+                <button
+                  onClick={() => setNovoOpen(false)}
+                  className="p-1.5 rounded-lg text-[#002132]/50 hover:bg-black/5"
+                  title="Fechar"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-2">
+                {[
+                  { k: "nome", label: "Nome da empresa", type: "text", ph: "Rádio Exemplo FM" },
+                  { k: "email", label: "E-mail de acesso", type: "email", ph: "contato@radio.com" },
+                  { k: "password", label: "Senha (mín. 8 caracteres)", type: "password", ph: "••••••••" },
+                  { k: "plano", label: "Plano (opcional)", type: "text", ph: "básico / premium" },
+                ].map(f => (
+                  <div key={f.k} className="rounded-xl px-3 py-2 border border-black/5 bg-[#F6F8F9]">
+                    <label className="block text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                      {f.label}
+                    </label>
+                    <input
+                      type={f.type}
+                      autoComplete="off"
+                      value={(novo as Record<string, string>)[f.k]}
+                      placeholder={f.ph}
+                      onChange={e => setNovo(prev => ({ ...prev, [f.k]: e.target.value }))}
+                      className="w-full bg-transparent text-sm outline-none text-[#002132] mt-0.5"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>
+                  Módulos liberados
+                </p>
+                <div className="grid sm:grid-cols-2 gap-2">
+                  {modules.map(m => {
+                    const on = novoModules.has(m.key);
+                    return (
+                      <div
+                        key={m.key}
+                        className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-black/5"
+                        style={{ backgroundColor: on ? "#D6F4FB" : "#F6F8F9" }}
+                      >
+                        <span className="text-sm text-[#002132]">{m.name}</span>
+                        <Switch
+                          checked={on}
+                          onCheckedChange={v =>
+                            setNovoModules(prev => {
+                              const next = new Set(prev);
+                              if (v) next.add(m.key);
+                              else next.delete(m.key);
+                              return next;
+                            })
+                          }
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={criarCliente}
+                  disabled={criando}
+                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[11px] font-bold uppercase tracking-wide text-white disabled:opacity-60"
+                  style={{ backgroundColor: CYAN }}
+                >
+                  {criando ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                  Cadastrar cliente
+                </button>
+                <button
+                  onClick={() => setNovoOpen(false)}
+                  className="rounded-full px-4 py-2.5 text-[11px] font-bold uppercase tracking-wide text-[#002132]/60 border border-black/10"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : !selected ? (
             <p className="text-sm text-[#002132]/50">Selecione um cliente para ver os dados de acesso e liberar módulos.</p>
           ) : (
+
             <>
               {(() => {
                 const cli = clientes.find(c => c.user_id === selected);
