@@ -208,6 +208,29 @@ export default function PermissoesSection() {
     }
   };
 
+  const applyPerfil = async (subUser: SubUser, perfil: PerfilKey) => {
+    const preset = PERFIS.find(p => p.key === perfil);
+    if (!preset) return;
+    const updated = preset.modules.filter(k => ALL_MODULE_KEYS.includes(k));
+    setSubUsers(prev => prev.map(s => s.id === subUser.id ? { ...s, allowed_modules: updated } : s));
+    setPerfilMap(prev => {
+      const next = { ...prev, [subUser.id]: perfil };
+      writePerfilMap(next);
+      return next;
+    });
+    setSavingId(subUser.id);
+    const { data, error } = await supabase.functions.invoke("manage-sub-users", {
+      body: { action: "update_modules", sub_user_id: subUser.id, allowed_modules: updated },
+    });
+    setSavingId(null);
+    if (error || data?.error) {
+      toast.error("Erro ao aplicar perfil");
+      fetchSubUsers();
+    } else {
+      toast.success(`Perfil ${preset.label} aplicado`);
+    }
+  };
+
   const handleCreate = async () => {
     if (!newEmail || !newPassword) {
       toast.error("Email e senha são obrigatórios");
@@ -221,10 +244,29 @@ export default function PermissoesSection() {
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao criar sub-usuário");
       } else {
-        toast.success("Sub-usuário criado com sucesso");
+        const preset = PERFIS.find(p => p.key === newPerfil);
+        const modules = (preset?.modules || []).filter(k => ALL_MODULE_KEYS.includes(k));
+        // Localiza o registro recém-criado para aplicar o perfil padrão
+        const { data: rows } = await supabase
+          .from("sub_users")
+          .select("id")
+          .eq("email", newEmail)
+          .maybeSingle();
+        if (rows?.id) {
+          await supabase.functions.invoke("manage-sub-users", {
+            body: { action: "update_modules", sub_user_id: rows.id, allowed_modules: modules },
+          });
+          setPerfilMap(prev => {
+            const next = { ...prev, [rows.id as string]: newPerfil };
+            writePerfilMap(next);
+            return next;
+          });
+        }
+        toast.success(`Sub-usuário criado com perfil ${preset?.label ?? ""}`);
         setNewEmail("");
         setNewPassword("");
         setNewNome("");
+        setNewPerfil("recepcao");
         setShowForm(false);
         fetchSubUsers();
       }
@@ -233,6 +275,7 @@ export default function PermissoesSection() {
     }
     setCreating(false);
   };
+
 
   const toggleModule = async (subUser: SubUser, moduleKey: string) => {
     const current = subUser.allowed_modules || [];
