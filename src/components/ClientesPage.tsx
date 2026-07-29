@@ -647,7 +647,7 @@ export default function ClientesPage() {
                         className="shrink-0 flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
                       >
                         {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
-                        Excluir cliente
+                        Mover para lixeira
                       </button>
                     </div>
 
