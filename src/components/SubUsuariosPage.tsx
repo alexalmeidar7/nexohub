@@ -88,9 +88,14 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
     const map: Record<string, FlatItem> = {};
     groups.forEach((g) => {
       map[`g:${g.label}`] = { id: `g:${g.label}`, label: g.label, group: g.label, icon: g.icon };
-      (g.children ?? []).forEach((c) => {
-        map[`c:${g.label}:${c.label}`] = { id: `c:${g.label}:${c.label}`, label: c.label, group: g.label, icon: c.icon };
-      });
+      const walk = (list: { icon: LucideIcon; label: string; children?: unknown }[]) => {
+        list.forEach((c) => {
+          map[`c:${g.label}:${c.label}`] = { id: `c:${g.label}:${c.label}`, label: c.label, group: g.label, icon: c.icon };
+          const sub = (c as { children?: { icon: LucideIcon; label: string }[] }).children;
+          if (sub?.length) walk(sub);
+        });
+      };
+      walk((g.children ?? []) as { icon: LucideIcon; label: string }[]);
     });
     return map;
   }, [groups]);
@@ -99,8 +104,16 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setPerms({ ...emptyPerms(), ...JSON.parse(raw) });
-    } catch { /* noop */ }
+      else setPerms({ ...emptyPerms(), ...DEFAULT_PERMS });
+    } catch { setPerms({ ...emptyPerms(), ...DEFAULT_PERMS }); }
   }, []);
+
+  const restoreDefaults = () => {
+    setPerms({ ...emptyPerms(), ...DEFAULT_PERMS });
+    setDirty(true);
+    toast.success("Perfis padrão aplicados — clique em Salvar perfis");
+  };
+
 
   const save = () => {
     try {
