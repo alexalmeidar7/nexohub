@@ -1231,22 +1231,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
                         : i)
                   : sidebarMenu
-                ).filter(item => {
-                  if (subUserModules !== null) {
-                    if (item.label === "home") return true;
-                    if (item.children) {
-                      return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
-                    }
-                    return item.page ? subUserModules.has(item.page) : false;
-                  }
-                  if (isAdmin) return true;
-                  if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-                  const modKey = menuToModuleKey[item.label];
-                  if (!modKey) return true;
-                  if (planModules) return planModules.has(modKey);
-                  if (enabledModules) return enabledModules.has(modKey);
-                  return true;
-                }).map(item => {
+                ).filter(isMenuItemVisible).map(item => {
                   const Icon = item.icon;
                   const active = isItemActive(item);
                   const expanded = expandedMenus.has(item.label);
