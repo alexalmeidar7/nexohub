@@ -39,6 +39,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   const [modules, setModules] = useState<ModuleDef[]>([]);
   const [clientesPorPlano, setClientesPorPlano] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<string | null>(null);
+  const [nomesOriginais, setNomesOriginais] = useState<Record<string, string>>({});
   const [novo, setNovo] = useState({ name: "", price: "" });
   const [criando, setCriando] = useState(false);
 
