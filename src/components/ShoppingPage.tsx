@@ -257,13 +257,13 @@ export default function ShoppingPage() {
             </div>
             <div>
               <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Imagem do Produto</label>
-              <input type="file" accept="image/*" onChange={handleImageChange} className="text-xs" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
+              <input type="file" accept="image/*" onChange={handleImageChange} disabled={formDisabled} className="text-xs disabled:opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
               {imagePreview && (
                 <img src={imagePreview} alt="Preview" className="mt-2 w-24 h-24 object-cover rounded-lg" style={{ border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 35%, transparent)" }} />
               )}
             </div>
 
-            <Button variant="save" type="submit" disabled={saving}
+            <Button variant="save" type="submit" disabled={formDisabled || saving}
             >
               {saving ? <Loader2 className="animate-spin" size={16} /> : <Plus size={16} />}
               {editId ? "Salvar Alterações" : "Cadastrar Produto"}
