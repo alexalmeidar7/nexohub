@@ -208,15 +208,86 @@ export default function ClientesPage() {
           </div>
         </div>
 
-        {/* Módulos do cliente */}
+        {/* Detalhe do cliente */}
         <div className="rounded-2xl bg-white/85 border border-black/5 p-4">
           {!selected ? (
-            <p className="text-sm text-[#002132]/50">Selecione um cliente para liberar ou bloquear módulos.</p>
+            <p className="text-sm text-[#002132]/50">Selecione um cliente para ver os dados de acesso e liberar módulos.</p>
           ) : (
             <>
+              {(() => {
+                const cli = clientes.find(c => c.user_id === selected);
+                const email = emails[selected] || null;
+                const slug = slugFromEmail(email, cli?.nome);
+                const subs = subUsers[selected] || [];
+                return (
+                  <div className="mb-5 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#D6F4FB] flex items-center justify-center shrink-0">
+                        {cli?.logo ? (
+                          <img src={cli.logo} alt={cli?.nome || ""} className="w-full h-full object-contain" />
+                        ) : (
+                          <Building2 size={18} style={{ color: CYAN }} />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold text-[#002132] truncate">{cli?.nome || "Sem nome"}</p>
+                        <p className="text-[11px] text-[#002132]/50">
+                          {cli?.plano || "sem plano"} · {cli?.ativo === false ? "inativo" : "ativo"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          <Link2 size={12} /> Slug
+                        </div>
+                        <p className="text-sm text-[#002132] font-mono truncate">/{slug}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          <Mail size={12} /> E-mail de acesso
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{email || "—"}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-black/5 bg-[#F6F8F9] overflow-hidden">
+                      <div className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45 border-b border-black/5">
+                        <UserCog size={12} /> Subusuários ({subs.length})
+                      </div>
+                      {subs.length === 0 ? (
+                        <p className="px-3 py-2.5 text-xs text-[#002132]/50">Nenhum subusuário cadastrado.</p>
+                      ) : (
+                        <div className="divide-y divide-black/5 max-h-52 overflow-y-auto">
+                          {subs.map(s => (
+                            <div key={s.id} className="px-3 py-2 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</p>
+                                <p className="text-[11px] text-[#002132]/50 truncate">{s.email}</p>
+                              </div>
+                              <span
+                                className="text-[10px] font-bold uppercase px-2 py-1 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: s.ativo ? "#D6F4FB" : "#EFEFEF",
+                                  color: s.ativo ? "#00789A" : "#8A9298",
+                                }}
+                              >
+                                {s.ativo ? "ativo" : "inativo"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
                 Módulos liberados
               </p>
+
               <div className="grid sm:grid-cols-2 gap-2">
                 {modules.map(m => {
                   const enabled = clientModules[selected]?.has(m.key) || false;
