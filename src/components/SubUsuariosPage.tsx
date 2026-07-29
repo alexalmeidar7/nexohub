@@ -211,17 +211,18 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
           return (
             <div
               key={group.label}
-              className="rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col overflow-hidden"
+              className="rounded-2xl bg-white border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_8px_24px_rgba(15,23,42,0.10)] hover:-translate-y-0.5 transition-all flex flex-col overflow-hidden"
             >
               <div
                 draggable
                 onDragStart={(e) => { e.dataTransfer.setData("text/plain", gid); setDragging(flat[gid]); }}
                 onDragEnd={() => { setDragging(null); setHover(null); }}
-                className="w-full flex items-center gap-3 px-4 py-4 cursor-grab active:cursor-grabbing hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-4 cursor-grab active:cursor-grabbing transition-colors"
+                style={{ background: `linear-gradient(135deg, ${accentColor}14, transparent 70%)` }}
               >
                 <span
-                  className="flex items-center justify-center rounded-xl shrink-0"
-                  style={{ width: 42, height: 42, backgroundColor: `${accentColor}1f`, color: accentColor }}
+                  className="flex items-center justify-center rounded-xl shrink-0 text-white"
+                  style={{ width: 44, height: 44, backgroundColor: accentColor, boxShadow: `0 6px 16px ${accentColor}44` }}
                 >
                   <Icon size={20} />
                 </span>
@@ -235,7 +236,7 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
               </div>
 
               {children.length > 0 && (
-                <div className="border-t border-slate-100 bg-slate-50/60 px-2 py-2 flex flex-col gap-1">
+                <div className="border-t border-slate-100 px-2 py-2 flex flex-col gap-1">
                   {children.map((child) => {
                     const CIcon = child.icon;
                     const cid = `c:${group.label}:${child.label}`;
@@ -246,12 +247,15 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
                         draggable
                         onDragStart={(e) => { e.dataTransfer.setData("text/plain", cid); setDragging(flat[cid]); }}
                         onDragEnd={() => { setDragging(null); setHover(null); }}
-                        className="w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] text-slate-600 bg-transparent hover:bg-white cursor-grab active:cursor-grabbing transition-colors"
+                        className="w-full flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] text-slate-600 bg-slate-50/70 hover:bg-white hover:shadow-sm border border-transparent hover:border-slate-200 cursor-grab active:cursor-grabbing transition-all"
                       >
                         <CIcon size={15} style={{ color: accentColor }} className="shrink-0" />
                         <span className="capitalize truncate flex-1">{child.label}</span>
                         {usedIn > 0 && (
-                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600">
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold rounded-full px-1.5 py-0.5"
+                            style={{ backgroundColor: `${accentColor}1f`, color: accentColor }}
+                          >
                             <Check size={11} /> {usedIn}
                           </span>
                         )}
@@ -261,21 +265,6 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
                   })}
                 </div>
               )}
-
-              {/* Atalho: adicionar módulo inteiro a um perfil */}
-              <div className="border-t border-slate-100 px-2 py-2 flex flex-wrap gap-1">
-                {PERFIS.map((p) => (
-                  <button
-                    key={p.key}
-                    type="button"
-                    onClick={() => addGroupTo(p.key, group)}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-[10px] text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    title={`Adicionar tudo em ${p.label}`}
-                  >
-                    <Plus size={10} /> {p.label}
-                  </button>
-                ))}
-              </div>
             </div>
           );
         })}
