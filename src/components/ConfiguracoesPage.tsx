@@ -6,6 +6,8 @@ const LayoutCustomizer = lazy(() => import("./LayoutCustomizer"));
 const PlayerLayoutCustomizer = lazy(() => import("./PlayerLayoutCustomizer"));
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 const PermissoesSection = lazy(() => import("./PermissoesSection"));
+const AISection = lazy(() => import("./AISection"));
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -1056,8 +1058,16 @@ export default function ConfiguracoesPage({ section = "all" }: { section?: "all"
           <PermissoesSection />
         </Suspense>
       </CollapsibleBox>}
+
+      {/* Box 6: Inteligência Artificial */}
+      {(section === "all" || section === "empresa") && <CollapsibleBox title="Inteligência Artificial" icon={<Sparkles size={16} style={{ opacity: 0.8 }} />}>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-8 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}><Loader2 size={16} className="animate-spin" /> Carregando...</div>}>
+          <AISection />
+        </Suspense>
+      </CollapsibleBox>}
         </div>
       </div>
+
     </div>
   );
 }
