@@ -130,6 +130,98 @@ export default function ClientesPage() {
     toast.success(enabled ? "Módulo liberado." : "Módulo bloqueado.");
   };
 
+  const callAdmin = async (payload: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("create-user", { body: payload });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(String(data.error));
+    return data;
+  };
+
+  const excluirCliente = async (userId: string, nome?: string | null) => {
+    const ok = await confirmDialog({
+      title: "Excluir cliente",
+      message: `Excluir definitivamente "${nome || "este cliente"}"? Todos os subusuários e acessos serão removidos. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      destructive: true,
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await callAdmin({ action: "delete_client", user_id: userId });
+      setClientes(prev => prev.filter(c => c.user_id !== userId));
+      setSubUsers(prev => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+      setSelected(null);
+      toast.success("Cliente excluído.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o cliente.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const patchSub = (parentId: string, subId: string, patch: Partial<SubUser>) => {
+    setSubUsers(prev => ({
+      ...prev,
+      [parentId]: (prev[parentId] || []).map(s => (s.id === subId ? { ...s, ...patch } : s)),
+    }));
+  };
+
+  const toggleSubAtivo = async (parentId: string, sub: SubUser, ativo: boolean) => {
+    setSubBusy(`${sub.id}:ativo`);
+    try {
+      await callAdmin({ action: "admin_sub_update", sub_user_id: sub.id, ativo });
+      patchSub(parentId, sub.id, { ativo });
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível atualizar o subusuário.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+  const toggleSubModule = async (parentId: string, sub: SubUser, key: string, enabled: boolean) => {
+    const current = new Set(sub.allowed_modules || []);
+    if (enabled) current.add(key);
+    else current.delete(key);
+    const next = Array.from(current);
+    setSubBusy(`${sub.id}:${key}`);
+    try {
+      await callAdmin({ action: "admin_sub_update", sub_user_id: sub.id, allowed_modules: next });
+      patchSub(parentId, sub.id, { allowed_modules: next });
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível salvar a permissão.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+  const excluirSub = async (parentId: string, sub: SubUser) => {
+    const ok = await confirmDialog({
+      title: "Excluir subusuário",
+      message: `Excluir o acesso de "${sub.nome || sub.email}"? Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      destructive: true,
+    });
+    if (!ok) return;
+    setSubBusy(`${sub.id}:del`);
+    try {
+      await callAdmin({ action: "admin_sub_delete", sub_user_id: sub.id });
+      setSubUsers(prev => ({
+        ...prev,
+        [parentId]: (prev[parentId] || []).filter(s => s.id !== sub.id),
+      }));
+      toast.success("Subusuário excluído.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o subusuário.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+
   if (role !== "admin") {
     return (
       <div className="p-8">
