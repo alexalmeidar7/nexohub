@@ -236,10 +236,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) finishLoading();
       });
 
+    // Proactive session recovery to prevent "reconnect loops" after long idle:
+    // - Refresh token on tab focus / online after being idle for >2min
+    // - Periodic refresh every 20 min to keep token warm during long idle
+    let lastRefreshAt = Date.now();
+    const proactiveRefresh = async (reason: string) => {
+      if (!mounted || manualSignOutRef.current) return;
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        lastRefreshAt = Date.now();
+        if (error) {
+          console.warn(`Auth: proactive refresh (${reason}) failed`, error.message);
+          const { data: sess } = await supabase.auth.getSession();
+          if (sess.session && mounted) {
+            lastGoodSessionRef.current = sess.session;
+            setSession(sess.session);
+          }
+          return;
+        }
+        if (data.session && mounted) {
+          lastGoodSessionRef.current = data.session;
+          setSession(data.session);
+          try { localStorage.setItem('nexohub_backup_session', JSON.stringify(data.session)); } catch { /* ignore */ }
+        }
+      } catch (e) {
+        console.warn(`Auth: proactive refresh (${reason}) threw`, e);
+      }
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) return;
+      const idleMs = Date.now() - lastRefreshAt;
+      if (idleMs > 2 * 60 * 1000) void proactiveRefresh("visibility");
+    };
+    const onOnline = () => { void proactiveRefresh("online"); };
+    const refreshInterval = setInterval(() => {
+      if (!document.hidden) void proactiveRefresh("interval");
+    }, 20 * 60 * 1000);
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("focus", onVisibility);
+
     return () => {
       mounted = false;
       timers.forEach(clearTimeout);
       subscription.unsubscribe();
+      clearInterval(refreshInterval);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("focus", onVisibility);
     };
   }, []);
 
