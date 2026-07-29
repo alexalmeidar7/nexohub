@@ -103,6 +103,9 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
   const [config, setConfig] = useState<TelaPromoConfig>(defaultTelaPromoConfig);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "sending" | "done" | "failed">("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string>("");
   const [previewDark, setPreviewDark] = useState(true);
 
   useEffect(() => {
@@ -149,20 +152,32 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!user || !e.target.files?.[0]) return;
+    const file = e.target.files[0];
     setUploading(true);
+    setUploadStatus("sending");
+    setUploadError("");
+    setUploadProgress(5);
+    // Simulated progressive indicator (Supabase JS doesn't expose native progress)
+    const timer = setInterval(() => {
+      setUploadProgress(p => (p < 90 ? p + Math.max(1, Math.round((90 - p) / 8)) : p));
+    }, 200);
     try {
-      const file = e.target.files[0];
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${user.id}/tela-promo/bg-${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("empresa-assets").upload(path, file, { upsert: true, contentType: file.type || undefined });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("empresa-assets").getPublicUrl(path);
       setConfig(c => ({ ...c, bg_image_url: urlData.publicUrl }));
+      setUploadProgress(100);
+      setUploadStatus("done");
       toast.success("Imagem enviada!");
     } catch (err: any) {
       console.error("[ConfigTelaPromo] upload error", err);
+      setUploadStatus("failed");
+      setUploadError(err?.message || "Falha desconhecida");
       toast.error(err?.message ? `Erro ao enviar imagem: ${err.message}` : "Erro ao enviar imagem");
     } finally {
+      clearInterval(timer);
       setUploading(false);
     }
   }
@@ -243,6 +258,32 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                 <div className="space-y-2">
                   <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Imagem de fundo</Label>
                   <Input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="cursor-pointer h-9 text-sm" style={inputStyle} />
+                  {uploadStatus !== "idle" && (
+                    <div className="space-y-1">
+                      <div className="h-1.5 w-full rounded-full overflow-hidden bg-black/10">
+                        <div
+                          className="h-full transition-all duration-200"
+                          style={{
+                            width: `${uploadProgress}%`,
+                            background:
+                              uploadStatus === "failed"
+                                ? "#ef4444"
+                                : uploadStatus === "done"
+                                ? "#22c55e"
+                                : "var(--layout-primary, #00BFF0)",
+                          }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]" style={{ color: "var(--layout-text)" }}>
+                        <span className="opacity-80">
+                          {uploadStatus === "sending" && "Enviando imagem..."}
+                          {uploadStatus === "done" && "Upload concluído"}
+                          {uploadStatus === "failed" && `Falhou${uploadError ? `: ${uploadError}` : ""}`}
+                        </span>
+                        <span className="opacity-60 font-mono">{uploadProgress}%</span>
+                      </div>
+                    </div>
+                  )}
                   <Input value={config.bg_image_url} onChange={e => update({ bg_image_url: e.target.value })} placeholder="https://..." className="h-9 text-sm" style={inputStyle} />
                 </div>
               )}
