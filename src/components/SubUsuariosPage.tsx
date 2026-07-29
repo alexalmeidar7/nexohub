@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Check, GripVertical, Plus, RotateCcw, Save, Trash2, Users } from "lucide-react";
+import { Check, GripVertical, RotateCcw, Save, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import type { ModuloGroup } from "./ModulosPage";
 
@@ -78,11 +78,6 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
     setDirty(true);
   };
 
-  const addGroupTo = (perfil: PerfilKey, g: ModuloGroup) => {
-    const ids = [`g:${g.label}`, ...(g.children ?? []).map((c) => `c:${g.label}:${c.label}`)];
-    setPerms((prev) => ({ ...prev, [perfil]: Array.from(new Set([...prev[perfil], ...ids])) }));
-    setDirty(true);
-  };
 
   const clear = (perfil: PerfilKey) => {
     setPerms((prev) => ({ ...prev, [perfil]: [] }));
