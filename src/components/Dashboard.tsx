@@ -171,17 +171,8 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
-  { icon: Bot, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
   { icon: Layers, label: "modulos", page: "modulos" },
-  {
-    icon: Wrench, label: "ferramentas", children: [
-      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
-      { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
-    ]
-  },
   { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
-  { icon: Smartphone, label: "app", page: "dashboard", pillMode: "TV App" },
-  { icon: Palette, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
 
 
