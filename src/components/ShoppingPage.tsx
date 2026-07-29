@@ -164,7 +164,8 @@ export default function ShoppingPage() {
           </div>
           <button
             onClick={toggleShopActive}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all"
+            disabled={formDisabled}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all disabled:opacity-60"
             style={{
               backgroundColor: shopActive ? "color-mix(in srgb, var(--layout-accent, #e1f532) 20%, transparent)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 10%, transparent)",
               color: shopActive ? "var(--layout-accent, #e1f532)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)",
