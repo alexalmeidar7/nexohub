@@ -56,6 +56,7 @@ const CortesVideoPage = lazy(() => import("./CortesVideoPage"));
 const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
+const AdminClientsDashboard = lazy(() => import("./AdminClientsDashboard"));
 const ChatbotHome = lazy(() => import("./ChatbotHome"));
 
 const PropostasPage = lazy(() => import("./PropostasPage"));
@@ -1599,7 +1600,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />
+                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
                 </div>
               </div>
 
