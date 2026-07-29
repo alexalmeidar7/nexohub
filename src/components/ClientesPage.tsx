@@ -181,7 +181,9 @@ export default function ClientesPage() {
     }
 
     if (plano) {
-      const allKeys = Array.from(new Set([...modules.map(m => m.key), ...planoModules]));
+      const catalogo = new Set(modules.map(m => m.key));
+      const allKeys = Array.from(new Set([...modules.map(m => m.key), ...planoModules]))
+        .filter(k => catalogo.has(k));
       const rows = allKeys.map(key => ({
         user_id: userId,
         module_key: key,
@@ -192,9 +194,10 @@ export default function ClientesPage() {
         .upsert(rows, { onConflict: "user_id,module_key" });
       if (cmErr) {
         setPlanoBusy(false);
-        toast.error("Pacote vinculado, mas os módulos não puderam ser sincronizados.");
+        toast.error(`Pacote vinculado, mas os módulos não puderam ser sincronizados: ${cmErr.message}`);
         return;
       }
+
       setClientModules(prev => ({ ...prev, [userId]: new Set(planoModules) }));
     }
 
