@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown, UserPlus, X } from "lucide-react";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown, UserPlus, X, RotateCcw } from "lucide-react";
 
 
 interface Cliente {
