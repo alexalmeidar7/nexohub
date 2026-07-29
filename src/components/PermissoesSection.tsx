@@ -415,6 +415,37 @@ export default function PermissoesSection() {
               />
             </div>
           </div>
+
+          {/* Perfil padrão */}
+          <div>
+            <label className="text-[11px] font-medium mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Categoria do sub-usuário *
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PERFIS.map(p => {
+                const active = newPerfil === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setNewPerfil(p.key)}
+                    className="rounded-xl px-3 py-2 text-left transition-all"
+                    style={{
+                      backgroundColor: active
+                        ? "var(--layout-accent-color, #444)"
+                        : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
+                      color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                      border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                    }}
+                  >
+                    <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
+                    <span className="block text-[10px] opacity-70">{p.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setShowForm(false)}
