@@ -69,6 +69,7 @@ const SitePage = lazy(() => import("./site/SitePage"));
 const ClientesPage = lazy(() => import("./ClientesPage"));
 const ModulosPage = lazy(() => import("./ModulosPage"));
 const SubUsuariosPage = lazy(() => import("./SubUsuariosPage"));
+const PacotesPage = lazy(() => import("./PacotesPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
@@ -77,7 +78,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -156,6 +157,7 @@ const adminSidebarMenu: MenuItem[] = [
     icon: Users, label: "cadastros", children: [
       { icon: Building2, label: "clientes", page: "clientes" },
       { icon: Users, label: "subusuários", page: "subusuarios" },
+      { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
   { icon: Layers, label: "modulos", page: "modulos" },
@@ -284,6 +286,7 @@ const pageTitle: Record<Page, string> = {
   clientes: "Cadastro de Clientes",
   modulos: "Módulos",
   subusuarios: "Subusuários",
+  pacotes: "Pacotes",
 };
 
 interface DashboardProps {
@@ -715,6 +718,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "fans" &&
       currentPage !== "clientes" &&
       currentPage !== "subusuarios" &&
+      currentPage !== "pacotes" &&
       !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
@@ -1639,6 +1643,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "clientes" && <ClientesPage />}
+              {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
