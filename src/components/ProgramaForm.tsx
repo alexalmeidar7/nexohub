@@ -856,9 +856,18 @@ export default function ProgramaForm() {
     return matching.find(p => !p.variavel) || matching[0];
   };
 
-  // Sorted programs for list
+  // Sorted + filtered programs for list
   const sortedProgramas = useMemo(() => {
-    const sorted = [...programas];
+    const WD = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+    const WE = ["Sábado", "Domingo"];
+    let sorted = [...programas];
+    if (periodoFilter !== "todos") {
+      sorted = sorted.filter(p => {
+        const days = p.diasSemana || [];
+        if (periodoFilter === "semana") return days.some(d => WD.includes(d));
+        return days.some(d => WE.includes(d));
+      });
+    }
     switch (sortBy) {
       case "nome": sorted.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")); break;
       case "estudio": sorted.sort((a, b) => a.estudio.localeCompare(b.estudio, "pt-BR")); break;
@@ -866,7 +875,8 @@ export default function ProgramaForm() {
       default: sorted.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio)); break;
     }
     return sorted;
-  }, [programas, sortBy]);
+  }, [programas, sortBy, periodoFilter]);
+
 
   if (loadingData) return <ModulePageSkeleton variant="form" />;
 
