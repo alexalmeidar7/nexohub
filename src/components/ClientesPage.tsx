@@ -70,6 +70,8 @@ export default function ClientesPage() {
   const [trash, setTrash] = useState<TrashItem[]>([]);
   const [trashLoading, setTrashLoading] = useState(false);
   const [trashBusy, setTrashBusy] = useState<string | null>(null);
+  const [planos, setPlanos] = useState<PlanoDef[]>([]);
+  const [planoBusy, setPlanoBusy] = useState(false);
 
 
 
