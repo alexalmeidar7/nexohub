@@ -69,6 +69,7 @@ const SitePage = lazy(() => import("./site/SitePage"));
 const ClientesPage = lazy(() => import("./ClientesPage"));
 const ModulosPage = lazy(() => import("./ModulosPage"));
 const SubUsuariosPage = lazy(() => import("./SubUsuariosPage"));
+const PacotesPage = lazy(() => import("./PacotesPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
