@@ -499,8 +499,17 @@ export default function PermissoesSection() {
             <div className="flex items-center gap-3">
               <ShieldCheck size={16} style={{ color: "var(--layout-accent-color, #444)" }} />
               <div className="text-left">
-                <div className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <div className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   {sub.nome || sub.email}
+                  <span
+                    className="text-[9px] font-bold tracking-wider rounded-full px-2 py-0.5"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444) 18%, transparent)",
+                      color: "var(--layout-accent-color, #444)",
+                    }}
+                  >
+                    {PERFIS.find(p => p.key === perfilMap[sub.id])?.label ?? "SEM CATEGORIA"}
+                  </span>
                 </div>
                 <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                   {sub.email} · {sub.allowed_modules.length} módulo{sub.allowed_modules.length !== 1 ? "s" : ""}
@@ -508,6 +517,7 @@ export default function PermissoesSection() {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2">
               {savingId === sub.id && <Loader2 size={14} className="animate-spin" style={{ color: "var(--layout-accent-color, #444)" }} />}
               {expandedId === sub.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
