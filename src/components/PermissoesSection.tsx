@@ -5,10 +5,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Loader2, Users, Eye, EyeOff, Save, ChevronDown, ChevronUp,
-  GripVertical, ShieldCheck, Key, Bot, Shield, AlertCircle
+  GripVertical, ShieldCheck, Key, Shield
 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+
 
 // Available modules grouped by category for sub-user permissions
 const MODULE_GROUPS = [
