@@ -718,6 +718,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       currentPage !== "fans" &&
       currentPage !== "clientes" &&
       currentPage !== "subusuarios" &&
+      currentPage !== "pacotes" &&
       !isAdmin &&
       !isModuleEnabled(currentPage)
     ) {
