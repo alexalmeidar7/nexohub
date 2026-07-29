@@ -580,6 +580,42 @@ export type Database = {
           },
         ]
       }
+      client_trash: {
+        Row: {
+          created_at: string
+          deleted_at: string
+          deleted_by: string | null
+          email: string | null
+          id: string
+          nome: string | null
+          purge_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          email?: string | null
+          id?: string
+          nome?: string | null
+          purge_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          deleted_at?: string
+          deleted_by?: string | null
+          email?: string | null
+          id?: string
+          nome?: string | null
+          purge_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       comercial_mockups: {
         Row: {
           config: Json | null
