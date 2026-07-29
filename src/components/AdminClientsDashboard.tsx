@@ -1,16 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type HlsType from "hls.js";
 import {
   Building2, Users, Radio, MonitorPlay, Layers, CheckCircle2, XCircle,
-  Music, Search, Video, Sparkles, VolumeX, Volume2,
+  Music, Search, Sparkles,
 } from "lucide-react";
 
-let hlsModule: typeof import("hls.js") | null = null;
-const getHls = async () => {
-  if (!hlsModule) hlsModule = await import("hls.js");
-  return hlsModule.default;
-};
 
 interface Empresa {
   user_id: string;
@@ -46,110 +40,6 @@ interface ClienteRow {
   canaisVideo: Canal[];
   canaisAudio: number;
   social: number;
-}
-
-function youtubeId(url: string): string | null {
-  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|live\/|embed\/)|youtu\.be\/)([\w-]{6,})/);
-  return m ? m[1] : null;
-}
-
-function ClientVideoFrame({ canal }: { canal: Canal | null }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<HlsType | null>(null);
-  const [muted, setMuted] = useState(true);
-  const [erro, setErro] = useState(false);
-  const ytId = canal ? youtubeId(canal.url) : null;
-
-  useEffect(() => {
-    if (!canal || ytId) return;
-    const video = videoRef.current;
-    if (!video) return;
-    let cancelled = false;
-    setErro(false);
-
-    (async () => {
-      try {
-        const Hls = await getHls();
-        if (cancelled) return;
-        if (Hls.isSupported()) {
-          const hls = new Hls({ enableWorker: true, lowLatencyMode: true, maxBufferLength: 10 });
-          hlsRef.current = hls;
-          hls.loadSource(canal.url);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(() => {}); });
-          hls.on(Hls.Events.ERROR, (_e, data) => { if (data?.fatal) setErro(true); });
-        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = canal.url;
-          video.addEventListener("loadedmetadata", () => video.play().catch(() => {}));
-        } else {
-          setErro(true);
-        }
-      } catch {
-        setErro(true);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
-    };
-  }, [canal?.id, canal?.url, ytId]);
-
-  if (!canal) {
-    return (
-      <div className="relative w-full rounded-xl overflow-hidden bg-muted/40 border border-border/60" style={{ paddingBottom: "56.25%" }}>
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
-          <Video className="w-6 h-6 opacity-50" />
-          <span className="text-[11px]">sem canal de vídeo</span>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative w-full rounded-xl overflow-hidden bg-black border border-border/60" style={{ paddingBottom: "56.25%" }}>
-      {ytId ? (
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0`}
-          allow="autoplay; encrypted-media"
-          title={canal.name}
-        />
-      ) : (
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover"
-          muted={muted}
-          playsInline
-          autoPlay
-        />
-      )}
-
-      {erro && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/70 text-[11px] text-white/70">
-          sinal indisponível
-        </div>
-      )}
-
-      <div className="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-sm">
-        <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-        <span className="text-[10px] font-semibold tracking-wide text-white uppercase">ao vivo</span>
-      </div>
-
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2">
-        <span className="truncate text-[11px] font-medium text-white/90 drop-shadow">{canal.name}</span>
-        {!ytId && (
-          <button
-            onClick={() => setMuted(m => !m)}
-            className="shrink-0 p-1 rounded-full bg-black/60 text-white/90 hover:bg-black/80 transition"
-            aria-label={muted ? "Ativar som" : "Silenciar"}
-          >
-            {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-          </button>
-        )}
-      </div>
-    </div>
-  );
 }
 
 function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
@@ -252,7 +142,7 @@ export default function AdminClientsDashboard() {
             Painel Super Admin
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Visão geral de todos os clientes e seus canais de vídeo ao vivo
+            Visão geral de todos os clientes, pacotes e canais
           </p>
         </div>
 
@@ -288,7 +178,7 @@ export default function AdminClientsDashboard() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-2xl border border-border/60 bg-card p-4 animate-pulse space-y-3">
               <div className="h-4 w-1/2 bg-muted rounded" />
-              <div className="w-full bg-muted rounded-xl" style={{ paddingBottom: "56.25%" }} />
+              <div className="h-10 bg-muted rounded-lg" />
               <div className="h-8 bg-muted rounded" />
             </div>
           ))}
@@ -298,14 +188,14 @@ export default function AdminClientsDashboard() {
           Nenhum cliente encontrado.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3">
           {filtrados.map(c => (
-            <div key={c.user_id} className="rounded-2xl border border-border/60 bg-card p-4 space-y-3 hover:border-primary/40 transition">
+            <div key={c.user_id} className="rounded-2xl border border-border/60 bg-card p-4 flex flex-col gap-3 hover:border-primary/40 hover:shadow-sm transition">
               <div className="flex items-center gap-3">
                 {c.logo ? (
-                  <img src={c.logo} alt={c.nome} className="w-9 h-9 rounded-lg object-contain bg-muted/50" />
+                  <img src={c.logo} alt={c.nome} className="w-10 h-10 rounded-lg object-contain bg-muted/50" />
                 ) : (
-                  <div className="w-9 h-9 rounded-lg bg-muted/50 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
                     <Building2 className="w-4 h-4 text-muted-foreground" />
                   </div>
                 )}
@@ -319,15 +209,20 @@ export default function AdminClientsDashboard() {
                 </span>
               </div>
 
-              <ClientVideoFrame canal={c.canaisVideo[0] || null} />
+              <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-2.5 py-2">
+                <Layers className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold leading-none truncate">{c.plano || "—"}</div>
+                  <div className="text-[10px] text-muted-foreground">{c.plano ? "pacote vinculado" : "sem pacote"}</div>
+                </div>
+                <span className="shrink-0 text-[10px] text-muted-foreground">{c.modules} módulos</span>
+              </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <Stat icon={Layers} label={c.plano ? "pacote" : "sem pacote"} value={c.plano || "—"} />
-                <Stat icon={Layers} label="módulos ativos" value={c.modules} />
                 <Stat icon={Users} label="subusuários" value={c.subUsers} />
+                <Stat icon={Music} label="seguidores" value={c.social ? c.social.toLocaleString("pt-BR") : "—"} />
                 <Stat icon={Radio} label="canais áudio" value={c.canaisAudio} />
                 <Stat icon={MonitorPlay} label="canais vídeo" value={c.canaisVideo.length} />
-                <Stat icon={Music} label="seguidores" value={c.social ? c.social.toLocaleString("pt-BR") : "—"} />
               </div>
             </div>
           ))}
