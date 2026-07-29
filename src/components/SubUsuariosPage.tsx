@@ -153,15 +153,25 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
             Arraste um módulo ou subitem para dentro do perfil desejado para liberar o acesso.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!dirty}
-          className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
-          style={{ backgroundColor: accentColor }}
-        >
-          <Save size={16} /> Salvar perfis
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={restoreDefaults}
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+          >
+            <RotateCcw size={15} /> Restaurar padrão
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!dirty}
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: accentColor }}
+          >
+            <Save size={16} /> Salvar perfis
+          </button>
+        </div>
+
       </div>
 
       {/* Boxes dos perfis padrão (barra fixa no topo ao rolar) */}
