@@ -3,7 +3,7 @@ import { MonitorPlay, Tv } from "lucide-react";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
 const CenarioInterativoPage = lazy(() => import("./CenarioInterativoPage"));
-const CenariosEstudioPage = lazy(() => import("./CenariosEstudioPage"));
+const CenariosEstudioPage = lazy(() => import("./CenariosEstudioTabs"));
 
 type Tab = "interativo" | "estudio";
 

@@ -515,6 +515,39 @@ export type Database = {
           },
         ]
       }
+      cenario_estudio_web: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          nome: string
+          orientation: string
+          tv_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          nome?: string
+          orientation?: string
+          tv_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          nome?: string
+          orientation?: string
+          tv_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_modules: {
         Row: {
           created_at: string
