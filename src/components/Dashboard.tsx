@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
+import type React from "react";
+
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
 import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
 import { format } from "date-fns";
@@ -90,11 +92,15 @@ interface MenuChild {
   children?: MenuChild[];
 }
 interface MenuItem {
-  icon: typeof Home;
+  icon: React.ComponentType<{ size?: string | number; className?: string; style?: React.CSSProperties }>;
   label: string;
   page?: Page;
   children?: MenuChild[];
+  pillMode?: string;
 }
+
+
+
 
 const sidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
@@ -106,6 +112,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
+  { icon: ChatbotIcon, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
   { icon: Gift, label: "sorteio", page: "sorteios" },
   { icon: Siren, label: "blitz", page: "blitz" },
   { icon: FileText, label: "roteiro de programa", page: "noticias" },
@@ -148,7 +155,11 @@ const sidebarMenu: MenuItem[] = [
       { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
     ]
   },
+  { icon: BusinessIcon, label: "business", page: "dashboard", pillMode: "Business" },
+  { icon: TvAppIcon, label: "app", page: "dashboard", pillMode: "TV App" },
+  { icon: SocialDesignIcon, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
+
 
 // Menu exclusivo do super admin: apenas Cadastro > Clientes e o agrupador MODULOS
 const adminSidebarMenu: MenuItem[] = [
@@ -160,8 +171,19 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
+  { icon: ChatbotIcon, label: "atendimento", page: "dashboard", pillMode: "Chatbot" },
   { icon: Layers, label: "modulos", page: "modulos" },
+  {
+    icon: Wrench, label: "ferramentas", children: [
+      { icon: Scissors, label: "corte de vídeo", page: "cortevideo" },
+      { icon: ExternalLink, label: "abrir TP externo", page: undefined as unknown as Page },
+    ]
+  },
+  { icon: BusinessIcon, label: "business", page: "dashboard", pillMode: "Business" },
+  { icon: TvAppIcon, label: "app", page: "dashboard", pillMode: "TV App" },
+  { icon: SocialDesignIcon, label: "social design", page: "dashboard", pillMode: "Social Design" },
 ];
+
 
 // Conteúdo da página MODULOS (boxes principais + subitens)
 export const adminModulosGroups: MenuItem[] = [
@@ -317,7 +339,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [selectedHeaderPill, setSelectedHeaderPill] = useState<string>(() => {
     try { return localStorage.getItem("nexohub_home_pill") || "nexohub"; } catch { return "nexohub"; }
   });
-  const [hoveredHeaderPill, setHoveredHeaderPill] = useState<string | null>(null);
+  
   useEffect(() => {
     try { localStorage.setItem("nexohub_home_pill", selectedHeaderPill); } catch {}
   }, [selectedHeaderPill]);
@@ -738,12 +760,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const handleMenuClick = (item: MenuItem) => {
     if (item.children) {
       toggleMenu(item.label);
+    } else if (item.pillMode) {
+      setSelectedHeaderPill(item.pillMode);
+      setCurrentPage("dashboard");
+      setMobileMenuOpen(false);
+      setHoveredMenu(null);
     } else if (item.page) {
       setCurrentPage(item.page);
       setMobileMenuOpen(false);
       setHoveredMenu(null);
     }
   };
+
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
     {
@@ -798,10 +826,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const isItemActive = (item: MenuItem): boolean => {
-    if (item.page === currentPage) return true;
+    if (item.page === currentPage) {
+      if (item.pillMode) return displayedPill === item.pillMode;
+      return true;
+    }
     if (item.children) return item.children.some(c => c.page === currentPage);
     return false;
   };
+
 
   // Auto-expand parent when child is active
   useEffect(() => {
@@ -858,7 +890,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {(() => {
           const isChatbotMode = displayedPill === "Chatbot";
-          const chatbotAllowedTop = new Set(["home", "cadastros", "sorteio"]);
+          const chatbotAllowedTop = new Set(["home", "cadastros", "atendimento", "sorteio"]);
           const chatbotCadastroChildren = new Set(["ouvintes"]);
           const effectiveMenu: MenuItem[] = isAdmin
             ? adminSidebarMenu
@@ -918,10 +950,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       onClick={() => {
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
+                        } else if (item.pillMode) {
+                          setSelectedHeaderPill(item.pillMode);
+                          setCurrentPage("dashboard");
                         } else if (item.page) {
                           setCurrentPage(item.page);
                         }
                       }}
+
                       onFocus={() => { if (item.children) { clearMenuLeaveTimer(); setHoveredMenu(item.label); } }}
                       onKeyDown={(e) => {
                         if (!item.children) return;
@@ -1148,7 +1184,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   ? adminSidebarMenu
                   : displayedPill === "Chatbot"
                   ? sidebarMenu
-                      .filter(i => new Set(["home", "cadastros", "sorteio"]).has(i.label))
+                      .filter(i => new Set(["home", "cadastros", "atendimento", "sorteio"]).has(i.label))
+
                       .map(i => i.label === "cadastros" && i.children
                         ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
                         : i)
@@ -1276,67 +1313,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
                   {empresa.nome || "NexoHUB"}
                 </h1>
-                {isDashboard && (
-                  <div className="flex items-center gap-1.5 rounded-full px-1 py-1" style={{ backgroundColor: "#D6F4FB" }}>
-                    {[
-                      { Icon: HouseMixIcon, name: "nexohub", label: "HouseMix" },
-                      { Icon: ChatbotIcon, name: "Chatbot", label: "Chatbot" },
-                      { Icon: BusinessIcon, name: "Business", label: "Business" },
-                      { Icon: TvAppIcon, name: "TV App", label: "App" },
-                      { Icon: SocialDesignIcon, name: "Social Design", label: "Social Design" },
-                    ].map(({ Icon, name, label }) => {
-                      const isSelected = selectedHeaderPill === name;
-                      const isOpen = isSelected || hoveredHeaderPill === name;
-                      return (
-                        <button
-                          key={name}
-                          type="button"
-                          onClick={() => setSelectedHeaderPill(name)}
-                          onMouseEnter={() => setHoveredHeaderPill(name)}
-                          onMouseLeave={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
-                          onFocus={() => setHoveredHeaderPill(name)}
-                          onBlur={() => setHoveredHeaderPill((current) => (current === name ? null : current))}
-                          className="header-pill inline-flex items-center justify-start rounded-full overflow-hidden"
-                          style={{
-                            backgroundColor: "#00dbff",
-                            color: "#002132",
-                            height: 34,
-                            paddingLeft: 0,
-                            paddingRight: isOpen ? 12 : 0,
-                            maxWidth: isOpen ? 220 : 34,
-                            minWidth: 34,
-                            transition:
-                              "max-width 260ms cubic-bezier(0.34, 1.3, 0.5, 1), padding 220ms cubic-bezier(0.34, 1.3, 0.5, 1), transform 180ms cubic-bezier(0.34, 1.3, 0.5, 1), box-shadow 220ms ease",
-                            transform: isOpen ? "scale(1.04)" : "scale(1)",
-                            boxShadow: isOpen
-                              ? "0 6px 18px rgba(0, 219, 255, 0.45)"
-                              : "0 1px 3px rgba(0, 33, 50, 0.08)",
-                            willChange: "max-width, padding, transform",
-                          }}
-                          data-selected={isSelected ? "true" : "false"}
-                          aria-label={name}
-                        >
-                          <span className="inline-flex items-center justify-center shrink-0" style={{ width: 34, height: 34 }}>
-                            <Icon size={22} />
-                          </span>
-                          <span
-                            className="header-pill-label text-xs font-bold tracking-wide whitespace-nowrap overflow-hidden"
-                            style={{
-                              maxWidth: isOpen ? 160 : 0,
-                              marginLeft: isOpen ? 6 : 0,
-                              opacity: isOpen ? 1 : 0,
-                              transform: isOpen ? "translateX(0)" : "translateX(-6px)",
-                              transition:
-                                "max-width 240ms cubic-bezier(0.34, 1.3, 0.5, 1), margin 220ms cubic-bezier(0.34, 1.3, 0.5, 1), opacity 160ms ease-out 70ms, transform 220ms cubic-bezier(0.34, 1.3, 0.5, 1) 50ms",
-                            }}
-                          >
-                            {label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
                 {/* Notificações agora são centralizadas no topo via App.tsx */}
               </div>
