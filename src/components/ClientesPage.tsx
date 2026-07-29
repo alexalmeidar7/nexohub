@@ -825,33 +825,104 @@ export default function ClientesPage() {
                 );
               })()}
 
-              <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
-                Módulos liberados
-              </p>
+              {(() => {
+                const cli = clientes.find(c => c.user_id === selected);
+                const planoAtual = planos.find(p => p.name === cli?.plano) || null;
+                const planoModules = planoAtual?.enabled_modules || [];
+                const extras = modules.filter(m => !planoModules.includes(m.key));
+                return (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
+                      Pacote vinculado
+                    </p>
 
-              <div className="grid sm:grid-cols-2 gap-2">
-                {modules.map(m => {
-                  const enabled = clientModules[selected]?.has(m.key) || false;
-                  const key = `${selected}:${m.key}`;
-                  return (
-                    <div
-                      key={m.key}
-                      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-black/5"
-                      style={{ backgroundColor: enabled ? "#D6F4FB" : "#F6F8F9" }}
-                    >
-                      <span className="text-sm text-[#002132]">{m.name}</span>
-                      {saving === key ? (
-                        <Loader2 size={14} className="animate-spin text-[#002132]/40" />
-                      ) : (
-                        <Switch
-                          checked={enabled}
-                          onCheckedChange={v => toggleModule(selected, m.key, v)}
-                        />
-                      )}
+                    <div className="rounded-xl border border-black/5 bg-[#F6F8F9] p-3 mb-5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <select
+                          value={planoAtual?.name || ""}
+                          disabled={planoBusy}
+                          onChange={e => aplicarPacote(selected, e.target.value)}
+                          className="flex-1 min-w-[180px] rounded-full border border-black/10 bg-white px-4 py-2.5 text-sm text-[#002132] outline-none disabled:opacity-50"
+                        >
+                          <option value="">— sem pacote —</option>
+                          {planos.map(p => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} · R$ {Number(p.price || 0).toFixed(2)} · {(p.enabled_modules || []).length} módulos
+                            </option>
+                          ))}
+                        </select>
+                        {planoBusy && <Loader2 size={16} className="animate-spin text-[#002132]/40" />}
+                      </div>
+                      <p className="text-[11px] text-[#002132]/45 mt-2">
+                        Ao escolher o pacote, os módulos do plano são liberados automaticamente para o usuário master.
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
+
+                    <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
+                      {planoAtual ? `Módulos do pacote ${planoAtual.name}` : "Módulos liberados"}
+                    </p>
+
+                    {planoAtual && planoModules.length === 0 && (
+                      <p className="text-sm text-[#002132]/50 mb-4">Este pacote ainda não possui módulos configurados.</p>
+                    )}
+
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {(planoAtual ? planoModules.map(k => ({ key: k, name: moduleName(k) })) : modules).map(m => {
+                        const enabled = clientModules[selected]?.has(m.key) || false;
+                        const key = `${selected}:${m.key}`;
+                        return (
+                          <div
+                            key={m.key}
+                            className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-black/5"
+                            style={{ backgroundColor: enabled ? "#D6F4FB" : "#F6F8F9" }}
+                          >
+                            <span className="text-sm text-[#002132]">{m.name}</span>
+                            {saving === key ? (
+                              <Loader2 size={14} className="animate-spin text-[#002132]/40" />
+                            ) : (
+                              <Switch
+                                checked={enabled}
+                                onCheckedChange={v => toggleModule(selected, m.key, v)}
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {planoAtual && extras.length > 0 && (
+                      <>
+                        <p className="text-xs font-bold uppercase tracking-widest mt-6 mb-3 text-[#002132]/45">
+                          Módulos fora do pacote
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-2">
+                          {extras.map(m => {
+                            const enabled = clientModules[selected]?.has(m.key) || false;
+                            const key = `${selected}:${m.key}`;
+                            return (
+                              <div
+                                key={m.key}
+                                className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-dashed border-black/10"
+                                style={{ backgroundColor: enabled ? "#D6F4FB" : "#FFFFFF" }}
+                              >
+                                <span className="text-sm text-[#002132]/70">{m.name}</span>
+                                {saving === key ? (
+                                  <Loader2 size={14} className="animate-spin text-[#002132]/40" />
+                                ) : (
+                                  <Switch
+                                    checked={enabled}
+                                    onCheckedChange={v => toggleModule(selected, m.key, v)}
+                                  />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               <p className="text-[11px] text-[#002132]/45 mt-4">
                 A liberação é validada no servidor pelas políticas de acesso — esconder itens no menu não substitui essa checagem.
               </p>
