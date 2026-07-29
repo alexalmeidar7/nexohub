@@ -87,19 +87,40 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   };
 
   const salvar = async (plano: Plano) => {
+    const nome = (plano.name || "").trim();
+    if (!nome) { toast.error("Informe o nome do pacote"); return; }
     setSaving(plano.id);
+
+    const nomeAnterior = nomesOriginais[plano.id];
+
     const { error } = await supabase
       .from("planos")
       .update({
-        name: plano.name,
+        name: nome,
         price: Number(plano.price) || 0,
         enabled_modules: plano.enabled_modules || [],
       })
       .eq("id", plano.id);
+
+    if (error) { setSaving(null); toast.error("Não foi possível salvar o pacote"); return; }
+
+    // Se o nome mudou, mantém os clientes vinculados ao pacote renomeado
+    if (nomeAnterior && nomeAnterior !== nome) {
+      await supabase.from("empresa_config").update({ plano: nome }).eq("plano", nomeAnterior);
+      setClientesPorPlano((prev) => {
+        const next = { ...prev };
+        next[nome] = next[nomeAnterior] || 0;
+        delete next[nomeAnterior];
+        return next;
+      });
+    }
+
+    setNomesOriginais((prev) => ({ ...prev, [plano.id]: nome }));
+    setPlanos((prev) => prev.map((x) => x.id === plano.id ? { ...x, name: nome } : x));
     setSaving(null);
-    if (error) { toast.error("Não foi possível salvar o pacote"); return; }
     toast.success("Pacote salvo");
   };
+
 
   const criar = async () => {
     const name = novo.name.trim();
