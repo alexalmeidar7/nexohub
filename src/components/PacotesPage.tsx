@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Package, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { Loader2, Package, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 
 const CYAN = "#00BFF0";
 
@@ -39,6 +39,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   const [modules, setModules] = useState<ModuleDef[]>([]);
   const [clientesPorPlano, setClientesPorPlano] = useState<Record<string, number>>({});
   const [selected, setSelected] = useState<string | null>(null);
+  const [nomesOriginais, setNomesOriginais] = useState<Record<string, string>>({});
   const [novo, setNovo] = useState({ name: "", price: "" });
   const [criando, setCriando] = useState(false);
 
@@ -52,6 +53,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
 
     const planosData = (pl || []) as Plano[];
     setPlanos(planosData);
+    setNomesOriginais(Object.fromEntries(planosData.map((p) => [p.id, p.name])));
 
     const base = (mods || []) as ModuleDef[];
     const known = new Set(base.map((m) => m.key));
@@ -87,19 +89,40 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
   };
 
   const salvar = async (plano: Plano) => {
+    const nome = (plano.name || "").trim();
+    if (!nome) { toast.error("Informe o nome do pacote"); return; }
     setSaving(plano.id);
+
+    const nomeAnterior = nomesOriginais[plano.id];
+
     const { error } = await supabase
       .from("planos")
       .update({
-        name: plano.name,
+        name: nome,
         price: Number(plano.price) || 0,
         enabled_modules: plano.enabled_modules || [],
       })
       .eq("id", plano.id);
+
+    if (error) { setSaving(null); toast.error("Não foi possível salvar o pacote"); return; }
+
+    // Se o nome mudou, mantém os clientes vinculados ao pacote renomeado
+    if (nomeAnterior && nomeAnterior !== nome) {
+      await supabase.from("empresa_config").update({ plano: nome }).eq("plano", nomeAnterior);
+      setClientesPorPlano((prev) => {
+        const next = { ...prev };
+        next[nome] = next[nomeAnterior] || 0;
+        delete next[nomeAnterior];
+        return next;
+      });
+    }
+
+    setNomesOriginais((prev) => ({ ...prev, [plano.id]: nome }));
+    setPlanos((prev) => prev.map((x) => x.id === plano.id ? { ...x, name: nome } : x));
     setSaving(null);
-    if (error) { toast.error("Não foi possível salvar o pacote"); return; }
     toast.success("Pacote salvo");
   };
+
 
   const criar = async () => {
     const name = novo.name.trim();
@@ -113,6 +136,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
     setCriando(false);
     if (error || !data) { toast.error("Não foi possível criar o pacote"); return; }
     setPlanos((prev) => [...prev, data as Plano]);
+    setNomesOriginais((prev) => ({ ...prev, [(data as Plano).id]: (data as Plano).name }));
     setSelected((data as Plano).id);
     setNovo({ name: "", price: "" });
     toast.success("Pacote criado");
@@ -215,7 +239,18 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
                   style={{ backgroundColor: `${accentColor}14`, color: accentColor }}>
                   <Users size={12} /> {clientes}
                 </span>
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold border transition-colors"
+                  style={{
+                    backgroundColor: isOpen ? accentColor : "#ffffff",
+                    borderColor: isOpen ? accentColor : "#e2e8f0",
+                    color: isOpen ? "#ffffff" : "#475569",
+                  }}
+                >
+                  {isOpen ? <X size={12} /> : <Pencil size={12} />} {isOpen ? "Fechar" : "Editar"}
+                </span>
               </button>
+
 
               {isOpen && (
                 <div className="border-t border-slate-100 p-4 space-y-4">
