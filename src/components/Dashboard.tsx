@@ -1649,12 +1649,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   onSelectGroup={(g) => {
                     const item = adminModulosGroups.find(i => i.label === g.label);
                     if (item?.page) { setCurrentPage(item.page); return; }
-                    if (item?.children?.length) handleChildClick(item.children[0], item.label);
+                    if (item?.children?.length) {
+                      const first = item.children[0];
+                      if (!first.page && first.children?.length) { handleChildClick(first.children[0], first.label); return; }
+                      handleChildClick(first, item.label);
+                      return;
+                    }
+                    handleChildClick({ label: g.label }, "modulos");
                   }}
                   onSelectChild={(c, parent) => {
-                    const item = adminModulosGroups.find(i => i.label === parent);
-                    const child = item?.children?.find(ch => ch.label === c.label);
-                    if (child) handleChildClick(child, parent);
+                    const findChild = (list: typeof adminModulosGroups[number]["children"]): { label: string; page?: Page } | undefined => {
+                      for (const ch of list ?? []) {
+                        if (ch.label === c.label) return ch;
+                        const deep = findChild(ch.children);
+                        if (deep) return deep;
+                      }
+                      return undefined;
+                    };
+                    const group = adminModulosGroups.find(i => i.label === parent)
+                      ?? adminModulosGroups.find(i => (i.children ?? []).some(ch => ch.label === parent));
+                    const child = findChild(group?.children) ?? { label: c.label };
+                    handleChildClick(child, parent);
                   }}
                 />
               )}
