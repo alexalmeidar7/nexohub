@@ -1532,9 +1532,17 @@ export default function PromocoesKiosk() {
                   )}
               </div>
 
-              {/* Rótulo Citações */}
-              <div className="px-4 py-1 flex-shrink-0">
-                <span className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</span>
+              {/* Header Citações */}
+              <div className="px-4 pt-2 pb-1 flex-shrink-0 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>
+                  <MessageSquareQuote size={16} style={{ color: "white" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</div>
+                  <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
+                    {selectedProgram ? getTestemunhaisForProgram(selectedProgram).length : 0} disponível{selectedProgram && getTestemunhaisForProgram(selectedProgram).length === 1 ? "" : "is"}
+                  </div>
+                </div>
               </div>
 
               {/* Controles teleprompter - painel estilizado */}
@@ -1547,29 +1555,65 @@ export default function PromocoesKiosk() {
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
-                    return <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhum conteúdo disponível.</p>;
+                    return (
+                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
+                          <MessageSquareQuote size={22} style={{ color: "rgba(255,255,255,0.3)" }} />
+                        </div>
+                        <p className="text-sm" style={{ color: "rgba(255, 255, 255, 0.4)" }}>Nenhuma citação disponível para este programa.</p>
+                      </div>
+                    );
                   }
-                  return tests.map(t => (
-                    <div key={t.id} className="mb-6 p-6 rounded-2xl shadow-xl border border-white/5" style={{ backgroundColor: "#1a1a1a" }}>
-                      {t.imagem_url && (
-                        <img src={t.imagem_url} alt="" className="w-full rounded-lg mb-4 object-contain max-h-[300px]" />
-                      )}
-                      <div
-                        className="max-w-none leading-[1.35] [&_*]:!bg-transparent [&_*]:leading-[1.35] [&_p]:!my-0 [&_p+p]:!mt-2"
-                        style={{ fontSize: `${fontSize}px`, lineHeight: 1.35, color: "white" }}
-                        dangerouslySetInnerHTML={{
-                          __html: t.texto
-                            .replace(/\/\//g, "<br/>")
-                            .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
-                            .replace(/color:\s*#000(?:000)?/gi, "color: white")
-                            .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
-                            .replace(/font-size\s*:\s*[^;\"]+;?/gi, "")
-                            .replace(/line-height\s*:\s*[^;\"]+;?/gi, "")
-                            .replace(/margin-(?:top|bottom)\s*:\s*[^;\"]+;?/gi, ""),
-                        }}
-                      />
+                  return (
+                    <div className="flex flex-col gap-4">
+                      {tests.map((t, i) => (
+                        <div
+                          key={t.id}
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-lg"
+                          style={{ backgroundColor: "#1a1a1a" }}
+                        >
+                          {/* Barra de destaque no topo */}
+                          <div className="h-1 w-full" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }} />
+
+                          <div className="p-5">
+                            {/* Badge de numeração */}
+                            <div className="flex items-center gap-2 mb-3">
+                              <span
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold"
+                                style={{ backgroundColor: "var(--layout-accent-color, #a60101)", color: "white" }}
+                              >
+                                {i + 1}
+                              </span>
+                              <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>
+                                Citação {i + 1} de {tests.length}
+                              </span>
+                            </div>
+
+                            {t.imagem_url && (
+                              <div className="mb-4 rounded-xl overflow-hidden border border-white/5" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
+                                <img src={t.imagem_url} alt="" className="w-full object-contain max-h-[260px]" />
+                              </div>
+                            )}
+
+                            <div
+                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3"
+                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
+                              dangerouslySetInnerHTML={{
+                                __html: t.texto
+                                  .replace(/\/\//g, "<br/>")
+                                  .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
+                                  .replace(/color:\s*#000(?:000)?/gi, "color: white")
+                                  .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
+                                  .replace(/font-size\s*:\s*[^;\"]+;?/gi, "")
+                                  .replace(/line-height\s*:\s*[^;\"]+;?/gi, "")
+                                  .replace(/margin-(?:top|bottom)\s*:\s*[^;\"]+;?/gi, ""),
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ));
+                  );
                 })()}
               </div>
             </div>
