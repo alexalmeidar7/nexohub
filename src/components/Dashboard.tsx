@@ -274,6 +274,20 @@ const menuToModuleKey: Record<string, string> = {
   "ferramentas": "ferramentas",
 };
 
+// ---- Plan (pacote) based menu visibility -------------------------------
+const moduleSlug = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+const moduleKeyOfNode = (n: { label: string; page?: unknown }) =>
+  (typeof n.page === "string" && n.page && n.page !== "dashboard") ? n.page : moduleSlug(n.label);
+
+const collectModuleKeys = (items: { label: string; page?: unknown; children?: any[] }[]): string[] =>
+  items.flatMap(i => [moduleKeyOfNode(i), ...collectModuleKeys(i.children ?? [])]);
+
+// Universe of keys that packages (pacotes) can control. Keys outside this set
+// are never blocked (avoids hiding menus that plans don't know about).
+const KNOWN_MODULE_KEYS = new Set(collectModuleKeys(adminModulosGroups as any));
+
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
@@ -729,6 +743,42 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return modulesSource.has(page);
   };
 
+  // ---- Menu visibility driven by the plan (pacote) linked to the client ----
+  const planKeyAllowed = (node: { label: string; page?: unknown }): boolean => {
+    const src = planModules ?? enabledModules;
+    if (!src) return true;
+    const key = moduleKeyOfNode(node);
+    if (!KNOWN_MODULE_KEYS.has(key)) return true;
+    return src.has(key);
+  };
+
+  const filterMenuChildren = (children: MenuChild[]): MenuChild[] =>
+    children
+      .filter(c => {
+        if (subUserModules !== null) {
+          return c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page));
+        }
+        if (isAdmin) return true;
+        return planKeyAllowed(c);
+      })
+      .map(c => (c.children ? { ...c, children: filterMenuChildren(c.children) } : c));
+
+  const isMenuItemVisible = (item: MenuItem): boolean => {
+    if (item.label === "home") return true;
+    if (subUserModules !== null) {
+      if (item.children) {
+        return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
+      }
+      return item.page ? subUserModules.has(item.page) : false;
+    }
+    if (isAdmin) return true;
+    if (!planKeyAllowed(item)) return false;
+    if (item.children) return filterMenuChildren(item.children).length > 0;
+    return true;
+  };
+
+
+
   useEffect(() => {
     // Only redirect if initial loading is complete and modules are loaded
     if (initialLoading || (!enabledModules && !planModules)) return;
@@ -908,25 +958,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             : sidebarMenu;
           return (
         <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
-          {effectiveMenu.filter(item => {
-            // Sub-user: only show menus for allowed modules
-            if (subUserModules !== null) {
-              if (item.label === "home") return true;
-              // For items with children, show if any child page is allowed
-              if (item.children) {
-                return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
-              }
-              // For standalone items, check the page directly
-              return item.page ? subUserModules.has(item.page) : false;
-            }
-            if (isAdmin) return true;
-            if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-            const modKey = menuToModuleKey[item.label];
-            if (!modKey) return true;
-            if (planModules) return planModules.has(modKey);
-            if (enabledModules) return enabledModules.has(modKey);
-            return true;
-          }).map((item, itemIdx, arr) => {
+          {effectiveMenu.filter(isMenuItemVisible).map((item, itemIdx, arr) => {
             const active = isItemActive(item);
             const Icon = item.icon;
             const isOpen = hoveredMenu === item.label;
@@ -1071,7 +1103,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: `${layoutColors.navText}80` }}>{item.label}</p>
                       </div>
                       <div className="px-2">
-                        {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map((child, ci) => {
+                        {filterMenuChildren(item.children).map((child, ci) => {
                           const ChildIcon = child.icon;
                           const childActive = currentPage === child.page;
                           return (
@@ -1199,22 +1231,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         ? { ...i, children: i.children.filter(c => c.label === "ouvintes") }
                         : i)
                   : sidebarMenu
-                ).filter(item => {
-                  if (subUserModules !== null) {
-                    if (item.label === "home") return true;
-                    if (item.children) {
-                      return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
-                    }
-                    return item.page ? subUserModules.has(item.page) : false;
-                  }
-                  if (isAdmin) return true;
-                  if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-                  const modKey = menuToModuleKey[item.label];
-                  if (!modKey) return true;
-                  if (planModules) return planModules.has(modKey);
-                  if (enabledModules) return enabledModules.has(modKey);
-                  return true;
-                }).map(item => {
+                ).filter(isMenuItemVisible).map(item => {
                   const Icon = item.icon;
                   const active = isItemActive(item);
                   const expanded = expandedMenus.has(item.label);
@@ -1251,7 +1268,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           }}
                         >
                           <div className="ml-6 space-y-0.5 mt-1 mb-1">
-                            {(subUserModules !== null ? item.children.filter(c => c.permKey ? subUserModules.has(c.permKey) : (!c.page || subUserModules.has(c.page))) : item.children).map(child => {
+                            {filterMenuChildren(item.children).map(child => {
                               const ChildIcon = child.icon;
                               const childActive = currentPage === child.page;
                               return (
