@@ -459,6 +459,8 @@ export default function ProgramaForm() {
 
   // Sorting
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
+  const [periodoFilter, setPeriodoFilter] = useState<"todos" | "semana" | "fds">("todos");
+
 
   const [currentTimeStr, setCurrentTimeStr] = useState(() => {
     const n = new Date();
@@ -856,9 +858,18 @@ export default function ProgramaForm() {
     return matching.find(p => !p.variavel) || matching[0];
   };
 
-  // Sorted programs for list
+  // Sorted + filtered programs for list
   const sortedProgramas = useMemo(() => {
-    const sorted = [...programas];
+    const WD = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta"];
+    const WE = ["Sábado", "Domingo"];
+    let sorted = [...programas];
+    if (periodoFilter !== "todos") {
+      sorted = sorted.filter(p => {
+        const days = p.diasSemana || [];
+        if (periodoFilter === "semana") return days.some(d => WD.includes(d));
+        return days.some(d => WE.includes(d));
+      });
+    }
     switch (sortBy) {
       case "nome": sorted.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")); break;
       case "estudio": sorted.sort((a, b) => a.estudio.localeCompare(b.estudio, "pt-BR")); break;
@@ -866,7 +877,8 @@ export default function ProgramaForm() {
       default: sorted.sort((a, b) => a.horarioInicio.localeCompare(b.horarioInicio)); break;
     }
     return sorted;
-  }, [programas, sortBy]);
+  }, [programas, sortBy, periodoFilter]);
+
 
   if (loadingData) return <ModulePageSkeleton variant="form" />;
 
@@ -1364,19 +1376,42 @@ export default function ProgramaForm() {
                 {sortedProgramas.length}
               </span>
             </div>
-            <div style={{ minWidth: 180 }}>
-              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
-                  <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="horario">Ordenar por Horário</SelectItem>
-                  <SelectItem value="nome">Ordenar por Nome</SelectItem>
-                  <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
-                  <SelectItem value="status">Ordenar por Status</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div style={{ display: "inline-flex", gap: 4, background: CARD_BG, borderRadius: 999, padding: 4 }}>
+                {([
+                  { v: "todos", label: "Todos" },
+                  { v: "semana", label: "Seg → Sex" },
+                  { v: "fds", label: "Fim de semana" },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.v}
+                    onClick={() => setPeriodoFilter(opt.v)}
+                    style={{
+                      padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.3,
+                      background: periodoFilter === opt.v ? CYAN : "transparent",
+                      color: periodoFilter === opt.v ? "#FFFFFF" : DARK,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ minWidth: 180 }}>
+                <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                  <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horario">Ordenar por Horário</SelectItem>
+                    <SelectItem value="nome">Ordenar por Nome</SelectItem>
+                    <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
+                    <SelectItem value="status">Ordenar por Status</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
           </div>
 
           <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
