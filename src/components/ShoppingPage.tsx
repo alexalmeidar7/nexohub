@@ -248,7 +248,8 @@ export default function ShoppingPage() {
               <div className="md:col-span-2">
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Link de Pagamento (Mercado Pago)</label>
                 <input value={paymentUrl} onChange={(e) => setPaymentUrl(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors" style={inputStyle} placeholder="https://mpago.la/..."
+                  disabled={formDisabled}
+                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors disabled:opacity-50" style={inputStyle} placeholder="https://mpago.la/..."
                   onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
                 />
