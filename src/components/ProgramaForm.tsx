@@ -459,6 +459,8 @@ export default function ProgramaForm() {
 
   // Sorting
   const [sortBy, setSortBy] = useState<"horario" | "nome" | "estudio" | "status">("horario");
+  const [periodoFilter, setPeriodoFilter] = useState<"todos" | "semana" | "fds">("todos");
+
 
   const [currentTimeStr, setCurrentTimeStr] = useState(() => {
     const n = new Date();
