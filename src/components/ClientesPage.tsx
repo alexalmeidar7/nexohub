@@ -29,6 +29,14 @@ interface SubUser {
   allowed_modules: string[] | null;
 }
 
+interface TrashItem {
+  user_id: string;
+  email: string | null;
+  nome: string | null;
+  deleted_at: string;
+  purge_at: string;
+}
+
 const CYAN = "#00BFF0";
 
 // Mesma regra usada pelo player para resolver o cliente pela URL:
