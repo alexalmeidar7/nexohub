@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog } from "lucide-react";
+import { confirmDialog } from "@/lib/confirmDialog";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, Trash2, ChevronDown } from "lucide-react";
+
 
 interface Cliente {
   user_id: string;
@@ -49,6 +51,10 @@ export default function ClientesPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [expandedSub, setExpandedSub] = useState<string | null>(null);
+  const [subBusy, setSubBusy] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
 
 
   useEffect(() => {
@@ -123,6 +129,98 @@ export default function ClientesPage() {
     });
     toast.success(enabled ? "Módulo liberado." : "Módulo bloqueado.");
   };
+
+  const callAdmin = async (payload: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke("create-user", { body: payload });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(String(data.error));
+    return data;
+  };
+
+  const excluirCliente = async (userId: string, nome?: string | null) => {
+    const ok = await confirmDialog({
+      title: "Excluir cliente",
+      message: `Excluir definitivamente "${nome || "este cliente"}"? Todos os subusuários e acessos serão removidos. Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      destructive: true,
+    });
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await callAdmin({ action: "delete_client", user_id: userId });
+      setClientes(prev => prev.filter(c => c.user_id !== userId));
+      setSubUsers(prev => {
+        const next = { ...prev };
+        delete next[userId];
+        return next;
+      });
+      setSelected(null);
+      toast.success("Cliente excluído.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o cliente.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const patchSub = (parentId: string, subId: string, patch: Partial<SubUser>) => {
+    setSubUsers(prev => ({
+      ...prev,
+      [parentId]: (prev[parentId] || []).map(s => (s.id === subId ? { ...s, ...patch } : s)),
+    }));
+  };
+
+  const toggleSubAtivo = async (parentId: string, sub: SubUser, ativo: boolean) => {
+    setSubBusy(`${sub.id}:ativo`);
+    try {
+      await callAdmin({ action: "admin_sub_update", sub_user_id: sub.id, ativo });
+      patchSub(parentId, sub.id, { ativo });
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível atualizar o subusuário.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+  const toggleSubModule = async (parentId: string, sub: SubUser, key: string, enabled: boolean) => {
+    const current = new Set(sub.allowed_modules || []);
+    if (enabled) current.add(key);
+    else current.delete(key);
+    const next = Array.from(current);
+    setSubBusy(`${sub.id}:${key}`);
+    try {
+      await callAdmin({ action: "admin_sub_update", sub_user_id: sub.id, allowed_modules: next });
+      patchSub(parentId, sub.id, { allowed_modules: next });
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível salvar a permissão.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
+  const excluirSub = async (parentId: string, sub: SubUser) => {
+    const ok = await confirmDialog({
+      title: "Excluir subusuário",
+      message: `Excluir o acesso de "${sub.nome || sub.email}"? Esta ação não pode ser desfeita.`,
+      confirmLabel: "Excluir",
+      destructive: true,
+    });
+    if (!ok) return;
+    setSubBusy(`${sub.id}:del`);
+    try {
+      await callAdmin({ action: "admin_sub_delete", sub_user_id: sub.id });
+      setSubUsers(prev => ({
+        ...prev,
+        [parentId]: (prev[parentId] || []).filter(s => s.id !== sub.id),
+      }));
+      toast.success("Subusuário excluído.");
+    } catch (e) {
+      toast.error((e as Error).message || "Não foi possível excluir o subusuário.");
+    } finally {
+      setSubBusy(null);
+    }
+  };
+
 
   if (role !== "admin") {
     return (
@@ -229,13 +327,22 @@ export default function ClientesPage() {
                           <Building2 size={18} style={{ color: CYAN }} />
                         )}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-lg font-semibold text-[#002132] truncate">{cli?.nome || "Sem nome"}</p>
                         <p className="text-[11px] text-[#002132]/50">
                           {cli?.plano || "sem plano"} · {cli?.ativo === false ? "inativo" : "ativo"}
                         </p>
                       </div>
+                      <button
+                        onClick={() => excluirCliente(selected, cli?.nome)}
+                        disabled={deleting}
+                        className="shrink-0 flex items-center gap-1.5 rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-wide border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-50"
+                      >
+                        {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                        Excluir cliente
+                      </button>
                     </div>
+
 
                     <div className="grid sm:grid-cols-2 gap-2">
                       <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
@@ -259,25 +366,95 @@ export default function ClientesPage() {
                       {subs.length === 0 ? (
                         <p className="px-3 py-2.5 text-xs text-[#002132]/50">Nenhum subusuário cadastrado.</p>
                       ) : (
-                        <div className="divide-y divide-black/5 max-h-52 overflow-y-auto">
-                          {subs.map(s => (
-                            <div key={s.id} className="px-3 py-2 flex items-center justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</p>
-                                <p className="text-[11px] text-[#002132]/50 truncate">{s.email}</p>
+                        <div className="divide-y divide-black/5 max-h-72 overflow-y-auto">
+                          {subs.map(s => {
+                            const open = expandedSub === s.id;
+                            const allowed = new Set(s.allowed_modules || []);
+                            return (
+                              <div key={s.id}>
+                                <div className="px-3 py-2 flex items-center justify-between gap-3">
+                                  <button
+                                    onClick={() => setExpandedSub(open ? null : s.id)}
+                                    className="min-w-0 flex items-center gap-2 text-left flex-1"
+                                  >
+                                    <ChevronDown
+                                      size={13}
+                                      className="shrink-0 text-[#002132]/40 transition-transform"
+                                      style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+                                    />
+                                    <span className="min-w-0">
+                                      <span className="block text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</span>
+                                      <span className="block text-[11px] text-[#002132]/50 truncate">
+                                        {s.email} · {allowed.size} módulos
+                                      </span>
+                                    </span>
+                                  </button>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    {subBusy === `${s.id}:ativo` ? (
+                                      <Loader2 size={14} className="animate-spin text-[#002132]/40" />
+                                    ) : (
+                                      <Switch
+                                        checked={s.ativo}
+                                        onCheckedChange={v => toggleSubAtivo(selected, s, v)}
+                                      />
+                                    )}
+                                    <button
+                                      onClick={() => excluirSub(selected, s)}
+                                      disabled={subBusy === `${s.id}:del`}
+                                      className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+                                      title="Excluir subusuário"
+                                    >
+                                      {subBusy === `${s.id}:del` ? (
+                                        <Loader2 size={13} className="animate-spin" />
+                                      ) : (
+                                        <Trash2 size={13} />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {open && (
+                                  <div className="px-3 pb-3 pt-1 bg-white/60">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#002132]/45 mb-2">
+                                      Permissões de módulos
+                                    </p>
+                                    <div className="grid sm:grid-cols-2 gap-1.5">
+                                      {modules.map(m => {
+                                        const on = allowed.has(m.key);
+                                        const busy = subBusy === `${s.id}:${m.key}`;
+                                        return (
+                                          <button
+                                            key={m.key}
+                                            onClick={() => !busy && toggleSubModule(selected, s, m.key, !on)}
+                                            className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 border border-black/5 text-left transition-colors"
+                                            style={{ backgroundColor: on ? "#D6F4FB" : "#F6F8F9" }}
+                                          >
+                                            <span className="text-[12px] text-[#002132] truncate">{m.name}</span>
+                                            {busy ? (
+                                              <Loader2 size={12} className="animate-spin text-[#002132]/40 shrink-0" />
+                                            ) : (
+                                              <span
+                                                className="w-3.5 h-3.5 rounded-full shrink-0 border"
+                                                style={{
+                                                  backgroundColor: on ? CYAN : "transparent",
+                                                  borderColor: on ? CYAN : "#C9D2D6",
+                                                }}
+                                              />
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                    {modules.length === 0 && (
+                                      <p className="text-xs text-[#002132]/50">Nenhum módulo disponível.</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              <span
-                                className="text-[10px] font-bold uppercase px-2 py-1 rounded-full shrink-0"
-                                style={{
-                                  backgroundColor: s.ativo ? "#D6F4FB" : "#EFEFEF",
-                                  color: s.ativo ? "#00789A" : "#8A9298",
-                                }}
-                              >
-                                {s.ativo ? "ativo" : "inativo"}
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
+
                       )}
                     </div>
                   </div>
