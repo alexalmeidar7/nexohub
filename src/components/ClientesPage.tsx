@@ -89,17 +89,19 @@ export default function ClientesPage() {
       return;
     }
     (async () => {
-      const [empresasRes, modsRes, cmRes, profRes, subRes] = await Promise.all([
+      const [empresasRes, modsRes, cmRes, profRes, subRes, planosRes] = await Promise.all([
         supabase.from("empresa_config").select("user_id, nome, plano, ativo, logo").order("nome"),
         supabase.from("available_modules").select("key, name").order("name"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
         supabase.from("profiles").select("user_id, email"),
         supabase.from("sub_users").select("id, parent_user_id, email, nome, ativo, allowed_modules"),
+        supabase.from("planos").select("id, name, price, enabled_modules").order("price"),
       ]);
 
       if (empresasRes.error) toast.error("Não foi possível carregar os clientes.");
       setClientes((empresasRes.data as Cliente[]) || []);
       setModules((modsRes.data as ModuleDef[]) || []);
+      setPlanos((planosRes.data as PlanoDef[]) || []);
 
       const map: Record<string, Set<string>> = {};
       for (const row of (cmRes.data as any[]) || []) {
