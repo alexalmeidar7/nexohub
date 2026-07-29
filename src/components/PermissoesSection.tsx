@@ -148,6 +148,9 @@ export default function PermissoesSection() {
   const [changingPassId, setChangingPassId] = useState<string | null>(null);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [updatingAi, setUpdatingAi] = useState(false);
+  const [newPerfil, setNewPerfil] = useState<PerfilKey>("recepcao");
+  const [perfilMap, setPerfilMap] = useState<Record<string, PerfilKey>>(readPerfilMap);
+
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "var(--layout-widget-bg, #1a1a1a)",
