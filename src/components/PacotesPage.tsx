@@ -318,28 +318,142 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
 
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Módulos do pacote</div>
-                    <div className="flex flex-wrap gap-2">
-                      {modules.map((m) => {
-                        const on = (p.enabled_modules || []).includes(m.key);
+                    <div className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+                      {MODULE_TREE.map((node) => {
+                        const enabled = new Set(p.enabled_modules || []);
+                        const childKeys = node.children.flatMap(collectKeys);
+                        const on = enabled.has(node.key);
+                        const someChild = childKeys.some((k) => enabled.has(k));
+                        const open = expanded[`${p.id}:${node.key}`] ?? false;
                         return (
-                          <button
-                            key={m.key}
-                            type="button"
-                            onClick={() => toggleModule(p.id, m.key)}
-                            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition-colors"
-                            style={{
-                              backgroundColor: on ? accentColor : "#f8fafc",
-                              borderColor: on ? accentColor : "#e2e8f0",
-                              color: on ? "#ffffff" : "#475569",
-                            }}
-                          >
-                            {on ? <X size={11} /> : <Plus size={11} />}
-                            <span className="capitalize">{m.name.replace(/^Módulo\s+/i, "")}</span>
-                          </button>
+                          <div key={node.key} className="bg-white">
+                            <div className="flex items-center gap-2 px-3 py-2">
+                              {node.children.length > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setExpanded((e) => ({ ...e, [`${p.id}:${node.key}`]: !open }))}
+                                  className="text-slate-400 hover:text-slate-600"
+                                >
+                                  {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                                </button>
+                              ) : <span className="w-[15px]" />}
+                              <button
+                                type="button"
+                                onClick={() => toggleNode(p.id, node)}
+                                className="flex items-center gap-2 flex-1 text-left"
+                              >
+                                <span
+                                  className="inline-flex items-center justify-center rounded-md border shrink-0"
+                                  style={{
+                                    width: 18, height: 18,
+                                    backgroundColor: on ? accentColor : (someChild ? `${accentColor}26` : "#ffffff"),
+                                    borderColor: on || someChild ? accentColor : "#cbd5e1",
+                                    color: "#ffffff",
+                                  }}
+                                >
+                                  {on && <Check size={12} />}
+                                </span>
+                                <span className="text-[13px] font-semibold text-slate-700 capitalize">{node.label}</span>
+                                {node.children.length > 0 && (
+                                  <span className="text-[11px] text-slate-400">
+                                    {childKeys.filter((k) => enabled.has(k)).length}/{childKeys.length}
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+
+                            {open && node.children.length > 0 && (
+                              <div className="pl-9 pr-3 pb-2 space-y-1">
+                                {node.children.map((c) => {
+                                  const cKeys = collectKeys(c);
+                                  const cOn = enabled.has(c.key);
+                                  return (
+                                    <div key={c.key}>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleNode(p.id, c)}
+                                        className="flex items-center gap-2 text-left w-full py-0.5"
+                                      >
+                                        <span
+                                          className="inline-flex items-center justify-center rounded-md border shrink-0"
+                                          style={{
+                                            width: 16, height: 16,
+                                            backgroundColor: cOn ? accentColor : "#ffffff",
+                                            borderColor: cOn ? accentColor : "#cbd5e1",
+                                            color: "#ffffff",
+                                          }}
+                                        >
+                                          {cOn && <Check size={11} />}
+                                        </span>
+                                        <span className="text-[12px] text-slate-600 capitalize">{c.label}</span>
+                                      </button>
+                                      {c.children.length > 0 && (
+                                        <div className="pl-6 space-y-1">
+                                          {c.children.map((g) => {
+                                            const gOn = enabled.has(g.key);
+                                            return (
+                                              <button
+                                                key={g.key}
+                                                type="button"
+                                                onClick={() => toggleModule(p.id, g.key)}
+                                                className="flex items-center gap-2 text-left w-full py-0.5"
+                                              >
+                                                <span
+                                                  className="inline-flex items-center justify-center rounded-md border shrink-0"
+                                                  style={{
+                                                    width: 14, height: 14,
+                                                    backgroundColor: gOn ? accentColor : "#ffffff",
+                                                    borderColor: gOn ? accentColor : "#cbd5e1",
+                                                    color: "#ffffff",
+                                                  }}
+                                                >
+                                                  {gOn && <Check size={10} />}
+                                                </span>
+                                                <span className="text-[11px] text-slate-500 capitalize">{g.label}</span>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                      {cKeys.length === 0 && null}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
+
+                    {modules.filter((m) => !TREE_KEYS.has(m.key)).length > 0 && (
+                      <>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mt-4 mb-2">Outros módulos</div>
+                        <div className="flex flex-wrap gap-2">
+                          {modules.filter((m) => !TREE_KEYS.has(m.key)).map((m) => {
+                            const on = (p.enabled_modules || []).includes(m.key);
+                            return (
+                              <button
+                                key={m.key}
+                                type="button"
+                                onClick={() => toggleModule(p.id, m.key)}
+                                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] transition-colors"
+                                style={{
+                                  backgroundColor: on ? accentColor : "#f8fafc",
+                                  borderColor: on ? accentColor : "#e2e8f0",
+                                  color: on ? "#ffffff" : "#475569",
+                                }}
+                              >
+                                {on ? <X size={11} /> : <Plus size={11} />}
+                                <span className="capitalize">{m.name.replace(/^Módulo\s+/i, "")}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
+
 
                   <div className="flex items-center justify-between gap-2 pt-1">
                     <button
