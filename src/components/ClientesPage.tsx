@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Building2, Search, ShieldCheck, Users } from "lucide-react";
+import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog } from "lucide-react";
 
 interface Cliente {
   user_id: string;
@@ -18,7 +18,25 @@ interface ModuleDef {
   name: string;
 }
 
+interface SubUser {
+  id: string;
+  parent_user_id: string;
+  email: string;
+  nome: string | null;
+  ativo: boolean;
+  allowed_modules: string[] | null;
+}
+
 const CYAN = "#00BFF0";
+
+// Mesma regra usada pelo player para resolver o cliente pela URL:
+// o slug é o "local-part" do e-mail de acesso (antes do @).
+function slugFromEmail(email?: string | null, nome?: string | null) {
+  const local = (email || "").split("@")[0]?.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  if (local) return local;
+  const fromName = (nome || "").toLowerCase().replace(/[^a-z0-9]+/g, "").slice(0, 32);
+  return fromName || "—";
+}
 
 export default function ClientesPage() {
   const { role } = useAuth();
@@ -26,9 +44,12 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [modules, setModules] = useState<ModuleDef[]>([]);
   const [clientModules, setClientModules] = useState<Record<string, Set<string>>>({});
+  const [emails, setEmails] = useState<Record<string, string>>({});
+  const [subUsers, setSubUsers] = useState<Record<string, SubUser[]>>({});
   const [selected, setSelected] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (role !== "admin") {
@@ -36,10 +57,12 @@ export default function ClientesPage() {
       return;
     }
     (async () => {
-      const [empresasRes, modsRes, cmRes] = await Promise.all([
+      const [empresasRes, modsRes, cmRes, profRes, subRes] = await Promise.all([
         supabase.from("empresa_config").select("user_id, nome, plano, ativo, logo").order("nome"),
         supabase.from("available_modules").select("key, name").order("name"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
+        supabase.from("profiles").select("user_id, email"),
+        supabase.from("sub_users").select("id, parent_user_id, email, nome, ativo, allowed_modules"),
       ]);
 
       if (empresasRes.error) toast.error("Não foi possível carregar os clientes.");
@@ -52,6 +75,19 @@ export default function ClientesPage() {
         (map[row.user_id] ||= new Set()).add(row.module_key);
       }
       setClientModules(map);
+
+      const em: Record<string, string> = {};
+      for (const p of (profRes.data as any[]) || []) {
+        if (p.email) em[p.user_id] = p.email;
+      }
+      setEmails(em);
+
+      const su: Record<string, SubUser[]> = {};
+      for (const s of (subRes.data as any[]) || []) {
+        (su[s.parent_user_id] ||= []).push(s as SubUser);
+      }
+      setSubUsers(su);
+
       setLoading(false);
     })();
   }, [role]);
@@ -59,8 +95,13 @@ export default function ClientesPage() {
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return clientes;
-    return clientes.filter(c => (c.nome || "").toLowerCase().includes(q));
-  }, [clientes, busca]);
+    return clientes.filter(c =>
+      (c.nome || "").toLowerCase().includes(q) ||
+      (emails[c.user_id] || "").toLowerCase().includes(q) ||
+      slugFromEmail(emails[c.user_id], c.nome).includes(q)
+    );
+  }, [clientes, busca, emails]);
+
 
   const toggleModule = async (userId: string, key: string, enabled: boolean) => {
     setSaving(`${userId}:${key}`);
@@ -167,15 +208,86 @@ export default function ClientesPage() {
           </div>
         </div>
 
-        {/* Módulos do cliente */}
+        {/* Detalhe do cliente */}
         <div className="rounded-2xl bg-white/85 border border-black/5 p-4">
           {!selected ? (
-            <p className="text-sm text-[#002132]/50">Selecione um cliente para liberar ou bloquear módulos.</p>
+            <p className="text-sm text-[#002132]/50">Selecione um cliente para ver os dados de acesso e liberar módulos.</p>
           ) : (
             <>
+              {(() => {
+                const cli = clientes.find(c => c.user_id === selected);
+                const email = emails[selected] || null;
+                const slug = slugFromEmail(email, cli?.nome);
+                const subs = subUsers[selected] || [];
+                return (
+                  <div className="mb-5 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden bg-[#D6F4FB] flex items-center justify-center shrink-0">
+                        {cli?.logo ? (
+                          <img src={cli.logo} alt={cli?.nome || ""} className="w-full h-full object-contain" />
+                        ) : (
+                          <Building2 size={18} style={{ color: CYAN }} />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-lg font-semibold text-[#002132] truncate">{cli?.nome || "Sem nome"}</p>
+                        <p className="text-[11px] text-[#002132]/50">
+                          {cli?.plano || "sem plano"} · {cli?.ativo === false ? "inativo" : "ativo"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          <Link2 size={12} /> Slug
+                        </div>
+                        <p className="text-sm text-[#002132] font-mono truncate">/{slug}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          <Mail size={12} /> E-mail de acesso
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{email || "—"}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-black/5 bg-[#F6F8F9] overflow-hidden">
+                      <div className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45 border-b border-black/5">
+                        <UserCog size={12} /> Subusuários ({subs.length})
+                      </div>
+                      {subs.length === 0 ? (
+                        <p className="px-3 py-2.5 text-xs text-[#002132]/50">Nenhum subusuário cadastrado.</p>
+                      ) : (
+                        <div className="divide-y divide-black/5 max-h-52 overflow-y-auto">
+                          {subs.map(s => (
+                            <div key={s.id} className="px-3 py-2 flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm text-[#002132] truncate">{s.nome || "Sem nome"}</p>
+                                <p className="text-[11px] text-[#002132]/50 truncate">{s.email}</p>
+                              </div>
+                              <span
+                                className="text-[10px] font-bold uppercase px-2 py-1 rounded-full shrink-0"
+                                style={{
+                                  backgroundColor: s.ativo ? "#D6F4FB" : "#EFEFEF",
+                                  color: s.ativo ? "#00789A" : "#8A9298",
+                                }}
+                              >
+                                {s.ativo ? "ativo" : "inativo"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
                 Módulos liberados
               </p>
+
               <div className="grid sm:grid-cols-2 gap-2">
                 {modules.map(m => {
                   const enabled = clientModules[selected]?.has(m.key) || false;
