@@ -160,6 +160,51 @@ export default function ClientesPage() {
     toast.success(enabled ? "Módulo liberado." : "Módulo bloqueado.");
   };
 
+  const moduleName = (key: string) =>
+    modules.find(m => m.key === key)?.name || key;
+
+  // Vincula um pacote ao usuário master e sincroniza os módulos do pacote
+  const aplicarPacote = async (userId: string, planoNome: string) => {
+    setPlanoBusy(true);
+    const plano = planos.find(p => p.name === planoNome) || null;
+    const planoModules = plano?.enabled_modules || [];
+
+    const { error } = await supabase
+      .from("empresa_config")
+      .update({ plano: plano ? plano.name : null })
+      .eq("user_id", userId);
+
+    if (error) {
+      setPlanoBusy(false);
+      toast.error("Não foi possível vincular o pacote.");
+      return;
+    }
+
+    if (plano) {
+      const allKeys = Array.from(new Set([...modules.map(m => m.key), ...planoModules]));
+      const rows = allKeys.map(key => ({
+        user_id: userId,
+        module_key: key,
+        enabled: planoModules.includes(key),
+      }));
+      const { error: cmErr } = await supabase
+        .from("client_modules")
+        .upsert(rows, { onConflict: "user_id,module_key" });
+      if (cmErr) {
+        setPlanoBusy(false);
+        toast.error("Pacote vinculado, mas os módulos não puderam ser sincronizados.");
+        return;
+      }
+      setClientModules(prev => ({ ...prev, [userId]: new Set(planoModules) }));
+    }
+
+    setClientes(prev => prev.map(c => c.user_id === userId ? { ...c, plano: plano ? plano.name : null } : c));
+    setPlanoBusy(false);
+    toast.success(plano ? `Pacote "${plano.name}" vinculado.` : "Pacote removido.");
+  };
+
+
+
   const callAdmin = async (payload: Record<string, unknown>) => {
     const { data, error } = await supabase.functions.invoke("create-user", { body: payload });
     if (error) throw new Error(error.message);
