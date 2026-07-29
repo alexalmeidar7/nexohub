@@ -146,10 +146,10 @@ export default function PermissoesSection() {
   const [showPassFor, setShowPassFor] = useState<string | null>(null);
   const [newPassMap, setNewPassMap] = useState<Record<string, string>>({});
   const [changingPassId, setChangingPassId] = useState<string | null>(null);
-  const [aiEnabled, setAiEnabled] = useState(true);
-  const [updatingAi, setUpdatingAi] = useState(false);
   const [newPerfil, setNewPerfil] = useState<PerfilKey>("recepcao");
   const [perfilMap, setPerfilMap] = useState<Record<string, PerfilKey>>(readPerfilMap);
+
+
 
 
   const inputStyle: React.CSSProperties = {
