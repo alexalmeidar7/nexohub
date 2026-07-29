@@ -58,6 +58,10 @@ export default function ClientesPage() {
   const [criando, setCriando] = useState(false);
   const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "" });
   const [novoModules, setNovoModules] = useState<Set<string>>(new Set());
+  const [trashOpen, setTrashOpen] = useState(false);
+  const [trash, setTrash] = useState<TrashItem[]>([]);
+  const [trashLoading, setTrashLoading] = useState(false);
+  const [trashBusy, setTrashBusy] = useState<string | null>(null);
 
 
 
