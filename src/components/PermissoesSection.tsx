@@ -527,8 +527,42 @@ export default function PermissoesSection() {
           {/* Expanded content */}
           {expandedId === sub.id && (
             <div className="p-4 space-y-4" style={{ backgroundColor: "var(--layout-page-bg, #fff)" }}>
+              {/* Categoria / perfil padrão */}
+              <div>
+                <label className="text-[11px] font-bold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Categoria:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {PERFIS.map(p => {
+                    const active = perfilMap[sub.id] === p.key;
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => applyPerfil(sub, p.key)}
+                        className="rounded-xl px-3 py-2 text-left transition-all"
+                        style={{
+                          backgroundColor: active
+                            ? "var(--layout-accent-color, #444)"
+                            : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
+                          color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                          border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                        }}
+                      >
+                        <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
+                        <span className="block text-[10px] opacity-70">{p.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] mt-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  Aplicar uma categoria substitui os módulos pelo padrão do perfil. Ajustes manuais continuam possíveis abaixo.
+                </p>
+              </div>
+
               {/* Module toggles by category */}
               <div className="space-y-3">
+
                 <label className="text-[11px] font-bold block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Módulos com acesso:
                 </label>
