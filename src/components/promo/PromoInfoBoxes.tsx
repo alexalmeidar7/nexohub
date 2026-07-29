@@ -18,6 +18,7 @@ interface Props {
   weatherCity: string | null;
   weatherLat: number | null;
   weatherLon: number | null;
+  userId?: string | null;
 }
 
 // ------- Shared card style (elegante / clean, combinando com a barra de audiência) -------
@@ -480,8 +481,265 @@ function DatasBox() {
   );
 }
 
+// ================= BLITZ =================
 
-export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon }: Props) {
+interface BlitzRow {
+  id: string;
+  dia: string;
+  horario: string;
+  horario_fim: string | null;
+  cliente: string;
+  equipe: string | null;
+  observacoes: string | null;
+  realizada: boolean;
+}
+
+function nowHMBrasilia() {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo",
+  }).format(new Date());
+}
+
+function todayBrasilia() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date());
+}
+
+function fmtDataBR(iso: string) {
+  const [y, m, d] = iso.split("-");
+  if (!y || !m || !d) return iso;
+  return `${d}/${m}/${y}`;
+}
+
+function BlitzBox({ userId }: { userId?: string | null }) {
+  const [rows, setRows] = useState<BlitzRow[]>([]);
+  const [tick, setTick] = useState(0);
+  const [selected, setSelected] = useState<BlitzRow | null>(null);
+  const [collapsed, toggleCollapsed] = useCollapsed("blitz");
+
+  useEffect(() => {
+    const iv = setInterval(() => setTick((t) => t + 1), 30000);
+    return () => clearInterval(iv);
+  }, []);
+
+  useEffect(() => {
+    if (!userId) { setRows([]); return; }
+    let cancelled = false;
+    const today = todayBrasilia();
+    const load = async () => {
+      const { data } = await supabase
+        .from("blitz_promocionais")
+        .select("id,dia,horario,horario_fim,cliente,equipe,observacoes,realizada")
+        .eq("user_id", userId)
+        .gte("dia", today)
+        .eq("realizada", false)
+        .order("dia")
+        .order("horario");
+      if (cancelled) return;
+      setRows((data as BlitzRow[]) || []);
+    };
+    load();
+    const ch = supabase
+      .channel(`promo-blitz-${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "blitz_promocionais", filter: `user_id=eq.${userId}` }, load)
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [userId]);
+
+  const today = todayBrasilia();
+  const hm = nowHMBrasilia();
+
+  const acontecendo = useMemo(() => {
+    void tick;
+    return rows.filter((b) => {
+      if (b.dia !== today) return false;
+      const ini = (b.horario || "").slice(0, 5);
+      const fim = (b.horario_fim || "").slice(0, 5);
+      if (ini && hm < ini) return false;
+      if (fim && hm > fim) return false;
+      return true;
+    });
+  }, [rows, tick, today, hm]);
+
+  const proxima = useMemo(() => {
+    void tick;
+    return rows.find((b) => {
+      if (b.dia > today) return true;
+      if (b.dia < today) return false;
+      const ini = (b.horario || "").slice(0, 5);
+      return ini > hm;
+    }) || null;
+  }, [rows, tick, today, hm]);
+
+  return (
+    <>
+      <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
+        <div style={titleStyle} className="justify-between">
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Sparkles size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
+            <span className="truncate">Blitz Promocional</span>
+            {collapsed && acontecendo.length > 0 && (
+              <span className="truncate" style={{ fontSize: 9, fontWeight: 700, color: PROMO_MUTED, letterSpacing: 0.5, marginLeft: 4 }}>
+                · {acontecendo.length} ao vivo
+              </span>
+            )}
+          </span>
+          <span className="flex items-center gap-1.5 flex-shrink-0">
+            {acontecendo.length > 0 && !collapsed && (
+              <span
+                style={{
+                  fontSize: 8, fontWeight: 900, letterSpacing: 1.5, textTransform: "uppercase",
+                  padding: "2px 7px", borderRadius: 999, background: PROMO_BORDER, color: PROMO_ACCENT_A,
+                  boxShadow: `0 0 10px color-mix(in srgb, ${PROMO_BORDER} 70%, transparent)`,
+                  animation: "promo-datas-pulse 1.4s ease-in-out infinite",
+                }}
+              >
+                ● AO VIVO
+              </span>
+            )}
+            <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+          </span>
+        </div>
+
+        {!collapsed && (
+          acontecendo.length === 0 ? (
+            <div style={{ fontSize: 11, color: PROMO_MUTED, marginTop: 6 }}>
+              Nenhuma blitz acontecendo agora.
+              {proxima && (
+                <div style={{ fontSize: 10, marginTop: 6, color: PROMO_MUTED }}>
+                  Próxima: <strong style={{ color: PROMO_TEXT }}>{proxima.cliente}</strong> · {fmtDataBR(proxima.dia)} às {(proxima.horario || "").slice(0, 5)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto" style={{ marginTop: 2 }}>
+              {acontecendo.map((b) => {
+                const ini = (b.horario || "").slice(0, 5);
+                const fim = (b.horario_fim || "").slice(0, 5);
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setSelected(b)}
+                    className="w-full text-left flex items-center gap-2 rounded-md transition-colors"
+                    style={{
+                      padding: "6px 8px",
+                      marginBottom: 4,
+                      background: `color-mix(in srgb, ${PROMO_BORDER} 6%, transparent)`,
+                      border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 15%, transparent)`,
+                      color: PROMO_TEXT,
+                      cursor: "pointer",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = `color-mix(in srgb, ${PROMO_BORDER} 14%, transparent)`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = `color-mix(in srgb, ${PROMO_BORDER} 6%, transparent)`; }}
+                  >
+                    <span style={{
+                      width: 6, height: 6, borderRadius: 999, background: PROMO_ACCENT_B, flexShrink: 0,
+                      boxShadow: `0 0 8px ${PROMO_ACCENT_B}`,
+                    }} />
+                    <span className="flex-1 min-w-0">
+                      <span className="block truncate" style={{ fontSize: 12, fontWeight: 800 }}>{b.cliente}</span>
+                      <span className="block" style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+                        {ini}{fim ? `–${fim}` : ""}{b.equipe ? ` · ${b.equipe}` : ""}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )
+        )}
+      </div>
+
+      {selected && createPortal(
+        <div
+          onClick={() => setSelected(null)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9999,
+            background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)",
+            display: "flex", alignItems: "center", justifyContent: "center", padding: 20,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%", maxWidth: 460,
+              background: PROMO_CARD_BG,
+              border: `1px solid color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
+              borderRadius: 18, color: PROMO_TEXT, overflow: "hidden",
+              fontFamily: "'Montserrat', sans-serif",
+              boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            }}
+          >
+            <div style={{
+              padding: "14px 18px", background: PROMO_ACCENT_GRADIENT,
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+            }}>
+              <div className="flex items-center gap-2 min-w-0">
+                <Sparkles size={16} style={{ color: PROMO_BORDER }} />
+                <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>Blitz Promocional</span>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                style={{
+                  width: 28, height: 28, borderRadius: 999,
+                  background: "rgba(255,255,255,0.15)", color: PROMO_TEXT, border: "none",
+                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+                }}
+                title="Fechar"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div style={{ padding: 18 }}>
+              <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.2 }}>{selected.cliente}</div>
+              <div style={{ fontSize: 11, color: PROMO_MUTED, marginTop: 8, letterSpacing: 1, textTransform: "uppercase", fontWeight: 700 }}>
+                {fmtDataBR(selected.dia)} · {(selected.horario || "").slice(0, 5)}{selected.horario_fim ? `–${selected.horario_fim.slice(0, 5)}` : ""}
+              </div>
+              {selected.equipe && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 800 }}>Equipe</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, marginTop: 3 }}>{selected.equipe}</div>
+                </div>
+              )}
+              {selected.observacoes && (
+                <div style={{ marginTop: 12 }}>
+                  <div style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 800 }}>Observações</div>
+                  <div style={{ fontSize: 12, marginTop: 3, lineHeight: 1.45, whiteSpace: "pre-wrap" }}>{selected.observacoes}</div>
+                </div>
+              )}
+
+              <div style={{
+                marginTop: 18, padding: 14, borderRadius: 12,
+                background: `color-mix(in srgb, ${PROMO_BORDER} 8%, transparent)`,
+                border: `1px dashed color-mix(in srgb, ${PROMO_BORDER} 30%, transparent)`,
+              }}>
+                <div style={{ fontSize: 9, color: PROMO_MUTED, letterSpacing: 1.5, textTransform: "uppercase", fontWeight: 800 }}>Próxima Blitz</div>
+                {proxima ? (
+                  <div style={{ marginTop: 6 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800 }}>{proxima.cliente}</div>
+                    <div style={{ fontSize: 11, color: PROMO_MUTED, marginTop: 2, letterSpacing: 0.5, textTransform: "uppercase", fontWeight: 700 }}>
+                      {fmtDataBR(proxima.dia)} às {(proxima.horario || "").slice(0, 5)}{proxima.horario_fim ? `–${proxima.horario_fim.slice(0, 5)}` : ""}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 12, marginTop: 6, color: PROMO_MUTED, fontStyle: "italic" }}>
+                    Não há próxima blitz cadastrada.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
+export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon, userId }: Props) {
   return (
     <div
       className="grid gap-3 mb-3"
@@ -489,6 +747,7 @@ export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon }: 
     >
       <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
       <DatasBox />
+      <BlitzBox userId={userId} />
     </div>
   );
 }

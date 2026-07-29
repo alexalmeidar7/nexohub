@@ -974,6 +974,7 @@ export default function PromocoesKiosk() {
           weatherCity={weatherInfo.city}
           weatherLat={weatherInfo.lat}
           weatherLon={weatherInfo.lon}
+          userId={audienceUserId}
         />
 
         {/* Barra Batalha de Audiência: Áudio (esq) vs Vídeo (dir) */}
