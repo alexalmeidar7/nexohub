@@ -5,6 +5,7 @@ export interface ModuloChild {
   icon: LucideIcon;
   label: string;
   page?: string;
+  children?: ModuloChild[];
 }
 
 export interface ModuloGroup {
