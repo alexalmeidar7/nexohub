@@ -760,6 +760,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const handleMenuClick = (item: MenuItem) => {
     if (item.children) {
       toggleMenu(item.label);
+    } else if (item.label === "home") {
+      setSelectedHeaderPill("nexohub");
+      setCurrentPage("dashboard");
+      setMobileMenuOpen(false);
+      setHoveredMenu(null);
     } else if (item.pillMode) {
       setSelectedHeaderPill(item.pillMode);
       setCurrentPage("dashboard");
@@ -950,6 +955,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       onClick={() => {
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
+                        } else if (item.label === "home") {
+                          setSelectedHeaderPill("nexohub");
+                          setCurrentPage("dashboard");
+                          setHoveredMenu(null);
                         } else if (item.pillMode) {
                           setSelectedHeaderPill(item.pillMode);
                           setCurrentPage("dashboard");
