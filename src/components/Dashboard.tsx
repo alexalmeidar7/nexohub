@@ -285,6 +285,7 @@ const pageTitle: Record<Page, string> = {
   clientes: "Cadastro de Clientes",
   modulos: "Módulos",
   subusuarios: "Subusuários",
+  pacotes: "Pacotes",
 };
 
 interface DashboardProps {
