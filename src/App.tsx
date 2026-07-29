@@ -98,6 +98,7 @@ const VmixControl = lazyRetry(() => import("./pages/VmixControl"));
 const CenarioTela = lazyRetry(() => import("./pages/CenarioTela"));
 const TelaInterativa = lazyRetry(() => import("./pages/TelaInterativa"));
 const CenarioTelaFull = lazyRetry(() => import("./pages/CenarioTelaFull"));
+const CenarioEstudioWebTela = lazyRetry(() => import("./pages/CenarioEstudioWebTela"));
 const IntercomListener = lazyRetry(() => import("./pages/IntercomListener"));
 const VmixAssunto = lazyRetry(() => import("./pages/VmixAssunto"));
 
