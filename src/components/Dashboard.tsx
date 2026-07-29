@@ -274,6 +274,20 @@ const menuToModuleKey: Record<string, string> = {
   "ferramentas": "ferramentas",
 };
 
+// ---- Plan (pacote) based menu visibility -------------------------------
+const moduleSlug = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+const moduleKeyOfNode = (n: { label: string; page?: unknown }) =>
+  (typeof n.page === "string" && n.page && n.page !== "dashboard") ? n.page : moduleSlug(n.label);
+
+const collectModuleKeys = (items: { label: string; page?: unknown; children?: any[] }[]): string[] =>
+  items.flatMap(i => [moduleKeyOfNode(i), ...collectModuleKeys(i.children ?? [])]);
+
+// Universe of keys that packages (pacotes) can control. Keys outside this set
+// are never blocked (avoids hiding menus that plans don't know about).
+const KNOWN_MODULE_KEYS = new Set(collectModuleKeys(adminModulosGroups as any));
+
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
   previsao: "Previsão do Tempo",
