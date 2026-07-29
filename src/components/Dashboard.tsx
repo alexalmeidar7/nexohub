@@ -158,6 +158,7 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Building2, label: "clientes", page: "clientes" },
       { icon: Users, label: "subusuários", page: "subusuarios" },
       { icon: Layers, label: "pacotes", page: "pacotes" },
+    ]
   },
   { icon: Layers, label: "modulos", page: "modulos" },
 ];
