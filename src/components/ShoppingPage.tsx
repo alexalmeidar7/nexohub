@@ -220,7 +220,8 @@ export default function ShoppingPage() {
               <div className="md:col-span-2">
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Descrição do Produto</label>
                 <textarea value={description} onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px]"
+                  disabled={formDisabled}
+                  className="w-full px-4 py-2 text-sm outline-none transition-colors min-h-[60px] disabled:opacity-50"
                   style={{ ...inputStyle, borderRadius: "12px" }} placeholder="Descrição do produto..."
                   onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
