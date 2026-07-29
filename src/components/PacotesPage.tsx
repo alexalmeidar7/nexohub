@@ -136,6 +136,7 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
     setCriando(false);
     if (error || !data) { toast.error("Não foi possível criar o pacote"); return; }
     setPlanos((prev) => [...prev, data as Plano]);
+    setNomesOriginais((prev) => ({ ...prev, [(data as Plano).id]: (data as Plano).name }));
     setSelected((data as Plano).id);
     setNovo({ name: "", price: "" });
     toast.success("Pacote criado");
