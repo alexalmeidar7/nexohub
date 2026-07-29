@@ -67,6 +67,7 @@ const EnquetePage = lazy(() => import("./EnquetePage"));
 const QuizPage = lazy(() => import("./QuizPage"));
 const SitePage = lazy(() => import("./site/SitePage"));
 const ClientesPage = lazy(() => import("./ClientesPage"));
+const ModulosPage = lazy(() => import("./ModulosPage"));
 const IntercomWidget = lazy(() => import("./IntercomWidget"));
 
 import DashboardSkeleton from "./skeletons/DashboardSkeleton";
@@ -75,7 +76,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -155,23 +156,27 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Building2, label: "clientes", page: "clientes" },
     ]
   },
+  { icon: Layers, label: "modulos", page: "modulos" },
+];
+
+// Conteúdo da página MODULOS (boxes principais + subitens)
+export const adminModulosGroups: MenuItem[] = [
   {
-    icon: Layers, label: "modulos", children: [
+    icon: Layers, label: "plataformas", children: [
       { icon: Home, label: "housemix", page: undefined as unknown as Page },
       { icon: Bot, label: "chatbot", page: undefined as unknown as Page },
       { icon: Smartphone, label: "app", page: undefined as unknown as Page },
       { icon: Palette, label: "social design", page: undefined as unknown as Page, separator: false },
-      ...sidebarMenu
-        .filter(i => i.label !== "home" && i.label !== "cadastros")
-        .map((i, idx) => ({
-          icon: i.icon,
-          label: i.label,
-          page: (i.page ?? (undefined as unknown as Page)),
-          separator: idx === 0,
-          children: i.children,
-        }) as MenuChild),
     ]
   },
+  ...sidebarMenu
+    .filter(i => i.label !== "home" && i.label !== "cadastros")
+    .map(i => ({
+      icon: i.icon,
+      label: i.label,
+      page: (i.page ?? (undefined as unknown as Page)),
+      children: i.children,
+    }) as MenuItem),
 ];
 
 // Map menu items to module keys for plan filtering
@@ -219,6 +224,7 @@ const pageTitle: Record<Page, string> = {
   sorteios: "Sorteios",
   blitz: "Blitz Promocionais",
   clientes: "Cadastro de Clientes",
+  modulos: "Módulos",
 };
 
 interface DashboardProps {
@@ -676,7 +682,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   };
 
   const handleChildClick = (child: { label: string; page?: Page }, parentLabel: string) => {
-    if (parentLabel === "modulos") {
+    if (parentLabel === "modulos" || parentLabel === "plataformas") {
       const pillByLabel: Record<string, string> = {
         "housemix": "nexohub",
         "chatbot": "Chatbot",
@@ -1571,6 +1577,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "clientes" && <ClientesPage />}
+              {currentPage === "modulos" && (
+                <ModulosPage
+                  groups={adminModulosGroups as never}
+                  accentColor={layoutColors.accentColor}
+                  onSelectGroup={(g) => {
+                    const item = adminModulosGroups.find(i => i.label === g.label);
+                    if (item?.page) { setCurrentPage(item.page); return; }
+                    if (item?.children?.length) handleChildClick(item.children[0], item.label);
+                  }}
+                  onSelectChild={(c, parent) => {
+                    const item = adminModulosGroups.find(i => i.label === parent);
+                    const child = item?.children?.find(ch => ch.label === c.label);
+                    if (child) handleChildClick(child, parent);
+                  }}
+                />
+              )}
               {currentPage === "fans" && <FansPage radioName={empresa?.nome || undefined} />}
               
             </Suspense>
