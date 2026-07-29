@@ -1416,7 +1416,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {isDashboard && displayedPill !== "Chatbot" && (
+        {isDashboard && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
 
             <div className="flex flex-row gap-4 items-stretch">
