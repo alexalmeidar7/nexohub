@@ -1376,19 +1376,42 @@ export default function ProgramaForm() {
                 {sortedProgramas.length}
               </span>
             </div>
-            <div style={{ minWidth: 180 }}>
-              <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
-                  <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="horario">Ordenar por Horário</SelectItem>
-                  <SelectItem value="nome">Ordenar por Nome</SelectItem>
-                  <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
-                  <SelectItem value="status">Ordenar por Status</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div style={{ display: "inline-flex", gap: 4, background: CARD_BG, borderRadius: 999, padding: 4 }}>
+                {([
+                  { v: "todos", label: "Todos" },
+                  { v: "semana", label: "Seg → Sex" },
+                  { v: "fds", label: "Fim de semana" },
+                ] as const).map(opt => (
+                  <button
+                    key={opt.v}
+                    onClick={() => setPeriodoFilter(opt.v)}
+                    style={{
+                      padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+                      fontSize: 11, fontWeight: 800, letterSpacing: 0.3,
+                      background: periodoFilter === opt.v ? CYAN : "transparent",
+                      color: periodoFilter === opt.v ? "#FFFFFF" : DARK,
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ minWidth: 180 }}>
+                <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+                  <SelectTrigger style={{ ...pillSelectTrigger, height: 38, fontSize: 12 }}>
+                    <SelectValue placeholder="Ordenar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="horario">Ordenar por Horário</SelectItem>
+                    <SelectItem value="nome">Ordenar por Nome</SelectItem>
+                    <SelectItem value="estudio">Ordenar por Estúdio</SelectItem>
+                    <SelectItem value="status">Ordenar por Status</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
           </div>
 
           <div style={{ overflowX: "auto", borderRadius: 16, border: `1px solid ${CARD_BG}` }}>
