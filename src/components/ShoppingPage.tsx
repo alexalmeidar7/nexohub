@@ -270,7 +270,18 @@ export default function ShoppingPage() {
               {editId ? "Salvar Alterações" : "Cadastrar Produto"}
             </Button>
           </div>
-        </form>
+          </form>
+
+          {formDisabled && (
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 78%, transparent)", backdropFilter: "blur(2px)" }}>
+              <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl" style={{ backgroundColor: "var(--layout-header-bg, #1a1a1a)" }}>
+                <Clock size={28} style={{ color: "var(--layout-accent, #e1f532)" }} />
+                <span className="text-sm font-bold" style={{ color: "var(--layout-header-text, #ffffff)" }}>Em breve</span>
+                <span className="text-[10px] text-center max-w-[200px]" style={{ color: "color-mix(in srgb, var(--layout-header-text, #ffffff) 70%, transparent)" }}>O módulo de shopping está em desenvolvimento.</span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* List */}
         <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
