@@ -122,10 +122,11 @@ export default function PacotesPage({ accentColor = CYAN }: Props) {
     const emUso = clientesPorPlano[plano.name] || 0;
     const ok = await confirmDialog({
       title: `Excluir "${plano.name}"?`,
-      description: emUso > 0
+      message: emUso > 0
         ? `${emUso} cliente(s) estão vinculados a este pacote e ficarão sem plano.`
         : "Esta ação não pode ser desfeita.",
-      confirmText: "Excluir",
+      confirmLabel: "Excluir",
+      destructive: true,
     });
     if (!ok) return;
     const { error } = await supabase.from("planos").delete().eq("id", plano.id);
