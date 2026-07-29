@@ -264,6 +264,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    // Force realtime socket reconnect if it went stale during idle.
+    const reconnectRealtime = () => {
+      try {
+        const rt: any = (supabase as any).realtime;
+        if (!rt) return;
+        const isOpen = typeof rt.isConnected === "function" ? rt.isConnected() : true;
+        if (!isOpen) {
+          try { rt.connect?.(); } catch { /* ignore */ }
+        }
+      } catch { /* ignore */ }
+    };
+
+
     const onVisibility = () => {
       if (document.hidden) return;
       const idleMs = Date.now() - lastRefreshAt;
