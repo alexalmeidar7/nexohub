@@ -197,7 +197,8 @@ export default function ShoppingPage() {
               <div>
                 <label className="text-xs font-semibold block mb-1" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome do Produto</label>
                 <input value={name} onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors"
+                  disabled={formDisabled}
+                  className="w-full px-4 py-1.5 text-sm outline-none transition-colors disabled:opacity-50"
                   style={inputStyle} placeholder="Ex: Caneca Positiva FM" required
                   onFocus={e => { e.currentTarget.style.borderColor = "var(--layout-accent-color, #2563eb)"; }}
                   onBlur={e => { e.currentTarget.style.borderColor = "var(--layout-header-bg, #1a1a1a)"; }}
