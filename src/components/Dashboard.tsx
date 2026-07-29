@@ -1594,7 +1594,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "clientes" && <ClientesPage />}
               {currentPage === "subusuarios" && (
-                <SubUsuariosPage groups={adminModulosGroups as never} accentColor={layoutColors.accentColor} />
+                <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
               {currentPage === "modulos" && (
                 <ModulosPage
