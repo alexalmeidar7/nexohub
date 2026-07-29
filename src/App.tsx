@@ -226,6 +226,7 @@ const App = () => (
             <Route path="/intercom" element={<IntercomListener />} />
             <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
             <Route path="/telainterativatelao" element={<TelaInterativa />} />
+            <Route path="/cenario-estudio-web/:userSlug/:id" element={<CenarioEstudioWebTela />} />
             <Route path="/vmix/assunto/:userId" element={<VmixAssunto />} />
 
             {/* Slug routes for dynamic access */}
