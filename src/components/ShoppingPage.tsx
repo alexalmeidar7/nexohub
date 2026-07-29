@@ -31,7 +31,8 @@ export default function ShoppingPage() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [shopActive, setShopActive] = useState(true);
+  const [shopActive, setShopActive] = useState(false);
+  const formDisabled = true; // módulo em desenvolvimento
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
