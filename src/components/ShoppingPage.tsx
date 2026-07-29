@@ -321,7 +321,8 @@ export default function ShoppingPage() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                       <button onClick={() => toggleActive(p.id, p.active)}
-                        className="text-[10px] px-3 py-1 rounded-full font-bold"
+                        disabled={formDisabled}
+                        className="text-[10px] px-3 py-1 rounded-full font-bold disabled:opacity-50"
                         style={p.active
                           ? { backgroundColor: "rgba(34,197,94,0.1)", color: "#22c55e" }
                           : { backgroundColor: "rgba(220,38,38,0.1)", color: "#dc2626" }
@@ -329,10 +330,10 @@ export default function ShoppingPage() {
                       >
                         {p.active ? "Ativo" : "Inativo"}
                       </button>
-                      <button onClick={() => startEdit(p)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <button onClick={() => startEdit(p)} disabled={formDisabled} className="p-1.5 rounded-lg transition-colors disabled:opacity-50" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="p-1.5 rounded-lg transition-colors" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                      <button onClick={() => handleDelete(p.id)} disabled={formDisabled} className="p-1.5 rounded-lg transition-colors disabled:opacity-50" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                         <Trash2 size={14} />
                       </button>
                     </div>
