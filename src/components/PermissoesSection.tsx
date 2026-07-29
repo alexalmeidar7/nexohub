@@ -68,6 +68,60 @@ const MODULE_GROUPS = [
 // Flat list for counting
 const ALL_MODULE_KEYS = MODULE_GROUPS.flatMap(g => g.items.map(i => i.key));
 
+// ---- Perfis padrão de sub-usuário ----
+const PERFIS = [
+  {
+    key: "recepcao",
+    label: "RECEPÇÃO",
+    desc: "Atendimento e cadastros",
+    modules: ["fans", "agenda", "promocoes"],
+  },
+  {
+    key: "locutor",
+    label: "LOCUTOR",
+    desc: "Estúdio e no ar",
+    modules: ["musica", "noticias", "telapromo", "testemunhais"],
+  },
+  {
+    key: "producao",
+    label: "PRODUÇÃO",
+    desc: "Conteúdo e pauta",
+    modules: [
+      "apresentadores", "programas", "previsao", "noticias", "musica", "agenda",
+      "broadcast", "cenario", "batalha", "enquete", "cortevideo",
+    ],
+  },
+  {
+    key: "comercial",
+    label: "COMERCIAL",
+    desc: "Vendas e patrocínios",
+    modules: [
+      "testemunhais", "promocoes", "configtelapromo", "telapromo",
+      "shopping", "propostas", "logos", "preroll",
+    ],
+  },
+] as const;
+
+type PerfilKey = (typeof PERFIS)[number]["key"];
+
+const PERFIL_STORAGE_KEY = "nexo_subuser_perfis";
+
+const readPerfilMap = (): Record<string, PerfilKey> => {
+  try {
+    return JSON.parse(localStorage.getItem(PERFIL_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+};
+
+const writePerfilMap = (map: Record<string, PerfilKey>) => {
+  try {
+    localStorage.setItem(PERFIL_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    /* ignore */
+  }
+};
+
 interface SubUser {
   id: string;
   auth_user_id: string;
@@ -76,6 +130,7 @@ interface SubUser {
   allowed_modules: string[];
   ativo: boolean;
 }
+
 
 export default function PermissoesSection() {
   const { user } = useAuth();
@@ -93,6 +148,9 @@ export default function PermissoesSection() {
   const [changingPassId, setChangingPassId] = useState<string | null>(null);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [updatingAi, setUpdatingAi] = useState(false);
+  const [newPerfil, setNewPerfil] = useState<PerfilKey>("recepcao");
+  const [perfilMap, setPerfilMap] = useState<Record<string, PerfilKey>>(readPerfilMap);
+
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "var(--layout-widget-bg, #1a1a1a)",
@@ -150,6 +208,29 @@ export default function PermissoesSection() {
     }
   };
 
+  const applyPerfil = async (subUser: SubUser, perfil: PerfilKey) => {
+    const preset = PERFIS.find(p => p.key === perfil);
+    if (!preset) return;
+    const updated = preset.modules.filter(k => ALL_MODULE_KEYS.includes(k));
+    setSubUsers(prev => prev.map(s => s.id === subUser.id ? { ...s, allowed_modules: updated } : s));
+    setPerfilMap(prev => {
+      const next = { ...prev, [subUser.id]: perfil };
+      writePerfilMap(next);
+      return next;
+    });
+    setSavingId(subUser.id);
+    const { data, error } = await supabase.functions.invoke("manage-sub-users", {
+      body: { action: "update_modules", sub_user_id: subUser.id, allowed_modules: updated },
+    });
+    setSavingId(null);
+    if (error || data?.error) {
+      toast.error("Erro ao aplicar perfil");
+      fetchSubUsers();
+    } else {
+      toast.success(`Perfil ${preset.label} aplicado`);
+    }
+  };
+
   const handleCreate = async () => {
     if (!newEmail || !newPassword) {
       toast.error("Email e senha são obrigatórios");
@@ -163,10 +244,29 @@ export default function PermissoesSection() {
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao criar sub-usuário");
       } else {
-        toast.success("Sub-usuário criado com sucesso");
+        const preset = PERFIS.find(p => p.key === newPerfil);
+        const modules = (preset?.modules || []).filter(k => ALL_MODULE_KEYS.includes(k));
+        // Localiza o registro recém-criado para aplicar o perfil padrão
+        const { data: rows } = await supabase
+          .from("sub_users")
+          .select("id")
+          .eq("email", newEmail)
+          .maybeSingle();
+        if (rows?.id) {
+          await supabase.functions.invoke("manage-sub-users", {
+            body: { action: "update_modules", sub_user_id: rows.id, allowed_modules: modules },
+          });
+          setPerfilMap(prev => {
+            const next = { ...prev, [rows.id as string]: newPerfil };
+            writePerfilMap(next);
+            return next;
+          });
+        }
+        toast.success(`Sub-usuário criado com perfil ${preset?.label ?? ""}`);
         setNewEmail("");
         setNewPassword("");
         setNewNome("");
+        setNewPerfil("recepcao");
         setShowForm(false);
         fetchSubUsers();
       }
@@ -175,6 +275,7 @@ export default function PermissoesSection() {
     }
     setCreating(false);
   };
+
 
   const toggleModule = async (subUser: SubUser, moduleKey: string) => {
     const current = subUser.allowed_modules || [];
@@ -314,6 +415,37 @@ export default function PermissoesSection() {
               />
             </div>
           </div>
+
+          {/* Perfil padrão */}
+          <div>
+            <label className="text-[11px] font-medium mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Categoria do sub-usuário *
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {PERFIS.map(p => {
+                const active = newPerfil === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setNewPerfil(p.key)}
+                    className="rounded-xl px-3 py-2 text-left transition-all"
+                    style={{
+                      backgroundColor: active
+                        ? "var(--layout-accent-color, #444)"
+                        : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
+                      color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                      border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                    }}
+                  >
+                    <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
+                    <span className="block text-[10px] opacity-70">{p.desc}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="flex gap-2 justify-end">
             <button
               onClick={() => setShowForm(false)}
@@ -367,8 +499,17 @@ export default function PermissoesSection() {
             <div className="flex items-center gap-3">
               <ShieldCheck size={16} style={{ color: "var(--layout-accent-color, #444)" }} />
               <div className="text-left">
-                <div className="text-sm font-semibold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                <div className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   {sub.nome || sub.email}
+                  <span
+                    className="text-[9px] font-bold tracking-wider rounded-full px-2 py-0.5"
+                    style={{
+                      backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444) 18%, transparent)",
+                      color: "var(--layout-accent-color, #444)",
+                    }}
+                  >
+                    {PERFIS.find(p => p.key === perfilMap[sub.id])?.label ?? "SEM CATEGORIA"}
+                  </span>
                 </div>
                 <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
                   {sub.email} · {sub.allowed_modules.length} módulo{sub.allowed_modules.length !== 1 ? "s" : ""}
@@ -376,6 +517,7 @@ export default function PermissoesSection() {
                 </div>
               </div>
             </div>
+
             <div className="flex items-center gap-2">
               {savingId === sub.id && <Loader2 size={14} className="animate-spin" style={{ color: "var(--layout-accent-color, #444)" }} />}
               {expandedId === sub.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -385,8 +527,42 @@ export default function PermissoesSection() {
           {/* Expanded content */}
           {expandedId === sub.id && (
             <div className="p-4 space-y-4" style={{ backgroundColor: "var(--layout-page-bg, #fff)" }}>
+              {/* Categoria / perfil padrão */}
+              <div>
+                <label className="text-[11px] font-bold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                  Categoria:
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {PERFIS.map(p => {
+                    const active = perfilMap[sub.id] === p.key;
+                    return (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => applyPerfil(sub, p.key)}
+                        className="rounded-xl px-3 py-2 text-left transition-all"
+                        style={{
+                          backgroundColor: active
+                            ? "var(--layout-accent-color, #444)"
+                            : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
+                          color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
+                          border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                        }}
+                      >
+                        <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
+                        <span className="block text-[10px] opacity-70">{p.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] mt-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  Aplicar uma categoria substitui os módulos pelo padrão do perfil. Ajustes manuais continuam possíveis abaixo.
+                </p>
+              </div>
+
               {/* Module toggles by category */}
               <div className="space-y-3">
+
                 <label className="text-[11px] font-bold block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Módulos com acesso:
                 </label>
