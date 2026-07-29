@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { confirmDialog } from "@/lib/confirmDialog";
-import { Loader2, Package, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { adminModulosGroups } from "@/components/Dashboard";
+import { Check, ChevronDown, ChevronRight, Loader2, Package, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 
 const CYAN = "#00BFF0";
 
@@ -19,6 +20,31 @@ interface ModuleDef {
   name: string;
 }
 
+interface TreeNode {
+  key: string;
+  label: string;
+  children: TreeNode[];
+}
+
+const slug = (s: string) =>
+  s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+type RawItem = { label: string; page?: unknown; children?: RawItem[] };
+
+const buildTree = (items: RawItem[]): TreeNode[] =>
+  items.map((i) => ({
+    key: (typeof i.page === "string" && i.page) ? i.page : slug(i.label),
+    label: i.label,
+    children: buildTree(i.children ?? []),
+  }));
+
+const MODULE_TREE: TreeNode[] = buildTree(adminModulosGroups as unknown as RawItem[]);
+
+const collectKeys = (node: TreeNode): string[] =>
+  [node.key, ...node.children.flatMap(collectKeys)];
+
+const TREE_KEYS = new Set(MODULE_TREE.flatMap(collectKeys));
+
 const EXTRA_MODULES: ModuleDef[] = [
   { key: "vmix", name: "Módulo vMix" },
   { key: "sorteios", name: "Módulo Sorteios" },
@@ -31,6 +57,7 @@ const EXTRA_MODULES: ModuleDef[] = [
 interface Props {
   accentColor?: string;
 }
+
 
 export default function PacotesPage({ accentColor = CYAN }: Props) {
   const [loading, setLoading] = useState(true);
