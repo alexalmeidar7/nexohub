@@ -19,6 +19,53 @@ const STORAGE_KEY = "nexo_subuser_role_templates";
 
 const emptyPerms = (): Perms => ({ full: [], recepcao: [], locutor: [], producao: [], comercial: [] });
 
+// Perfis padrão definidos pelo administrador
+const DEFAULT_PERMS: Perms = {
+  full: [
+    "g:cadastros",
+    "g:sorteio",
+    "g:blitz",
+    "g:roteiro de programa",
+    "g:música no ar",
+    "g:agenda",
+    "g:site",
+    "g:comercial",
+    "g:vmix",
+    "g:ferramentas",
+  ],
+  recepcao: [
+    "c:cadastros:ouvintes",
+    "g:sorteio",
+    "g:blitz",
+  ],
+  locutor: [
+    "c:comercial:módulo locutor",
+  ],
+  producao: [
+    "g:roteiro de programa",
+    "g:agenda",
+    "c:site:site",
+    "c:vmix:batalha musical",
+    "c:vmix:enquete",
+    "c:vmix:quiz",
+    "c:ferramentas:corte de vídeo",
+    "c:ferramentas:abrir TP externo",
+  ],
+  comercial: [
+    "c:cadastros:participantes",
+    "g:sorteio",
+    "g:blitz",
+    "g:agenda",
+    "c:comercial:ADS",
+    "c:comercial:citações",
+    "c:comercial:promoções",
+    "c:comercial:logos",
+    "c:comercial:config módulo locutor",
+    "c:comercial:shopping",
+  ],
+};
+
+
 interface Props {
   groups: ModuloGroup[];
   accentColor?: string;
@@ -41,9 +88,14 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
     const map: Record<string, FlatItem> = {};
     groups.forEach((g) => {
       map[`g:${g.label}`] = { id: `g:${g.label}`, label: g.label, group: g.label, icon: g.icon };
-      (g.children ?? []).forEach((c) => {
-        map[`c:${g.label}:${c.label}`] = { id: `c:${g.label}:${c.label}`, label: c.label, group: g.label, icon: c.icon };
-      });
+      const walk = (list: { icon: LucideIcon; label: string; children?: unknown }[]) => {
+        list.forEach((c) => {
+          map[`c:${g.label}:${c.label}`] = { id: `c:${g.label}:${c.label}`, label: c.label, group: g.label, icon: c.icon };
+          const sub = (c as { children?: { icon: LucideIcon; label: string }[] }).children;
+          if (sub?.length) walk(sub);
+        });
+      };
+      walk((g.children ?? []) as { icon: LucideIcon; label: string }[]);
     });
     return map;
   }, [groups]);
@@ -52,8 +104,16 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setPerms({ ...emptyPerms(), ...JSON.parse(raw) });
-    } catch { /* noop */ }
+      else setPerms({ ...emptyPerms(), ...DEFAULT_PERMS });
+    } catch { setPerms({ ...emptyPerms(), ...DEFAULT_PERMS }); }
   }, []);
+
+  const restoreDefaults = () => {
+    setPerms({ ...emptyPerms(), ...DEFAULT_PERMS });
+    setDirty(true);
+    toast.success("Perfis padrão aplicados — clique em Salvar perfis");
+  };
+
 
   const save = () => {
     try {
@@ -93,15 +153,25 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
             Arraste um módulo ou subitem para dentro do perfil desejado para liberar o acesso.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={save}
-          disabled={!dirty}
-          className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
-          style={{ backgroundColor: accentColor }}
-        >
-          <Save size={16} /> Salvar perfis
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={restoreDefaults}
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-semibold border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition-colors"
+          >
+            <RotateCcw size={15} /> Restaurar padrão
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={!dirty}
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 transition-opacity"
+            style={{ backgroundColor: accentColor }}
+          >
+            <Save size={16} /> Salvar perfis
+          </button>
+        </div>
+
       </div>
 
       {/* Boxes dos perfis padrão (barra fixa no topo ao rolar) */}

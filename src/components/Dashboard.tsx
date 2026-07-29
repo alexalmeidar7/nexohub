@@ -181,6 +181,18 @@ export const adminModulosGroups: MenuItem[] = [
     }) as MenuItem),
 ];
 
+// Conteúdo da página SUBUSUÁRIOS (inclui cadastros, que não aparece em MODULOS)
+export const subUsuarioModulosGroups: MenuItem[] = sidebarMenu
+  .filter(i => i.label !== "home" && i.label !== "modulos")
+  .map(i => ({
+    icon: i.icon,
+    label: i.label,
+    page: (i.page ?? (undefined as unknown as Page)),
+    children: i.children,
+  }) as MenuItem);
+
+
+
 // Map menu items to module keys for plan filtering
 const menuToModuleKey: Record<string, string> = {
   "cadastros": "cadastros",
@@ -1582,7 +1594,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPage === "clientes" && <ClientesPage />}
               {currentPage === "subusuarios" && (
-                <SubUsuariosPage groups={adminModulosGroups as never} accentColor={layoutColors.accentColor} />
+                <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
               {currentPage === "modulos" && (
                 <ModulosPage
