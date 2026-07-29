@@ -199,6 +199,8 @@ export default function SubUsuariosPage({ groups, accentColor = "#00BFF0" }: Pro
           );
         })}
       </div>
+      </div>
+
 
       {/* Módulos disponíveis (mesmo layout da página Módulos) */}
       <div className="mb-4">
