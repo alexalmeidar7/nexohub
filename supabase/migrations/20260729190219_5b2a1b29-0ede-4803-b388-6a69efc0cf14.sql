@@ -1,0 +1,2 @@
+CREATE POLICY "Admins can view all profiles" ON public.profiles FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can view all sub_users" ON public.sub_users FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
