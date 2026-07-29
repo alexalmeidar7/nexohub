@@ -832,7 +832,6 @@ export default function ClientesPage() {
                 const cli = clientes.find(c => c.user_id === selected);
                 const planoAtual = planos.find(p => p.name === cli?.plano) || null;
                 const planoModules = planoAtual?.enabled_modules || [];
-                const extras = modules.filter(m => !planoModules.includes(m.key));
                 return (
                   <>
                     <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
@@ -857,75 +856,36 @@ export default function ClientesPage() {
                         {planoBusy && <Loader2 size={16} className="animate-spin text-[#002132]/40" />}
                       </div>
                       <p className="text-[11px] text-[#002132]/45 mt-2">
-                        Ao escolher o pacote, os módulos do plano são liberados automaticamente para o usuário master.
+                        Os módulos liberados para este cliente são definidos pelo pacote escolhido.
                       </p>
                     </div>
 
-                    <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
-                      {planoAtual ? `Módulos do pacote ${planoAtual.name}` : "Módulos liberados"}
-                    </p>
-
-                    {planoAtual && planoModules.length === 0 && (
-                      <p className="text-sm text-[#002132]/50 mb-4">Este pacote ainda não possui módulos configurados.</p>
-                    )}
-
-                    <div className="grid sm:grid-cols-2 gap-2">
-                      {(planoAtual ? planoModules.map(k => ({ key: k, name: moduleName(k) })) : modules).map(m => {
-                        const enabled = clientModules[selected]?.has(m.key) || false;
-                        const key = `${selected}:${m.key}`;
-                        return (
-                          <div
-                            key={m.key}
-                            className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-black/5"
-                            style={{ backgroundColor: enabled ? "#D6F4FB" : "#F6F8F9" }}
-                          >
-                            <span className="text-sm text-[#002132]">{m.name}</span>
-                            {saving === key ? (
-                              <Loader2 size={14} className="animate-spin text-[#002132]/40" />
-                            ) : (
-                              <Switch
-                                checked={enabled}
-                                onCheckedChange={v => toggleModule(selected, m.key, v)}
-                              />
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {planoAtual && extras.length > 0 && (
+                    {planoAtual && (
                       <>
-                        <p className="text-xs font-bold uppercase tracking-widest mt-6 mb-3 text-[#002132]/45">
-                          Módulos fora do pacote
+                        <p className="text-xs font-bold uppercase tracking-widest mb-3 text-[#002132]/45">
+                          Módulos do pacote {planoAtual.name}
                         </p>
-                        <div className="grid sm:grid-cols-2 gap-2">
-                          {extras.map(m => {
-                            const enabled = clientModules[selected]?.has(m.key) || false;
-                            const key = `${selected}:${m.key}`;
-                            return (
-                              <div
-                                key={m.key}
-                                className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 border border-dashed border-black/10"
-                                style={{ backgroundColor: enabled ? "#D6F4FB" : "#FFFFFF" }}
+                        {planoModules.length === 0 ? (
+                          <p className="text-sm text-[#002132]/50">Este pacote ainda não possui módulos configurados.</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {planoModules.map(k => (
+                              <span
+                                key={k}
+                                className="rounded-full px-3 py-1.5 text-xs text-[#002132] border border-black/5"
+                                style={{ backgroundColor: "#D6F4FB" }}
                               >
-                                <span className="text-sm text-[#002132]/70">{m.name}</span>
-                                {saving === key ? (
-                                  <Loader2 size={14} className="animate-spin text-[#002132]/40" />
-                                ) : (
-                                  <Switch
-                                    checked={enabled}
-                                    onCheckedChange={v => toggleModule(selected, m.key, v)}
-                                  />
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                                {moduleName(k)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </>
                     )}
                   </>
                 );
               })()}
+
               <p className="text-[11px] text-[#002132]/45 mt-4">
                 A liberação é validada no servidor pelas políticas de acesso — esconder itens no menu não substitui essa checagem.
               </p>
