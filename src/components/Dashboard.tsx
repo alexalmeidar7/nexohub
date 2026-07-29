@@ -958,25 +958,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             : sidebarMenu;
           return (
         <div key={isChatbotMode ? "sb-chat" : "sb-nexo"} className="flex flex-col items-center gap-1 px-1 overflow-visible animate-fade-in">
-          {effectiveMenu.filter(item => {
-            // Sub-user: only show menus for allowed modules
-            if (subUserModules !== null) {
-              if (item.label === "home") return true;
-              // For items with children, show if any child page is allowed
-              if (item.children) {
-                return item.children.some(c => (c.permKey && subUserModules.has(c.permKey)) || (c.page && subUserModules.has(c.page)));
-              }
-              // For standalone items, check the page directly
-              return item.page ? subUserModules.has(item.page) : false;
-            }
-            if (isAdmin) return true;
-            if (item.label === "home" || item.label === "cadastros" || item.label === "ferramentas") return true;
-            const modKey = menuToModuleKey[item.label];
-            if (!modKey) return true;
-            if (planModules) return planModules.has(modKey);
-            if (enabledModules) return enabledModules.has(modKey);
-            return true;
-          }).map((item, itemIdx, arr) => {
+          {effectiveMenu.filter(isMenuItemVisible).map((item, itemIdx, arr) => {
             const active = isItemActive(item);
             const Icon = item.icon;
             const isOpen = hoveredMenu === item.label;
