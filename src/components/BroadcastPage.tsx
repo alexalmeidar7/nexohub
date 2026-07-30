@@ -47,6 +47,7 @@ interface BroadcastData {
   useCustomAssuntoBg: boolean;
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
+  aSeguirForceUntil?: string;
 }
 
 const defaultBroadcast: BroadcastData = {
