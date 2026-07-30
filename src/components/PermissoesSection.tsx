@@ -86,7 +86,7 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     slug: "recepcao",
     desc: "Atendimento e cadastros",
     icon: Headphones,
-    modules: ["fans", "agenda", "promocoes"],
+    modules: ["fans", "agenda", "promocoes", "ouvintes", "atendimento"],
   },
   {
     key: "locutor",
