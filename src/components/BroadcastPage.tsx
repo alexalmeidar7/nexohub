@@ -1455,8 +1455,8 @@ export default function BroadcastPage() {
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
               <p className="mt-3" style={{ color: "#ffffff60" }}>
-                O próximo programa é calculado pela grade (dias da semana + horário de início),
-                avançando para os próximos dias quando não há mais programas hoje.
+                As informações entram no XML 3 minutos antes do início do próximo programa e permanecem por 2 minutos.
+                Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>
           </div>
