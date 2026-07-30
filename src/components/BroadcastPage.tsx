@@ -73,6 +73,132 @@ const defaultBroadcast: BroadcastData = {
   aSeguirDurationSeconds: 120,
 };
 
+// ── helpers for next-program countdown (mirrors serve-xml-broadcast) ──
+const DAY_NAME_MAP: Record<string, string> = {
+  domingo: "Domingo",
+  "segunda-feira": "Segunda",
+  "terça-feira": "Terça",
+  "quarta-feira": "Quarta",
+  "quinta-feira": "Quinta",
+  "sexta-feira": "Sexta",
+  sábado: "Sábado",
+};
+
+function getZonedInfo(date: Date, timezone?: string | null) {
+  const fallback = () => ({
+    dayName: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][date.getDay()],
+    dateStr: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`,
+    seconds: date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds(),
+  });
+
+  if (!timezone) return fallback();
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
+  } catch {
+    timezone = "America/Sao_Paulo";
+  }
+
+  const dayName = DAY_NAME_MAP[new Intl.DateTimeFormat("pt-BR", { timeZone: timezone, weekday: "long" }).format(date).toLowerCase()] || "Segunda";
+  const dateStr = new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: timezone, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).formatToParts(date);
+  const h = Number(parts.find((p) => p.type === "hour")?.value || 0);
+  const m = Number(parts.find((p) => p.type === "minute")?.value || 0);
+  const s = Number(parts.find((p) => p.type === "second")?.value || 0);
+  return { dayName, dateStr, seconds: h * 3600 + m * 60 + s };
+}
+
+function timeToSeconds(hhmm: string | null | undefined): number {
+  if (!hhmm) return -1;
+  const [h = "0", m = "0"] = String(hhmm).split(":");
+  const total = Number(h) * 3600 + Number(m) * 60;
+  return Number.isFinite(total) ? total : -1;
+}
+
+interface NextProgramInfo {
+  current: any | null;
+  next: any | null;
+  nextStartSeconds: number;
+  secondsUntilStart: number;
+  windowOpenSeconds: number;
+  windowCloseSeconds: number;
+  actualDurationSeconds: number;
+  isInWindow: boolean;
+  isForced: boolean;
+  forcedRemainingSeconds: number;
+}
+
+
+function computeNextProgramInfo(allProgs: any[], timezone: string | null | undefined, leadSeconds: number, durationSeconds: number, forceUntilIso?: string): NextProgramInfo | null {
+  const z = getZonedInfo(new Date(), timezone);
+  const now = new Date();
+  const nowSeconds = z.seconds;
+
+  const current = allProgs.find((p) => {
+    if (p.variavel && p.data_variavel !== z.dateStr) return false;
+    if (!p.variavel && !(p.dias_semana || []).includes(z.dayName)) return false;
+    const start = timeToSeconds(p.horario_inicio);
+    const end = timeToSeconds(p.horario_fim);
+    if (start < 0 || end < 0) return false;
+    const crosses = end <= start;
+    if (!crosses) return nowSeconds >= start && nowSeconds < end;
+    return nowSeconds >= start || nowSeconds < end;
+  }) || null;
+
+  const curEndSec = current ? timeToSeconds(current.horario_fim) : -1;
+  const refSeconds = curEndSec > nowSeconds ? curEndSec : nowSeconds;
+
+  let next: any | null = null;
+  let nextStartSeconds = -1;
+
+  for (let offset = 0; offset <= 7; offset++) {
+    const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
+    const refInfo = getZonedInfo(refDate, timezone);
+    const candidates = allProgs
+      .map((p) => ({ p, start: timeToSeconds(p.horario_inicio) }))
+      .filter(({ p, start }) => {
+        if (start < 0) return false;
+        if (current && p.id && current.id && p.id === current.id) return false;
+        const runs = p.variavel ? p.data_variavel === refInfo.dateStr : (p.dias_semana || []).includes(refInfo.dayName);
+        if (!runs) return false;
+        return offset > 0 ? true : start >= refSeconds;
+      })
+      .sort((a, b) => a.start - b.start);
+
+    if (candidates.length > 0) {
+      next = candidates[0].p;
+      nextStartSeconds = candidates[0].start;
+      break;
+    }
+  }
+
+  if (!next || nextStartSeconds < 0) return null;
+
+  let secondsUntilStart = nextStartSeconds - nowSeconds;
+  if (secondsUntilStart < 0) secondsUntilStart += 24 * 60 * 60;
+
+  const endDelta = Math.max(0, leadSeconds - durationSeconds);
+  const windowOpenSeconds = Math.max(0, secondsUntilStart - leadSeconds);
+  const windowCloseSeconds = Math.max(0, secondsUntilStart - endDelta);
+  const actualDurationSeconds = Math.max(0, leadSeconds - endDelta);
+  const isInWindow = secondsUntilStart <= leadSeconds && secondsUntilStart >= endDelta;
+  const isForced = !!forceUntilIso && new Date(forceUntilIso).getTime() > Date.now();
+  const forcedRemainingSeconds = isForced
+    ? Math.max(0, Math.floor((new Date(forceUntilIso).getTime() - Date.now()) / 1000))
+    : 0;
+
+  return { current, next, nextStartSeconds, secondsUntilStart, windowOpenSeconds, windowCloseSeconds, actualDurationSeconds, isInWindow, isForced, forcedRemainingSeconds };
+
+}
+
+function formatCountdown(totalSeconds: number): string {
+  const seconds = Math.max(0, totalSeconds);
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  if (m > 0) return `${m} min ${String(s).padStart(2, "0")} s`;
+  return `${s} s`;
+}
+
+
 interface SocialItem {
   tipo: string;
   valor: string;
@@ -82,7 +208,7 @@ interface SocialItem {
 
 export default function BroadcastPage() {
   const { user } = useAuth();
-  
+
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
   const [saving, setSaving] = useState(false);
   const [empresaLogo, setEmpresaLogo] = useState<string | null>(null);
@@ -102,10 +228,15 @@ export default function BroadcastPage() {
   const [locutorSearchResults, setLocutorSearchResults] = useState<{nome: string; instagram: string; foto: string | null}[]>([]);
   const [showLocutorDropdown, setShowLocutorDropdown] = useState(false);
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
+  const [allProgramasFull, setAllProgramasFull] = useState<any[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"preview" | "ticker" | "aseguir" | "assuntos" | "xml">("preview");
+  const [timezone, setTimezone] = useState<string | null>("America/Sao_Paulo");
+  const [nextProgramInfo, setNextProgramInfo] = useState<NextProgramInfo | null>(null);
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
+
+
 
   // Ticker auto-content
   const [newsTitles, setNewsTitles] = useState<string[]>([]);
@@ -152,14 +283,15 @@ export default function BroadcastPage() {
   const loadInitialData = useCallback(async () => {
     if (!user) return;
     
-    // Empresa config (logo + socials)
+    // Empresa config (logo + socials + timezone)
     const { data: emp } = await supabase
       .from("empresa_config")
-      .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao")
+      .select("logo, nome, instagram, facebook, youtube, site, telefone_participacao, timezone")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (emp?.logo) setEmpresaLogo(emp.logo);
+    if (emp?.timezone) setTimezone(emp.timezone);
 
     // Build social list from empresa_config
     const socials: SocialItem[] = [];
@@ -173,7 +305,7 @@ export default function BroadcastPage() {
     }
     setEmpresaSocials(socials);
 
-    // All programs (for linking assunto background)
+    // All programs (for linking assunto background and A Seguir countdown)
     const { data: allProgs } = await supabase
       .from("programas")
       .select("id, nome")
@@ -181,6 +313,14 @@ export default function BroadcastPage() {
       .eq("ativo", true)
       .order("nome");
     if (allProgs) setAllProgramas(allProgs);
+
+    const { data: allProgsFull } = await supabase
+      .from("programas")
+      .select("id, nome, selo, capa, thumb, apresentadores_ids, apresentador_id, dias_semana, horario_inicio, horario_fim, variavel, data_variavel, estudio")
+      .eq("user_id", user.id)
+      .eq("ativo", true);
+    if (allProgsFull) setAllProgramasFull(allProgsFull);
+
 
     // Current program – match by time AND day of week
     const now = new Date();
@@ -684,6 +824,27 @@ export default function BroadcastPage() {
     const t = setInterval(() => setNowClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // A Seguir countdown
+  useEffect(() => {
+    if (!user) return;
+    const tick = () => {
+      if (allProgramasFull.length === 0) return;
+      const info = computeNextProgramInfo(
+        allProgramasFull,
+        timezone,
+        Number(data.aSeguirLeadSeconds) || 180,
+        Number(data.aSeguirDurationSeconds) || 120,
+        data.aSeguirForceUntil,
+      );
+      setNextProgramInfo(info);
+    };
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirDurationSeconds, data.aSeguirForceUntil]);
+
+
   const clockStr = `${String(nowClock.getHours()).padStart(2, "0")}:${String(nowClock.getMinutes()).padStart(2, "0")}:${String(nowClock.getSeconds()).padStart(2, "0")}`;
 
   const SectionHeader = ({ n, label, color = CYAN, right }: { n: string; label: string; color?: string; right?: React.ReactNode }) => (
@@ -1449,12 +1610,81 @@ export default function BroadcastPage() {
               ))}
             </div>
 
-
+            {/* Countdown status */}
 
             <div
-              className="mt-3 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
+              className="mt-4 p-4 rounded-xl"
+              style={{
+                backgroundColor: data.aSeguirEnabled ? "rgba(0,191,240,0.08)" : NAVY_DEEP,
+                border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}`,
+              }}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-[10px] font-bold uppercase tracking-widest" style={{ color: CYAN }}>Contagem regressiva</div>
+                <span
+                  className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
+                  style={{
+                    backgroundColor: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? LIME : "#0d2a45") : "#0d2a45",
+                    color: data.aSeguirEnabled ? (nextProgramInfo?.isInWindow || nextProgramInfo?.isForced ? NAVY : "#ffffff70") : "#ffffff70",
+                  }}
+                >
+                  {data.aSeguirEnabled ? (nextProgramInfo?.isForced ? "Forçado agora" : nextProgramInfo?.isInWindow ? "No ar no XML" : "Aguardando") : "Desligado"}
+                </span>
+              </div>
+
+              {!data.aSeguirEnabled ? (
+                <p className="text-[11px]" style={{ color: "#ffffff60" }}>
+                  Habilite o módulo A Seguir para ver a contagem regressiva.
+                </p>
+              ) : !nextProgramInfo ? (
+                <p className="text-[11px]" style={{ color: "#ffffff60" }}>
+                  Nenhum programa seguinte encontrado na grade.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span style={{ color: "#ffffff80" }}>Próximo programa</span>
+                    <span className="font-semibold text-white truncate max-w-[55%]">
+                      {nextProgramInfo.next?.nome || "—"} às {(nextProgramInfo.next?.horario_inicio || "").toString().slice(0, 5)}
+                    </span>
+                  </div>
+
+                  {(nextProgramInfo.isInWindow || nextProgramInfo.isForced) ? (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span style={{ color: "#ffffff80" }}>XML preenchido por mais</span>
+                      <span className="font-mono font-bold" style={{ color: LIME }}>
+                        {formatCountdown(nextProgramInfo.isForced ? nextProgramInfo.forcedRemainingSeconds : nextProgramInfo.windowCloseSeconds)}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span style={{ color: "#ffffff80" }}>XML será preenchido em</span>
+                      <span className="font-mono font-bold" style={{ color: CYAN }}>
+                        {formatCountdown(nextProgramInfo.windowOpenSeconds)}
+                      </span>
+                    </div>
+                  )}
+
+
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span style={{ color: "#ffffff80" }}>Permanecerá no XML</span>
+                    <span className="font-mono font-bold text-white">
+                      {formatCountdown(nextProgramInfo.actualDurationSeconds)}
+                    </span>
+                  </div>
+
+                  <div className="pt-2 text-[10px]" style={{ color: "#ffffff60" }}>
+                    As imagens e textos entram <strong style={{ color: "#fff" }}>{formatCountdown(nextProgramInfo.windowOpenSeconds)}</strong> antes do início do próximo programa e ficam no XML por <strong style={{ color: "#fff" }}>{formatCountdown(nextProgramInfo.actualDurationSeconds)}</strong>.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div
+              className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
               style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
             >
+
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold text-white">Envio manual</div>
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>
