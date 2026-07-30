@@ -1240,6 +1240,15 @@ serve(async (req) => {
     lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
     lines.push(`      <ico_temp_atual>${esc(infoCantoIcoTemp)}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
+    lines.push("    <a_seguir>");
+    lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
+    lines.push(`      <programa_nome>${esc(aSeguirNome)}</programa_nome>`);
+    lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
+    lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
+    lines.push(`      <locutor_foto>${esc(aSeguirLocutorFoto)}</locutor_foto>`);
+    lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
+    lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
+    lines.push("    </a_seguir>");
     lines.push("  </dados>");
     lines.push("</items>");
 
