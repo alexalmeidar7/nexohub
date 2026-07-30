@@ -56,19 +56,26 @@ function parseCreds(raw: string): Record<string, Cred> {
 
 export function credsForHost(hostname: string, hostWithPort: string): Cred | null {
   const raw = Deno.env.get("STREAM_ADMIN_CREDENTIALS") ?? "";
-  if (!raw) return null;
+  if (!raw) {
+    console.log("[streamAdmin] STREAM_ADMIN_CREDENTIALS not set");
+    return null;
+  }
   if (raw !== cachedRaw) {
     cachedRaw = raw;
     cachedMap = parseCreds(raw);
   }
   const map = cachedMap ?? {};
-  return (
+  const cred =
     map[hostWithPort.toLowerCase()] ??
     map[hostname.toLowerCase()] ??
     map["*"] ??
-    null
+    null;
+  console.log(
+    `[streamAdmin] host=${hostWithPort} keys=${Object.keys(map).join(",")} matched=${cred ? "yes" : "no"}`,
   );
+  return cred;
 }
+
 
 function basic(c: Cred): string {
   return `Basic ${btoa(`${c.user}:${c.pass}`)}`;
