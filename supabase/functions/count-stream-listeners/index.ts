@@ -1,10 +1,13 @@
 // Counts current listeners for a user's active audio streams.
 // Supports (a) explicit URL + XPath override, (b) Icecast/Shoutcast auto-detect,
-// (c) generic JSON/XML fallback.
+// (c) authenticated Icecast /admin probes, (d) generic JSON/XML fallback.
+import { icecastAdminListeners } from "../_shared/streamAdmin.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
 
 // Minimal XPath-ish extractor. Supports paths like:
 //   response/data/item/listeners
@@ -228,6 +231,9 @@ async function resolveCached(url: string, xpath: string | null): Promise<number 
     if (xpath) strategies.push(fetchWithXPath(url, xpath));
     strategies.push(fetchGenericListeners(url));
     strategies.push(fetchListenersForUrl(url));
+    // Authenticated Icecast admin probe (credentials from backend secret only).
+    strategies.push(icecastAdminListeners(url).catch(() => null));
+
     let value: number | null = null;
     try {
       value = await Promise.any(
