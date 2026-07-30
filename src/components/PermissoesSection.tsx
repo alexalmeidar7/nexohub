@@ -17,9 +17,17 @@ const MODULE_GROUPS = [
     items: [
       { key: "apresentadores", label: "Apresentadores" },
       { key: "programas", label: "Programas" },
+      { key: "ouvintes", label: "Cadastro de Ouvintes" },
       { key: "previsao", label: "Cidade / Tempo" },
     ],
   },
+  {
+    category: "Atendimento",
+    items: [
+      { key: "atendimento", label: "Atendimento (Chatbot)" },
+    ],
+  },
+
   {
     category: "Roteiro / Música / Agenda",
     items: [
@@ -78,7 +86,7 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     slug: "recepcao",
     desc: "Atendimento e cadastros",
     icon: Headphones,
-    modules: ["fans", "agenda", "promocoes"],
+    modules: ["fans", "agenda", "promocoes", "ouvintes", "atendimento"],
   },
   {
     key: "locutor",
@@ -95,9 +103,10 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     desc: "Conteúdo e pauta",
     icon: Clapperboard,
     modules: [
-      "apresentadores", "programas", "previsao", "noticias", "musica", "agenda",
+      "apresentadores", "programas", "ouvintes", "previsao", "noticias", "musica", "agenda",
       "broadcast", "cenario", "batalha", "enquete", "cortevideo",
     ],
+
   },
   {
     key: "comercial",
