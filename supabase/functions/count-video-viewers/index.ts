@@ -250,6 +250,9 @@ async function raceStrategies(url: string, xpath: string | null): Promise<number
   if (xpath) strategies.push(fetchWithXPath(url, xpath));
   strategies.push(fetchGenericViewers(url));
   strategies.push(fetchProviderViewers(url));
+  // nginx-rtmp / http-flv /stat (optionally authenticated via backend secret).
+  strategies.push(nginxRtmpStatViewers(url).catch(() => null));
+
   try {
     return await Promise.any(
       strategies.map(async (p) => {
