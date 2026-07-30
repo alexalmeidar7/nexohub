@@ -103,9 +103,10 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     desc: "Conteúdo e pauta",
     icon: Clapperboard,
     modules: [
-      "apresentadores", "programas", "previsao", "noticias", "musica", "agenda",
+      "apresentadores", "programas", "ouvintes", "previsao", "noticias", "musica", "agenda",
       "broadcast", "cenario", "batalha", "enquete", "cortevideo",
     ],
+
   },
   {
     key: "comercial",
