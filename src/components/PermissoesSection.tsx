@@ -554,93 +554,127 @@ export default function PermissoesSection() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-4 pt-4 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
+      <div className="space-y-5 pt-4 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
         <div className="flex items-center gap-2">
           <Shield size={16} style={{ color: textCol }} />
           <h4 className="text-sm font-bold uppercase tracking-tight" style={{ color: textCol }}>Acesso de Equipe</h4>
         </div>
         <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-          Cada categoria define as funções liberadas. Use a engrenagem para editar as funções da categoria.
+          Cada categoria abaixo já vem com o usuário padrão sugerido (ex.: <b>recepcao@{emailDomain || "seudominio.com.br"}</b>).
+          Use a engrenagem para editar as funções liberadas da categoria.
         </p>
 
-        {/* Category boxes */}
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+        {/* Category sections */}
+        <div className="space-y-4">
           {PERFIS.map(p => {
             const Icon = p.icon;
             const users = subUsers.filter(s => perfilMap[s.id] === p.key);
             const mods = perfilModules[p.key] || [];
+            const suggestedEmail = emailDomain ? `${p.slug}@${emailDomain}` : `${p.slug}@seudominio.com.br`;
+            const hasDefault = users.some(u => u.email.toLowerCase() === suggestedEmail.toLowerCase());
             return (
-              <div key={p.key} className="flex flex-col gap-3">
+              <section
+                key={p.key}
+                className="rounded-2xl overflow-hidden"
+                style={{
+                  border: `1px solid color-mix(in srgb, ${p.color} 35%, transparent)`,
+                  backgroundColor: `color-mix(in srgb, ${p.color} 5%, var(--layout-page-bg, #fff) 95%)`,
+                }}
+              >
+                {/* Header band */}
                 <div
-                  className="rounded-2xl p-4 flex flex-col gap-3"
-                  style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}
+                  className="flex items-center gap-3 px-4 py-3 flex-wrap"
+                  style={{ backgroundColor: p.color, color: "#fff" }}
                 >
-                  <div className="flex items-start gap-3">
-                    <span
-                      className="flex items-center justify-center rounded-xl shrink-0"
-                      style={{ width: 40, height: 40, backgroundColor: "rgba(255,255,255,0.18)" }}
-                    >
-                      <Icon size={20} />
+                  <span
+                    className="flex items-center justify-center rounded-xl shrink-0"
+                    style={{ width: 38, height: 38, backgroundColor: "rgba(255,255,255,0.2)" }}
+                  >
+                    <Icon size={19} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-extrabold tracking-wide leading-tight">{p.label}</div>
+                    <div className="text-[11px] opacity-80 truncate">{p.desc}</div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                      {users.length} usuário{users.length !== 1 ? "s" : ""}
                     </span>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-bold tracking-wide">{p.label}</div>
-                      <div className="text-[10px] opacity-75 truncate">{p.desc}</div>
-                    </div>
+                    <span className="rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ backgroundColor: "rgba(255,255,255,0.2)" }}>
+                      {mods.length} funç{mods.length !== 1 ? "ões" : "ão"}
+                    </span>
                     <button
                       onClick={() => setConfigPerfil(p.key)}
                       title="Funções da categoria"
-                      className="rounded-lg p-1.5 transition-opacity opacity-80 hover:opacity-100"
-                      style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+                      className="rounded-lg p-1.5 transition-opacity opacity-85 hover:opacity-100"
+                      style={{ backgroundColor: "rgba(255,255,255,0.2)" }}
                     >
                       <Settings size={15} />
                     </button>
+                    <button
+                      onClick={() => openCreateForm(p.key)}
+                      className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-bold"
+                      style={{ backgroundColor: "#fff", color: p.color }}
+                    >
+                      <UserPlus size={13} /> Novo usuário
+                    </button>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] opacity-85">
-                    <span>{users.length} usuário{users.length !== 1 ? "s" : ""}</span>
-                    <span>{mods.length} funç{mods.length !== 1 ? "ões" : "ão"}</span>
-                  </div>
-                  <button
-                    onClick={() => openCreateForm(p.key)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-semibold"
-                    style={{ backgroundColor: "rgba(255,255,255,0.95)", color: "#0f172a" }}
-                  >
-                    <UserPlus size={13} /> Novo usuário
-                  </button>
                 </div>
 
-                {/* Create form for this category */}
-                {formPerfil === p.key && (
-                  <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: softBg, border: `1px solid ${borderCol}` }}>
-                    <input value={newNome} onChange={e => setNewNome(e.target.value)} placeholder="Nome" style={inputStyle} />
-                    <input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="email@dominio.com" type="email" style={inputStyle} />
-                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Senha (mín. 6)" type="password" style={inputStyle} />
-                    <div className="flex gap-2 justify-end">
-                      <button onClick={() => setFormPerfil(null)} className="px-3 py-1.5 rounded-lg text-[11px]" style={{ color: textCol }}>Cancelar</button>
+                <div className="p-3 space-y-3">
+                  {/* Default suggested user */}
+                  {!hasDefault && formPerfil !== p.key && (
+                    <div
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 flex-wrap"
+                      style={{
+                        border: `1px dashed color-mix(in srgb, ${p.color} 55%, transparent)`,
+                        backgroundColor: "var(--layout-page-bg, #fff)",
+                      }}
+                    >
+                      <UserPlus size={15} style={{ color: p.color }} />
+                      <div className="min-w-0">
+                        <div className="text-[12px] font-semibold" style={{ color: textCol }}>Usuário padrão da categoria</div>
+                        <div className="text-[11px] font-mono truncate" style={{ color: p.color }}>{suggestedEmail}</div>
+                      </div>
                       <button
-                        onClick={handleCreate}
-                        disabled={creating}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
-                        style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)", opacity: creating ? 0.6 : 1 }}
+                        onClick={() => openCreateForm(p.key)}
+                        className="ml-auto rounded-lg px-3 py-1.5 text-[11px] font-bold"
+                        style={{ backgroundColor: p.color, color: "#fff" }}
                       >
-                        {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Criar
+                        Criar este usuário
                       </button>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Users of this category */}
-                <div className="space-y-2">
-                  {users.length === 0 && formPerfil !== p.key && (
-                    <div
-                      className="rounded-xl border-2 border-dashed text-center py-5 text-[10px]"
-                      style={{ borderColor: borderCol, color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}
-                    >
-                      Nenhum usuário nesta categoria
+                  {/* Create form for this category */}
+                  {formPerfil === p.key && (
+                    <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: `1px solid ${borderCol}` }}>
+                      <input value={newNome} onChange={e => setNewNome(e.target.value)} placeholder="Nome" style={inputStyle} />
+                      <input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder={suggestedEmail} type="email" style={inputStyle} />
+                      <input value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Senha (mín. 6)" type="password" style={inputStyle} />
+                      <div className="flex gap-2 justify-end">
+                        <button onClick={() => setFormPerfil(null)} className="px-3 py-1.5 rounded-lg text-[11px]" style={{ color: textCol }}>Cancelar</button>
+                        <button
+                          onClick={handleCreate}
+                          disabled={creating}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                          style={{ backgroundColor: p.color, color: "#fff", opacity: creating ? 0.6 : 1 }}
+                        >
+                          {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Criar
+                        </button>
+                      </div>
                     </div>
                   )}
-                  {users.map(renderUserCard)}
+
+                  {/* Users of this category */}
+                  {users.length > 0 && (
+                    <div className="grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                      {users.map(renderUserCard)}
+                    </div>
+                  )}
                 </div>
-              </div>
+              </section>
             );
           })}
         </div>
@@ -651,12 +685,13 @@ export default function PermissoesSection() {
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
               <Users size={13} /> Sem categoria
             </div>
-            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {semCategoria.map(renderUserCard)}
             </div>
           </div>
         )}
       </div>
+
 
       {/* Config popup */}
       {configPerfil && (
