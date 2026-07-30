@@ -1,8 +1,11 @@
 // Counts current viewers for a user's active video streams.
 // Fastest-wins strategy: runs XPath override (if set), generic viewer-tag
-// auto-detect, HLS m3u8 EXT-X-VIEWERS scan and provider-specific probes
-// (YouTube Live "watching now") in parallel. First non-null result wins.
+// auto-detect, HLS m3u8 EXT-X-VIEWERS scan, nginx-rtmp /stat and
+// provider-specific probes (YouTube Live "watching now") in parallel.
+import { nginxRtmpStatViewers } from "../_shared/streamAdmin.ts";
+
 const corsHeaders = {
+
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
