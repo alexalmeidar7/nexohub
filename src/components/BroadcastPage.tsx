@@ -1574,40 +1574,55 @@ export default function BroadcastPage() {
               </div>
             </label>
 
-            <div
-              className="mt-3 p-4 rounded-xl grid gap-4 sm:grid-cols-2"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
-            >
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {([
-                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa" },
-                { key: "aSeguirDurationSeconds" as const, label: "Permanecer no XML", hint: "Tempo em que as informações ficam no XML" },
-              ]).map(({ key, label, hint }) => (
-                <div key={key}>
-                  <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>{label}</div>
-                  <select
-                    value={String(data[key] ?? (key === "aSeguirLeadSeconds" ? 180 : 120))}
-                    disabled={!data.aSeguirEnabled}
-                    onChange={e => {
-                      const nextData = { ...latestDataRef.current, [key]: Number(e.target.value) };
-                      setData(nextData);
-                      void handleSave(nextData);
-                    }}
-                    className="w-full px-3 py-2 rounded-lg text-[12px] text-white"
-                    style={{
-                      backgroundColor: "rgba(255,255,255,0.05)",
-                      border: `1px solid ${NAVY_BORDER}`,
-                      opacity: data.aSeguirEnabled ? 1 : 0.5,
-                    }}
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa", fallback: 180 },
+                { key: "aSeguirDurationSeconds" as const, label: "Permanecer no XML", hint: "Tempo em que as informações ficam no XML", fallback: 120 },
+              ]).map(({ key, label, hint, fallback }) => {
+                const current = Number(data[key] ?? fallback);
+                return (
+                  <div
+                    key={key}
+                    className="p-4 rounded-xl"
+                    style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, opacity: data.aSeguirEnabled ? 1 : 0.55 }}
                   >
-                    <option value="30">30 segundos</option>
-                    <option value="60">1 minuto</option>
-                    <option value="90">1 minuto e meio</option>
-                    <option value="120">2 minutos</option>
-                    <option value="180">3 minutos</option>
-                  </select>
-                  <p className="text-[10px] mt-1" style={{ color: "#ffffff50" }}>{hint}</p>
-                </div>
-              ))}
+                    <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: CYAN }}>{label}</div>
+                    <p className="text-[10px] mb-3" style={{ color: "#ffffff55" }}>{hint}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { v: 30, l: "30s" },
+                        { v: 60, l: "1min" },
+                        { v: 90, l: "1min30" },
+                        { v: 120, l: "2min" },
+                        { v: 180, l: "3min" },
+                      ].map(({ v, l }) => {
+                        const active = current === v;
+                        return (
+                          <button
+                            key={v}
+                            type="button"
+                            disabled={!data.aSeguirEnabled}
+                            onClick={() => {
+                              const nextData = { ...latestDataRef.current, [key]: v };
+                              setData(nextData);
+                              void handleSave(nextData);
+                            }}
+                            className="px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide transition-colors"
+                            style={{
+                              backgroundColor: active ? CYAN : "rgba(255,255,255,0.06)",
+                              color: active ? "#04121b" : "#ffffffcc",
+                              border: `1px solid ${active ? CYAN : NAVY_BORDER}`,
+                              cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
+                            }}
+                          >
+                            {l}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Countdown status */}
