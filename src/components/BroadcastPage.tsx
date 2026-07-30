@@ -66,6 +66,7 @@ const defaultBroadcast: BroadcastData = {
   useCustomAssuntoBg: false,
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
+  aSeguirForceUntil: "",
 };
 
 interface SocialItem {
