@@ -108,8 +108,9 @@ export default function AdminClientsDashboard() {
             ativo: !!e.ativo,
             subUsers: subCount.get(e.user_id) || 0,
             modules: modCount.get(e.user_id) || 0,
-            canaisVideo: meus.filter(c => c.type === "video" && c.active),
-            canaisAudio: meus.filter(c => c.type !== "video" && c.active).length,
+            canaisVideo: meus.filter(c => isVideo(c.type) && c.active),
+            canaisAudio: meus.filter(c => isAudio(c.type) && c.active).length,
+            canaisCatalogo: meus.filter(c => isCatalog(c.type) && c.active).length,
             social: (e.instagram_subs || 0) + (e.youtube_subs || 0) + (e.facebook_subs || 0),
           };
         });
