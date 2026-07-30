@@ -46,6 +46,7 @@ interface BroadcastData {
   assuntoBgUrl: string;
   useCustomAssuntoBg: boolean;
   assuntoBgProgramaIds: string[];
+  aSeguirEnabled: boolean;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -63,6 +64,7 @@ const defaultBroadcast: BroadcastData = {
   assuntoBgUrl: "",
   useCustomAssuntoBg: false,
   assuntoBgProgramaIds: [],
+  aSeguirEnabled: false,
 };
 
 interface SocialItem {
@@ -96,7 +98,7 @@ export default function BroadcastPage() {
   const [allProgramas, setAllProgramas] = useState<{id: string; nome: string}[]>([]);
   const [activeProgramaId, setActiveProgramaId] = useState<string | null>(null);
   const [showProgramDropdown, setShowProgramDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState<"preview" | "ticker" | "assuntos" | "xml">("preview");
+  const [activeTab, setActiveTab] = useState<"preview" | "ticker" | "aseguir" | "assuntos" | "xml">("preview");
   const latestDataRef = useRef<BroadcastData>(defaultBroadcast);
 
   // Ticker auto-content
@@ -776,6 +778,7 @@ export default function BroadcastPage() {
             { id: "preview", label: "Preview" },
             { id: "assuntos", label: "Assuntos" },
             { id: "ticker", label: "Ticker" },
+            { id: "aseguir", label: "A Seguir" },
             { id: "xml", label: "XML" },
           ] as const).map(t => {
             const active = activeTab === t.id;
