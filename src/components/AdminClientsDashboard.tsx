@@ -230,6 +230,31 @@ export default function AdminClientsDashboard() {
                 <Stat icon={Radio} label="canais áudio" value={c.canaisAudio} />
                 <Stat icon={MonitorPlay} label="canais vídeo" value={c.canaisVideo.length} />
               </div>
+
+              <div className="mt-auto rounded-lg border border-border/50 px-2.5 py-2 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wide text-muted-foreground">Canais de vídeo</span>
+                  {c.canaisCatalogo > 0 && (
+                    <span className="text-[10px] text-muted-foreground">{c.canaisCatalogo} catálogo</span>
+                  )}
+                </div>
+                {c.canaisVideo.length === 0 ? (
+                  <div className="text-[11px] text-muted-foreground">Nenhum canal de vídeo ativo</div>
+                ) : (
+                  <div className="flex flex-wrap gap-1.5">
+                    {c.canaisVideo.map(v => (
+                      <span
+                        key={v.id}
+                        title={v.name}
+                        className="inline-flex items-center gap-1 max-w-full px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium"
+                      >
+                        <MonitorPlay className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{v.name}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
