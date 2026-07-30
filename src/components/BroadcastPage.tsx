@@ -1377,6 +1377,54 @@ export default function BroadcastPage() {
           </div>
         )}
 
+        {activeTab === "aseguir" && (
+          <div className="max-w-3xl mx-auto p-6 rounded-2xl" style={cardStyle}>
+            <SectionHeader n="03" label="A Seguir" color={CYAN} />
+
+            <label
+              className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer mt-4"
+              style={{
+                backgroundColor: data.aSeguirEnabled ? "rgba(0,191,240,0.12)" : NAVY_DEEP,
+                border: `1px solid ${data.aSeguirEnabled ? CYAN : NAVY_BORDER}`,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={data.aSeguirEnabled}
+                onChange={e => {
+                  const nextData = { ...latestDataRef.current, aSeguirEnabled: e.target.checked };
+                  setData(nextData);
+                  void handleSave(nextData);
+                }}
+                style={{ accentColor: CYAN }}
+              />
+              <div className="min-w-0">
+                <span className="text-[12px] font-semibold text-white block">Habilitar módulo A Seguir</span>
+                <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                  Envia no XML BROADCAST o nódulo <code>&lt;a_seguir&gt;</code> com foto do locutor (.png),
+                  logo do programa (.png) e o texto "começa às: HH:MM" do próximo programa da grade.
+                </p>
+              </div>
+            </label>
+
+            <div className="mt-4 p-4 rounded-xl text-[11px] leading-relaxed" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#ffffff80" }}>
+              <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>Campos no XML</div>
+              <div>a_seguir/ativo</div>
+              <div>a_seguir/programa_nome</div>
+              <div>a_seguir/programa_logo (.png)</div>
+              <div>a_seguir/locutor_nome</div>
+              <div>a_seguir/locutor_foto (.png)</div>
+              <div>a_seguir/horario</div>
+              <div>a_seguir/texto → "começa às: 14:00"</div>
+              <p className="mt-3" style={{ color: "#ffffff60" }}>
+                O próximo programa é calculado pela grade (dias da semana + horário de início),
+                avançando para os próximos dias quando não há mais programas hoje.
+              </p>
+            </div>
+          </div>
+        )}
+
+
         {activeTab === "xml" && (
           <div className="max-w-3xl mx-auto p-6 rounded-2xl space-y-3" style={cardStyle}>
             <SectionHeader n="03" label="Endpoints XML" color={CYAN} />
