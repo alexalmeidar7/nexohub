@@ -599,6 +599,12 @@ serve(async (req) => {
       let nextProg: any = null;
       let nextStart = -1;
 
+      // Referência: o programa a seguir é o que vem DEPOIS do programa no ar
+      // agora (a partir do horário de término dele), não simplesmente o
+      // próximo horário maior que "agora".
+      const curEndSec = prog ? timeToSeconds((prog as any).horario_fim) : -1;
+      const refSeconds = curEndSec > nowSeconds ? curEndSec : nowSeconds;
+
       for (let offset = 0; offset <= 7 && !nextProg; offset++) {
         const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
         const refDayName = dayMap[dayFormatter.format(refDate).toLowerCase()] || "";
@@ -613,7 +619,7 @@ serve(async (req) => {
               ? normalizeDateValue(p.data_variavel) === refDateStr
               : (Array.isArray(p.dias_semana) ? p.dias_semana : []).includes(refDayName);
             if (!runs) return false;
-            return offset > 0 ? true : start > nowSeconds;
+            return offset > 0 ? true : start >= refSeconds;
           })
           .sort((a, b) => a.start - b.start);
 
