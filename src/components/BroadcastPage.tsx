@@ -1470,11 +1470,14 @@ export default function BroadcastPage() {
                 type="button"
                 disabled={!data.aSeguirEnabled}
                 onClick={() => {
-                  const until = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+                  const dur = Number(latestDataRef.current.aSeguirDurationSeconds) > 0
+                    ? Number(latestDataRef.current.aSeguirDurationSeconds)
+                    : 120;
+                  const until = new Date(Date.now() + dur * 1000).toISOString();
                   const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
                   setData(nextData);
                   void handleSave(nextData);
-                  toast.success("A Seguir enviado ao XML por 2 minutos");
+                  toast.success(`A Seguir enviado ao XML por ${Math.round(dur / 60 * 10) / 10} min`);
                 }}
                 className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider"
                 style={{
