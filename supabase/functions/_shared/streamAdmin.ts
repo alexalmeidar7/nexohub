@@ -86,6 +86,25 @@ function basic(c: Cred): string {
 
 const T = 7000;
 
+function parseIcecastStats(xml: string, mount: string | null): number | null {
+  const sources = [...xml.matchAll(/<source\s+mount="([^"]+)"[^>]*>([\s\S]*?)<\/source>/gi)];
+  const pick = (block: string): number | null => {
+    const m = block.match(/<listeners>\s*(\d+)\s*<\/listeners>/i);
+    return m ? parseInt(m[1], 10) : null;
+  };
+  if (sources.length) {
+    if (mount) {
+      const hit = sources.find((s) => s[1] === mount);
+      if (hit) { const n = pick(hit[2]); if (n != null) return n; }
+    }
+    let total = 0; let found = false;
+    for (const s of sources) { const n = pick(s[2]); if (n != null) { total += n; found = true; } }
+    if (found) return total;
+  }
+  const g = xml.match(/<listeners>\s*(\d+)\s*<\/listeners>/i);
+  return g ? parseInt(g[1], 10) : null;
+}
+
 /** Icecast: /admin/stats.xml + /admin/listclients (requires admin auth). */
 export async function icecastAdminListeners(streamUrl: string): Promise<number | null> {
   let u: URL;
@@ -94,34 +113,35 @@ export async function icecastAdminListeners(streamUrl: string): Promise<number |
   if (!cred) return null;
   const base = `${u.protocol}//${u.host}`;
   const mount = u.pathname && u.pathname !== "/" ? u.pathname : null;
-  const headers = { Authorization: basic(cred), "User-Agent": "Mozilla/5.0" };
+
+  // Some panels expose a different admin username than the one configured.
+  // Try the provided pair first, then common Icecast admin usernames with the
+  // same password (and the reversed pair, in case user/pass were swapped).
+  const candidates: Cred[] = [cred];
+  for (const user of ["admin", "source", "statistics", "stats", "relay"]) {
+    if (user !== cred.user.toLowerCase()) candidates.push({ user, pass: cred.pass });
+  }
+  if (cred.pass) candidates.push({ user: cred.pass, pass: cred.user });
+
+  let headers: Record<string, string> | null = null;
 
   // 1) /admin/stats.xml — full server stats with one <source mount="..."> each.
-  try {
-    const r = await fetch(`${base}/admin/stats.xml`, { headers, signal: AbortSignal.timeout(T) });
-    console.log(`[streamAdmin] ${base}/admin/stats.xml -> ${r.status}`);
-    if (r.ok) {
-      const xml = await r.text();
-
-      const sources = [...xml.matchAll(/<source\s+mount="([^"]+)"[^>]*>([\s\S]*?)<\/source>/gi)];
-      if (sources.length) {
-        const pick = (block: string): number | null => {
-          const m = block.match(/<listeners>\s*(\d+)\s*<\/listeners>/i);
-          return m ? parseInt(m[1], 10) : null;
-        };
-        if (mount) {
-          const hit = sources.find((s) => s[1] === mount);
-          if (hit) { const n = pick(hit[2]); if (n != null) return n; }
-        }
-        let total = 0; let found = false;
-        for (const s of sources) { const n = pick(s[2]); if (n != null) { total += n; found = true; } }
-        if (found) return total;
+  for (const c of candidates) {
+    const h = { Authorization: basic(c), "User-Agent": "Mozilla/5.0" };
+    try {
+      const r = await fetch(`${base}/admin/stats.xml`, { headers: h, signal: AbortSignal.timeout(T) });
+      console.log(`[streamAdmin] ${base}/admin/stats.xml -> ${r.status}`);
+      if (r.status === 401 || r.status === 403) continue;
+      headers = h;
+      if (r.ok) {
+        const n = parseIcecastStats(await r.text(), mount);
+        if (n != null) return n;
       }
-      // Server-wide fallback
-      const g = xml.match(/<listeners>\s*(\d+)\s*<\/listeners>/i);
-      if (g) return parseInt(g[1], 10);
-    }
-  } catch { /* try next */ }
+      break;
+    } catch { /* try next candidate */ }
+  }
+  if (!headers) return null;
+
 
   // 2) /admin/listclients?mount=/stream — count <listener> entries.
   if (mount) {
