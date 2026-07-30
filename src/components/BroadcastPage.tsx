@@ -48,6 +48,8 @@ interface BroadcastData {
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
   aSeguirForceUntil?: string;
+  aSeguirLeadSeconds: number;
+  aSeguirDurationSeconds: number;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -67,6 +69,8 @@ const defaultBroadcast: BroadcastData = {
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
   aSeguirForceUntil: "",
+  aSeguirLeadSeconds: 180,
+  aSeguirDurationSeconds: 120,
 };
 
 interface SocialItem {
@@ -1410,13 +1414,51 @@ export default function BroadcastPage() {
             </label>
 
             <div
+              className="mt-3 p-4 rounded-xl grid gap-4 sm:grid-cols-2"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              {([
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa" },
+                { key: "aSeguirDurationSeconds" as const, label: "Permanecer no XML", hint: "Tempo em que as informações ficam no XML" },
+              ]).map(({ key, label, hint }) => (
+                <div key={key}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>{label}</div>
+                  <select
+                    value={String(data[key] ?? (key === "aSeguirLeadSeconds" ? 180 : 120))}
+                    disabled={!data.aSeguirEnabled}
+                    onChange={e => {
+                      const nextData = { ...latestDataRef.current, [key]: Number(e.target.value) };
+                      setData(nextData);
+                      void handleSave(nextData);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] text-white"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      border: `1px solid ${NAVY_BORDER}`,
+                      opacity: data.aSeguirEnabled ? 1 : 0.5,
+                    }}
+                  >
+                    <option value="30">30 segundos</option>
+                    <option value="60">1 minuto</option>
+                    <option value="90">1 minuto e meio</option>
+                    <option value="120">2 minutos</option>
+                    <option value="180">3 minutos</option>
+                  </select>
+                  <p className="text-[10px] mt-1" style={{ color: "#ffffff50" }}>{hint}</p>
+                </div>
+              ))}
+            </div>
+
+
+
+            <div
               className="mt-3 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
               style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
             >
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold text-white">Envio manual</div>
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>
-                  Força o envio das informações do próximo programa ao XML por 2 minutos, fora da janela automática.
+                  Força o envio das informações do próximo programa ao XML pelo tempo de permanência configurado, fora da janela automática.
                 </p>
                 {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
                   <p className="text-[10px] mt-1" style={{ color: CYAN }}>
@@ -1428,11 +1470,14 @@ export default function BroadcastPage() {
                 type="button"
                 disabled={!data.aSeguirEnabled}
                 onClick={() => {
-                  const until = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+                  const dur = Number(latestDataRef.current.aSeguirDurationSeconds) > 0
+                    ? Number(latestDataRef.current.aSeguirDurationSeconds)
+                    : 120;
+                  const until = new Date(Date.now() + dur * 1000).toISOString();
                   const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
                   setData(nextData);
                   void handleSave(nextData);
-                  toast.success("A Seguir enviado ao XML por 2 minutos");
+                  toast.success(`A Seguir enviado ao XML por ${Math.round(dur / 60 * 10) / 10} min`);
                 }}
                 className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider"
                 style={{
@@ -1455,7 +1500,7 @@ export default function BroadcastPage() {
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
               <p className="mt-3" style={{ color: "#ffffff60" }}>
-                As informações entram no XML 3 minutos antes do início do próximo programa e permanecem por 2 minutos.
+                As informações entram no XML conforme a antecedência configurada e permanecem pelo tempo definido.
                 Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>

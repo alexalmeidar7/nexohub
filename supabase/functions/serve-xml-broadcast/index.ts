@@ -657,9 +657,15 @@ serve(async (req) => {
         }
       }
 
-      // Janela de exibição: 3 min antes do início, permanecendo por 2 min
-      // (ou seja, de start-180s até start-60s). Fora disso, campos em branco.
+      // Janela de exibição configurável pelo usuário:
+      // entra `lead` segundos antes do início e permanece por `duration` segundos.
       const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+      const leadSeconds = Number(broadcastConfig.aSeguirLeadSeconds) > 0
+        ? Number(broadcastConfig.aSeguirLeadSeconds)
+        : 180;
+      const durationSeconds = Number(broadcastConfig.aSeguirDurationSeconds) > 0
+        ? Number(broadcastConfig.aSeguirDurationSeconds)
+        : 120;
       const forceUntilRaw = broadcastConfig.aSeguirForceUntil;
       const forceUntilMs = forceUntilRaw ? Date.parse(String(forceUntilRaw)) : 0;
       const forcedActive = !!forceUntilMs && forceUntilMs > now.getTime();
@@ -668,7 +674,8 @@ serve(async (req) => {
       if (nextStart >= 0) {
         let delta = nextStart - nowSeconds;
         if (delta < 0) delta += 24 * 60 * 60;
-        inWindow = delta <= 180 && delta >= 60;
+        const endDelta = Math.max(0, leadSeconds - durationSeconds);
+        inWindow = delta <= leadSeconds && delta >= endDelta;
       }
 
       if (!forcedActive && !inWindow) {
