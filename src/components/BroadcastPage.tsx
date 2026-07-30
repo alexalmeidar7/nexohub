@@ -48,6 +48,8 @@ interface BroadcastData {
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
   aSeguirForceUntil?: string;
+  aSeguirLeadSeconds: number;
+  aSeguirDurationSeconds: number;
 }
 
 const defaultBroadcast: BroadcastData = {
