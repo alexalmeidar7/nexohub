@@ -1,14 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   Plus, Trash2, Loader2, Users, Eye, EyeOff, Save, ChevronDown, ChevronUp,
-  GripVertical, ShieldCheck, Key, Shield
+  ShieldCheck, Key, Shield, Settings, X, Headphones, Mic, Clapperboard,
+  Briefcase, UserPlus, RotateCcw,
 } from "lucide-react";
-import { Label } from "@/components/ui/label";
-
+import type { LucideIcon } from "lucide-react";
 
 // Available modules grouped by category for sub-user permissions
 const MODULE_GROUPS = [
@@ -65,27 +65,35 @@ const MODULE_GROUPS = [
   },
 ];
 
-// Flat list for counting
 const ALL_MODULE_KEYS = MODULE_GROUPS.flatMap(g => g.items.map(i => i.key));
+const MODULE_LABEL: Record<string, string> = Object.fromEntries(
+  MODULE_GROUPS.flatMap(g => g.items.map(i => [i.key, i.label])),
+);
 
 // ---- Perfis padrão de sub-usuário ----
-const PERFIS = [
+const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon: LucideIcon; modules: string[] }[] = [
   {
     key: "recepcao",
     label: "RECEPÇÃO",
+    slug: "recepcao",
     desc: "Atendimento e cadastros",
+    icon: Headphones,
     modules: ["fans", "agenda", "promocoes"],
   },
   {
     key: "locutor",
     label: "LOCUTOR",
+    slug: "locutor",
     desc: "Estúdio e no ar",
+    icon: Mic,
     modules: ["musica", "noticias", "telapromo", "testemunhais"],
   },
   {
     key: "producao",
     label: "PRODUÇÃO",
+    slug: "producao",
     desc: "Conteúdo e pauta",
+    icon: Clapperboard,
     modules: [
       "apresentadores", "programas", "previsao", "noticias", "musica", "agenda",
       "broadcast", "cenario", "batalha", "enquete", "cortevideo",
@@ -94,17 +102,20 @@ const PERFIS = [
   {
     key: "comercial",
     label: "COMERCIAL",
+    slug: "comercial",
     desc: "Vendas e patrocínios",
+    icon: Briefcase,
     modules: [
       "testemunhais", "promocoes", "configtelapromo", "telapromo",
       "shopping", "propostas", "logos", "preroll",
     ],
   },
-] as const;
+];
 
-type PerfilKey = (typeof PERFIS)[number]["key"];
+type PerfilKey = "recepcao" | "locutor" | "producao" | "comercial";
 
 const PERFIL_STORAGE_KEY = "nexo_subuser_perfis";
+const PERFIL_MODULES_KEY = "nexo_subuser_perfil_modules";
 
 const readPerfilMap = (): Record<string, PerfilKey> => {
   try {
@@ -117,9 +128,30 @@ const readPerfilMap = (): Record<string, PerfilKey> => {
 const writePerfilMap = (map: Record<string, PerfilKey>) => {
   try {
     localStorage.setItem(PERFIL_STORAGE_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+};
+
+const defaultPerfilModules = (): Record<PerfilKey, string[]> => ({
+  recepcao: [...PERFIS[0].modules],
+  locutor: [...PERFIS[1].modules],
+  producao: [...PERFIS[2].modules],
+  comercial: [...PERFIS[3].modules],
+});
+
+const readPerfilModules = (): Record<PerfilKey, string[]> => {
+  try {
+    const raw = localStorage.getItem(PERFIL_MODULES_KEY);
+    if (!raw) return defaultPerfilModules();
+    return { ...defaultPerfilModules(), ...JSON.parse(raw) };
   } catch {
-    /* ignore */
+    return defaultPerfilModules();
   }
+};
+
+const writePerfilModules = (map: Record<PerfilKey, string[]>) => {
+  try {
+    localStorage.setItem(PERFIL_MODULES_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
 };
 
 interface SubUser {
@@ -131,7 +163,6 @@ interface SubUser {
   ativo: boolean;
 }
 
-
 export default function PermissoesSection() {
   const { user } = useAuth();
   const [subUsers, setSubUsers] = useState<SubUser[]>([]);
@@ -140,17 +171,20 @@ export default function PermissoesSection() {
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newNome, setNewNome] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [formPerfil, setFormPerfil] = useState<PerfilKey | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showPassFor, setShowPassFor] = useState<string | null>(null);
   const [newPassMap, setNewPassMap] = useState<Record<string, string>>({});
   const [changingPassId, setChangingPassId] = useState<string | null>(null);
-  const [newPerfil, setNewPerfil] = useState<PerfilKey>("recepcao");
   const [perfilMap, setPerfilMap] = useState<Record<string, PerfilKey>>(readPerfilMap);
+  const [perfilModules, setPerfilModules] = useState<Record<PerfilKey, string[]>>(readPerfilModules);
+  const [configPerfil, setConfigPerfil] = useState<PerfilKey | null>(null);
 
-
-
+  const emailDomain = useMemo(() => {
+    const parts = (user?.email || "").split("@");
+    return parts.length === 2 ? parts[1] : "";
+  }, [user?.email]);
 
   const inputStyle: React.CSSProperties = {
     backgroundColor: "var(--layout-widget-bg, #1a1a1a)",
@@ -182,35 +216,62 @@ export default function PermissoesSection() {
     setLoading(false);
   }, [user]);
 
+  useEffect(() => { fetchSubUsers(); }, [fetchSubUsers]);
+
+  // Auto-associa sub-usuários cujo e-mail começa com o slug da categoria
   useEffect(() => {
-    fetchSubUsers();
-  }, [fetchSubUsers]);
-
-
-  const applyPerfil = async (subUser: SubUser, perfil: PerfilKey) => {
-    const preset = PERFIS.find(p => p.key === perfil);
-    if (!preset) return;
-    const updated = preset.modules.filter(k => ALL_MODULE_KEYS.includes(k));
-    setSubUsers(prev => prev.map(s => s.id === subUser.id ? { ...s, allowed_modules: updated } : s));
+    if (!subUsers.length) return;
     setPerfilMap(prev => {
-      const next = { ...prev, [subUser.id]: perfil };
-      writePerfilMap(next);
-      return next;
+      let changed = false;
+      const next = { ...prev };
+      subUsers.forEach(s => {
+        if (next[s.id]) return;
+        const local = s.email.split("@")[0].toLowerCase();
+        const match = PERFIS.find(p => local === p.slug || local.startsWith(`${p.slug}.`));
+        if (match) { next[s.id] = match.key; changed = true; }
+      });
+      if (changed) writePerfilMap(next);
+      return changed ? next : prev;
     });
+  }, [subUsers]);
+
+  const persistModules = async (subUser: SubUser, updated: string[]) => {
+    setSubUsers(prev => prev.map(s => s.id === subUser.id ? { ...s, allowed_modules: updated } : s));
     setSavingId(subUser.id);
     const { data, error } = await supabase.functions.invoke("manage-sub-users", {
       body: { action: "update_modules", sub_user_id: subUser.id, allowed_modules: updated },
     });
     setSavingId(null);
     if (error || data?.error) {
-      toast.error("Erro ao aplicar perfil");
+      toast.error("Erro ao salvar permissões");
       fetchSubUsers();
-    } else {
-      toast.success(`Perfil ${preset.label} aplicado`);
+      return false;
     }
+    return true;
+  };
+
+  const applyPerfil = async (subUser: SubUser, perfil: PerfilKey) => {
+    const updated = (perfilModules[perfil] || []).filter(k => ALL_MODULE_KEYS.includes(k));
+    setPerfilMap(prev => {
+      const next = { ...prev, [subUser.id]: perfil };
+      writePerfilMap(next);
+      return next;
+    });
+    const ok = await persistModules(subUser, updated);
+    if (ok) toast.success(`Perfil ${PERFIS.find(p => p.key === perfil)?.label} aplicado`);
+  };
+
+  const openCreateForm = (perfil: PerfilKey) => {
+    const preset = PERFIS.find(p => p.key === perfil)!;
+    const already = subUsers.some(s => perfilMap[s.id] === perfil);
+    setFormPerfil(perfil);
+    setNewNome(preset.label.charAt(0) + preset.label.slice(1).toLowerCase());
+    setNewEmail(!already && emailDomain ? `${preset.slug}@${emailDomain}` : "");
+    setNewPassword("");
   };
 
   const handleCreate = async () => {
+    if (!formPerfil) return;
     if (!newEmail || !newPassword) {
       toast.error("Email e senha são obrigatórios");
       return;
@@ -223,9 +284,7 @@ export default function PermissoesSection() {
       if (error || data?.error) {
         toast.error(data?.error || error?.message || "Erro ao criar sub-usuário");
       } else {
-        const preset = PERFIS.find(p => p.key === newPerfil);
-        const modules = (preset?.modules || []).filter(k => ALL_MODULE_KEYS.includes(k));
-        // Localiza o registro recém-criado para aplicar o perfil padrão
+        const modules = (perfilModules[formPerfil] || []).filter(k => ALL_MODULE_KEYS.includes(k));
         const { data: rows } = await supabase
           .from("sub_users")
           .select("id")
@@ -236,17 +295,13 @@ export default function PermissoesSection() {
             body: { action: "update_modules", sub_user_id: rows.id, allowed_modules: modules },
           });
           setPerfilMap(prev => {
-            const next = { ...prev, [rows.id as string]: newPerfil };
+            const next = { ...prev, [rows.id as string]: formPerfil };
             writePerfilMap(next);
             return next;
           });
         }
-        toast.success(`Sub-usuário criado com perfil ${preset?.label ?? ""}`);
-        setNewEmail("");
-        setNewPassword("");
-        setNewNome("");
-        setNewPerfil("recepcao");
-        setShowForm(false);
+        toast.success("Sub-usuário criado");
+        setNewEmail(""); setNewPassword(""); setNewNome(""); setFormPerfil(null);
         fetchSubUsers();
       }
     } catch (e: any) {
@@ -255,27 +310,12 @@ export default function PermissoesSection() {
     setCreating(false);
   };
 
-
-  const toggleModule = async (subUser: SubUser, moduleKey: string) => {
+  const toggleModule = (subUser: SubUser, moduleKey: string) => {
     const current = subUser.allowed_modules || [];
     const updated = current.includes(moduleKey)
       ? current.filter(k => k !== moduleKey)
       : [...current, moduleKey];
-
-    // Optimistic update
-    setSubUsers(prev => prev.map(s =>
-      s.id === subUser.id ? { ...s, allowed_modules: updated } : s
-    ));
-
-    setSavingId(subUser.id);
-    const { data, error } = await supabase.functions.invoke("manage-sub-users", {
-      body: { action: "update_modules", sub_user_id: subUser.id, allowed_modules: updated },
-    });
-    setSavingId(null);
-    if (error || data?.error) {
-      toast.error("Erro ao salvar permissões");
-      fetchSubUsers(); // revert
-    }
+    persistModules(subUser, updated);
   };
 
   const handleDelete = async (subUser: SubUser) => {
@@ -283,23 +323,16 @@ export default function PermissoesSection() {
     const { data, error } = await supabase.functions.invoke("manage-sub-users", {
       body: { action: "delete", sub_user_id: subUser.id },
     });
-    if (error || data?.error) {
-      toast.error("Erro ao excluir");
-    } else {
-      toast.success("Sub-usuário excluído");
-      fetchSubUsers();
-    }
+    if (error || data?.error) toast.error("Erro ao excluir");
+    else { toast.success("Sub-usuário excluído"); fetchSubUsers(); }
   };
 
   const handleToggleAtivo = async (subUser: SubUser) => {
     const { data, error } = await supabase.functions.invoke("manage-sub-users", {
       body: { action: "toggle_ativo", sub_user_id: subUser.id, ativo: !subUser.ativo },
     });
-    if (error || data?.error) {
-      toast.error("Erro ao alterar status");
-    } else {
-      fetchSubUsers();
-    }
+    if (error || data?.error) toast.error("Erro ao alterar status");
+    else fetchSubUsers();
   };
 
   const handleChangePassword = async (subUser: SubUser) => {
@@ -313,13 +346,42 @@ export default function PermissoesSection() {
       body: { action: "update_password", auth_user_id: subUser.auth_user_id, password },
     });
     setChangingPassId(null);
-    if (error || data?.error) {
-      toast.error(data?.error || "Erro ao alterar senha");
-    } else {
+    if (error || data?.error) toast.error(data?.error || "Erro ao alterar senha");
+    else {
       toast.success("Senha alterada com sucesso");
       setNewPassMap(prev => ({ ...prev, [subUser.id]: "" }));
       setShowPassFor(null);
     }
+  };
+
+  // ---- Config popup (funções da categoria) ----
+  const togglePerfilModule = (perfil: PerfilKey, key: string) => {
+    setPerfilModules(prev => {
+      const cur = prev[perfil] || [];
+      const next = {
+        ...prev,
+        [perfil]: cur.includes(key) ? cur.filter(k => k !== key) : [...cur, key],
+      };
+      writePerfilModules(next);
+      return next;
+    });
+  };
+
+  const resetPerfilModules = (perfil: PerfilKey) => {
+    setPerfilModules(prev => {
+      const next = { ...prev, [perfil]: [...(PERFIS.find(p => p.key === perfil)?.modules || [])] };
+      writePerfilModules(next);
+      return next;
+    });
+    toast.success("Funções padrão restauradas");
+  };
+
+  const applyToCategoryUsers = async (perfil: PerfilKey) => {
+    const targets = subUsers.filter(s => perfilMap[s.id] === perfil);
+    if (!targets.length) { toast.info("Nenhum usuário nesta categoria"); return; }
+    const mods = (perfilModules[perfil] || []).filter(k => ALL_MODULE_KEYS.includes(k));
+    for (const t of targets) await persistModules(t, mods);
+    toast.success(`Funções aplicadas a ${targets.length} usuário(s)`);
   };
 
   if (loading) {
@@ -330,354 +392,354 @@ export default function PermissoesSection() {
     );
   }
 
-  return (
-    <div className="space-y-6">
+  const textCol = "var(--layout-page-text, #1a1a1a)";
+  const accent = "var(--layout-accent-color, #444)";
+  const softBg = "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)";
+  const borderCol = "var(--layout-border-color, #333)";
 
-      <div className="space-y-4 pt-4 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
-        <div className="flex items-center gap-2 mb-2">
-          <Shield size={16} style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-          <h4 className="text-sm font-bold uppercase tracking-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Acesso de Equipe</h4>
-        </div>
-      <div className="flex items-center justify-between">
-        <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
-          Crie sub-usuários com acesso limitado aos módulos selecionados.
-        </p>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-          style={{
-            backgroundColor: "var(--layout-button-bg, #333)",
-            color: "var(--layout-button-text, #fff)",
-          }}
-        >
-          <Plus size={14} /> Novo Sub-Usuário
-        </button>
-      </div>
-
-      {/* Create form */}
-      {showForm && (
-        <div
-          className="rounded-xl p-4 space-y-3"
-          style={{
-            backgroundColor: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
-            border: "1px solid var(--layout-border-color, #333)",
-          }}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-[11px] font-medium mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Nome</label>
-              <input
-                value={newNome}
-                onChange={e => setNewNome(e.target.value)}
-                placeholder="Nome do sub-usuário"
-                style={inputStyle}
-              />
+  const renderUserCard = (sub: SubUser) => (
+    <div
+      key={sub.id}
+      className="rounded-xl overflow-hidden transition-all"
+      style={{ border: `1px solid ${borderCol}`, opacity: sub.ativo ? 1 : 0.5 }}
+    >
+      <button
+        onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
+        className="w-full flex items-center justify-between px-3 py-2.5 gap-2"
+        style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)" }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <ShieldCheck size={15} style={{ color: accent }} className="shrink-0" />
+          <div className="text-left min-w-0">
+            <div className="text-[13px] font-semibold truncate" style={{ color: textCol }}>
+              {sub.nome || sub.email}
             </div>
-            <div>
-              <label className="text-[11px] font-medium mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Email *</label>
-              <input
-                value={newEmail}
-                onChange={e => setNewEmail(e.target.value)}
-                placeholder="email@exemplo.com"
-                type="email"
-                style={inputStyle}
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-medium mb-1 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Senha *</label>
-              <input
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                placeholder="Mínimo 6 caracteres"
-                type="password"
-                style={inputStyle}
-              />
+            <div className="text-[10px] truncate" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+              {sub.email} · {sub.allowed_modules.length} módulo{sub.allowed_modules.length !== 1 ? "s" : ""}
+              {!sub.ativo && " · Inativo"}
             </div>
           </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {savingId === sub.id && <Loader2 size={13} className="animate-spin" style={{ color: accent }} />}
+          {expandedId === sub.id ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+        </div>
+      </button>
 
-          {/* Perfil padrão */}
+      {expandedId === sub.id && (
+        <div className="p-3 space-y-3" style={{ backgroundColor: "var(--layout-page-bg, #fff)" }}>
           <div>
-            <label className="text-[11px] font-medium mb-1.5 block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Categoria do sub-usuário *
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <label className="text-[10px] font-bold block mb-1.5" style={{ color: textCol }}>Mover para categoria:</label>
+            <div className="flex flex-wrap gap-1.5">
               {PERFIS.map(p => {
-                const active = newPerfil === p.key;
+                const active = perfilMap[sub.id] === p.key;
                 return (
                   <button
                     key={p.key}
-                    type="button"
-                    onClick={() => setNewPerfil(p.key)}
-                    className="rounded-xl px-3 py-2 text-left transition-all"
+                    onClick={() => applyPerfil(sub, p.key)}
+                    className="rounded-full px-3 py-1 text-[10px] font-bold tracking-wide transition-all"
                     style={{
-                      backgroundColor: active
-                        ? "var(--layout-accent-color, #444)"
-                        : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
-                      color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                      border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                      backgroundColor: active ? accent : softBg,
+                      color: active ? "var(--layout-button-text, #fff)" : textCol,
+                      border: `1px solid ${active ? "transparent" : borderCol}`,
                     }}
                   >
-                    <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
-                    <span className="block text-[10px] opacity-70">{p.desc}</span>
+                    {p.label}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setShowForm(false)}
-              className="px-3 py-1.5 rounded-lg text-xs"
-              style={{ color: "var(--layout-page-text, #1a1a1a)" }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors"
-              style={{
-                backgroundColor: "var(--layout-accent-color, #444)",
-                color: "var(--layout-button-text, #fff)",
-                opacity: creating ? 0.6 : 1,
-              }}
-            >
-              {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-              Criar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Sub-users list */}
-      {subUsers.length === 0 && !showForm && (
-        <div className="text-center py-8 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
-          <Users size={32} className="mx-auto mb-2 opacity-30" />
-          Nenhum sub-usuário criado ainda.
-        </div>
-      )}
-
-      {subUsers.map(sub => (
-        <div
-          key={sub.id}
-          className="rounded-xl overflow-hidden transition-all"
-          style={{
-            border: "1px solid var(--layout-border-color, #333)",
-            opacity: sub.ativo ? 1 : 0.5,
-          }}
-        >
-          {/* Header */}
-          <button
-            onClick={() => setExpandedId(expandedId === sub.id ? null : sub.id)}
-            className="w-full flex items-center justify-between px-4 py-3 transition-colors"
-            style={{
-              backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #1a1a1a) 15%, var(--layout-page-bg, #fff) 85%)",
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <ShieldCheck size={16} style={{ color: "var(--layout-accent-color, #444)" }} />
-              <div className="text-left">
-                <div className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  {sub.nome || sub.email}
-                  <span
-                    className="text-[9px] font-bold tracking-wider rounded-full px-2 py-0.5"
-                    style={{
-                      backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #444) 18%, transparent)",
-                      color: "var(--layout-accent-color, #444)",
-                    }}
-                  >
-                    {PERFIS.find(p => p.key === perfilMap[sub.id])?.label ?? "SEM CATEGORIA"}
-                  </span>
+          <div className="space-y-2.5">
+            <label className="text-[10px] font-bold block" style={{ color: textCol }}>Módulos com acesso:</label>
+            {MODULE_GROUPS.map(group => (
+              <div key={group.category}>
+                <div className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  {group.category}
                 </div>
-                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                  {sub.email} · {sub.allowed_modules.length} módulo{sub.allowed_modules.length !== 1 ? "s" : ""}
-                  {!sub.ativo && " · Inativo"}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {savingId === sub.id && <Loader2 size={14} className="animate-spin" style={{ color: "var(--layout-accent-color, #444)" }} />}
-              {expandedId === sub.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </div>
-          </button>
-
-          {/* Expanded content */}
-          {expandedId === sub.id && (
-            <div className="p-4 space-y-4" style={{ backgroundColor: "var(--layout-page-bg, #fff)" }}>
-              {/* Categoria / perfil padrão */}
-              <div>
-                <label className="text-[11px] font-bold block mb-1.5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Categoria:
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {PERFIS.map(p => {
-                    const active = perfilMap[sub.id] === p.key;
+                <div className="grid grid-cols-2 gap-1.5">
+                  {group.items.map(mod => {
+                    const active = sub.allowed_modules.includes(mod.key);
                     return (
                       <button
-                        key={p.key}
-                        type="button"
-                        onClick={() => applyPerfil(sub, p.key)}
-                        className="rounded-xl px-3 py-2 text-left transition-all"
+                        key={mod.key}
+                        onClick={() => toggleModule(sub, mod.key)}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-medium transition-all text-left"
                         style={{
-                          backgroundColor: active
-                            ? "var(--layout-accent-color, #444)"
-                            : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 8%, var(--layout-page-bg, #fff) 92%)",
-                          color: active ? "var(--layout-button-text, #fff)" : "var(--layout-page-text, #1a1a1a)",
-                          border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
+                          backgroundColor: active ? accent : softBg,
+                          color: active ? "var(--layout-button-text, #fff)" : textCol,
+                          border: `1px solid ${active ? "transparent" : borderCol}`,
                         }}
                       >
-                        <span className="block text-[11px] font-bold tracking-wide">{p.label}</span>
-                        <span className="block text-[10px] opacity-70">{p.desc}</span>
+                        {active ? <Eye size={11} /> : <EyeOff size={11} style={{ opacity: 0.4 }} />}
+                        <span className="truncate">{mod.label}</span>
                       </button>
                     );
                   })}
                 </div>
-                <p className="text-[10px] mt-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                  Aplicar uma categoria substitui os módulos pelo padrão do perfil. Ajustes manuais continuam possíveis abaixo.
-                </p>
               </div>
+            ))}
+          </div>
 
-              {/* Module toggles by category */}
-              <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2 pt-2" style={{ borderTop: `1px solid ${borderCol}` }}>
+            <button
+              onClick={() => handleToggleAtivo(sub)}
+              className="px-2.5 py-1.5 rounded-lg text-[10px] font-medium"
+              style={{ backgroundColor: softBg, color: textCol, border: `1px solid ${borderCol}` }}
+            >
+              {sub.ativo ? "Desativar" : "Ativar"}
+            </button>
+            <button
+              onClick={() => setShowPassFor(showPassFor === sub.id ? null : sub.id)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-medium"
+              style={{ backgroundColor: softBg, color: textCol, border: `1px solid ${borderCol}` }}
+            >
+              <Key size={11} /> Senha
+            </button>
+            <button
+              onClick={() => handleDelete(sub)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-medium ml-auto"
+              style={{
+                backgroundColor: "color-mix(in srgb, #ef4444 15%, var(--layout-page-bg, #fff) 85%)",
+                color: "#ef4444",
+                border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)",
+              }}
+            >
+              <Trash2 size={11} /> Excluir
+            </button>
+          </div>
 
-                <label className="text-[11px] font-bold block" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                  Módulos com acesso:
-                </label>
-                {MODULE_GROUPS.map(group => {
-                  const allActive = group.items.every(i => sub.allowed_modules.includes(i.key));
-                  const someActive = group.items.some(i => sub.allowed_modules.includes(i.key));
-                  return (
-                    <div key={group.category}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <button
-                          onClick={() => {
-                            // Toggle all in this group
-                            const keys = group.items.map(i => i.key);
-                            if (allActive) {
-                              // Remove all
-                              const updated = sub.allowed_modules.filter(k => !keys.includes(k));
-                              setSubUsers(prev => prev.map(s => s.id === sub.id ? { ...s, allowed_modules: updated } : s));
-                              setSavingId(sub.id);
-                              supabase.functions.invoke("manage-sub-users", {
-                                body: { action: "update_modules", sub_user_id: sub.id, allowed_modules: updated },
-                              }).then(() => setSavingId(null));
-                            } else {
-                              // Add all
-                              const updated = [...new Set([...sub.allowed_modules, ...keys])];
-                              setSubUsers(prev => prev.map(s => s.id === sub.id ? { ...s, allowed_modules: updated } : s));
-                              setSavingId(sub.id);
-                              supabase.functions.invoke("manage-sub-users", {
-                                body: { action: "update_modules", sub_user_id: sub.id, allowed_modules: updated },
-                              }).then(() => setSavingId(null));
-                            }
-                          }}
-                          className="text-[10px] font-bold uppercase tracking-wider"
-                          style={{ color: someActive ? "var(--layout-accent-color, #444)" : "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}
-                        >
-                          {group.category}
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                        {group.items.map(mod => {
-                          const active = sub.allowed_modules.includes(mod.key);
-                          return (
-                            <button
-                              key={mod.key}
-                              onClick={() => toggleModule(sub, mod.key)}
-                              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all"
-                              style={{
-                                backgroundColor: active
-                                  ? "var(--layout-accent-color, #444)"
-                                  : "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
-                                color: active
-                                  ? "var(--layout-button-text, #fff)"
-                                  : "var(--layout-page-text, #1a1a1a)",
-                                border: `1px solid ${active ? "transparent" : "var(--layout-border-color, #333)"}`,
-                              }}
-                            >
-                              {active ? <Eye size={12} /> : <EyeOff size={12} style={{ opacity: 0.4 }} />}
-                              {mod.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-wrap items-center gap-2 pt-2" style={{ borderTop: "1px solid var(--layout-border-color, #333)" }}>
-                <button
-                  onClick={() => handleToggleAtivo(sub)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
-                    color: "var(--layout-page-text, #1a1a1a)",
-                    border: "1px solid var(--layout-border-color, #333)",
-                  }}
-                >
-                  {sub.ativo ? "Desativar" : "Ativar"}
-                </button>
-
-                <button
-                  onClick={() => setShowPassFor(showPassFor === sub.id ? null : sub.id)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 10%, var(--layout-page-bg, #fff) 90%)",
-                    color: "var(--layout-page-text, #1a1a1a)",
-                    border: "1px solid var(--layout-border-color, #333)",
-                  }}
-                >
-                  <Key size={12} /> Alterar Senha
-                </button>
-
-                <button
-                  onClick={() => handleDelete(sub)}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-colors ml-auto"
-                  style={{
-                    backgroundColor: "color-mix(in srgb, #ef4444 15%, var(--layout-page-bg, #fff) 85%)",
-                    color: "#ef4444",
-                    border: "1px solid color-mix(in srgb, #ef4444 30%, transparent)",
-                  }}
-                >
-                  <Trash2 size={12} /> Excluir
-                </button>
-              </div>
-
-              {/* Change password */}
-              {showPassFor === sub.id && (
-                <div className="flex items-center gap-2">
-                  <input
-                    value={newPassMap[sub.id] || ""}
-                    onChange={e => setNewPassMap(prev => ({ ...prev, [sub.id]: e.target.value }))}
-                    placeholder="Nova senha (mín. 6 caracteres)"
-                    type="password"
-                    style={{ ...inputStyle, flex: 1 }}
-                  />
-                  <Button variant="save"
-                    onClick={() => handleChangePassword(sub)}
-                    disabled={changingPassId === sub.id}
-                    className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold"
-                    style={{
-                      backgroundColor: "var(--layout-accent-color, #444)",
-                      color: "var(--layout-button-text, #fff)",
-                      opacity: changingPassId === sub.id ? 0.6 : 1,
-                    }}
-                  >
-                    {changingPassId === sub.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    Salvar
-                  </Button>
-                </div>
-              )}
+          {showPassFor === sub.id && (
+            <div className="flex items-center gap-2">
+              <input
+                value={newPassMap[sub.id] || ""}
+                onChange={e => setNewPassMap(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                placeholder="Nova senha (mín. 6 caracteres)"
+                type="password"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <Button
+                variant="save"
+                onClick={() => handleChangePassword(sub)}
+                disabled={changingPassId === sub.id}
+                className="flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-semibold"
+                style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}
+              >
+                {changingPassId === sub.id ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                Salvar
+              </Button>
             </div>
           )}
         </div>
-      ))}
+      )}
+    </div>
+  );
+
+  const semCategoria = subUsers.filter(s => !perfilMap[s.id]);
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-4 pt-4 border-t" style={{ borderColor: "color-mix(in srgb, var(--layout-border-color, #333) 10%, transparent)" }}>
+        <div className="flex items-center gap-2">
+          <Shield size={16} style={{ color: textCol }} />
+          <h4 className="text-sm font-bold uppercase tracking-tight" style={{ color: textCol }}>Acesso de Equipe</h4>
+        </div>
+        <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>
+          Cada categoria define as funções liberadas. Use a engrenagem para editar as funções da categoria.
+        </p>
+
+        {/* Category boxes */}
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+          {PERFIS.map(p => {
+            const Icon = p.icon;
+            const users = subUsers.filter(s => perfilMap[s.id] === p.key);
+            const mods = perfilModules[p.key] || [];
+            return (
+              <div key={p.key} className="flex flex-col gap-3">
+                <div
+                  className="rounded-2xl p-4 flex flex-col gap-3"
+                  style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className="flex items-center justify-center rounded-xl shrink-0"
+                      style={{ width: 40, height: 40, backgroundColor: "rgba(255,255,255,0.18)" }}
+                    >
+                      <Icon size={20} />
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[13px] font-bold tracking-wide">{p.label}</div>
+                      <div className="text-[10px] opacity-75 truncate">{p.desc}</div>
+                    </div>
+                    <button
+                      onClick={() => setConfigPerfil(p.key)}
+                      title="Funções da categoria"
+                      className="rounded-lg p-1.5 transition-opacity opacity-80 hover:opacity-100"
+                      style={{ backgroundColor: "rgba(255,255,255,0.18)" }}
+                    >
+                      <Settings size={15} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] opacity-85">
+                    <span>{users.length} usuário{users.length !== 1 ? "s" : ""}</span>
+                    <span>{mods.length} funç{mods.length !== 1 ? "ões" : "ão"}</span>
+                  </div>
+                  <button
+                    onClick={() => openCreateForm(p.key)}
+                    className="w-full flex items-center justify-center gap-1.5 rounded-xl py-2 text-[11px] font-semibold"
+                    style={{ backgroundColor: "rgba(255,255,255,0.95)", color: "#0f172a" }}
+                  >
+                    <UserPlus size={13} /> Novo usuário
+                  </button>
+                </div>
+
+                {/* Create form for this category */}
+                {formPerfil === p.key && (
+                  <div className="rounded-xl p-3 space-y-2" style={{ backgroundColor: softBg, border: `1px solid ${borderCol}` }}>
+                    <input value={newNome} onChange={e => setNewNome(e.target.value)} placeholder="Nome" style={inputStyle} />
+                    <input value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="email@dominio.com" type="email" style={inputStyle} />
+                    <input value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Senha (mín. 6)" type="password" style={inputStyle} />
+                    <div className="flex gap-2 justify-end">
+                      <button onClick={() => setFormPerfil(null)} className="px-3 py-1.5 rounded-lg text-[11px]" style={{ color: textCol }}>Cancelar</button>
+                      <button
+                        onClick={handleCreate}
+                        disabled={creating}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold"
+                        style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)", opacity: creating ? 0.6 : 1 }}
+                      >
+                        {creating ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />} Criar
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Users of this category */}
+                <div className="space-y-2">
+                  {users.length === 0 && formPerfil !== p.key && (
+                    <div
+                      className="rounded-xl border-2 border-dashed text-center py-5 text-[10px]"
+                      style={{ borderColor: borderCol, color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 45%, transparent)" }}
+                    >
+                      Nenhum usuário nesta categoria
+                    </div>
+                  )}
+                  {users.map(renderUserCard)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Sem categoria */}
+        {semCategoria.length > 0 && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+              <Users size={13} /> Sem categoria
+            </div>
+            <div className="grid gap-2 grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
+              {semCategoria.map(renderUserCard)}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Config popup */}
+      {configPerfil && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(15,23,42,0.55)" }}
+          onClick={() => setConfigPerfil(null)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl p-5 space-y-4"
+            style={{ backgroundColor: "var(--layout-page-bg, #fff)", border: `1px solid ${borderCol}` }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex items-center justify-center rounded-xl shrink-0" style={{ width: 38, height: 38, backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}>
+                <Settings size={18} />
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold" style={{ color: textCol }}>
+                  Funções da categoria {PERFIS.find(p => p.key === configPerfil)?.label}
+                </div>
+                <div className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                  Marque para adicionar, desmarque para excluir da categoria.
+                </div>
+              </div>
+              <button onClick={() => setConfigPerfil(null)} className="p-1.5 rounded-lg" style={{ color: textCol }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {(perfilModules[configPerfil] || []).map(k => (
+                <span
+                  key={k}
+                  className="inline-flex items-center gap-1.5 rounded-full pl-2.5 pr-1.5 py-1 text-[10px] font-medium"
+                  style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}
+                >
+                  {MODULE_LABEL[k] || k}
+                  <button onClick={() => togglePerfilModule(configPerfil, k)} title="Remover"><X size={11} /></button>
+                </span>
+              ))}
+              {(perfilModules[configPerfil] || []).length === 0 && (
+                <span className="text-[11px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                  Nenhuma função nesta categoria.
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {MODULE_GROUPS.map(group => (
+                <div key={group.category}>
+                  <div className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
+                    {group.category}
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {group.items.map(mod => {
+                      const active = (perfilModules[configPerfil] || []).includes(mod.key);
+                      return (
+                        <button
+                          key={mod.key}
+                          onClick={() => togglePerfilModule(configPerfil, mod.key)}
+                          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium text-left"
+                          style={{
+                            backgroundColor: active ? accent : softBg,
+                            color: active ? "var(--layout-button-text, #fff)" : textCol,
+                            border: `1px solid ${active ? "transparent" : borderCol}`,
+                          }}
+                        >
+                          {active ? <Eye size={11} /> : <EyeOff size={11} style={{ opacity: 0.4 }} />}
+                          <span className="truncate">{mod.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-end pt-2" style={{ borderTop: `1px solid ${borderCol}` }}>
+              <button
+                onClick={() => resetPerfilModules(configPerfil)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium"
+                style={{ backgroundColor: softBg, color: textCol, border: `1px solid ${borderCol}` }}
+              >
+                <RotateCcw size={12} /> Restaurar padrão
+              </button>
+              <button
+                onClick={() => applyToCategoryUsers(configPerfil)}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-semibold"
+                style={{ backgroundColor: accent, color: "var(--layout-button-text, #fff)" }}
+              >
+                <Save size={12} /> Aplicar aos usuários
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
