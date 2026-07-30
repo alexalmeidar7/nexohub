@@ -1500,7 +1500,7 @@ export default function BroadcastPage() {
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
               <p className="mt-3" style={{ color: "#ffffff60" }}>
-                As informações entram no XML 3 minutos antes do início do próximo programa e permanecem por 2 minutos.
+                As informações entram no XML conforme a antecedência configurada e permanecem pelo tempo definido.
                 Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>
