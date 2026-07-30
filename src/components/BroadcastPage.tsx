@@ -844,6 +844,46 @@ export default function BroadcastPage() {
     return () => clearInterval(t);
   }, [user, allProgramasFull, timezone, data.aSeguirLeadSeconds, data.aSeguirDurationSeconds, data.aSeguirForceUntil]);
 
+  // A Seguir — locutor do próximo programa (para a prévia do XML)
+  const [aSeguirLocutor, setASeguirLocutor] = useState<{ nome: string; foto: string } | null>(null);
+  const nextProgId = nextProgramInfo?.next?.id || null;
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const prog = nextProgramInfo?.next;
+      if (!user || !prog) { setASeguirLocutor(null); return; }
+      const apIds: string[] = (prog.apresentadores_ids && prog.apresentadores_ids.length > 0)
+        ? prog.apresentadores_ids
+        : (prog.apresentador_id ? [prog.apresentador_id] : []);
+      if (apIds.length === 0) { setASeguirLocutor(null); return; }
+      const { data: aps } = await supabase
+        .from("apresentadores")
+        .select("id, nome, foto")
+        .in("id", apIds);
+      if (cancelled) return;
+      const ap = (aps || []).sort((a: any, b: any) => apIds.indexOf(a.id) - apIds.indexOf(b.id))[0];
+      setASeguirLocutor(ap ? { nome: ap.nome || "", foto: ap.foto || "" } : null);
+    })();
+    return () => { cancelled = true; };
+  }, [user, nextProgId]);
+
+  const BLANK_PNG_ASEGUIR = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+  const aSeguirActive = !!data.aSeguirEnabled && !!nextProgramInfo && (nextProgramInfo.isInWindow || nextProgramInfo.isForced);
+  const aSeguirXmlPreview = (() => {
+    const horario = aSeguirActive ? (nextProgramInfo?.next?.horario_inicio || "").toString().slice(0, 5) : "";
+    return {
+      ativo: data.aSeguirEnabled ? "1" : "0",
+      programa_nome: aSeguirActive ? (nextProgramInfo?.next?.nome || "") : "",
+      programa_logo: aSeguirActive ? (nextProgramInfo?.next?.selo || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
+      locutor_nome: aSeguirActive ? (aSeguirLocutor?.nome || "") : "",
+      locutor_foto: aSeguirActive ? (aSeguirLocutor?.foto || BLANK_PNG_ASEGUIR) : BLANK_PNG_ASEGUIR,
+      horario,
+      texto: horario ? `começa às: ${horario}` : "",
+    };
+  })();
+
+
+
 
   const clockStr = `${String(nowClock.getHours()).padStart(2, "0")}:${String(nowClock.getMinutes()).padStart(2, "0")}:${String(nowClock.getSeconds()).padStart(2, "0")}`;
 
