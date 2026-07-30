@@ -39,8 +39,13 @@ interface ClienteRow {
   modules: number;
   canaisVideo: Canal[];
   canaisAudio: number;
+  canaisCatalogo: number;
   social: number;
 }
+
+const isVideo = (t?: string | null) => (t || "").toLowerCase().startsWith("video");
+const isAudio = (t?: string | null) => (t || "").toLowerCase().startsWith("audio");
+const isCatalog = (t?: string | null) => (t || "").toLowerCase().includes("catalog");
 
 function Stat({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
   return (
