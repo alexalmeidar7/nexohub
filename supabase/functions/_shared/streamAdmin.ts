@@ -39,29 +39,46 @@ function parseCreds(raw: string): Record<string, Cred> {
     } catch { /* fall through to line format */ }
   }
   for (const line of trimmed.split(/\r?\n/)) {
-    const parts = line.split("|").map((s) => s.trim());
+    const l = line.trim();
+    if (!l) continue;
+    const parts = l.split("|").map((s) => s.trim());
     if (parts.length >= 2 && parts[0]) {
       out[parts[0].toLowerCase()] = { user: parts[1], pass: parts[2] ?? "" };
+      continue;
     }
+    // Bare "user:pass" (or "user pass") — applies to every host.
+    const m = l.match(/^([^:\s]+)[:\s]+(.+)$/);
+    if (m) { out["*"] = { user: m[1], pass: m[2] }; continue; }
+    // Single token: assume it is the admin password with the default user.
+    out["*"] = { user: "admin", pass: l };
   }
+
   return out;
 }
 
+
 export function credsForHost(hostname: string, hostWithPort: string): Cred | null {
   const raw = Deno.env.get("STREAM_ADMIN_CREDENTIALS") ?? "";
-  if (!raw) return null;
+  if (!raw) {
+    console.log("[streamAdmin] STREAM_ADMIN_CREDENTIALS not set");
+    return null;
+  }
   if (raw !== cachedRaw) {
     cachedRaw = raw;
     cachedMap = parseCreds(raw);
   }
   const map = cachedMap ?? {};
-  return (
+  const cred =
     map[hostWithPort.toLowerCase()] ??
     map[hostname.toLowerCase()] ??
     map["*"] ??
-    null
+    null;
+  console.log(
+    `[streamAdmin] host=${hostWithPort} keys=${Object.keys(map).join(",")} matched=${cred ? "yes" : "no"}`,
   );
+  return cred;
 }
+
 
 function basic(c: Cred): string {
   return `Basic ${btoa(`${c.user}:${c.pass}`)}`;
@@ -82,8 +99,10 @@ export async function icecastAdminListeners(streamUrl: string): Promise<number |
   // 1) /admin/stats.xml — full server stats with one <source mount="..."> each.
   try {
     const r = await fetch(`${base}/admin/stats.xml`, { headers, signal: AbortSignal.timeout(T) });
+    console.log(`[streamAdmin] ${base}/admin/stats.xml -> ${r.status}`);
     if (r.ok) {
       const xml = await r.text();
+
       const sources = [...xml.matchAll(/<source\s+mount="([^"]+)"[^>]*>([\s\S]*?)<\/source>/gi)];
       if (sources.length) {
         const pick = (block: string): number | null => {
