@@ -1458,7 +1458,7 @@ export default function BroadcastPage() {
               <div className="min-w-0">
                 <div className="text-[11px] font-semibold text-white">Envio manual</div>
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>
-                  Força o envio das informações do próximo programa ao XML por 2 minutos, fora da janela automática.
+                  Força o envio das informações do próximo programa ao XML pelo tempo de permanência configurado, fora da janela automática.
                 </p>
                 {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
                   <p className="text-[10px] mt-1" style={{ color: CYAN }}>
