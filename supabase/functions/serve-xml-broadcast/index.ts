@@ -585,6 +585,76 @@ serve(async (req) => {
     const bgAppliesToCurrent = linkedProgIds.length === 0 || (programaId && linkedProgIds.includes(programaId));
     const fundoAssunto = broadcastConfig.useCustomAssuntoBg && broadcastConfig.assuntoBgUrl && bgAppliesToCurrent ? broadcastConfig.assuntoBgUrl : "";
 
+    // ── A SEGUIR (next program) ──────────────────────────────────────────
+    const aSeguirEnabled = !!broadcastConfig.aSeguirEnabled;
+    let aSeguirNome = "";
+    let aSeguirLogo = "";
+    let aSeguirLocutorNome = "";
+    let aSeguirLocutorFoto = "";
+    let aSeguirHorario = "";
+    let aSeguirTexto = "";
+
+    if (aSeguirEnabled) {
+      const allProgs = progsRes.data || [];
+      let nextProg: any = null;
+      let nextStart = -1;
+
+      for (let offset = 0; offset <= 7 && !nextProg; offset++) {
+        const refDate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
+        const refDayName = dayMap[dayFormatter.format(refDate).toLowerCase()] || "";
+        const refDateStr = dateFormatter.format(refDate);
+
+        const candidates = allProgs
+          .map((p: any) => ({ p, start: timeToSeconds(p.horario_inicio) }))
+          .filter(({ p, start }) => {
+            if (start < 0) return false;
+            if (p.id && programaId && p.id === programaId) return false;
+            const runs = p.variavel
+              ? normalizeDateValue(p.data_variavel) === refDateStr
+              : (Array.isArray(p.dias_semana) ? p.dias_semana : []).includes(refDayName);
+            if (!runs) return false;
+            return offset > 0 ? true : start > nowSeconds;
+          })
+          .sort((a, b) => a.start - b.start);
+
+        if (candidates.length > 0) {
+          nextProg = candidates[0].p;
+          nextStart = candidates[0].start;
+        }
+      }
+
+      if (nextProg) {
+        aSeguirNome = nextProg.nome || "";
+        aSeguirHorario = (nextProg.horario_inicio || "").toString().slice(0, 5);
+        aSeguirTexto = aSeguirHorario ? `começa às: ${aSeguirHorario}` : "";
+        aSeguirLogo = nextProg.selo
+          ? await ensurePngImageUrl(supabase, nextProg.selo, `broadcast/${dataOwnerId}/${nextProg.id}-aseguir-logo.png`, 512)
+          : "";
+
+        const nextApIds = (nextProg.apresentadores_ids && nextProg.apresentadores_ids.length > 0)
+          ? nextProg.apresentadores_ids
+          : (nextProg.apresentador_id ? [nextProg.apresentador_id] : []);
+        if (nextApIds.length > 0) {
+          const { data: nextPresenters } = await supabase
+            .from("apresentadores")
+            .select("id, nome, foto")
+            .eq("user_id", dataOwnerId)
+            .in("id", nextApIds);
+          const nextAp = (nextPresenters || [])
+            .sort((a: any, b: any) => nextApIds.indexOf(a.id) - nextApIds.indexOf(b.id))[0];
+          if (nextAp) {
+            aSeguirLocutorNome = nextAp.nome || "";
+            aSeguirLocutorFoto = nextAp.foto
+              ? await ensurePngImageUrl(supabase, nextAp.foto, `broadcast/${dataOwnerId}/${nextAp.id}-aseguir-locutor.png`, 1080)
+              : "";
+          }
+        }
+      }
+      void nextStart;
+    }
+
+
+
     const tickerParts: string[] = [];
     const rssEnabled = !!(broadcastConfig.tickerRssEnabled && typeof broadcastConfig.tickerRssUrl === "string" && broadcastConfig.tickerRssUrl.trim());
     if (broadcastConfig.tickerNews || rssEnabled) {
@@ -1170,6 +1240,15 @@ serve(async (req) => {
     lines.push(`      <temp_atual>${esc(infoCantoTempAtual)}</temp_atual>`);
     lines.push(`      <ico_temp_atual>${esc(infoCantoIcoTemp)}</ico_temp_atual>`);
     lines.push("    </infos_canto>");
+    lines.push("    <a_seguir>");
+    lines.push(`      <ativo>${aSeguirEnabled ? "1" : "0"}</ativo>`);
+    lines.push(`      <programa_nome>${esc(aSeguirNome)}</programa_nome>`);
+    lines.push(`      <programa_logo>${esc(aSeguirLogo)}</programa_logo>`);
+    lines.push(`      <locutor_nome>${esc(aSeguirLocutorNome)}</locutor_nome>`);
+    lines.push(`      <locutor_foto>${esc(aSeguirLocutorFoto)}</locutor_foto>`);
+    lines.push(`      <horario>${esc(aSeguirHorario)}</horario>`);
+    lines.push(`      <texto>${esc(aSeguirTexto)}</texto>`);
+    lines.push("    </a_seguir>");
     lines.push("  </dados>");
     lines.push("</items>");
 
