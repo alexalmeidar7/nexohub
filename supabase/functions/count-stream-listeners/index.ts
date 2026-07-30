@@ -231,6 +231,9 @@ async function resolveCached(url: string, xpath: string | null): Promise<number 
     if (xpath) strategies.push(fetchWithXPath(url, xpath));
     strategies.push(fetchGenericListeners(url));
     strategies.push(fetchListenersForUrl(url));
+    // Authenticated Icecast admin probe (credentials from backend secret only).
+    strategies.push(icecastAdminListeners(url).catch(() => null));
+
     let value: number | null = null;
     try {
       value = await Promise.any(
