@@ -17,9 +17,17 @@ const MODULE_GROUPS = [
     items: [
       { key: "apresentadores", label: "Apresentadores" },
       { key: "programas", label: "Programas" },
+      { key: "ouvintes", label: "Cadastro de Ouvintes" },
       { key: "previsao", label: "Cidade / Tempo" },
     ],
   },
+  {
+    category: "Atendimento",
+    items: [
+      { key: "atendimento", label: "Atendimento (Chatbot)" },
+    ],
+  },
+
   {
     category: "Roteiro / Música / Agenda",
     items: [
