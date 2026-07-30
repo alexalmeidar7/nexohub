@@ -277,10 +277,11 @@ export default function PermissoesSection() {
 
   const openCreateForm = (perfil: PerfilKey) => {
     const preset = PERFIS.find(p => p.key === perfil)!;
-    const already = subUsers.some(s => perfilMap[s.id] === perfil);
+    const suggested = emailDomain ? `${preset.slug}@${emailDomain}` : "";
+    const taken = subUsers.some(s => s.email.toLowerCase() === suggested.toLowerCase());
     setFormPerfil(perfil);
     setNewNome(preset.label.charAt(0) + preset.label.slice(1).toLowerCase());
-    setNewEmail(!already && emailDomain ? `${preset.slug}@${emailDomain}` : "");
+    setNewEmail(!taken ? suggested : "");
     setNewPassword("");
   };
 
