@@ -130,7 +130,7 @@ export async function icecastAdminListeners(streamUrl: string): Promise<number |
     const h = { Authorization: basic(c), "User-Agent": "Mozilla/5.0" };
     try {
       const r = await fetch(`${base}/admin/stats.xml`, { headers: h, signal: AbortSignal.timeout(T) });
-      console.log(`[streamAdmin] ${base}/admin/stats.xml user=${c.user} -> ${r.status}`);
+      console.log(`[streamAdmin] ${base}/admin/stats.xml -> ${r.status}`);
       if (r.status === 401 || r.status === 403) continue;
       headers = h;
       if (r.ok) {
