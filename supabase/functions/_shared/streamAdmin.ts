@@ -48,8 +48,11 @@ function parseCreds(raw: string): Record<string, Cred> {
     }
     // Bare "user:pass" (or "user pass") — applies to every host.
     const m = l.match(/^([^:\s]+)[:\s]+(.+)$/);
-    if (m) out["*"] = { user: m[1], pass: m[2] };
+    if (m) { out["*"] = { user: m[1], pass: m[2] }; continue; }
+    // Single token: assume it is the admin password with the default user.
+    out["*"] = { user: "admin", pass: l };
   }
+
   return out;
 }
 
