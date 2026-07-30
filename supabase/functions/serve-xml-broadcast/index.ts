@@ -650,7 +650,36 @@ serve(async (req) => {
           }
         }
       }
-      void nextStart;
+
+      // Janela de exibição: 3 min antes do início, permanecendo por 2 min
+      // (ou seja, de start-180s até start-60s). Fora disso, campos em branco.
+      const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+      const forceUntilRaw = broadcastConfig.aSeguirForceUntil;
+      const forceUntilMs = forceUntilRaw ? Date.parse(String(forceUntilRaw)) : 0;
+      const forcedActive = !!forceUntilMs && forceUntilMs > now.getTime();
+
+      let inWindow = false;
+      if (nextStart >= 0) {
+        let delta = nextStart - nowSeconds;
+        if (delta < 0) delta += 24 * 60 * 60;
+        inWindow = delta <= 180 && delta >= 60;
+      }
+
+      if (!forcedActive && !inWindow) {
+        aSeguirNome = "";
+        aSeguirHorario = "";
+        aSeguirTexto = "";
+        aSeguirLogo = BLANK_PNG_ASEG;
+        aSeguirLocutorNome = "";
+        aSeguirLocutorFoto = BLANK_PNG_ASEG;
+      } else {
+        if (!aSeguirLogo) aSeguirLogo = BLANK_PNG_ASEG;
+        if (!aSeguirLocutorFoto) aSeguirLocutorFoto = BLANK_PNG_ASEG;
+      }
+    } else {
+      const BLANK_PNG_ASEG = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/broadcast/imgblanck.png";
+      aSeguirLogo = BLANK_PNG_ASEG;
+      aSeguirLocutorFoto = BLANK_PNG_ASEG;
     }
 
 

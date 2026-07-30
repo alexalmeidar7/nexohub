@@ -47,6 +47,7 @@ interface BroadcastData {
   useCustomAssuntoBg: boolean;
   assuntoBgProgramaIds: string[];
   aSeguirEnabled: boolean;
+  aSeguirForceUntil?: string;
 }
 
 const defaultBroadcast: BroadcastData = {
@@ -65,6 +66,7 @@ const defaultBroadcast: BroadcastData = {
   useCustomAssuntoBg: false,
   assuntoBgProgramaIds: [],
   aSeguirEnabled: false,
+  aSeguirForceUntil: "",
 };
 
 interface SocialItem {
@@ -1407,6 +1409,42 @@ export default function BroadcastPage() {
               </div>
             </label>
 
+            <div
+              className="mt-3 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              <div className="min-w-0">
+                <div className="text-[11px] font-semibold text-white">Envio manual</div>
+                <p className="text-[10px]" style={{ color: "#ffffff60" }}>
+                  Força o envio das informações do próximo programa ao XML por 2 minutos, fora da janela automática.
+                </p>
+                {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
+                  <p className="text-[10px] mt-1" style={{ color: CYAN }}>
+                    Ativo até {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                disabled={!data.aSeguirEnabled}
+                onClick={() => {
+                  const until = new Date(Date.now() + 2 * 60 * 1000).toISOString();
+                  const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
+                  setData(nextData);
+                  void handleSave(nextData);
+                  toast.success("A Seguir enviado ao XML por 2 minutos");
+                }}
+                className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider"
+                style={{
+                  backgroundColor: data.aSeguirEnabled ? CYAN : NAVY_BORDER,
+                  color: data.aSeguirEnabled ? "#04121b" : "#ffffff50",
+                  cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
+                }}
+              >
+                Enviar agora
+              </button>
+            </div>
+
             <div className="mt-4 p-4 rounded-xl text-[11px] leading-relaxed" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#ffffff80" }}>
               <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>Campos no XML</div>
               <div>a_seguir/ativo</div>
@@ -1417,8 +1455,8 @@ export default function BroadcastPage() {
               <div>a_seguir/horario</div>
               <div>a_seguir/texto → "começa às: 14:00"</div>
               <p className="mt-3" style={{ color: "#ffffff60" }}>
-                O próximo programa é calculado pela grade (dias da semana + horário de início),
-                avançando para os próximos dias quando não há mais programas hoje.
+                As informações entram no XML 3 minutos antes do início do próximo programa e permanecem por 2 minutos.
+                Fora dessa janela, as imagens ficam com <code>blanck.png</code> e os textos vazios.
               </p>
             </div>
           </div>
