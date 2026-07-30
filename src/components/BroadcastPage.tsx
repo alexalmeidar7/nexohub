@@ -1414,6 +1414,44 @@ export default function BroadcastPage() {
             </label>
 
             <div
+              className="mt-3 p-4 rounded-xl grid gap-4 sm:grid-cols-2"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+            >
+              {([
+                { key: "aSeguirLeadSeconds" as const, label: "Entrar antes do início", hint: "Antecedência em relação ao horário do próximo programa" },
+                { key: "aSeguirDurationSeconds" as const, label: "Permanecer no XML", hint: "Tempo em que as informações ficam no XML" },
+              ]).map(({ key, label, hint }) => (
+                <div key={key}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: CYAN }}>{label}</div>
+                  <select
+                    value={String(data[key] ?? (key === "aSeguirLeadSeconds" ? 180 : 120))}
+                    disabled={!data.aSeguirEnabled}
+                    onChange={e => {
+                      const nextData = { ...latestDataRef.current, [key]: Number(e.target.value) };
+                      setData(nextData);
+                      void handleSave(nextData);
+                    }}
+                    className="w-full px-3 py-2 rounded-lg text-[12px] text-white"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.05)",
+                      border: `1px solid ${NAVY_BORDER}`,
+                      opacity: data.aSeguirEnabled ? 1 : 0.5,
+                    }}
+                  >
+                    <option value="30">30 segundos</option>
+                    <option value="60">1 minuto</option>
+                    <option value="90">1 minuto e meio</option>
+                    <option value="120">2 minutos</option>
+                    <option value="180">3 minutos</option>
+                  </select>
+                  <p className="text-[10px] mt-1" style={{ color: "#ffffff50" }}>{hint}</p>
+                </div>
+              ))}
+            </div>
+
+
+
+            <div
               className="mt-3 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
               style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
             >
