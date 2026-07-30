@@ -39,13 +39,20 @@ function parseCreds(raw: string): Record<string, Cred> {
     } catch { /* fall through to line format */ }
   }
   for (const line of trimmed.split(/\r?\n/)) {
-    const parts = line.split("|").map((s) => s.trim());
+    const l = line.trim();
+    if (!l) continue;
+    const parts = l.split("|").map((s) => s.trim());
     if (parts.length >= 2 && parts[0]) {
       out[parts[0].toLowerCase()] = { user: parts[1], pass: parts[2] ?? "" };
+      continue;
     }
+    // Bare "user:pass" (or "user pass") — applies to every host.
+    const m = l.match(/^([^:\s]+)[:\s]+(.+)$/);
+    if (m) out["*"] = { user: m[1], pass: m[2] };
   }
   return out;
 }
+
 
 export function credsForHost(hostname: string, hostWithPort: string): Cred | null {
   const raw = Deno.env.get("STREAM_ADMIN_CREDENTIALS") ?? "";
