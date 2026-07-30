@@ -270,8 +270,17 @@ const menuToModuleKey: Record<string, string> = {
 const moduleSlug = (s: string) =>
   s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 
-const moduleKeyOfNode = (n: { label: string; page?: unknown }) =>
-  (typeof n.page === "string" && n.page && n.page !== "dashboard") ? n.page : moduleSlug(n.label);
+// Alguns itens do menu lateral têm rótulo diferente do cadastrado em MÓDULOS.
+// O alias garante que o pacote (plano) continue controlando a visibilidade.
+const MODULE_KEY_ALIASES: Record<string, string> = {
+  socialdesign: "socialmedia",
+};
+
+const moduleKeyOfNode = (n: { label: string; page?: unknown }) => {
+  const key = (typeof n.page === "string" && n.page && n.page !== "dashboard") ? n.page : moduleSlug(n.label);
+  return MODULE_KEY_ALIASES[key] ?? key;
+};
+
 
 const collectModuleKeys = (items: { label: string; page?: unknown; children?: any[] }[]): string[] =>
   items.flatMap(i => [moduleKeyOfNode(i), ...collectModuleKeys(i.children ?? [])]);
