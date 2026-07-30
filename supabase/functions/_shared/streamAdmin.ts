@@ -89,8 +89,10 @@ export async function icecastAdminListeners(streamUrl: string): Promise<number |
   // 1) /admin/stats.xml — full server stats with one <source mount="..."> each.
   try {
     const r = await fetch(`${base}/admin/stats.xml`, { headers, signal: AbortSignal.timeout(T) });
+    console.log(`[streamAdmin] ${base}/admin/stats.xml -> ${r.status}`);
     if (r.ok) {
       const xml = await r.text();
+
       const sources = [...xml.matchAll(/<source\s+mount="([^"]+)"[^>]*>([\s\S]*?)<\/source>/gi)];
       if (sources.length) {
         const pick = (block: string): number | null => {
