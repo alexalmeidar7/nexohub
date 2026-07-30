@@ -79,13 +79,14 @@ const MODULE_LABEL: Record<string, string> = Object.fromEntries(
 );
 
 // ---- Perfis padrão de sub-usuário ----
-const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon: LucideIcon; modules: string[] }[] = [
+const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon: LucideIcon; color: string; modules: string[] }[] = [
   {
     key: "recepcao",
     label: "RECEPÇÃO",
     slug: "recepcao",
     desc: "Atendimento e cadastros",
     icon: Headphones,
+    color: "#00BFF0",
     modules: ["fans", "agenda", "promocoes", "ouvintes", "atendimento"],
   },
   {
@@ -94,6 +95,7 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     slug: "locutor",
     desc: "Estúdio e no ar",
     icon: Mic,
+    color: "#7C3AED",
     modules: ["musica", "noticias", "telapromo", "testemunhais"],
   },
   {
@@ -102,6 +104,7 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     slug: "producao",
     desc: "Conteúdo e pauta",
     icon: Clapperboard,
+    color: "#F59E0B",
     modules: [
       "apresentadores", "programas", "ouvintes", "previsao", "noticias", "musica", "agenda",
       "broadcast", "cenario", "batalha", "enquete", "cortevideo",
@@ -114,12 +117,14 @@ const PERFIS: { key: PerfilKey; label: string; slug: string; desc: string; icon:
     slug: "comercial",
     desc: "Vendas e patrocínios",
     icon: Briefcase,
+    color: "#16A34A",
     modules: [
       "testemunhais", "promocoes", "configtelapromo", "telapromo",
       "shopping", "propostas", "logos", "preroll",
     ],
   },
 ];
+
 
 type PerfilKey = "recepcao" | "locutor" | "producao" | "comercial";
 
