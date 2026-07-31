@@ -360,6 +360,8 @@ export default function BlitzPage() {
 
   const renderRow = (b: Blitz) => {
     const live = isAcontecendo(b);
+    const restante = live ? secondsToEnd(b) : null;
+
     return (
     <div
       key={b.id}
