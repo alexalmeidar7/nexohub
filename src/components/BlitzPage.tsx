@@ -322,8 +322,29 @@ export default function BlitzPage() {
   };
   const fmtTime = (t: string) => t?.slice(0, 5);
 
-  const renderRow = (b: Blitz) => (
-    <div key={b.id} className="flex items-center gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33` }}>
+  const isAcontecendo = (b: Blitz) => {
+    void nowTick;
+    if (b.realizada) return false;
+    const now = new Date();
+    const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+    const nowHM = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
+    if (b.dia !== todayStr) return false;
+    const ini = (b.horario || "").slice(0, 5);
+    const fim = (b.horario_fim || "").slice(0, 5);
+    if (ini && nowHM < ini) return false;
+    if (fim && nowHM > fim) return false;
+    return true;
+  };
+
+  const renderRow = (b: Blitz) => {
+    const live = isAcontecendo(b);
+    return (
+    <div
+      key={b.id}
+      className={`flex items-center gap-3 flex-wrap${live ? " blitz-live-row" : ""}`}
+      style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${live ? LIME : `${CYAN}33`}` }}
+    >
+
       <div style={{ minWidth: 90 }}>
         <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Dia</div>
         <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtDate(b.dia)}</div>
