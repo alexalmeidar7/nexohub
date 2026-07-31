@@ -406,6 +406,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [onAirPair, setOnAirPair] = useState<{ primary: string; secondary: string } | null>(null);
+  // Gradiente dinâmico do box "no ar" a partir da foto do locutor
+  useEffect(() => {
+    let cancelled = false;
+    if (!onAirLocutorFoto) { setOnAirPair(null); return; }
+    import("@/lib/dominantColors").then(({ extractDominantPair }) =>
+      extractDominantPair(onAirLocutorFoto!).then((pair) => { if (!cancelled) setOnAirPair(pair); })
+    );
+    return () => { cancelled = true; };
+  }, [onAirLocutorFoto]);
+  // Texto legível sobre o gradiente (branco ou escuro)
+  const onAirText = (() => {
+    const base = onAirPair?.primary || "#00d6f9";
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(base);
+    if (!m) return "#002132";
+    const [r, g, b] = [m[1], m[2], m[3]].map((h) => {
+      const c = parseInt(h, 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return lum > 0.42 ? "#002132" : "#ffffff";
+  })();
+
   const [nextProgram, setNextProgram] = useState<{ foto: string | null; apresentador: string; programa: string; inicio: string; fim: string } | null>(null);
   const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
