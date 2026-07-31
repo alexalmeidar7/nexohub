@@ -122,6 +122,13 @@ export default function BlitzPage() {
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
   const [historico, setHistorico] = useState<BlitzHistRow[]>([]);
   const [showHistorico, setShowHistorico] = useState(false);
+  const [nowTick, setNowTick] = useState(0);
+
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(t => t + 1), 15000);
+    return () => clearInterval(iv);
+  }, []);
+
 
   const loadHistorico = async () => {
     if (!user?.id) return;
@@ -315,8 +322,29 @@ export default function BlitzPage() {
   };
   const fmtTime = (t: string) => t?.slice(0, 5);
 
-  const renderRow = (b: Blitz) => (
-    <div key={b.id} className="flex items-center gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33` }}>
+  const isAcontecendo = (b: Blitz) => {
+    void nowTick;
+    if (b.realizada) return false;
+    const now = new Date();
+    const todayStr = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).format(now);
+    const nowHM = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", hour12: false }).format(now);
+    if (b.dia !== todayStr) return false;
+    const ini = (b.horario || "").slice(0, 5);
+    const fim = (b.horario_fim || "").slice(0, 5);
+    if (ini && nowHM < ini) return false;
+    if (fim && nowHM > fim) return false;
+    return true;
+  };
+
+  const renderRow = (b: Blitz) => {
+    const live = isAcontecendo(b);
+    return (
+    <div
+      key={b.id}
+      className={`flex items-center gap-3 flex-wrap${live ? " blitz-live-row" : ""}`}
+      style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${live ? LIME : `${CYAN}33`}` }}
+    >
+
       <div style={{ minWidth: 90 }}>
         <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Dia</div>
         <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtDate(b.dia)}</div>
@@ -338,10 +366,10 @@ export default function BlitzPage() {
         fontWeight: 800,
         textTransform: "uppercase",
         letterSpacing: 1,
-        background: b.realizada ? LIME : "#fef3c7",
-        color: b.realizada ? DARK : "#92400e",
+        background: b.realizada ? LIME : live ? "#dcfce7" : "#fef3c7",
+        color: b.realizada ? DARK : live ? "#166534" : "#92400e",
       }}>
-        {b.realizada ? "Realizada" : "Agendada"}
+        {b.realizada ? "Realizada" : live ? "Acontecendo agora" : "Agendada"}
       </div>
       <div className="flex gap-1">
         <button
@@ -355,12 +383,19 @@ export default function BlitzPage() {
         <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(b.id)}><Trash2 size={14} /></button>
       </div>
     </div>
-  );
+    );
+  };
+
+  const blitzLiveCss = `@keyframes blitzLiveBorder{0%,100%{border-color:${LIME};box-shadow:0 0 0 0 ${LIME}00}50%{border-color:${LIME};box-shadow:0 0 0 4px ${LIME}66}}
+.blitz-live-row{animation:blitzLiveBorder 1.3s ease-in-out infinite}`;
+
 
 
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
+      <style>{blitzLiveCss}</style>
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div style={{ width: 48, height: 48, borderRadius: 16, background: CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
