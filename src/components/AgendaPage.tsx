@@ -3039,7 +3039,6 @@ export default function AgendaPage() {
                 )}
               </div>
             </div>
-
           </div>
 
           {/* Events + Upcoming */}
