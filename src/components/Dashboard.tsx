@@ -350,6 +350,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   });
 
+  // State for minimization animation
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   useEffect(() => {
     try {
       localStorage.setItem("nexohub_is_minimized", isMinimized.toString());
@@ -360,6 +363,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       }
     } catch {}
   }, [isMinimized, currentPage]);
+
+  const toggleMinimize = useCallback(() => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setIsMinimized(prev => !prev);
+      setIsTransitioning(false);
+    }, 300); // Match animation duration
+  }, []);
+
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
