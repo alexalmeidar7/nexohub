@@ -271,6 +271,9 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     const isDismissing = dismissing.has(evt.id);
     const isConfirming = confirming.has(evt.id);
     const isWeekly = evt.recorrencia === "semanal" || evt.recorrencia === "programa_semanal";
+    const nowHm = (() => { const n = new Date(); return `${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`; })();
+    const isNow =
+      isToday && !!hora && nowHm >= hora.slice(0, 5) && (horaFim ? nowHm <= horaFim.slice(0, 5) : true);
     const cardBg = isWeekly ? WEEKLY_BG : "transparent";
     const cardText = isWeekly ? "#0A2540" : textColor;
     return (
