@@ -395,6 +395,29 @@ export default function BlitzPage() {
       }}>
         {b.realizada ? "Realizada" : live ? "Acontecendo agora" : "Agendada"}
       </div>
+      {live && restante !== null && restante > 0 && (
+        <div
+          className="blitz-live-countdown"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 12px",
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 800,
+            fontVariantNumeric: "tabular-nums",
+            background: `${LIME}33`,
+            border: `1px solid ${LIME}`,
+            color: DARK,
+          }}
+          title={`Termina às ${fmtTime(b.horario_fim || "")}`}
+        >
+          <Clock size={12} />
+          <span>termina em {fmtCountdown(restante)}</span>
+        </div>
+      )}
+
       <div className="flex gap-1">
         <button
           style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: b.realizada ? "#94a3b8" : LIME, color: b.realizada ? "#64748B" : DARK, background: b.realizada ? "#fff" : LIME }}
