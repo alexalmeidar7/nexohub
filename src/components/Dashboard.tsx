@@ -367,10 +367,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const toggleMinimize = useCallback(() => {
     setIsTransitioning(true);
     setTimeout(() => {
-      setIsMinimized(prev => !prev);
+      setIsMinimized(prev => {
+        const next = !prev;
+        if (next && currentPage !== "dashboard") {
+          setCurrentPageState("dashboard");
+        }
+        return next;
+      });
       setIsTransitioning(false);
-    }, 300); // Match animation duration
-  }, []);
+    }, 300);
+  }, [currentPage]);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
