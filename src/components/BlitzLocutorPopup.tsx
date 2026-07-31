@@ -86,24 +86,45 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     }
   };
 
-  if (!userId || active.length === 0) return null;
+  if (!userId || active.length === 0 || dismissed) return null;
 
   if (minimized) {
     return (
-      <button
-        onClick={() => setMinimized(false)}
+      <div
         style={{
-          position: "fixed", right: 18, bottom: 18, zIndex: 60,
-          background: CYAN, color: "#fff", border: "none", borderRadius: 999,
-          padding: "10px 16px", fontFamily: FONT, fontWeight: 800, fontSize: 12,
-          textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
-          boxShadow: "0 12px 30px rgba(0,191,240,0.45)", cursor: "pointer",
+          position: "fixed", left: 18, bottom: 18, zIndex: 60,
+          display: "flex", alignItems: "center", gap: 6,
+          background: CYAN, borderRadius: 999, padding: "4px 6px 4px 4px",
+          boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: FONT,
         }}
       >
-        <Siren size={14} /> Blitz ({active.length}) <ChevronUp size={14} />
-      </button>
+        <button
+          onClick={() => setMinimized(false)}
+          style={{
+            background: "transparent", color: "#fff", border: "none", borderRadius: 999,
+            padding: "6px 10px", fontFamily: FONT, fontWeight: 800, fontSize: 12,
+            textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
+            cursor: "pointer",
+          }}
+          title="Abrir blitz"
+        >
+          <Siren size={14} /> Blitz ({active.length}) <ChevronUp size={14} />
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 999,
+            width: 22, height: 22, color: "#fff", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}
+          title="Fechar"
+        >
+          <X size={12} />
+        </button>
+      </div>
     );
   }
+
 
   return (
     <div
