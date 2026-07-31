@@ -30,6 +30,7 @@ function nowHM() {
 export default function BlitzLocutorPopup({ userId }: { userId: string | null }) {
   const [items, setItems] = useState<Blitz[]>([]);
   const [minimized, setMinimized] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [today, setToday] = useState(todayInBrasilia());
   const [tick, setTick] = useState(0);
 
