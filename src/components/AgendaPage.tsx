@@ -2805,9 +2805,10 @@ export default function AgendaPage() {
 
         {/* Calendar + Events Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-1 space-y-5">
-            {/* Calendar */}
-            <div className="overflow-hidden w-fit mx-auto max-w-full" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+          <div className="lg:col-span-1">
+            <div className="w-fit mx-auto max-w-full space-y-5">
+              {/* Calendar */}
+              <div className="overflow-hidden w-full" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
                 Calendário
               </div>
@@ -2834,6 +2835,14 @@ export default function AgendaPage() {
                   locale={ptBR}
                   modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
                   modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  classNames={{
+                    caption_label: "text-[15px] font-medium",
+                    nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
+                    head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.85rem]",
+                    row: "flex w-full mt-2.5",
+                    cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-10 w-10 rounded-md p-0 font-normal text-sm aria-selected:opacity-100 hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground transition-colors",
+                  }}
                   components={{
                     DayContent: ({ date, ...props }) => {
                       const feriado = getFeriadoNome(date);
@@ -3031,6 +3040,7 @@ export default function AgendaPage() {
               </div>
             </div>
 
+          </div>
           </div>
 
           {/* Events + Upcoming */}
