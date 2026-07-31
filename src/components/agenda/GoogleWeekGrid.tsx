@@ -108,10 +108,10 @@ export default function GoogleWeekGrid<T>({
   const todayIdx = weekDays.findIndex((d) => isSameDay(d.date, now));
 
   return (
-    <div className="flex flex-col" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="flex flex-col h-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Day header */}
       <div
-        className="grid sticky top-0 z-20"
+        className="grid sticky top-0 z-20 shrink-0"
         style={{
           gridTemplateColumns: `56px repeat(7, minmax(0, 1fr))`,
           background: "#FFFFFF",
