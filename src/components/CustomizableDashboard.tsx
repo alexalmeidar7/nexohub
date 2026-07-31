@@ -15,6 +15,8 @@ import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { readMusicData, readMusicStart, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
+import AutoScrollText from "@/components/player/AutoScrollText";
+
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
