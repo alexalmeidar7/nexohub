@@ -1273,6 +1273,47 @@ export default function AgendaPage() {
     return days;
   }, [eventos, filterLocal, selectedDate, weekOffset, now]);
 
+  // Map an Evento to a positioned block in the Google-style week grid
+  const toGridEvent = useCallback((evt: Evento, dateStr: string): GridEvent | null => {
+    const toMin = (hhmm?: string | null) => {
+      if (!hhmm) return null;
+      const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return null;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    };
+    const isGravacao = evt.tipo_evento === "gravacao";
+    let start = isGravacao
+      ? toMin(evt.horario_gravacao) ?? toMin(evt.programa?.horario_inicio)
+      : toMin(evt.programa?.horario_inicio) ?? toMin(evt.horario_gravacao);
+    let end = isGravacao
+      ? toMin(evt.horario_gravacao_fim) ?? toMin(evt.programa?.horario_fim)
+      : toMin(evt.programa?.horario_fim) ?? toMin(evt.horario_gravacao_fim);
+    if (start == null) start = 12 * 60;
+    if (end == null || end <= start) end = start + 60;
+
+    const color =
+      evt.prioridade === "alta"
+        ? "#EF4444"
+        : isGravacao
+          ? "#7C6CF0"
+          : evt.tipo_evento === "externo"
+            ? "#F59E0B"
+            : NEXO_CYAN;
+
+    const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+    return {
+      key: `${evt.id}-${dateStr}`,
+      title: evt.programa?.nome || evt.descricao || "Evento",
+      subtitle: `${fmt(start)} – ${fmt(end)}${evt.local ? ` · ${evt.local}` : ""}`,
+      startMin: start,
+      endMin: end,
+      color,
+      raw: evt,
+    };
+  }, []);
+
+
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
       key={evt.id}
