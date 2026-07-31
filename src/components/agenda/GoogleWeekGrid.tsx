@@ -155,7 +155,7 @@ export default function GoogleWeekGrid<T>({
       </div>
 
       {/* Time grid */}
-      <div ref={scrollRef} className="relative overflow-y-auto" style={{ maxHeight: 560 }}>
+      <div ref={scrollRef} className="relative overflow-y-auto flex-1" style={{ minHeight: 0 }}>
         <div
           className="grid relative"
           style={{ gridTemplateColumns: `56px repeat(7, minmax(0, 1fr))` }}
