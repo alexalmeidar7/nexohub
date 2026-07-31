@@ -737,6 +737,10 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
           35%  { opacity: 1; }
           100% { opacity: 0; }
         }
+        @keyframes evtNowBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.35; }
+        }
         @keyframes evtCheckPop {
           0%   { opacity: 0; transform: scale(0.4); }
           45%  { opacity: 1; transform: scale(1.15); }
