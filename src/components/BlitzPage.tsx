@@ -125,9 +125,10 @@ export default function BlitzPage() {
   const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
-    const iv = setInterval(() => setNowTick(t => t + 1), 15000);
+    const iv = setInterval(() => setNowTick(t => t + 1), 1000);
     return () => clearInterval(iv);
   }, []);
+
 
 
   const loadHistorico = async () => {
