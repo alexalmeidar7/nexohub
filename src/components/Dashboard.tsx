@@ -1472,15 +1472,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
 
             <div className="flex flex-row gap-4 items-stretch">
+            <style>{`
+              .nexo-onair-card {
+                width: 778px;
+                flex-basis: 778px;
+                min-width: 520px;
+                height: 461px;
+              }
+              @media (max-width: 1024px) {
+                .nexo-onair-card { min-width: 0; width: 100%; flex-basis: 100%; height: 380px; }
+                .nexo-onair-locutor { width: 46% !important; }
+                .nexo-onair-thumb { height: 150px !important; }
+              }
+              @media (max-width: 640px) {
+                .nexo-onair-card { height: 300px; border-radius: 20px; }
+                .nexo-onair-locutor { width: 52% !important; top: 12px !important; right: 8px !important; }
+                .nexo-onair-thumb { height: 104px !important; top: 52px !important; left: 4px !important; }
+                .nexo-onair-pill { top: 12px !important; left: 12px !important; padding: 4px 12px !important; font-size: 11px !important; }
+                .nexo-onair-info { bottom: 12px !important; left: 12px !important; right: 12px !important; }
+              }
+            `}</style>
             <div
-              className="rounded-3xl relative shrink min-w-0 overflow-hidden"
+              className="nexo-onair-card rounded-3xl relative shrink min-w-0 overflow-hidden"
               style={{
-                width: "778px",
                 flexShrink: 1,
-                flexBasis: "778px",
-                minWidth: "520px",
                 maxWidth: "100%",
-                height: "461px",
                 background: onAirPair
                   ? `linear-gradient(135deg, ${onAirPair.primary} 0%, ${onAirPair.secondary} 100%)`
                   : "#00d6f9",
@@ -1488,7 +1504,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               }}
             >
               <div
-                className="absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
+                className="nexo-onair-pill absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
                 style={{
                   top: "20px",
                   left: "18px",
@@ -1502,12 +1518,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <img
                   src={onAirThumb}
                   alt="Programa no ar"
-                  className="absolute object-contain"
-                  style={{ top: "60px", left: "8px", height: "208px", width: "auto" }}
+                  className="nexo-onair-thumb absolute object-contain"
+                  style={{ top: "60px", left: "8px", height: "208px", width: "auto", maxWidth: "45%" }}
                 />
               )}
               <div
                 id="on-air-info-slot"
+                className="nexo-onair-info"
                 style={{
                   position: "absolute",
                   bottom: "20px",
@@ -1520,14 +1537,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               />
               {/* LOCUTOR — foto sem box, encostada no bottom */}
               <div
-                className="absolute group"
+                className="nexo-onair-locutor absolute group"
                 style={{
                   top: "20px",
                   right: "20px",
                   bottom: "0px",
                   width: "320px",
+                  maxWidth: "52%",
                 }}
               >
+
 
                 {onAirLocutorFoto && (
                   <>
