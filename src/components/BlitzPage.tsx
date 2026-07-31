@@ -292,11 +292,14 @@ export default function BlitzPage() {
   };
 
 
-  const filtered = useMemo(() => {
-    if (filter === "pendentes") return items.filter(i => !i.realizada);
-    if (filter === "realizadas") return items.filter(i => i.realizada);
-    return items;
-  }, [items, filter]);
+  const agendadas = useMemo(
+    () => items.filter(i => !i.realizada).sort((a, b) => (a.dia + a.horario).localeCompare(b.dia + b.horario)),
+    [items],
+  );
+  const realizadas = useMemo(
+    () => items.filter(i => i.realizada).sort((a, b) => (b.dia + b.horario).localeCompare(a.dia + a.horario)),
+    [items],
+  );
 
   const stats = useMemo(() => ({
     total: items.length,
