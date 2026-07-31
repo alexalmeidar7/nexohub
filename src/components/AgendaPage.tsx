@@ -3040,6 +3040,7 @@ export default function AgendaPage() {
               </div>
             </div>
           </div>
+          </div>
 
           {/* Events + Upcoming */}
           <div className="h-full flex flex-col space-y-4">
