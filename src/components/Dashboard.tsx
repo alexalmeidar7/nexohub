@@ -1478,7 +1478,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 flex-basis: 778px;
                 min-width: 520px;
                 height: 461px;
+                background: linear-gradient(135deg, var(--onair-primary) 0%, var(--onair-secondary) 100%);
+                transition: --onair-primary 900ms ease, --onair-secondary 900ms ease, background 900ms ease;
               }
+
               @media (max-width: 1024px) {
                 .nexo-onair-card { min-width: 0; width: 100%; flex-basis: 100%; height: 380px; }
                 .nexo-onair-locutor { width: 46% !important; }
