@@ -1431,7 +1431,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
             <div className="flex flex-row gap-4 items-stretch">
             <div
-              className="rounded-3xl relative shrink min-w-0"
+              className="rounded-3xl relative shrink min-w-0 overflow-hidden"
               style={{
                 width: "778px",
                 flexShrink: 1,
@@ -1439,7 +1439,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 minWidth: "520px",
                 maxWidth: "100%",
                 height: "461px",
-                backgroundColor: "#00d6f9",
+                background: onAirPair
+                  ? `linear-gradient(135deg, ${onAirPair.primary} 0%, ${onAirPair.secondary} 100%)`
+                  : "#00d6f9",
+                transition: "background 700ms ease",
               }}
             >
               <div
@@ -1447,8 +1450,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 style={{
                   top: "20px",
                   left: "18px",
-                  backgroundColor: "#c3f628",
-                  color: "#002132",
+                  backgroundColor: onAirText === "#ffffff" ? "rgba(255,255,255,0.16)" : "#c3f628",
+                  color: onAirText === "#ffffff" ? "#ffffff" : "#002132",
                 }}
               >
                 no ar
@@ -1468,22 +1471,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   bottom: "20px",
                   left: "18px",
                   right: "18px",
-                  ["--layout-nav-text" as any]: "#002132",
-                  ["--layout-icon-color" as any]: "#002132",
-                  ["--layout-accent-color" as any]: "#002132",
+                  ["--layout-nav-text" as any]: onAirText,
+                  ["--layout-icon-color" as any]: onAirText,
+                  ["--layout-accent-color" as any]: onAirText,
                 }}
               />
-              {/* BOX DO LOCUTOR */}
+              {/* LOCUTOR — foto sem box, encostada no bottom */}
               <div
-                className="absolute rounded-2xl overflow-hidden group"
+                className="absolute group"
                 style={{
                   top: "20px",
                   right: "20px",
-                  bottom: "20px",
+                  bottom: "0px",
                   width: "320px",
-                  backgroundColor: "#c3f628",
                 }}
               >
+
                 {onAirLocutorFoto && (
                   <>
                     <style>{`
