@@ -2952,7 +2952,7 @@ export default function AgendaPage() {
 
             {/* Past Events */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div className="flex items-center justify-between gap-2" style={{ padding: "10px 14px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+              <div className="flex items-center justify-between gap-2" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <History size={13} />
                   <span className="truncate">Eventos Passados</span>
