@@ -407,15 +407,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
   const [onAirPair, setOnAirPair] = useState<{ primary: string; secondary: string } | null>(null);
+  // Versão da foto: incrementada quando a foto de destaque é trocada (evita cache do browser)
+  const [onAirFotoVersion, setOnAirFotoVersion] = useState(0);
+  const onAirFotoSrc = onAirLocutorFoto
+    ? `${onAirLocutorFoto}${onAirLocutorFoto.includes("?") ? "&" : "?"}v=${onAirFotoVersion}`
+    : null;
   // Gradiente dinâmico do box "no ar" a partir da foto do locutor
   useEffect(() => {
     let cancelled = false;
-    if (!onAirLocutorFoto) { setOnAirPair(null); return; }
+    if (!onAirFotoSrc) { setOnAirPair(null); return; }
     import("@/lib/dominantColors").then(({ extractDominantPair }) =>
-      extractDominantPair(onAirLocutorFoto!).then((pair) => { if (!cancelled) setOnAirPair(pair); })
+      extractDominantPair(onAirFotoSrc).then((pair) => { if (!cancelled && pair) setOnAirPair(pair); })
     );
     return () => { cancelled = true; };
-  }, [onAirLocutorFoto]);
+  }, [onAirFotoSrc]);
+  // Realtime: troca de foto do locutor/programa atualiza foto + degradê sem reload
+  useEffect(() => {
+    const uid = effectiveUserId || user?.id;
+    if (!uid) return;
+    const bump = () => setOnAirFotoVersion((v) => v + 1);
+    const ch = supabase
+      .channel(`onair-foto-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "apresentadores" }, bump)
+      .on("postgres_changes", { event: "*", schema: "public", table: "programas" }, bump)
+      .subscribe();
+    window.addEventListener("onair-foto-updated", bump);
+    return () => { window.removeEventListener("onair-foto-updated", bump); supabase.removeChannel(ch); };
+  }, [user, effectiveUserId]);
+
   // Texto legível sobre o gradiente (branco ou escuro)
   const onAirText = (() => {
     const base = onAirPair?.primary || "#00d6f9";
