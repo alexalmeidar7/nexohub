@@ -1500,12 +1500,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               style={{
                 flexShrink: 1,
                 maxWidth: "100%",
-                background: onAirPair
-                  ? `linear-gradient(135deg, ${onAirPair.primary} 0%, ${onAirPair.secondary} 100%)`
-                  : "#00d6f9",
-                transition: "background 700ms ease",
+                ["--onair-primary" as any]: onAirPair?.primary || "#00d6f9",
+                ["--onair-secondary" as any]: onAirPair?.secondary || "#00d6f9",
               }}
             >
+
               <div
                 className="nexo-onair-pill absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
                 style={{
