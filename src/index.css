@@ -10,6 +10,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Registered custom properties for smooth animated gradients */
+@property --onair-primary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #00d6f9;
+}
+@property --onair-secondary {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #00d6f9;
+}
+
+
 
 /* Player scope — Apple TV aesthetic. Font is confined to `.player-scope`
    so the rest of the app keeps its existing typography. */
