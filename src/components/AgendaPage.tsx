@@ -3041,12 +3041,11 @@ export default function AgendaPage() {
             </div>
 
           </div>
-          </div>
 
           {/* Events + Upcoming */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="h-full flex flex-col space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
-            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+            <div className="overflow-hidden h-full flex flex-col" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               {/* Google Agenda style toolbar */}
               <div className="flex items-center gap-2 flex-wrap px-4 py-3" style={{ borderBottom: "1px solid #EEF6FA", fontFamily: "'Montserrat', sans-serif" }}>
                 <button
