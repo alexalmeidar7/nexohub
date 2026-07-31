@@ -394,6 +394,8 @@ export default function BlitzPage() {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
+      <style>{blitzLiveCss}</style>
+
       {/* Header */}
       <div className="flex items-center gap-3">
         <div style={{ width: 48, height: 48, borderRadius: 16, background: CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
