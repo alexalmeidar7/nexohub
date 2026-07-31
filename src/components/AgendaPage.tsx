@@ -2835,6 +2835,14 @@ export default function AgendaPage() {
                   locale={ptBR}
                   modifiers={{ hasEvent: eventDates, isFeriado: feriadoDates }}
                   modifiersClassNames={{ hasEvent: "has-event-day", isFeriado: "is-feriado-day" }}
+                  classNames={{
+                    caption_label: "text-[15px] font-medium",
+                    nav_button: "h-8 w-8 rounded-full bg-transparent p-0 opacity-60 hover:opacity-100 hover:bg-muted border-0 flex items-center justify-center transition-colors",
+                    head_cell: "text-muted-foreground rounded-md w-10 font-normal text-[0.85rem]",
+                    row: "flex w-full mt-2.5",
+                    cell: "h-10 w-10 text-center text-sm p-0 relative [&:has([aria-selected].day-range-end)]:rounded-r-md first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
+                    day: "h-10 w-10 rounded-md p-0 font-normal text-sm aria-selected:opacity-100 hover:bg-muted hover:text-foreground focus:bg-muted focus:text-foreground transition-colors",
+                  }}
                   components={{
                     DayContent: ({ date, ...props }) => {
                       const feriado = getFeriadoNome(date);
