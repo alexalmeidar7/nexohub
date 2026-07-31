@@ -1527,16 +1527,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <img
                       src={onAirLocutorFoto}
                       alt="Locutor no ar"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain object-bottom"
                       style={{
                         animation: "locutorEntrada 0.95s cubic-bezier(0.22,1,0.36,1) both",
-                        transformOrigin: "center 65%",
+                        transformOrigin: "center 100%",
                         willChange: "transform, opacity, filter",
                       }}
-                    />
-                    <div
-                      className="absolute inset-0 pointer-events-none rounded-2xl"
-                      style={{ animation: "locutorGlow 1.1s ease-out both" }}
                     />
                   </>
                 )}
@@ -1547,11 +1543,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {nextProgram && (
                   <div
                     className={`absolute inset-0 transition-all duration-500 ${showNext ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
-                    style={{ backgroundColor: "#c3f628" }}
                   >
                     {nextProgram.foto && (
-                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-cover" />
+                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-contain object-bottom" />
                     )}
+
                     <div
                       className="absolute left-0 right-0 bottom-0 px-5 pt-8 pb-6"
                       style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,33,50,0.85) 100%)", color: "#e4fcff" }}
