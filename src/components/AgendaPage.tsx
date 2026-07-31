@@ -2804,9 +2804,9 @@ export default function AgendaPage() {
         </Dialog>
 
         {/* Calendar + Events Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-1">
-            <div className="w-fit mx-auto max-w-full space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5 items-stretch">
+          <div className="w-full">
+            <div className="w-full space-y-5">
               {/* Calendar */}
               <div className="overflow-hidden w-full" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
