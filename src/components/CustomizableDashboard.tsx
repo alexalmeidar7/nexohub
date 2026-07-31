@@ -15,6 +15,8 @@ import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { readMusicData, readMusicStart, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
+import AutoScrollText from "@/components/player/AutoScrollText";
+
 
 /* Typewriter text component — animates character-by-character on text change */
 function TypewriterText({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
@@ -2481,16 +2483,26 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             src={fadingArt}
             alt=""
             className="absolute inset-0 w-full h-full object-cover object-center"
-            style={{ transition: imgFadeTransition, opacity: 0 }}
+            style={{
+              transition: reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out, transform 0.7s cubic-bezier(0.22,0.61,0.36,1)",
+              opacity: 0,
+              transform: reducedMotion ? undefined : "translateX(-12%)",
+            }}
           />
         )}
         {visibleArt ? (
           <img
+            key={visibleArt}
             src={visibleArt}
             alt=""
             className="absolute inset-0 w-full h-full object-cover object-center"
-            style={{ transition: imgFadeTransition, opacity: artOpacity }}
+            style={{
+              transition: reducedMotion ? "opacity 0.01s linear" : "opacity 0.6s ease-out, transform 0.7s cubic-bezier(0.22,0.61,0.36,1)",
+              opacity: artOpacity,
+              transform: reducedMotion ? undefined : artOpacity ? "translateX(0)" : "translateX(14%)",
+            }}
           />
+
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             {isPlaying && !isVideo && audioRef.current ? (
@@ -2574,12 +2586,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
-                    <TypewriterText text={currentMusic.titulo || ""} />
+                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
+                    <AutoScrollText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
-                    <TypewriterText text={currentMusic.artista || ""} />
+                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
+                    <AutoScrollText text={currentMusic.artista || ""} />
                   </p>
+
                 </>
               ) : (
                 <>
