@@ -315,6 +315,50 @@ export default function BlitzPage() {
   };
   const fmtTime = (t: string) => t?.slice(0, 5);
 
+  const renderRow = (b: Blitz) => (
+    <div key={b.id} className="flex items-center gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33` }}>
+      <div style={{ minWidth: 90 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Dia</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtDate(b.dia)}</div>
+      </div>
+      <div style={{ minWidth: 70 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Hora</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtTime(b.horario)}{b.horario_fim ? `–${fmtTime(b.horario_fim)}` : ""}</div>
+      </div>
+      <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Cliente</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.cliente}</div>
+        {b.equipe && <div style={{ fontSize: 11, color: "#64748B" }}><Users size={10} style={{ display: "inline", marginRight: 3 }} />{b.equipe}</div>}
+        {b.observacoes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{b.observacoes}</div>}
+      </div>
+      <div style={{
+        padding: "5px 12px",
+        borderRadius: 999,
+        fontSize: 10,
+        fontWeight: 800,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        background: b.realizada ? LIME : "#fef3c7",
+        color: b.realizada ? DARK : "#92400e",
+      }}>
+        {b.realizada ? "Realizada" : "Agendada"}
+      </div>
+      <div className="flex gap-1">
+        <button
+          style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: b.realizada ? "#94a3b8" : LIME, color: b.realizada ? "#64748B" : DARK, background: b.realizada ? "#fff" : LIME }}
+          onClick={() => toggleRealizada(b)}
+          title={b.realizada ? "Voltar para agendada" : "Marcar como realizada"}
+        >
+          {b.realizada ? <X size={14} /> : <Check size={14} />}
+        </button>
+        <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(b)}><Pencil size={14} /></button>
+        <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(b.id)}><Trash2 size={14} /></button>
+      </div>
+    </div>
+  );
+
+
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
       {/* Header */}
