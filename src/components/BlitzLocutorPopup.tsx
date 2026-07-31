@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Siren, Minus, Check, ChevronUp, Clock, Users, Building2 } from "lucide-react";
+import { Siren, Minus, Check, ChevronUp, Clock, Users, Building2, X } from "lucide-react";
 import { todayInBrasilia } from "@/lib/brasiliaDate";
 import { logBlitzHistorico } from "@/lib/blitzHistorico";
 
@@ -30,6 +30,7 @@ function nowHM() {
 export default function BlitzLocutorPopup({ userId }: { userId: string | null }) {
   const [items, setItems] = useState<Blitz[]>([]);
   const [minimized, setMinimized] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [today, setToday] = useState(todayInBrasilia());
   const [tick, setTick] = useState(0);
 
@@ -85,24 +86,45 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     }
   };
 
-  if (!userId || active.length === 0) return null;
+  if (!userId || active.length === 0 || dismissed) return null;
 
   if (minimized) {
     return (
-      <button
-        onClick={() => setMinimized(false)}
+      <div
         style={{
-          position: "fixed", right: 18, bottom: 18, zIndex: 60,
-          background: CYAN, color: "#fff", border: "none", borderRadius: 999,
-          padding: "10px 16px", fontFamily: FONT, fontWeight: 800, fontSize: 12,
-          textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
-          boxShadow: "0 12px 30px rgba(0,191,240,0.45)", cursor: "pointer",
+          position: "fixed", left: 18, bottom: 18, zIndex: 60,
+          display: "flex", alignItems: "center", gap: 6,
+          background: CYAN, borderRadius: 999, padding: "4px 6px 4px 4px",
+          boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: FONT,
         }}
       >
-        <Siren size={14} /> Blitz ({active.length}) <ChevronUp size={14} />
-      </button>
+        <button
+          onClick={() => setMinimized(false)}
+          style={{
+            background: "transparent", color: "#fff", border: "none", borderRadius: 999,
+            padding: "6px 10px", fontFamily: FONT, fontWeight: 800, fontSize: 12,
+            textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
+            cursor: "pointer",
+          }}
+          title="Abrir blitz"
+        >
+          <Siren size={14} /> Blitz ({active.length}) <ChevronUp size={14} />
+        </button>
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 999,
+            width: 22, height: 22, color: "#fff", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}
+          title="Fechar"
+        >
+          <X size={12} />
+        </button>
+      </div>
     );
   }
+
 
   return (
     <div
@@ -117,13 +139,23 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 900, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
           <Siren size={14} /> Blitz de hoje
         </div>
-        <button
-          onClick={() => setMinimized(true)}
-          style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          title="Minimizar"
-        >
-          <Minus size={14} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            onClick={() => setMinimized(true)}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            title="Minimizar"
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            onClick={() => setDismissed(true)}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            title="Fechar"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
       </div>
       <div style={{ maxHeight: 340, overflowY: "auto", padding: 10 }}>
         {active.map(b => (
