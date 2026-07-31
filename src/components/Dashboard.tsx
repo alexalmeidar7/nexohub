@@ -1478,7 +1478,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 flex-basis: 778px;
                 min-width: 520px;
                 height: 461px;
+                background: linear-gradient(135deg, var(--onair-primary) 0%, var(--onair-secondary) 100%);
+                transition: --onair-primary 900ms ease, --onair-secondary 900ms ease, background 900ms ease;
               }
+
               @media (max-width: 1024px) {
                 .nexo-onair-card { min-width: 0; width: 100%; flex-basis: 100%; height: 380px; }
                 .nexo-onair-locutor { width: 46% !important; }
@@ -1497,12 +1500,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               style={{
                 flexShrink: 1,
                 maxWidth: "100%",
-                background: onAirPair
-                  ? `linear-gradient(135deg, ${onAirPair.primary} 0%, ${onAirPair.secondary} 100%)`
-                  : "#00d6f9",
-                transition: "background 700ms ease",
+                ["--onair-primary" as any]: onAirPair?.primary || "#00d6f9",
+                ["--onair-secondary" as any]: onAirPair?.secondary || "#00d6f9",
               }}
             >
+
               <div
                 className="nexo-onair-pill absolute rounded-full px-5 py-2 font-heading font-bold uppercase tracking-widest text-sm"
                 style={{
