@@ -2804,9 +2804,9 @@ export default function AgendaPage() {
         </Dialog>
 
         {/* Calendar + Events Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          <div className="lg:col-span-1">
-            <div className="w-fit mx-auto max-w-full space-y-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-5 items-stretch">
+          <div className="w-full">
+            <div className="w-full space-y-5">
               {/* Calendar */}
               <div className="overflow-hidden w-full" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
@@ -2952,7 +2952,7 @@ export default function AgendaPage() {
 
             {/* Past Events */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div className="flex items-center justify-between gap-2" style={{ padding: "10px 14px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+              <div className="flex items-center justify-between gap-2" style={{ padding: "12px 18px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
                 <div className="flex items-center gap-2 min-w-0">
                   <History size={13} />
                   <span className="truncate">Eventos Passados</span>
@@ -3039,14 +3039,13 @@ export default function AgendaPage() {
                 )}
               </div>
             </div>
-
           </div>
           </div>
 
           {/* Events + Upcoming */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="h-full flex flex-col space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
-            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+            <div className="overflow-hidden h-full flex flex-col" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
               {/* Google Agenda style toolbar */}
               <div className="flex items-center gap-2 flex-wrap px-4 py-3" style={{ borderBottom: "1px solid #EEF6FA", fontFamily: "'Montserrat', sans-serif" }}>
                 <button
