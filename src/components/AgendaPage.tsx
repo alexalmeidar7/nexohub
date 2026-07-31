@@ -37,6 +37,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
+import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGrid";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
@@ -1271,6 +1272,47 @@ export default function AgendaPage() {
     }
     return days;
   }, [eventos, filterLocal, selectedDate, weekOffset, now]);
+
+  // Map an Evento to a positioned block in the Google-style week grid
+  const toGridEvent = useCallback((evt: Evento, dateStr: string): GridEvent | null => {
+    const toMin = (hhmm?: string | null) => {
+      if (!hhmm) return null;
+      const m = hhmm.match(/^(\d{1,2}):(\d{2})/);
+      if (!m) return null;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    };
+    const isGravacao = evt.tipo_evento === "gravacao";
+    let start = isGravacao
+      ? toMin(evt.horario_gravacao) ?? toMin(evt.programa?.horario_inicio)
+      : toMin(evt.programa?.horario_inicio) ?? toMin(evt.horario_gravacao);
+    let end = isGravacao
+      ? toMin(evt.horario_gravacao_fim) ?? toMin(evt.programa?.horario_fim)
+      : toMin(evt.programa?.horario_fim) ?? toMin(evt.horario_gravacao_fim);
+    if (start == null) start = 12 * 60;
+    if (end == null || end <= start) end = start + 60;
+
+    const color =
+      evt.prioridade === "alta"
+        ? "#EF4444"
+        : isGravacao
+          ? "#7C6CF0"
+          : evt.tipo_evento === "externo"
+            ? "#F59E0B"
+            : NEXO_CYAN;
+
+    const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+
+    return {
+      key: `${evt.id}-${dateStr}`,
+      title: evt.programa?.nome || evt.descricao || "Evento",
+      subtitle: `${fmt(start)} – ${fmt(end)}${evt.local ? ` · ${evt.local}` : ""}`,
+      startMin: start,
+      endMin: end,
+      color,
+      raw: evt,
+    };
+  }, []);
+
 
   const renderEventCard = (evt: Evento, inactive = false) => (
     <div
@@ -2842,108 +2884,76 @@ export default function AgendaPage() {
           <div className="lg:col-span-2 space-y-4">
             {/* Week schedule (Mon-Sun) - Injected here */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
-              <div className="flex items-center justify-between" style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
-
-                <span className="flex items-center gap-1.5 flex-wrap">
-                  <CalendarIcon size={12} /> Programação da Semana
-                  {weekEvents.length > 0 && (
-                    <span className="opacity-70 font-normal ml-1">
-                      ({format(weekEvents[0].date, "dd/MM")} – {format(weekEvents[6].date, "dd/MM")})
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((w) => w - 1)}
-                    className="ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
-                  >
-                    ←
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((w) => w + 1)}
-                    className="px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
-                  >
-                    →
-                  </button>
-                  {weekOffset !== 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setWeekOffset(0)}
-                      className="px-2 py-0.5 rounded-full text-[10px] font-semibold hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 35%, transparent)", color: "var(--layout-header-text, #ffffff)" }}
-                    >
-                      Hoje
-                    </button>
-                  )}
-                </span>
+              {/* Google Agenda style toolbar */}
+              <div className="flex items-center gap-2 flex-wrap px-4 py-3" style={{ borderBottom: "1px solid #EEF6FA", fontFamily: "'Montserrat', sans-serif" }}>
                 <button
                   type="button"
-                  onClick={handleExportFeriados}
-                  className="px-2 py-0.5 rounded-full text-[9px] font-semibold hover:opacity-80 transition-opacity flex items-center gap-1"
-                  style={{ backgroundColor: "rgba(255,255,255,0.15)", color: "var(--layout-header-text, #ffffff)" }}
-                  title="Exportar feriados para o Google Calendar"
+                  onClick={() => { setWeekOffset(0); setSelectedDate(new Date()); }}
+                  className="px-4 h-9 rounded-full text-xs font-bold transition-colors"
+                  style={{ border: "1px solid #D5E9F2", color: NEXO_DARK, background: "#FFFFFF" }}
                 >
-                  <Download size={10} /> Exportar
+                  Hoje
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w - 1)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F1F9FB] transition-colors"
+                  style={{ color: NEXO_DARK }}
+                  aria-label="Semana anterior"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset((w) => w + 1)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-[#F1F9FB] transition-colors"
+                  style={{ color: NEXO_DARK }}
+                  aria-label="Próxima semana"
+                >
+                  ›
+                </button>
+                <span className="text-base font-semibold capitalize ml-1" style={{ color: NEXO_DARK }}>
+                  {weekEvents.length > 0
+                    ? format(weekEvents[0].date, "MMMM 'de' yyyy", { locale: ptBR })
+                    : ""}
+                </span>
+                <span className="text-[11px] font-medium ml-1" style={{ color: "rgba(10,37,64,0.5)" }}>
+                  {weekEvents.length > 0 && `${format(weekEvents[0].date, "dd/MM")} – ${format(weekEvents[6].date, "dd/MM")}`}
+                </span>
+                <div className="ml-auto flex items-center gap-2">
+                  <span
+                    className="px-3 h-8 inline-flex items-center rounded-full text-[11px] font-bold"
+                    style={{ background: "#F1F9FB", color: NEXO_DARK }}
+                  >
+                    Semana
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleExportFeriados}
+                    className="px-3 h-8 rounded-full text-[10px] font-semibold flex items-center gap-1 hover:opacity-80 transition-opacity"
+                    style={{ border: "1px solid #D5E9F2", color: NEXO_DARK }}
+                    title="Exportar feriados para o Google Calendar"
+                  >
+                    <Download size={11} /> Exportar
+                  </button>
+                </div>
               </div>
-              <div className="p-3 flex gap-3 overflow-x-auto pb-3" style={{ scrollbarWidth: "thin" }}>
-                {weekEvents.map(({ dateStr, date, events: dayEvents }) => {
-                  const isToday = isSameDay(date, now);
-                  const isSelected = selectedDate && isSameDay(date, selectedDate);
-                  const feriadoNome = getFeriadoNome(date);
-                    return (
-                      <button
-                        type="button"
-                        key={dateStr}
-                        onClick={() => setSelectedDate(date)}
-                        className="flex-shrink-0 rounded-3xl p-3 flex flex-col items-center justify-between transition-all hover:scale-[1.03] group"
-                        style={{
-                          width: 112,
-                          minHeight: 128,
-                          background: isSelected
-                            ? NEXO_CYAN
-                            : feriadoNome
-                            ? "rgba(239, 68, 68, 0.06)"
-                            : "#FFFFFF",
-                          color: isSelected ? "#FFFFFF" : NEXO_DARK,
-                          border: isSelected
-                            ? `2px solid ${NEXO_CYAN}`
-                            : feriadoNome
-                            ? "2px solid rgba(239, 68, 68, 0.25)"
-                            : isToday
-                            ? `2px solid ${NEXO_CYAN}`
-                            : "2px solid #E5F5FB",
-                          boxShadow: isSelected ? "0 8px 20px rgba(0, 191, 240, 0.35)" : "none",
-                        }}
-                      >
-                        <div className="flex flex-col items-center gap-0.5">
-                          <span className="text-[10px] uppercase font-bold tracking-wider" style={{ opacity: isSelected ? 0.9 : 0.55 }}>
-                            {format(date, "EEE", { locale: ptBR }).substring(0, 3)}
-                          </span>
-                          <span className="text-2xl font-black leading-none">
-                            {format(date, "dd")}
-                          </span>
-                        </div>
-                        <div className="flex flex-col items-center mt-1">
-                          <span className="text-[11px] font-black" style={{ color: isSelected ? "#FFFFFF" : feriadoNome ? "#ef4444" : NEXO_CYAN }}>
-                            {dayEvents.length}
-                          </span>
-                          <span className="text-[8px] uppercase font-bold tracking-wider" style={{ opacity: 0.6 }}>
-                            evento{dayEvents.length !== 1 ? "s" : ""}
-                          </span>
-                        </div>
-                        {feriadoNome && (
-                          <div className="text-[8px] font-bold uppercase truncate text-center mt-1 w-full" style={{ color: isSelected ? "#FFFFFF" : "#ef4444" }}>
-                            Feriado
-                          </div>
-                        )}
-                      </button>
-                    );
-                })}
-              </div>
+
+              <GoogleWeekGrid<Evento>
+                weekDays={weekEvents}
+                now={now}
+                selectedDate={selectedDate}
+                getFeriadoNome={getFeriadoNome}
+                onSelectDate={(d) => setSelectedDate(d)}
+                onEventClick={(evt, dateStr) => {
+                  setViewingEvent(evt);
+                  setViewingOccurrenceDate(dateStr);
+                  setViewEventDialogOpen(true);
+                }}
+                toGridEvent={toGridEvent}
+              />
             </div>
+
 
             {/* Events of selected day */}
             <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
