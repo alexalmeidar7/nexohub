@@ -1544,7 +1544,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       }
                     `}</style>
                     <img
-                      src={onAirLocutorFoto}
+                      src={onAirFotoSrc!}
                       alt="Locutor no ar"
                       className="w-full h-full object-contain object-bottom"
                       style={{
