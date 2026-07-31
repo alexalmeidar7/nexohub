@@ -568,9 +568,10 @@ function BlitzBox({ userId }: { userId?: string | null }) {
   const [collapsed, toggleCollapsed] = useCollapsed("blitz");
 
   useEffect(() => {
-    const iv = setInterval(() => setTick((t) => t + 1), 30000);
+    const iv = setInterval(() => setTick((t) => t + 1), 15000);
     return () => clearInterval(iv);
   }, []);
+
 
   useEffect(() => {
     if (!userId) { setRows([]); return; }
