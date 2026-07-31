@@ -1552,9 +1552,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <>
                     <style>{`
                       @keyframes locutorEntrada {
-                        0%   { opacity: 0; transform: scale(1.18) translateY(24px); filter: blur(6px); }
+                        0%   { opacity: 0; transform: scale(1.5) translateY(24px); filter: blur(6px); }
                         60%  { opacity: 1; filter: blur(0); }
-                        100% { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+                        100% { opacity: 1; transform: scale(1.3) translateY(0); filter: blur(0); }
                       }
                       @keyframes locutorGlow {
                         0%   { box-shadow: inset 0 0 0 0 rgba(195,246,40,0); }
@@ -1577,48 +1577,30 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                 {onAirTimes && <ProgramProgressBar inicio={onAirTimes.inicio} fim={onAirTimes.fim} nowTick={nowTick} />}
 
-                {/* Overlay: Próximo programa/locutor */}
+                {/* Seta: hover mostra apenas "A seguir" + programa + horário de início */}
                 {nextProgram && (
                   <div
-                    className={`absolute inset-0 transition-all duration-500 ${showNext ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
+                    className="absolute group/next"
+                    style={{ top: "12px", right: "12px", zIndex: 3 }}
                   >
-                    {nextProgram.foto && (
-                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-contain object-bottom" />
-                    )}
-
                     <div
-                      className="absolute left-0 right-0 bottom-0 px-5 pt-8 pb-6"
-                      style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,33,50,0.85) 100%)", color: "#e4fcff" }}
+                      aria-label="A seguir"
+                      className="rounded-full flex items-center justify-center transition-transform duration-300 group-hover/next:scale-110 shadow-md cursor-default"
+                      style={{ width: "34px", height: "34px", backgroundColor: "#d7faff", color: "#002132" }}
                     >
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">A seguir</p>
-                      <p className="text-base font-bold leading-tight truncate">{nextProgram.programa}</p>
-                      {nextProgram.apresentador && (
-                        <p className="text-xs opacity-80 truncate">{nextProgram.apresentador}</p>
-                      )}
-                      <p className="text-[11px] opacity-70 mt-1">{nextProgram.inicio} — {nextProgram.fim}</p>
+                      <ChevronRight size={18} />
+                    </div>
+                    <div
+                      className="absolute right-0 top-[42px] rounded-2xl px-4 py-3 shadow-xl opacity-0 translate-y-1 pointer-events-none transition-all duration-200 group-hover/next:opacity-100 group-hover/next:translate-y-0 whitespace-nowrap"
+                      style={{ backgroundColor: "rgba(0,33,50,0.92)", color: "#e4fcff", minWidth: "180px" }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">A seguir</p>
+                      <p className="text-sm font-bold leading-tight">{nextProgram.programa}</p>
+                      <p className="text-[11px] opacity-75 mt-1">{nextProgram.inicio}</p>
                     </div>
                   </div>
                 )}
 
-                {/* Botão toggle próximo */}
-                {nextProgram && (
-                  <button
-                    onClick={() => setShowNext((v) => !v)}
-                    aria-label={showNext ? "Voltar" : "Ver a seguir"}
-                    className="absolute rounded-full flex items-center justify-center transition-transform duration-300 hover:scale-110 active:scale-95 shadow-md"
-                    style={{
-                      top: "12px",
-                      right: "12px",
-                      width: "34px",
-                      height: "34px",
-                      backgroundColor: "#d7faff",
-                      color: "#002132",
-                      zIndex: 2,
-                    }}
-                  >
-                    {showNext ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
-                  </button>
-                )}
               </div>
             </div>
 
