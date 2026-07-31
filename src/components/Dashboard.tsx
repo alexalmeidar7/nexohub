@@ -406,6 +406,29 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
   const [onAirLocutorFoto, setOnAirLocutorFoto] = useState<string | null>(null);
+  const [onAirPair, setOnAirPair] = useState<{ primary: string; secondary: string } | null>(null);
+  // Gradiente dinâmico do box "no ar" a partir da foto do locutor
+  useEffect(() => {
+    let cancelled = false;
+    if (!onAirLocutorFoto) { setOnAirPair(null); return; }
+    import("@/lib/dominantColors").then(({ extractDominantPair }) =>
+      extractDominantPair(onAirLocutorFoto!).then((pair) => { if (!cancelled) setOnAirPair(pair); })
+    );
+    return () => { cancelled = true; };
+  }, [onAirLocutorFoto]);
+  // Texto legível sobre o gradiente (branco ou escuro)
+  const onAirText = (() => {
+    const base = onAirPair?.primary || "#00d6f9";
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(base);
+    if (!m) return "#002132";
+    const [r, g, b] = [m[1], m[2], m[3]].map((h) => {
+      const c = parseInt(h, 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return lum > 0.42 ? "#002132" : "#ffffff";
+  })();
+
   const [nextProgram, setNextProgram] = useState<{ foto: string | null; apresentador: string; programa: string; inicio: string; fim: string } | null>(null);
   const [showNext, setShowNext] = useState(false);
   const [onAirTimes, setOnAirTimes] = useState<{ inicio: string; fim: string } | null>(null);
@@ -1431,7 +1454,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
             <div className="flex flex-row gap-4 items-stretch">
             <div
-              className="rounded-3xl relative shrink min-w-0"
+              className="rounded-3xl relative shrink min-w-0 overflow-hidden"
               style={{
                 width: "778px",
                 flexShrink: 1,
@@ -1439,7 +1462,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 minWidth: "520px",
                 maxWidth: "100%",
                 height: "461px",
-                backgroundColor: "#00d6f9",
+                background: onAirPair
+                  ? `linear-gradient(135deg, ${onAirPair.primary} 0%, ${onAirPair.secondary} 100%)`
+                  : "#00d6f9",
+                transition: "background 700ms ease",
               }}
             >
               <div
@@ -1447,8 +1473,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 style={{
                   top: "20px",
                   left: "18px",
-                  backgroundColor: "#c3f628",
-                  color: "#002132",
+                  backgroundColor: onAirText === "#ffffff" ? "rgba(255,255,255,0.16)" : "#c3f628",
+                  color: onAirText === "#ffffff" ? "#ffffff" : "#002132",
                 }}
               >
                 no ar
@@ -1468,22 +1494,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   bottom: "20px",
                   left: "18px",
                   right: "18px",
-                  ["--layout-nav-text" as any]: "#002132",
-                  ["--layout-icon-color" as any]: "#002132",
-                  ["--layout-accent-color" as any]: "#002132",
+                  ["--layout-nav-text" as any]: onAirText,
+                  ["--layout-icon-color" as any]: onAirText,
+                  ["--layout-accent-color" as any]: onAirText,
                 }}
               />
-              {/* BOX DO LOCUTOR */}
+              {/* LOCUTOR — foto sem box, encostada no bottom */}
               <div
-                className="absolute rounded-2xl overflow-hidden group"
+                className="absolute group"
                 style={{
                   top: "20px",
                   right: "20px",
-                  bottom: "20px",
+                  bottom: "0px",
                   width: "320px",
-                  backgroundColor: "#c3f628",
                 }}
               >
+
                 {onAirLocutorFoto && (
                   <>
                     <style>{`
@@ -1501,16 +1527,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     <img
                       src={onAirLocutorFoto}
                       alt="Locutor no ar"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain object-bottom"
                       style={{
                         animation: "locutorEntrada 0.95s cubic-bezier(0.22,1,0.36,1) both",
-                        transformOrigin: "center 65%",
+                        transformOrigin: "center 100%",
                         willChange: "transform, opacity, filter",
                       }}
-                    />
-                    <div
-                      className="absolute inset-0 pointer-events-none rounded-2xl"
-                      style={{ animation: "locutorGlow 1.1s ease-out both" }}
                     />
                   </>
                 )}
@@ -1521,11 +1543,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {nextProgram && (
                   <div
                     className={`absolute inset-0 transition-all duration-500 ${showNext ? "opacity-100 scale-100 pointer-events-auto" : "opacity-0 scale-95 pointer-events-none"}`}
-                    style={{ backgroundColor: "#c3f628" }}
                   >
                     {nextProgram.foto && (
-                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-cover" />
+                      <img src={nextProgram.foto} alt={nextProgram.apresentador} className="w-full h-full object-contain object-bottom" />
                     )}
+
                     <div
                       className="absolute left-0 right-0 bottom-0 px-5 pt-8 pb-6"
                       style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,33,50,0.85) 100%)", color: "#e4fcff" }}
