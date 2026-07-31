@@ -122,6 +122,13 @@ export default function BlitzPage() {
   const [filter, setFilter] = useState<"todos" | "pendentes" | "realizadas">("todos");
   const [historico, setHistorico] = useState<BlitzHistRow[]>([]);
   const [showHistorico, setShowHistorico] = useState(false);
+  const [nowTick, setNowTick] = useState(0);
+
+  useEffect(() => {
+    const iv = setInterval(() => setNowTick(t => t + 1), 15000);
+    return () => clearInterval(iv);
+  }, []);
+
 
   const loadHistorico = async () => {
     if (!user?.id) return;
