@@ -366,10 +366,10 @@ export default function BlitzPage() {
         fontWeight: 800,
         textTransform: "uppercase",
         letterSpacing: 1,
-        background: b.realizada ? LIME : "#fef3c7",
-        color: b.realizada ? DARK : "#92400e",
+        background: b.realizada ? LIME : live ? "#dcfce7" : "#fef3c7",
+        color: b.realizada ? DARK : live ? "#166534" : "#92400e",
       }}>
-        {b.realizada ? "Realizada" : "Agendada"}
+        {b.realizada ? "Realizada" : live ? "Acontecendo agora" : "Agendada"}
       </div>
       <div className="flex gap-1">
         <button
@@ -383,7 +383,12 @@ export default function BlitzPage() {
         <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(b.id)}><Trash2 size={14} /></button>
       </div>
     </div>
-  );
+    );
+  };
+
+  const blitzLiveCss = `@keyframes blitzLiveBorder{0%,100%{border-color:${LIME};box-shadow:0 0 0 0 ${LIME}00}50%{border-color:${LIME};box-shadow:0 0 0 4px ${LIME}66}}
+.blitz-live-row{animation:blitzLiveBorder 1.3s ease-in-out infinite}`;
+
 
 
 
