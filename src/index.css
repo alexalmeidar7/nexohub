@@ -587,14 +587,19 @@ input.login-input:focus {
   border-spacing: 0;
 }
 .mv-content-area table thead tr {
-  background-color: color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff)) !important;
+  background-color: color-mix(in srgb, var(--layout-page-text, #0d0446) 4%, var(--layout-page-bg, #ffffff));
 }
 .mv-content-area table thead th {
-  color: color-mix(in srgb, var(--layout-page-text, #0d0446) 60%, transparent) !important;
+  color: color-mix(in srgb, var(--layout-page-text, #0d0446) 60%, transparent);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+/* Headers with a custom (dark) background keep their own legible text color */
+.mv-content-area table thead tr[style*="background"] th,
+.mv-content-area table thead th[style*="color"] {
+  color: inherit;
 }
 .mv-content-area table tbody td {
   color: var(--layout-page-text, #0d0446);

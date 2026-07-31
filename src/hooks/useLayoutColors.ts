@@ -26,6 +26,36 @@ function hexToHsl(hex: string, lightnessOffset = 0): string | null {
   return `${H} ${S}% ${L}%`;
 }
 
+/** Relative luminance (0 = black, 1 = white) of a hex color */
+function luminance(hex: string): number | null {
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
+  if (!m) return null;
+  const [r, g, b] = [m[1], m[2], m[3]].map((h) => {
+    const c = parseInt(h, 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(a: string, b: string): number | null {
+  const la = luminance(a), lb = luminance(b);
+  if (la === null || lb === null) return null;
+  const [hi, lo] = la > lb ? [la, lb] : [lb, la];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * Guarantees legible text over a given background.
+ * Keeps the user's chosen color when contrast is acceptable (>= 4.5),
+ * otherwise falls back to white or near-black.
+ */
+export function readableOn(bg: string, desired: string): string {
+  const ratio = contrastRatio(bg, desired);
+  if (ratio === null || ratio >= 4.5) return desired;
+  const lbg = luminance(bg);
+  return lbg !== null && lbg > 0.5 ? "#111111" : "#ffffff";
+}
+
 export interface LayoutColors {
   pageBg: string;
   pageText: string;
@@ -131,7 +161,7 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-page-bg", colors.pageBg);
     root.style.setProperty("--layout-page-text", colors.pageText);
     root.style.setProperty("--layout-header-bg", colors.headerBg);
-    root.style.setProperty("--layout-header-text", colors.headerText);
+    root.style.setProperty("--layout-header-text", readableOn(colors.headerBg, colors.headerText));
     root.style.setProperty("--layout-button-bg", colors.buttonBg);
     root.style.setProperty("--layout-button-text", colors.buttonText);
     root.style.setProperty("--layout-link-color", colors.linkColor);
