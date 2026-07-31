@@ -630,6 +630,11 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                         {format(dayDate, "dd 'de' MMM", { locale: ptBR })}
                       </span>
                     </div>
+                    {dayEvents.length === 0 && (
+                      <span className="text-[10px] font-medium shrink-0" style={{ color: textColor, opacity: 0.45 }}>
+                        sem evento
+                      </span>
+                    )}
                     {isTodayD && (
                       <span className="text-[8.5px] font-black uppercase tracking-wider px-1.5 py-[2px] rounded-full" style={{ background: accent, color: "var(--layout-header-text, #ffffff)" }}>
                         hoje
@@ -639,37 +644,27 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 );
               }
 
-              // Empty-day placeholder ("Sem evento neste dia")
-              if (dayEvents.length === 0) {
+              // Empty non-weekend day: single discrete line inside the day box
+              if (dayEvents.length === 0 && !isWeekend) {
                 dayNodes.push(
                   <div
                     key={`empty-${dayDate.toISOString()}`}
-                    className="rounded-lg px-2.5 py-1.5 flex items-center gap-2"
+                    className="rounded-lg px-2.5 py-1 flex items-center gap-2"
                     style={{
-                      background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 25%, transparent)",
-                      border: "1px dashed color-mix(in srgb, var(--layout-border-color, #333333) 25%, transparent)",
+                      background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 18%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 14%, transparent)",
                     }}
                   >
-                    <div
-                      className="flex flex-col items-center justify-center rounded-md shrink-0"
-                      style={{
-                        minWidth: 34,
-                        padding: "2px 6px",
-                        background: "color-mix(in srgb, var(--layout-widget-bg, #1a1a1a) 45%, transparent)",
-                        color: textColor,
-                        opacity: 0.65,
-                      }}
-                    >
-                      <span className="text-[8px] uppercase font-bold leading-none">{format(dayDate, "MMM", { locale: ptBR })}</span>
-                      <span className="text-[13px] font-black leading-none tabular-nums mt-0.5">{dayDate.getDate()}</span>
-                      <span className="text-[7.5px] uppercase font-bold leading-none mt-0.5">{format(dayDate, "EEE", { locale: ptBR }).replace(".", "")}</span>
-                    </div>
-                    <p className="text-[10.5px] italic font-medium m-0" style={{ color: textColor, opacity: 0.55 }}>
-                      Sem evento neste dia
-                    </p>
+                    <span className="text-[10px] font-bold uppercase tabular-nums shrink-0" style={{ color: textColor, opacity: 0.6 }}>
+                      {format(dayDate, "dd/MM EEE", { locale: ptBR }).replace(".", "")}
+                    </span>
+                    <span className="text-[10px] font-medium" style={{ color: textColor, opacity: 0.4 }}>
+                      sem evento
+                    </span>
                   </div>
                 );
               }
+
 
               // Events of the day
               dayEvents.forEach((evt) => {
