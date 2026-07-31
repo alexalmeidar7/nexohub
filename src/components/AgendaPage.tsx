@@ -2875,8 +2875,161 @@ export default function AgendaPage() {
               )}
             </div>
           </div>
+            {/* Upcoming 7 days */}
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div style={{ padding: "12px 18px", background: NEXO_CYAN, color: "#FFFFFF", fontWeight: 800, fontSize: 12, letterSpacing: 2, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                Próximos 7 dias
+              </div>
+
+              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+                {upcomingEvents.length === 0 ? (
+                  <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                    Nenhum evento nos próximos dias.
+                  </p>
+                ) : (
+                  upcomingEvents.map(({ dateStr, date, events: dayEvents }) => (
+                    <div key={dateStr}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(date)}
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
+                        style={{ color: "var(--layout-icon-color, #888888)" }}
+                      >
+                        <CalendarIcon size={10} />
+                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                          {dayEvents.length}
+                        </span>
+                      </button>
+                      <div className="space-y-1.5">
+                        {dayEvents.map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all"
+                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                            onClick={() => {
+                              setViewingEvent(evt);
+                              setViewingOccurrenceDate(dateStr);
+                              setViewEventDialogOpen(true);
+                            }}
+                          >
+                            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              {evt.programa?.nome || "Programa removido"}
+                            </p>
+                            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                              {evt.programa ? (
+                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                              ) : ""}
+                              {evt.local ? ` • ${evt.local}` : ""}
+                            </p>
+                            {evt.recorrencia !== "unico" && (
+                              <span className="inline-block text-[9px] font-semibold px-1.5 py-0.5 rounded mt-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                                🔁 {recorrenciaLabels[evt.recorrencia]}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* Datas Comemorativas + Aniversários de Cidades */}
             <DatasComemorativasCidades feriados={feriadosNacionais} />
+
+            {/* Past Events */}
+            <div className="overflow-hidden" style={{ backgroundColor: "#FFFFFF", borderRadius: 20, border: "1px solid #E5F5FB", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)" }}>
+              <div className="flex items-center justify-between gap-2" style={{ padding: "10px 14px", background: NEXO_DARK, color: "#FFFFFF", fontWeight: 800, fontSize: 11, letterSpacing: 1.5, textTransform: "uppercase", fontFamily: "'Montserrat', sans-serif" }}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <History size={13} />
+                  <span className="truncate">Eventos Passados</span>
+                </div>
+                <Select value={pastMonthFilter} onValueChange={setPastMonthFilter}>
+                  <SelectTrigger className="h-7 w-[120px] text-[10px] bg-white/10 border-white/20 text-white hover:bg-white/20 transition-colors">
+                    <SelectValue placeholder="Filtrar por mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os meses</SelectItem>
+                    {pastMonths.map(month => (
+                      <SelectItem key={month} value={month.toLowerCase()}>
+                        {month.charAt(0).toUpperCase() + month.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+                {pastEvents.length === 0 ? (
+                  <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
+                    Nenhum evento passado encontrado para o filtro selecionado.
+                  </p>
+                ) : (
+                  pastEvents.map(({ dateStr, date, events: dayEvents }) => (
+                    <div key={dateStr}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(date)}
+                        className="text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5 w-full hover:opacity-80 transition-opacity cursor-pointer"
+                        style={{ color: "var(--layout-icon-color, #888888)" }}
+                      >
+                        <CalendarIcon size={10} />
+                        {format(date, "EEEE, dd/MM", { locale: ptBR })}
+                        <span className="ml-auto text-[9px] font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 10%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                          {dayEvents.length}
+                        </span>
+                      </button>
+                      <div className="space-y-1.5">
+                        {dayEvents.map((evt) => (
+                          <div
+                            key={evt.id}
+                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all opacity-75"
+                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                            onClick={() => {
+                              setViewingEvent(evt);
+                              setViewingOccurrenceDate(dateStr);
+                              setViewEventDialogOpen(true);
+                            }}
+                          >
+                            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                              {evt.programa?.nome || "Programa removido"}
+                            </p>
+                            <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
+                              {evt.programa ? (
+                                evt.tipo_evento === "gravacao" && evt.horario_gravacao
+                                  ? `🎬 ${evt.horario_gravacao} (gravação)`
+                                  : `${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
+                              ) : ""}
+                              {evt.local ? ` • ${evt.local}` : ""}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {evt.status === "concluido" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-100 text-green-700">
+                                  CONCLUÍDO
+                                </span>
+                              )}
+                              {evt.status === "cancelado" && (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                                  CANCELADO
+                                </span>
+                              )}
+                              {evt.recorrencia !== "unico" && (
+                                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent)", color: "var(--layout-icon-color, #888888)" }}>
+                                  🔁 {recorrenciaLabels[evt.recorrencia]}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
 
           </div>
 
