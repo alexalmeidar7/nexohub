@@ -3033,6 +3033,7 @@ export default function AgendaPage() {
             </div>
 
           </div>
+          </div>
 
           {/* Events + Upcoming */}
           <div className="lg:col-span-2 space-y-4">
