@@ -292,11 +292,14 @@ export default function BlitzPage() {
   };
 
 
-  const filtered = useMemo(() => {
-    if (filter === "pendentes") return items.filter(i => !i.realizada);
-    if (filter === "realizadas") return items.filter(i => i.realizada);
-    return items;
-  }, [items, filter]);
+  const agendadas = useMemo(
+    () => items.filter(i => !i.realizada).sort((a, b) => (a.dia + a.horario).localeCompare(b.dia + b.horario)),
+    [items],
+  );
+  const realizadas = useMemo(
+    () => items.filter(i => i.realizada).sort((a, b) => (b.dia + b.horario).localeCompare(a.dia + a.horario)),
+    [items],
+  );
 
   const stats = useMemo(() => ({
     total: items.length,
@@ -311,6 +314,50 @@ export default function BlitzPage() {
     return `${day}/${m}/${y}`;
   };
   const fmtTime = (t: string) => t?.slice(0, 5);
+
+  const renderRow = (b: Blitz) => (
+    <div key={b.id} className="flex items-center gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33` }}>
+      <div style={{ minWidth: 90 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Dia</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtDate(b.dia)}</div>
+      </div>
+      <div style={{ minWidth: 70 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Hora</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtTime(b.horario)}{b.horario_fim ? `–${fmtTime(b.horario_fim)}` : ""}</div>
+      </div>
+      <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
+        <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Cliente</div>
+        <div style={{ fontWeight: 800, color: DARK, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.cliente}</div>
+        {b.equipe && <div style={{ fontSize: 11, color: "#64748B" }}><Users size={10} style={{ display: "inline", marginRight: 3 }} />{b.equipe}</div>}
+        {b.observacoes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{b.observacoes}</div>}
+      </div>
+      <div style={{
+        padding: "5px 12px",
+        borderRadius: 999,
+        fontSize: 10,
+        fontWeight: 800,
+        textTransform: "uppercase",
+        letterSpacing: 1,
+        background: b.realizada ? LIME : "#fef3c7",
+        color: b.realizada ? DARK : "#92400e",
+      }}>
+        {b.realizada ? "Realizada" : "Agendada"}
+      </div>
+      <div className="flex gap-1">
+        <button
+          style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: b.realizada ? "#94a3b8" : LIME, color: b.realizada ? "#64748B" : DARK, background: b.realizada ? "#fff" : LIME }}
+          onClick={() => toggleRealizada(b)}
+          title={b.realizada ? "Voltar para agendada" : "Marcar como realizada"}
+        >
+          {b.realizada ? <X size={14} /> : <Check size={14} />}
+        </button>
+        <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(b)}><Pencil size={14} /></button>
+        <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(b.id)}><Trash2 size={14} /></button>
+      </div>
+    </div>
+  );
+
+
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
@@ -371,94 +418,42 @@ export default function BlitzPage() {
         </div>
       </div>
 
-      {/* Relatório */}
+      {/* Blitz agendadas */}
       <div style={cardStyle}>
         <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
           <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK }}>
-            Relatório de blitz realizadas
+            Blitz agendadas ({agendadas.length})
           </h2>
-          <div className="flex gap-2">
-            {[
-              { k: "todos", label: `Todas (${stats.total})` },
-              { k: "pendentes", label: `Pendentes (${stats.pendentes})` },
-              { k: "realizadas", label: `Realizadas (${stats.realizadas})` },
-            ].map(t => (
-              <button
-                key={t.k}
-                onClick={() => setFilter(t.k as any)}
-                style={{
-                  ...ghostBtn,
-                  height: 34,
-                  padding: "0 14px",
-                  fontSize: 11,
-                  background: filter === t.k ? CYAN : "#fff",
-                  color: filter === t.k ? "#fff" : DARK,
-                  borderColor: CYAN,
-                }}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
         </div>
-
-        {filtered.length === 0 ? (
+        {agendadas.length === 0 ? (
           <p style={{ color: "#64748B", fontSize: 13, textAlign: "center", padding: 24 }}>
-            Nenhuma blitz {filter === "realizadas" ? "realizada" : filter === "pendentes" ? "pendente" : "cadastrada"}.
+            Nenhuma blitz agendada.
           </p>
         ) : (
-          <div className="grid gap-2">
-            {filtered.map(b => (
-              <div key={b.id} className="flex items-center gap-3 flex-wrap" style={{ background: "#fff", borderRadius: 16, padding: 14, border: `1px solid ${CYAN}33` }}>
-                <div style={{ minWidth: 90 }}>
-                  <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Dia</div>
-                  <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtDate(b.dia)}</div>
-                </div>
-                <div style={{ minWidth: 70 }}>
-                  <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Hora</div>
-                  <div style={{ fontWeight: 800, color: DARK, fontSize: 14 }}>{fmtTime(b.horario)}{b.horario_fim ? `–${fmtTime(b.horario_fim)}` : ""}</div>
-                </div>
-                <div className="flex-1 min-w-0" style={{ minWidth: 200 }}>
-                  <div style={{ fontSize: 10, textTransform: "uppercase", color: "#64748B", fontWeight: 700, letterSpacing: 1 }}>Cliente</div>
-                  <div style={{ fontWeight: 800, color: DARK, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.cliente}</div>
-                  {b.equipe && <div style={{ fontSize: 11, color: "#64748B" }}><Users size={10} style={{ display: "inline", marginRight: 3 }} />{b.equipe}</div>}
-                  {b.observacoes && <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 2 }}>{b.observacoes}</div>}
-                </div>
-                <div style={{
-                  padding: "5px 12px",
-                  borderRadius: 999,
-                  fontSize: 10,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                  background: b.realizada ? LIME : "#fef3c7",
-                  color: b.realizada ? DARK : "#92400e",
-                }}>
-                  {b.realizada ? "Realizada" : "Pendente"}
-                </div>
-                <div className="flex gap-1">
-                  <button
-                    style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: b.realizada ? "#94a3b8" : LIME, color: b.realizada ? "#64748B" : DARK, background: b.realizada ? "#fff" : LIME }}
-                    onClick={() => toggleRealizada(b)}
-                    title={b.realizada ? "Marcar como pendente" : "Marcar como realizada"}
-                  >
-                    {b.realizada ? <X size={14} /> : <Check size={14} />}
-                  </button>
-                  <button style={{ ...ghostBtn, height: 36, padding: "0 12px" }} onClick={() => edit(b)}><Pencil size={14} /></button>
-                  <button style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: "#ef4444", color: "#ef4444" }} onClick={() => del(b.id)}><Trash2 size={14} /></button>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="grid gap-2">{agendadas.map(renderRow)}</div>
         )}
+      </div>
 
+      {/* Blitz realizadas */}
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: 13, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, marginBottom: 16 }}>
+          Blitz realizadas ({realizadas.length})
+        </h2>
+        {realizadas.length === 0 ? (
+          <p style={{ color: "#64748B", fontSize: 13, textAlign: "center", padding: 24 }}>
+            Nenhuma blitz realizada ainda.
+          </p>
+        ) : (
+          <div className="grid gap-2">{realizadas.map(renderRow)}</div>
+        )}
         {stats.total > 0 && (
           <div className="mt-4 flex items-center gap-2" style={{ fontSize: 11, color: "#64748B" }}>
             <CheckCircle2 size={13} color={LIME} />
-            <span>Taxa de execução: <b style={{ color: DARK }}>{stats.total ? Math.round((stats.realizadas / stats.total) * 100) : 0}%</b></span>
+            <span>Taxa de execução: <b style={{ color: DARK }}>{Math.round((stats.realizadas / stats.total) * 100)}%</b></span>
           </div>
         )}
       </div>
+
 
       {/* Histórico / Auditoria */}
       <div style={cardStyle}>
