@@ -2584,12 +2584,13 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
             <div className="min-w-0 flex-1">
               {currentMusic ? (
                 <>
-                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1] truncate" style={{ color: "#c8ff00" }}>
-                    <TypewriterText text={currentMusic.titulo || ""} />
+                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
+                    <AutoScrollText text={currentMusic.titulo || ""} />
                   </p>
-                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15] truncate" style={{ color: "#ffffff" }}>
-                    <TypewriterText text={currentMusic.artista || ""} />
+                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
+                    <AutoScrollText text={currentMusic.artista || ""} />
                   </p>
+
                 </>
               ) : (
                 <>
