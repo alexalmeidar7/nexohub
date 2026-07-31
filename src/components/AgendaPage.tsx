@@ -2813,7 +2813,7 @@ export default function AgendaPage() {
                 Calendário
               </div>
 
-              <div className="p-2">
+              <div className="p-3">
               <style>{`
                 .agenda-calendar .rdp-day:hover { background-color: color-mix(in srgb, var(--layout-accent-color, #2563eb) 15%, transparent) !important; color: var(--layout-accent-color, #2563eb) !important; }
                 .agenda-calendar .rdp-day_selected { background-color: var(--layout-accent-color, #2563eb) !important; color: #fff !important; }
@@ -2890,7 +2890,7 @@ export default function AgendaPage() {
                 Próximos 7 dias
               </div>
 
-              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+              <div className="p-3 space-y-3 max-h-[320px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
                 {upcomingEvents.length === 0 ? (
                   <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                     Nenhum evento nos próximos dias.
@@ -2914,8 +2914,8 @@ export default function AgendaPage() {
                         {dayEvents.map((evt) => (
                           <div
                             key={evt.id}
-                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all"
-                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                            className="rounded-xl px-3 py-2 cursor-pointer hover:shadow-sm transition-all"
+                            style={{ backgroundColor: "#FAFDFE", border: "1px solid #EEF6FA" }}
                             onClick={() => {
                               setViewingEvent(evt);
                               setViewingOccurrenceDate(dateStr);
@@ -2971,7 +2971,7 @@ export default function AgendaPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="p-3 space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
+              <div className="p-3 space-y-3 max-h-[320px] overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--layout-scrollbar-color, #555555) transparent" }}>
                 {pastEvents.length === 0 ? (
                   <p className="text-xs py-4 text-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 40%, transparent)" }}>
                     Nenhum evento passado encontrado para o filtro selecionado.
@@ -2995,8 +2995,8 @@ export default function AgendaPage() {
                         {dayEvents.map((evt) => (
                           <div
                             key={evt.id}
-                            className="rounded-lg px-3 py-2 cursor-pointer hover:shadow-sm transition-all opacity-75"
-                            style={{ backgroundColor: "rgba(13,4,70,0.03)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333333) 20%, transparent)" }}
+                            className="rounded-xl px-3 py-2 cursor-pointer hover:shadow-sm transition-all opacity-75"
+                            style={{ backgroundColor: "#FAFDFE", border: "1px solid #EEF6FA" }}
                             onClick={() => {
                               setViewingEvent(evt);
                               setViewingOccurrenceDate(dateStr);

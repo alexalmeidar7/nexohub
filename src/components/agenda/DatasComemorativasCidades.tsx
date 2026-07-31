@@ -213,7 +213,7 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
         </span>
       </div>
 
-      <div className="p-3 space-y-1.5 max-h-[300px] overflow-y-auto scrollbar-hide">
+      <div className="p-3 space-y-1.5 max-h-[320px] overflow-y-auto scrollbar-hide">
         {items.length === 0 && (
           <p className="text-center text-[11px] py-6" style={{ color: "#64748B" }}>
             Nenhuma data cadastrada.
@@ -236,7 +236,7 @@ export default function DatasComemorativasCidades({ feriados = [] }: Props) {
           return (
             <div
               key={idx}
-              className="p-2 rounded-lg flex items-center gap-3 group transition-colors"
+              className="p-2 rounded-xl flex items-center gap-3 group transition-colors"
               style={{ backgroundColor: bg, border: `1px solid ${border}` }}
             >
               <div
