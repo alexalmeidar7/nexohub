@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, Minimize2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -335,7 +335,31 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
-  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  const [currentPage, setCurrentPageState] = useState<Page>(() => {
+    try {
+      const saved = localStorage.getItem("nexohub_minimized_page");
+      if (saved) return saved as Page;
+    } catch {}
+    return "dashboard";
+  });
+  const [isMinimized, setIsMinimized] = useState(() => {
+    try {
+      return localStorage.getItem("nexohub_is_minimized") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("nexohub_is_minimized", isMinimized.toString());
+      if (isMinimized && currentPage !== "dashboard") {
+        localStorage.setItem("nexohub_minimized_page", currentPage);
+      } else if (!isMinimized) {
+        localStorage.removeItem("nexohub_minimized_page");
+      }
+    } catch {}
+  }, [isMinimized, currentPage]);
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
@@ -918,6 +942,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if (child.page) {
+      if (isMinimized) setIsMinimized(false);
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
       setHoveredMenu(null);
@@ -1012,14 +1037,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 key={item.label}
                 data-menu-item-root
                 className="relative"
-
                 onMouseEnter={() => {
                    clearMenuLeaveTimer();
                    if (item.children) {
                      setHoveredMenu(item.label);
                    } else {
-                     // Fecha imediatamente qualquer submenu aberto de outro ícone
-                     // para não prejudicar a visibilidade do tooltip deste item.
                      setHoveredMenu(null);
                    }
                  }}
@@ -1032,6 +1054,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
                         } else if (item.label === "home") {
+                          if (isMinimized) setIsMinimized(false);
                           setSelectedHeaderPill("nexohub");
                           setCurrentPage("dashboard");
                           setHoveredMenu(null);
@@ -1039,6 +1062,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setSelectedHeaderPill(item.pillMode);
                           setCurrentPage("dashboard");
                         } else if (item.page) {
+                          if (isMinimized) setIsMinimized(false);
                           setCurrentPage(item.page);
                         }
                       }}
@@ -1158,7 +1182,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               <button
                                 data-submenu-item
                                 role="menuitem"
-                                onClick={() => handleChildClick(child, item.label)}
+                                 onClick={() => {
+                                   if (isMinimized) setIsMinimized(false);
+                                   handleChildClick(child, item.label);
+                                 }}
                                 className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
                                 style={{
                                   color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
@@ -1181,7 +1208,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                     key={grand.label}
                                     data-submenu-item
                                     role="menuitem"
-                                    onClick={() => handleChildClick(grand, child.label)}
+                                    onClick={() => {
+                                      if (isMinimized) setIsMinimized(false);
+                                      handleChildClick(grand, child.label);
+                                    }}
                                     className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
                                     style={{
                                       color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
@@ -1317,7 +1347,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               const childActive = currentPage === child.page;
                               return (
                                 <div key={child.label}>
-                                  <button onClick={() => handleChildClick(child, item.label)}
+                                  <button onClick={() => {
+                                      if (isMinimized) setIsMinimized(false);
+                                      handleChildClick(child, item.label);
+                                    }}
                                     className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
                                     style={{
                                       minHeight: 40,
@@ -1332,7 +1365,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                     const GrandIcon = grand.icon;
                                     const grandActive = currentPage === grand.page;
                                     return (
-                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
+                                      <button key={grand.label} onClick={() => {
+                                          if (isMinimized) setIsMinimized(false);
+                                          handleChildClick(grand, child.label);
+                                        }}
                                         className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
                                         style={{
                                           minHeight: 36,
@@ -1371,7 +1407,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
-        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
+        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]" style={{ display: isMinimized ? "none" : "flex" }}>
           <div className="flex items-center gap-4">
             <div>
               {!isDashboard && (
@@ -1438,7 +1474,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => setCurrentPage("configuracoes")}
+                  onClick={() => {
+                    if (isMinimized) setIsMinimized(false);
+                    setCurrentPage("configuracoes");
+                  }}
                   className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                   style={{ color: "#002132" }}
                 >
@@ -1468,10 +1507,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {isDashboard && !isAdmin && displayedPill !== "Chatbot" && (
+        {(isDashboard || isMinimized) && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
 
-            <div className="flex flex-row gap-4 items-stretch">
+            <div className="flex flex-row gap-4 items-stretch" style={{ display: isMinimized ? "none" : "flex" }}>
             <style>{`
               .nexo-onair-card {
                 width: 778px;
@@ -1625,18 +1664,54 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
               </Suspense>
             </div>
-            </div>
+          </div>
+        )}
 
+        {isMinimized && !isAdmin && displayedPill !== "Chatbot" && (
+          <div className="px-3 lg:px-6 mb-4 ml-1 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsMinimized(false)}
+                className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] text-white shadow-lg transition-all hover:scale-105"
+                title="Expandir"
+              >
+                <Maximize2 size={18} />
+              </button>
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">Módulo Ativo</span>
+                <span className="text-sm font-bold" style={{ color: layoutColors.accentColor }}>{pageTitle[currentPage]}</span>
+              </div>
+            </div>
           </div>
         )}
 
 
 
         {/* ===== MAIN CONTENT AREA ===== */}
-        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
-          {currentPage !== "dashboard" && (
+        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]" style={{ paddingTop: isMinimized ? "1.5rem" : "0" }}>
+          {currentPage !== "dashboard" && !isMinimized && (
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <BackButton onClick={() => setCurrentPage("dashboard")} />
+              <div className="flex items-center gap-2">
+                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          setIsMinimized(true);
+                          setCurrentPage("dashboard");
+                        }}
+                        className="flex items-center justify-center w-11 h-11 rounded-full bg-white/80 border border-[#00BFF0]/20 text-[#002132] transition-all hover:bg-[#00BFF0]/10 active:scale-[0.97] shadow-sm"
+                      >
+                        <Minimize2 size={18} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">
+                      <p className="text-xs">Minimizar</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
                 <span>Home</span>
                 <span className="opacity-50">/</span>
@@ -1648,7 +1723,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
-              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+              <div style={{ display: currentPage === "dashboard" || isMinimized ? "block" : "none", height: currentPage === "dashboard" || isMinimized ? "auto" : 0, overflow: currentPage === "dashboard" || isMinimized ? "visible" : "hidden" }}>
                 {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
