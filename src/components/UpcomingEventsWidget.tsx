@@ -414,20 +414,31 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                 <p className="text-[12px] font-bold truncate leading-tight flex-1" style={{ color: cardText }}>
                   {evt.programa?.nome || evt.descricao?.slice(0, 40) || "Evento"}
                 </p>
-                {evt.tipo_evento === "live" || !evt.tipo_evento ? (
+                {isNow ? (
                   <span
-                    className="inline-flex items-center gap-1 shrink-0 rounded-full pl-1.5 pr-2 py-[2px] font-black text-[9px] tracking-[0.12em] uppercase"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-full px-2 py-[2px] font-bold text-[9px] tracking-[0.08em] uppercase"
                     style={{
-                      background: "linear-gradient(135deg, #ff2d2d 0%, #b91c1c 100%)",
-                      color: "#fff",
-                      boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 6px rgba(239,68,68,0.45)",
+                      background: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 22%, transparent)",
+                      color: isWeekly ? "#0A2540" : textColor,
+                      border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 55%, transparent)",
+                      animation: "evtNowBlink 1.4s ease-in-out infinite",
                     }}
                   >
-                    <span className="relative inline-flex w-1.5 h-1.5">
-                      <span className="absolute inset-0 rounded-full animate-ping" style={{ background: "#fff", opacity: 0.75 }} />
-                      <span className="relative inline-block w-1.5 h-1.5 rounded-full" style={{ background: "#fff" }} />
-                    </span>
-                    LIVE
+                    <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: accent }} />
+                    Acontecendo agora
+                  </span>
+                ) : evt.tipo_evento === "live" || !evt.tipo_evento ? (
+                  <span
+                    className="inline-flex items-center gap-1 shrink-0 rounded-full px-1.5 py-[1px] font-semibold text-[9px] tracking-[0.08em] uppercase"
+                    style={{
+                      background: "transparent",
+                      color: cardText,
+                      opacity: 0.6,
+                      border: "1px solid color-mix(in srgb, currentColor 35%, transparent)",
+                    }}
+                  >
+                    <span className="inline-block w-1 h-1 rounded-full" style={{ background: "currentColor" }} />
+                    live
                   </span>
                 ) : evt.tipo_evento === "gravacao" ? (
                   <span
@@ -453,6 +464,7 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                     {type.label}
                   </span>
                 )}
+
               </div>
               <div className="flex items-center gap-2 mt-0.5">
                 {hora && (
