@@ -37,6 +37,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import ProgramaExpressInline, { type ExpressEditData } from "@/components/ProgramaExpressInline";
 import DatasComemorativasCidades from "@/components/agenda/DatasComemorativasCidades";
+import GoogleWeekGrid, { type GridEvent } from "@/components/agenda/GoogleWeekGrid";
 
 import { uploadImageToStorage } from "@/lib/uploadImageToStorage";
 import { Youtube, Image as ImageIcon, Upload, Download, Search, MessageCircle, Send, Loader2, Sparkles } from "lucide-react";
