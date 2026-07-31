@@ -576,8 +576,8 @@ function BlitzBox({ userId }: { userId?: string | null }) {
   useEffect(() => {
     if (!userId) { setRows([]); return; }
     let cancelled = false;
-    const today = todayBrasilia();
     const load = async () => {
+      const today = todayBrasilia();
       const { data } = await supabase
         .from("blitz_promocionais")
         .select("id,dia,horario,horario_fim,cliente,equipe,observacoes,realizada")
@@ -590,12 +590,14 @@ function BlitzBox({ userId }: { userId?: string | null }) {
       setRows((data as BlitzRow[]) || []);
     };
     load();
+    const iv = setInterval(load, 60000);
     const ch = supabase
       .channel(`promo-blitz-${userId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "blitz_promocionais", filter: `user_id=eq.${userId}` }, load)
       .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    return () => { cancelled = true; clearInterval(iv); supabase.removeChannel(ch); };
   }, [userId]);
+
 
   const today = todayBrasilia();
   const hm = nowHMBrasilia();
