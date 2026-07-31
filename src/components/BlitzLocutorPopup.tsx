@@ -139,13 +139,23 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
         <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 900, fontSize: 12, letterSpacing: 1, textTransform: "uppercase" }}>
           <Siren size={14} /> Blitz de hoje
         </div>
-        <button
-          onClick={() => setMinimized(true)}
-          style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          title="Minimizar"
-        >
-          <Minus size={14} />
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            onClick={() => setMinimized(true)}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            title="Minimizar"
+          >
+            <Minus size={14} />
+          </button>
+          <button
+            onClick={() => setDismissed(true)}
+            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            title="Fechar"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
       </div>
       <div style={{ maxHeight: 340, overflowY: "auto", padding: 10 }}>
         {active.map(b => (
