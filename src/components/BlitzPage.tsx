@@ -336,6 +336,27 @@ export default function BlitzPage() {
     if (fim && nowHM > fim) return false;
     return true;
   };
+  /** Segundos restantes até o horário final da blitz (fuso Brasília) */
+  const secondsToEnd = (b: Blitz) => {
+    void nowTick;
+    const fim = (b.horario_fim || "").slice(0, 5);
+    if (!fim) return null;
+    const now = new Date();
+    const hms = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(now);
+    const [h, m, s] = hms.split(":").map(Number);
+    const [fh, fm] = fim.split(":").map(Number);
+    return (fh * 3600 + fm * 60) - (h * 3600 + m * 60 + s);
+  };
+
+  const fmtCountdown = (total: number) => {
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h > 0
+      ? `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`
+      : `${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  };
+
 
   const renderRow = (b: Blitz) => {
     const live = isAcontecendo(b);
