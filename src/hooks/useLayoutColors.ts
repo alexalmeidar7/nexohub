@@ -131,7 +131,7 @@ export function useLayoutColors() {
     root.style.setProperty("--layout-page-bg", colors.pageBg);
     root.style.setProperty("--layout-page-text", colors.pageText);
     root.style.setProperty("--layout-header-bg", colors.headerBg);
-    root.style.setProperty("--layout-header-text", colors.headerText);
+    root.style.setProperty("--layout-header-text", readableOn(colors.headerBg, colors.headerText));
     root.style.setProperty("--layout-button-bg", colors.buttonBg);
     root.style.setProperty("--layout-button-text", colors.buttonText);
     root.style.setProperty("--layout-link-color", colors.linkColor);
