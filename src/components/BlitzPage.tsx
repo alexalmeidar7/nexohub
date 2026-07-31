@@ -125,9 +125,10 @@ export default function BlitzPage() {
   const [nowTick, setNowTick] = useState(0);
 
   useEffect(() => {
-    const iv = setInterval(() => setNowTick(t => t + 1), 15000);
+    const iv = setInterval(() => setNowTick(t => t + 1), 1000);
     return () => clearInterval(iv);
   }, []);
+
 
 
   const loadHistorico = async () => {
@@ -335,9 +336,32 @@ export default function BlitzPage() {
     if (fim && nowHM > fim) return false;
     return true;
   };
+  /** Segundos restantes até o horário final da blitz (fuso Brasília) */
+  const secondsToEnd = (b: Blitz) => {
+    void nowTick;
+    const fim = (b.horario_fim || "").slice(0, 5);
+    if (!fim) return null;
+    const now = new Date();
+    const hms = new Intl.DateTimeFormat("en-GB", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }).format(now);
+    const [h, m, s] = hms.split(":").map(Number);
+    const [fh, fm] = fim.split(":").map(Number);
+    return (fh * 3600 + fm * 60) - (h * 3600 + m * 60 + s);
+  };
+
+  const fmtCountdown = (total: number) => {
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h > 0
+      ? `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`
+      : `${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+  };
+
 
   const renderRow = (b: Blitz) => {
     const live = isAcontecendo(b);
+    const restante = live ? secondsToEnd(b) : null;
+
     return (
     <div
       key={b.id}
@@ -371,6 +395,29 @@ export default function BlitzPage() {
       }}>
         {b.realizada ? "Realizada" : live ? "Acontecendo agora" : "Agendada"}
       </div>
+      {live && restante !== null && restante > 0 && (
+        <div
+          className="blitz-live-countdown"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 12px",
+            borderRadius: 999,
+            fontSize: 11,
+            fontWeight: 800,
+            fontVariantNumeric: "tabular-nums",
+            background: `${LIME}33`,
+            border: `1px solid ${LIME}`,
+            color: DARK,
+          }}
+          title={`Termina às ${fmtTime(b.horario_fim || "")}`}
+        >
+          <Clock size={12} />
+          <span>termina em {fmtCountdown(restante)}</span>
+        </div>
+      )}
+
       <div className="flex gap-1">
         <button
           style={{ ...ghostBtn, height: 36, padding: "0 12px", borderColor: b.realizada ? "#94a3b8" : LIME, color: b.realizada ? "#64748B" : DARK, background: b.realizada ? "#fff" : LIME }}
