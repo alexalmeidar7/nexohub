@@ -1535,7 +1535,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <Suspense fallback={<div className="w-full h-full rounded-2xl bg-white/10 animate-pulse" />}>
-                  <UpcomingEventsWidget onNavigate={setCurrentPageState} />
+                  <UpcomingEventsWidget onNavigate={(p) => setCurrentPageState(p as Page)} />
                 </Suspense>
               </div>
             </div>
