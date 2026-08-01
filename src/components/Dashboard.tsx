@@ -1002,7 +1002,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return { background: "linear-gradient(135deg, #333333 0%, #000000 100%)" } as React.CSSProperties;
   })();
 
-  const isDashboard = currentPage === "dashboard";
+  const isDashboard = currentPageState === "dashboard";
  
   return (
     <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
@@ -1671,26 +1671,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
 
-            {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
-            <div
-              className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
-              style={{
-                minWidth: "260px",
-                height: "461px",
-                backgroundColor: "#00d6f9",
-                padding: "20px",
-                ["--layout-widget-text" as any]: "#002132",
-                ["--layout-accent-color" as any]: "#002132",
-                ["--layout-header-text" as any]: "#c3f628",
-                ["--layout-widget-bg" as any]: "#002132",
-                ["--layout-border-color" as any]: "#002132",
-              }}
-            >
-              <Suspense fallback={<div className="w-full h-full" />}>
-                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
-              </Suspense>
-            </div>
-          </div>
         )}
 
         {isMinimized && !isAdmin && displayedPill !== "Chatbot" && (
