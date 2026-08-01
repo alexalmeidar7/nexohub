@@ -106,9 +106,9 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
             textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
             cursor: "pointer",
           }}
-          title="Abrir blitz"
+          title="Restaurar janela"
         >
-          <Siren size={14} /> Blitz ({active.length}) <ChevronUp size={14} />
+          <Siren size={14} /> Blitz ({active.length}) <Maximize2 size={14} />
         </button>
         <button
           onClick={() => setDismissed(true)}
@@ -117,7 +117,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
             width: 22, height: 22, color: "#fff", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}
-          title="Fechar"
+          title="Fechar janela"
         >
           <X size={12} />
         </button>
