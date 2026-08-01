@@ -375,7 +375,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         return next;
       });
       setIsTransitioning(false);
-    }, 300);
+    }, 450); // Ligeiramente maior para a animação CSS respirar
   }, [currentPage]);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
