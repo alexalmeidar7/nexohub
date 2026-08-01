@@ -135,7 +135,7 @@ export default function OnAirWidget() {
   useEffect(() => {
     const update = async () => {
       const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
-      console.log("OnAirWidget raw data:", programasData);
+      
       
       // Filter out programmes that have a cancelled event today
       let filteredProgramas = programasData;
