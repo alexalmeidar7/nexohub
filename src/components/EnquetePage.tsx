@@ -179,12 +179,10 @@ export default function EnquetePage() {
     setCustomCategories(cats);
     for (const item of toRegenerate) {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: item.nome }) }
-        );
-        const json = await res.json();
-        const quizzes = Array.isArray(json) ? json : json?.quizzes;
+        const { data: json } = await supabase.functions.invoke("generate-enquetes", {
+          body: { categoria: item.nome },
+        });
+        const quizzes = Array.isArray(json) ? json : (json as any)?.quizzes;
         if (Array.isArray(quizzes) && quizzes.length > 0) {
           await supabase
             .from("custom_enquete_categories")
@@ -808,17 +806,12 @@ export default function EnquetePage() {
                 if (CATEGORIES.includes(name)) { toast.error("Categoria já existe."); return; }
                 setLoadingCategory(true);
                 try {
-                  const res = await fetch(
-                    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
-                    {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ categoria: name }),
-                    }
-                  );
-                  const json = await res.json();
-                  const quizzes = Array.isArray(json) ? json : json?.quizzes;
-                  if (json?.ok === false) { toast.error(json.error || "Erro ao gerar enquetes."); return; }
+                  const { data: json, error: fnError } = await supabase.functions.invoke("generate-enquetes", {
+                    body: { categoria: name },
+                  });
+                  if (fnError) { toast.error("Erro ao gerar enquetes. Faça login novamente."); return; }
+                  const quizzes = Array.isArray(json) ? json : (json as any)?.quizzes;
+                  if ((json as any)?.ok === false) { toast.error((json as any).error || "Erro ao gerar enquetes."); return; }
                   if (Array.isArray(quizzes) && quizzes.length > 0) {
                     const today = todayInBrasilia();
                     if (user) {
