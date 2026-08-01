@@ -24,13 +24,13 @@ const DIAS_MAP: Record<number, string> = {
 };
 
 async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
+  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id").ilike("estudio", "%fm%");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
-    selo: p.selo || "",
+    selo: p.selo || p.thumb || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
@@ -135,6 +135,7 @@ export default function OnAirWidget() {
   useEffect(() => {
     const update = async () => {
       const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
+      
       
       // Filter out programmes that have a cancelled event today
       let filteredProgramas = programasData;
@@ -300,7 +301,12 @@ export default function OnAirWidget() {
             <span className="font-bold text-[10px]" style={{ color: "var(--layout-accent-color)" }}>PRÓXIMO</span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center z-10 pl-1">
+          <div className="flex-1 flex flex-col justify-center z-10 pl-1 relative">
+            {firstNext.selo && (
+              <div className="absolute -left-2 -top-8 w-16 h-16 pointer-events-none opacity-80">
+                <img src={firstNext.selo} alt="" className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
+              </div>
+            )}
             <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{firstNext.nome}</p>
             <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
               {firstNext.horarioInicio} — {firstNext.horarioFim}
@@ -366,7 +372,12 @@ export default function OnAirWidget() {
           <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
-        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in" style={{ animationDuration: "500ms" }}>
+        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in relative" style={{ animationDuration: "500ms" }}>
+          {programa.selo && (
+            <div className="absolute -left-2 -top-10 w-20 h-20 pointer-events-none opacity-90 animate-fade-in">
+              <img src={programa.selo} alt="" className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+            </div>
+          )}
           <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
             <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
             {programa.classificacaoEtaria && (
