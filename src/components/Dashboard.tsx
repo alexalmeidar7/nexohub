@@ -369,14 +369,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     setTimeout(() => {
       setIsMinimized(prev => {
         const next = !prev;
-        if (next && currentPage !== "dashboard") {
+        if (next && currentPageState !== "dashboard") {
           setCurrentPageState("dashboard");
         }
         return next;
       });
       setIsTransitioning(false);
-    }, 450); // Ligeiramente maior para a animação CSS respirar
-  }, [currentPage]);
+    }, 450);
+  }, [currentPageState]);
 
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
@@ -1689,8 +1689,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="px-3 lg:px-6 mb-4 ml-1 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setIsMinimized(false)}
-                className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] text-white shadow-lg transition-all hover:scale-105"
+                onClick={toggleMinimize}
+                className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] text-white shadow-lg transition-all hover:scale-105 active:scale-95"
                 title="Expandir"
               >
                 <Maximize2 size={18} />
@@ -1715,10 +1715,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        onClick={() => {
-                          setIsMinimized(true);
-                          setCurrentPage("dashboard");
-                        }}
+                        onClick={toggleMinimize}
                         className="flex items-center justify-center w-11 h-11 rounded-full bg-white/80 border border-[#00BFF0]/20 text-[#002132] transition-all hover:bg-[#00BFF0]/10 active:scale-[0.97] shadow-sm"
                       >
                         <Minimize2 size={18} />
@@ -1738,16 +1735,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           )}
           <div className="relative flex-1 h-full">
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl transition-all duration-500 ease-in-out ${currentPageState !== "dashboard" ? "mv-content-area" : ""} ${isTransitioning ? "scale-[0.98] opacity-50 blur-[2px]" : "scale-100 opacity-100 blur-0"}`} style={currentPageState === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
-              <div style={{ display: currentPage === "dashboard" || isMinimized ? "block" : "none", height: currentPage === "dashboard" || isMinimized ? "auto" : 0, overflow: currentPage === "dashboard" || isMinimized ? "visible" : "hidden" }}>
-                {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
+              <div 
+                className={`transition-all duration-500 ease-in-out ${isTransitioning ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}
+                style={{ display: currentPageState === "dashboard" || isMinimized ? "block" : "none", height: currentPageState === "dashboard" || isMinimized ? "auto" : 0, overflow: currentPageState === "dashboard" || isMinimized ? "visible" : "hidden" }}
+              >
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPageState} effectiveUserId={effectiveUserId} />}
                 </div>
               </div>
 
