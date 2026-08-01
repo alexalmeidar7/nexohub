@@ -1762,25 +1762,25 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPageState === "agenda" && <AgendaPage />}
               {currentPageState === "curtidas" && <MusicasCurtidasPage />}
               {currentPageState === "configuracoes" && <ConfiguracoesPage section="empresa" />}
-              {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
-              {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
-              {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
-              {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
-              {currentPage === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
-              {currentPage === "shopping" && <ShoppingPage />}
-              {currentPage === "preroll" && <PreRollPage />}
-              {currentPage === "cortevideo" && <CortesVideoPage />}
-              {currentPage === "vmix" && <VmixPage />}
-              {currentPage === "propostas" && <PropostasPage />}
-              {currentPage === "tp" && <TeleprompterPage />}
-              {currentPage === "cenario" && <CenariosPage />}
-              {currentPage === "broadcast" && <BroadcastPage />}
-              {currentPage === "batalha" && <BatalhaMusicalPage />}
-              {currentPage === "enquete" && <EnquetePage />}
-              {currentPage === "quiz" && <QuizPage />}
-              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {currentPage === "clientes" && <ClientesPage />}
-              {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
+              {currentPageState === "playerconfig" && <ConfiguracoesPage section="player" />}
+              {currentPageState === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
+              {currentPageState === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
+              {currentPageState === "configtelapromo" && <ConfigTelaPromoPage />}
+              {currentPageState === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
+              {currentPageState === "shopping" && <ShoppingPage />}
+              {currentPageState === "preroll" && <PreRollPage />}
+              {currentPageState === "cortevideo" && <CortesVideoPage />}
+              {currentPageState === "vmix" && <VmixPage />}
+              {currentPageState === "propostas" && <PropostasPage />}
+              {currentPageState === "tp" && <TeleprompterPage />}
+              {currentPageState === "cenario" && <CenariosPage />}
+              {currentPageState === "broadcast" && <BroadcastPage />}
+              {currentPageState === "batalha" && <BatalhaMusicalPage />}
+              {currentPageState === "enquete" && <EnquetePage />}
+              {currentPageState === "quiz" && <QuizPage />}
+              {currentPageState === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
+              {currentPageState === "clientes" && <ClientesPage />}
+              {currentPageState === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
