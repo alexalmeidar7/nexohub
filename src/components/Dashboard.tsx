@@ -1527,12 +1527,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {(isDashboard || isMinimized) && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
-            <div className="flex flex-row gap-4 items-stretch" style={{ display: isMinimized ? "none" : "flex" }}>
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch" style={{ display: isMinimized ? "none" : "flex", minHeight: "461px" }}>
               <div className="nexo-onair-card rounded-2xl p-4 relative overflow-hidden flex flex-col justify-end group">
                 <OnAirWidget />
               </div>
               <div className="flex-1 min-w-0">
-                <UpcomingEventsWidget onNavigate={setCurrentPageState} />
+                <Suspense fallback={<div className="w-full h-full rounded-2xl bg-white/10 animate-pulse" />}>
+                  <UpcomingEventsWidget onNavigate={setCurrentPageState} />
+                </Suspense>
               </div>
             </div>
           </div>
@@ -1670,8 +1672,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
               </div>
             </div>
-
-        )}
 
         {isMinimized && !isAdmin && displayedPill !== "Chatbot" && (
           <div className="px-3 lg:px-6 mb-4 ml-1 flex items-center justify-between">
