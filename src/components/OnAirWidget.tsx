@@ -24,13 +24,13 @@ const DIAS_MAP: Record<number, string> = {
 };
 
 async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*").ilike("estudio", "%fm%");
+  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id").ilike("estudio", "%fm%");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
-    selo: p.selo || "",
+    selo: p.selo || p.thumb || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
     horarioFim: p.horario_fim,
@@ -135,6 +135,7 @@ export default function OnAirWidget() {
   useEffect(() => {
     const update = async () => {
       const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
+      console.log("OnAirWidget raw data:", programasData);
       
       // Filter out programmes that have a cancelled event today
       let filteredProgramas = programasData;
