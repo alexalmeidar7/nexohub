@@ -1790,7 +1790,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   accentColor={layoutColors.accentColor}
                   onSelectGroup={(g) => {
                     const item = adminModulosGroups.find(i => i.label === g.label);
-                    if (item?.page) { setCurrentPage(item.page); return; }
+                    if (item?.page) { setCurrentPageState(item.page); return; }
                     if (item?.children?.length) {
                       const first = item.children[0];
                       if (!first.page && first.children?.length) { handleChildClick(first.children[0], first.label); return; }
