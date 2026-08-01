@@ -1725,11 +1725,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           )}
           <div className="relative flex-1 h-full">
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl transition-all duration-500 ease-in-out ${currentPageState !== "dashboard" ? "mv-content-area" : ""} ${isTransitioning ? "scale-[0.98] opacity-50 blur-[2px]" : "scale-100 opacity-100 blur-0"}`} style={currentPageState === "dashboard" ? {} : { padding: "1.25rem" }}>
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl transition-all duration-500 ease-in-out ${currentPageState !== "dashboard" ? "mv-content-area" : ""} ${isTransitioning ? "scale-[0.98] opacity-50 blur-[2px]" : "scale-100 opacity-100 blur-0"}`} style={currentPageState === "dashboard" ? { padding: "1.25rem" } : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               <div 
                 className={`transition-all duration-500 ease-in-out ${isTransitioning ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}
-                style={{ display: currentPageState === "dashboard" || isMinimized ? "block" : "none", height: currentPageState === "dashboard" || isMinimized ? "auto" : 0, overflow: currentPageState === "dashboard" || isMinimized ? "visible" : "hidden" }}
+                style={{ display: currentPageState === "dashboard" || isMinimized ? "block" : "none" }}
               >
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
