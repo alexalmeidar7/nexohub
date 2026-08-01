@@ -301,7 +301,12 @@ export default function OnAirWidget() {
             <span className="font-bold text-[10px]" style={{ color: "var(--layout-accent-color)" }}>PRÓXIMO</span>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center z-10 pl-1">
+          <div className="flex-1 flex flex-col justify-center z-10 pl-1 relative">
+            {firstNext.selo && (
+              <div className="absolute -left-2 -top-8 w-16 h-16 pointer-events-none opacity-80">
+                <img src={firstNext.selo} alt="" className="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.3)]" />
+              </div>
+            )}
             <p className="font-bold text-white text-lg leading-tight line-clamp-2" style={{ maxWidth: "55%" }}>{firstNext.nome}</p>
             <p className="text-white/50 text-[10px] whitespace-nowrap mt-1">
               {firstNext.horarioInicio} — {firstNext.horarioFim}
