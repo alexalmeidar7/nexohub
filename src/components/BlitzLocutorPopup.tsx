@@ -106,7 +106,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
             textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
             cursor: "pointer",
           }}
-          title="Restaurar janela"
+          title="Restaurar e fechar a janela"
         >
           <Siren size={14} /> Blitz ({active.length}) <Maximize2 size={14} />
         </button>
@@ -117,7 +117,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
             width: 22, height: 22, color: "#fff", cursor: "pointer",
             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
           }}
-          title="Fechar janela"
+          title="Fechar a janela"
         >
           <X size={12} />
         </button>
