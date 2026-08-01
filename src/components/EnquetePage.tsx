@@ -179,12 +179,10 @@ export default function EnquetePage() {
     setCustomCategories(cats);
     for (const item of toRegenerate) {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-enquetes`,
-          { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoria: item.nome }) }
-        );
-        const json = await res.json();
-        const quizzes = Array.isArray(json) ? json : json?.quizzes;
+        const { data: json } = await supabase.functions.invoke("generate-enquetes", {
+          body: { categoria: item.nome },
+        });
+        const quizzes = Array.isArray(json) ? json : (json as any)?.quizzes;
         if (Array.isArray(quizzes) && quizzes.length > 0) {
           await supabase
             .from("custom_enquete_categories")
