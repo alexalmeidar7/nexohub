@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, Minimize2, Maximize2 } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -335,51 +335,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
-  const [currentPageState, setCurrentPageState] = useState<Page>(() => {
-    try {
-      const saved = localStorage.getItem("nexohub_minimized_page");
-      if (saved) return saved as Page;
-    } catch {}
-    return "dashboard";
-  });
-  const currentPage = currentPageState;
-
-  const [isMinimized, setIsMinimized] = useState(() => {
-    try {
-      return localStorage.getItem("nexohub_is_minimized") === "true";
-    } catch {
-      return false;
-    }
-  });
-
-  // State for minimization animation
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem("nexohub_is_minimized", isMinimized.toString());
-      if (isMinimized && currentPage !== "dashboard") {
-        localStorage.setItem("nexohub_minimized_page", currentPage);
-      } else if (!isMinimized) {
-        localStorage.removeItem("nexohub_minimized_page");
-      }
-    } catch {}
-  }, [isMinimized, currentPage]);
-
-  const toggleMinimize = useCallback(() => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      setIsMinimized(prev => {
-        const next = !prev;
-        if (next && currentPageState !== "dashboard") {
-          setCurrentPageState("dashboard");
-        }
-        return next;
-      });
-      setIsTransitioning(false);
-    }, 450);
-  }, [currentPageState]);
-
+  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
@@ -962,7 +918,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       return;
     }
     if (child.page) {
-      if (isMinimized) setIsMinimized(false);
       setCurrentPage(child.page);
       setMobileMenuOpen(false);
       setHoveredMenu(null);
@@ -1004,7 +959,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return { background: "linear-gradient(135deg, #333333 0%, #000000 100%)" } as React.CSSProperties;
   })();
 
-  const isDashboard = currentPageState === "dashboard";
+  const isDashboard = currentPage === "dashboard";
  
   return (
     <div data-app-shell className="h-screen flex animate-fade-in overflow-hidden relative" style={{ backgroundColor: "#e4fcff" }}>
@@ -1057,11 +1012,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 key={item.label}
                 data-menu-item-root
                 className="relative"
+
                 onMouseEnter={() => {
                    clearMenuLeaveTimer();
                    if (item.children) {
                      setHoveredMenu(item.label);
                    } else {
+                     // Fecha imediatamente qualquer submenu aberto de outro ícone
+                     // para não prejudicar a visibilidade do tooltip deste item.
                      setHoveredMenu(null);
                    }
                  }}
@@ -1074,7 +1032,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (item.children) {
                           setHoveredMenu(prev => prev === item.label ? null : item.label);
                         } else if (item.label === "home") {
-                          if (isMinimized) setIsMinimized(false);
                           setSelectedHeaderPill("nexohub");
                           setCurrentPage("dashboard");
                           setHoveredMenu(null);
@@ -1082,7 +1039,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           setSelectedHeaderPill(item.pillMode);
                           setCurrentPage("dashboard");
                         } else if (item.page) {
-                          if (isMinimized) setIsMinimized(false);
                           setCurrentPage(item.page);
                         }
                       }}
@@ -1202,10 +1158,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               <button
                                 data-submenu-item
                                 role="menuitem"
-                                 onClick={() => {
-                                   if (isMinimized) setIsMinimized(false);
-                                   handleChildClick(child, item.label);
-                                 }}
+                                onClick={() => handleChildClick(child, item.label)}
                                 className="nexo-focus w-full text-left px-3 py-2 rounded-lg text-xs flex items-center gap-2.5 transition-all group relative"
                                 style={{
                                   color: childActive ? layoutColors.accentColor : `${layoutColors.navText}d9`,
@@ -1228,10 +1181,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                     key={grand.label}
                                     data-submenu-item
                                     role="menuitem"
-                                    onClick={() => {
-                                      if (isMinimized) setIsMinimized(false);
-                                      handleChildClick(grand, child.label);
-                                    }}
+                                    onClick={() => handleChildClick(grand, child.label)}
                                     className="nexo-focus w-full text-left pl-9 pr-3 py-1.5 rounded-lg text-[11px] flex items-center gap-2 transition-all"
                                     style={{
                                       color: grandActive ? layoutColors.accentColor : `${layoutColors.navText}a6`,
@@ -1367,10 +1317,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                               const childActive = currentPage === child.page;
                               return (
                                 <div key={child.label}>
-                                  <button onClick={() => {
-                                      if (isMinimized) setIsMinimized(false);
-                                      handleChildClick(child, item.label);
-                                    }}
+                                  <button onClick={() => handleChildClick(child, item.label)}
                                     className="w-full flex items-center gap-2 px-3 rounded-lg text-xs transition-all active:scale-[0.98]"
                                     style={{
                                       minHeight: 40,
@@ -1385,10 +1332,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                                     const GrandIcon = grand.icon;
                                     const grandActive = currentPage === grand.page;
                                     return (
-                                      <button key={grand.label} onClick={() => {
-                                          if (isMinimized) setIsMinimized(false);
-                                          handleChildClick(grand, child.label);
-                                        }}
+                                      <button key={grand.label} onClick={() => handleChildClick(grand, child.label)}
                                         className="w-full flex items-center gap-2 pl-8 pr-3 rounded-lg text-[11px] transition-all active:scale-[0.98]"
                                         style={{
                                           minHeight: 36,
@@ -1427,7 +1371,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         )}
 
         {/* ===== TOP HEADER BAR (desktop) ===== */}
-        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]" style={{ display: isMinimized ? "none" : "flex" }}>
+        <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
             <div>
               {!isDashboard && (
@@ -1494,10 +1438,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => {
-                    if (isMinimized) setIsMinimized(false);
-                    setCurrentPage("configuracoes");
-                  }}
+                  onClick={() => setCurrentPage("configuracoes")}
                   className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
                   style={{ color: "#002132" }}
                 >
@@ -1527,20 +1468,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {(isDashboard || isMinimized) && !isAdmin && displayedPill !== "Chatbot" && (
+        {isDashboard && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
-            <div className="flex flex-col lg:flex-row gap-4 items-stretch" style={{ display: isMinimized ? "none" : "flex", minHeight: "461px" }}>
-              <div className="nexo-onair-card rounded-2xl p-4 relative overflow-hidden flex flex-col justify-end group">
-                <OnAirWidget />
-              </div>
-              <div className="flex-1 min-w-0">
-                <Suspense fallback={<div className="w-full h-full rounded-2xl bg-white/10 animate-pulse" />}>
-                  <UpcomingEventsWidget onNavigate={(p) => setCurrentPageState(p as Page)} />
-                </Suspense>
-              </div>
-            </div>
-          </div>
-        )}
+
+            <div className="flex flex-row gap-4 items-stretch">
             <style>{`
               .nexo-onair-card {
                 width: 778px;
@@ -1675,48 +1606,37 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
             </div>
 
-        {isMinimized && !isAdmin && displayedPill !== "Chatbot" && (
-          <div className="px-3 lg:px-6 mb-4 ml-1 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleMinimize}
-                className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] text-white shadow-lg transition-all hover:scale-105 active:scale-95"
-                title="Expandir"
-              >
-                <Maximize2 size={18} />
-              </button>
-              <div className="flex flex-col">
-                <span className="text-[10px] uppercase font-bold tracking-widest opacity-40">Módulo Ativo</span>
-                <span className="text-sm font-bold" style={{ color: layoutColors.accentColor }}>{pageTitle[currentPage]}</span>
-              </div>
+            {/* Calendário Próximos Eventos — ao lado do "No Ar" */}
+            <div
+              className="rounded-3xl relative overflow-hidden flex-1 min-w-0"
+              style={{
+                minWidth: "260px",
+                height: "461px",
+                backgroundColor: "#00d6f9",
+                padding: "20px",
+                ["--layout-widget-text" as any]: "#002132",
+                ["--layout-accent-color" as any]: "#002132",
+                ["--layout-header-text" as any]: "#c3f628",
+                ["--layout-widget-bg" as any]: "#002132",
+                ["--layout-border-color" as any]: "#002132",
+              }}
+            >
+              <Suspense fallback={<div className="w-full h-full" />}>
+                <UpcomingEventsWidget onNavigate={setCurrentPage as any} />
+              </Suspense>
             </div>
+            </div>
+
           </div>
         )}
 
 
 
         {/* ===== MAIN CONTENT AREA ===== */}
-        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]" style={{ paddingTop: isMinimized ? "1.5rem" : "0" }}>
-          {currentPage !== "dashboard" && !isMinimized && (
+        <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
+          {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <div className="flex items-center gap-2">
-                <BackButton onClick={() => setCurrentPage("dashboard")} />
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        onClick={toggleMinimize}
-                        className="flex items-center justify-center w-11 h-11 rounded-full bg-white/80 border border-[#00BFF0]/20 text-[#002132] transition-all hover:bg-[#00BFF0]/10 active:scale-[0.97] shadow-sm"
-                      >
-                        <Minimize2 size={18} />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p className="text-xs">Minimizar</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              <BackButton onClick={() => setCurrentPage("dashboard")} />
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
                 <span>Home</span>
                 <span className="opacity-50">/</span>
@@ -1725,62 +1645,63 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             </div>
           )}
           <div className="relative flex-1 h-full">
-            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl transition-all duration-500 ease-in-out ${currentPageState !== "dashboard" ? "mv-content-area" : ""} ${isTransitioning ? "scale-[0.98] opacity-50 blur-[2px]" : "scale-100 opacity-100 blur-0"}`} style={currentPageState === "dashboard" ? { padding: "1.25rem" } : { padding: "1.25rem" }}>
+            <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
-              <div 
-                className={`transition-all duration-500 ease-in-out ${isTransitioning ? "scale-95 opacity-0" : "scale-100 opacity-100"}`}
-                style={{ display: currentPageState === "dashboard" || isMinimized ? "block" : "none" }}
-              >
+              {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
+              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+                {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPageState} effectiveUserId={effectiveUserId} />}
+                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
                 </div>
               </div>
 
-              {currentPageState === "previsao" && <PrevisaoTempo />}
-              {currentPageState === "noticias" && <RoteiroPrograma />}
-              {currentPageState === "apresentadores" && <ApresentadorForm />}
-              {currentPageState === "ouvintes" && <OuvintesPage />}
-              {currentPageState === "sorteios" && <SorteiosPage />}
-              {currentPageState === "blitz" && <BlitzPage />}
-              {currentPageState === "programas" && <ProgramaForm />}
-              <div style={{ display: currentPageState === "musica" ? "block" : "none" }}>
+
+              {currentPage === "previsao" && <PrevisaoTempo />}
+              {currentPage === "noticias" && <RoteiroPrograma />}
+              {currentPage === "apresentadores" && <ApresentadorForm />}
+              {currentPage === "ouvintes" && <OuvintesPage />}
+              {currentPage === "sorteios" && <SorteiosPage />}
+              {currentPage === "blitz" && <BlitzPage />}
+              {currentPage === "programas" && <ProgramaForm />}
+              {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
+              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
                 <MusicaNoAr effectiveUserId={effectiveUserId} />
               </div>
-              {currentPageState === "agenda" && <AgendaPage />}
-              {currentPageState === "curtidas" && <MusicasCurtidasPage />}
-              {currentPageState === "configuracoes" && <ConfiguracoesPage section="empresa" />}
-              {currentPageState === "playerconfig" && <ConfiguracoesPage section="player" />}
-              {currentPageState === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
-              {currentPageState === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
-              {currentPageState === "configtelapromo" && <ConfigTelaPromoPage />}
-              {currentPageState === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
-              {currentPageState === "shopping" && <ShoppingPage />}
-              {currentPageState === "preroll" && <PreRollPage />}
-              {currentPageState === "cortevideo" && <CortesVideoPage />}
-              {currentPageState === "vmix" && <VmixPage />}
-              {currentPageState === "propostas" && <PropostasPage />}
-              {currentPageState === "tp" && <TeleprompterPage />}
-              {currentPageState === "cenario" && <CenariosPage />}
-              {currentPageState === "broadcast" && <BroadcastPage />}
-              {currentPageState === "batalha" && <BatalhaMusicalPage />}
-              {currentPageState === "enquete" && <EnquetePage />}
-              {currentPageState === "quiz" && <QuizPage />}
-              {currentPageState === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {currentPageState === "clientes" && <ClientesPage />}
-              {currentPageState === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
-              {currentPageState === "subusuarios" && (
+              {currentPage === "agenda" && <AgendaPage />}
+              {currentPage === "curtidas" && <MusicasCurtidasPage />}
+              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
+              {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
+              {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
+              {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
+              {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
+              {currentPage === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
+              {currentPage === "shopping" && <ShoppingPage />}
+              {currentPage === "preroll" && <PreRollPage />}
+              {currentPage === "cortevideo" && <CortesVideoPage />}
+              {currentPage === "vmix" && <VmixPage />}
+              {currentPage === "propostas" && <PropostasPage />}
+              {currentPage === "tp" && <TeleprompterPage />}
+              {currentPage === "cenario" && <CenariosPage />}
+              {currentPage === "broadcast" && <BroadcastPage />}
+              {currentPage === "batalha" && <BatalhaMusicalPage />}
+              {currentPage === "enquete" && <EnquetePage />}
+              {currentPage === "quiz" && <QuizPage />}
+              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
+              {currentPage === "clientes" && <ClientesPage />}
+              {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
+              {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
-              {currentPageState === "modulos" && (
+              {currentPage === "modulos" && (
                 <ModulosPage
                   groups={adminModulosGroups as never}
                   accentColor={layoutColors.accentColor}
                   onSelectGroup={(g) => {
                     const item = adminModulosGroups.find(i => i.label === g.label);
-                    if (item?.page) { setCurrentPageState(item.page); return; }
+                    if (item?.page) { setCurrentPage(item.page); return; }
                     if (item?.children?.length) {
                       const first = item.children[0];
                       if (!first.page && first.children?.length) { handleChildClick(first.children[0], first.label); return; }
