@@ -367,7 +367,12 @@ export default function OnAirWidget() {
           <span className="font-bold text-xs animate-pulse" translate="no" style={{ color: "var(--layout-accent-color)" }}>NO AR</span>
         </div>
 
-        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in" style={{ animationDuration: "500ms" }}>
+        <div key={`info-${programa.id}`} className="flex-1 flex flex-col justify-center z-10 animate-fade-in relative" style={{ animationDuration: "500ms" }}>
+          {programa.selo && (
+            <div className="absolute -left-2 -top-10 w-20 h-20 pointer-events-none opacity-90 animate-fade-in">
+              <img src={programa.selo} alt="" className="w-full h-full object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]" />
+            </div>
+          )}
           <div className="flex items-center gap-1.5" style={{ maxWidth: "55%" }}>
             <p className="font-bold text-white text-lg leading-tight line-clamp-2">{programa.nome}</p>
             {programa.classificacaoEtaria && (
