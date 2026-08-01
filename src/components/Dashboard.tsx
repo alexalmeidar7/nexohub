@@ -1528,6 +1528,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {(isDashboard || isMinimized) && !isAdmin && displayedPill !== "Chatbot" && (
           <div className={`px-3 lg:px-6 pb-4 relative z-[1] ${pillAnimClass}`}>
             <div className="flex flex-row gap-4 items-stretch" style={{ display: isMinimized ? "none" : "flex" }}>
+              <div className="nexo-onair-card rounded-2xl p-4 relative overflow-hidden flex flex-col justify-end group">
+                <OnAirWidget />
+              </div>
+              <div className="flex-1 min-w-0">
+                <UpcomingEventsWidget onNavigate={setCurrentPageState} />
+              </div>
+            </div>
+          </div>
+        )}
             <style>{`
               .nexo-onair-card {
                 width: 778px;
