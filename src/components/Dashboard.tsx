@@ -1781,10 +1781,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPageState === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
               {currentPageState === "clientes" && <ClientesPage />}
               {currentPageState === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
-              {currentPage === "subusuarios" && (
+              {currentPageState === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
               )}
-              {currentPage === "modulos" && (
+              {currentPageState === "modulos" && (
                 <ModulosPage
                   groups={adminModulosGroups as never}
                   accentColor={layoutColors.accentColor}
