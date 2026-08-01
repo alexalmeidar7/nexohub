@@ -1749,21 +1749,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
               </div>
 
-
-              {currentPage === "previsao" && <PrevisaoTempo />}
-              {currentPage === "noticias" && <RoteiroPrograma />}
-              {currentPage === "apresentadores" && <ApresentadorForm />}
-              {currentPage === "ouvintes" && <OuvintesPage />}
-              {currentPage === "sorteios" && <SorteiosPage />}
-              {currentPage === "blitz" && <BlitzPage />}
-              {currentPage === "programas" && <ProgramaForm />}
-              {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+              {currentPageState === "previsao" && <PrevisaoTempo />}
+              {currentPageState === "noticias" && <RoteiroPrograma />}
+              {currentPageState === "apresentadores" && <ApresentadorForm />}
+              {currentPageState === "ouvintes" && <OuvintesPage />}
+              {currentPageState === "sorteios" && <SorteiosPage />}
+              {currentPageState === "blitz" && <BlitzPage />}
+              {currentPageState === "programas" && <ProgramaForm />}
+              <div style={{ display: currentPageState === "musica" ? "block" : "none" }}>
                 <MusicaNoAr effectiveUserId={effectiveUserId} />
               </div>
-              {currentPage === "agenda" && <AgendaPage />}
-              {currentPage === "curtidas" && <MusicasCurtidasPage />}
-              {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
+              {currentPageState === "agenda" && <AgendaPage />}
+              {currentPageState === "curtidas" && <MusicasCurtidasPage />}
+              {currentPageState === "configuracoes" && <ConfiguracoesPage section="empresa" />}
               {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
               {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
               {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
