@@ -151,6 +151,41 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
     }
   }, [messages]);
 
+  // Fetch city suggestions from IBGE
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (cidade.length < 3 || joined) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cidade)}&max=5`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const formatted = data.map((item: any) => `${item.nome}, ${item.microrregiao.mesorregiao.UF.sigla}`);
+          setSuggestions(formatted);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch city suggestions", err);
+      }
+    };
+
+    const timer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timer);
+  }, [cidade, joined]);
+
+  // Click outside suggestions to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleJoin = () => {
     if (!nome.trim() || !cidade.trim()) return;
     setJoined(true);
