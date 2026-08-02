@@ -210,6 +210,20 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
   }, [detailProg?.id]);
 
   useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (detailProg) {
+          setDetailProg(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose, detailProg]);
+
+  useEffect(() => {
     if (hasScrolledToNow.current) return;
     const container = gradeScrollRef.current;
     if (!container) return;
