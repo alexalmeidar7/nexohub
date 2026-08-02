@@ -2207,6 +2207,7 @@ export default function PlayerPage() {
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
     setStreamRequested(false);
+    setTransitionHold(true);
 
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
