@@ -702,7 +702,7 @@ export default function ClientesPage() {
               </div>
             </div>
           ) : !selected ? (
-            <p className="text-sm text-[#002132]/50">Selecione um cliente para ver os dados de acesso e liberar módulos.</p>
+            <p className="text-sm text-[#002132]/50">esse formulários vamos ter os seguintes campo - NOME - CNPJ - TELEFONE - ENDEREÇO - CLIENTE DESDE (CAMPO DATA) - EXECUTIVA DE VENDA - abaixo desse formulário o histórico de ações feitas por esse cliente, blitz, inserções FM, anuncios no site, player etc</p>
           ) : (
 
             <>
