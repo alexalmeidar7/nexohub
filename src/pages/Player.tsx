@@ -1202,7 +1202,7 @@ export default function PlayerPage() {
     // Skip if Top 10 mode — playlist is already set from navigation state
     if (isTop10Mode) return;
 
-    if (!(isYoutube || isCatalog) || !canal?.url) {
+    if (!(isYoutube || isCatalog || isVideo) || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
       return;
@@ -1270,7 +1270,7 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setYtPlaying(true);
-  }, [canal?.url, isYoutube, isCatalog, requestedVideoId, isTop10Mode]);
+  }, [canal?.url, isYoutube, isCatalog, isVideo, requestedVideoId, isTop10Mode]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
