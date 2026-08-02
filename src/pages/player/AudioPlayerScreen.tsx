@@ -3173,7 +3173,7 @@ function InteractivityMenu({
           <MenuItem
             active={karaokeEnabled}
             icon={<Mic size={14} />}
-            label="Karaokê"
+            label="Letra"
             onClick={() => { onToggleKaraoke(); setOpen(false); }}
           />
           )}
