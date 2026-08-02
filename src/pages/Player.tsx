@@ -202,23 +202,33 @@ const extractYoutubeVideoId = (input?: string | null) => {
   try {
     const parsed = new URL(raw);
     const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    
+    // Handle youtube.com/watch?v=...
     const byQuery = normalizeYoutubeVideoId(parsed.searchParams.get("v"));
     if (byQuery) return byQuery;
 
+    // Handle youtu.be/xxxx
     if (host === "youtu.be") {
       return normalizeYoutubeVideoId(parsed.pathname.split("/").filter(Boolean)[0] || "");
     }
 
+    // Handle /embed/, /shorts/, /live/, /v/
     const parts = parsed.pathname.split("/").filter(Boolean);
     const markerIdx = parts.findIndex((p) => ["embed", "shorts", "live", "v"].includes(p));
     if (markerIdx >= 0) {
       return normalizeYoutubeVideoId(parts[markerIdx + 1] || "");
     }
   } catch {
-    // ignore and fallback below
+    // ignore
   }
 
   return normalizeYoutubeVideoId(raw);
+};
+
+const isYoutubeUrl = (url?: string | null) => {
+  if (!url) return false;
+  const id = extractYoutubeVideoId(url);
+  return !!id || url.includes("youtube.com") || url.includes("youtu.be");
 };
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
