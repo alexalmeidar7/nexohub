@@ -1631,24 +1631,24 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 // A capa "tocando agora" (i=0) também acompanha a navegação para
                 // que o usuário possa deslizar pelas capas das músicas já tocadas
                 // sem que ela fique travada na frente.
-                const depth = i - activeIndex;
+                const depth = i;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
-                const translateX = -depth * 72;
+                // Card ativo (i=0) fica parado à esquerda, os outros se movem
+                const translateX = i === 0 ? 0 : -(i - activeIndex) * 72;
                 // itens escondidos "atrás" do índice ativo têm opacidade menor
-                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
-                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
-                const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
-                const isActive = depth === 0;
+                const opacity = i < activeIndex ? 0 : i === activeIndex ? 1 : Math.max(0, 0.9 - (i - activeIndex) * 0.16);
+                const blur = i === activeIndex ? 0 : Math.min(Math.abs(i - activeIndex) * 1.4, 6);
+                const gray = i === activeIndex ? 0 : Math.min(70, 25 + Math.abs(i - activeIndex) * 12);
+                const isActive = i === activeIndex;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
                 const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 const rewindKey = `${i}-${t.horario}-${t.musica}`;
                 const isPreparing = preparingRewind === rewindKey;
-                // z-index acompanha proximidade do índice ativo: a capa focada
-                // fica sempre por cima, permitindo navegar entre as capas.
-                const zIndex = 30 - abs;
+                // z-index: o card no índice ativo fica sempre por cima
+                const zIndex = 30 - Math.abs(i - activeIndex);
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
