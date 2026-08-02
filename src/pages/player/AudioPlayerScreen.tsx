@@ -1489,7 +1489,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       )}
 
       {/* ============== CENTER STAGE ============== */}
-      <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-10" : ""}`}>
+      <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-[2]" : ""}`}>
         {isVideoChannel ? null : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
@@ -1873,16 +1873,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <Plus size={20} />
           </button>
 
-          {/* Letra da música — popup central com scroll */}
-          <Suspense fallback={null}>
-            <LyricsPopup
-              open={karaokeEnabled}
-              artist={musicData?.artista}
-              title={musicData?.titulo}
-              duration={musicData?.duracao}
-              onClose={() => setKaraokeEnabled(false)}
-            />
-          </Suspense>
           </div>
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
@@ -2461,8 +2451,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Karaoke agora é inline, dentro da coluna "a seguir" (ver <InlineKaraoke /> abaixo do botão +) */}
-
+      {/* Letra da música — popup central com scroll */}
+      {karaokeEnabled && (
+        <Suspense fallback={null}>
+          <LyricsPopup
+            open={karaokeEnabled}
+            artist={musicData?.artista}
+            title={musicData?.titulo}
+            duration={musicData?.duracao}
+            onClose={() => setKaraokeEnabled(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Grade */}
       {gradeOpen && (
