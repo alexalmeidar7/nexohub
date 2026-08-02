@@ -530,6 +530,7 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
   const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
+  const isYoutubeContent = isYoutube || isCatalog || (isVideo && !!selectedVideoId);
 
   // Fetch artist background image from Deezer
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
