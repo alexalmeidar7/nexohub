@@ -1293,7 +1293,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }}
+        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
