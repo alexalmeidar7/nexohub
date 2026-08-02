@@ -2948,7 +2948,7 @@ export default function PlayerPage() {
 
 
   // ===== New Apple-TV player screen (for audio and video channels) =====
-  if (canal && (isAudio || isVideo) && !isYoutube && !isCatalog) {
+  if (canal && (isAudio || isVideo) && !isYoutube) {
     return (
       <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
         <AudioPlayerScreen
@@ -2996,6 +2996,7 @@ export default function PlayerPage() {
           radioUserId={profileRadioUserId}
           onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
           isVideoChannel={isVideo}
+          isCatalog={isCatalog}
         />
       </Suspense>
     );
