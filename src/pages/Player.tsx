@@ -4006,6 +4006,7 @@ export default function PlayerPage() {
                       const meta = {
                         isVideo,
                         isAudio: !!a && !v,
+                        isCatalog,
                         mediaTag: tag,
                         hasMedia: !!media,
                         currentSrc: media?.currentSrc,
