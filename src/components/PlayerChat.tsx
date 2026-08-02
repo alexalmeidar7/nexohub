@@ -329,6 +329,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                       <p className="text-[13px] leading-[1.4] text-white/85 break-words">{msg.message}</p>
                     </div>
                   </div>
+                </div>
               </div>
             );
           })}
