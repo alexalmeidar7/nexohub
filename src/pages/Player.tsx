@@ -1670,6 +1670,11 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
+      
+      if (isYoutubeUrl(url)) {
+        console.log("[PLAYER] playStream called for YouTube URL, skipping native playback");
+        return;
+      }
       const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube" || isYoutubeUrl(url);
       setBuffering(!isYtOrCatalog);
       setPlaying(false);
