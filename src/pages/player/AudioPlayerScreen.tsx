@@ -1384,6 +1384,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   </span>
                 </div>
               )}
+              {nextProg && (
+                <div key={`next-prog-${nextProg.id}`} className="text-[9px] text-white/40 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em] animate-slide-up-down">
+                  <span className="text-white/30 italic">A seguir:</span>
+                  <span className="text-white/60">{nextProg.nome}</span>
+                  <span className="w-0.5 h-0.5 rounded-full bg-white/10" />
+                  <span className="tabular-nums opacity-80">
+                    {hhmm(nextProg.horario_inicio)} — {hhmm(nextProg.horario_fim)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
