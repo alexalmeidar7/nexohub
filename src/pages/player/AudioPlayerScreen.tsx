@@ -1873,33 +1873,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <Plus size={20} />
           </button>
 
-          {/* Karaokê inline — desliza suavemente por baixo quando ativado */}
-          <div
-            style={{
-              width: "100%",
-              maxHeight: karaokeEnabled ? 360 : 0,
-              opacity: karaokeEnabled ? 1 : 0,
-              transform: karaokeEnabled ? "translateY(-16px)" : "translateY(24px)",
-              transition:
-                "max-height 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-              overflow: "hidden",
-              pointerEvents: karaokeEnabled ? "auto" : "none",
-            }}
-          >
-            {karaokeEnabled && (
-              <Suspense fallback={null}>
-                <InlineKaraoke
-                  enabled={karaokeEnabled}
-                  artist={musicData?.artista}
-                  title={musicData?.titulo}
-                  duration={musicData?.duracao}
-                  audioElement={audioRef.current}
-                  onClose={() => setKaraokeEnabled(false)}
-
-                />
-              </Suspense>
-            )}
-          </div>
+          {/* Letra da música — popup central com scroll */}
+          <Suspense fallback={null}>
+            <LyricsPopup
+              open={karaokeEnabled}
+              artist={musicData?.artista}
+              title={musicData?.titulo}
+              duration={musicData?.duracao}
+              onClose={() => setKaraokeEnabled(false)}
+            />
+          </Suspense>
           </div>
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
