@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Send, Smile } from "lucide-react";
+import { ArrowLeft, Send, Smile, X } from "lucide-react";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatMessage {
