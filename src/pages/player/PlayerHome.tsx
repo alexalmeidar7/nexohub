@@ -810,6 +810,26 @@ function HeroBanner({
                 </div>
               </div>
 
+              <div className="mb-4">
+                <p className="text-white text-tv-card-title font-tv-bold mb-1" style={{ fontFamily: "'Lufga', sans-serif" }}>
+                  Controles de Reprodução
+                </p>
+                <div className="space-y-2 text-[11px] text-white">
+                  <div className="flex items-center gap-2">
+                    <KeyCap small wide>Espaço</KeyCap>
+                    <span className="text-white/80">Play / Pause</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <KeyCap small>M</KeyCap>
+                    <span className="text-white/80">Ativar / Desativar som</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <KeyCap small>F</KeyCap>
+                    <span className="text-white/80">Tela cheia</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="mt-4 pt-3 border-t border-white/10">
                 <p className="text-white text-[11px] font-semibold mb-1.5" style={{ fontFamily: "'Lufga', sans-serif" }}>
                   Indicador ao lado
