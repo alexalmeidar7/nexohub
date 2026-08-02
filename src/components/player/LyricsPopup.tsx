@@ -76,10 +76,18 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
       className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300"
       style={{
         background: "transparent",
-        transition: "background 300ms ease",
       }}
       onClick={onClose}
     >
+      <div 
+        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{
+          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+          zIndex: -1,
+          opacity: 1
+        }}
+      />
+
       <div
         onClick={(e) => e.stopPropagation()}
         className="w-[360px] pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
