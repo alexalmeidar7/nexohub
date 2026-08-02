@@ -3076,6 +3076,22 @@ function InteractivityMenu({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  // Delay para fechar no mouseLeave para dar tempo do usuário mover o mouse
+  const closeTimeoutRef = useRef<number | null>(null);
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimeoutRef.current = null;
+    }, 800); // 800ms de delay para não fechar instantaneamente
+  };
+
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
