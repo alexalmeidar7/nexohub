@@ -3115,7 +3115,7 @@ function InteractivityMenu({
   const initialShowTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isVideoChannel || isTop10Mode) {
+    if (!isVideoChannel || isCatalog) {
       setAutoShowVisible(false);
       return;
     }
