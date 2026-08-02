@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings, Users } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
@@ -2465,17 +2465,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               )}
             </div>
             {!isCatalog && (
-              <InteractivityMenu
-                userId={effectiveUserId}
-                chatOpen={chatOpen}
-                onToggleChat={() => setChatOpen(!chatOpen)}
-                karaokeEnabled={karaokeEnabled}
-                onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-                showKaraoke={true}
-                isVideoChannel={isVideoChannel}
-                controlsVisible={controlsVisible}
-                isCatalog={isCatalog}
-              />
+          <InteractivityMenu
+            userId={effectiveUserId}
+            user={user}
+            chatOpen={chatOpen}
+            onToggleChat={() => setChatOpen(!chatOpen)}
+            karaokeEnabled={karaokeEnabled}
+            onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+            setWatchProfileOpen={setWatchProfileOpen}
+            showKaraoke={true}
+            isVideoChannel={isVideoChannel}
+            controlsVisible={controlsVisible}
+            isCatalog={isCatalog}
+          />
             )}
           </div>
         </div>
@@ -3019,20 +3021,24 @@ type ActivePoll = {
 
 function InteractivityMenu({
   userId,
+  user,
   chatOpen,
   onToggleChat,
   karaokeEnabled,
   onToggleKaraoke,
+  setWatchProfileOpen,
   showKaraoke = true,
   isVideoChannel = false,
   controlsVisible = true,
   isCatalog = false,
 }: {
   userId: string | null;
+  user: any;
   chatOpen: boolean;
   onToggleChat: () => void;
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
+  setWatchProfileOpen: (v: boolean) => void;
   showKaraoke?: boolean;
   isVideoChannel?: boolean;
   controlsVisible?: boolean;
