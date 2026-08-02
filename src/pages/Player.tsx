@@ -2483,7 +2483,7 @@ export default function PlayerPage() {
   }, []);
 
   useEffect(() => {
-    if (!isYoutube || !selectedVideoId) return;
+    if (!(isYoutube || isCatalog) || !selectedVideoId) return;
     // Unmute shortly after embed starts (it starts muted for autoplay compliance)
     const unmuteTimer = setTimeout(() => {
       ytPostMessage("unMute");
@@ -2495,7 +2495,7 @@ export default function PlayerPage() {
       else ytPostMessage("unMute");
     }, 1500);
     return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
-  }, [volume, muted, isYoutube, selectedVideoId, ytPostMessage]);
+  }, [volume, muted, isYoutube, isCatalog, selectedVideoId, ytPostMessage]);
 
   // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
   const ytNextVideoRef = useRef<() => void>(() => {});
@@ -2509,7 +2509,7 @@ export default function PlayerPage() {
 
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
-    if (!isYoutube || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
+    if (!(isYoutube || isCatalog) || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
     const onMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
