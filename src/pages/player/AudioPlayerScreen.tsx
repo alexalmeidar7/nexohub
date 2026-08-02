@@ -204,6 +204,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isCatalog = false,
   } = props;
 
+  const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
+  const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
+
   // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
   const [exiting, setExiting] = useState(false);
 
