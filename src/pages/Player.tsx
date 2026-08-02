@@ -3249,7 +3249,7 @@ export default function PlayerPage() {
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {isYoutubeContent && selectedVideoId && (
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           <iframe
             ref={ytIframeRef}
             className="absolute pointer-events-none"
@@ -3266,6 +3266,17 @@ export default function PlayerPage() {
           {/* Transparent overlay to block YouTube controls on pause */}
           <div className="absolute inset-0 z-[1] pointer-events-none" />
         </div>
+      )}
+
+      {/* Background Video Element (Strictly for non-YouTube channels) */}
+      {isVideo && !isYoutubeContent && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          playsInline
+          muted={muted}
+          onContextMenu={(e) => e.preventDefault()}
+        />
       )}
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
