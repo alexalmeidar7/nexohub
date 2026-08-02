@@ -52,11 +52,21 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
       try {
         const response = await fetch("https://ipapi.co/json/");
         const data = await response.json();
-        if (data.city && data.region_code) {
-          userLocation = `${data.city}, ${data.region_code}`;
+        if (data.city && (data.region_code || data.country_name)) {
+          userLocation = data.region_code ? `${data.city}, ${data.region_code}` : `${data.city}, ${data.country_name}`;
         }
       } catch (err) {
         console.warn("Failed to fetch location from IP", err);
+        // Fallback: Tenta um segundo serviço se o primeiro falhar
+        try {
+          const res2 = await fetch("https://ip-api.com/json/");
+          const data2 = await res2.json();
+          if (data2.status === "success") {
+            userLocation = data2.regionName ? `${data2.city}, ${data2.regionName}` : `${data2.city}, ${data2.country}`;
+          }
+        } catch (err2) {
+          console.warn("Second location fallback failed", err2);
+        }
       }
 
       if (session?.user) {
