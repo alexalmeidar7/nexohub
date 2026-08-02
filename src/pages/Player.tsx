@@ -530,6 +530,7 @@ export default function PlayerPage() {
   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
   const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
   const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
+  const isYoutubeContent = isYoutube || isCatalog || (isVideo && !!selectedVideoId);
 
   // Fetch artist background image from Deezer
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
@@ -1201,7 +1202,7 @@ export default function PlayerPage() {
     // Skip if Top 10 mode — playlist is already set from navigation state
     if (isTop10Mode) return;
 
-    if (!(isYoutube || isCatalog) || !canal?.url) {
+    if (!(isYoutube || isCatalog || isVideo) || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
       return;
@@ -1269,7 +1270,7 @@ export default function PlayerPage() {
     setPlaying(true);
     setBuffering(false);
     setYtPlaying(true);
-  }, [canal?.url, isYoutube, isCatalog, requestedVideoId, isTop10Mode]);
+  }, [canal?.url, isYoutube, isCatalog, isVideo, requestedVideoId, isTop10Mode]);
 
   // Sync music data directly from XML
   const coverCacheRef = useRef<Record<string, string>>({});
@@ -1659,10 +1660,11 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
-      setBuffering(type !== "youtube" && type !== "catalog");
+      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube";
+      setBuffering(!isYtOrCatalog);
       setPlaying(false);
       setStreamStalled(false);
-      setStreamRequested(type !== "youtube" && type !== "catalog");
+      setStreamRequested(!isYtOrCatalog);
 
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
@@ -2196,7 +2198,7 @@ export default function PlayerPage() {
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
 
-    if (nextChannel.type === "youtube") {
+    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
@@ -2483,7 +2485,7 @@ export default function PlayerPage() {
   }, []);
 
   useEffect(() => {
-    if (!(isYoutube || isCatalog) || !selectedVideoId) return;
+    if (!isYoutubeContent || !selectedVideoId) return;
     // Unmute shortly after embed starts (it starts muted for autoplay compliance)
     const unmuteTimer = setTimeout(() => {
       ytPostMessage("unMute");
@@ -2495,7 +2497,7 @@ export default function PlayerPage() {
       else ytPostMessage("unMute");
     }, 1500);
     return () => { clearTimeout(unmuteTimer); clearTimeout(syncTimer); };
-  }, [volume, muted, isYoutube, isCatalog, selectedVideoId, ytPostMessage]);
+  }, [volume, muted, isYoutubeContent, selectedVideoId, ytPostMessage]);
 
   // Ref for auto-advance (avoids declaration order issue with ytNextVideo)
   const ytNextVideoRef = useRef<() => void>(() => {});
@@ -2509,7 +2511,7 @@ export default function PlayerPage() {
 
   // Listen for YouTube player state messages to track currentTime/duration
   useEffect(() => {
-    if (!(isYoutube || isCatalog) || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
+    if (!isYoutubeContent || !selectedVideoId) { setYtCurrentTime(0); setYtDuration(0); return; }
     const onMessage = (e: MessageEvent) => {
       try {
         const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
@@ -3119,7 +3121,7 @@ export default function PlayerPage() {
       {/* Fallback overlay: shown when stream requested but not yet playing */}
       {(() => {
         const hasMedia = Boolean(audioRef.current?.src) || Boolean(videoRef.current?.src);
-        const show = Boolean(canal) && !playing && !isYoutube && !isCatalog && (streamRequested || buffering || streamStalled || !hasMedia);
+        const show = Boolean(canal) && !playing && !isYoutubeContent && (streamRequested || buffering || streamStalled || !hasMedia);
         if (!show) return null;
         const title = streamStalled ? "Reconectando canal..." : buffering ? "YouTube on demand, sem bloquear a reprodução." : "Toque para ouvir";
         return (
@@ -3246,7 +3248,7 @@ export default function PlayerPage() {
 
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
-      {(isYoutube || isCatalog) && selectedVideoId && (
+      {isYoutubeContent && selectedVideoId && (
         <div className="absolute inset-0 z-0 overflow-hidden">
           <iframe
             ref={ytIframeRef}
@@ -3267,19 +3269,19 @@ export default function PlayerPage() {
       )}
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
-      {isYoutube && !selectedVideoId && (
+      {isYoutubeContent && !selectedVideoId && (
         <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
           style={{ backgroundImage: `url(${youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : ''})`, backgroundColor: '#111' }}
         />
       )}
 
       {/* YouTube: Subtle bottom gradient only for control bar readability */}
-      {isYoutube && (
+      {isYoutubeContent && (
         <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
       {/* YouTube: Horizontal playlist — shown on home by default OR when sidebarOpen, hidden for single-video catalogs */}
-      {isYoutube && youtubeVideos.length > 1 && (isYtHome || sidebarOpen) && (
+      {isYoutubeContent && youtubeVideos.length > 1 && (isYtHome || sidebarOpen) && (
         <div className="absolute left-0 right-0 z-[25] mx-auto" style={{ bottom: "155px", maxWidth: "1400px", paddingLeft: "20px", paddingRight: "20px" }}>
           <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "transparent", border: "none", boxShadow: "none" }}>
             <div className="flex items-center justify-between px-5 py-3 border-b border-white/10">
@@ -3342,7 +3344,7 @@ export default function PlayerPage() {
       )}
 
       {/* Video element */}
-      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube || isCatalog ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutubeContent ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
       <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
 
       {/* Volume OSD — centered overlay */}
