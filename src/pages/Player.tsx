@@ -4316,6 +4316,65 @@ export default function PlayerPage() {
         </Suspense>
       )}
 
+      {showDiagnostic && (
+        <div 
+          className="fixed bottom-[160px] right-5 w-80 z-[60] rounded-2xl border border-white/10 p-4 shadow-2xl animate-fade-in"
+          style={{ backgroundColor: "rgba(10,10,10,0.92)", backdropFilter: "blur(20px)" }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-player-accent">
+              <Activity size={16} />
+              <span className="text-xs font-bold uppercase tracking-wider">Diagnóstico</span>
+            </div>
+            <button onClick={() => setShowDiagnostic(false)} className="text-white/40 hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+          
+          <div className="space-y-3">
+            <div className="flex flex-col gap-1 p-2 rounded-lg bg-white/5 border border-white/5">
+              <span className="text-[10px] text-white/40 font-medium uppercase">Canal / Fonte</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white font-semibold">{canal?.name || "Desconhecido"}</span>
+                <span className="px-1.5 py-0.5 rounded bg-player-accent/20 text-player-accent text-[9px] font-bold uppercase">
+                  {isYoutubeContent ? "YouTube" : "HLS/Native"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1 p-2 rounded-lg bg-white/5 border border-white/5">
+              <span className="text-[10px] text-white/40 font-medium uppercase">Status de Reprodução</span>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${playing ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
+                  <span className="text-[11px] text-white/80">{playing ? "Tocando" : "Pausado"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${buffering ? "bg-yellow-500 animate-pulse" : "bg-green-500"}`} />
+                  <span className="text-[11px] text-white/80">{buffering ? "Buffering" : "Estável"}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1 p-2 rounded-lg bg-white/5 border border-white/5">
+              <span className="text-[10px] text-white/40 font-medium uppercase">Eventos Recentes</span>
+              <div className="flex flex-col gap-1 max-h-[120px] overflow-y-auto scrollbar-hide">
+                {lastEvents.length === 0 ? (
+                  <span className="text-[10px] text-white/30 italic">Nenhum evento registrado</span>
+                ) : (
+                  lastEvents.map((ev, i) => (
+                    <div key={i} className="flex gap-2 text-[10px] border-b border-white/5 pb-1 last:border-0">
+                      <Zap size={10} className="text-player-accent mt-0.5 shrink-0" />
+                      <span className="text-white/60 leading-tight">{ev}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating heart animation keyframes */}
       <style>{`
         @keyframes slideDownIn {
