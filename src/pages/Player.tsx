@@ -1695,8 +1695,10 @@ export default function PlayerPage() {
       
       if (isYoutubeUrl(url)) {
         console.log("[PLAYER] playStream called for YouTube URL, skipping native playback");
+        logEvent("Native Playback: Skipped (YouTube URL)");
         return;
       }
+      logEvent(`Native Playback: Attempting ${type}`);
       const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube" || isYoutubeUrl(url);
       setBuffering(!isYtOrCatalog);
       setPlaying(false);
