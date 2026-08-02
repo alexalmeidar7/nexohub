@@ -213,19 +213,31 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     setAiAnalysis(fallback);
   }, [detailProg?.id]);
 
+  const requestClose = useCallback(() => {
+    if (closing) return;
+    setClosing(true);
+    setVisible(false);
+    window.setTimeout(() => onClose(), 300);
+  }, [closing, onClose]);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (detailProg) {
           setDetailProg(null);
         } else {
-          onClose();
+          requestClose();
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose, detailProg]);
+  }, [requestClose, detailProg]);
 
   useEffect(() => {
     if (hasScrolledToNow.current) return;
