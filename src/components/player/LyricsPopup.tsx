@@ -73,12 +73,18 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300"
+      style={{
+        background: open ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
+        backdropFilter: open ? "blur(12px)" : "blur(0px)",
+        WebkitBackdropFilter: open ? "blur(12px)" : "blur(0px)",
+        transition: "background 300ms ease, backdrop-filter 300ms ease",
+      }}
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[520px]"
+        className="w-[360px] pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
         style={{
           padding: "22px 24px 18px",
           borderRadius: 32,
@@ -87,6 +93,8 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           backdropFilter: "blur(28px) saturate(140%)",
           WebkitBackdropFilter: "blur(28px) saturate(140%)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.12)",
+          marginBottom: "140px",
+          marginRight: "20px",
         }}
       >
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -111,7 +119,7 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           ref={scrollRef}
           className="overflow-y-auto pr-2"
           style={{
-            maxHeight: "min(52vh, 420px)",
+            maxHeight: "min(40vh, 320px)",
             overscrollBehavior: "contain",
             scrollbarWidth: "thin",
           }}
@@ -129,7 +137,7 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
             <p
               key={i}
               className="text-white/85"
-              style={{ fontSize: 15, lineHeight: 1.75, minHeight: l ? undefined : 12, textAlign: "center" }}
+              style={{ fontSize: 14, lineHeight: 1.75, minHeight: l ? undefined : 12, textAlign: "left" }}
             >
               {l}
             </p>

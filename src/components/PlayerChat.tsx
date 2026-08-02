@@ -275,10 +275,10 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
   // Full chat — positioned same as shopping panel
   return (
     <div
-      className="absolute left-0 right-0 z-[55] mx-auto animate-fade-in"
-      style={{ bottom: "170px", width: "80%", paddingLeft: "8px", paddingRight: "8px" }}
+      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-300"
+      style={{ bottom: "170px", right: "20px", width: "360px" }}
     >
-      <div className="ml-auto" style={{ maxWidth: "360px" }}>
+      <div className="w-full">
         <div
           className="flex flex-col overflow-hidden"
           style={{
