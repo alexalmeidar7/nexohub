@@ -2223,8 +2223,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
           <div className="flex items-center gap-2 justify-self-end">
-            {!isVideoChannel && (
-              <div className="relative">
+            {/* DJ Mode button */}
+            <div className="relative">
                 <button
                   type="button"
                   onClick={() => setDjModeOn((v) => !v)}
@@ -2324,7 +2324,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   </>
                 )}
               </div>
-            )}
 
             <button
               type="button"
@@ -2350,108 +2349,106 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             >
               {isFullscreen ? <Minimize2 size={22} /> : <Maximize2 size={22} />}
             </button>
-            {!isVideoChannel && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setPlayedListOpen((v) => !v)}
-                  className={`w-16 h-16 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
-                  aria-label="Músicas tocadas"
-                  title="Músicas tocadas"
-                  aria-expanded={playedListOpen}
-                  data-focusable
-                >
-                  <ListMusic size={22} />
-                </button>
-                {playedListOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-[60]"
-                      onClick={() => setPlayedListOpen(false)}
-                    />
-                    <div
-                      className="absolute right-0 bottom-[calc(100%+10px)] z-[61] w-[420px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-black/85 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)] p-1.5"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-white/10 mb-1 sticky top-0 bg-black/85 backdrop-blur-xl z-10">
-                        <div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center">
-                          <ListMusic size={14} className="text-white/70" />
-                        </div>
-                        <div className="flex-1 text-[11px] uppercase tracking-[0.16em] text-white/60 font-medium">
-                          Últimas {history.length} músicas
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setPlayedListOpen(false)}
-                          className="h-6 w-6 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition"
-                          aria-label="Fechar"
-                        >
-                          <X size={14} />
-                        </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setPlayedListOpen((v) => !v)}
+                className={`w-16 h-16 rounded-full flex items-center justify-center border transition shrink-0 ${playedListOpen ? "bg-white/20 border-white/30" : "bg-white/6 border-white/10 hover:bg-white/15"}`}
+                aria-label="Músicas tocadas"
+                title="Músicas tocadas"
+                aria-expanded={playedListOpen}
+                data-focusable
+              >
+                <ListMusic size={22} />
+              </button>
+              {playedListOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60]"
+                    onClick={() => setPlayedListOpen(false)}
+                  />
+                  <div
+                    className="absolute right-0 bottom-[calc(100%+10px)] z-[61] w-[420px] max-h-[70vh] overflow-y-auto rounded-2xl border border-white/10 bg-black/85 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.8)] p-1.5"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-white/10 mb-1 sticky top-0 bg-black/85 backdrop-blur-xl z-10">
+                      <div className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center">
+                        <ListMusic size={14} className="text-white/70" />
                       </div>
-                      {history.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-[12px] text-white/50">
-                          Nenhuma música registrada ainda.
-                        </div>
-                      ) : (
-                        <div className="space-y-1">
-                          {history.map((t, i) => (
-                            <div
-                              key={`${t.horario}-${i}`}
-                              className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-white/20 hover:bg-white/[0.06] transition-all group"
-                            >
-                              <div className="flex flex-col items-center w-11 shrink-0">
-                                <div className="text-[11px] font-semibold tabular-nums text-white/70">
-                                  {(t.horario || "").slice(0, 5)}
-                                </div>
-                                {i === 0 && (
-                                  <div className="mt-1 h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
-                                )}
-                              </div>
-                              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white/8 border border-white/10 group-hover:border-white/25 transition">
-                                {t.capa ? (
-                                  <img
-                                    src={t.capa}
-                                    alt=""
-                                    className="h-full w-full object-cover"
-                                    loading="lazy"
-                                    decoding="async"
-                                  />
-                                ) : (
-                                  <div className="h-full w-full flex items-center justify-center">
-                                    <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
-                                  </div>
-                                )}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="text-[13px] text-white font-medium truncate leading-snug" title={t.musica}>
-                                  {t.musica}
-                                </div>
-                                <div className="text-[11px] uppercase tracking-[0.08em] text-white/55 truncate mt-0.5" title={t.artista}>
-                                  {t.artista}
-                                </div>
-                                {t.programa && (
-                                  <div className="text-[10.5px] text-white/40 truncate mt-0.5" title={t.programa}>
-                                    no ar: {t.programa}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div className="flex-1 text-[11px] uppercase tracking-[0.16em] text-white/60 font-medium">
+                        Últimas {history.length} músicas
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPlayedListOpen(false)}
+                        className="h-6 w-6 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition"
+                        aria-label="Fechar"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
-                  </>
-                )}
-              </div>
-            )}
+                    {history.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-[12px] text-white/50">
+                        Nenhuma música registrada ainda.
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        {history.map((t, i) => (
+                          <div
+                            key={`${t.horario}-${i}`}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-transparent hover:border-white/20 hover:bg-white/[0.06] transition-all group"
+                          >
+                            <div className="flex flex-col items-center w-11 shrink-0">
+                              <div className="text-[11px] font-semibold tabular-nums text-white/70">
+                                {(t.horario || "").slice(0, 5)}
+                              </div>
+                              {i === 0 && (
+                                <div className="mt-1 h-1.5 w-1.5 rounded-full bg-white/80 animate-pulse" />
+                              )}
+                            </div>
+                            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-white/8 border border-white/10 group-hover:border-white/25 transition">
+                              {t.capa ? (
+                                <img
+                                  src={t.capa}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center">
+                                  <Disc3 size={18} className="text-white/25" strokeWidth={1.4} />
+                                </div>
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[13px] text-white font-medium truncate leading-snug" title={t.musica}>
+                                {t.musica}
+                              </div>
+                              <div className="text-[11px] uppercase tracking-[0.08em] text-white/55 truncate mt-0.5" title={t.artista}>
+                                {t.artista}
+                              </div>
+                              {t.programa && (
+                                <div className="text-[10.5px] text-white/40 truncate mt-0.5" title={t.programa}>
+                                  no ar: {t.programa}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             <InteractivityMenu
               userId={effectiveUserId}
               chatOpen={chatOpen}
               onToggleChat={() => setChatOpen(!chatOpen)}
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-              showKaraoke={!isVideoChannel}
+              showKaraoke={true}
             />
           </div>
         </div>
