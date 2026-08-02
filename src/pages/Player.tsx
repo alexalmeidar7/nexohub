@@ -1212,7 +1212,10 @@ export default function PlayerPage() {
     // Skip if Top 10 mode — playlist is already set from navigation state
     if (isTop10Mode) return;
 
-    if (!(isYoutube || isCatalog || isVideo) || !canal?.url) {
+    const isYtUrl = isYoutubeUrl(canal?.url);
+    const isActuallyYoutube = isYoutube || isYtUrl;
+
+    if (!(isActuallyYoutube || isCatalog || isVideo) || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
       return;
