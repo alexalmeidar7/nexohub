@@ -1292,8 +1292,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
+        className="fixed inset-0 pointer-events-none overflow-hidden"
+        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
@@ -1302,8 +1302,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
       {artistBgImage && !djModeActive && !isCatalog && (
         <div
-          className="absolute inset-0 pointer-events-none overflow-hidden"
-          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
+          className="fixed inset-0 pointer-events-none overflow-hidden"
+          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out", zIndex: 0 }}
           aria-hidden
         >
           <div
