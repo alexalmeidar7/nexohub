@@ -250,23 +250,43 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
     requestAnimationFrame(() => onAirRow.scrollIntoView({ behavior: "smooth", block: "center" }));
   }, [spanMap, diaAtual, currentTimeStr]);
 
-  return (
+  return createPortal(
     <div
-      className="absolute inset-0 z-[100] flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
-      onClick={(e) => { if (e.target === e.currentTarget) { onClose(); setDetailProg(null); } }}
+      className="fixed inset-0 z-[100] flex items-center justify-end p-8 pointer-events-none"
+      style={{
+        background: "transparent",
+        transition: "opacity 300ms ease",
+        opacity: visible ? 1 : 0,
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) requestClose(); }}
     >
-      <div
-        className="relative w-[96vw] max-w-[1300px] max-h-[92vh] rounded-3xl overflow-hidden"
+      <div 
+        className="fixed inset-y-0 right-0 w-[800px] pointer-events-none transition-opacity duration-700 ease-in-out"
         style={{
-          backgroundColor: "rgba(10, 10, 14, 0.92)",
-          backdropFilter: "blur(40px)",
-          boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
+          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+          zIndex: -1,
+          opacity: visible ? 1 : 0
+        }}
+      />
+
+      <div
+        className="relative w-[96vw] max-w-[1100px] flex flex-col pointer-events-auto overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{
+          maxHeight: "85vh",
+          borderRadius: 32,
+          backgroundColor: "rgba(35,35,38,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.06)",
+          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1) translateX(0)" : "scale(0.96) translateX(40px)",
+          marginRight: "20px",
         }}
       >
         {/* Header + Weekday row */}
         <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="flex items-center justify-between px-8 py-4">
+          <div className="flex items-center justify-between px-8 py-5">
             <div className="flex items-center gap-4">
               <div
                 className="w-10 h-10 rounded-2xl flex items-center justify-center"
