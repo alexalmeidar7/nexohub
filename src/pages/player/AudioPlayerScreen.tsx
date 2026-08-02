@@ -3417,7 +3417,7 @@ function PollDialog({
           </div>
           <PlayerBackButton
             onClick={requestClose}
-            className="w-9 h-9"
+            className="w-9 h-9 focus-visible:ring-offset-2"
             iconSize={16}
             aria-label="Voltar"
           />
