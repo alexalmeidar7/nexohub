@@ -186,6 +186,16 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const handleJoin = () => {
     if (!nome.trim() || !cidade.trim()) return;
     setJoined(true);
