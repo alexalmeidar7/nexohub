@@ -13,7 +13,7 @@ export const PlayerBackButton = React.forwardRef<HTMLButtonElement, PlayerBackBu
       <button
         ref={ref}
         className={cn(
-          "w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0 relative group",
+          "w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--player-accent))] border border-white/10 transition shrink-0 relative group",
           className
         )}
         data-focusable
