@@ -61,6 +61,37 @@ function slugFromEmail(email?: string | null, nome?: string | null) {
   return fromName || "—";
 }
 
+function isValidCNPJ(cnpj: string) {
+  cnpj = cnpj.replace(/[^\d]+/g, "");
+  if (cnpj.length !== 14) return false;
+  if (/^(\d)\1+$/.test(cnpj)) return false;
+  let t = cnpj.length - 2, d = cnpj.substring(t), c = cnpj.substring(0, t),
+    r = (n: string) => {
+      let s = 0, p = n.length - 7;
+      for (let i = n.length; i >= 1; i--) {
+        s += parseInt(n.charAt(n.length - i)) * p--;
+        if (p < 2) p = 9;
+      }
+      return (s % 11 < 2 ? 0 : 11 - (s % 11)).toString();
+    };
+  return r(c) === d.charAt(0) && r(c + d.charAt(0)) === d.charAt(1);
+}
+
+function maskCNPJ(v: string) {
+  v = v.replace(/\D/g, "");
+  if (v.length > 14) v = v.slice(0, 14);
+  return v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/, "$1.$2.$3/$4-$5");
+}
+
+function maskPhone(v: string) {
+  v = v.replace(/\D/g, "");
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 10) return v.replace(/^(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  if (v.length > 5) return v.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+  if (v.length > 2) return v.replace(/^(\d{2})(\d{0,5})/, "($1) $2");
+  return v.length > 0 ? "(" + v : v;
+}
+
 export default function ClientesPage() {
   const { role } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -224,8 +255,14 @@ export default function ClientesPage() {
   const criarCliente = async () => {
     const nome = novo.nome.trim();
     const email = novo.email.trim().toLowerCase();
+    const cnpj = novo.cnpj.replace(/\D/g, "");
+
     if (!nome || !email || !novo.password) {
       toast.error("Preencha nome, e-mail e senha.");
+      return;
+    }
+    if (cnpj && !isValidCNPJ(cnpj)) {
+      toast.error("CNPJ inválido.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -645,7 +682,12 @@ export default function ClientesPage() {
                       autoComplete="off"
                       value={(novo as Record<string, string>)[f.k]}
                       placeholder={f.ph}
-                      onChange={e => setNovo(prev => ({ ...prev, [f.k]: e.target.value }))}
+                      onChange={e => {
+                        let val = e.target.value;
+                        if (f.k === "cnpj") val = maskCNPJ(val);
+                        if (f.k === "telefone") val = maskPhone(val);
+                        setNovo(prev => ({ ...prev, [f.k]: val }));
+                      }}
                       className="w-full bg-transparent text-sm outline-none text-[#002132] mt-0.5"
                     />
                   </div>
