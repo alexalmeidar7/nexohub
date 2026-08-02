@@ -1619,7 +1619,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
                     aria-busy={isPreparing || undefined}
                     title={undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
 
                     style={{
                       width: isActive ? 280 : 240,
