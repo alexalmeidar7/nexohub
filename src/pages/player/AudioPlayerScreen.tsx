@@ -201,6 +201,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
     isVideoChannel = false,
+    isCatalog = false,
   } = props;
 
   // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
