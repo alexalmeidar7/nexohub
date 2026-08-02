@@ -111,6 +111,7 @@ const sidebarMenu: MenuItem[] = [
       { icon: Mic2, label: "participantes", page: "apresentadores" },
       { icon: Users, label: "ouvintes", page: "ouvintes" },
       { icon: PlaySquare, label: "programas", page: "programas" },
+      { icon: Building2, label: "clientes", page: "clientes" },
       { icon: CloudSun, label: "cidade tempo", page: "previsao" },
     ]
   },
@@ -768,6 +769,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "programas" ||
       page === "previsao" ||
       page === "site" ||
+      page === "clientes" ||
       page === "sorteios"
     ) {
       return true;
