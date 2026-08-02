@@ -303,9 +303,10 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
         style={{
           background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
           zIndex: -1,
-          opacity: minimized ? 0 : 1
+          opacity: 1
         }}
       />
+
 
       <div className="w-full h-full flex flex-col pointer-events-auto">
         {/* Header - Transparent/Minimal */}
@@ -349,13 +350,22 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
                     boxShadow: "0 8px 32px -4px rgba(0,0,0,0.4)"
                   }}
                 >
+                  <div 
+                    className="flex-shrink-0"
+                    style={{
+                      borderLeft: "2px solid #C6F03C",
+                      height: "32px",
+                      marginRight: "4px",
+                      opacity: 0.8
+                    }}
+                  />
                   {avatarUrl && isMe ? (
                     <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
                   ) : (
                     <div
                       className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
                       style={{
-                        background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))",
+                        background: "rgba(255,255,255,0.1)",
                         border: "1px solid rgba(255,255,255,0.1)",
                       }}
                     >
