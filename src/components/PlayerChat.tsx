@@ -35,6 +35,8 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -42,6 +44,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Check if user is logged in and load profile
   useEffect(() => {
