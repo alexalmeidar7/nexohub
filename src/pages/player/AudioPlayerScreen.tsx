@@ -1639,9 +1639,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         "box-shadow 620ms cubic-bezier(.22,1,.36,1)",
                       animation: (isNow && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
                       boxShadow: isNow
-                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
+                        ? "0 40px 100px -20px rgba(0,0,0,0.95)"
                         : isActive
-                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+                          ? "0 40px 100px -20px rgba(0,0,0,0.95)"
                           : undefined,
                     }}
                   >
