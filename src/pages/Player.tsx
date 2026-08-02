@@ -2948,7 +2948,7 @@ export default function PlayerPage() {
 
 
   // ===== New Apple-TV player screen (for audio and video channels) =====
-  if (canal && (isAudio || isVideo) && !isYoutube) {
+  if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
       <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
         <AudioPlayerScreen
@@ -3322,7 +3322,7 @@ export default function PlayerPage() {
       )}
 
       {/* Video element */}
-      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || (isYoutube && !isCatalog) ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || (isYoutube && !isCatalog) ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} src={isCatalog && requestedVideoId ? `https://www.youtube.com/embed/${requestedVideoId}` : undefined} />
       <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
 
       {/* Volume OSD — centered overlay */}

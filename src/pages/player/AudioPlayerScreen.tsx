@@ -204,8 +204,25 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     isCatalog = false,
   } = props;
 
-  // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
-  const [exiting, setExiting] = useState(false);
+  const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
+  const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
+
+  return (
+    <div className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+      {/* Dynamic background */}
+      {isCatalog && selectedVideoId ? (
+        <div className="absolute inset-0 z-0">
+          <iframe
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
+            className="w-full h-full border-0"
+            allow="autoplay; encrypted-media"
+          />
+        </div>
+      ) : (
+        /* ... existing background logic ... */
+        null
+      )}
+
   const handleBackHome = useCallback(() => {
     if (exiting) return;
     setExiting(true);
