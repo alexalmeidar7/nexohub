@@ -2142,16 +2142,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <ArrowLeft size={22} />
             </button>
 
-            {/* Botão Minimizar ao lado do Voltar */}
-            <button
-              onClick={handleBackHome}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0"
-              aria-label="Minimizar"
-              title="Minimizar"
-              data-focusable
-            >
-              <Minimize2 size={22} />
-            </button>
             {(() => {
               const vol = muted ? 0 : volume;
               const expanded = volHover;
