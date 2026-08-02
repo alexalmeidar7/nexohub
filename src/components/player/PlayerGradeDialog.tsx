@@ -628,7 +628,8 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
