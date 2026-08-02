@@ -1489,7 +1489,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       )}
 
       {/* ============== CENTER STAGE ============== */}
-      <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-10" : ""}`}>
+      <main className={`absolute inset-0 flex items-center justify-center pt-28 pb-40 ${isVideoChannel ? "pointer-events-none z-[2]" : ""}`}>
         {isVideoChannel ? null : (
         <div className="relative flex items-center gap-8 max-w-[1400px] w-full px-8">
 
