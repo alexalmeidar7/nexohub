@@ -2439,6 +2439,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               karaokeEnabled={karaokeEnabled}
               onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
               showKaraoke={true}
+              isVideoChannel={isVideoChannel}
+              controlsVisible={controlsVisible}
             />
           </div>
         </div>
