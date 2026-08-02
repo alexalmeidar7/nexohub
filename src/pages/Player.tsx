@@ -3309,9 +3309,10 @@ export default function PlayerPage() {
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutubeContent && !selectedVideoId && (
-        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : ''})`, backgroundColor: '#111' }}
-        />
+        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700 flex items-center justify-center"
+          style={{ backgroundImage: `url(${youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : ''})`, backgroundColor: '#111' }}>
+          <ElegantLoader size={48} />
+        </div>
       )}
 
       {/* YouTube: Subtle bottom gradient only for control bar readability */}
