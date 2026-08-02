@@ -2324,7 +2324,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                   </>
                 )}
               </div>
-            )}
+            </div>
 
             <button
               type="button"
