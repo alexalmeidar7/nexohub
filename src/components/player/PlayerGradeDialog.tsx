@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo, useEffect, memo } from "react";
 import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2, ArrowLeft } from "lucide-react";
+import { PlayerBackButton } from "./PlayerBackButton";
 import { format, addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -266,21 +267,12 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 </p>
               </div>
             </div>
-            <button
+            <PlayerBackButton
               onClick={() => { onClose(); setDetailProg(null); }}
-              className="relative group text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
-            >
-              <div className="absolute inset-[-3px] rounded-2xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-                   style={{
-                     background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-                     WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                     WebkitMaskComposite: "destination-out",
-                     maskComposite: "exclude",
-                     animation: "interactSpin 3s linear infinite"
-                   }} 
-              />
-              <ArrowLeft size={20} className="relative z-10" />
-            </button>
+              className="w-10 h-10"
+              iconSize={20}
+              aria-label="Voltar"
+            />
           </div>
           {/* Weekday columns - fixed */}
           <div className="px-5 pb-3">

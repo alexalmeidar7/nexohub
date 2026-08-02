@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Music2, ArrowLeft } from "lucide-react";
+import { PlayerBackButton } from "./PlayerBackButton";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -116,23 +117,12 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
             <div className="mt-1 text-[15px] font-bold text-white truncate">{title || "—"}</div>
             <div className="text-[12px] text-white/60 truncate">{artist || ""}</div>
           </div>
-          <button
+          <PlayerBackButton
             onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border border-white/15 text-white/80 hover:bg-white/10 hover:border-white/30 transition relative group"
+            className="w-8 h-8"
+            iconSize={14}
             aria-label="Voltar"
-            data-focusable
-          >
-            <div className="absolute inset-[-3px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-                 style={{
-                   background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-                   WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                   WebkitMaskComposite: "destination-out",
-                   maskComposite: "exclude",
-                   animation: "interactSpin 3s linear infinite"
-                 }} 
-            />
-            <ArrowLeft size={14} className="relative z-10" />
-          </button>
+          />
         </div>
 
         <div
