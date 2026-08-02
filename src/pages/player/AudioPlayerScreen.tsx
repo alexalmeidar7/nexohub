@@ -3281,19 +3281,19 @@ function PollDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center animate-fade-in pointer-events-none"
+      className="fixed inset-0 z-[100] flex items-center justify-end p-8 pointer-events-none"
       style={{
         background: visible ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
         backdropFilter: visible ? "blur(12px)" : "blur(0px)",
         WebkitBackdropFilter: visible ? "blur(12px)" : "blur(0px)",
-        transition: "background 220ms ease, backdrop-filter 220ms ease",
+        transition: "background 300ms ease, backdrop-filter 300ms ease",
         opacity: visible ? 1 : 0,
       }}
     >
       <div
         role="dialog"
         aria-modal="true"
-        className="w-[360px] flex flex-col gap-6 pointer-events-auto"
+        className="w-[360px] flex flex-col gap-6 pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
         style={{
           padding: "28px 26px 24px",
           borderRadius: 32,
@@ -3301,8 +3301,10 @@ function PollDialog({
           border: "1px solid rgba(255,255,255,0.24)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
           opacity: visible ? 1 : 0,
-          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(8px)",
-          transition: "opacity 220ms ease-out, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+          marginBottom: "140px",
+          marginRight: "20px",
+          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(20px)",
+          transition: "opacity 300ms ease-out, transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
         <div className="flex items-center justify-between">
