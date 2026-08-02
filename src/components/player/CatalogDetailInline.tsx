@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
+import { Play, Film, Calendar, Clock, Plus, Minus, ArrowLeft } from "lucide-react";
+import { PlayerBackButton } from "./PlayerBackButton";
 import backArrowImg from "@/assets/back-arrow.png";
 import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
