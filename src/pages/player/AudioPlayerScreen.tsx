@@ -1300,7 +1300,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         ))}
       </div>
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
-      {artistBgImage && !djModeActive && (
+      {artistBgImage && !djModeActive && !isCatalog && (
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
