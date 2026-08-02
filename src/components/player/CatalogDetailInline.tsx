@@ -574,22 +574,38 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           ) : videos.length === 0 ? (
             <p className="text-sm text-white/30 mx-auto">Nenhum vídeo disponível</p>
           ) : (
-            videos.map((video) => {
+            videos.map((video, i) => {
               const isSelected = selectedVideo?.videoId === video.videoId;
               const isHovered = hoveredVideoId === video.videoId;
+              
+              // Sticky left navigation logic
+              const isActive = i === activeIndex;
+              const depth = i - activeIndex;
+              const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - depth * 0.16);
+              const translateX = depth < 0 ? 0 : depth * 40; // Small overlap/spacing offset
+
               return (
                 <div
                   key={video.videoId}
                   className="shrink-0 relative"
-                  onMouseEnter={(e) => handleCardMouseEnter(video, e.currentTarget)}
+                  onMouseEnter={(e) => {
+                    handleCardMouseEnter(video, e.currentTarget);
+                    setActiveIndex(i);
+                  }}
                   onMouseLeave={handleCardMouseLeave}
+                  style={{
+                    opacity,
+                    transform: `translateX(${translateX}px)`,
+                    transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms",
+                    zIndex: 20 - Math.abs(depth),
+                    pointerEvents: depth < 0 ? 'none' : 'auto'
+                  }}
                 >
                   {/* Base card (thumbnail) */}
                   <button
                     onClick={() => handlePlay(video)}
                     className="shrink-0 cursor-pointer transition-all duration-300"
                     style={{
-                      opacity: isSelected || isHovered ? 1 : 0.7,
                       transform: isHovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
                       transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
                     }}
