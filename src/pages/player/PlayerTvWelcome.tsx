@@ -715,7 +715,7 @@ export default function PlayerTvWelcome() {
                         ou acesse no navegador
                       </p>
                       <p className="text-sm font-tv-bold tracking-tight text-white/85 mt-1 break-all drop-shadow">
-                        {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
+                        {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : manualPairUrl.replace(/^https?:\/\//, "")}
                       </p>
                     </div>
                   </div>
