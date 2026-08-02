@@ -1360,6 +1360,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           <div className="leading-tight">
             <div className="text-[11px] uppercase tracking-widest text-white/50">canal</div>
             <div className="text-[1.2rem] font-semibold">{canal?.name || "—"}</div>
+            {currentProg && (
+              <div className="text-[10px] text-white/60 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em]">
+                <span className="text-white/80">{currentProg.nome}</span>
+                <span className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="tabular-nums">
+                  {hhmm(currentProg.horario_inicio)} — {hhmm(currentProg.horario_fim)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Logo do canal — ao lado das setas / nome do canal */}
