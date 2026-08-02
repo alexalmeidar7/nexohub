@@ -2124,6 +2124,7 @@ export default function PlayerPage() {
       awaitingNextClipReadyRef.current = yId;
       setSidebarOpen(false);
     } else {
+      setSelectedVideoId(null);
       setTransitionHold(false);
       setTimeout(() => playStream(first.url, first.type, true), 120);
     }
