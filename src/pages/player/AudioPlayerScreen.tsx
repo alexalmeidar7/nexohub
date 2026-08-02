@@ -3112,7 +3112,7 @@ function InteractivityMenu({
   const initialShowTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isVideoChannel) {
+    if (!isVideoChannel || isTop10Mode) {
       setAutoShowVisible(false);
       return;
     }
