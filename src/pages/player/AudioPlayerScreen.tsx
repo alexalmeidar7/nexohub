@@ -3097,8 +3097,8 @@ function InteractivityMenu({
       {/* Botão principal — icon-only com borda animada */}
       <div 
         className="relative flex items-center"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <button
           type="button"
