@@ -3003,6 +3003,7 @@ function InteractivityMenu({
   showKaraoke = true,
   isVideoChannel = false,
   controlsVisible = true,
+  isCatalog = false,
 }: {
   userId: string | null;
   chatOpen: boolean;
@@ -3012,6 +3013,7 @@ function InteractivityMenu({
   showKaraoke?: boolean;
   isVideoChannel?: boolean;
   controlsVisible?: boolean;
+  isCatalog?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
