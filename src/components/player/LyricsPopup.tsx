@@ -118,7 +118,7 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           </div>
           <PlayerBackButton
             onClick={onClose}
-            className="w-8 h-8"
+            className="w-8 h-8 focus-visible:ring-offset-2"
             iconSize={14}
             aria-label="Voltar"
           />

@@ -226,7 +226,7 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
         {/* Back button */}
         <PlayerBackButton
           onClick={onBack}
-          className="absolute top-6 left-6 z-20 w-10 h-10"
+          className="absolute top-6 left-6 z-20 w-10 h-10 focus-visible:ring-offset-2"
           iconSize={18}
           aria-label="Voltar"
         />
