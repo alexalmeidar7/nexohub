@@ -1357,28 +1357,35 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               <ChevronDown size={16} />
             </button>
           </div>
-          <div className="leading-tight">
-            <div className="text-[11px] uppercase tracking-widest text-white/50">canal</div>
-            <div className="text-[1.2rem] font-semibold">{canal?.name || "—"}</div>
-            {currentProg && (
-              <div className="text-[10px] text-white/60 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em]">
-                <span className="text-white/80">{currentProg.nome}</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="tabular-nums">
-                  {hhmm(currentProg.horario_inicio)} — {hhmm(currentProg.horario_fim)}
-                </span>
+
+          <div className="flex items-center gap-3">
+            {/* Logo do canal — agora à esquerda do nome do canal */}
+            {(canal?.background_url || canal?.logo_url) && (
+              <div key={`logo-${canal.id}`} className="animate-slide-up-down">
+                <img
+                  src={canal.background_url || canal.logo_url}
+                  alt=""
+                  className="h-14 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)]"
+                />
               </div>
             )}
-          </div>
 
-          {/* Logo do canal — ao lado das setas / nome do canal */}
-          {(canal?.background_url || canal?.logo_url) && (
-            <img
-              src={canal.background_url || canal.logo_url}
-              alt=""
-              className="h-14 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.6)] ml-2"
-            />
-          )}
+            <div className="leading-tight">
+              <div className="text-[11px] uppercase tracking-widest text-white/50">canal</div>
+              <div key={`name-${canal?.id}`} className="text-[1.2rem] font-semibold animate-slide-up-down">
+                {canal?.name || "—"}
+              </div>
+              {currentProg && (
+                <div key={`prog-${currentProg.id}`} className="text-[10px] text-white/60 mt-0.5 font-medium flex items-center gap-1.5 uppercase tracking-[0.05em] animate-slide-up-down">
+                  <span className="text-white/80">{currentProg.nome}</span>
+                  <span className="w-1 h-1 rounded-full bg-white/20" />
+                  <span className="tabular-nums">
+                    {hhmm(currentProg.horario_inicio)} — {hhmm(currentProg.horario_fim)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Área direita: clima + relógio + perfil */}
