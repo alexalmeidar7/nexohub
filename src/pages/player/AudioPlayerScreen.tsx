@@ -1323,7 +1323,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           />
         </div>
       )}
-      <div className="fixed inset-0 pointer-events-none" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.45) 35%, transparent 70%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }} />
+      <div className="fixed inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }} />
 
 
       {/* Media elements (owned by parent HLS) */}
