@@ -769,6 +769,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "programas" ||
       page === "previsao" ||
       page === "site" ||
+      page === "clientes" ||
       page === "sorteios"
     ) {
       return true;
