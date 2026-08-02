@@ -35,6 +35,8 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -42,6 +44,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Check if user is logged in and load profile
   useEffect(() => {
@@ -148,6 +151,41 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
     }
   }, [messages]);
 
+  // Fetch city suggestions from IBGE
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (cidade.length < 3 || joined) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        const response = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cidade)}&max=5`);
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const formatted = data.map((item: any) => `${item.nome}, ${item.microrregiao.mesorregiao.UF.sigla}`);
+          setSuggestions(formatted);
+          setShowSuggestions(true);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch city suggestions", err);
+      }
+    };
+
+    const timer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(timer);
+  }, [cidade, joined]);
+
+  // Click outside suggestions to close
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleJoin = () => {
     if (!nome.trim() || !cidade.trim()) return;
     setJoined(true);
@@ -233,15 +271,41 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                 autoFocus
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 relative">
               <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Sua localização</label>
               <input
                 placeholder="Ex: São Paulo, SP"
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
+                onFocus={() => cidade.length >= 3 && setShowSuggestions(true)}
                 className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <div 
+                  ref={suggestionsRef}
+                  className="absolute left-0 right-0 top-full mt-2 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  style={{ 
+                    background: "rgba(35,35,38,0.98)", 
+                    borderRadius: 20, 
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.8)"
+                  }}
+                >
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setCidade(s);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full px-5 py-3 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors border-b border-white/5 last:border-0"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <button
