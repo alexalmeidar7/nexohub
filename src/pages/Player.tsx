@@ -2207,7 +2207,13 @@ export default function PlayerPage() {
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
     setStreamRequested(false);
-    setTransitionHold(true);
+    // Only use transitionHold for YouTube-based content to prevent cutting through
+    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube" || isYoutubeUrl(nextChannel.url)) {
+      setTransitionHold(true);
+      awaitingNextClipReadyRef.current = extractYoutubeVideoId(nextChannel.url);
+    } else {
+      setTransitionHold(false);
+    }
 
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
