@@ -304,7 +304,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             </div>
             <PlayerBackButton
               onClick={requestClose}
-              className="w-10 h-10"
+              className="w-10 h-10 focus-visible:ring-offset-2"
               iconSize={20}
               aria-label="Voltar"
             />
