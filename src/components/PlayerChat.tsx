@@ -199,8 +199,8 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
         }
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose, showEmoji, showSuggestions]);
 
   const handleJoin = () => {

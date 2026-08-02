@@ -396,7 +396,7 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
               {/* Back arrow */}
               <PlayerBackButton
                 onClick={onBack}
-                className="mb-4 w-10 h-10"
+                className="mb-4 w-10 h-10 focus-visible:ring-offset-2"
                 iconSize={20}
                 aria-label="Voltar"
               />
