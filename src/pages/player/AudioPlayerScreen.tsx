@@ -1627,7 +1627,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity: isActive ? 1 : (isExpired ? Math.max(0.35, opacity * 0.55) : opacity),
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
-                      background: "#111",
+                      background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
                       zIndex,
                       willChange: "transform, opacity, filter",
                       transition:
