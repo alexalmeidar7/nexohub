@@ -3008,7 +3008,7 @@ export default function PlayerPage() {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+    <div ref={containerRef} className="fixed inset-0 h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
 
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
@@ -3100,7 +3100,7 @@ export default function PlayerPage() {
       })()}
 
       {/* Content wrapper with fade transition */}
-      <div className={`transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
+      <div className={`relative h-full w-full overflow-y-auto scrollbar-hide transition-opacity duration-400 ease-in-out ${pageFadeOut ? "opacity-0" : "opacity-100"}`}>
 
       {/* Fallback overlay: shown when stream requested but not yet playing */}
       {(() => {

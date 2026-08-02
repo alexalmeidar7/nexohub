@@ -1262,9 +1262,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div
-      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+      className="relative min-h-full w-full text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
       style={{
-        background: "#050810",
+        background: "transparent",
         fontFamily: "'Lufga', 'Inter', sans-serif",
         opacity: exiting ? 0 : 1,
         transform: exiting ? "scale(0.97)" : "scale(1)",
@@ -1274,7 +1274,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* YouTube Catalog Background */}
       {isCatalog && selectedVideoId && (
-        <div className="absolute inset-0 z-0">
+        <div className="fixed inset-0 z-0">
           <iframe
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
             className="w-full h-full border-0"
@@ -1292,8 +1292,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
-        className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
+        className="fixed inset-0 pointer-events-none overflow-hidden"
+        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
@@ -1302,8 +1302,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
       {artistBgImage && !djModeActive && !isCatalog && (
         <div
-          className="absolute inset-0 pointer-events-none overflow-hidden"
-          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
+          className="fixed inset-0 pointer-events-none overflow-hidden"
+          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out", zIndex: 0 }}
           aria-hidden
         >
           <div
@@ -1323,7 +1323,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           />
         </div>
       )}
-      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }} />
+      <div className="fixed inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }} />
 
 
       {/* Media elements (owned by parent HLS) */}
