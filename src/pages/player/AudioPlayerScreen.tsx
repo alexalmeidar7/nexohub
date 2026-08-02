@@ -2444,16 +2444,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </>
               )}
             </div>
-            <InteractivityMenu
-              userId={effectiveUserId}
-              chatOpen={chatOpen}
-              onToggleChat={() => setChatOpen(!chatOpen)}
-              karaokeEnabled={karaokeEnabled}
-              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-              showKaraoke={true}
-              isVideoChannel={isVideoChannel}
-              controlsVisible={controlsVisible}
-            />
+            {!isCatalog && (
+              <InteractivityMenu
+                userId={effectiveUserId}
+                chatOpen={chatOpen}
+                onToggleChat={() => setChatOpen(!chatOpen)}
+                karaokeEnabled={karaokeEnabled}
+                onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+                showKaraoke={true}
+                isVideoChannel={isVideoChannel}
+                controlsVisible={controlsVisible}
+                isCatalog={isCatalog}
+              />
+            )}
           </div>
         </div>
       </footer>
