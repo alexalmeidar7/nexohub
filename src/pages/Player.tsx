@@ -3244,8 +3244,8 @@ export default function PlayerPage() {
       )}
 
 
-      {/* YouTube: Fullscreen background video iframe — proper aspect ratio */}
-      {isYoutube && selectedVideoId && (
+      {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
+      {(isYoutube || isCatalog) && selectedVideoId && (
         <div className="absolute inset-0 z-0 overflow-hidden">
           <iframe
             ref={ytIframeRef}
