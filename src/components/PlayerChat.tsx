@@ -283,12 +283,12 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
           className="flex flex-col overflow-hidden"
           style={{
             height: "clamp(320px, calc(100vh - 335px), 520px)",
-            borderRadius: 22,
-            background: "linear-gradient(180deg, rgba(20,20,22,0.88) 0%, rgba(10,10,12,0.92) 100%)",
-            border: "1px solid rgba(255,255,255,0.22)",
+            borderRadius: 32,
+            background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
+            border: "1px solid rgba(255,255,255,0.24)",
             backdropFilter: "blur(28px) saturate(140%)",
             WebkitBackdropFilter: "blur(28px) saturate(140%)",
-            boxShadow: "0 30px 80px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.10)",
+            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
 
           }}
         >
