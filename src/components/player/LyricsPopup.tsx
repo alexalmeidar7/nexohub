@@ -64,7 +64,12 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
   // ESC to close
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose?.(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // Encerra apenas o contexto do popup de letra
+        onClose?.();
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
