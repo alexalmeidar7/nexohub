@@ -291,7 +291,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
         </div>
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 space-y-2.5 chat-scroll pb-4 mask-fade-top">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 space-y-2.5 scrollbar-hide pb-4 mask-fade-out-top">
           {messages.length === 0 && (
             <div className="h-full flex items-center justify-center text-center px-4">
               <span className="text-[12px] text-white/40 italic">Seja o primeiro a mandar uma mensagem</span>
@@ -310,26 +310,24 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                     boxShadow: "0 8px 32px -4px rgba(0,0,0,0.4)"
                   }}
                 >
-                  <div 
-                    className="flex-shrink-0"
-                    style={{ borderLeft: "2px solid #C6F03C", height: "32px", marginRight: "4px", opacity: 0.8 }}
-                  />
-                  {avatarUrl && isMe ? (
-                    <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
-                  ) : (
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}
-                    >
-                      <span className="text-[11px] text-white/70 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                  <div className="flex items-start gap-3 flex-1">
+                    {avatarUrl && isMe ? (
+                      <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}
+                      >
+                        <span className="text-[11px] text-white/70 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[11px] font-bold text-white/90 truncate">{msg.nome}</span>
+                        <span className="text-[9px] text-white/30 truncate">{msg.cidade}</span>
+                      </div>
+                      <p className="text-[13px] leading-[1.4] text-white/85 break-words">{msg.message}</p>
                     </div>
-                  )}
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className="text-[11px] font-bold text-white/90 truncate">{msg.nome}</span>
-                      <span className="text-[9px] text-white/30 truncate">{msg.cidade}</span>
-                    </div>
-                    <p className="text-[13px] leading-[1.4] text-white/85 break-words">{msg.message}</p>
                   </div>
                 </div>
               </div>
