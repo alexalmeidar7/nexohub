@@ -1873,16 +1873,6 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <Plus size={20} />
           </button>
 
-          {/* Letra da música — popup central com scroll */}
-          <Suspense fallback={null}>
-            <LyricsPopup
-              open={karaokeEnabled}
-              artist={musicData?.artista}
-              title={musicData?.titulo}
-              duration={musicData?.duracao}
-              onClose={() => setKaraokeEnabled(false)}
-            />
-          </Suspense>
           </div>
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
