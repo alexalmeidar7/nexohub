@@ -270,7 +270,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
               onClick={() => { onClose(); setDetailProg(null); }}
               className="relative group text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
             >
-              <div className="absolute inset-0 rounded-2xl border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+              <div className="absolute inset-[-3px] rounded-2xl border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
+                   style={{
+                     background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
+                     WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                     WebkitMaskComposite: "destination-out",
+                     maskComposite: "exclude",
+                     animation: "interactSpin 3s linear infinite"
+                   }} 
+              />
               <ArrowLeft size={20} className="relative z-10" />
             </button>
           </div>
@@ -437,7 +445,15 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                   onClick={() => setDetailProg(null)}
                   className="absolute top-3 right-3 relative group text-white/50 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-2 transition-all duration-200 backdrop-blur-sm"
                 >
-                  <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+                  <div className="absolute inset-[-3px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
+                       style={{
+                         background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
+                         WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                         WebkitMaskComposite: "destination-out",
+                         maskComposite: "exclude",
+                         animation: "interactSpin 3s linear infinite"
+                       }} 
+                  />
                   <ArrowLeft size={16} className="relative z-10" />
                 </button>
 
