@@ -2113,11 +2113,15 @@ export default function PlayerPage() {
     
     if (isYt) {
       setStreamRequested(false);
+      setTransitionHold(true);
       setPlaying(true);
       setBuffering(false);
-      setSelectedVideoId(extractYoutubeVideoId(first.url));
+      const yId = extractYoutubeVideoId(first.url);
+      setSelectedVideoId(yId);
+      awaitingNextClipReadyRef.current = yId;
       setSidebarOpen(false);
     } else {
+      setTransitionHold(false);
       setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
