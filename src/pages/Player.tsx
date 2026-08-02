@@ -2094,7 +2094,7 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube" || first.type === "catalog") {
+    if (first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube") {
       setStreamRequested(false);
       setPlaying(true);
       setBuffering(false);
