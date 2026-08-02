@@ -1674,7 +1674,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
                       <>
-                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
+                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.6)] ring-1 ring-black/5 backdrop-blur-xl">
                           <VolumeEqBars volume={volume} muted={muted} playing={playing} />
                           <span>Tocando agora</span>
                         </div>
