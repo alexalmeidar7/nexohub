@@ -1226,13 +1226,17 @@ export default function PlayerPage() {
 
         setYoutubeVideos(sorted as YoutubeVideo[]);
 
-        const requestedId = normalizeYoutubeVideoId(requestedVideoId);
-        if (requestedId && sorted.some((v: any) => v.videoId === requestedId)) {
           setSelectedVideoId(requestedId);
           setPlaying(true);
           setBuffering(false);
           setYtPlaying(true);
-        }
+          
+          // Ensure auto-play happens for the requested video
+          if (ytIframeRef.current) {
+            try {
+              ytIframeRef.current.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            } catch (e) {}
+          }
       });
       return;
     }

@@ -107,8 +107,10 @@ export default function PlayerCatalog() {
     params.set("ch", primaryChannel.id);
     params.set("vid", video.videoId);
     const qs = `?${params.toString()}`;
-    if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}`);
-    else navigate(`/user/nexohub/player/watch${qs}`);
+    
+    // Força o passo 'home' na URL para o Player.tsx reconhecer o estado e montar corretamente o canal
+    if (userSlug) navigate(`/user/${userSlug}/nexohub/player/watch${qs}&step=home`);
+    else navigate(`/user/nexohub/player/watch${qs}&step=home`);
   }, [primaryChannel, userSlug, navigate]);
 
   const goBack = () => {
