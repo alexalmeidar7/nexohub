@@ -2223,8 +2223,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
           {/* Right: DJ, fullscreen, músicas tocadas, interatividade */}
           <div className="flex items-center gap-2 justify-self-end">
-            {(true || !isVideoChannel) && (
-              <div className="relative">
+            {/* DJ Mode button */}
+            <div className="relative">
                 <button
                   type="button"
                   onClick={() => setDjModeOn((v) => !v)}
