@@ -1660,10 +1660,11 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
-      setBuffering(type !== "youtube" && type !== "catalog");
+      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube";
+      setBuffering(!isYtOrCatalog);
       setPlaying(false);
       setStreamStalled(false);
-      setStreamRequested(type !== "youtube" && type !== "catalog");
+      setStreamRequested(!isYtOrCatalog);
 
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
@@ -2197,7 +2198,7 @@ export default function PlayerPage() {
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
 
-    if (nextChannel.type === "youtube") {
+    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube") {
       setPlaying(true);
       setBuffering(false);
       setSelectedVideoId(null);
