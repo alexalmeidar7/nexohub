@@ -199,8 +199,8 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
         }
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
+    return () => document.removeEventListener("keydown", onKey, true);
   }, [onClose, showEmoji, showSuggestions]);
 
   const handleJoin = () => {
@@ -365,7 +365,7 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
           </div>
           <PlayerBackButton
             onClick={onClose}
-            className="w-8 h-8"
+            className="w-8 h-8 focus-visible:ring-offset-2"
             iconSize={14}
             aria-label="Voltar"
           />

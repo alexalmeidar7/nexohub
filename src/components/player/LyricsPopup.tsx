@@ -67,12 +67,11 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        // Encerra apenas o contexto do popup de letra
         onClose?.();
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   }, [open, onClose]);
 
   if (!open || typeof document === "undefined") return null;
@@ -119,7 +118,7 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           </div>
           <PlayerBackButton
             onClick={onClose}
-            className="w-8 h-8"
+            className="w-8 h-8 focus-visible:ring-offset-2"
             iconSize={14}
             aria-label="Voltar"
           />
