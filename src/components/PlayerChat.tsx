@@ -175,9 +175,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
       <div
         className="fixed inset-0 z-[60] flex items-center justify-center animate-fade-in"
         style={{
-          background: "rgba(0,0,0,0.45)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
+          background: "transparent",
         }}
       >
         <div
@@ -186,8 +184,8 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
             padding: "28px 26px 24px",
             borderRadius: 32,
             background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-            border: "1px solid rgba(255,255,255,0.24)",
-            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
+            border: "none",
+            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           }}
         >
           <div className="flex items-center justify-between">
@@ -285,10 +283,10 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
             height: "clamp(320px, calc(100vh - 335px), 520px)",
             borderRadius: 32,
             background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-            border: "1px solid rgba(255,255,255,0.24)",
+            border: "none",
             backdropFilter: "blur(28px) saturate(140%)",
             WebkitBackdropFilter: "blur(28px) saturate(140%)",
-            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
+            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
 
           }}
         >
