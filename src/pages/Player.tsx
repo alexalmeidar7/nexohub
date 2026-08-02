@@ -370,10 +370,15 @@ export default function PlayerPage() {
     navigate(`${playerWelcomePath}?edit=1`);
   }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
   const handleSwitchProfile = useCallback(() => {
-    clearHomeSkipFlag();
+    // When switching profiles, we skip the splash screen entirely
+    const radioSlug = userSlug || "root";
+    try {
+      window.localStorage.setItem(`player-step-home:${radioSlug}`, "true");
+    } catch {}
+    
     emitProfileChanged({ reason: "switch" });
     navigate(playerWelcomePath);
-  }, [clearHomeSkipFlag, navigate, playerWelcomePath]);
+  }, [userSlug, navigate, playerWelcomePath]);
   const { user, loading: authLoading, signOut } = useAuth();
   const userId = user?.id ?? null;
 

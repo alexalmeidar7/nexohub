@@ -414,7 +414,7 @@ export default function WatchProfilePopup({
               onClick={() => { onClose(); onSwitchProfile(); }}
               className="flex items-center gap-2 text-white/60 text-[11px] hover:text-white transition-colors rounded-lg px-2 py-1.5 hover:bg-white/5"
             >
-              <Users size={13} /> Trocar de perfil
+              <Users size={13} /> tela de perfis
             </button>
           )}
           {onLogout && (
