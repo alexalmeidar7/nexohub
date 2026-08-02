@@ -3276,7 +3276,7 @@ export default function PlayerPage() {
       )}
 
       {/* YouTube: Subtle bottom gradient only for control bar readability */}
-      {isYoutube && (
+      {isYoutubeContent && (
         <div className="absolute inset-x-0 bottom-0 z-[1]" style={{ height: "200px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }} />
       )}
 
