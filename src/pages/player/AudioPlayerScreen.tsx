@@ -2461,8 +2461,18 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         </Suspense>
       )}
 
-      {/* Karaoke agora é inline, dentro da coluna "a seguir" (ver <InlineKaraoke /> abaixo do botão +) */}
-
+      {/* Letra da música — popup central com scroll */}
+      {karaokeEnabled && (
+        <Suspense fallback={null}>
+          <LyricsPopup
+            open={karaokeEnabled}
+            artist={musicData?.artista}
+            title={musicData?.titulo}
+            duration={musicData?.duracao}
+            onClose={() => setKaraokeEnabled(false)}
+          />
+        </Suspense>
+      )}
 
       {/* Grade */}
       {gradeOpen && (
