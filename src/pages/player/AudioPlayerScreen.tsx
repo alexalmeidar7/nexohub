@@ -3089,11 +3089,61 @@ function InteractivityMenu({
     }, 800); // 800ms de delay para não fechar instantaneamente
   };
 
+  // Timer para o auto-show do botão de interatividade em canais de vídeo
+  const [autoShowVisible, setAutoShowVisible] = useState(false);
+  const autoShowTimeoutRef = useRef<number | null>(null);
+  const initialShowTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!isVideoChannel) {
+      setAutoShowVisible(false);
+      return;
+    }
+
+    // Só auto-mostra se os controles do player NÃO estiverem visíveis
+    const shouldShow = !controlsVisible && !open;
+
+    const hideAutoShow = () => {
+      setAutoShowVisible(false);
+      if (autoShowTimeoutRef.current) {
+        window.clearTimeout(autoShowTimeoutRef.current);
+        autoShowTimeoutRef.current = null;
+      }
+    };
+
+    const showAutoShow = () => {
+      if (!shouldShow) return;
+      setAutoShowVisible(true);
+      autoShowTimeoutRef.current = window.setTimeout(hideAutoShow, 15000); // Fica por 15 segundos
+    };
+
+    // 1. A cada 2 minutos (120s)
+    const intervalId = window.setInterval(showAutoShow, 120000);
+
+    // 2. Primeira vez após 10 segundos
+    initialShowTimeoutRef.current = window.setTimeout(showAutoShow, 10000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      if (autoShowTimeoutRef.current) window.clearTimeout(autoShowTimeoutRef.current);
+      if (initialShowTimeoutRef.current) window.clearTimeout(initialShowTimeoutRef.current);
+    };
+  }, [isVideoChannel, controlsVisible, open]);
+
+  // Se o usuário interagir, fecha o autoShow
+  useEffect(() => {
+    if (open || controlsVisible) setAutoShowVisible(false);
+  }, [open, controlsVisible]);
+
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
       <div 
-        className="relative flex items-center"
+        className={`relative flex items-center transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+          isVideoChannel && !controlsVisible && !open && !autoShowVisible
+            ? "opacity-0 translate-y-8 pointer-events-none"
+            : "opacity-100 translate-y-0 pointer-events-auto"
+        }`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
