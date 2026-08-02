@@ -1274,7 +1274,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* YouTube Catalog Background */}
       {isCatalog && selectedVideoId && (
-        <div className="absolute inset-0 z-0">
+        <div className="fixed inset-0 z-0">
           <iframe
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
             className="w-full h-full border-0"
