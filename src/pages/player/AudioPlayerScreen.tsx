@@ -3361,7 +3361,13 @@ function PollDialog({
   }, [closing, onClose]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") requestClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // Encerra apenas o contexto do popup voltando ao menu anterior (onClose)
+        // sem fechar outros contextos globais do player
+        requestClose();
+      }
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [requestClose]);
