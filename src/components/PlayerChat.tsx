@@ -48,6 +48,18 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      let userLocation = "";
+      try {
+        const response = await fetch("https://ipapi.co/json/");
+        const data = await response.json();
+        if (data.city && data.region_code) {
+          userLocation = `${data.city}, ${data.region_code}`;
+        }
+      } catch (err) {
+        console.warn("Failed to fetch location from IP", err);
+      }
+
       if (session?.user) {
         const { data: scopedProfile } = radioUserId ? await supabase
           .from("player_listener_profiles")
@@ -55,19 +67,28 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
           .eq("auth_user_id", session.user.id)
           .eq("radio_user_id", radioUserId)
           .maybeSingle() : { data: null } as any;
+          
         const { data: fallbackProfile } = !scopedProfile ? await supabase
           .from("profiles")
           .select("nome, cidade, avatar_url")
           .eq("user_id", session.user.id)
           .maybeSingle() : { data: null } as any;
+          
         const profile = scopedProfile || fallbackProfile;
+        
         if (profile?.nome) {
           setNome(profile.nome);
-          setCidade(profile.cidade || "");
+          setCidade(profile.cidade || userLocation || "");
           setAvatarUrl(profile.avatar_url || null);
           setIsLoggedIn(true);
           setJoined(true);
+        } else {
+          // Logged in but no profile name yet
+          setCidade(userLocation);
         }
+      } else {
+        // Not logged in, still pre-fill location
+        setCidade(userLocation);
       }
     };
     checkAuth();
