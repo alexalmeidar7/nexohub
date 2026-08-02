@@ -3299,10 +3299,8 @@ function PollDialog({
     <div
       className="fixed inset-0 z-[100] flex items-center justify-end p-8 pointer-events-none"
       style={{
-        background: visible ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
-        backdropFilter: visible ? "blur(12px)" : "blur(0px)",
-        WebkitBackdropFilter: visible ? "blur(12px)" : "blur(0px)",
-        transition: "background 300ms ease, backdrop-filter 300ms ease",
+        background: "transparent",
+        transition: "background 300ms ease",
         opacity: visible ? 1 : 0,
       }}
     >
@@ -3314,8 +3312,8 @@ function PollDialog({
           padding: "28px 26px 24px",
           borderRadius: 32,
           background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-          border: "1px solid rgba(255,255,255,0.24)",
-          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
+          border: "none",
+          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           opacity: visible ? 1 : 0,
           marginBottom: "140px",
           marginRight: "20px",

@@ -75,10 +75,8 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-end p-8 pointer-events-none animate-in fade-in duration-300"
       style={{
-        background: open ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
-        backdropFilter: open ? "blur(12px)" : "blur(0px)",
-        WebkitBackdropFilter: open ? "blur(12px)" : "blur(0px)",
-        transition: "background 300ms ease, backdrop-filter 300ms ease",
+        background: "transparent",
+        transition: "background 300ms ease",
       }}
       onClick={onClose}
     >
@@ -89,10 +87,10 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           padding: "22px 24px 18px",
           borderRadius: 32,
           background: "linear-gradient(180deg, rgba(25,25,28,0.94) 0%, rgba(12,12,14,0.97) 100%)",
-          border: "1px solid rgba(255,255,255,0.24)",
+          border: "none",
           backdropFilter: "blur(28px) saturate(140%)",
           WebkitBackdropFilter: "blur(28px) saturate(140%)",
-          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.12)",
+          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           marginBottom: "140px",
           marginRight: "20px",
         }}
