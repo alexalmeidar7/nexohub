@@ -1232,6 +1232,13 @@ export default function PlayerPage() {
           setPlaying(true);
           setBuffering(false);
           setYtPlaying(true);
+          
+          // Ensure auto-play happens for the requested video
+          if (ytIframeRef.current) {
+            try {
+              ytIframeRef.current.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+            } catch (e) {}
+          }
         }
       });
       return;
