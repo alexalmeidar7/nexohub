@@ -303,7 +303,7 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
               </div>
             </div>
             <PlayerBackButton
-              onClick={() => { onClose(); setDetailProg(null); }}
+              onClick={requestClose}
               className="w-10 h-10"
               iconSize={20}
               aria-label="Voltar"
