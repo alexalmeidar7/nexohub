@@ -64,7 +64,12 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
   // ESC to close
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose?.(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        // Encerra apenas o contexto do popup de letra
+        onClose?.();
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
@@ -117,8 +122,16 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
             aria-label="Voltar"
             data-focusable
           >
-            <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
-            <ArrowLeft size={14} />
+            <div className="absolute inset-[-3px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
+                 style={{
+                   background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
+                   WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                   WebkitMaskComposite: "destination-out",
+                   maskComposite: "exclude",
+                   animation: "interactSpin 3s linear infinite"
+                 }} 
+            />
+            <ArrowLeft size={14} className="relative z-10" />
           </button>
         </div>
 
