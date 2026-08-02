@@ -3121,7 +3121,7 @@ export default function PlayerPage() {
         const hasMedia = Boolean(audioRef.current?.src) || Boolean(videoRef.current?.src);
         const show = Boolean(canal) && !playing && !isYoutube && !isCatalog && (streamRequested || buffering || streamStalled || !hasMedia);
         if (!show) return null;
-        const title = streamStalled ? "Reconectando canal..." : buffering ? "Conectando..." : "Toque para ouvir";
+        const title = streamStalled ? "Reconectando canal..." : buffering ? "YouTube on demand, sem bloquear a reprodução." : "Toque para ouvir";
         return (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 px-4">
             <div className="w-full max-w-sm rounded-3xl px-6 py-7 text-center backdrop-blur-2xl" style={{ backgroundColor: "rgba(8,8,8,0.55)", border: "1px solid hsla(var(--player-accent) / 0.22)", boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
