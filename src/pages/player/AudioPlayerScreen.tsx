@@ -3076,13 +3076,29 @@ function InteractivityMenu({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
+  // Delay para fechar no mouseLeave para dar tempo do usuário mover o mouse
+  const closeTimeoutRef = useRef<number | null>(null);
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      window.clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimeoutRef.current = null;
+    }, 800); // 800ms de delay para não fechar instantaneamente
+  };
+
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
       <div 
         className="relative flex items-center"
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <button
           type="button"
@@ -3146,29 +3162,29 @@ function InteractivityMenu({
           <button
             onClick={() => { setPollOpen(true); setOpen(false); }}
             disabled={!activePoll}
-            className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95 ${!activePoll ? "opacity-40 grayscale" : ""}`}
+            className={`w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95 ${!activePoll ? "opacity-40 grayscale" : ""}`}
             title="Enquete"
           >
-            <BarChart3 size={20} />
-            {hasNotif && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />}
+            <BarChart3 size={24} />
+            {hasNotif && <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black" />}
           </button>
           
           {showKaraoke && (
             <button
               onClick={() => { onToggleKaraoke(); setOpen(false); }}
-              className="w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
               title="Letra"
             >
-              <Mic size={20} />
+              <Mic size={24} />
             </button>
           )}
           
           <button
             onClick={() => { onToggleChat(); setOpen(false); }}
-            className="w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
+            className="w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
             title="Chat"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={24} />
           </button>
         </div>
       </div>
