@@ -175,82 +175,87 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
       <div
         className="fixed inset-0 z-[60] flex items-center justify-center animate-fade-in"
         style={{
-          background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.8) 100%)",
-          backdropFilter: "blur(14px)",
-          WebkitBackdropFilter: "blur(14px)",
+          background: "rgba(0,0,0,0.45)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
       >
         <div
-          className="w-[360px] flex flex-col gap-5 animate-scale-in"
+          className="w-[360px] flex flex-col gap-6 animate-scale-in"
           style={{
-            padding: "26px 26px 24px",
-            borderRadius: 24,
-            background: "linear-gradient(180deg, rgba(20,20,22,0.90) 0%, rgba(10,10,12,0.94) 100%)",
-            border: "1px solid rgba(255,255,255,0.22)",
-            backdropFilter: "blur(28px) saturate(140%)",
-            WebkitBackdropFilter: "blur(28px) saturate(140%)",
-            boxShadow: "0 34px 90px -25px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
+            padding: "28px 26px 24px",
+            borderRadius: 32,
+            background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
+            border: "1px solid rgba(255,255,255,0.24)",
+            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
           }}
         >
           <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-[10px] uppercase tracking-[0.24em] text-white/50">chat ao vivo</span>
-              <h3 className="text-white font-semibold text-lg tracking-tight mt-0.5">Entrar no chat</h3>
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-[0.24em] font-bold text-white/50">chat ao vivo</span>
+              <h3 className="text-white font-bold text-xl tracking-tight">Entrar no chat</h3>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-white/25 transition"
+              className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group"
               aria-label="Fechar"
             >
-              <X size={15} className="text-white/70" />
+              <X size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" />
             </button>
           </div>
           <div className="flex flex-col gap-3">
-            <input
-              placeholder="Seu nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="w-full rounded-xl text-white px-4 py-3 text-sm placeholder:text-white/35 focus:outline-none transition"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)",
-              }}
-              onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.30)")}
-              onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
-              autoFocus
-            />
-            <input
-              placeholder="Sua cidade"
-              value={cidade}
-              onChange={(e) => setCidade(e.target.value)}
-              className="w-full rounded-xl text-white px-4 py-3 text-sm placeholder:text-white/35 focus:outline-none transition"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)",
-              }}
-              onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.30)")}
-              onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
-            />
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Como quer ser chamado?</label>
+              <input
+                placeholder="Seu nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                }}
+                onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.35)")}
+                onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Sua localização</label>
+              <input
+                placeholder="Ex: São Paulo, SP"
+                value={cidade}
+                onChange={(e) => setCidade(e.target.value)}
+                className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
+                style={{
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                }}
+                onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.35)")}
+                onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
+              />
+            </div>
           </div>
           <button
             onClick={handleJoin}
             disabled={!nome.trim() || !cidade.trim()}
-            className="w-full py-3 rounded-xl text-sm font-semibold tracking-wide transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
             style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(230,230,230,0.85) 100%)",
-              color: "#111",
-              boxShadow: "0 10px 30px -10px rgba(255,255,255,0.25), inset 0 1px 0 rgba(255,255,255,0.6)",
+              background: "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(235,235,235,1) 100%)",
+              color: "#000",
+              boxShadow: "0 10px 30px -10px rgba(255,255,255,0.3), inset 0 1px 0 rgba(255,255,255,0.6)",
             }}
           >
-            Entrar no chat
+            Participar da conversa
           </button>
-          <p className="text-[11px] text-white/40 text-center leading-relaxed">
-            Ao entrar, você concorda em manter o respeito na comunidade.
+          <p className="text-[11px] text-white/30 text-center leading-relaxed font-medium">
+            Ao entrar, você concorda com nossas diretrizes de comunidade.
           </p>
         </div>
       </div>
     );
   }
+
 
 
   // Minimized
