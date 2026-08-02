@@ -2549,7 +2549,9 @@ export default function PlayerPage() {
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
           // Readiness gate: lift the hold overlay when a real duration is reported.
           const reportedDuration = typeof data.info.duration === "number" ? data.info.duration : 0;
-          if (reportedDuration > 0) {
+          const playerState = typeof data.info.playerState === "number" ? data.info.playerState : null;
+          
+          if (reportedDuration > 0 || playerState === 1) {
             setTransitionHold(false);
             awaitingNextClipReadyRef.current = null;
           }
