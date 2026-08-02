@@ -224,14 +224,12 @@ export default function Top10DetailInline({ avatarUrl, onBack, onPlayVideo, radi
 
       <div className="relative z-10 flex flex-col h-full">
         {/* Back button */}
-        <button
+        <PlayerBackButton
           onClick={onBack}
-          className="absolute top-6 left-6 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110"
-          style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(10px)" }}
+          className="absolute top-6 left-6 z-20 w-10 h-10"
+          iconSize={18}
           aria-label="Voltar"
-        >
-          <ArrowLeft size={18} className="text-white" />
-        </button>
+        />
 
         {/* Reload button */}
         <button
