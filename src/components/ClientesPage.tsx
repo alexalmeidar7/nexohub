@@ -170,8 +170,9 @@ export default function ClientesPage() {
     if (!q) return base;
     return base.filter(c =>
       (c.nome || "").toLowerCase().includes(q) ||
-      (emails[c.user_id] || "").toLowerCase().includes(q) ||
-      slugFromEmail(emails[c.user_id], c.nome).includes(q)
+      (c.cnpj || "").replace(/\D/g, "").includes(q.replace(/\D/g, "")) ||
+      (c.telefone_comercial || "").replace(/\D/g, "").includes(q.replace(/\D/g, "")) ||
+      (emails[c.user_id] || "").toLowerCase().includes(q)
     );
   }, [clientes, busca, emails, trash]);
 
@@ -607,7 +608,7 @@ export default function ClientesPage() {
             <input
               value={busca}
               onChange={e => setBusca(e.target.value)}
-              placeholder="Buscar cliente"
+              placeholder="encontrar rápido por nome, CNPJ ou telefone."
               className="w-full bg-transparent text-sm outline-none text-[#002132]"
             />
           </div>
