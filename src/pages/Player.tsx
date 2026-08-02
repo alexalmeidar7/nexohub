@@ -2104,11 +2104,13 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube") {
+    const isYt = first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube" || isYoutubeUrl(first.url);
+    
+    if (isYt) {
       setStreamRequested(false);
       setPlaying(true);
       setBuffering(false);
-      setSelectedVideoId(null);
+      setSelectedVideoId(extractYoutubeVideoId(first.url));
       setSidebarOpen(false);
     } else {
       setTimeout(() => playStream(first.url, first.type, true), 120);
