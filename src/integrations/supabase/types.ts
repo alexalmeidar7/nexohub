@@ -548,6 +548,36 @@ export type Database = {
         }
         Relationships: []
       }
+      client_actions_history: {
+        Row: {
+          action_type: string
+          client_id: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          client_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          client_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_modules: {
         Row: {
           created_at: string
@@ -906,7 +936,10 @@ export type Database = {
           audio_stream_api_url: string | null
           audio_stream_xpath: string | null
           background_url: string | null
+          cliente_desde: string | null
+          cnpj: string | null
           endereco: string | null
+          executiva_venda: string | null
           facebook: string | null
           facebook_subs: number | null
           id: string
@@ -935,7 +968,10 @@ export type Database = {
           audio_stream_api_url?: string | null
           audio_stream_xpath?: string | null
           background_url?: string | null
+          cliente_desde?: string | null
+          cnpj?: string | null
           endereco?: string | null
+          executiva_venda?: string | null
           facebook?: string | null
           facebook_subs?: number | null
           id?: string
@@ -964,7 +1000,10 @@ export type Database = {
           audio_stream_api_url?: string | null
           audio_stream_xpath?: string | null
           background_url?: string | null
+          cliente_desde?: string | null
+          cnpj?: string | null
           endereco?: string | null
+          executiva_venda?: string | null
           facebook?: string | null
           facebook_subs?: number | null
           id?: string
