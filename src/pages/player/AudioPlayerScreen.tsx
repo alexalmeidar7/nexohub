@@ -69,6 +69,7 @@ export interface AudioPlayerScreenProps {
   onSwitchProfile?: () => void;
   onAvatarChange?: (url: string) => void;
   isVideoChannel?: boolean;
+  isCatalog?: boolean;
 }
 
 interface HistoryTrack {
@@ -200,10 +201,15 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     onBackHome,
     onEditProfile, onSwitchProfile, onAvatarChange,
     isVideoChannel = false,
+    isCatalog = false,
   } = props;
+
+  const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
+  const selectedVideoId = isCatalog ? (new URLSearchParams(window.location.search).get("vid")) : null;
 
   // ---- Transição de saída ao voltar para Home (com fade-out do áudio/vídeo) ----
   const [exiting, setExiting] = useState(false);
+
   const handleBackHome = useCallback(() => {
     if (exiting) return;
     setExiting(true);
@@ -1266,20 +1272,35 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       }}
     >
 
+      {/* YouTube Catalog Background */}
+      {isCatalog && selectedVideoId && (
+        <div className="absolute inset-0 z-0">
+          <iframe
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
+            className="w-full h-full border-0"
+            allow="autoplay; encrypted-media"
+          />
+          {/* Overlay to ensure controls visibility */}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+        </div>
+      )}
+
       {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} showHud={djHudEnabled} />
+      {!isCatalog && (
+        <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} showHud={djHudEnabled} />
+      )}
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }}
+        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
         ))}
       </div>
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
-      {artistBgImage && !djModeActive && (
+      {artistBgImage && !djModeActive && !isCatalog && (
         <div
           className="absolute inset-0 pointer-events-none overflow-hidden"
           style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
@@ -2443,16 +2464,19 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 </>
               )}
             </div>
-            <InteractivityMenu
-              userId={effectiveUserId}
-              chatOpen={chatOpen}
-              onToggleChat={() => setChatOpen(!chatOpen)}
-              karaokeEnabled={karaokeEnabled}
-              onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-              showKaraoke={true}
-              isVideoChannel={isVideoChannel}
-              controlsVisible={controlsVisible}
-            />
+            {!isCatalog && (
+              <InteractivityMenu
+                userId={effectiveUserId}
+                chatOpen={chatOpen}
+                onToggleChat={() => setChatOpen(!chatOpen)}
+                karaokeEnabled={karaokeEnabled}
+                onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+                showKaraoke={true}
+                isVideoChannel={isVideoChannel}
+                controlsVisible={controlsVisible}
+                isCatalog={isCatalog}
+              />
+            )}
           </div>
         </div>
       </footer>
@@ -3002,6 +3026,7 @@ function InteractivityMenu({
   showKaraoke = true,
   isVideoChannel = false,
   controlsVisible = true,
+  isCatalog = false,
 }: {
   userId: string | null;
   chatOpen: boolean;
@@ -3011,6 +3036,7 @@ function InteractivityMenu({
   showKaraoke?: boolean;
   isVideoChannel?: boolean;
   controlsVisible?: boolean;
+  isCatalog?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
@@ -3112,7 +3138,7 @@ function InteractivityMenu({
   const initialShowTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!isVideoChannel) {
+    if (!isVideoChannel || isCatalog) {
       setAutoShowVisible(false);
       return;
     }

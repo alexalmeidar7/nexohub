@@ -522,9 +522,9 @@ export default function PlayerPage() {
     [canais]
   );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
-  const isYoutube = canal?.type === "youtube" || canal?.type === "catalog";
-  const isCatalog = canal?.type === "catalog";
-  const isVideo = canal?.type === "video" || canal?.type === "video_live";
+  const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
+  const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
+  const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
 
   // Fetch artist background image from Deezer
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
@@ -2948,7 +2948,7 @@ export default function PlayerPage() {
 
 
   // ===== New Apple-TV player screen (for audio and video channels) =====
-  if (canal && (isAudio || isVideo) && !isYoutube && !isCatalog) {
+  if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
       <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
         <AudioPlayerScreen
@@ -2996,6 +2996,7 @@ export default function PlayerPage() {
           radioUserId={profileRadioUserId}
           onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
           isVideoChannel={isVideo}
+          isCatalog={isCatalog}
         />
       </Suspense>
     );
@@ -3321,7 +3322,7 @@ export default function PlayerPage() {
       )}
 
       {/* Video element */}
-      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || isYoutube ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} />
+      <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || (isYoutube && !isCatalog) ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} src={isCatalog && requestedVideoId ? `https://www.youtube.com/embed/${requestedVideoId}` : undefined} />
       <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
 
       {/* Volume OSD — centered overlay */}
@@ -4005,6 +4006,7 @@ export default function PlayerPage() {
                       const meta = {
                         isVideo,
                         isAudio: !!a && !v,
+                        isCatalog,
                         mediaTag: tag,
                         hasMedia: !!media,
                         currentSrc: media?.currentSrc,
