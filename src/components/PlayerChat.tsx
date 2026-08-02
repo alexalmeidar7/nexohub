@@ -189,12 +189,18 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onClose();
+        if (showEmoji) {
+          setShowEmoji(false);
+        } else if (showSuggestions) {
+          setShowSuggestions(false);
+        } else {
+          onClose();
+        }
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, showEmoji, showSuggestions]);
 
   const handleJoin = () => {
     if (!nome.trim() || !cidade.trim()) return;
