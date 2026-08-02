@@ -27,7 +27,7 @@ export default function ModulosPage({ groups, onSelectGroup, onSelectChild, acce
     <div className="animate-fade-in pb-10">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">Módulos</h2>
-        <p className="text-sm text-slate-500">os demais usuário que tem no seu pacote esse opção de cadastro de cliente</p>
+        <p className="text-sm text-slate-500">o usuário sem ser o alex (super admin) cadastrar seus respectivos clientes</p>
       </div>
 
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
