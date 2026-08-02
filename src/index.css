@@ -1752,3 +1752,8 @@ img, video, canvas, svg { max-width: 100%; }
 [data-sonner-toaster] [data-sonner-toast] {
   z-index: 2147483647 !important;
 }
+ 
+.mask-fade-out-top {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+}
