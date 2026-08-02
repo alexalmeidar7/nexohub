@@ -202,23 +202,33 @@ const extractYoutubeVideoId = (input?: string | null) => {
   try {
     const parsed = new URL(raw);
     const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+    
+    // Handle youtube.com/watch?v=...
     const byQuery = normalizeYoutubeVideoId(parsed.searchParams.get("v"));
     if (byQuery) return byQuery;
 
+    // Handle youtu.be/xxxx
     if (host === "youtu.be") {
       return normalizeYoutubeVideoId(parsed.pathname.split("/").filter(Boolean)[0] || "");
     }
 
+    // Handle /embed/, /shorts/, /live/, /v/
     const parts = parsed.pathname.split("/").filter(Boolean);
     const markerIdx = parts.findIndex((p) => ["embed", "shorts", "live", "v"].includes(p));
     if (markerIdx >= 0) {
       return normalizeYoutubeVideoId(parts[markerIdx + 1] || "");
     }
   } catch {
-    // ignore and fallback below
+    // ignore
   }
 
   return normalizeYoutubeVideoId(raw);
+};
+
+const isYoutubeUrl = (url?: string | null) => {
+  if (!url) return false;
+  const id = extractYoutubeVideoId(url);
+  return !!id || url.includes("youtube.com") || url.includes("youtu.be");
 };
 
 function getCurrentProgram(programas: Programa[]): Programa | null {
@@ -527,10 +537,10 @@ export default function PlayerPage() {
     [canais]
   );
   const isAudio = canal?.type === "audio_live" || canal?.type === "audio";
-  const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube";
-  const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
-  const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
-  const isYoutubeContent = isYoutube || isCatalog || (isVideo && !!selectedVideoId);
+   const isYoutube = canal?.type === "video_youtube" || canal?.type === "youtube" || (!!canal?.url && isYoutubeUrl(canal.url));
+   const isCatalog = canal?.type === "catalog" || (!canal && requestedVideoId && !isTop10Mode);
+   const isVideo = canal?.type === "video" || canal?.type === "video_live" || isCatalog;
+   const isYoutubeContent = isYoutube || isCatalog || (isVideo && !!selectedVideoId);
 
   // Fetch artist background image from Deezer
   const isBreakTrack = musicData?.titulo?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "break" || musicData?.artista?.toLowerCase() === "vinhetas" || musicData?.titulo?.toLowerCase() === "hora certa" || musicData?.artista?.toLowerCase() === "hora certa";
@@ -1202,7 +1212,10 @@ export default function PlayerPage() {
     // Skip if Top 10 mode — playlist is already set from navigation state
     if (isTop10Mode) return;
 
-    if (!(isYoutube || isCatalog || isVideo) || !canal?.url) {
+    const isYtUrl = isYoutubeUrl(canal?.url);
+    const isActuallyYoutube = isYoutube || isYtUrl;
+
+    if (!(isActuallyYoutube || isCatalog || isVideo) || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
       return;
@@ -1660,7 +1673,12 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
-      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube";
+      
+      if (isYoutubeUrl(url)) {
+        console.log("[PLAYER] playStream called for YouTube URL, skipping native playback");
+        return;
+      }
+      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube" || isYoutubeUrl(url);
       setBuffering(!isYtOrCatalog);
       setPlaying(false);
       setStreamStalled(false);
@@ -2094,13 +2112,20 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube") {
+    const isYt = first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube" || isYoutubeUrl(first.url);
+    
+    if (isYt) {
       setStreamRequested(false);
+      setTransitionHold(true);
       setPlaying(true);
       setBuffering(false);
-      setSelectedVideoId(null);
+      const yId = extractYoutubeVideoId(first.url);
+      setSelectedVideoId(yId);
+      awaitingNextClipReadyRef.current = yId;
       setSidebarOpen(false);
     } else {
+      setSelectedVideoId(null);
+      setTransitionHold(false);
       setTimeout(() => playStream(first.url, first.type, true), 120);
     }
   }, [canais, playing, playStream, prerollDone, isAutoplayChannel, requestedChannelId]);
@@ -2190,6 +2215,13 @@ export default function PlayerPage() {
     setChannelAnimKey(prev => prev + 1);
     setCurrentIndex(nextIndex);
     setStreamRequested(false);
+    // Only use transitionHold for YouTube-based content to prevent cutting through
+    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube" || isYoutubeUrl(nextChannel.url)) {
+      setTransitionHold(true);
+      awaitingNextClipReadyRef.current = extractYoutubeVideoId(nextChannel.url);
+    } else {
+      setTransitionHold(false);
+    }
 
     // Stop any playing audio/video when switching channels — full cleanup
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
@@ -2198,12 +2230,14 @@ export default function PlayerPage() {
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
 
-    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube") {
+    const isYtNext = nextChannel.type === "youtube" || nextChannel.type === "video_youtube" || isYoutubeUrl(nextChannel.url);
+    if (isYtNext) {
       setPlaying(true);
       setBuffering(false);
-      setSelectedVideoId(null);
+      setSelectedVideoId(extractYoutubeVideoId(nextChannel.url));
       setSidebarOpen(false);
     } else {
+      setSelectedVideoId(null);
       void playStream(nextChannel.url, nextChannel.type, false, true);
     }
   }, [canal, canais, liveChannels, playStream]);
@@ -2518,12 +2552,13 @@ export default function PlayerPage() {
         if (data?.event === "infoDelivery" && data?.info) {
           if (typeof data.info.currentTime === "number") setYtCurrentTime(data.info.currentTime);
           if (typeof data.info.duration === "number") setYtDuration(data.info.duration);
-          // Readiness gate: if we are awaiting the next clip's media to load,
-          // lift the hold overlay only when a real duration (>0) is reported.
+          // Readiness gate: lift the hold overlay when a real duration is reported.
           const reportedDuration = typeof data.info.duration === "number" ? data.info.duration : 0;
-          if (awaitingNextClipReadyRef.current && reportedDuration > 0) {
-            awaitingNextClipReadyRef.current = null;
+          const playerState = typeof data.info.playerState === "number" ? data.info.playerState : null;
+          
+          if (reportedDuration > 0 || playerState === 1) {
             setTransitionHold(false);
+            awaitingNextClipReadyRef.current = null;
           }
           // playerState 0 = ENDED — but YouTube sometimes fires it spuriously
           // (e.g. while the source is still loading or during quality switch),
@@ -2552,6 +2587,8 @@ export default function PlayerPage() {
         }
         // When iframe is ready, start listening and force HD quality
         if (data?.event === "onReady" || data?.event === "initialDelivery") {
+          setTransitionHold(false);
+          awaitingNextClipReadyRef.current = null;
           ytPostMessage("addEventListener", ["onStateChange"]);
           ytPostMessage("setPlaybackQuality", ["hd1080"]);
           ytPostMessage("setPlaybackQualityRange", [{ min: "hd1080", max: "highres" }]);
@@ -3029,6 +3066,7 @@ export default function PlayerPage() {
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
         const bgThumb = currentProg?.thumb || currentProg?.capa;
+        if (isYoutubeContent) return null;
         // Audio channels always use gradient background (no thumb)
         if (isAudio) {
           const c1 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color1").trim() || "hsl(var(--player-accent))";
@@ -3269,21 +3307,14 @@ export default function PlayerPage() {
       )}
 
       {/* Background Video Element (Strictly for non-YouTube channels) */}
-      {isVideo && !isYoutubeContent && (
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover z-0"
-          playsInline
-          muted={muted}
-          onContextMenu={(e) => e.preventDefault()}
-        />
-      )}
+      {/* Handled by the unified video element below */}
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutubeContent && !selectedVideoId && (
-        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700"
-          style={{ backgroundImage: `url(${youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : ''})`, backgroundColor: '#111' }}
-        />
+        <div className="absolute inset-0 bg-cover bg-center transition-all duration-700 flex items-center justify-center"
+          style={{ backgroundImage: `url(${youtubeVideos.length > 0 ? youtubeVideos[0].thumbnail.replace('default.jpg','maxresdefault.jpg') : ''})`, backgroundColor: '#111' }}>
+          <ElegantLoader size={48} />
+        </div>
       )}
 
       {/* YouTube: Subtle bottom gradient only for control bar readability */}
