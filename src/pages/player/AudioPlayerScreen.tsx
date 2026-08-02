@@ -3416,10 +3416,11 @@ function PollDialog({
           </div>
           <button
             onClick={requestClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group"
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group relative"
             data-focusable
           >
-            <X size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" />
+            <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+            <ArrowLeft size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform relative z-10" />
           </button>
         </div>
 
