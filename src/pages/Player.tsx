@@ -3245,6 +3245,7 @@ export default function PlayerPage() {
 
 
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
+      {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {(isYoutube || isCatalog) && selectedVideoId && (
         <div className="absolute inset-0 z-0 overflow-hidden">
           <iframe
@@ -3261,23 +3262,6 @@ export default function PlayerPage() {
             allow="autoplay; encrypted-media"
           />
           {/* Transparent overlay to block YouTube controls on pause */}
-          <div className="absolute inset-0 z-[1] pointer-events-none" />
-        </div>
-      )}
-
-      {/* Catalog: Fullscreen background video iframe for non-Youtube sources */}
-      {isCatalog && selectedVideoId && !isYoutube && (
-        <div className="absolute inset-0 z-0 overflow-hidden">
-          <iframe
-            ref={ytIframeRef}
-            className="absolute pointer-events-none"
-            style={{
-              width: "100%", height: "100%", top: "0", left: "0", border: "none",
-              opacity: midrollFading === "out" || midrollActive || top10Fading === "out" ? 0 : 1,
-            }}
-            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&modestbranding=1&enablejsapi=1&playsinline=1&iv_load_policy=3&disablekb=1&vq=hd1080&origin=${window.location.origin}`}
-            allow="autoplay; encrypted-media"
-          />
           <div className="absolute inset-0 z-[1] pointer-events-none" />
         </div>
       )}
