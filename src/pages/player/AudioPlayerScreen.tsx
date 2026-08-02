@@ -1785,7 +1785,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 position: "relative",
                 overflow: "hidden",
                 borderRadius: 40,
-                transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
+                transform: `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
                 transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
                 willChange: "transform",
                 touchAction: "pan-y",
