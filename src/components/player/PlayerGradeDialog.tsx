@@ -254,9 +254,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
             </div>
             <button
               onClick={() => { onClose(); setDetailProg(null); }}
-              className="text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
+              className="relative group text-white/30 hover:text-white hover:bg-white/10 rounded-2xl p-2.5 transition-all duration-200"
             >
-              <X size={20} />
+              <div className="absolute inset-0 rounded-2xl border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+              <ArrowLeft size={20} className="relative z-10" />
             </button>
           </div>
           {/* Weekday columns - fixed */}
@@ -420,9 +421,10 @@ function PlayerGradeDialog({ programas, onClose }: Props) {
                 {/* Close button */}
                 <button
                   onClick={() => setDetailProg(null)}
-                  className="absolute top-3 right-3 text-white/50 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-2 transition-all duration-200 backdrop-blur-sm"
+                  className="absolute top-3 right-3 relative group text-white/50 hover:text-white bg-black/30 hover:bg-black/50 rounded-full p-2 transition-all duration-200 backdrop-blur-sm"
                 >
-                  <X size={16} />
+                  <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+                  <ArrowLeft size={16} className="relative z-10" />
                 </button>
 
                 {/* Program initial if no cover */}
