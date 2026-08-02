@@ -2381,14 +2381,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       <div className="flex-1 text-[11px] uppercase tracking-[0.16em] text-white/60 font-medium">
                         Últimas {history.length} músicas
                       </div>
-                      <button
-                        type="button"
+                      <PlayerBackButton
                         onClick={() => setPlayedListOpen(false)}
-                        className="h-6 w-6 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition"
-                        aria-label="Fechar"
-                      >
-                        <X size={14} />
-                      </button>
+                        className="h-7 w-7"
+                        iconSize={14}
+                        aria-label="Voltar"
+                      />
                     </div>
                     {history.length === 0 ? (
                       <div className="px-4 py-8 text-center text-[12px] text-white/50">
