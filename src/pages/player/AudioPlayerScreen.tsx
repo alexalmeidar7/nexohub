@@ -1658,7 +1658,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         }}
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "transparent" }}>
                         <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
                       </div>
                     )}
