@@ -2210,10 +2210,11 @@ export default function PlayerPage() {
     setHlsLevels([]);
     setHlsCurrentLevel(-1);
 
-    if (nextChannel.type === "youtube" || nextChannel.type === "video_youtube") {
+    const isYtNext = nextChannel.type === "youtube" || nextChannel.type === "video_youtube" || isYoutubeUrl(nextChannel.url);
+    if (isYtNext) {
       setPlaying(true);
       setBuffering(false);
-      setSelectedVideoId(null);
+      setSelectedVideoId(extractYoutubeVideoId(nextChannel.url));
       setSidebarOpen(false);
     } else {
       void playStream(nextChannel.url, nextChannel.type, false, true);
