@@ -1983,13 +1983,14 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 );
               })}
               {upcomingProgs.slice(0, UPCOMING_VISIBLE).map((p, i) => {
-                const depth = i - progNavIndex;
+                const depth = i;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
-                const translateX = depth * 72;
-                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
-                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
-                const isActive = depth === 0;
+                // Card ativo (i=progNavIndex) fica parado à esquerda do seu grupo, os outros se movem
+                const translateX = i === progNavIndex ? 0 : (i - progNavIndex) * 72;
+                const opacity = i < progNavIndex ? 0 : i === progNavIndex ? 1 : Math.max(0, 0.9 - (i - progNavIndex) * 0.16);
+                const blur = i === progNavIndex ? 0 : Math.min(Math.abs(i - progNavIndex) * 1.4, 6);
+                const isActive = i === progNavIndex;
                 const isFirst = i === 0;
                 const cover = p?.thumb || p?.capa || null;
                 const size = isActive ? 280 : 240;
@@ -2003,7 +2004,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
                       filter: `blur(${blur}px)`,
-                      zIndex: 20 - abs,
+                      zIndex: 20 - Math.abs(i - progNavIndex),
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
                     }}
                   >
