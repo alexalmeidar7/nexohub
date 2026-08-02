@@ -1863,7 +1863,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onClick={() => setGradeOpen(true)}
             className="w-11 h-11 rounded-full flex items-center justify-center border border-white/25 hover:bg-white/10 transition"
             style={{
-              transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
+              transform: "translateY(0)",
               transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
             aria-label="Ver grade completa de programação"
