@@ -3282,15 +3282,7 @@ export default function PlayerPage() {
       )}
 
       {/* Background Video Element (Strictly for non-YouTube channels) */}
-      {isVideo && !isYoutubeContent && (
-        <video
-          ref={videoRef}
-          className="absolute inset-0 w-full h-full object-cover z-0"
-          playsInline
-          muted={muted}
-          onContextMenu={(e) => e.preventDefault()}
-        />
-      )}
+      {/* Handled by the unified video element below */}
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
       {isYoutubeContent && !selectedVideoId && (
