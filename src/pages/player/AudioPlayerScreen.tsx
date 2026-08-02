@@ -2987,6 +2987,8 @@ function InteractivityMenu({
   karaokeEnabled,
   onToggleKaraoke,
   showKaraoke = true,
+  isVideoChannel = false,
+  controlsVisible = true,
 }: {
   userId: string | null;
   chatOpen: boolean;
@@ -2994,6 +2996,8 @@ function InteractivityMenu({
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
   showKaraoke?: boolean;
+  isVideoChannel?: boolean;
+  controlsVisible?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pollOpen, setPollOpen] = useState(false);
