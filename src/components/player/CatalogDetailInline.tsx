@@ -325,16 +325,22 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const startAutoScroll = useCallback((direction: "left" | "right") => {
     const scroll = () => {
       if (!scrollRef.current) return;
-      const speed = 2.5;
-      scrollRef.current.scrollLeft += direction === "right" ? speed : -speed;
-      scrollAnimRef.current = requestAnimationFrame(scroll);
+      const step = direction === "right" ? 1 : -1;
+      setActiveIndex(prev => Math.max(0, Math.min(videos.length - 1, prev + step)));
+      
+      // We don't use requestAnimationFrame for index-based navigation
+      // as it would be way too fast. We use a slower interval or just rely on mouseenter/move.
+      // However, the user request says "o card em foco ativo, sempre fica parado no canto esquerdo na primeira linha".
     };
-    scrollAnimRef.current = requestAnimationFrame(scroll);
-  }, []);
+    
+    // For index based navigation, a simple interval is better
+    if (scrollAnimRef.current) clearInterval(scrollAnimRef.current);
+    scrollAnimRef.current = setInterval(scroll, 200) as any;
+  }, [videos.length]);
 
   const stopAutoScroll = useCallback(() => {
     if (scrollAnimRef.current) {
-      cancelAnimationFrame(scrollAnimRef.current);
+      clearInterval(scrollAnimRef.current);
       scrollAnimRef.current = null;
     }
   }, []);
