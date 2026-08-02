@@ -271,15 +271,41 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
                 autoFocus
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 relative">
               <label className="text-[10px] uppercase tracking-wider text-white/40 ml-1">Sua localização</label>
               <input
                 placeholder="Ex: São Paulo, SP"
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
+                onFocus={() => cidade.length >= 3 && setShowSuggestions(true)}
                 className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
                 style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
               />
+              {showSuggestions && suggestions.length > 0 && (
+                <div 
+                  ref={suggestionsRef}
+                  className="absolute left-0 right-0 top-full mt-2 z-[70] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                  style={{ 
+                    background: "rgba(35,35,38,0.98)", 
+                    borderRadius: 20, 
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.8)"
+                  }}
+                >
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setCidade(s);
+                        setShowSuggestions(false);
+                      }}
+                      className="w-full px-5 py-3 text-left text-sm text-white/80 hover:bg-white/10 hover:text-white transition-colors border-b border-white/5 last:border-0"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <button
