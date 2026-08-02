@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings } from "lucide-react";
+import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { WeatherIcon } from "@/components/WeatherIcons";
@@ -2132,24 +2133,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           {/* Left: voltar + volume */}
           <div className="flex items-center gap-2">
-            <button
+            <PlayerBackButton
               onClick={handleBackHome}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0 relative group"
               aria-label="Voltar para Home"
               title="Voltar para Home"
-              data-focusable
-            >
-              <div className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-                   style={{
-                     background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-                     WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                     WebkitMaskComposite: "destination-out",
-                     maskComposite: "exclude",
-                     animation: "interactSpin 3s linear infinite"
-                   }} 
-              />
-              <ArrowLeft size={22} className="relative z-10" />
-            </button>
+            />
 
             {(() => {
               const vol = muted ? 0 : volume;
@@ -2393,14 +2381,12 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       <div className="flex-1 text-[11px] uppercase tracking-[0.16em] text-white/60 font-medium">
                         Últimas {history.length} músicas
                       </div>
-                      <button
-                        type="button"
+                      <PlayerBackButton
                         onClick={() => setPlayedListOpen(false)}
-                        className="h-6 w-6 rounded-full flex items-center justify-center text-white/40 hover:text-white/80 hover:bg-white/10 transition"
-                        aria-label="Fechar"
-                      >
-                        <X size={14} />
-                      </button>
+                        className="h-7 w-7"
+                        iconSize={14}
+                        aria-label="Voltar"
+                      />
                     </div>
                     {history.length === 0 ? (
                       <div className="px-4 py-8 text-center text-[12px] text-white/50">
@@ -3429,14 +3415,12 @@ function PollDialog({
               {poll.pergunta}
             </h3>
           </div>
-          <button
+          <PlayerBackButton
             onClick={requestClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group relative"
-            data-focusable
-          >
-            <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
-            <ArrowLeft size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform relative z-10" />
-          </button>
+            className="w-9 h-9"
+            iconSize={16}
+            aria-label="Voltar"
+          />
         </div>
 
         <div className="flex flex-col gap-3">

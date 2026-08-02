@@ -2,7 +2,8 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Film, Home, Radio, ShoppingBag, Calendar, ArrowLeft } from "lucide-react";
+import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
 import { usePublicHead } from "@/hooks/usePageTitle";
@@ -167,13 +168,12 @@ export default function PlayerCatalog() {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, hsla(var(--player-bg) / 0.4) 0%, transparent 20%)" }} />
 
           {/* Back button */}
-          <button
+          <PlayerBackButton
             onClick={goBack}
-            className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-medium tracking-wide uppercase"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Voltar
-          </button>
+            className="absolute top-6 left-6 z-20 w-10 h-10"
+            iconSize={18}
+            aria-label="Voltar"
+          />
 
           {/* Content: logo + description, bottom-left */}
           <div className="absolute bottom-10 left-8 sm:left-12 z-10 max-w-xl flex flex-col gap-4">

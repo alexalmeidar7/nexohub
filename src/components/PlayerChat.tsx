@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send, Smile, X } from "lucide-react";
+import { PlayerBackButton } from "./player/PlayerBackButton";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatMessage {
@@ -362,21 +363,12 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
             </span>
             <span className="text-[9px] uppercase tracking-[0.2em] text-white/50 font-bold">chat ao vivo</span>
           </div>
-          <button
+          <PlayerBackButton
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 border border-white/10 transition-all group relative"
-          >
-            <div className="absolute inset-[-3px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-                 style={{
-                   background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-                   WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                   WebkitMaskComposite: "destination-out",
-                   maskComposite: "exclude",
-                   animation: "interactSpin 3s linear infinite"
-                 }} 
-            />
-            <ArrowLeft size={14} className="text-white/60 group-hover:text-white relative z-10" />
-          </button>
+            className="w-8 h-8"
+            iconSize={14}
+            aria-label="Voltar"
+          />
         </div>
 
         {/* Messages */}

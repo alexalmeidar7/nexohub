@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Play, Film, Calendar, Clock, Plus, Minus } from "lucide-react";
+import { Play, Film, Calendar, Clock, Plus, Minus, ArrowLeft } from "lucide-react";
+import { PlayerBackButton } from "./PlayerBackButton";
 import backArrowImg from "@/assets/back-arrow.png";
 import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
@@ -393,13 +394,12 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           ) : (
             <div className="animate-fade-in" key="content-hero">
               {/* Back arrow */}
-              <button
+              <PlayerBackButton
                 onClick={onBack}
-                className="mb-3 w-10 h-10 rounded-full flex items-center justify-center hover:opacity-80 transition-opacity"
-                title="Voltar"
-              >
-                <img src={backArrowImg} alt="Voltar" className="w-10 h-10" />
-              </button>
+                className="mb-4 w-10 h-10"
+                iconSize={20}
+                aria-label="Voltar"
+              />
               {logoUrl ? (
                 <img
                   src={logoUrl}
