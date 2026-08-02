@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Play, Heart, Music, Loader2, ArrowLeft, RefreshCw } from "lucide-react";
+import { PlayerBackButton } from "./PlayerBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface PlaylistVideo {
