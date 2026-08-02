@@ -1262,9 +1262,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div
-      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+      className="relative h-full w-full overflow-y-auto scrollbar-hide text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
       style={{
-        background: "#050810",
+        background: "transparent",
         fontFamily: "'Lufga', 'Inter', sans-serif",
         opacity: exiting ? 0 : 1,
         transform: exiting ? "scale(0.97)" : "scale(1)",
