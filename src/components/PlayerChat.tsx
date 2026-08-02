@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Minus, Send, Smile } from "lucide-react";
+import { X, Send, Smile } from "lucide-react";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatMessage {
@@ -31,14 +31,13 @@ function formatMsgTime(iso: string): string {
   }
 }
 
-export default function PlayerChat({ channelId, onClose, shopOpen = false, radioUserId }: PlayerChatProps) {
+export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerChatProps) {
   const [joined, setJoined] = useState(false);
   const [nome, setNome] = useState("");
   const [cidade, setCidade] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [minimized, setMinimized] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -83,11 +82,9 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
           setIsLoggedIn(true);
           setJoined(true);
         } else {
-          // Logged in but no profile name yet
           setCidade(userLocation);
         }
       } else {
-        // Not logged in, still pre-fill location
         setCidade(userLocation);
       }
     };
@@ -151,7 +148,6 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
     const msg = input.trim();
     setInput("");
     setShowEmoji(false);
-    // Optimistic update — show message instantly
     const optimisticMsg: ChatMessage = {
       id: "optimistic-" + Date.now(),
       nome,
@@ -166,7 +162,6 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
       cidade,
       message: msg,
     });
-    // Cleanup: keep only last 100 messages per channel
     const { data: allMsgs } = await supabase
       .from("player_chat_messages")
       .select("id")
@@ -193,19 +188,14 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
   // Login popup
   if (!joined) {
     return (
-      <div
-        className="fixed inset-0 z-[60] flex items-center justify-center animate-fade-in"
-        style={{
-          background: "transparent",
-        }}
-      >
+      <div className="fixed inset-0 z-[60] flex items-center justify-center animate-fade-in" style={{ background: "transparent" }}>
         <div
           className="w-[360px] flex flex-col gap-6 animate-scale-in"
           style={{
             padding: "28px 26px 24px",
             borderRadius: 32,
-            background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-            border: "none",
+            background: "rgba(35,35,38,0.95)",
+            border: "1px solid rgba(255,255,255,0.06)",
             boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           }}
         >
@@ -217,9 +207,8 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
             <button
               onClick={onClose}
               className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group"
-              aria-label="Fechar"
             >
-              <X size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" />
+              <X size={16} className="text-white/60 group-hover:text-white" />
             </button>
           </div>
           <div className="flex flex-col gap-3">
@@ -230,12 +219,7 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-                onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.35)")}
-                onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
                 autoFocus
               />
             </div>
@@ -246,231 +230,136 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
                 value={cidade}
                 onChange={(e) => setCidade(e.target.value)}
                 className="w-full rounded-2xl text-white px-5 py-4 text-sm placeholder:text-white/25 focus:outline-none transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-                onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.35)")}
-                onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.10)" }}
               />
             </div>
           </div>
           <button
             onClick={handleJoin}
             disabled={!nome.trim() || !cidade.trim()}
-            className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: "linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(235,235,235,1) 100%)",
-              color: "#000",
-              boxShadow: "0 10px 30px -10px rgba(255,255,255,0.3), inset 0 1px 0 rgba(255,255,255,0.6)",
-            }}
+            className="w-full py-4 rounded-2xl text-sm font-bold tracking-wide transition-all disabled:opacity-30 hover:scale-[1.02] active:scale-[0.98]"
+            style={{ background: "#fff", color: "#000" }}
           >
             Participar da conversa
           </button>
-          <p className="text-[11px] text-white/30 text-center leading-relaxed font-medium">
-            Ao entrar, você concorda com nossas diretrizes de comunidade.
-          </p>
         </div>
       </div>
     );
   }
 
-
-
-  // Minimized
-  if (minimized) {
-    return (
-      <div
-        className="fixed z-[55] rounded-xl border border-white/10 px-4 py-2 flex items-center gap-3 cursor-pointer"
-        style={{ backgroundColor: "rgba(15,15,15,0.95)", bottom: "165px", right: "calc(10% + 8px)" }}
-        onClick={() => setMinimized(false)}
-      >
-        <span className="text-white text-sm font-bold">💬 Chat</span>
-        <span className="text-white/40 text-xs">({messages.length})</span>
-      </div>
-    );
-  }
-
-  // Full chat — positioned same as shopping panel
   return (
     <div
-      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-300"
-      style={{ bottom: "170px", right: "20px", width: "360px" }}
+      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
+      style={{ bottom: "170px", right: "20px", width: "360px", height: "clamp(320px, calc(100vh - 335px), 520px)" }}
     >
-      <div className="w-full">
-        <div
-          className="flex flex-col overflow-hidden"
-          style={{
-            height: "clamp(320px, calc(100vh - 335px), 520px)",
-            borderRadius: 32,
-            background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-            border: "none",
-            backdropFilter: "blur(28px) saturate(140%)",
-            WebkitBackdropFilter: "blur(28px) saturate(140%)",
-            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
+      {/* Background Gradient Shadow */}
+      <div 
+        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{
+          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+          zIndex: -1,
+          opacity: 1
+        }}
+      />
 
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60 opacity-60"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.22em] text-white/70 font-medium">chat ao vivo</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setMinimized(true)}
-                className="w-7 h-7 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-white/25 transition"
-                title="Minimizar"
-              >
-                <Minus size={13} className="text-white/70" />
-              </button>
-              <button
-                onClick={onClose}
-                className="w-7 h-7 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-white/25 transition"
-                title="Fechar"
-              >
-                <X size={13} className="text-white/70" />
-              </button>
-            </div>
+      <div className="w-full h-full flex flex-col pointer-events-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between px-2 py-2 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/40 opacity-60"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.2em] text-white/50 font-bold">chat ao vivo</span>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 border border-white/10 transition-all group"
+          >
+            <X size={14} className="text-white/60 group-hover:text-white" />
+          </button>
+        </div>
 
-          {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 chat-scroll">
-            {messages.length === 0 && (
-              <div className="h-full flex items-center justify-center text-center px-4">
-                <span className="text-[12px] text-white/40 italic">Seja o primeiro a mandar uma mensagem</span>
-              </div>
-            )}
-            {messages.map((msg) => {
-              const isMe = msg.nome === nome && msg.cidade === cidade;
-              return (
-                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : "flex-row"} animate-fade-in`}>
-                  {/* Avatar */}
-                  {isMe && avatarUrl ? (
-                    <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-3 border border-white/15" />
-                  ) : (
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-3"
-                      style={{
-                        background: "linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))",
-                        border: "1px solid rgba(255,255,255,0.10)",
-                      }}
-                    >
-                      <span className="text-[10px] text-white/70 font-semibold">{msg.nome.charAt(0).toUpperCase()}</span>
-                    </div>
-                  )}
-                  <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[80%]`}>
-                    <span className="text-[10px] text-white/45 mb-1 px-1">
-                      <span className="font-semibold text-white/70">{msg.nome}</span>
-                      <span className="text-white/30"> · {msg.cidade}</span>
-                      <span className="ml-1.5 text-white/25">{formatMsgTime(msg.created_at)}</span>
-                    </span>
-                    <div
-                      className="rounded-2xl px-3.5 py-2 text-[13px] leading-snug break-words"
-                      style={
-                        isMe
-                          ? {
-                              background: "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(230,230,230,0.88) 100%)",
-                              color: "#111",
-                              borderTopRightRadius: 6,
-                              boxShadow: "0 6px 18px -8px rgba(255,255,255,0.2)",
-                            }
-                          : {
-                              background: "rgba(255,255,255,0.07)",
-                              color: "rgba(255,255,255,0.92)",
-                              border: "1px solid rgba(255,255,255,0.08)",
-                              borderTopLeftRadius: 6,
-                            }
-                      }
-                    >
-                      {msg.message}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Emoji picker */}
-          {showEmoji && (
-            <div className="absolute bottom-16 left-0 right-0 z-10 flex justify-center px-2">
-              <div
-                className="rounded-2xl overflow-hidden shadow-2xl"
-                style={{
-                  background: "rgba(10,10,10,0.75)",
-                  backdropFilter: "blur(20px)",
-                  WebkitBackdropFilter: "blur(20px)",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                }}
-              >
-                <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-                  <span className="text-white/60 text-[11px] uppercase tracking-[0.18em]">emojis</span>
-                  <button onClick={() => setShowEmoji(false)} className="text-white/40 hover:text-white transition-colors">
-                    <X size={13} />
-                  </button>
-                </div>
-                <EmojiPicker
-                  onEmojiClick={onEmojiClick}
-                  theme={Theme.DARK}
-                  width={310}
-                  height={300}
-                  searchPlaceholder="Buscar emoji..."
-                  skinTonesDisabled
-                  previewConfig={{ showPreview: false }}
-                />
-              </div>
+        {/* Messages */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-1 space-y-2.5 chat-scroll pb-4 mask-fade-top">
+          {messages.length === 0 && (
+            <div className="h-full flex items-center justify-center text-center px-4">
+              <span className="text-[12px] text-white/40 italic">Seja o primeiro a mandar uma mensagem</span>
             </div>
           )}
+          {messages.map((msg) => {
+            const isMe = msg.nome === nome && msg.cidade === cidade;
+            return (
+              <div key={msg.id} className="flex flex-col gap-1.5 animate-in slide-in-from-bottom-2 duration-300">
+                <div 
+                  className="rounded-[24px] px-4 py-3 flex items-start gap-3"
+                  style={{
+                    background: "rgba(35,35,38,0.85)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    boxShadow: "0 8px 32px -4px rgba(0,0,0,0.4)"
+                  }}
+                >
+                  <div 
+                    className="flex-shrink-0"
+                    style={{ borderLeft: "2px solid #C6F03C", height: "32px", marginRight: "4px", opacity: 0.8 }}
+                  />
+                  {avatarUrl && isMe ? (
+                    <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.1)" }}
+                    >
+                      <span className="text-[11px] text-white/70 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[11px] font-bold text-white/90 truncate">{msg.nome}</span>
+                      <span className="text-[9px] text-white/30 truncate">{msg.cidade}</span>
+                    </div>
+                    <p className="text-[13px] leading-[1.4] text-white/85 break-words">{msg.message}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Input */}
-          <div
-            className="px-3 py-3 flex items-center gap-2"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
-          >
-            <button
-              onClick={() => setShowEmoji(!showEmoji)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition ${
-                showEmoji
-                  ? "bg-white/15 border-white/25 text-white"
-                  : "border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
-              }`}
-              aria-label="Emojis"
-            >
-              <Smile size={16} />
-            </button>
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Digite sua mensagem…"
-              className="flex-1 rounded-full text-white px-4 py-2.5 text-[13px] placeholder:text-white/35 focus:outline-none transition"
+        {/* Emoji picker */}
+        {showEmoji && (
+          <div className="absolute bottom-16 left-0 right-0 z-10 flex justify-center px-2">
+            <div
+              className="rounded-2xl overflow-hidden shadow-2xl"
               style={{
-                background: "rgba(255,255,255,0.06)",
+                background: "rgba(10,10,10,0.75)",
+                backdropFilter: "blur(20px)",
                 border: "1px solid rgba(255,255,255,0.10)",
               }}
-              onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.28)")}
-              onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
-              style={{
-                background: input.trim()
-                  ? "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(230,230,230,0.85) 100%)"
-                  : "rgba(255,255,255,0.06)",
-                color: input.trim() ? "#111" : "rgba(255,255,255,0.4)",
-                border: input.trim() ? "none" : "1px solid rgba(255,255,255,0.10)",
-                boxShadow: input.trim() ? "0 6px 18px -8px rgba(255,255,255,0.35)" : "none",
-              }}
-              aria-label="Enviar"
             >
-              <Send size={15} />
+              <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.DARK} width={310} height={300} searchPlaceholder="Buscar emoji..." skinTonesDisabled previewConfig={{ showPreview: false }} />
+            </div>
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="mt-2 px-1 py-1 flex items-center gap-2">
+          <div 
+            className="flex-1 flex items-center gap-2 rounded-full px-4 py-3"
+            style={{
+              background: "rgba(255,255,255,0.1)",
+              backdropFilter: "blur(16px)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
+            }}
+          >
+            <button onClick={() => setShowEmoji(!showEmoji)} className={`w-7 h-7 flex items-center justify-center transition-colors ${showEmoji ? "text-white" : "text-white/40 hover:text-white"}`}>
+              <Smile size={18} />
+            </button>
+            <input ref={inputRef} value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown} placeholder="Participar da conversa..." className="flex-1 bg-transparent text-white text-[13px] placeholder:text-white/30 focus:outline-none" />
+            <button onClick={handleSend} disabled={!input.trim()} className="w-7 h-7 flex items-center justify-center text-white/40 hover:text-white disabled:opacity-20 transition-all">
+              <Send size={16} />
             </button>
           </div>
         </div>
@@ -478,4 +367,3 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
     </div>
   );
 }
-

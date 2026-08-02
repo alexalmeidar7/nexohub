@@ -3304,6 +3304,15 @@ function PollDialog({
         opacity: visible ? 1 : 0,
       }}
     >
+      <div 
+        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{
+          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+          zIndex: -1,
+          opacity: visible ? 1 : 0
+        }}
+      />
+
       <div
         role="dialog"
         aria-modal="true"
@@ -3311,8 +3320,10 @@ function PollDialog({
         style={{
           padding: "28px 26px 24px",
           borderRadius: 32,
-          background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-          border: "none",
+          background: "rgba(35,35,38,0.85)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: "1px solid rgba(255,255,255,0.06)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           opacity: visible ? 1 : 0,
           marginBottom: "140px",
