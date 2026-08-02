@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Send, Smile } from "lucide-react";
+import { ArrowLeft, Send, Smile, X } from "lucide-react";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 
 interface ChatMessage {
@@ -348,9 +348,10 @@ export default function PlayerChat({ channelId, onClose, radioUserId }: PlayerCh
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 border border-white/10 transition-all group"
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 border border-white/10 transition-all group relative"
           >
-            <X size={14} className="text-white/60 group-hover:text-white" />
+            <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+            <ArrowLeft size={14} className="text-white/60 group-hover:text-white" />
           </button>
         </div>
 

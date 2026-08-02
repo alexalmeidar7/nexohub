@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Music2, X } from "lucide-react";
+import { Music2, ArrowLeft } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 
@@ -113,11 +113,12 @@ export default function LyricsPopup({ open, artist, title, duration, onClose }: 
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border border-white/15 text-white/80 hover:bg-white/10 hover:border-white/30 transition"
-            aria-label="Fechar letra"
+            className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center border border-white/15 text-white/80 hover:bg-white/10 hover:border-white/30 transition relative group"
+            aria-label="Voltar"
             data-focusable
           >
-            <X size={14} />
+            <div className="absolute inset-0 rounded-full border border-white/0 group-hover:border-white/20 transition-all duration-300" />
+            <ArrowLeft size={14} />
           </button>
         </div>
 
