@@ -1659,10 +1659,10 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
-      setBuffering(true);
+      setBuffering(type !== "youtube" && type !== "catalog");
       setPlaying(false);
       setStreamStalled(false);
-      setStreamRequested(true);
+      setStreamRequested(type !== "youtube" && type !== "catalog");
 
       const isAudioType = type === "audio_live" || type === "audio";
       const shouldResetAutoplayMute = Boolean(userInitiated && autoplayMutedRef.current && volumeRef.current > 0);
