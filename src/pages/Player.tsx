@@ -2094,7 +2094,7 @@ export default function PlayerPage() {
     if (!first) return;
 
     setCurrentIndex(startIndex);
-    if (first.type === "youtube" || first.type === "catalog") {
+    if (first.type === "youtube" || first.type === "catalog" || first.type === "video_youtube") {
       setStreamRequested(false);
       setPlaying(true);
       setBuffering(false);
@@ -3123,7 +3123,7 @@ export default function PlayerPage() {
         const hasMedia = Boolean(audioRef.current?.src) || Boolean(videoRef.current?.src);
         const show = Boolean(canal) && !playing && !isYoutubeContent && (streamRequested || buffering || streamStalled || !hasMedia);
         if (!show) return null;
-        const title = streamStalled ? "Reconectando canal..." : buffering ? "YouTube on demand, sem bloquear a reprodução." : "Toque para ouvir";
+        const title = streamStalled ? "Reconectando canal..." : (buffering || streamRequested) ? "YouTube on demand, sem bloquear a reprodução." : "Toque para ouvir";
         return (
           <div className="absolute inset-0 flex flex-col items-center justify-center z-20 px-4">
             <div className="w-full max-w-sm rounded-3xl px-6 py-7 text-center backdrop-blur-2xl" style={{ backgroundColor: "rgba(8,8,8,0.55)", border: "1px solid hsla(var(--player-accent) / 0.22)", boxShadow: "0 24px 80px rgba(0,0,0,0.45)" }}>
@@ -3249,7 +3249,7 @@ export default function PlayerPage() {
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {/* YouTube / Catalog: Fullscreen background video iframe — proper aspect ratio */}
       {isYoutubeContent && selectedVideoId && (
-        <div className="absolute inset-0 z-0 overflow-hidden">
+        <div className="absolute inset-0 z-0 overflow-hidden bg-black">
           <iframe
             ref={ytIframeRef}
             className="absolute pointer-events-none"
@@ -3266,6 +3266,17 @@ export default function PlayerPage() {
           {/* Transparent overlay to block YouTube controls on pause */}
           <div className="absolute inset-0 z-[1] pointer-events-none" />
         </div>
+      )}
+
+      {/* Background Video Element (Strictly for non-YouTube channels) */}
+      {isVideo && !isYoutubeContent && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          playsInline
+          muted={muted}
+          onContextMenu={(e) => e.preventDefault()}
+        />
       )}
 
       {/* YouTube: Thumbnail placeholder when no video selected */}
