@@ -2133,24 +2133,11 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
         <div className="mt-4 grid items-center" style={{ gridTemplateColumns: "1fr auto 1fr" }}>
           {/* Left: voltar + volume */}
           <div className="flex items-center gap-2">
-            <button
+            <PlayerBackButton
               onClick={handleBackHome}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 border border-white/10 transition shrink-0 relative group"
               aria-label="Voltar para Home"
               title="Voltar para Home"
-              data-focusable
-            >
-              <div className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-                   style={{
-                     background: "linear-gradient(var(--player-accent, #00BFF0), var(--player-accent-hover, #C6F03C)) border-box",
-                     WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                     WebkitMaskComposite: "destination-out",
-                     maskComposite: "exclude",
-                     animation: "interactSpin 3s linear infinite"
-                   }} 
-              />
-              <ArrowLeft size={22} className="relative z-10" />
-            </button>
+            />
 
             {(() => {
               const vol = muted ? 0 : volume;
