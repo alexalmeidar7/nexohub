@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo, useEffect, memo } from "react";
+import { useState, useRef, useMemo, useEffect, memo, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import { PlayerBackButton } from "./PlayerBackButton";
 import { format, addDays, startOfWeek } from "date-fns";
