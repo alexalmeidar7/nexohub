@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, memo } from "react";
-import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2 } from "lucide-react";
+import { X, Clock, Radio, MapPin, Calendar, Tag, Shield, Sparkles, Loader2, ArrowLeft } from "lucide-react";
 import { format, addDays, startOfWeek } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
