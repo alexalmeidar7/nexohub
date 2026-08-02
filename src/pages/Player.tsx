@@ -2236,6 +2236,7 @@ export default function PlayerPage() {
       setSelectedVideoId(extractYoutubeVideoId(nextChannel.url));
       setSidebarOpen(false);
     } else {
+      setSelectedVideoId(null);
       void playStream(nextChannel.url, nextChannel.type, false, true);
     }
   }, [canal, canais, liveChannels, playStream]);
