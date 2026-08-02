@@ -2350,7 +2350,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             >
               {isFullscreen ? <Minimize2 size={22} /> : <Maximize2 size={22} />}
             </button>
-            {!isVideoChannel && (
+            {(true || !isVideoChannel) && (
               <div className="relative">
                 <button
                   type="button"
