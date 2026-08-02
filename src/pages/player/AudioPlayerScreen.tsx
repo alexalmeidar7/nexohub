@@ -3289,7 +3289,6 @@ function PollDialog({
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
 
-  // Ativa o estado de entrada no próximo frame para disparar a transição CSS.
   useEffect(() => {
     const id = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(id);
@@ -3308,130 +3307,109 @@ function PollDialog({
     return () => document.removeEventListener("keydown", onKey);
   }, [requestClose]);
 
-  const submit = () => {
-    if (selected == null) return;
+  const submit = (idx: number) => {
+    if (submitted) return;
+    setSelected(idx);
     setSubmitted(true);
-    onVoted(selected);
+    onVoted(idx);
   };
-
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-4 pointer-events-none"
+      className="fixed inset-0 z-[100] flex items-center justify-center animate-fade-in pointer-events-none"
       style={{
+        background: visible ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(12px)" : "blur(0px)",
+        WebkitBackdropFilter: visible ? "blur(12px)" : "blur(0px)",
+        transition: "background 220ms ease, backdrop-filter 220ms ease",
         opacity: visible ? 1 : 0,
-        transition: "opacity 220ms ease-out",
       }}
     >
-
-
       <div
         role="dialog"
         aria-modal="true"
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md rounded-2xl border border-white/15 bg-[#0e0e14]/95 shadow-[0_40px_100px_rgba(0,0,0,0.7)] overflow-hidden pointer-events-auto"
+        className="w-[360px] flex flex-col gap-6 pointer-events-auto"
         style={{
+          padding: "28px 26px 24px",
+          borderRadius: 32,
+          background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
+          border: "1px solid rgba(255,255,255,0.24)",
+          boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
           opacity: visible ? 1 : 0,
           transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(8px)",
-          transformOrigin: "center center",
           transition: "opacity 220ms ease-out, transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
-          willChange: "opacity, transform",
         }}
       >
-
-        {/* Cabeçalho com faixa animada */}
-        <div className="relative px-5 pt-5 pb-3">
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-0 h-[3px]"
-            style={{
-              background: "linear-gradient(90deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
-              backgroundSize: "200% 100%",
-              animation: "interactStripe 3s linear infinite",
-            }}
-          />
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.2em] text-white/50 flex items-center gap-1.5">
-                <BarChart3 size={11} /> Enquete ao vivo
-              </div>
-              <h3 className="mt-1.5 text-[16px] font-semibold text-white leading-snug">{poll.pergunta}</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60 opacity-60"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.24em] font-bold text-white/50">Participar da conversa</span>
             </div>
-            <button
-              onClick={requestClose}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-white/6 hover:bg-white/15 border border-white/10 transition"
-              aria-label="Fechar"
-            >
-              <X size={14} />
-            </button>
+            <h3 className="text-white font-bold text-xl leading-tight tracking-tight pr-4">
+              {poll.pergunta}
+            </h3>
           </div>
+          <button
+            onClick={requestClose}
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/15 hover:border-white/25 transition-all group"
+            data-focusable
+          >
+            <X size={16} className="text-white/60 group-hover:text-white group-hover:scale-110 transition-transform" />
+          </button>
         </div>
 
-        {/* Opções */}
-        <div className="px-5 pb-4 space-y-2">
-          {poll.respostas.map((r, i) => {
-            const isSel = selected === i;
+        <div className="flex flex-col gap-3">
+          {poll.respostas.map((opt, i) => {
+            const isSelected = selected === i;
             return (
               <button
                 key={i}
+                onClick={() => submit(i)}
                 disabled={submitted}
-                onClick={() => setSelected(i)}
-                className={
-                  "w-full text-left px-3.5 py-2.5 rounded-xl border text-[13px] transition " +
-                  (submitted
-                    ? isSel
-                      ? "border-white/40 bg-white/10 text-white"
-                      : "border-white/8 bg-white/3 text-white/55"
-                    : isSel
-                      ? "border-white/45 bg-white/12 text-white"
-                      : "border-white/10 bg-white/4 text-white/85 hover:bg-white/10 hover:border-white/25")
-                }
+                className="w-full relative py-4 px-5 rounded-2xl text-left transition-all overflow-hidden group"
+                style={{
+                  background: isSelected
+                    ? "rgba(255,255,255,1)"
+                    : "rgba(255,255,255,0.06)",
+                  border: isSelected
+                    ? "1px solid rgba(255,255,255,1)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  boxShadow: isSelected ? "0 8px 24px -6px rgba(255,255,255,0.3)" : "none",
+                }}
+                data-focusable
               >
-                <span className="inline-flex items-center gap-2">
-                  <span className={
-                    "inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold " +
-                    (isSel ? "bg-white text-black" : "bg-white/10 text-white/70")
-                  }>
-                    {isSel ? <Check size={12} /> : String.fromCharCode(65 + i)}
+                <div className="flex items-center justify-between relative z-10">
+                  <span
+                    className="text-sm font-semibold tracking-tight transition-colors"
+                    style={{ color: isSelected ? "#000" : "rgba(255,255,255,0.9)" }}
+                  >
+                    {opt}
                   </span>
-                  {r}
-                </span>
+                  {isSelected && (
+                    <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center animate-scale-in">
+                      <Check size={12} className="text-white" strokeWidth={3} />
+                    </div>
+                  )}
+                </div>
+                {submitted && !isSelected && (
+                  <div className="absolute inset-0 bg-white/5 opacity-50" />
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Rodapé */}
-        <div className="px-5 pb-5 flex items-center justify-between gap-3">
-          <div className="text-[10px] text-white/45 uppercase tracking-wider">
-            Ativa {poll.horario_inicio} – {poll.horario_fim}
-          </div>
-          {submitted ? (
-            <div className="text-[12px] text-emerald-300 flex items-center gap-1.5">
-              <Check size={14} /> Voto registrado
-            </div>
-          ) : (
-            <button
-              onClick={submit}
-              disabled={selected == null}
-              className={
-                "px-4 h-9 rounded-full text-[12px] font-semibold transition " +
-                (selected == null
-                  ? "bg-white/10 text-white/40 cursor-not-allowed"
-                  : "bg-white text-black hover:bg-white/90")
-              }
-            >
-              Enviar voto
-            </button>
-          )}
-        </div>
-
-        <style>{`
-          @keyframes interactStripe { to { background-position: -200% 0; } }
-        `}</style>
+        <p className="text-[11px] text-white/40 text-center leading-relaxed font-medium">
+          {submitted ? "Obrigado por participar!" : "Selecione uma opção para votar"}
+        </p>
       </div>
     </div>,
     document.body
   );
 }
+
 
