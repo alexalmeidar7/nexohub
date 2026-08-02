@@ -1272,8 +1272,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       }}
     >
 
+      {/* YouTube Catalog Background */}
+      {isCatalog && selectedVideoId && (
+        <div className="absolute inset-0 z-0">
+          <iframe
+            src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
+            className="w-full h-full border-0"
+            allow="autoplay; encrypted-media"
+          />
+          {/* Overlay to ensure controls visibility */}
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+        </div>
+      )}
+
       {/* Modo DJ — cobre o background com cores contrastantes piscando no ritmo */}
-      <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} showHud={djHudEnabled} />
+      {!isCatalog && (
+        <DjModeLayer audioRef={audioRef} active={djModeActive} sensitivity={djSensitivity} coverPalette={activePalette} coverTriad={djCoverTriad} showHud={djHudEnabled} />
+      )}
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
