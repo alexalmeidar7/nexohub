@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
-const InlineKaraoke = lazy(() => import("@/components/player/InlineKaraoke"));
+const LyricsPopup = lazy(() => import("@/components/player/LyricsPopup"));
 const WatchProfilePopup = lazy(() => import("@/components/player/WatchProfilePopup"));
 
 export interface AudioPlayerScreenProps {
@@ -1785,7 +1785,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 position: "relative",
                 overflow: "hidden",
                 borderRadius: 40,
-                transform: karaokeEnabled ? "translateY(-32px) scale(0.92)" : `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
+                transform: `translateY(0) translateX(${progSwipeDx}px) scale(1)`,
                 transition: progSwiping ? "none" : "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
                 willChange: "transform",
                 touchAction: "pan-y",
@@ -1863,7 +1863,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             onClick={() => setGradeOpen(true)}
             className="w-11 h-11 rounded-full flex items-center justify-center border border-white/25 hover:bg-white/10 transition"
             style={{
-              transform: karaokeEnabled ? "translateY(-32px)" : "translateY(0)",
+              transform: "translateY(0)",
               transition: "transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
             }}
             aria-label="Ver grade completa de programação"
@@ -1873,33 +1873,16 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
             <Plus size={20} />
           </button>
 
-          {/* Karaokê inline — desliza suavemente por baixo quando ativado */}
-          <div
-            style={{
-              width: "100%",
-              maxHeight: karaokeEnabled ? 360 : 0,
-              opacity: karaokeEnabled ? 1 : 0,
-              transform: karaokeEnabled ? "translateY(-16px)" : "translateY(24px)",
-              transition:
-                "max-height 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, transform 600ms cubic-bezier(0.22, 1, 0.36, 1)",
-              overflow: "hidden",
-              pointerEvents: karaokeEnabled ? "auto" : "none",
-            }}
-          >
-            {karaokeEnabled && (
-              <Suspense fallback={null}>
-                <InlineKaraoke
-                  enabled={karaokeEnabled}
-                  artist={musicData?.artista}
-                  title={musicData?.titulo}
-                  duration={musicData?.duracao}
-                  audioElement={audioRef.current}
-                  onClose={() => setKaraokeEnabled(false)}
-
-                />
-              </Suspense>
-            )}
-          </div>
+          {/* Letra da música — popup central com scroll */}
+          <Suspense fallback={null}>
+            <LyricsPopup
+              open={karaokeEnabled}
+              artist={musicData?.artista}
+              title={musicData?.titulo}
+              duration={musicData?.duracao}
+              onClose={() => setKaraokeEnabled(false)}
+            />
+          </Suspense>
           </div>
 
           {/* UPCOMING PROGRAMS CAROUSEL — mesmo estilo do histórico, do lado direito */}
@@ -3190,7 +3173,7 @@ function InteractivityMenu({
           <MenuItem
             active={karaokeEnabled}
             icon={<Mic size={14} />}
-            label="Karaokê"
+            label="Letra"
             onClick={() => { onToggleKaraoke(); setOpen(false); }}
           />
           )}
