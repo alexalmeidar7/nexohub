@@ -3042,6 +3042,7 @@ export default function PlayerPage() {
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
         const bgThumb = currentProg?.thumb || currentProg?.capa;
+        if (isYoutubeContent) return null;
         // Audio channels always use gradient background (no thumb)
         if (isAudio) {
           const c1 = getComputedStyle(document.documentElement).getPropertyValue("--player-audio-gradient-color1").trim() || "hsl(var(--player-accent))";
