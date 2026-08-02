@@ -3121,7 +3121,7 @@ export default function PlayerPage() {
       {/* Fallback overlay: shown when stream requested but not yet playing */}
       {(() => {
         const hasMedia = Boolean(audioRef.current?.src) || Boolean(videoRef.current?.src);
-        const show = Boolean(canal) && !playing && !isYoutube && !isCatalog && (streamRequested || buffering || streamStalled || !hasMedia);
+        const show = Boolean(canal) && !playing && !isYoutubeContent && (streamRequested || buffering || streamStalled || !hasMedia);
         if (!show) return null;
         const title = streamStalled ? "Reconectando canal..." : buffering ? "YouTube on demand, sem bloquear a reprodução." : "Toque para ouvir";
         return (
