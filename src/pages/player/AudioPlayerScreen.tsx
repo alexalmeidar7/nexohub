@@ -3079,116 +3079,99 @@ function InteractivityMenu({
   return (
     <div ref={wrapRef} className="relative">
       {/* Botão principal — icon-only com borda animada */}
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Interatividade"
-        aria-expanded={open}
-        aria-pressed={open}
-        data-focusable
-        data-active={open || undefined}
-        className="relative h-16 rounded-full flex items-center justify-center outline-none group overflow-hidden"
-        style={{
-          padding: 2,
-          width: "64px",
-          maxWidth: "64px",
-          transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), width 380ms cubic-bezier(0.22, 1, 0.36, 1)",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.maxWidth = "200px"; e.currentTarget.style.width = "200px"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.maxWidth = "64px"; e.currentTarget.style.width = "64px"; }}
-        onFocus={(e) => { e.currentTarget.style.maxWidth = "200px"; e.currentTarget.style.width = "200px"; }}
-        onBlur={(e) => { e.currentTarget.style.maxWidth = "64px"; e.currentTarget.style.width = "64px"; }}
+      <div 
+        className="relative flex items-center"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
       >
-        {/* borda animada (conic gradient girando) */}
-        <span
-          aria-hidden
-          className="absolute inset-0 rounded-full"
-          style={{
-            background:
-              "conic-gradient(from 0deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
-            animation: "interactSpin 3.6s linear infinite",
-            filter: "saturate(1.15)",
-          }}
-        />
-        {/* halo suave — mais intenso quando o menu está aberto */}
-        <span
-          aria-hidden
-          className={`absolute -inset-[3px] rounded-full blur-[6px] transition-opacity duration-300 group-hover:opacity-100 ${open ? "opacity-100" : "opacity-70"}`}
-          style={{
-            background:
-              "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
-            animation: "interactSpin 3.6s linear infinite",
-            filter: open ? "saturate(1.4) brightness(1.15)" : undefined,
-          }}
-        />
-        {/* núcleo — expande no hover; recebe tint quando aberto */}
-        <span
-          className="relative z-10 h-full w-full rounded-full flex items-center justify-center gap-0 px-0 group-hover:gap-1.5 group-hover:px-2.5 group-focus-visible:gap-1.5 group-focus-visible:px-2.5"
-          style={{
-            background: open
-              ? "linear-gradient(135deg, #1a0b1f 0%, #0b0b10 60%)"
-              : "#0b0b10",
-            boxShadow: open ? "inset 0 0 0 1px rgba(255,255,255,0.18)" : "none",
-            transition: "padding 380ms cubic-bezier(0.22, 1, 0.36, 1), gap 380ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease-out",
-          }}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Interatividade"
+          aria-expanded={open}
+          aria-pressed={open}
+          data-focusable
+          data-active={open || undefined}
+          className="relative h-16 w-16 rounded-full flex items-center justify-center outline-none group overflow-hidden z-20"
+          style={{ padding: 2 }}
         >
-          <Sparkles size={22} className="text-white shrink-0" strokeWidth={2.2} />
-          <span
-            className="text-[11px] font-medium text-white whitespace-nowrap overflow-hidden max-w-0 opacity-0 group-hover:max-w-[140px] group-hover:opacity-100 group-focus-visible:max-w-[140px] group-focus-visible:opacity-100"
-            style={{ transition: "max-width 380ms cubic-bezier(0.22, 1, 0.36, 1), opacity 260ms ease-out 100ms" }}
-          >
-            Interatividade
-          </span>
-        </span>
-        {/* badge de notificação (enquete ativa não votada) */}
-        {hasNotif && (
+          {/* borda animada (conic gradient girando) */}
           <span
             aria-hidden
-            className="absolute -top-0.5 -right-0.5 z-20 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-[#0b0b10]"
-            style={{ boxShadow: "0 0 0 0 rgba(239,68,68,0.7)", animation: "interactPulse 1.6s ease-out infinite" }}
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: "conic-gradient(from 0deg, #ff3355, #ffb63b, #7bd3ff, #b76bff, #ff3355)",
+              animation: "interactSpin 3.6s linear infinite",
+              filter: "saturate(1.15)",
+            }}
           />
-        )}
-      </button>
-
-
-      {/* Submenu via portal para evitar corte por overflow de pais */}
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          role="menu"
-          className={[
-            "fixed z-[100] min-w-[180px] p-1.5 rounded-xl border border-white/12 bg-black/90 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.6)] animate-[fadeInUp_140ms_ease-out]",
-            menuLayout === "centered"
-              ? "left-1/2 -translate-x-1/2 bottom-4 max-w-[min(92vw,280px)] w-full"
-              : "right-4 bottom-28",
-          ].join(" ")}
-        >
-          <MenuItem
-            active={chatOpen}
-            icon={<MessageSquare size={14} />}
-            label="Chat"
-            onClick={() => { onToggleChat(); setOpen(false); }}
+          {/* halo suave */}
+          <span
+            aria-hidden
+            className={`absolute -inset-[3px] rounded-full blur-[6px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-70"}`}
+            style={{
+              background: "conic-gradient(from 0deg, rgba(255,51,85,.5), rgba(255,182,59,.5), rgba(123,211,255,.5), rgba(183,107,255,.5), rgba(255,51,85,.5))",
+              animation: "interactSpin 3.6s linear infinite",
+            }}
           />
-          {showKaraoke && (
-          <MenuItem
-            active={karaokeEnabled}
-            icon={<Mic size={14} />}
-            label="Letra"
-            onClick={() => { onToggleKaraoke(); setOpen(false); }}
-          />
+          {/* núcleo */}
+          <span
+            className="relative z-10 h-full w-full rounded-full flex items-center justify-center"
+            style={{
+              background: open ? "linear-gradient(135deg, #1a0b1f 0%, #0b0b10 60%)" : "#0b0b10",
+              boxShadow: open ? "inset 0 0 0 1px rgba(255,255,255,0.18)" : "none",
+            }}
+          >
+            {open ? (
+              <X size={24} className="text-white animate-in fade-in zoom-in duration-200" strokeWidth={2.5} />
+            ) : (
+              <Sparkles size={24} className="text-white animate-in fade-in zoom-in duration-200" strokeWidth={2.2} />
+            )}
+          </span>
+          {hasNotif && !open && (
+            <span
+              aria-hidden
+              className="absolute top-0.5 right-0.5 z-30 h-3 w-3 rounded-full bg-red-500 ring-2 ring-[#0b0b10]"
+              style={{ animation: "interactPulse 1.6s ease-out infinite" }}
+            />
           )}
-          <MenuItem
-            active={false}
-            icon={<BarChart3 size={14} />}
-            label="Enquete"
-            hint={activePoll ? (alreadyVoted ? "respondida" : "ativa agora") : "sem enquete"}
-            dot={hasNotif}
-            disabled={!activePoll}
+        </button>
+
+        {/* Botões que surgem acima no mouseover */}
+        <div 
+          className={`absolute bottom-full left-0 right-0 mb-4 flex flex-col items-center gap-3 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${
+            open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-8 pointer-events-none"
+          }`}
+        >
+          <button
             onClick={() => { setPollOpen(true); setOpen(false); }}
-          />
-        </div>,
-        document.body
-      )}
+            disabled={!activePoll}
+            className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95 ${!activePoll ? "opacity-40 grayscale" : ""}`}
+            title="Enquete"
+          >
+            <BarChart3 size={20} />
+            {hasNotif && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-black" />}
+          </button>
+          
+          {showKaraoke && (
+            <button
+              onClick={() => { onToggleKaraoke(); setOpen(false); }}
+              className="w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
+              title="Letra"
+            >
+              <Mic size={20} />
+            </button>
+          )}
+          
+          <button
+            onClick={() => { onToggleChat(); setOpen(false); }}
+            className="w-12 h-12 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
+            title="Chat"
+          >
+            <MessageSquare size={20} />
+          </button>
+        </div>
+      </div>
 
       {/* Popup da enquete */}
       {pollOpen && activePoll && (
@@ -3218,7 +3201,6 @@ function InteractivityMenu({
           70%  { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
           100% { box-shadow: 0 0 0 0 rgba(239,68,68,0); }
         }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
       `}</style>
     </div>
   );
