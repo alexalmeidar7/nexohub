@@ -1619,7 +1619,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     aria-label={canRewind ? `Voltar para ${t.artista} - ${t.musica}` : undefined}
                     aria-busy={isPreparing || undefined}
                     title={undefined}
-                    className={`absolute right-0 rounded-[32px] overflow-hidden shadow-2xl group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
+                    className={`absolute right-0 rounded-[32px] overflow-hidden group ${canRewind ? "cursor-pointer" : "cursor-default"}`}
 
                     style={{
                       width: isActive ? 280 : 240,
@@ -1627,7 +1627,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity: isActive ? 1 : (isExpired ? Math.max(0.35, opacity * 0.55) : opacity),
                       filter: `blur(${blur}px) grayscale(${isExpired ? Math.max(gray, 75) : gray}%)`,
-                      background: "#111",
+                      background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
                       zIndex,
                       willChange: "transform, opacity, filter",
                       transition:
@@ -1639,9 +1639,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         "box-shadow 620ms cubic-bezier(.22,1,.36,1)",
                       animation: (isNow && activeIndex === 0) ? "audioHistIn 820ms cubic-bezier(.22,1,.36,1) both" : undefined,
                       boxShadow: isNow
-                        ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 32px rgba(255,255,255,0.18)"
+                        ? "0 40px 100px -20px rgba(0,0,0,0.95)"
                         : isActive
-                          ? "0 30px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.12)"
+                          ? "0 40px 100px -20px rgba(0,0,0,0.95)"
                           : undefined,
                     }}
                   >
@@ -1658,7 +1658,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                         }}
                       />
                     ) : (
-                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "radial-gradient(ellipse at 30% 20%, #2f2f38 0%, #0d0d12 70%)" }}>
+                      <div className="absolute inset-0 flex items-center justify-center" style={{ background: "transparent" }}>
                         <Disc3 size={isActive ? 96 : 72} className="text-white/15" strokeWidth={1.2} />
                       </div>
                     )}
@@ -1674,7 +1674,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     {/* badge TOCANDO AGORA no card ativo + coração para curtir a música atual */}
                     {isNow ? (
                       <>
-                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.5)_inset] ring-1 ring-black/5 backdrop-blur-xl">
+                        <div className="absolute top-3 right-3 flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full bg-gradient-to-r from-white/95 via-white to-white/95 text-black text-[10px] font-bold uppercase tracking-[0.18em] shadow-[0_4px_16px_rgba(0,0,0,0.35),inset 0 1px 0 rgba(255,255,255,0.6)] ring-1 ring-black/5 backdrop-blur-xl">
                           <VolumeEqBars volume={volume} muted={muted} playing={playing} />
                           <span>Tocando agora</span>
                         </div>
