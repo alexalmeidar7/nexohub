@@ -291,55 +291,91 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
     );
   }
 
-  // Full chat — positioned same as shopping panel
+  // Full chat - Floating bubble style
   return (
     <div
-      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-300"
-      style={{ bottom: "170px", right: "20px", width: "360px" }}
+      className="absolute z-[55] animate-in fade-in slide-in-from-bottom-4 duration-500 pointer-events-none"
+      style={{ bottom: "170px", right: "20px", width: "360px", height: "clamp(320px, calc(100vh - 335px), 520px)" }}
     >
-      <div className="w-full">
-        <div
-          className="flex flex-col overflow-hidden"
-          style={{
-            height: "clamp(320px, calc(100vh - 335px), 520px)",
-            borderRadius: 32,
-            background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
-            border: "none",
-            backdropFilter: "blur(28px) saturate(140%)",
-            WebkitBackdropFilter: "blur(28px) saturate(140%)",
-            boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
+      {/* Background Gradient Shadow for the whole right area */}
+      <div 
+        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
+        style={{
+          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+          zIndex: -1,
+          opacity: minimized ? 0 : 1
+        }}
+      />
 
-          }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/60 opacity-60"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-              </span>
-              <span className="text-[10px] uppercase tracking-[0.22em] text-white/70 font-medium">chat ao vivo</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setMinimized(true)}
-                className="w-7 h-7 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-white/25 transition"
-                title="Minimizar"
-              >
-                <Minus size={13} className="text-white/70" />
-              </button>
-              <button
-                onClick={onClose}
-                className="w-7 h-7 rounded-full flex items-center justify-center border border-white/10 hover:bg-white/10 hover:border-white/25 transition"
-                title="Fechar"
-              >
-                <X size={13} className="text-white/70" />
-              </button>
-            </div>
+      <div className="w-full h-full flex flex-col pointer-events-auto">
+        {/* Header - Transparent/Minimal */}
+        <div className="flex items-center justify-between px-2 py-2 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white/40 opacity-60"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+            </span>
+            <span className="text-[9px] uppercase tracking-[0.2em] text-white/50 font-bold">chat ao vivo</span>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-black/20 hover:bg-black/40 border border-white/10 transition-all group"
+            title="Fechar"
+          >
+            <X size={14} className="text-white/60 group-hover:text-white" />
+          </button>
+        </div>
 
-          {/* Messages */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3 chat-scroll">
+        {/* Messages - No main box background */}
+        <div 
+          ref={scrollRef} 
+          className="flex-1 overflow-y-auto px-1 space-y-2.5 chat-scroll pb-4 mask-fade-top"
+        >
+          {messages.length === 0 && (
+            <div className="h-full flex items-center justify-center text-center px-4">
+              <span className="text-[12px] text-white/40 italic">Seja o primeiro a mandar uma mensagem</span>
+            </div>
+          )}
+          {messages.map((msg) => {
+            const isMe = msg.nome === nome && msg.cidade === cidade;
+            return (
+              <div key={msg.id} className="flex flex-col gap-1.5 animate-in slide-in-from-bottom-2 duration-300">
+                <div 
+                  className="rounded-[24px] px-4 py-3 flex items-start gap-3"
+                  style={{
+                    background: "rgba(35,35,38,0.85)",
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    boxShadow: "0 8px 32px -4px rgba(0,0,0,0.4)"
+                  }}
+                >
+                  {avatarUrl && isMe ? (
+                    <img src={avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <span className="text-[11px] text-white/70 font-bold">{msg.nome.charAt(0).toUpperCase()}</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[11px] font-bold text-white/90 truncate">{msg.nome}</span>
+                      <span className="text-[9px] text-white/30 truncate">{msg.cidade}</span>
+                    </div>
+                    <p className="text-[13px] leading-[1.4] text-white/85 break-words">
+                      {msg.message}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
             {messages.length === 0 && (
               <div className="h-full flex items-center justify-center text-center px-4">
                 <span className="text-[12px] text-white/40 italic">Seja o primeiro a mandar uma mensagem</span>
@@ -426,34 +462,49 @@ export default function PlayerChat({ channelId, onClose, shopOpen = false, radio
             </div>
           )}
 
-          {/* Input */}
+          {/* Input - Now a floating pill */}
           <div
-            className="px-3 py-3 flex items-center gap-2"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+            className="mt-2 px-1 py-1 flex items-center gap-2"
           >
-            <button
-              onClick={() => setShowEmoji(!showEmoji)}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border transition ${
-                showEmoji
-                  ? "bg-white/15 border-white/25 text-white"
-                  : "border-white/10 text-white/60 hover:bg-white/10 hover:text-white"
-              }`}
-              aria-label="Emojis"
-            >
-              <Smile size={16} />
-            </button>
-            <input
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Digite sua mensagem…"
-              className="flex-1 rounded-full text-white px-4 py-2.5 text-[13px] placeholder:text-white/35 focus:outline-none transition"
+            <div 
+              className="flex-1 flex items-center gap-2 rounded-full px-4 py-3"
               style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.10)",
+                background: "rgba(255,255,255,0.1)",
+                backdropFilter: "blur(16px)",
+                border: "1px solid rgba(255,255,255,0.15)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
               }}
-              onFocus={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.28)")}
+            >
+              <button
+                onClick={() => setShowEmoji(!showEmoji)}
+                className={`w-7 h-7 flex items-center justify-center transition-colors ${
+                  showEmoji ? "text-white" : "text-white/40 hover:text-white"
+                }`}
+              >
+                <Smile size={18} />
+              </button>
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Participar da conversa..."
+                className="flex-1 bg-transparent text-white text-[13px] placeholder:text-white/30 focus:outline-none"
+              />
+              <button
+                onClick={handleSend}
+                disabled={!input.trim()}
+                className="w-7 h-7 flex items-center justify-center text-white/40 hover:text-white disabled:opacity-20 transition-all"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
               onBlur={(e) => (e.currentTarget.style.border = "1px solid rgba(255,255,255,0.10)")}
             />
             <button
