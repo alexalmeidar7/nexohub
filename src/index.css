@@ -198,6 +198,18 @@
   to { transform: rotate(360deg); }
 }
 
+@keyframes slideUpDown {
+  0% { opacity: 0; transform: translateY(-20px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(20px); }
+}
+
+.animate-slide-up-down {
+  animation: slideUpDown 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+
 /* ─── Vinyl Slide Out (retract then reveal) ─── */
 @keyframes vinylReveal {
   0%   { transform: translateX(0); opacity: 1; }
