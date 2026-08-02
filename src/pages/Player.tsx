@@ -43,6 +43,10 @@ import {
   Plus,
   Instagram,
   Phone,
+  Info,
+  ArrowLeft,
+  Activity,
+  Zap,
 } from "lucide-react";
 
 import ElegantLoader from "@/components/player/ElegantLoader";
