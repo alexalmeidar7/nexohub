@@ -2582,6 +2582,8 @@ export default function PlayerPage() {
         }
         // When iframe is ready, start listening and force HD quality
         if (data?.event === "onReady" || data?.event === "initialDelivery") {
+          setTransitionHold(false);
+          awaitingNextClipReadyRef.current = null;
           ytPostMessage("addEventListener", ["onStateChange"]);
           ytPostMessage("setPlaybackQuality", ["hd1080"]);
           ytPostMessage("setPlaybackQualityRange", [{ min: "hd1080", max: "highres" }]);
