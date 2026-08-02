@@ -3249,6 +3249,16 @@ function InteractivityMenu({
             open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-8 pointer-events-none"
           }`}
         >
+          {user && (
+            <button
+              onClick={() => { setWatchProfileOpen(true); setOpen(false); }}
+              className="w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
+              title="Trocar Perfil"
+            >
+              <Users size={24} />
+            </button>
+          )}
+
           <button
             onClick={() => { setPollOpen(true); setOpen(false); }}
             disabled={!activePoll}

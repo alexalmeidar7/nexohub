@@ -309,6 +309,8 @@ export default function PlayerTvWelcome() {
     ? `${pairOrigin}/${userSlug}/pair?code=${code}`
     : `${pairOrigin}/${userSlug}/pair`;
 
+  const manualPairUrl = `${pairOrigin}/${userSlug}/pair`;
+
   // Encurta a URL para facilitar a digitação no navegador.
   useEffect(() => {
     if (!code) { setShortUrl(null); return; }
