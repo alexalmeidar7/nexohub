@@ -10,6 +10,11 @@ import { Loader2, Building2, Search, ShieldCheck, Users, Mail, Link2, UserCog, T
 interface Cliente {
   user_id: string;
   nome: string | null;
+  cnpj: string | null;
+  telefone_comercial: string | null;
+  endereco: string | null;
+  cliente_desde: string | null;
+  executiva_venda: string | null;
   plano: string | null;
   ativo: boolean | null;
   logo: string | null;
@@ -40,6 +45,7 @@ interface TrashItem {
   user_id: string;
   email: string | null;
   nome: string | null;
+  cnpj: string | null;
   deleted_at: string;
   purge_at: string;
 }
@@ -71,7 +77,7 @@ export default function ClientesPage() {
   const [deleting, setDeleting] = useState(false);
   const [novoOpen, setNovoOpen] = useState(false);
   const [criando, setCriando] = useState(false);
-  const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "" });
+  const [novo, setNovo] = useState({ nome: "", email: "", password: "", plano: "", cnpj: "", telefone: "", endereco: "", cliente_desde: "", executiva_venda: "" });
   const [novoModules, setNovoModules] = useState<Set<string>>(new Set());
   const [trashOpen, setTrashOpen] = useState(false);
   const [trash, setTrash] = useState<TrashItem[]>([]);
@@ -90,7 +96,7 @@ export default function ClientesPage() {
     }
     (async () => {
       const [empresasRes, modsRes, cmRes, profRes, subRes, planosRes] = await Promise.all([
-        supabase.from("empresa_config").select("user_id, nome, plano, ativo, logo").order("nome"),
+        supabase.from("empresa_config").select("user_id, nome, plano, ativo, logo, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda").order("nome"),
         supabase.from("available_modules").select("key, name").order("name"),
         supabase.from("client_modules").select("user_id, module_key, enabled"),
         supabase.from("profiles").select("user_id, email"),
@@ -238,16 +244,32 @@ export default function ClientesPage() {
         email,
         password: novo.password,
         plano: novo.plano.trim() || undefined,
+        cnpj: novo.cnpj,
+        telefone: novo.telefone,
+        endereco: novo.endereco,
+        cliente_desde: novo.cliente_desde,
+        executiva_venda: novo.executiva_venda,
         modules: Array.from(novoModules),
       });
       const newId = String(data?.user_id || "");
       if (newId) {
-        setClientes(prev => [...prev, { user_id: newId, nome, plano: novo.plano.trim() || null, ativo: true, logo: null }]);
+        setClientes(prev => [...prev, { 
+          user_id: newId, 
+          nome, 
+          plano: novo.plano.trim() || null, 
+          ativo: true, 
+          logo: null,
+          cnpj: novo.cnpj,
+          telefone_comercial: novo.telefone,
+          endereco: novo.endereco,
+          cliente_desde: novo.cliente_desde,
+          executiva_venda: novo.executiva_venda
+        }]);
         setEmails(prev => ({ ...prev, [newId]: email }));
         setClientModules(prev => ({ ...prev, [newId]: new Set(novoModules) }));
         setSelected(newId);
       }
-      setNovo({ nome: "", email: "", password: "", plano: "" });
+      setNovo({ nome: "", email: "", password: "", plano: "", cnpj: "", telefone: "", endereco: "", cliente_desde: "", executiva_venda: "" });
       setNovoModules(new Set());
       setNovoOpen(false);
       toast.success("Cliente cadastrado.");
@@ -311,7 +333,7 @@ export default function ClientesPage() {
       setTrash(prev => prev.filter(t => t.user_id !== item.user_id));
       const { data } = await supabase
         .from("empresa_config")
-        .select("user_id, nome, plano, ativo, logo")
+        .select("user_id, nome, plano, ativo, logo, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda")
         .eq("user_id", item.user_id)
         .maybeSingle();
       if (data) setClientes(prev => [...prev, data as Cliente].sort((a, b) => (a.nome || "").localeCompare(b.nome || "")));
@@ -605,6 +627,11 @@ export default function ClientesPage() {
               <div className="grid sm:grid-cols-2 gap-2">
                 {[
                   { k: "nome", label: "Nome da empresa", type: "text", ph: "Rádio Exemplo FM" },
+                  { k: "cnpj", label: "CNPJ", type: "text", ph: "00.000.000/0000-00" },
+                  { k: "telefone", label: "Telefone", type: "tel", ph: "(00) 00000-0000" },
+                  { k: "endereco", label: "Endereço", type: "text", ph: "Rua Exemplo, 123" },
+                  { k: "cliente_desde", label: "Cliente desde", type: "date", ph: "" },
+                  { k: "executiva_venda", label: "Executiva de venda", type: "text", ph: "Nome da vendedora" },
                   { k: "email", label: "E-mail de acesso", type: "email", ph: "contato@radio.com" },
                   { k: "password", label: "Senha (mín. 8 caracteres)", type: "password", ph: "••••••••" },
                   { k: "plano", label: "Plano (opcional)", type: "text", ph: "básico / premium" },
