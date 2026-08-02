@@ -1670,7 +1670,7 @@ export default function PlayerPage() {
       resetMediaElement(videoRef.current);
       setHlsLevels([]);
       setHlsCurrentLevel(-1);
-      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube";
+      const isYtOrCatalog = type === "youtube" || type === "catalog" || type === "video_youtube" || isYoutubeUrl(url);
       setBuffering(!isYtOrCatalog);
       setPlaying(false);
       setStreamStalled(false);
