@@ -780,6 +780,25 @@ export default function PlayerPage() {
   const [karaokeEnabled, setKaraokeEnabled] = useState(false);
   const [karaokeVisible, setKaraokeVisible] = useState(false);
 
+  // Diagnostic state
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [lastEvents, setLastEvents] = useState<string[]>([]);
+  const logEvent = useCallback((msg: string) => {
+    setLastEvents(prev => [
+      `[${new Date().toLocaleTimeString()}] ${msg}`,
+      ...prev.slice(0, 9)
+    ]);
+  }, []);
+
+  // Sync logEvent with internal state changes
+  useEffect(() => {
+    if (selectedVideoId) logEvent(`YouTube: ${selectedVideoId}`);
+  }, [selectedVideoId, logEvent]);
+
+  useEffect(() => {
+    if (playing) logEvent("Playback: Started");
+  }, [playing, logEvent]);
+
   // Playlist popup state
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [recentTracks, setRecentTracks] = useState<{ musica: string; artista: string; horario: string; programa: string }[]>([]);
