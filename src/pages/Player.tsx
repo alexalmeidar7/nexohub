@@ -4292,6 +4292,13 @@ export default function PlayerPage() {
               )}
               <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`rounded-md w-7 h-7 flex items-center justify-center transition-all ${sidebarOpen ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`} title={sidebarOpen ? "Fechar Playlist" : "Abrir Playlist"}><List size={12} /></button>
               <button onClick={toggleFullscreen} className="text-player-muted-foreground hover:text-player-foreground transition-colors rounded-md p-1.5">{fullscreen ? <Minimize size={15} /> : <Maximize size={15} />}</button>
+              <button 
+                onClick={() => setShowDiagnostic(!showDiagnostic)} 
+                className={`rounded-md w-7 h-7 flex items-center justify-center transition-all ${showDiagnostic ? "bg-player-accent text-player-foreground" : "text-player-muted-foreground hover:text-player-foreground"}`} 
+                title="Painel de Diagnóstico"
+              >
+                <Info size={12} />
+              </button>
             </div>
           </div>
         </div>
