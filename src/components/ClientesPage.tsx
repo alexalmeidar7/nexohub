@@ -753,6 +753,51 @@ export default function ClientesPage() {
                       </div>
                     </div>
 
+                    <div className="grid sm:grid-cols-2 gap-2 mt-2">
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          CNPJ
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{cli?.cnpj || "—"}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          Telefone
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{cli?.telefone_comercial || "—"}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          Endereço
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{cli?.endereco || "—"}</p>
+                      </div>
+                      <div className="rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          Cliente desde
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">
+                          {cli?.cliente_desde ? new Date(cli.cliente_desde).toLocaleDateString("pt-BR") : "—"}
+                        </p>
+                      </div>
+                      <div className="col-span-full rounded-xl px-3 py-2.5 border border-black/5 bg-[#F6F8F9]">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45">
+                          Executiva de venda
+                        </div>
+                        <p className="text-sm text-[#002132] truncate">{cli?.executiva_venda || "—"}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-black/5 pt-4">
+                      <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: CYAN }}>
+                        Histórico de Ações
+                      </p>
+                      <div className="bg-[#F6F8F9] rounded-xl p-4 min-h-[100px] flex flex-col items-center justify-center border border-black/5">
+                        <Loader2 className="animate-spin text-[#002132]/20 mb-2" size={24} />
+                        <p className="text-xs text-[#002132]/40">Carregando histórico (blitz, inserções, anúncios)...</p>
+                      </div>
+                    </div>
+
                     <div className="rounded-xl border border-black/5 bg-[#F6F8F9] overflow-hidden">
                       <div className="flex items-center gap-1.5 px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-[#002132]/45 border-b border-black/5">
                         <UserCog size={12} /> Subusuários ({subs.length})
