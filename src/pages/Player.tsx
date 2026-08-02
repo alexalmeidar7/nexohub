@@ -1201,7 +1201,7 @@ export default function PlayerPage() {
     // Skip if Top 10 mode — playlist is already set from navigation state
     if (isTop10Mode) return;
 
-    if (!isYoutube || !canal?.url) {
+    if (!(isYoutube || isCatalog) || !canal?.url) {
       setYoutubeVideos([]);
       setSelectedVideoId(null);
       return;
