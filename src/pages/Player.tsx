@@ -2582,6 +2582,7 @@ export default function PlayerPage() {
           const playerState = typeof data.info.playerState === "number" ? data.info.playerState : null;
           
           if (reportedDuration > 0 || playerState === 1) {
+            if (transitionHold) logEvent("YouTube: State 1 (Playing) - Lifting Hold");
             setTransitionHold(false);
             awaitingNextClipReadyRef.current = null;
           }
