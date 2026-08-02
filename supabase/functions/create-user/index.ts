@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
 
     // CREATE USER
     if (action === "create") {
-      const { email, password, nome, plano, modules } = body;
+      const { email, password, nome, plano, modules, cnpj, telefone, endereco, cliente_desde, executiva_venda } = body;
       if (!email || !password || !nome) {
         return new Response(JSON.stringify({ error: "Preencha todos os campos" }), {
           status: 400,
@@ -99,6 +99,11 @@ Deno.serve(async (req) => {
       const newId = newUser.user!.id;
       const empresaRow: Record<string, any> = { user_id: newId, nome };
       if (typeof plano === "string" && plano.trim()) empresaRow.plano = plano.trim();
+      if (cnpj) empresaRow.cnpj = cnpj;
+      if (telefone) empresaRow.telefone_comercial = telefone;
+      if (endereco) empresaRow.endereco = endereco;
+      if (cliente_desde) empresaRow.cliente_desde = cliente_desde;
+      if (executiva_venda) empresaRow.executiva_venda = executiva_venda;
 
       await adminClient.from("empresa_config").insert(empresaRow);
       await adminClient.from("user_roles").insert({ user_id: newId, role: "user" });
