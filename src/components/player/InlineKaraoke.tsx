@@ -216,13 +216,13 @@ export default function InlineKaraoke({ enabled, artist, title, duration, audioE
       className="mt-3 w-full max-w-[560px] mx-auto animate-fade-in"
       aria-live="polite"
       style={{
-        padding: "18px 22px 16px",
-        borderRadius: 22,
-        background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
-        border: "1px solid rgba(255,255,255,0.10)",
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        boxShadow: "0 20px 60px -30px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)",
+        padding: "24px 26px 20px",
+        borderRadius: 32,
+        background: "linear-gradient(180deg, rgba(25,25,28,0.92) 0%, rgba(12,12,14,0.96) 100%)",
+        border: "1px solid rgba(255,255,255,0.24)",
+        backdropFilter: "blur(28px) saturate(140%)",
+        WebkitBackdropFilter: "blur(28px) saturate(140%)",
+        boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,255,255,0.06), inset 0 1px 0 rgba(255,255,255,0.12)",
       }}
     >
       {/* Header */}
