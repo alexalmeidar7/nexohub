@@ -165,6 +165,7 @@ const sidebarMenu: MenuItem[] = [
 
 
 // Menu exclusivo do super admin: apenas Cadastro > Clientes e o agrupador MODULOS
+// O submenu clientes deve estar liberado para todos os usuários que o possuem no pacote assinado.
 const adminSidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
   {
@@ -770,8 +771,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       page === "programas" ||
       page === "previsao" ||
       page === "site" ||
-      page === "clientes" ||
-      page === "sorteios"
+      page === "sorteios" ||
+      page === "clientes"
     ) {
       return true;
     }
@@ -792,11 +793,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   // ---- Menu visibility driven by the plan (pacote) linked to the client ----
   const planKeyAllowed = (node: { label: string; page?: unknown }): boolean => {
+    // If it's a sub-user, we follow the granular subUserModules set (already filtered in isModuleEnabled for pages)
+    // But for the sidebar layout itself, we still check the master plan for consistency
     const src = planModules ?? enabledModules;
-    if (!src) return true;
+    
     const key = moduleKeyOfNode(node);
-    if (!KNOWN_MODULE_KEYS.has(key)) return true;
-    return src.has(key);
+    
+    // IF the module is part of the controlled set (KNOWN_MODULE_KEYS),
+    // and the plan/manual-enable doesn't have it, we block it.
+    // EXCEPT for 'clientes' which should be available if the user has it in their assigned package.
+    if (src && KNOWN_MODULE_KEYS.has(key) && !src.has(key)) {
+      return false;
+    }
+    
+    return true;
   };
 
   const filterMenuChildren = (children: MenuChild[]): MenuChild[] =>
