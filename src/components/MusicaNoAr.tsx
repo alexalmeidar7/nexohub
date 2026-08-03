@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, ArrowLeft, Minimize2 } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
@@ -1412,6 +1412,30 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         {/* Header */}
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                const event = new CustomEvent("changePage", { detail: "dashboard" });
+                window.dispatchEvent(event);
+              }}
+              className="w-10 h-10 rounded-full bg-white border-2 flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-sm group"
+              style={{ borderColor: NEXO_CYAN }}
+            >
+              <ArrowLeft size={20} style={{ color: NEXO_CYAN }} className="transition-transform group-hover:-translate-x-0.5" />
+            </button>
+            <button
+              onClick={() => {
+                const event = new CustomEvent("minimizeMusica");
+                window.dispatchEvent(event);
+                const pageEvent = new CustomEvent("changePage", { detail: "dashboard" });
+                window.dispatchEvent(pageEvent);
+              }}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95 shadow-lg shadow-[#00BFF0]/20 group"
+              style={{ background: NEXO_CYAN }}
+            >
+              <Minimize2 size={18} className="text-white" />
+            </button>
+            <div className="w-[1px] h-8 mx-1 bg-[#0A2540]/10" />
+            <div className="flex items-center gap-3">
             <div
               className="flex items-center justify-center"
               style={{ width: 40, height: 40, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}` }}
