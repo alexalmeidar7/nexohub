@@ -116,6 +116,7 @@ export default function OnAirWidget() {
       clearInterval(interval);
       document.documentElement.style.removeProperty("--onair-bottom");
       document.documentElement.style.removeProperty("--onair-left");
+      document.documentElement.style.removeProperty("--onair-left-offset");
     };
   }, [loading, onAir, isHovered]);
 
