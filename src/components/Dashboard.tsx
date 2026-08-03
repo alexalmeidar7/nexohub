@@ -1658,7 +1658,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
                     title="Minimizar"
                   >
-                    <div className="w-5 h-1 bg-white rounded-full" />
+                    <Minus size={20} />
                   </button>
                 )}
               </div>
