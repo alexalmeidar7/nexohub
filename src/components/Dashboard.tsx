@@ -801,12 +801,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     
     // IF the module is part of the controlled set (KNOWN_MODULE_KEYS),
     // and the plan/manual-enable doesn't have it, we block it.
-    // EXCEPT for 'clientes' which should be available if the user has it in their assigned package.
     if (src && KNOWN_MODULE_KEYS.has(key) && !src.has(key)) {
+      // EXCEPT for 'clientes' which should be available if the user has it in their assigned package.
+      if (key === "clientes") return true;
       return false;
     }
     
     return true;
+
   };
 
   const filterMenuChildren = (children: MenuChild[]): MenuChild[] =>
