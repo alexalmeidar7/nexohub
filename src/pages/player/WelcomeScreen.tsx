@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { ANIVERSARIOS_CIDADES } from "@/data/aniversariosCidades";
+
 
 const AVATARS = [
   "/avatars/usr-default.png",
@@ -352,15 +354,29 @@ export default function WelcomeScreen({
   const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
   const [ufCities, setUfCities] = useState<string[]>([]);
   const [cityFocused, setCityFocused] = useState(false);
+  const [cityLoading, setCityLoading] = useState(false);
 
   useEffect(() => {
     const uf = (profile.estado || "").toUpperCase();
     if (uf.length !== 2) { setUfCities([]); return; }
     let cancelled = false;
+    setCityLoading(true);
     fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
       .then(r => r.json())
-      .then((list: any[]) => { if (!cancelled) setUfCities((list || []).map(m => m.nome)); })
-      .catch(() => { if (!cancelled) setUfCities([]); });
+      .then((list: any[]) => {
+        if (cancelled) return;
+        const nomes = (list || []).map(m => m.nome);
+        // cidades "mais relevantes" da UF primeiro (capital e principais municípios)
+        const prio = (ANIVERSARIOS_CIDADES[uf] || []).map(c => c.cidade);
+        const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const rank = (n: string) => {
+          const i = prio.findIndex(p => norm(p) === norm(n));
+          return i === -1 ? 999 : i;
+        };
+        setUfCities([...nomes].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, "pt-BR")));
+      })
+      .catch(() => { if (!cancelled) setUfCities([]); })
+      .finally(() => { if (!cancelled) setCityLoading(false); });
     return () => { cancelled = true; };
   }, [profile.estado]);
 
@@ -369,8 +385,9 @@ export default function WelcomeScreen({
     if (!ufCities.length) return [];
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const nq = norm(q);
-    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 8);
+    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 12);
   })();
+
 
 
 
@@ -1553,7 +1570,7 @@ export default function WelcomeScreen({
                       <div>
                         <label className={labelCls} style={labelStyle}>UF</label>
                         <select className="wsp-input" style={inputStyle} value={profile.estado}
-                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value, cidade: "" }))}>
+                          onChange={e => { setProfile(p => ({ ...p, estado: e.target.value, cidade: "" })); setCityFocused(!!e.target.value); }}>
                           <option value="">--</option>
                           {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                         </select>
@@ -1561,14 +1578,16 @@ export default function WelcomeScreen({
                       <div className="relative">
                         <label className={labelCls} style={labelStyle}>Cidade</label>
                         <input className="wsp-input" style={inputStyle} value={profile.cidade}
-                          placeholder={profile.estado ? "digite para buscar" : "selecione a UF"}
+                          placeholder={!profile.estado ? "selecione a UF" : cityLoading ? "carregando cidades..." : "escolha ou digite"}
                           disabled={!profile.estado}
                           autoComplete="off"
+                          readOnly={cityLoading}
                           onFocus={() => setCityFocused(true)}
+                          onClick={() => setCityFocused(true)}
                           onBlur={() => setTimeout(() => setCityFocused(false), 150)}
-                          onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                          onChange={e => { setProfile(p => ({ ...p, cidade: e.target.value })); setCityFocused(true); }} />
                         {cityFocused && citySuggestions.length > 0 && (
-                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl"
+                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl max-h-56 overflow-y-auto"
                             style={{ background: "rgba(20,20,20,0.92)", border: "1px solid rgba(255,255,255,0.14)" }}>
                             {citySuggestions.map(c => (
                               <button key={c} type="button"
@@ -1581,6 +1600,7 @@ export default function WelcomeScreen({
                           </div>
                         )}
                       </div>
+
 
                     </div>
                     <div className="mt-3">
