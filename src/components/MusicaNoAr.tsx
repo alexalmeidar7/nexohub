@@ -155,18 +155,7 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
           <h1 className="text-2xl font-bold text-slate-800">Música no Ar</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button 
-            onClick={onMinimize}
-            className="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors"
-          >
-            <Minus size={20} />
-          </button>
-          <button 
-            onClick={onClose}
-            className="w-10 h-10 rounded-full hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-500 transition-colors"
-          >
-            <X size={20} />
-          </button>
+          {/* Botões de minimizar e fechar removidos conforme solicitado pelo usuário */}
         </div>
       </div>
       
