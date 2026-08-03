@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
+import { playerSignOut } from "@/lib/playerSignOut";
 
 const AVATARS = [
   "/avatars/usr-default.png",
@@ -527,7 +528,7 @@ export default function WelcomeScreen({
       // Player é um sistema à parte: deslogar SEM redirecionar para o /admin.
       // Usa o signOut do contexto (marca manualSignOutRef para o listener não
       // restaurar a sessão do backup) e permanece nesta tela de boas-vindas.
-      await signOut({ redirect: false });
+      await playerSignOut(signOut);
       setAuthMode(null);
       setAuthError(null);
     } catch (e) {

@@ -7,6 +7,7 @@ import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import PlayerSidebar from "@/components/player/PlayerSidebar";
 import { usePublicHead } from "@/hooks/usePageTitle";
+import { playerSignOut } from "@/lib/playerSignOut";
 
 interface Channel {
   id: string;
@@ -117,9 +118,8 @@ export default function PlayerCatalog() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
     const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
-    navigate(dest);
+    await playerSignOut(signOut, dest);
   };
 
 
