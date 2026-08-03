@@ -1015,7 +1015,7 @@ function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } =
       try {
         const d = readMusicData(dataUserId) as any;
         if (d) {
-          if (d.titulo) setMusic(d);
+          if (d.titulo !== undefined || d.excecao) setMusic(d);
           if (d.programa) setPrograma(d.programa);
         }
       } catch {}
@@ -1442,7 +1442,7 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
       try {
         const d = readMusicData(dataUserId) as any;
         if (d) {
-          if (d.titulo && d.titulo !== prevTitle) {
+          if ((d.titulo !== undefined || d.excecao) && d.titulo !== prevTitle) {
             prevTitle = d.titulo;
             setMusic(d);
             setMusicKey(k => k + 1);
