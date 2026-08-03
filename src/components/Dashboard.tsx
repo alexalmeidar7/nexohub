@@ -331,9 +331,12 @@ const pageTitle: Record<Page, string> = {
 
 interface DashboardProps {
   onLogout?: () => void;
+  musicaMinimizada?: boolean;
+  onRestaurarMusica?: () => void;
+  onFecharMusica?: () => void;
 }
 
-export default function Dashboard({ onLogout }: DashboardProps) {
+export default function Dashboard({ onLogout, musicaMinimizada, onRestaurarMusica, onFecharMusica }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
