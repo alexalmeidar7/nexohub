@@ -281,12 +281,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (document.hidden) return;
       reconnectRealtime();
       const idleMs = Date.now() - lastRefreshAt;
-      if (idleMs > 2 * 60 * 1000) void proactiveRefresh("visibility");
+      // If idle for more than 1 min, refresh now to ensure tokens are valid
+      if (idleMs > 1 * 60 * 1000) void proactiveRefresh("visibility");
     };
-    const onOnline = () => { reconnectRealtime(); void proactiveRefresh("online"); };
+    const onOnline = () => { 
+      reconnectRealtime(); 
+      void proactiveRefresh("online"); 
+    };
+    
+    // Check session health every minute instead of 20min
     const refreshInterval = setInterval(() => {
-      if (!document.hidden) void proactiveRefresh("interval");
-    }, 20 * 60 * 1000);
+      if (!document.hidden) {
+        const session = lastGoodSessionRef.current;
+        if (session?.expires_at) {
+          const expiresAt = session.expires_at * 1000;
+          const timeToExpiry = expiresAt - Date.now();
+          // If less than 10 mins remaining, refresh proactively
+          if (timeToExpiry < 10 * 60 * 1000) {
+            void proactiveRefresh("expiry_buffer");
+            return;
+          }
+        }
+        void proactiveRefresh("health_check");
+      }
+    }, 60 * 1000);
 
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("online", onOnline);
