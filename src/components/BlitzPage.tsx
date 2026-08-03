@@ -129,6 +129,8 @@ export default function BlitzPage() {
   const [sugestoesClientes, setSugestoesClientes] = useState<{ id: string; nome: string }[]>([]);
   const [showSugestoes, setShowSugestoes] = useState(false);
   const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [confirmCadastroOpen, setConfirmCadastroOpen] = useState(false);
+  const [novoClienteNome, setNovoClienteNome] = useState("");
   const [novoClienteData, setNovoClienteData] = useState({
     nome: "",
     cnpj: "",
@@ -244,11 +246,8 @@ export default function BlitzPage() {
       
       const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
       if (!exists && val.length > 2) {
-        const confirm = window.confirm(`O cliente "${val}" não está cadastrado. Vamos cadastrar esse cliente?`);
-        if (confirm) {
-          setNovoClienteData(prev => ({ ...prev, nome: val }));
-          setCadastroOpen(true);
-        }
+        setNovoClienteNome(val);
+        setConfirmCadastroOpen(true);
       }
     }, 200);
   };
@@ -351,8 +350,16 @@ export default function BlitzPage() {
   };
 
   const del = async (id: string) => {
-    const motivo = window.prompt("Excluir esta blitz?\n\nInforme um motivo (opcional) para o histórico:", "");
-    if (motivo === null) return;
+    const isConfirmed = await confirmDialog({
+      title: "Excluir Blitz",
+      message: "Deseja realmente excluir esta blitz? Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      destructive: true
+    });
+
+    if (!isConfirmed) return;
+
     const b = items.find(i => i.id === id);
     if (b?.agenda_evento_id) {
       await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
@@ -362,7 +369,7 @@ export default function BlitzPage() {
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     await logBlitzHistorico({
       userId: user!.id, blitzId: id, cliente: b?.cliente ?? null, acao: "excluida",
-      motivo: motivo.trim() || null, dadosAntes: b,
+      motivo: "Excluída pelo usuário", dadosAntes: b,
     });
     toast({ title: "Blitz excluída" });
     load();
@@ -806,6 +813,49 @@ export default function BlitzPage() {
                 >
                   {cadastrandoCliente ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                   Cadastrar Cliente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmação de cadastro */}
+      {confirmCadastroOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div 
+            className="bg-white rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-300"
+            style={{ fontFamily: FONT }}
+          >
+            <div className="p-8 text-center">
+              <div className="w-16 h-16 bg-[#D6F4FB] rounded-full flex items-center justify-center mx-auto mb-6">
+                <Building2 size={32} color={CYAN} />
+              </div>
+              <h3 className="text-xl font-extrabold text-[#0A2540] mb-4">
+                Cliente não cadastrado
+              </h3>
+              <p className="text-[#64748B] text-sm leading-relaxed mb-8">
+                O cliente <strong className="text-[#0A2540]">"{novoClienteNome}"</strong> não foi encontrado em nosso sistema. Deseja realizar o cadastro agora?
+              </p>
+              
+              <div className="flex gap-3">
+                <button 
+                  style={{ ...ghostBtn, flex: 1, border: "none", background: "#f1f5f9" }}
+                  onClick={() => setConfirmCadastroOpen(false)}
+                >
+                  <X size={16} className="mr-2" />
+                  Agora não
+                </button>
+                <button 
+                  style={{ ...limeBtn, flex: 1 }}
+                  onClick={() => {
+                    setConfirmCadastroOpen(false);
+                    setNovoClienteData(prev => ({ ...prev, nome: novoClienteNome }));
+                    setCadastroOpen(true);
+                  }}
+                >
+                  <Check size={16} className="mr-2" />
+                  Sim, cadastrar
                 </button>
               </div>
             </div>
