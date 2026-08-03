@@ -52,7 +52,30 @@ serve(async (req) => {
 
     // Action: forecast - get weather data
     if (action === "forecast") {
-      const { lat, lon } = body;
+      let { lat, lon } = body;
+
+      // Fallback público: quando o cliente não tem permissão para ler
+      // user_settings (ex.: ouvintes no /player), buscamos as coordenadas
+      // da rádio pelo user_id usando a service role.
+      if ((lat == null || lon == null) && body.user_id) {
+        try {
+          const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+          const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+          const res = await fetch(
+            `${supabaseUrl}/rest/v1/user_settings?user_id=eq.${body.user_id}&select=weather_lat,weather_lon&limit=1`,
+            { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } },
+          );
+          const rows = await res.json();
+          const row = Array.isArray(rows) ? rows[0] : null;
+          if (row && row.weather_lat != null && row.weather_lon != null) {
+            lat = row.weather_lat;
+            lon = row.weather_lon;
+          }
+        } catch (err) {
+          console.error("fetch-weather coords lookup failed:", err);
+        }
+      }
+
       if (lat == null || lon == null) {
         return new Response(JSON.stringify({ ok: false, error: "lat/lon required" }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
