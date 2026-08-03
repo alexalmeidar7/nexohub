@@ -3323,7 +3323,7 @@ export default function PlayerPage() {
 
       {/* Video element */}
       <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || (isYoutube && !isCatalog) ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} src={isCatalog && requestedVideoId ? `https://www.youtube.com/embed/${requestedVideoId}` : undefined} />
-      <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
+      <audio ref={audioRef} muted={!isAudio || muted} preload="auto" />
 
       {/* Volume OSD — centered overlay */}
       {volumeOsd && (
