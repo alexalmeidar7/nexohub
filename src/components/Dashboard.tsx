@@ -290,7 +290,7 @@ const collectModuleKeys = (items: { label: string; page?: unknown; children?: an
 
 // Universe of keys that packages (pacotes) can control. Keys outside this set
 // are never blocked (avoids hiding menus that plans don't know about).
-const KNOWN_MODULE_KEYS = new Set(collectModuleKeys(adminModulosGroups as any));
+const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes"]);
 
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
