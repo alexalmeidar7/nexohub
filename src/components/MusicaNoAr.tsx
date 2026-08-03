@@ -319,7 +319,7 @@ async function addUploadLogToDb(
 import { getMusicData } from "@/lib/musicData";
 export { getMusicData } from "@/lib/musicData";
 
-export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: string | null }) {
+export default function MusicaNoAr({ effectiveUserId, onMinimize }: { effectiveUserId?: string | null; onMinimize?: () => void }) {
   const { user } = useAuth();
   const dataUserId = effectiveUserId || user?.id || null;
   // Per-user scoped localStorage keys (prevents cross-tenant music leak)
@@ -1556,8 +1556,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             )}
           </span>
           <button
-            onClick={() => setShowConfig(!showConfig)}
+            onClick={onMinimize}
             className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BFF0] border border-white/10 transition shrink-0 relative group"
+            title="Minimizar"
           >
             <div 
               className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
@@ -1569,12 +1570,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 animation: "interactSpin 3s linear infinite"
               }} 
             />
-            {showConfig ? (
-              <ChevronUp size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            ) : (
-              <Settings size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            )}
+            <Minus size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
           </button>
+
         </div>
 
         {showConfig && (
