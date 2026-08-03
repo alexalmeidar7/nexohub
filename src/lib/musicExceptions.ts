@@ -1,27 +1,38 @@
 import { supabase } from "@/integrations/supabase/client";
 
-type CacheEntry = { list: string[]; ts: number };
+export interface MusicException {
+  id: string;
+  termo: string;
+  capa_url: string | null;
+  background_url: string | null;
+}
+
+type CacheEntry = { list: MusicException[]; ts: number };
 const cache = new Map<string, CacheEntry>();
 const TTL_MS = 30_000;
 
 /**
- * Palavras/termos de exceção de música cadastrados pelo dono da rádio
- * (campo `user_settings.infomusic_excecoes`, CSV). Cache curto para
- * evitar rajadas de requisições em listas que renderizam por linha.
+ * Busca exceções de música (artistas ou títulos) com metadados (capa/fundo).
  */
-export async function getMusicExceptions(userId: string | null | undefined): Promise<string[]> {
+export async function getMusicExceptions(userId: string | null | undefined): Promise<MusicException[]> {
   if (!userId) return [];
   const hit = cache.get(userId);
   const now = Date.now();
   if (hit && now - hit.ts < TTL_MS) return hit.list;
+  
   try {
     const { data } = await supabase
-      .from("user_settings")
-      .select("infomusic_excecoes")
-      .eq("user_id", userId)
-      .maybeSingle();
-    const raw = (data?.infomusic_excecoes || "") as string;
-    const list = raw.split(",").map((s) => s.trim()).filter(Boolean);
+      .from("infomusic_excecoes")
+      .select("id, termo, capa_url, background_url")
+      .eq("user_id", userId);
+    
+    const list: MusicException[] = (data || []).map(d => ({
+      id: d.id,
+      termo: d.termo,
+      capa_url: d.capa_url,
+      background_url: d.background_url
+    }));
+
     cache.set(userId, { list, ts: now });
     return list;
   } catch {
@@ -30,23 +41,28 @@ export async function getMusicExceptions(userId: string | null | undefined): Pro
 }
 
 export function matchesMusicException(
-  exceptions: string[],
+  exceptions: (string | MusicException)[],
   artista?: string | null,
   musica?: string | null,
-): boolean {
-  if (!exceptions || exceptions.length === 0) return false;
+): MusicException | null {
+  if (!exceptions || exceptions.length === 0) return null;
   const a = (artista || "").toLowerCase();
   const m = (musica || "").toLowerCase();
-  if (!a && !m) return false;
-  return exceptions.some((w) => {
-    const ww = w.trim().toLowerCase();
-    if (!ww) return false;
-    return (a && a.includes(ww)) || (m && m.includes(ww));
-  });
+  if (!a && !m) return null;
+
+  for (const ex of exceptions) {
+    const term = typeof ex === "string" ? ex : ex.termo;
+    const ww = term.trim().toLowerCase();
+    if (!ww) continue;
+    if ((a && a.includes(ww)) || (m && m.includes(ww))) {
+      return typeof ex === "string" ? { id: "", termo: ex, capa_url: null, background_url: null } : ex;
+    }
+  }
+  return null;
 }
 
 export function filterOutMusicExceptions<T extends { artista?: string | null; musica?: string | null }>(
-  exceptions: string[],
+  exceptions: (string | MusicException)[],
   rows: T[],
 ): T[] {
   if (!exceptions || exceptions.length === 0) return rows;

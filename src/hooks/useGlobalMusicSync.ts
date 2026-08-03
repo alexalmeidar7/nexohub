@@ -108,7 +108,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
     localStoragePath: null,
   });
   const settingsFetchedRef = useRef(false);
-  const excecoesRef = useRef<string[]>([]);
+  const excecoesRef = useRef<any[]>([]);
   const lastRecordedRef = useRef<string>("");
   const directFetchOkRef = useRef<boolean | null>(null);
   const fetchCountRef = useRef(0);
@@ -156,29 +156,29 @@ export function useGlobalMusicSync(enabled: boolean = true) {
 
     const processTrackData = async (data: { titulo: string; artista: string; duracao: number; capa: string }) => {
       // Exceções cadastradas em INFO MUSIC: essa faixa não deve aparecer em
-      // nenhum lugar do player como nome/artista, e a capa/imagem do Deezer
-      // deve ser substituída pela foto do locutor no ar (para virar um
-      // degradê elegante nos componentes que já fazem esse tratamento).
-      if (matchesMusicException(excecoesRef.current, data.artista, data.titulo)) {
+      // nenhum lugar do player como nome/artista, e as imagens de capa/fundo
+      // devem ser as cadastradas na exceção (ou locutor como fallback).
+      const matchedExcecao = matchesMusicException(excecoesRef.current, data.artista, data.titulo);
+      if (matchedExcecao) {
         const photo = await getOnAirPresenterPhoto();
-        // Título/artista vazios (interpretados como placeholder) — os
-        // componentes de UI escondem esses textos quando ficam em branco.
+        
+        // Se a exceção tiver capa/fundo próprios, usamos eles.
+        // O nome da música e artista ficam em BRANCO conforme solicitado.
         const masked = {
           titulo: "",
           artista: "",
           duracao: 0,
-          capa: photo || "",
+          capa: matchedExcecao.capa_url || photo || "",
         };
-        // Bypass do guarda de placeholder do applyMusicData: escreve
-        // diretamente o estado mascarado e propaga para o dashboard.
+
         writeMusicData(user.id, masked);
         localStorage.setItem(MUSIC_START_KEY, Date.now().toString());
         if (user?.id) {
           void mergeUserDashboardItems(user.id, {
             music_current_title: "",
             music_current_artist: "",
-            music_current_cover: photo || "",
-            music_deezer_artist_img: photo || "",
+            music_current_cover: matchedExcecao.capa_url || photo || "",
+            music_deezer_artist_img: matchedExcecao.background_url || matchedExcecao.capa_url || photo || "",
             music_current_curiosity: "",
           }).catch(() => {});
         }
@@ -399,23 +399,29 @@ export function useGlobalMusicSync(enabled: boolean = true) {
       fetchCountRef.current++;
 
       if (!settingsFetchedRef.current) {
-        const { data: settings } = await supabase
-          .from("user_settings")
-          .select("music_xml_url, music_source_mode, dashboard_items, infomusic_excecoes")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const [settingsRes, exceptionsRes] = await Promise.all([
+          supabase
+            .from("user_settings")
+            .select("music_xml_url, music_source_mode, dashboard_items")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("infomusic_excecoes")
+            .select("id, termo, capa_url, background_url")
+            .eq("user_id", user.id)
+        ]);
 
+        const settings = settingsRes.data;
         const dashboardItems = settings?.dashboard_items as { local_xml_filename?: string; local_xml_storage_path?: string } | null;
+        
         cachedSettingsRef.current = {
           url: settings?.music_xml_url || null,
           mode: settings?.music_source_mode || "online",
           localFileName: dashboardItems?.local_xml_filename || null,
           localStoragePath: dashboardItems?.local_xml_storage_path || null,
         };
-        excecoesRef.current = ((settings?.infomusic_excecoes || "") as string)
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
+        
+        excecoesRef.current = exceptionsRes.data || [];
         settingsFetchedRef.current = true;
       }
 

@@ -1169,6 +1169,36 @@ export type Database = {
         }
         Relationships: []
       }
+      infomusic_excecoes: {
+        Row: {
+          background_url: string | null
+          capa_url: string | null
+          created_at: string | null
+          id: string
+          termo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          background_url?: string | null
+          capa_url?: string | null
+          created_at?: string | null
+          id?: string
+          termo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          background_url?: string | null
+          capa_url?: string | null
+          created_at?: string | null
+          id?: string
+          termo?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       logos_patrocinadores: {
         Row: {
           ativo: boolean

@@ -25,8 +25,7 @@ export default function InfoMusicSection() {
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
-  const [excecoes, setExcecoes] = useState("");
-  const [excecoesInitial, setExcecoesInitial] = useState("");
+  const [excecoes, setExcecoes] = useState<any[]>([]);
   const [savingExcecoes, setSavingExcecoes] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
@@ -44,17 +43,26 @@ export default function InfoMusicSection() {
   const [showAiToggle, setShowAiToggle] = useState(false);
 
   const [newExcecao, setNewExcecao] = useState("");
+  const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
+  const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
 
   const loadExcecoes = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count, last_manual_curiosity_id, dashboard_items")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const v = (data?.infomusic_excecoes || "") as string;
-    setExcecoes(v);
-    setExcecoesInitial(v);
+    const [settingsRes, exceptionsRes] = await Promise.all([
+      supabase
+        .from("user_settings")
+        .select("infomusic_ai_enabled, infomusic_ai_monthly_count, last_manual_curiosity_id, dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("infomusic_excecoes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+    ]);
+
+    const data = settingsRes.data;
+    setExcecoes(exceptionsRes.data || []);
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
     setLastManualId(data?.last_manual_curiosity_id || null);
@@ -143,69 +151,51 @@ export default function InfoMusicSection() {
     }
   };
 
-  const saveExcecoesValue = async (val: string) => {
-    if (!user) return;
+  const addExcecao = async () => {
+    const v = newExcecao.trim();
+    if (!v) return;
+    if (excecoes.some((x) => x.termo.toLowerCase() === v.toLowerCase())) {
+      toast.error("Termo já cadastrado");
+      return;
+    }
+    
     setSavingExcecoes(true);
     try {
       const { error } = await supabase
-        .from("user_settings")
-        .upsert({ user_id: user.id, infomusic_excecoes: val }, { onConflict: "user_id" });
+        .from("infomusic_excecoes")
+        .insert({
+          user_id: user?.id,
+          termo: v,
+          capa_url: newExcecaoCapa.trim() || null,
+          background_url: newExcecaoFundo.trim() || null
+        });
+      
       if (error) throw error;
-      setExcecoes(val);
-      setExcecoesInitial(val);
-      // Ensure any track matching the current exception list is removed from "Tocadas"
-      const parsed = val.split(",").map((s) => s.trim()).filter(Boolean);
-      await purgeExceptionsFromTocadas(parsed);
+      
+      setNewExcecao("");
+      setNewExcecaoCapa("");
+      setNewExcecaoFundo("");
+      await loadExcecoes();
+      toast.success("Exceção adicionada");
     } catch (e) {
-      toast.error("Erro ao salvar exceções");
+      toast.error("Erro ao adicionar exceção");
     }
     setSavingExcecoes(false);
   };
 
-  const saveExcecoes = async () => {
-    await saveExcecoesValue(excecoes);
-    toast.success("Exceções salvas");
-  };
-
-  const excecaoList = useMemo(
-    () => excecoes.split(",").map((s) => s.trim()).filter(Boolean),
-    [excecoes]
-  );
-
-  const addExcecao = async () => {
-    const v = newExcecao.trim();
-    if (!v) return;
-    if (excecaoList.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      toast.error("Palavra já cadastrada");
-      return;
+  const removeExcecao = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("infomusic_excecoes")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      await loadExcecoes();
+      toast.success("Exceção removida");
+    } catch (e) {
+      toast.error("Erro ao remover exceção");
     }
-    // Novo item vai para o TOPO da lista
-    const next = [v, ...excecaoList].join(", ");
-    setNewExcecao("");
-    await saveExcecoesValue(next);
-    toast.success("Exceção adicionada", {
-      action: {
-        label: "Desfazer",
-        onClick: async () => {
-          const rollback = excecaoList.join(", ");
-          await saveExcecoesValue(rollback);
-        },
-      },
-    });
-  };
-
-  const removeExcecao = async (word: string) => {
-    const prev = excecaoList.slice();
-    const next = excecaoList.filter((x) => x !== word).join(", ");
-    await saveExcecoesValue(next);
-    toast.success(`"${word}" removida`, {
-      action: {
-        label: "Desfazer",
-        onClick: async () => {
-          await saveExcecoesValue(prev.join(", "));
-        },
-      },
-    });
   };
 
 
@@ -393,7 +383,7 @@ export default function InfoMusicSection() {
 
 
   const filteredMissing = useMemo(() => {
-    const excLower = excecaoList.map(w => w.trim().toLowerCase()).filter(Boolean);
+    const excLower = excecoes.map(ex => ex.termo.trim().toLowerCase());
     const notExcepted = missingRows.filter(m => {
       const a = (m.artista || "").toLowerCase();
       const mu = (m.musica || "").toLowerCase();
@@ -404,7 +394,7 @@ export default function InfoMusicSection() {
     return notExcepted.filter(m =>
       m.artista.toLowerCase().includes(q) || m.musica.toLowerCase().includes(q)
     );
-  }, [missingRows, search, excecaoList]);
+  }, [missingRows, search, excecoes]);
 
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const Highlight = ({ text, term }: { text: string; term: string }) => {
@@ -434,7 +424,7 @@ export default function InfoMusicSection() {
 
   const filteredRows = useMemo(() => {
     // Ocultar da tabela Tocadas qualquer artista/música que esteja na lista de Exceções
-    const excLower = excecaoList.map(w => w.toLowerCase()).filter(Boolean);
+    const excLower = excecoes.map(ex => ex.termo.toLowerCase());
     const notExcepted = rows.filter(r => {
       const artista = (r.artista || "").toLowerCase();
       const musica = (r.musica || "").toLowerCase();
@@ -451,7 +441,7 @@ export default function InfoMusicSection() {
       if (filterField === "curiosidade") return curiosidade.includes(q);
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
-  }, [rows, search, filterField, excecaoList]);
+  }, [rows, search, filterField, excecoes]);
 
   const load = async () => {
     setLoading(true);
@@ -482,17 +472,19 @@ export default function InfoMusicSection() {
   useEffect(() => { load(); }, []);
   // Guarantee: any row in "Tocadas" that matches the current exception list is purged from DB + UI
   useEffect(() => {
-    if (!user || excecaoList.length === 0 || rows.length === 0) return;
+    if (!user || excecoes.length === 0 || rows.length === 0) return;
     const hasMatch = rows.some((r) => {
       const a = (r.artista || "").toLowerCase();
       const m = (r.musica || "").toLowerCase();
-      return excecaoList.some((w) => {
-        const ww = w.toLowerCase();
+      return excecoes.some((ex) => {
+        const ww = ex.termo.toLowerCase();
         return a.includes(ww) || m.includes(ww);
       });
     });
-    if (hasMatch) purgeExceptionsFromTocadas(excecaoList);
-  }, [excecaoList, rows, user]);
+    if (hasMatch) {
+      purgeExceptionsFromTocadas(excecoes.map(ex => ex.termo));
+    }
+  }, [excecoes, rows, user]);
   useEffect(() => {
     if (filterField === "sem_curiosidade" && !loadingMissing) {
       loadMissing();
@@ -519,8 +511,8 @@ export default function InfoMusicSection() {
 
     // Skip if artist/music matches any exception word (case-insensitive substring)
     const hay = `${nowPlaying.artista} ${nowPlaying.musica}`.toLowerCase();
-    const isException = excecaoList.some((w) => {
-      const ww = w.trim().toLowerCase();
+    const isException = excecoes.some((ex) => {
+      const ww = ex.termo.trim().toLowerCase();
       return !!ww && hay.includes(ww);
     });
     if (isException) return;
@@ -587,7 +579,7 @@ export default function InfoMusicSection() {
       }
     })();
     return () => { cancelled = true; };
-  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user, excecaoList]);
+  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user, excecoes]);
 
   // ============ XML Verifier ============
   // Fetch the live broadcast XML and compare its <curiosidade> value with the text
@@ -858,8 +850,8 @@ export default function InfoMusicSection() {
               <div className="flex items-center gap-1 shrink-0">
                 {(() => {
                   const hay = `${nowPlaying.artista} ${nowPlaying.musica}`.toLowerCase();
-                  const isException = excecaoList.some((w) => {
-                    const ww = w.trim().toLowerCase();
+                  const isException = excecoes.some((ex) => {
+                    const ww = ex.termo.trim().toLowerCase();
                     return !!ww && hay.includes(ww);
                   });
                   if (!isException) return null;
@@ -968,30 +960,56 @@ export default function InfoMusicSection() {
                 color: "var(--layout-accent-color, #2563eb)",
               }}
             >
-              {excecaoList.length}
+              {excecoes.length}
             </span>
           </div>
           <div className="p-4 space-y-3">
             <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
               Quando o artista ou música contiver qualquer palavra abaixo, a tag <code className="px-1 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", fontFamily: "ui-monospace, monospace" }}>&lt;curiosidade&gt;</code> fica vazia.
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <input
                 type="text"
-                placeholder="Adicionar palavra (ex.: jingle)"
+                placeholder="Termo (ex.: jingle ou artista)"
                 value={newExcecao}
                 onChange={(e) => setNewExcecao(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addExcecao(); } }}
-                className="flex-1 px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 transition-shadow"
+                className="w-full px-3 py-2 rounded-lg text-xs outline-none focus:ring-2 transition-shadow"
                 style={{
                   backgroundColor: "var(--layout-page-bg, #fff)",
                   color: "var(--layout-page-text, #1a1a1a)",
                   border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
                 }}
               />
-              <Button variant="save" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="URL da Capa (1080x1080)"
+                  value={newExcecaoCapa}
+                  onChange={(e) => setNewExcecaoCapa(e.target.value)}
+                  className="px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, #fff)",
+                    color: "var(--layout-page-text, #1a1a1a)",
+                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="URL do Fundo (1920x1080)"
+                  value={newExcecaoFundo}
+                  onChange={(e) => setNewExcecaoFundo(e.target.value)}
+                  className="px-3 py-2 rounded-lg text-xs outline-none"
+                  style={{
+                    backgroundColor: "var(--layout-page-bg, #fff)",
+                    color: "var(--layout-page-text, #1a1a1a)",
+                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                  }}
+                />
+              </div>
+              <Button variant="save" className="w-full" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
                 {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
-                Adicionar
+                Adicionar Exceção
               </Button>
             </div>
             <div
@@ -1003,7 +1021,7 @@ export default function InfoMusicSection() {
                 overflowY: "auto",
               }}
             >
-              {excecaoList.length === 0 ? (
+              {excecoes.length === 0 ? (
                 <div className="text-center py-6 text-[11px] opacity-60" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                   Nenhuma palavra cadastrada.
                 </div>
@@ -1015,7 +1033,10 @@ export default function InfoMusicSection() {
                   }}>
                     <tr>
                       <th className="text-left px-3 py-2 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
-                        Palavra / Artista / Música
+                        Palavra / Artista
+                      </th>
+                      <th className="text-left px-3 py-2 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
+                        Capa / Fundo
                       </th>
                       <th className="text-right px-3 py-2 font-black uppercase text-[10px] tracking-wider w-16" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
                         Ação
@@ -1023,9 +1044,9 @@ export default function InfoMusicSection() {
                     </tr>
                   </thead>
                   <tbody>
-                    {excecaoList.map((w, i) => (
+                    {excecoes.map((ex, i) => (
                       <tr
-                        key={w + i}
+                        key={ex.id}
                         className="excecao-row transition-colors"
                         style={{
                           borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined,
@@ -1033,11 +1054,17 @@ export default function InfoMusicSection() {
                         }}
                       >
                         <td className="px-3 py-2 font-medium truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          {w}
+                          {ex.termo}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <div className="flex flex-col gap-0.5">
+                            {ex.capa_url ? <span className="text-emerald-500 font-bold">✓ Capa</span> : <span>—</span>}
+                            {ex.background_url ? <span className="text-emerald-500 font-bold">✓ Fundo</span> : <span>—</span>}
+                          </div>
                         </td>
                         <td className="px-3 py-2 text-right">
                           <button
-                            onClick={() => removeExcecao(w)}
+                            onClick={() => removeExcecao(ex.id)}
                             className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold transition-all hover:scale-105"
                             style={{ backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)", color: "#dc2626", border: "1px solid color-mix(in srgb, #dc2626 25%, transparent)" }}
                             title="Remover exceção"
@@ -1386,18 +1413,19 @@ export default function InfoMusicSection() {
                         onClick={async () => {
                           const nameRaw = (m.artista || "").trim();
                           if (!nameRaw) return;
-                          if (excecaoList.some(x => x.toLowerCase() === nameRaw.toLowerCase())) {
+                          if (excecoes.some(x => x.termo.toLowerCase() === nameRaw.toLowerCase())) {
                             toast.info(`"${nameRaw}" já está nas exceções`);
                             setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
                             return;
                           }
-                          const prevList = excecaoList.slice();
-                          const next = [nameRaw, ...excecaoList].join(", ");
-                          await saveExcecoesValue(next);
+                          
+                          setSavingExcecoes(true);
+                          await supabase.from("infomusic_excecoes").insert({ user_id: user?.id, termo: nameRaw });
+                          await loadExcecoes();
+                          setSavingExcecoes(false);
+                          
                           setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
-                          toast.success(`"${nameRaw}" adicionado às exceções`, {
-                            action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
-                          });
+                          toast.success(`"${nameRaw}" adicionado às exceções`);
                         }}
                         title="Adicionar este artista à lista de exceções (não gera curiosidade)"
                         className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1.5 shrink-0 transition-opacity hover:opacity-90"
@@ -1537,31 +1565,22 @@ export default function InfoMusicSection() {
                        </td>
                        <td className="px-3 py-2 align-top text-center">
                          {(() => {
-                           const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
                            const handleToggle = async () => {
                              const nameRaw = r.artista.trim();
                              if (!nameRaw) return;
-                             const prevList = excecaoList.slice();
-                             if (isEx) {
-                               const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
-                               await saveExcecoesValue(next);
-                               toast.success(`"${nameRaw}" removido das exceções`, {
-                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
-                               });
+                             if (ex) {
+                               await removeExcecao(ex.id);
                              } else {
-                               const next = [nameRaw, ...excecaoList].join(", ");
-                               await saveExcecoesValue(next);
-                               toast.success(`"${nameRaw}" adicionado às exceções`, {
-                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
-                               });
+                               setNewExcecao(nameRaw);
                              }
                            };
                            return (
                              <div
                                className="inline-flex items-center justify-center"
-                               title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções (oculta desta tabela)"}
+                               title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
                              >
-                               <Switch checked={isEx} onCheckedChange={handleToggle} />
+                               <Switch checked={!!ex} onCheckedChange={handleToggle} />
                              </div>
                            );
                          })()}
