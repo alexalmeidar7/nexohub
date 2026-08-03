@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Dashboard from "@/components/Dashboard";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,12 @@ export default function MasterViewHome() {
   const { signOut } = useAuth();
   usePageTitle("Dashboard");
   const [musicaMinimizada, setMusicaMinimizada] = useState(false);
+
+  useEffect(() => {
+    const onMinimize = () => setMusicaMinimizada(true);
+    window.addEventListener("minimizeMusica", onMinimize);
+    return () => window.removeEventListener("minimizeMusica", onMinimize);
+  }, []);
 
   return (
     <ProtectedRoute>
