@@ -670,7 +670,10 @@ export default function WelcomeScreen({
       if (result?.redirected) return; // navegação em curso; watchdog cuida do retorno
       clearAuthWatchdog();
       setSigningIn(false);
-      onLoginSuccess?.();
+      setAuthMode(null);
+      // Não avança para a home: o usuário fica na tela de perfis do player,
+      // onde o aviso de cadastro existente é exibido quando for o caso.
+
     } catch (e: any) {
       const msg = e?.message || "erro inesperado ao conectar com o google.";
       resetAuthUI(msg);
