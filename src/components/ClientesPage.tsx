@@ -289,9 +289,15 @@ export default function ClientesPage() {
               <TableRow key={cliente.user_id || idx} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-medium text-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
-                      <Building2 size={16} />
-                    </div>
+                    {cliente.logo_url ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200">
+                        <img src={cliente.logo_url} alt={cliente.nome || ""} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
+                        <Building2 size={16} />
+                      </div>
+                    )}
                     {cliente.nome}
                   </div>
                 </TableCell>
@@ -306,7 +312,7 @@ export default function ClientesPage() {
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-100 text-lime-700 text-[10px] font-bold uppercase">
                     <Activity size={12} />
-                    {getEventosCliente(cliente.nome)} Eventos
+                    {getEventosCliente(cliente.nome)} Blitz/Eventos
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
