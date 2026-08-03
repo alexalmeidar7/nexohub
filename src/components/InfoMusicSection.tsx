@@ -1059,8 +1059,8 @@ export default function InfoMusicSection() {
                         border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
                       }}
                     />
-                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center" title="Upload da Capa (1080x1080)">
-                      <ImagePlus size={14} className="opacity-60" />
+                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center bg-cyan-500/10" title="Upload da Capa (1080x1080)">
+                      <Upload size={14} className="text-cyan-600" />
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -1076,7 +1076,7 @@ export default function InfoMusicSection() {
                       />
                     </label>
                   </div>
-                  {newExcecaoCapa && <div className="text-[9px] opacity-50 truncate">Capa selecionada</div>}
+                  {newExcecaoCapa && <div className="text-[9px] opacity-60 font-bold text-cyan-600 px-1">Capa carregada ✓</div>}
                 </div>
 
                 <div className="space-y-1">
@@ -1093,8 +1093,8 @@ export default function InfoMusicSection() {
                         border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
                       }}
                     />
-                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center" title="Upload do Fundo (1920x1080)">
-                      <ImagePlus size={14} className="opacity-60" />
+                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center bg-cyan-500/10" title="Upload do Fundo (1920x1080)">
+                      <Upload size={14} className="text-cyan-600" />
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -1110,7 +1110,7 @@ export default function InfoMusicSection() {
                       />
                     </label>
                   </div>
-                  {newExcecaoFundo && <div className="text-[9px] opacity-50 truncate">Fundo selecionado</div>}
+                  {newExcecaoFundo && <div className="text-[9px] opacity-60 font-bold text-cyan-600 px-1">Fundo carregado ✓</div>}
                 </div>
               </div>
               <Button variant="save" className="w-full" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
