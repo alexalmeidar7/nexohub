@@ -654,7 +654,9 @@ export default function WelcomeScreen({
     window.addEventListener("focus", onFocus);
 
     try {
+      try { sessionStorage.setItem("nexohub_player_signup_check", "1"); } catch { /* ignore */ }
       setOAuthReturnPath(getCurrentReturnPath());
+
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: getManagedOAuthRedirectUri(),
         extraParams: { prompt: "select_account" },
