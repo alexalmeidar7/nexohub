@@ -1077,7 +1077,7 @@ export default function WelcomeScreen({
           ) : (
             <div className="w-full flex items-center justify-center gap-5">
               {[
-                { key: "login", label: "entrar", icon: <LogIn className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: true },
+                
                 {
                   key: "google",
                   label: "entrar com google",
