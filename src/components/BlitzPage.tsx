@@ -195,7 +195,89 @@ export default function BlitzPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  const loadClientes = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("logos_patrocinadores")
+      .select("id, nome")
+      .eq("excluido", false)
+      .order("nome");
+    
+    if (data) {
+      const unique = new Map();
+      data.forEach(d => {
+        if (d.nome) unique.set(d.nome.trim().toUpperCase(), { id: d.id, nome: d.nome });
+      });
+      setClientesDisponiveis(Array.from(unique.values()));
+    }
+  };
+
+  useEffect(() => { 
+    load(); 
+    loadClientes();
+  }, [user?.id]);
+
+  const handleClienteChange = (val: string) => {
+    setForm(prev => ({ ...prev, cliente: val }));
+    if (val.length > 1) {
+      const matched = clientesDisponiveis.filter(c => 
+        c.nome.toLowerCase().includes(val.toLowerCase())
+      );
+      setSugestoesClientes(matched);
+      setShowSugestoes(true);
+    } else {
+      setShowSugestoes(false);
+    }
+  };
+
+  const selectCliente = (c: { id: string; nome: string }) => {
+    setForm(prev => ({ ...prev, cliente: c.nome }));
+    setShowSugestoes(false);
+  };
+
+  const handleClienteBlur = () => {
+    // Pequeno delay para permitir clique na sugestão
+    setTimeout(async () => {
+      setShowSugestoes(false);
+      const val = form.cliente.trim();
+      if (!val) return;
+      
+      const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
+      if (!exists && val.length > 2) {
+        const confirm = window.confirm(`O cliente "${val}" não está cadastrado. Vamos cadastrar esse cliente?`);
+        if (confirm) {
+          setNovoClienteData(prev => ({ ...prev, nome: val }));
+          setCadastroOpen(true);
+        }
+      }
+    }, 200);
+  };
+
+  const saveNovoCliente = async () => {
+    if (!novoClienteData.nome || !novoClienteData.cnpj) {
+      toast({ title: "Razão Social e CNPJ são obrigatórios", variant: "destructive" });
+      return;
+    }
+    setCadastrandoCliente(true);
+    try {
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        nome: novoClienteData.nome.trim().toUpperCase(),
+        user_id: user?.id,
+        ativo: true,
+        excluido: false,
+        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
+      } as any);
+      if (error) throw error;
+      toast({ title: "Cliente cadastrado com sucesso!" });
+      setCadastroOpen(false);
+      await loadClientes();
+      setForm(prev => ({ ...prev, cliente: novoClienteData.nome.trim().toUpperCase() }));
+    } catch (e: any) {
+      toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
+    } finally {
+      setCadastrandoCliente(false);
+    }
+  };
 
   const reset = () => { setForm(emptyForm); setEditingId(null); };
 
