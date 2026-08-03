@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, Maximize2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -399,9 +399,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     menuLeaveTimer.current = setTimeout(() => setHoveredMenu(null), 450);
   }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
+  const [musicaMinimizada, setMusicaMinimizada] = useState(false);
+  const [musicaDismissed, setMusicaDismissed] = useState(false);
+  const [activeBlitzCount, setActiveBlitzCount] = useState(0);
+
+  useEffect(() => {
+    if (!effectiveUserId) return;
+    const today = new Date().toISOString().split('T')[0];
+    const load = async () => {
+      const { data } = await supabase
+        .from("blitz_promocionais")
+        .select("id")
+        .eq("user_id", effectiveUserId)
+        .eq("dia", today)
+        .eq("realizada", false);
+      setActiveBlitzCount(data?.length || 0);
+    };
+    load();
+    const ch = supabase
+      .channel(`blitz-count-${effectiveUserId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "blitz_promocionais" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [effectiveUserId]);
+
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
