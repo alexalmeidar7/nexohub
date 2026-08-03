@@ -276,11 +276,21 @@ export default function BlitzPage() {
     }, 250);
   };
 
-  const saveNovoCliente = async () => {
-    if (!novoClienteData.nome || !novoClienteData.cnpj) {
-      toast({ title: "Razão Social e CNPJ são obrigatórios", variant: "destructive" });
-      return;
+  const validateCadastro = () => {
+    const errors: Record<string, string> = {};
+    if (!novoClienteData.nome || novoClienteData.nome.trim().length < 3) {
+      errors.nome = "Razão Social deve ter pelo menos 3 caracteres";
     }
+    const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
+    if (!cleanCnpj || cleanCnpj.length !== 14) {
+      errors.cnpj = "CNPJ deve ter 14 dígitos";
+    }
+    setCadastroErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const saveNovoCliente = async () => {
+    if (!validateCadastro()) return;
 
     const cleanNome = novoClienteData.nome.trim().toUpperCase();
     const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
@@ -290,14 +300,14 @@ export default function BlitzPage() {
     );
 
     if (alreadyExists) {
-      toast({ title: "Cliente já cadastrado", description: "Já existe um cliente com esta Razão Social.", variant: "destructive" });
-      setCadastroOpen(false);
+      setCadastroErrors({ nome: "Cliente já cadastrado com esta Razão Social" });
       return;
     }
 
     setCadastrandoCliente(true);
+    setCadastroErrors({});
+    
     try {
-      // @ts-ignore
       const { data: cnpjExists } = await supabase
         .from("logos_patrocinadores")
         .select("id")
@@ -306,7 +316,7 @@ export default function BlitzPage() {
         .maybeSingle();
 
       if (cnpjExists) {
-        toast({ title: "CNPJ duplicado", description: "Já existe um cliente cadastrado com este CNPJ.", variant: "destructive" });
+        setCadastroErrors({ cnpj: "Já existe um cliente cadastrado com este CNPJ" });
         setCadastrandoCliente(false);
         return;
       }
@@ -314,6 +324,8 @@ export default function BlitzPage() {
       const payload: any = {
         nome: cleanNome,
         cnpj: cleanCnpj,
+        telefone: novoClienteData.telefone || null,
+        endereco: novoClienteData.endereco || null,
         user_id: user?.id,
         ativo: true,
         excluido: false,
