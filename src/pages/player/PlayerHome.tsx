@@ -438,6 +438,9 @@ function TopNavBar({
 
       {/* Right: avatar (rounded square) + station logo */}
       <div className="flex items-center gap-2 sm:gap-4 ml-auto">
+        {/* Relógio + previsão do tempo (mesmo padrão do /player/watch) */}
+        <PlayerClockWeather radioUserId={radioUserId} compact />
+
         <div ref={profileRef} className="relative">
           <button
             onClick={() => setProfileOpen(v => !v)}
