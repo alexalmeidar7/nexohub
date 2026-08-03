@@ -350,9 +350,19 @@ export default function ClientesPage() {
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-red-500">
-                    <Trash2 size={16} />
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleEdit(cliente)}
+                      className="rounded-full text-slate-400 hover:text-cyan-600"
+                    >
+                      <UserCog size={16} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-red-500">
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
