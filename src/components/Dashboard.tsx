@@ -459,7 +459,6 @@ export default function Dashboard({ onLogout, musicaMinimizada, onRestaurarMusic
   const [nowTick, setNowTick] = useState(() => Date.now());
   // Global player state (mirrored from CustomizableDashboard via window events)
   const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
-  const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
   
   useEffect(() => {
     const onState = (e: Event) => {
