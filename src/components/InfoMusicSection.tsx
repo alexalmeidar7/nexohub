@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus, Download, Upload } from "lucide-react";
+import { Sparkles, Loader2, Trash2, RefreshCw, Ban, Save, Send, Music, Search, X, AlertTriangle, CheckCircle2, HelpCircle, Plus, Download, Upload, ImagePlus } from "lucide-react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -161,13 +161,37 @@ export default function InfoMusicSection() {
     
     setSavingExcecoes(true);
     try {
+      let capaFinal = newExcecaoCapa.trim();
+      let fundoFinal = newExcecaoFundo.trim();
+
+      // Process base64 uploads if present
+      const timestamp = Date.now();
+      if (capaFinal.startsWith("data:") && user?.id) {
+        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        capaFinal = await uploadImageToStorage(
+          capaFinal, 
+          "empresa-assets", 
+          `${user.id}/excecoes/${timestamp}_capa.webp`,
+          1080
+        );
+      }
+      if (fundoFinal.startsWith("data:") && user?.id) {
+        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        fundoFinal = await uploadImageToStorage(
+          fundoFinal, 
+          "empresa-assets", 
+          `${user.id}/excecoes/${timestamp}_fundo.webp`,
+          1920
+        );
+      }
+
       const { error } = await supabase
         .from("infomusic_excecoes")
         .insert({
           user_id: user?.id,
           termo: v,
-          capa_url: newExcecaoCapa.trim() || null,
-          background_url: newExcecaoFundo.trim() || null
+          capa_url: capaFinal || null,
+          background_url: fundoFinal || null
         });
       
       if (error) throw error;
@@ -982,30 +1006,73 @@ export default function InfoMusicSection() {
                 }}
               />
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="text"
-                  placeholder="URL da Capa (1080x1080)"
-                  value={newExcecaoCapa}
-                  onChange={(e) => setNewExcecaoCapa(e.target.value)}
-                  className="px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{
-                    backgroundColor: "var(--layout-page-bg, #fff)",
-                    color: "var(--layout-page-text, #1a1a1a)",
-                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="URL do Fundo (1920x1080)"
-                  value={newExcecaoFundo}
-                  onChange={(e) => setNewExcecaoFundo(e.target.value)}
-                  className="px-3 py-2 rounded-lg text-xs outline-none"
-                  style={{
-                    backgroundColor: "var(--layout-page-bg, #fff)",
-                    color: "var(--layout-page-text, #1a1a1a)",
-                    border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
-                  }}
-                />
+                <div className="space-y-1">
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      placeholder="URL da Capa"
+                      value={newExcecaoCapa}
+                      onChange={(e) => setNewExcecaoCapa(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
+                      style={{
+                        backgroundColor: "var(--layout-page-bg, #fff)",
+                        color: "var(--layout-page-text, #1a1a1a)",
+                        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                      }}
+                    />
+                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center" title="Upload da Capa (1080x1080)">
+                      <ImagePlus size={14} className="opacity-60" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setNewExcecaoCapa(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {newExcecaoCapa && <div className="text-[9px] opacity-50 truncate">Capa selecionada</div>}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      placeholder="URL do Fundo"
+                      value={newExcecaoFundo}
+                      onChange={(e) => setNewExcecaoFundo(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-lg text-xs outline-none"
+                      style={{
+                        backgroundColor: "var(--layout-page-bg, #fff)",
+                        color: "var(--layout-page-text, #1a1a1a)",
+                        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 25%, transparent)",
+                      }}
+                    />
+                    <label className="shrink-0 p-2 rounded-lg cursor-pointer hover:bg-black/5 transition-colors border border-dashed border-black/20 flex items-center justify-center" title="Upload do Fundo (1920x1080)">
+                      <ImagePlus size={14} className="opacity-60" />
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (ev) => setNewExcecaoFundo(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {newExcecaoFundo && <div className="text-[9px] opacity-50 truncate">Fundo selecionado</div>}
+                </div>
               </div>
               <Button variant="save" className="w-full" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
                 {savingExcecoes ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
