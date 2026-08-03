@@ -1679,7 +1679,52 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
               <div className="flex items-center gap-2">
-                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                <BackButton onClick={() => {
+                  if (currentPage === "musica") setMusicaMinimizada(false);
+                  setCurrentPage("dashboard");
+                }} />
+                {musicaMinimizada && !musicaDismissed && (
+                  <div
+                    style={{
+                      position: "fixed", left: "var(--onair-left, 18px)", bottom: activeBlitzCount > 0 ? 76 : 18, zIndex: 60,
+                      display: "flex", alignItems: "center", gap: 6,
+                      background: "#00BFF0", borderRadius: 999, padding: "4px 6px 4px 4px",
+                      boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: "'Montserrat', sans-serif",
+                      paddingLeft: "var(--onair-left-offset, 0px)",
+                      transition: "bottom 0.3s ease"
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setMusicaMinimizada(false);
+                        setCurrentPage("musica");
+                      }}
+                      style={{
+                        background: "transparent", color: "#fff", border: "none", borderRadius: 999,
+                        padding: "6px 10px", fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: 12,
+                        textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
+                        cursor: "pointer",
+                      }}
+                      title="Restaurar Música no Ar"
+                    >
+                      <Music size={14} /> Música no Ar <Maximize2 size={14} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMusicaMinimizada(false);
+                        setMusicaDismissed(true);
+                      }}
+                      style={{
+                        background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 999,
+                        width: 22, height: 22, color: "#fff", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                      }}
+                      title="Fechar"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                )}
                 {currentPage === "musica" && (
                   <button
                     onClick={() => setCurrentPage("dashboard")}
@@ -1701,7 +1746,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
-              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
+              <div style={{ display: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "block" : "none", height: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "auto" : 0, overflow: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "visible" : "hidden" }}>
                 {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
