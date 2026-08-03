@@ -150,11 +150,11 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
           className="h-screen w-screen flex flex-col items-center justify-center gap-4"
           style={{ backgroundColor: "#131519", color: "#fff" }}
         >
-          {this.state.retryCount < 2 ? (
+          {this.state.retryCount < 3 ? (
             <>
               <LoadingSpinner size={32} />
-              <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
-                Reconectando...
+              <p className="text-sm opacity-60">
+                Sincronizando ambiente...
               </p>
             </>
           ) : (
