@@ -53,8 +53,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/40">
+    <section className="rounded-2xl border border-border bg-card text-card-foreground overflow-hidden shadow-sm">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted">
         <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           {icon}
         </div>
@@ -66,7 +66,7 @@ function SectionCard({
           {count}
         </span>
       </header>
-      <div className="max-h-[52vh] overflow-y-auto">{children}</div>
+      <div className="max-h-[52vh] overflow-y-auto bg-card text-card-foreground">{children}</div>
     </section>
   );
 }
@@ -181,8 +181,10 @@ export default function AdminInfoMusicPage() {
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
 
-  const thClass = "px-4 py-2.5 font-semibold";
-  const headRow = "text-left text-[11px] uppercase tracking-wider text-muted-foreground";
+  const thClass = "px-4 py-3 font-bold text-card-foreground/80";
+  const headRow = "text-left text-[11px] uppercase tracking-wider";
+  const trClass =
+    "border-t border-border/50 odd:bg-muted/30 hover:bg-primary/10 transition-colors text-card-foreground";
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -222,8 +224,8 @@ export default function AdminInfoMusicPage() {
         subtitle="Registro em tempo real de todos os clientes"
         count={filtered.length}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+        <table className="w-full text-sm border-collapse">
+          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Data</th>
               <th className={thClass}>Horário</th>
@@ -241,13 +243,13 @@ export default function AdminInfoMusicPage() {
               <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
             )}
             {filtered.map((r) => (
-              <tr key={r.id} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
-                <td className="px-4 py-2.5 whitespace-nowrap">{formatDia(r.dia, r.created_at)}</td>
-                <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs">{(r.horario || "").slice(0, 8)}</td>
+              <tr key={r.id} className={trClass}>
+                <td className="px-4 py-2.5 whitespace-nowrap text-card-foreground/80">{formatDia(r.dia, r.created_at)}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs text-card-foreground/80">{(r.horario || "").slice(0, 8)}</td>
                 <td className="px-4 py-2.5 font-semibold">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5">{r.musica}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{r.artista}</td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.programa || "—"}</td>
+                <td className="px-4 py-2.5 font-medium">{r.musica}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70">{r.artista}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70 text-xs">{r.programa || "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -260,8 +262,8 @@ export default function AdminInfoMusicPage() {
         subtitle="Curiosidades registradas por todos os clientes"
         count={curiosidadesFiltradas.length}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+        <table className="w-full text-sm border-collapse">
+          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
@@ -274,11 +276,11 @@ export default function AdminInfoMusicPage() {
               <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nenhuma curiosidade cadastrada.</td></tr>
             )}
             {curiosidadesFiltradas.map((c) => (
-              <tr key={c.id} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
+              <tr key={c.id} className={trClass}>
                 <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[c.user_id] || c.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5">{c.musica}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{c.artista}</td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[520px]">{c.curiosidade}</td>
+                <td className="px-4 py-2.5 font-medium">{c.musica}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70">{c.artista}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70 text-xs max-w-[520px] leading-relaxed">{c.curiosidade}</td>
               </tr>
             ))}
           </tbody>
@@ -291,8 +293,8 @@ export default function AdminInfoMusicPage() {
         subtitle="Oportunidades de cadastro — músicas tocadas sem informação"
         count={semCuriosidade.length}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+        <table className="w-full text-sm border-collapse">
+          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
@@ -305,11 +307,11 @@ export default function AdminInfoMusicPage() {
               <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Todas as músicas possuem curiosidade.</td></tr>
             )}
             {semCuriosidade.map((r) => (
-              <tr key={`sc-${r.id}`} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
+              <tr key={`sc-${r.id}`} className={trClass}>
                 <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5">{r.musica}</td>
-                <td className="px-4 py-2.5 text-muted-foreground">{r.artista}</td>
-                <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">
+                <td className="px-4 py-2.5 font-medium">{r.musica}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70">{r.artista}</td>
+                <td className="px-4 py-2.5 text-card-foreground/70 text-xs whitespace-nowrap">
                   {formatDia(r.dia, r.created_at)} {(r.horario || "").slice(0, 5)}
                 </td>
               </tr>
