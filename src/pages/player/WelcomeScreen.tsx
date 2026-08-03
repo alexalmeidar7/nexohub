@@ -1135,13 +1135,14 @@ export default function WelcomeScreen({
                       }}
                     />
                     <div className="relative flex items-center justify-center w-11 h-11 rounded-full" style={{ background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.16)", backdropFilter: "blur(6px)" }}>
-                      {signingIn && btn.primary ? (
+                      {signingIn && btn.key === "google" ? (
                         <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
                       ) : btn.icon}
                     </div>
-                    <span className="relative text-white text-sm font-medium lowercase" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}>
-                      {signingIn && btn.primary ? "autenticando..." : btn.label}
+                    <span className="relative text-white text-sm font-medium lowercase text-center px-2" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}>
+                      {signingIn && btn.key === "google" ? "autenticando..." : btn.label}
                     </span>
+
                   </div>
                 </button>
               ))}
