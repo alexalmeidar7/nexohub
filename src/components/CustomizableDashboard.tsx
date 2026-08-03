@@ -1026,8 +1026,8 @@ function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } =
   }, [dataUserId]);
   return music ? (
     <div className="flex items-center gap-2.5">
-      {music.capa ? (
-        <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
+      {(music.excecao?.capa_url || music.capa) ? (
+        <img src={music.excecao?.capa_url || music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
         <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 14%, transparent)" }}>
           <Music size={16} style={{ color: "var(--layout-accent-color)" }} />
@@ -1427,7 +1427,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
 function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
-  const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string; excecao?: any } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
   const [currentProgram, setCurrentProgram] = useState<any>(null);
@@ -1564,8 +1564,8 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
       {/* Music */}
       {music ? (
         <div key={`music-${musicKey}`} className="flex items-center gap-3 animate-fade-in">
-          {music.capa && (
-            <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+          {(music.excecao?.capa_url || music.capa) && (
+            <img src={music.excecao?.capa_url || music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
             <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{music.titulo}</p>
