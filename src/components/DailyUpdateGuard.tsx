@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 /**
- * Global component that triggers a page reload every day at 3 AM.
- * This ensures all active sessions are running the latest version of the app.
+ * Global component that triggers a page reload every day at 3 AM,
+ * eu só atualizar quando houver mudança real.
  */
 export default function DailyUpdateGuard() {
   const { user } = useAuth();
