@@ -640,17 +640,22 @@ export default function BlitzPage() {
                 style={pillInput} 
                 placeholder="Ex: Supermercado ABC" 
                 value={form.cliente} 
-                onChange={e => handleClienteChange(e.target.value)} 
+                onChange={e => handleClienteChange(e.target.value)}
+                onKeyDown={handleClienteKeyDown}
                 onBlur={handleClienteBlur}
                 maxLength={120} 
+                autoComplete="off"
               />
               {showSugestoes && sugestoesClientes.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
-                  {sugestoesClientes.map(c => (
+                  {sugestoesClientes.map((c, index) => (
                     <button
                       key={c.id}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
+                      className={`w-full text-left px-4 py-2 text-sm transition-colors border-b border-slate-100 last:border-0 ${
+                        index === activeSugestaoIndex ? "bg-slate-100 font-bold" : "hover:bg-slate-50"
+                      }`}
                       onClick={() => selectCliente(c)}
+                      onMouseDown={(e) => e.preventDefault()} // Impede o blur de disparar antes do clique
                     >
                       {c.nome}
                     </button>
