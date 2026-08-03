@@ -350,8 +350,16 @@ export default function BlitzPage() {
   };
 
   const del = async (id: string) => {
-    const motivo = window.prompt("Excluir esta blitz?\n\nInforme um motivo (opcional) para o histórico:", "");
-    if (motivo === null) return;
+    const isConfirmed = await confirmDialog({
+      title: "Excluir Blitz",
+      message: "Deseja realmente excluir esta blitz? Esta ação não pode ser desfeita.",
+      confirmLabel: "Excluir",
+      cancelLabel: "Cancelar",
+      variant: "destructive"
+    });
+
+    if (!isConfirmed) return;
+
     const b = items.find(i => i.id === id);
     if (b?.agenda_evento_id) {
       await supabase.from("agenda_participantes").delete().eq("evento_id", b.agenda_evento_id);
@@ -361,7 +369,7 @@ export default function BlitzPage() {
     if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
     await logBlitzHistorico({
       userId: user!.id, blitzId: id, cliente: b?.cliente ?? null, acao: "excluida",
-      motivo: motivo.trim() || null, dadosAntes: b,
+      motivo: "Excluída pelo usuário", dadosAntes: b,
     });
     toast({ title: "Blitz excluída" });
     load();
