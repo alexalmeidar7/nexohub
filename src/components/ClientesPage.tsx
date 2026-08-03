@@ -229,8 +229,10 @@ export default function ClientesPage() {
       {novoOpen && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800">Novo Cliente</h2>
-            <Button variant="ghost" size="icon" onClick={() => setNovoOpen(false)} className="rounded-full">
+            <h2 className="text-lg font-bold text-slate-800">
+              {editingId ? "Editar Cliente" : "Novo Cliente"}
+            </h2>
+            <Button variant="ghost" size="icon" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full">
               <X size={20} />
             </Button>
           </div>
