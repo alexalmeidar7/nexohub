@@ -51,6 +51,7 @@ export default function ClientesPage() {
   const [busca, setBusca] = useState("");
   const [criando, setCriando] = useState(false);
   const [novoOpen, setNovoOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [novo, setNovo] = useState({
     nome: "",
     cnpj: "",
@@ -127,31 +128,53 @@ export default function ClientesPage() {
     try {
       const isAlex = user?.email?.toLowerCase().includes("alex");
 
-      // Para o Alex ou para novos cadastros (que não devem mais seguir a lógica de logo),
-      // o ideal seria inserir na tabela 'clientes'. Como fallback de permissão, 
-      // ainda usamos o sistema de logos mas com uma flag ou comportamento distinto.
-      // Se for Alex, tratamos o cadastro de forma manual e isolada.
-      
-      const { error } = await supabase.from("logos_patrocinadores").insert({
-        nome: novo.nome.trim().toUpperCase(),
-        user_id: user?.id,
-        ativo: true,
-        excluido: false,
-        // Se for Alex, marcamos com uma validade diferente ou nota (se houvesse o campo)
-        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
-      } as any);
+      if (editingId) {
+        // Lógica de edição
+        const { error } = await supabase
+          .from("logos_patrocinadores")
+          .update({
+            nome: novo.nome.trim().toUpperCase(),
+          } as any)
+          .eq("id", editingId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Dados do cliente atualizados!");
+      } else {
+        // Lógica de inserção
+        const { error } = await supabase.from("logos_patrocinadores").insert({
+          nome: novo.nome.trim().toUpperCase(),
+          user_id: user?.id,
+          ativo: true,
+          excluido: false,
+          data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
+        } as any);
 
-      toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
+        if (error) throw error;
+        toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
+      }
+
       setNovoOpen(false);
+      setEditingId(null);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao cadastrar cliente.");
+      toast.error(e.message || "Erro ao salvar cliente.");
     } finally {
       setCriando(false);
     }
+  };
+
+  const handleEdit = (cliente: Cliente) => {
+    setEditingId(cliente.id);
+    setNovo({
+      nome: cliente.nome || "",
+      cnpj: cliente.cnpj || "",
+      endereco: cliente.endereco || "",
+      telefone: cliente.telefone_comercial || "",
+      cliente_desde: cliente.cliente_desde || "",
+      executiva_venda: cliente.executiva_venda || ""
+    });
+    setNovoOpen(true);
   };
 
   const filtrados = useMemo(() => {
@@ -206,8 +229,10 @@ export default function ClientesPage() {
       {novoOpen && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800">Novo Cliente</h2>
-            <Button variant="ghost" size="icon" onClick={() => setNovoOpen(false)} className="rounded-full">
+            <h2 className="text-lg font-bold text-slate-800">
+              {editingId ? "Editar Cliente" : "Novo Cliente"}
+            </h2>
+            <Button variant="ghost" size="icon" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full">
               <X size={20} />
             </Button>
           </div>
@@ -270,14 +295,14 @@ export default function ClientesPage() {
           </div>
 
           <div className="mt-8 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setNovoOpen(false)} className="rounded-full px-6">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full px-6">Cancelar</Button>
             <Button 
               onClick={handleSave} 
               disabled={criando}
               className="rounded-full px-8 bg-cyan-500 hover:bg-cyan-600 text-white"
             >
               {criando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Salvar Cliente
+              {editingId ? "Atualizar Dados" : "Salvar Cliente"}
             </Button>
           </div>
         </div>
@@ -297,7 +322,7 @@ export default function ClientesPage() {
           </TableHeader>
           <TableBody>
             {filtrados.map((cliente, idx) => (
-              <TableRow key={cliente.user_id || idx} className="hover:bg-slate-50/50 transition-colors">
+              <TableRow key={cliente.id || idx} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-medium text-slate-800">
                   <div className="flex items-center gap-3">
                     {cliente.logo_url ? (
@@ -327,9 +352,19 @@ export default function ClientesPage() {
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-red-500">
-                    <Trash2 size={16} />
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleEdit(cliente)}
+                      className="rounded-full text-slate-400 hover:text-cyan-600"
+                    >
+                      <UserCog size={16} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-red-500">
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
