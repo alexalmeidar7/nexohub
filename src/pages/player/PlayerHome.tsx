@@ -1539,7 +1539,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const t = window.setTimeout(() => {
       const rowEl = document.querySelector(`[data-tv-row="${activeRow}"]`) as HTMLElement | null;
       const first = rowEl?.querySelector<HTMLElement>("[data-tv-focusable]");
-      first?.focus({ preventScroll: true });
+      // Ensure we don't cause page scroll during focus if the row is intended to be off-screen
+      // or handled by our own transforms
+      if (first && document.activeElement !== first) {
+        first.focus({ preventScroll: true });
+      }
     }, 60);
     return () => window.clearTimeout(t);
   }, [activeRow]);
@@ -2138,7 +2142,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
       {/* Top loading bar */}
@@ -2243,7 +2247,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                   and slides up into view when activeRow === 1. The rest of the page stays still. */}
               <div
                 data-tv-row="1"
-                className="absolute left-4 sm:left-8 md:left-12 right-4 sm:right-8 md:right-12 z-20 flex items-end gap-5"
+                className="absolute left-4 sm:left-8 md:left-12 right-4 sm:right-8 md:right-12 z-20 flex items-end gap-5 h-[200px]"
                 style={{
                   bottom: "2.5rem",
                   transform: activeRow === 1 ? "translateY(0)" : "translateY(calc(100% + 4rem))",
