@@ -2069,16 +2069,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     }, 200);
   };
 
-  const scrollToSection = useCallback((sectionId: string) => {
-    const container = contentScrollRef.current;
-    const el = document.getElementById(sectionId);
-    if (!container || !el) return;
-    // Calculate offset within the scroll container, accounting for the sticky hero
-    const containerRect = container.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const offset = elRect.top - containerRect.top + container.scrollTop;
-    // Small padding above the section title
-    container.scrollTo({ top: Math.max(0, offset - 8), behavior: "smooth" });
+  // Na home as fileiras são overlays fixos: nada de scroll vertical do conteúdo
+  // (o menu do topo e o hero devem permanecer imóveis).
+  const scrollToSection = useCallback((_sectionId: string) => {
+    contentScrollRef.current?.scrollTo({ top: 0 });
   }, []);
 
   const handleSectionChange = useCallback((section: Section) => {
@@ -2090,11 +2084,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         setVisibleSection("home");
         setSectionFading(false);
         setTimeout(() => {
-          if (section === "home") {
-            contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-          } else {
-            scrollToSection(`section-${section}`);
-          }
+          contentScrollRef.current?.scrollTo({ top: 0 });
         }, 50);
       }, 200);
       setActiveSection(section);
@@ -2102,13 +2092,25 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     }
 
     setActiveSection(section);
+    contentScrollRef.current?.scrollTo({ top: 0 });
+  }, [visibleSection]);
 
-    if (section === "home") {
-      contentScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      scrollToSection(`section-${section}`);
-    }
-  }, [visibleSection, scrollToSection]);
+  // Trava o scroll vertical do conteúdo na home: se algo (foco, âncora, teclado)
+  // tentar rolar o container, voltamos imediatamente ao topo — assim o menu,
+  // o hero e o fundo nunca se mexem; só as fileiras de cards animam.
+  useEffect(() => {
+    if (visibleSection !== "home") return;
+    const container = contentScrollRef.current;
+    if (!container) return;
+    const reset = () => {
+      if (container.scrollTop !== 0) container.scrollTop = 0;
+      if (container.scrollLeft !== 0) container.scrollLeft = 0;
+    };
+    reset();
+    container.addEventListener("scroll", reset, { passive: true });
+    return () => container.removeEventListener("scroll", reset);
+  }, [visibleSection]);
+
 
   const handleSignOut = async () => {
     const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
