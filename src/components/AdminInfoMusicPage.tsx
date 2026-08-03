@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
-import { Music, RefreshCw, Search } from "lucide-react";
+import { Music, RefreshCw, Search, Sparkles, HelpCircle } from "lucide-react";
 
 interface Row {
   id: string;
@@ -14,14 +14,66 @@ interface Row {
   created_at: string;
 }
 
+interface CuriosidadeRow {
+  id: string;
+  user_id: string;
+  artista: string | null;
+  musica: string | null;
+  curiosidade: string | null;
+  created_at: string;
+}
+
 const formatDia = (dia: string | null, createdAt: string) => {
   const base = dia || createdAt.slice(0, 10);
   const [y, m, d] = base.split("-");
   return y && m && d ? `${d}/${m}/${y}` : base;
 };
 
+const norm = (v?: string | null) =>
+  (v || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+
+const key = (artista?: string | null, musica?: string | null) => `${norm(artista)}|${norm(musica)}`;
+
+function SectionCard({
+  icon,
+  title,
+  subtitle,
+  count,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted/40">
+        <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
+          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+        </div>
+        <span className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
+          {count}
+        </span>
+      </header>
+      <div className="max-h-[52vh] overflow-y-auto">{children}</div>
+    </section>
+  );
+}
+
 export default function AdminInfoMusicPage() {
   const [rows, setRows] = useState<Row[]>([]);
+  const [curiosidades, setCuriosidades] = useState<CuriosidadeRow[]>([]);
   const [clientes, setClientes] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
@@ -39,12 +91,22 @@ export default function AdminInfoMusicPage() {
   }, []);
 
   const loadRows = useCallback(async () => {
-    const { data } = await supabase
-      .from("musicas_tocadas")
-      .select("id, user_id, dia, horario, artista, musica, programa, created_at")
-      .order("created_at", { ascending: false })
-      .limit(300);
-    setRows((data || []) as Row[]);
+    const [tocadas, infos] = await Promise.all([
+      supabase
+        .from("musicas_tocadas")
+        .select("id, user_id, dia, horario, artista, musica, programa, created_at")
+        .order("created_at", { ascending: false })
+        .limit(300),
+      supabase
+        .from("infomusic")
+        .select("id, user_id, artista, musica, curiosidade, created_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+    setRows((tocadas.data || []) as Row[]);
+    setCuriosidades(
+      ((infos.data || []) as CuriosidadeRow[]).filter((c) => (c.curiosidade || "").trim().length > 0)
+    );
     setLastUpdate(new Date());
     setLoading(false);
   }, []);
@@ -71,11 +133,18 @@ export default function AdminInfoMusicPage() {
           setLastUpdate(new Date());
         }
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "infomusic" },
+        () => {
+          loadRows();
+        }
+      )
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [loadClientes]);
+  }, [loadClientes, loadRows]);
 
   // Fallback de polling (caso o realtime caia)
   useEffect(() => {
@@ -83,18 +152,40 @@ export default function AdminInfoMusicPage() {
     return () => clearInterval(id);
   }, [loadRows]);
 
-  const filtered = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [clientes[r.user_id], r.musica, r.artista, r.programa]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [rows, busca, clientes]);
+  const q = busca.trim().toLowerCase();
+  const matches = (vals: (string | null | undefined)[]) =>
+    !q || vals.filter(Boolean).some((v) => String(v).toLowerCase().includes(q));
+
+  const filtered = useMemo(
+    () => rows.filter((r) => matches([clientes[r.user_id], r.musica, r.artista, r.programa])),
+    [rows, q, clientes]
+  );
+
+  const curiosidadesFiltradas = useMemo(
+    () => curiosidades.filter((c) => matches([clientes[c.user_id], c.musica, c.artista, c.curiosidade])),
+    [curiosidades, q, clientes]
+  );
+
+  // Músicas tocadas (por cliente) que não possuem curiosidade cadastrada
+  const semCuriosidade = useMemo(() => {
+    const cadastradas = new Set(curiosidades.map((c) => `${c.user_id}::${key(c.artista, c.musica)}`));
+    const seen = new Set<string>();
+    const out: Row[] = [];
+    rows.forEach((r) => {
+      const k = `${r.user_id}::${key(r.artista, r.musica)}`;
+      if (cadastradas.has(k) || seen.has(k)) return;
+      if (!norm(r.musica)) return;
+      seen.add(k);
+      out.push(r);
+    });
+    return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
+  }, [rows, curiosidades, q, clientes]);
+
+  const thClass = "px-4 py-2.5 font-semibold";
+  const headRow = "text-left text-[11px] uppercase tracking-wider text-muted-foreground";
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Music className="text-primary" size={20} />
@@ -125,40 +216,107 @@ export default function AdminInfoMusicPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card overflow-hidden">
-        <div className="max-h-[70vh] overflow-y-auto">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 bg-muted/80 backdrop-blur">
-              <tr className="text-left text-xs uppercase tracking-wider text-muted-foreground">
-                <th className="px-4 py-3">Data</th>
-                <th className="px-4 py-3">Horário</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Música</th>
-                <th className="px-4 py-3">Artista</th>
-                <th className="px-4 py-3">Programa</th>
+      <SectionCard
+        icon={<Music size={16} />}
+        title="Músicas tocadas"
+        subtitle="Registro em tempo real de todos os clientes"
+        count={filtered.length}
+      >
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+            <tr className={headRow}>
+              <th className={thClass}>Data</th>
+              <th className={thClass}>Horário</th>
+              <th className={thClass}>Cliente</th>
+              <th className={thClass}>Música</th>
+              <th className={thClass}>Artista</th>
+              <th className={thClass}>Programa</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading && rows.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
+            )}
+            {!loading && filtered.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
+            )}
+            {filtered.map((r) => (
+              <tr key={r.id} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
+                <td className="px-4 py-2.5 whitespace-nowrap">{formatDia(r.dia, r.created_at)}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs">{(r.horario || "").slice(0, 8)}</td>
+                <td className="px-4 py-2.5 font-semibold">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5">{r.musica}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{r.artista}</td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.programa || "—"}</td>
               </tr>
-            </thead>
-            <tbody>
-              {loading && rows.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
-              )}
-              {!loading && filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
-              )}
-              {filtered.map((r) => (
-                <tr key={r.id} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
-                  <td className="px-4 py-2.5 whitespace-nowrap">{formatDia(r.dia, r.created_at)}</td>
-                  <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs">{(r.horario || "").slice(0, 8)}</td>
-                  <td className="px-4 py-2.5 font-semibold">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
-                  <td className="px-4 py-2.5">{r.musica}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{r.artista}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground text-xs">{r.programa || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+
+      <SectionCard
+        icon={<Sparkles size={16} />}
+        title="Músicas com curiosidade cadastrada"
+        subtitle="Curiosidades registradas por todos os clientes"
+        count={curiosidadesFiltradas.length}
+      >
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+            <tr className={headRow}>
+              <th className={thClass}>Cliente</th>
+              <th className={thClass}>Música</th>
+              <th className={thClass}>Artista</th>
+              <th className={thClass}>Curiosidade</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && curiosidadesFiltradas.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Nenhuma curiosidade cadastrada.</td></tr>
+            )}
+            {curiosidadesFiltradas.map((c) => (
+              <tr key={c.id} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
+                <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[c.user_id] || c.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5">{c.musica}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{c.artista}</td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs max-w-[520px]">{c.curiosidade}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
+
+      <SectionCard
+        icon={<HelpCircle size={16} />}
+        title="Músicas sem curiosidade cadastrada"
+        subtitle="Oportunidades de cadastro — músicas tocadas sem informação"
+        count={semCuriosidade.length}
+      >
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 bg-muted/80 backdrop-blur">
+            <tr className={headRow}>
+              <th className={thClass}>Cliente</th>
+              <th className={thClass}>Música</th>
+              <th className={thClass}>Artista</th>
+              <th className={thClass}>Última execução</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && semCuriosidade.length === 0 && (
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">Todas as músicas possuem curiosidade.</td></tr>
+            )}
+            {semCuriosidade.map((r) => (
+              <tr key={`sc-${r.id}`} className="border-t border-border/60 hover:bg-muted/40 transition-colors">
+                <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5">{r.musica}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{r.artista}</td>
+                <td className="px-4 py-2.5 text-muted-foreground text-xs whitespace-nowrap">
+                  {formatDia(r.dia, r.created_at)} {(r.horario || "").slice(0, 5)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </SectionCard>
     </div>
   );
 }
