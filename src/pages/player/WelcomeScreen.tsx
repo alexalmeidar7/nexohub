@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { fetchPlayerListenerProfile, upsertPlayerListenerProfile } from "@/lib/playerListenerProfile";
 import { playerSignOut } from "@/lib/playerSignOut";
+import { ANIVERSARIOS_CIDADES } from "@/data/aniversariosCidades";
+
 
 const AVATARS = [
   "/avatars/usr-default.png",
