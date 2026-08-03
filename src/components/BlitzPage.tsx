@@ -355,7 +355,7 @@ export default function BlitzPage() {
       message: "Deseja realmente excluir esta blitz? Esta ação não pode ser desfeita.",
       confirmLabel: "Excluir",
       cancelLabel: "Cancelar",
-      variant: "destructive"
+      destructive: true
     });
 
     if (!isConfirmed) return;
