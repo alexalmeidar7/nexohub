@@ -57,6 +57,8 @@ initGlobalNotifications();
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
+
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 import DailyUpdateGuard from "@/components/DailyUpdateGuard";
@@ -148,15 +150,9 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
       const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
 
       if (isPlayer && this.state.retryCount < 3) {
-        return (
-          <div
-            className="h-screen w-screen flex items-center justify-center"
-            style={{ backgroundColor: "#000" }}
-          >
-            <LoadingSpinner size={32} />
-          </div>
-        );
+        return <PlayerSyncLoader size={32} />;
       }
+
 
       return (
         <div
