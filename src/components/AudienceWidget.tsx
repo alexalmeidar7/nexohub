@@ -1590,11 +1590,17 @@ function AudienceReportDialog({
     const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
     // Regra: YouTube só conta quando youtube > 0 (Live ao vivo)
     const liveRows = filteredRows.filter((r) => (r.youtube || 0) > 0);
-    const peakYoutube = liveRows.length 
+    const peakYoutube: HistRow = liveRows.length 
       ? liveRows.reduce((m, r) => (r.youtube > m.youtube ? r : m), liveRows[0])
-      : { youtube: 0, created_at: filteredRows[0].created_at };
+      : { 
+          id: 'placeholder', 
+          created_at: filteredRows[0].created_at, 
+          audio: 0, 
+          video: 0, 
+          youtube: 0, 
+          programa: null 
+        };
     
-    // Total agora considera YouTube como 0 se não houver live
     const peakTotal = filteredRows.reduce((m, r) => {
       const curYt = (r.youtube || 0);
       const mYt = (m.youtube || 0);
