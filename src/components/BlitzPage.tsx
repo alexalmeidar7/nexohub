@@ -308,12 +308,12 @@ export default function BlitzPage() {
     setCadastroErrors({});
     
     try {
-      const { data: cnpjExists }: { data: any } = await supabase
+      const { data: cnpjExists }: any = await (supabase
         .from("logos_patrocinadores")
         .select("id")
         .eq("cnpj", cleanCnpj)
         .eq("excluido", false)
-        .maybeSingle();
+        .maybeSingle());
 
       if (cnpjExists) {
         setCadastroErrors({ cnpj: "Já existe um cliente cadastrado com este CNPJ" });
