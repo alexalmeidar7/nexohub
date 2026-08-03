@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { Radio, Database, Music, Server, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -14,11 +15,13 @@ export default function InfoMusicSourceSelector() {
     const load = async () => {
       const { data } = await supabase
         .from("user_settings")
-        .select("infomusic_source")
+        .select("dashboard_items")
         .eq("user_id", user.id)
         .maybeSingle();
-      if (data?.infomusic_source) {
-        setSource(data.infomusic_source);
+      
+      const items = (data?.dashboard_items as any) || {};
+      if (items.infomusic_source) {
+        setSource(items.infomusic_source);
       }
       setLoading(false);
     };
@@ -28,16 +31,13 @@ export default function InfoMusicSourceSelector() {
   const updateSource = async (val: string) => {
     if (!user) return;
     setSource(val);
-    const { error } = await supabase
-      .from("user_settings")
-      .upsert({ user_id: user.id, infomusic_source: val }, { onConflict: "user_id" });
-    
-    if (error) {
-      toast.error("Erro ao atualizar fonte");
-    } else {
+    try {
+      await mergeUserDashboardItems(user.id, { infomusic_source: val });
       toast.success("Fonte de dados atualizada");
       // Trigger a refresh of the broadcast XML if needed
       try { window.dispatchEvent(new Event("infomusic-source-changed")); } catch {}
+    } catch (error) {
+      toast.error("Erro ao atualizar fonte");
     }
   };
 
