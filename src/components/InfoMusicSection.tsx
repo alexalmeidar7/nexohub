@@ -1068,8 +1068,8 @@ export default function InfoMusicSection() {
             </span>
           </div>
           <div className="p-4 space-y-3">
-            <p className="text-[11px] leading-relaxed" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 78%, transparent)" }}>
-              Quando o artista ou música contiver qualquer palavra abaixo, a tag <code className="px-1 py-0.5 rounded" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)", fontFamily: "ui-monospace, monospace" }}>&lt;curiosidade&gt;</code> fica vazia.
+            <p className="text-[11px] leading-relaxed font-bold" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 85%, transparent)" }}>
+              TODAS AS MUSICAS CADASTRADAS NA LISTA DE EXCEÇÕES
             </p>
             <div className="flex flex-col gap-2">
               <input
