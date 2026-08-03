@@ -3075,10 +3075,43 @@ function InteractivityMenu({
   }, []);
 
   // Busca enquete ativa (data = hoje, horário dentro do intervalo)
+  // Ouvintes não têm permissão de leitura direta na tabela, então usamos a
+  // edge function pública como fonte principal e a query direta como fallback.
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
+
+    const applyPoll = (poll: ActivePoll | null) => {
+      if (cancelled) return;
+      setActivePoll(poll);
+      if (poll) {
+        setAlreadyVoted(!!localStorage.getItem(`nexo:poll:voted:${poll.id}`));
+      }
+    };
+
     const fetchActive = async () => {
+      try {
+        const { data: fnData } = await supabase.functions.invoke("public-enquete-ativa", {
+          body: { user_id: userId },
+        });
+        if (cancelled) return;
+        if (fnData?.ok) {
+          const p = fnData.poll;
+          applyPoll(
+            p
+              ? {
+                  id: p.id,
+                  pergunta: p.pergunta,
+                  respostas: (p.respostas ?? []) as string[],
+                  horario_inicio: p.horario_inicio,
+                  horario_fim: p.horario_fim,
+                }
+              : null,
+          );
+          return;
+        }
+      } catch { /* segue para o fallback */ }
+
       try {
         const today = new Date().toISOString().slice(0, 10);
         const now = new Date();
@@ -3094,21 +3127,19 @@ function InteractivityMenu({
           .limit(1)
           .maybeSingle();
         if (cancelled || error) return;
-        if (!data) { setActivePoll(null); return; }
+        if (!data) { applyPoll(null); return; }
         const respostas = [data.resposta1, data.resposta2, data.resposta3, data.resposta4].filter(Boolean) as string[];
-        setActivePoll({
+        applyPoll({
           id: data.id,
           pergunta: data.pergunta,
           respostas,
           horario_inicio: data.horario_inicio,
           horario_fim: data.horario_fim,
         });
-        const votedKey = `nexo:poll:voted:${data.id}`;
-        setAlreadyVoted(!!localStorage.getItem(votedKey));
       } catch { /* silencioso */ }
     };
     fetchActive();
-    const id = window.setInterval(fetchActive, 60_000);
+    const id = window.setInterval(fetchActive, 30_000);
     return () => { cancelled = true; window.clearInterval(id); };
   }, [userId]);
 
