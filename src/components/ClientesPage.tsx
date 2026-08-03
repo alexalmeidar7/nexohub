@@ -300,7 +300,7 @@ export default function ClientesPage() {
               className="rounded-full px-8 bg-cyan-500 hover:bg-cyan-600 text-white"
             >
               {criando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
-              Salvar Cliente
+              {editingId ? "Atualizar Dados" : "Salvar Cliente"}
             </Button>
           </div>
         </div>
