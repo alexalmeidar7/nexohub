@@ -612,7 +612,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const viewersNow = (streamingCount || 0) + (videoCount || 0);
+  // YouTube Live só entra se houver live (valor > 0)
+  const viewersNow = (streamingCount || 0) + (videoCount || 0) + (youtubeLiveCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -881,7 +882,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               className="text-[9px] font-bold uppercase truncate"
               style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              Espectadores agora
+              Espectadores Streaming (Áudio/Vídeo)
             </span>
             {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
               <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
