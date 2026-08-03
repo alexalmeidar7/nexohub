@@ -293,7 +293,7 @@ export default function ClientesPage() {
           </div>
 
           <div className="mt-8 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setNovoOpen(false)} className="rounded-full px-6">Cancelar</Button>
+            <Button variant="outline" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full px-6">Cancelar</Button>
             <Button 
               onClick={handleSave} 
               disabled={criando}
