@@ -1552,7 +1552,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </div>
                 )}
               </div>
-            </div>
           </div>
         </div>
       </section>
