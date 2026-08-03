@@ -57,6 +57,8 @@ import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
 import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
+import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
+
 const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
