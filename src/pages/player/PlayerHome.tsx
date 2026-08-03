@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
+import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));

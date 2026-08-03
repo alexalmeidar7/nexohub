@@ -3003,7 +3003,11 @@ export default function PlayerPage() {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+    <div ref={containerRef} className={`relative h-screen w-screen bg-black overflow-hidden select-none cursor-default nexo-player-container ${pageFadeOut ? 'opacity-0 scale-95 transition-all duration-700' : 'opacity-100 scale-100'}`}>
+      <PlayerLoadingOverlay 
+        isLoading={loading || streamLoading} 
+        minDurationMs={3000}
+      />
 
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
