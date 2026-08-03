@@ -403,6 +403,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [musicaDismissed, setMusicaDismissed] = useState(false);
   const [activeBlitzCount, setActiveBlitzCount] = useState(0);
 
+
+  const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
+  const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
+  const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
+
+  const [planModules, setPlanModules] = useState<Set<string> | null>(null);
+  const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
+
   useEffect(() => {
     if (!effectiveUserId) return;
     const today = new Date().toISOString().split('T')[0];
@@ -423,13 +432,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return () => { supabase.removeChannel(ch); };
   }, [effectiveUserId]);
 
-  const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
-  const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
-  const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
-
-  const [planModules, setPlanModules] = useState<Set<string> | null>(null);
-  const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
-  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
   const [parentEmail, setParentEmail] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
