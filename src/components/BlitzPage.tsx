@@ -140,6 +140,7 @@ export default function BlitzPage() {
     executiva_venda: ""
   });
   const [cadastrandoCliente, setCadastrandoCliente] = useState(false);
+  const [cadastroErrors, setCadastroErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const iv = setInterval(() => setNowTick(t => t + 1), 1000);
