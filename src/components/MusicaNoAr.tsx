@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, Minus, Maximize2 } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
+import InfoMusicSourceSelector from "./InfoMusicSourceSelector";
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,7 +170,10 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
         </div>
       </div>
       
-      <div className="bg-white rounded-2xl border border-slate-200 p-0 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 p-0 shadow-sm overflow-hidden space-y-4">
+        <div className="p-5 border-b border-slate-100">
+          <InfoMusicSourceSelector />
+        </div>
         <Suspense fallback={<div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin text-cyan-500" /></div>}>
           <InfoMusicSection />
         </Suspense>
