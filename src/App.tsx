@@ -123,11 +123,11 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
       error.message?.includes("Loading CSS chunk") ||
       error.message?.includes("dynamically imported module");
 
-    // Auto-retry chunk errors up to 2 times
-    if (isChunkError && this.state.retryCount < 2) {
+    // Auto-retry chunk errors up to 3 times with faster logic
+    if (isChunkError && this.state.retryCount < 3) {
       this.retryTimer = setTimeout(() => {
         this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
-      }, 1500);
+      }, 800);
     }
   }
 
