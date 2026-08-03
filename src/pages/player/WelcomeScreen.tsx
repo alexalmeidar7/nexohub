@@ -156,6 +156,9 @@ export default function WelcomeScreen({
             window.localStorage.removeItem(`player-step-home:${slug}`);
           } catch { /* ignore */ }
         }
+        // Recarrega a lista de perfis do usuário logado após o login com Google.
+        setProfilesReloadKey((k) => k + 1);
+
       } catch { /* silencioso: não bloqueia o login */ }
     })();
   }, [user?.email, radioUserId, userSlug]);
