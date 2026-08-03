@@ -2193,13 +2193,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           audioChannels[0] ||
                           streamingChannels[0];
                         if (!audio) return;
-                        // Navega direto ao player de áudio — sem splash / sem fade, retomando último canal
+                        // Navega direto ao player de áudio — retomando último canal
                         const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
                         navigate(`${watchPath}?ch=${audio.id}&autoplay=1`, { state: { fromPath: `${location.pathname}${location.search}` } });
                       }}
                       onAssistir={() => {
                         const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];
-                        if (video) goToPlayer(video.id);
+                        if (video) {
+                          const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+                          navigate(`${watchPath}?ch=${video.id}`, { state: { fromPath: `${location.pathname}${location.search}` } });
+                        }
                       }}
                       onPlaylist={() => goToTop10()}
                       cardsVisible={activeRow === 0}
