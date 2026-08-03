@@ -351,22 +351,39 @@ export default function WelcomeScreen({
 
   useEffect(() => {
     if (!user || !radioUserId) return;
-    fetchPlayerListenerProfile(user, radioUserId, userName).then((data) => {
-      if (data) {
-        const d = data as any;
-        setProfile({
-          nome: d.nome || userName,
-          email: d.email || user.email || "",
-          cpf: d.cpf || "",
-          whatsapp: d.whatsapp || "",
-          sexo: d.sexo || "",
-          estado: d.estado || "",
-          cidade: d.cidade || "",
-          setor: d.setor || "",
-          data_nascimento: d.data_nascimento || "",
-          avatar_url: d.avatar_url || "/avatars/usr-default.png",
+    // Foto da conta Google (identidade OAuth ou metadados do usuário)
+    const gIdentity = (user as any)?.identities?.find?.((i: any) => i.provider === "google");
+    const gData: any = gIdentity?.identity_data || {};
+    const meta: any = (user as any)?.user_metadata || {};
+    const googlePhoto: string | null =
+      gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || null;
+    const isDefaultAvatar = (url?: string | null) => !url || url.includes("usr-default");
+
+    fetchPlayerListenerProfile(user, radioUserId, userName).then(async (data) => {
+      const d = (data || {}) as any;
+      // Dados do CADASTRO DE OUVINTE (fonte oficial) via função pública
+      let listener: any = null;
+      try {
+        const { data: res } = await supabase.functions.invoke("check-listener-registration", {
+          body: { email: user.email, radio_user_id: radioUserId },
         });
-      }
+        if ((res as any)?.exists) listener = (res as any).listener;
+      } catch { /* ignore */ }
+
+      setProfile({
+        nome: listener?.nome || d.nome || userName,
+        email: listener?.email || d.email || user.email || "",
+        cpf: listener?.cpf || d.cpf || "",
+        whatsapp: listener?.telefone || d.whatsapp || "",
+        sexo: listener?.sexo || d.sexo || "",
+        estado: d.estado || "",
+        cidade: listener?.cidade || d.cidade || "",
+        setor: listener?.setor || d.setor || "",
+        data_nascimento: listener?.data_nascimento || d.data_nascimento || "",
+        avatar_url: isDefaultAvatar(d.avatar_url)
+          ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
+          : d.avatar_url,
+      });
     });
     // Simple points tally from music likes
     supabase.from("music_likes").select("id", { count: "exact", head: true })
@@ -374,6 +391,7 @@ export default function WelcomeScreen({
       .eq("radio_user_id", radioUserId)
       .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
   }, [user, userName, radioUserId]);
+
 
   // === Background sequence: delayed reveal + intercalated artist image ===
   const [bgVisible, setBgVisible] = useState(false);
@@ -1557,18 +1575,31 @@ export default function WelcomeScreen({
             <DialogTitle className="text-white">Escolha seu avatar</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-3 gap-3 py-2">
-            {AVATARS.map(av => (
-              <button
-                key={av}
-                onClick={() => { setProfile(p => ({ ...p, avatar_url: av })); setAvatarPickerOpen(false); }}
-                className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-colors mx-auto ${
-                  profile.avatar_url === av ? "border-white" : "border-transparent hover:border-white/40"
-                }`}
-              >
-                <img src={av} alt="Avatar" className="w-full h-full object-cover" />
-              </button>
-            ))}
+            {(() => {
+              const gIdentity = (user as any)?.identities?.find?.((i: any) => i.provider === "google");
+              const gData: any = gIdentity?.identity_data || {};
+              const meta: any = (user as any)?.user_metadata || {};
+              const googlePhoto: string | null =
+                gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || null;
+              const options = googlePhoto ? [googlePhoto, ...AVATARS] : AVATARS;
+              return options.map((av, i) => (
+                <button
+                  key={`${av}-${i}`}
+                  onClick={() => { setProfile(p => ({ ...p, avatar_url: av })); setAvatarPickerOpen(false); }}
+                  className={`relative w-20 h-20 rounded-2xl overflow-hidden border-2 transition-colors mx-auto ${
+                    profile.avatar_url === av ? "border-white" : "border-transparent hover:border-white/40"
+                  }`}
+                  title={googlePhoto && i === 0 ? "foto da conta google" : "avatar"}
+                >
+                  <img src={av} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  {googlePhoto && i === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 text-[9px] py-0.5 bg-black/60 lowercase">google</span>
+                  )}
+                </button>
+              ));
+            })()}
           </div>
+
         </DialogContent>
       </Dialog>
 

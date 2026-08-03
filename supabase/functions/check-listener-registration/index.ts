@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
 
     let query = admin
       .from("ouvintes")
-      .select("id, nome, email, pontuacao, user_id")
+      .select("id, nome, email, cpf, telefone, setor, cidade, data_nascimento, sexo, pontuacao, user_id")
       .ilike("email", normalizedEmail)
       .limit(1);
 
@@ -54,7 +54,19 @@ Deno.serve(async (req) => {
       JSON.stringify({
         ok: true,
         exists: !!row,
-        listener: row ? { nome: row.nome ?? null, pontuacao: row.pontuacao ?? 0 } : null,
+        listener: row
+          ? {
+              nome: row.nome ?? null,
+              email: row.email ?? null,
+              cpf: row.cpf ?? null,
+              telefone: row.telefone ?? null,
+              setor: row.setor ?? null,
+              cidade: row.cidade ?? null,
+              data_nascimento: row.data_nascimento ?? null,
+              sexo: row.sexo ?? null,
+              pontuacao: row.pontuacao ?? 0,
+            }
+          : null,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
