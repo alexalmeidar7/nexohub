@@ -955,6 +955,15 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
       <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
         <StatCell
+          icon={current ? current.icon : <Users size={14} />}
+          label={current ? current.label : "Redes sociais"}
+          value={current ? current.value : null}
+          loading={loadingConfig || loadingSocial}
+          dark={dark}
+          rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
+          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
+        />
+        <StatCell
           icon={<Radio size={14} />}
           label="Áudio Streaming"
           value={streamingCount}
@@ -970,15 +979,15 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           dark={dark}
           badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
         />
-        <StatCell
-          icon={current ? current.icon : <Users size={14} />}
-          label={current ? current.label : "Redes sociais"}
-          value={current ? current.value : null}
-          loading={loadingConfig || loadingSocial}
-          dark={dark}
-          rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
-          badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
-        />
+        {(youtubeLiveCount ?? 0) > 0 && (
+          <StatCell
+            icon={<Youtube size={14} />}
+            label="YouTube Live"
+            value={youtubeLiveCount}
+            loading={loadingVideo && youtubeLiveCount === null}
+            dark={dark}
+          />
+        )}
       </div>
 
       <Dialog
