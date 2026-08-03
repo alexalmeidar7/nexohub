@@ -107,6 +107,42 @@ export default function WelcomeScreen({
     });
   }, [user, radioUserId, userName]);
 
+  // Após autenticar com o Google, verifica se o e-mail já possui cadastro na
+  // base de ouvintes da rádio. Se sim, avisa o usuário e mantém/leva ele para a
+  // tela de perfis do player (welcome) em vez de criar um novo cadastro.
+  const existingCheckRef = useRef(false);
+  useEffect(() => {
+    if (!user?.email || existingCheckRef.current) return;
+    let pending = false;
+    try { pending = sessionStorage.getItem("nexohub_player_signup_check") === "1"; } catch { /* ignore */ }
+    if (!pending) return;
+    existingCheckRef.current = true;
+    try { sessionStorage.removeItem("nexohub_player_signup_check"); } catch { /* ignore */ }
+
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke("check-listener-registration", {
+          body: { email: user.email, radio_user_id: radioUserId },
+        });
+        if ((data as any)?.exists) {
+          const nome = (data as any)?.listener?.nome as string | null;
+          toast.success("Você já tem cadastro com a gente", {
+            description: nome
+              ? `bem-vindo de volta, ${String(nome).split(" ")[0].toLowerCase()}! entramos com a sua conta existente.`
+              : "entramos com a sua conta existente. escolha seu perfil para continuar.",
+            duration: 6000,
+          });
+          // Garante que o usuário fique na tela de perfis do player.
+          try {
+            const slug = userSlug && userSlug !== ":userSlug" ? userSlug : "root";
+            window.localStorage.removeItem(`player-step-home:${slug}`);
+          } catch { /* ignore */ }
+        }
+      } catch { /* silencioso: não bloqueia o login */ }
+    })();
+  }, [user?.email, radioUserId, userSlug]);
+
+
   const persistSubProfiles = async (next: Array<{ id: string; name: string; avatar_url: string }>) => {
     setSubProfiles(next);
     if (!user || !radioUserId) return;
