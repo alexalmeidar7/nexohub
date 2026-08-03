@@ -234,6 +234,46 @@ export default function InfoMusicSection() {
   };
 
 
+  const updateExcecaoAsset = async (id: string, field: "capa_url" | "background_url", value: string | null) => {
+    if (!user) return;
+    setSavingExcecoes(true);
+    try {
+      let finalValue = value;
+      if (value && value.startsWith("data:")) {
+        const timestamp = Date.now();
+        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        const suffix = field === "capa_url" ? "capa" : "fundo";
+        const size = field === "capa_url" ? 1080 : 1920;
+        
+        setUploadProgress({ active: true, stage: `Processando ${field === "capa_url" ? "Capa" : "Fundo"}...`, percent: 40 });
+        
+        finalValue = await uploadImageToStorage(
+          value,
+          "empresa-assets",
+          `${user.id}/excecoes/${timestamp}_${suffix}.webp`,
+          size
+        );
+        setUploadProgress({ active: true, stage: "Upload concluído", percent: 80 });
+      }
+
+      const { error } = await supabase
+        .from("infomusic_excecoes")
+        .update({ [field]: finalValue })
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      await loadExcecoes();
+      setUploadProgress({ active: true, stage: "Sucesso!", percent: 100 });
+      setTimeout(() => setUploadProgress({ active: false, stage: "", percent: 0 }), 1000);
+      toast.success(field === "capa_url" ? "Capa atualizada" : "Fundo atualizado");
+    } catch (e) {
+      setUploadProgress({ active: false, stage: "", percent: 0 });
+      toast.error("Erro ao atualizar asset");
+    }
+    setSavingExcecoes(false);
+  };
+
   const PAGE_SIZE = 50;
   const HARD_CAP = Number.POSITIVE_INFINITY;
   const [totalCount, setTotalCount] = useState(0);
