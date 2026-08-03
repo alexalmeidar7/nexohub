@@ -1969,6 +1969,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     if (channelId) params.set("ch", channelId);
     if (videoId) params.set("vid", videoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
+    
+    // Mostramos o loading overlay imediatamente se possível, ou apenas aguardamos o fadeOut
+    // O AudioPlayerScreen no destino cuidará do streamLoading=true baseado no param da URL
+    
     setTimeout(() => {
       const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
       const fromParams = new URLSearchParams(location.search);
@@ -2146,6 +2150,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
+      <PlayerLoadingOverlay 
+        isLoading={!dataLoaded || fadeOut} 
+        minDurationMs={3000}
+      />
       {/* Top loading bar */}
       {!dataLoaded && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
