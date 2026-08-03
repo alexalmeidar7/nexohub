@@ -873,22 +873,45 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: dark }}
+            style={{ background: "#FF0000" }}
           >
-            <Radio size={16} style={{ color: bg }} />
+            <Youtube size={16} style={{ color: "#fff" }} />
           </div>
           <div className="flex flex-col min-w-0">
             <span
               className="text-[9px] font-bold uppercase truncate"
               style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              Espectadores Streaming (Áudio/Vídeo)
+              YouTube Live
             </span>
-            {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
-              <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
-                <Loader2 size={16} className="animate-spin" />
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+            {loadingVideo ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: "#FF0000" }}
+              >
+                {(youtubeLiveCount || 0) > 0 ? (youtubeLiveCount || 0).toLocaleString("pt-BR") : "OFF"}
               </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Users size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              Total Audiência
+            </span>
+            {loadingStreaming || loadingVideo ? (
+              <Skeleton width={72} height={18} dark={dark} />
             ) : (
               <span
                 className="text-xl font-black leading-none"
@@ -899,10 +922,52 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             )}
           </div>
         </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Globe size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              No Site
+            </span>
+            {loadingSite ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {(siteCount || 0).toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
 
-      <div className={`grid ${youtubeLiveCount && youtubeLiveCount > 0 ? "grid-cols-5" : "grid-cols-4"} gap-2 flex-1 min-h-0`}>
+      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
+        <StatCell
+          icon={<Radio size={14} />}
+          label="Áudio Streaming"
+          value={streamingCount}
+          loading={loadingStreaming && streamingCount === null}
+          dark={dark}
+          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
+        />
+        <StatCell
+          icon={<MonitorPlay size={14} />}
+          label="Vídeo Streaming"
+          value={videoCount}
+          loading={loadingVideo && videoCount === null}
+          dark={dark}
+          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+        />
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
@@ -912,49 +977,16 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
           badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
         />
-        <StatCell
-          icon={<Radio size={14} />}
-          label="Rádio (áudio)"
-          value={streamingCount}
-          loading={loadingStreaming && streamingCount === null}
-          dark={dark}
-          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
-        />
-        <StatCell
-          icon={<MonitorPlay size={14} />}
-          label="TV (vídeo)"
-          value={videoCount}
-          loading={loadingVideo && videoCount === null}
-          dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
-        />
-        {youtubeLiveCount && youtubeLiveCount > 0 ? (
-          <StatCell
-            icon={<Youtube size={14} />}
-            label="Live YouTube"
-            value={youtubeLiveCount}
-            loading={false}
-            dark={dark}
-            badge={
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                style={{ background: "#ef4444", color: "#fff" }}
-                title="Transmissão ao vivo"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                AO VIVO
-              </span>
-            }
-          />
-        ) : null}
-        <StatCell
-          icon={<Globe size={14} />}
-          label="Conectados no Player"
-          value={siteCount}
-          loading={loadingSite && siteCount === null}
-          dark={dark}
-        />
-
+        <div
+          className="rounded-2xl flex flex-col items-center justify-center p-3 relative cursor-pointer group"
+          onClick={() => setReportOpen(true)}
+          style={{ background: dark }}
+        >
+          <TrendingUp className="text-[#C6F03C] group-hover:scale-110 transition-transform mb-1" size={20} />
+          <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: "#fff" }}>
+            Ver Relatório
+          </span>
+        </div>
       </div>
 
       <Dialog
