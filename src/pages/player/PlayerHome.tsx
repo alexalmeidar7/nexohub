@@ -14,6 +14,8 @@ import { Home, Radio, Film, ShoppingBag, LogOut, Clock, Music, ChevronLeft, Chev
 import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
+import PlayerClockWeather from "@/components/player/PlayerClockWeather";
+
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
 import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
