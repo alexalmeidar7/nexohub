@@ -11,6 +11,7 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { matchesMusicException } from "@/lib/musicExceptions";
+import { BackButton } from "@/components/ui/back-button";
 
 interface MusicData {
   titulo: string;
