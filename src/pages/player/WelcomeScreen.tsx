@@ -348,6 +348,32 @@ export default function WelcomeScreen({
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
 
+  // UFs brasileiras + cidades (IBGE)
+  const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+  const [ufCities, setUfCities] = useState<string[]>([]);
+  const [cityFocused, setCityFocused] = useState(false);
+
+  useEffect(() => {
+    const uf = (profile.estado || "").toUpperCase();
+    if (uf.length !== 2) { setUfCities([]); return; }
+    let cancelled = false;
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
+      .then(r => r.json())
+      .then((list: any[]) => { if (!cancelled) setUfCities((list || []).map(m => m.nome)); })
+      .catch(() => { if (!cancelled) setUfCities([]); });
+    return () => { cancelled = true; };
+  }, [profile.estado]);
+
+  const citySuggestions = (() => {
+    const q = (profile.cidade || "").trim().toLowerCase();
+    if (!ufCities.length) return [];
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const nq = norm(q);
+    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 8);
+  })();
+
+
+
 
   useEffect(() => {
     if (!user || !radioUserId) return;
