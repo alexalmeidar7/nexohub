@@ -1206,8 +1206,22 @@ export default function InfoMusicSection() {
                         </td>
                         <td className="px-3 py-2 text-[10px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-0.5">
-                            {ex.capa_url ? <span className="text-emerald-500 font-bold">✓ Capa</span> : <span>—</span>}
-                            {ex.background_url ? <span className="text-emerald-500 font-bold">✓ Fundo</span> : <span>—</span>}
+                            {ex.capa_url ? (
+                              <button 
+                                onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
+                                className="text-emerald-500 font-bold hover:underline text-left"
+                              >
+                                ✓ Capa
+                              </button>
+                            ) : <span>—</span>}
+                            {ex.background_url ? (
+                              <button 
+                                onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
+                                className="text-emerald-500 font-bold hover:underline text-left"
+                              >
+                                ✓ Fundo
+                              </button>
+                            ) : <span>—</span>}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-right">
