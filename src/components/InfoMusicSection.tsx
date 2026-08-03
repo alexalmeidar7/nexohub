@@ -1247,21 +1247,73 @@ export default function InfoMusicSection() {
                         <td className="px-3 py-2 text-[10px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-0.5">
                             {ex.capa_url ? (
-                              <button 
-                                onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
-                                className="text-emerald-500 font-bold hover:underline text-left"
-                              >
-                                ✓ Capa
-                              </button>
-                            ) : <span>—</span>}
+                              <div className="flex items-center gap-1.5 group/asset">
+                                <button 
+                                  onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
+                                  className="text-emerald-500 font-bold hover:underline text-left"
+                                >
+                                  ✓ Capa
+                                </button>
+                                <button 
+                                  onClick={() => updateExcecaoAsset(ex.id, "capa_url", null)}
+                                  className="opacity-0 group-hover/asset:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                  title="Remover Capa"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer text-[9px] text-cyan-600 hover:underline flex items-center gap-1">
+                                <Plus size={10} /> Adicionar Capa
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => updateExcecaoAsset(ex.id, "capa_url", ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
                             {ex.background_url ? (
-                              <button 
-                                onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
-                                className="text-emerald-500 font-bold hover:underline text-left"
-                              >
-                                ✓ Fundo
-                              </button>
-                            ) : <span>—</span>}
+                              <div className="flex items-center gap-1.5 group/asset">
+                                <button 
+                                  onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
+                                  className="text-emerald-500 font-bold hover:underline text-left"
+                                >
+                                  ✓ Fundo
+                                </button>
+                                <button 
+                                  onClick={() => updateExcecaoAsset(ex.id, "background_url", null)}
+                                  className="opacity-0 group-hover/asset:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                  title="Remover Fundo"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer text-[9px] text-cyan-600 hover:underline flex items-center gap-1">
+                                <Plus size={10} /> Adicionar Fundo
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => updateExcecaoAsset(ex.id, "background_url", ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-right">
