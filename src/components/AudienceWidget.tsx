@@ -843,7 +843,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         </button>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
@@ -870,34 +870,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             )}
           </div>
         </div>
-        {(youtubeLiveCount ?? 0) > 0 && (
-          <div className="flex items-center gap-2 min-w-0">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "#FF0000" }}
-            >
-              <Youtube size={16} style={{ color: "#fff" }} />
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span
-                className="text-[9px] font-bold uppercase truncate"
-                style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
-              >
-                YouTube Live
-              </span>
-              {loadingVideo ? (
-                <Skeleton width={72} height={18} dark={dark} />
-              ) : (
-                <span
-                  className="text-xl font-black leading-none"
-                  style={{ color: "#FF0000" }}
-                >
-                  {(youtubeLiveCount || 0).toLocaleString("pt-BR")}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
