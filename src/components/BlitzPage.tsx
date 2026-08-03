@@ -308,7 +308,7 @@ export default function BlitzPage() {
     setCadastroErrors({});
     
     try {
-      const { data: cnpjExists } = await supabase
+      const { data: cnpjExists }: { data: any } = await supabase
         .from("logos_patrocinadores")
         .select("id")
         .eq("cnpj", cleanCnpj)
