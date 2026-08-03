@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useAuth } from "@/hooks/useAuth";
-import { Radio, Database, Music, Server, Check } from "lucide-react";
+import { Radio, Database, Music, Server, Check, Link2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import XmlSection from "./XmlSection";
+import XmlLinkRow from "./XmlLinkRow";
 
 export default function InfoMusicSourceSelector() {
   const { user } = useAuth();
