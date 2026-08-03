@@ -1552,15 +1552,36 @@ export default function WelcomeScreen({
                     <div className="grid grid-cols-[80px_1fr] gap-3">
                       <div>
                         <label className={labelCls} style={labelStyle}>UF</label>
-                        <input className="wsp-input" style={inputStyle} value={profile.estado} maxLength={2}
-                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value.toUpperCase() }))}
-                          placeholder="SP" />
+                        <select className="wsp-input" style={inputStyle} value={profile.estado}
+                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value, cidade: "" }))}>
+                          <option value="">--</option>
+                          {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                        </select>
                       </div>
-                      <div>
+                      <div className="relative">
                         <label className={labelCls} style={labelStyle}>Cidade</label>
                         <input className="wsp-input" style={inputStyle} value={profile.cidade}
+                          placeholder={profile.estado ? "digite para buscar" : "selecione a UF"}
+                          disabled={!profile.estado}
+                          autoComplete="off"
+                          onFocus={() => setCityFocused(true)}
+                          onBlur={() => setTimeout(() => setCityFocused(false), 150)}
                           onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                        {cityFocused && citySuggestions.length > 0 && (
+                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl"
+                            style={{ background: "rgba(20,20,20,0.92)", border: "1px solid rgba(255,255,255,0.14)" }}>
+                            {citySuggestions.map(c => (
+                              <button key={c} type="button"
+                                className="w-full text-left px-3 py-2 text-xs hover:bg-white/10"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => { setProfile(p => ({ ...p, cidade: c })); setCityFocused(false); }}>
+                                {c}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                     </div>
                     <div className="mt-3">
                       <label className={labelCls} style={labelStyle}>Bairro / Setor</label>
