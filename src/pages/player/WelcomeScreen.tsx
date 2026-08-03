@@ -91,21 +91,39 @@ export default function WelcomeScreen({
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  // Permite recarregar a lista de perfis após o login com Google.
+  const [profilesReloadKey, setProfilesReloadKey] = useState(0);
 
   // Load sub-profiles scoped by radio so the same listener can belong to multiple stations.
   useEffect(() => {
-    if (!user || !radioUserId) { setSubProfiles([]); return; }
+    if (!user || !radioUserId) { setSubProfiles([]); setProfilesLoading(false); return; }
     const cacheKey = `nexohub_sub_profiles_${user.id}_${radioUserId}`;
+    let hadCache = false;
     try {
       const raw = localStorage.getItem(cacheKey);
-      if (raw) setSubProfiles(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) { setSubProfiles(parsed); hadCache = true; }
+      }
     } catch { /* ignore */ }
-    fetchPlayerListenerProfile(user, radioUserId, userName).then((data) => {
-      const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
-      setSubProfiles(remote);
-      try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
-    });
-  }, [user, radioUserId, userName]);
+    let cancelled = false;
+    setProfilesLoading(!hadCache);
+    fetchPlayerListenerProfile(user, radioUserId, userName)
+      .then((data) => {
+        if (cancelled) return;
+        const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
+        // Só sobrescreve o cache quando o backend retornou perfis, evitando
+        // "piscar" uma lista vazia logo após o login com o Google.
+        if (remote.length || !hadCache) {
+          setSubProfiles(remote);
+          try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
+        }
+      })
+      .finally(() => { if (!cancelled) setProfilesLoading(false); });
+    return () => { cancelled = true; };
+  }, [user, radioUserId, userName, profilesReloadKey]);
+
 
   // Após autenticar com o Google, verifica se o e-mail já possui cadastro na
   // base de ouvintes da rádio. Se sim, avisa o usuário e mantém/leva ele para a
@@ -138,6 +156,9 @@ export default function WelcomeScreen({
             window.localStorage.removeItem(`player-step-home:${slug}`);
           } catch { /* ignore */ }
         }
+        // Recarrega a lista de perfis do usuário logado após o login com Google.
+        setProfilesReloadKey((k) => k + 1);
+
       } catch { /* silencioso: não bloqueia o login */ }
     })();
   }, [user?.email, radioUserId, userSlug]);
@@ -1028,7 +1049,24 @@ export default function WelcomeScreen({
                   );
                 })}
 
+                {profilesLoading && subProfiles.length === 0 && (
+                  <div
+                    className="shrink-0 rounded-[28px] flex items-center justify-center"
+                    style={{
+                      width: "clamp(110px, 11vw, 150px)",
+                      height: "clamp(110px, 11vw, 150px)",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(6px)",
+                    }}
+                    aria-label="Carregando perfis"
+                  >
+                    <span className="inline-block w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" aria-hidden />
+                  </div>
+                )}
+
                 <button
+
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
                   data-ws-focusable="true"
                   aria-label="Adicionar novo perfil"
