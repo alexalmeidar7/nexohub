@@ -2108,22 +2108,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     className={`absolute -right-0.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full ${isLive ? "bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.9)]" : "bg-white/40"}`}
                     aria-hidden
                   />
-                  {/* Thumb (playhead) — pílula com tempo, branco puro com opacidade dinâmica */}
+                  {/* Thumb (playhead) — ponto discreto, sem pílula de tempo */}
                   <div
                     className="absolute top-1/2 -translate-y-1/2 pointer-events-none transition-[left] duration-500"
                     style={{ left: `${playheadPct}%` }}
                     aria-hidden
                   >
                     <div
-                      className={`-translate-x-1/2 flex items-center gap-1 px-2 h-6 rounded-full text-[10px] font-semibold tabular-nums whitespace-nowrap border border-white/40 shadow-[0_2px_10px_rgba(255,255,255,0.20)] transition-all ${
-                        isLive
-                          ? "bg-white text-black shadow-[0_2px_12px_rgba(255,255,255,0.35)]"
-                          : "bg-white/95 text-black"
-                      } ${dragVal != null ? "scale-110 shadow-[0_4px_20px_rgba(255,255,255,0.45)]" : "group-hover/timeshift:scale-105"}`}
-                    >
-                      {!isLive && <Rewind size={10} strokeWidth={2.5} className="text-black/70" />}
-                      <span>{offsetLabel}</span>
-                    </div>
+                      className={`-translate-x-1/2 rounded-full bg-white border border-white/40 shadow-[0_2px_10px_rgba(255,255,255,0.25)] transition-all ${
+                        dragVal != null ? "w-4 h-4 scale-110" : "w-3.5 h-3.5 group-hover/timeshift:scale-110"
+                      }`}
+                    />
                   </div>
                 </div>
 
