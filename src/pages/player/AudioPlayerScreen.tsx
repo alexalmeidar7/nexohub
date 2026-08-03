@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useCallback, Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings, Users } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft, Rewind, Heart, Plus, MessageSquare, Mic, ListMusic, HelpCircle, Play, Pause, VolumeX, Volume2, Radio, Disc3, Music2, Sparkles, BarChart3, X, Check, Maximize2, Minimize2, Loader2, Settings } from "lucide-react";
 import { PlayerBackButton } from "@/components/player/PlayerBackButton";
 import { supabase } from "@/integrations/supabase/client";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
@@ -1262,9 +1262,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
   return (
     <div
-      className="relative min-h-full w-full text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
+      className="relative h-screen w-screen overflow-hidden text-white select-none transition-all duration-500 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)]"
       style={{
-        background: "transparent",
+        background: "#050810",
         fontFamily: "'Lufga', 'Inter', sans-serif",
         opacity: exiting ? 0 : 1,
         transform: exiting ? "scale(0.97)" : "scale(1)",
@@ -1274,7 +1274,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* YouTube Catalog Background */}
       {isCatalog && selectedVideoId && (
-        <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 z-0">
           <iframe
             src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&mute=${muted ? 1 : 0}&controls=0&modestbranding=1&rel=0&enablejsapi=1&origin=${window.location.origin}`}
             className="w-full h-full border-0"
@@ -1292,8 +1292,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
       {/* Background dinâmico da capa da música (crossfade elegante entre trocas) */}
       <div
-        className="fixed inset-0 pointer-events-none overflow-hidden"
-        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }}
+        className="absolute inset-0 pointer-events-none overflow-hidden"
+        style={{ opacity: (djModeActive || isCatalog) ? 0 : 1, transition: "opacity 300ms ease-out" }}
       >
         {bgLayers.map((l, idx) => (
           <BgFadeLayer key={l.id} gradient={l.g} initialOpacity={idx === 0 ? 1 : 0} />
@@ -1302,8 +1302,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       {/* Imagem do artista (Deezer) intercalada a cada 15s com movimento lento (Ken Burns) */}
       {artistBgImage && !djModeActive && !isCatalog && (
         <div
-          className="fixed inset-0 pointer-events-none overflow-hidden"
-          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out", zIndex: 0 }}
+          className="absolute inset-0 pointer-events-none overflow-hidden"
+          style={{ opacity: showArtistBg ? 1 : 0, transition: "opacity 1600ms ease-in-out" }}
           aria-hidden
         >
           <div
@@ -1323,7 +1323,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           />
         </div>
       )}
-      <div className="fixed inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out", zIndex: 0 }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.55) 100%)", opacity: djModeActive ? 0 : 1, transition: "opacity 300ms ease-out" }} />
 
 
       {/* Media elements (owned by parent HLS) */}
@@ -1631,24 +1631,24 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 // A capa "tocando agora" (i=0) também acompanha a navegação para
                 // que o usuário possa deslizar pelas capas das músicas já tocadas
                 // sem que ela fique travada na frente.
-                const depth = i;
+                const depth = i - activeIndex;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
-                // Card ativo (i=0) fica parado à esquerda, os outros se movem
-                const translateX = i === 0 ? 0 : -(i - activeIndex) * 72;
+                const translateX = -depth * 72;
                 // itens escondidos "atrás" do índice ativo têm opacidade menor
-                const opacity = i < activeIndex ? 0 : i === activeIndex ? 1 : Math.max(0, 0.9 - (i - activeIndex) * 0.16);
-                const blur = i === activeIndex ? 0 : Math.min(Math.abs(i - activeIndex) * 1.4, 6);
-                const gray = i === activeIndex ? 0 : Math.min(70, 25 + Math.abs(i - activeIndex) * 12);
-                const isActive = i === activeIndex;
+                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
+                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
+                const gray = depth === 0 ? 0 : Math.min(70, 25 + abs * 12);
+                const isActive = depth === 0;
                 const ago = secsAgoFor(t.horario);
                 const canRewind = !isNow && ago > 0 && ago <= REWIND_LIMIT && ts.back >= ago - 2;
                 const isExpired = !isNow && ago > REWIND_LIMIT;
                 const isLiked = historyLikes.has(likeKey(t.artista, t.musica));
                 const rewindKey = `${i}-${t.horario}-${t.musica}`;
                 const isPreparing = preparingRewind === rewindKey;
-                // z-index: o card no índice ativo fica sempre por cima
-                const zIndex = 30 - Math.abs(i - activeIndex);
+                // z-index acompanha proximidade do índice ativo: a capa focada
+                // fica sempre por cima, permitindo navegar entre as capas.
+                const zIndex = 30 - abs;
                 return (
                   <div
                     key={`${carKey}-${i}-${t.musica}-${t.artista}`}
@@ -1983,14 +1983,13 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                 );
               })}
               {upcomingProgs.slice(0, UPCOMING_VISIBLE).map((p, i) => {
-                const depth = i;
+                const depth = i - progNavIndex;
                 const abs = Math.abs(depth);
                 const scale = 1 - Math.min(abs, 5) * 0.055;
-                // Card ativo (i=progNavIndex) fica parado à esquerda do seu grupo, os outros se movem
-                const translateX = i === progNavIndex ? 0 : (i - progNavIndex) * 72;
-                const opacity = i < progNavIndex ? 0 : i === progNavIndex ? 1 : Math.max(0, 0.9 - (i - progNavIndex) * 0.16);
-                const blur = i === progNavIndex ? 0 : Math.min(Math.abs(i - progNavIndex) * 1.4, 6);
-                const isActive = i === progNavIndex;
+                const translateX = depth * 72;
+                const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - abs * 0.16);
+                const blur = depth === 0 ? 0 : Math.min(abs * 1.4, 6);
+                const isActive = depth === 0;
                 const isFirst = i === 0;
                 const cover = p?.thumb || p?.capa || null;
                 const size = isActive ? 280 : 240;
@@ -2004,7 +2003,7 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                       transform: `translateX(${translateX}px) scale(${scale})`,
                       opacity,
                       filter: `blur(${blur}px)`,
-                      zIndex: 20 - Math.abs(i - progNavIndex),
+                      zIndex: 20 - abs,
                       transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms, filter 400ms, width 400ms, height 400ms",
                     }}
                   >
@@ -2466,19 +2465,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
               )}
             </div>
             {!isCatalog && (
-          <InteractivityMenu
-            userId={effectiveUserId}
-            user={user}
-            chatOpen={chatOpen}
-            onToggleChat={() => setChatOpen(!chatOpen)}
-            karaokeEnabled={karaokeEnabled}
-            onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
-            setWatchProfileOpen={setWatchProfileOpen}
-            showKaraoke={true}
-            isVideoChannel={isVideoChannel}
-            controlsVisible={controlsVisible}
-            isCatalog={isCatalog}
-          />
+              <InteractivityMenu
+                userId={effectiveUserId}
+                chatOpen={chatOpen}
+                onToggleChat={() => setChatOpen(!chatOpen)}
+                karaokeEnabled={karaokeEnabled}
+                onToggleKaraoke={() => setKaraokeEnabled(!karaokeEnabled)}
+                showKaraoke={true}
+                isVideoChannel={isVideoChannel}
+                controlsVisible={controlsVisible}
+                isCatalog={isCatalog}
+              />
             )}
           </div>
         </div>
@@ -3022,24 +3019,20 @@ type ActivePoll = {
 
 function InteractivityMenu({
   userId,
-  user,
   chatOpen,
   onToggleChat,
   karaokeEnabled,
   onToggleKaraoke,
-  setWatchProfileOpen,
   showKaraoke = true,
   isVideoChannel = false,
   controlsVisible = true,
   isCatalog = false,
 }: {
   userId: string | null;
-  user: any;
   chatOpen: boolean;
   onToggleChat: () => void;
   karaokeEnabled: boolean;
   onToggleKaraoke: () => void;
-  setWatchProfileOpen: (v: boolean) => void;
   showKaraoke?: boolean;
   isVideoChannel?: boolean;
   controlsVisible?: boolean;
@@ -3256,16 +3249,6 @@ function InteractivityMenu({
             open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-8 pointer-events-none"
           }`}
         >
-          {user && (
-            <button
-              onClick={() => { setWatchProfileOpen(true); setOpen(false); }}
-              className="w-16 h-16 rounded-full flex items-center justify-center bg-black/80 backdrop-blur-xl border border-white/20 text-white hover:bg-white/20 transition-all hover:scale-110 active:scale-95"
-              title="Trocar Perfil"
-            >
-              <Users size={24} />
-            </button>
-          )}
-
           <button
             onClick={() => { setPollOpen(true); setOpen(false); }}
             disabled={!activePoll}

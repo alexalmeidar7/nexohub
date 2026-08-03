@@ -185,7 +185,6 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const [selectedVideo, setSelectedVideo] = useState<PlaylistVideo | null>(null);
   const [programa, setPrograma] = useState<ProgramaInfo | null>(null);
   const [hoveredVideoId, setHoveredVideoId] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [hoverPreview, setHoverPreview] = useState<{ video: PlaylistVideo; x: number; y: number } | null>(null);
   const [descExpanded, setDescExpanded] = useState(false);
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -325,22 +324,16 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
   const startAutoScroll = useCallback((direction: "left" | "right") => {
     const scroll = () => {
       if (!scrollRef.current) return;
-      const step = direction === "right" ? 1 : -1;
-      setActiveIndex(prev => Math.max(0, Math.min(videos.length - 1, prev + step)));
-      
-      // We don't use requestAnimationFrame for index-based navigation
-      // as it would be way too fast. We use a slower interval or just rely on mouseenter/move.
-      // However, the user request says "o card em foco ativo, sempre fica parado no canto esquerdo na primeira linha".
+      const speed = 2.5;
+      scrollRef.current.scrollLeft += direction === "right" ? speed : -speed;
+      scrollAnimRef.current = requestAnimationFrame(scroll);
     };
-    
-    // For index based navigation, a simple interval is better
-    if (scrollAnimRef.current) clearInterval(scrollAnimRef.current);
-    scrollAnimRef.current = setInterval(scroll, 200) as any;
-  }, [videos.length]);
+    scrollAnimRef.current = requestAnimationFrame(scroll);
+  }, []);
 
   const stopAutoScroll = useCallback(() => {
     if (scrollAnimRef.current) {
-      clearInterval(scrollAnimRef.current);
+      cancelAnimationFrame(scrollAnimRef.current);
       scrollAnimRef.current = null;
     }
   }, []);
@@ -574,38 +567,22 @@ export default function CatalogDetailInline({ catalogName, onBack, onPlayVideo }
           ) : videos.length === 0 ? (
             <p className="text-sm text-white/30 mx-auto">Nenhum vídeo disponível</p>
           ) : (
-            videos.map((video, i) => {
+            videos.map((video) => {
               const isSelected = selectedVideo?.videoId === video.videoId;
               const isHovered = hoveredVideoId === video.videoId;
-              
-              // Sticky left navigation logic
-              const isActive = i === activeIndex;
-              const depth = i - activeIndex;
-              const opacity = depth < 0 ? 0 : depth === 0 ? 1 : Math.max(0, 0.9 - depth * 0.16);
-              const translateX = depth < 0 ? 0 : depth * 40; // Small overlap/spacing offset
-
               return (
                 <div
                   key={video.videoId}
                   className="shrink-0 relative"
-                  onMouseEnter={(e) => {
-                    handleCardMouseEnter(video, e.currentTarget);
-                    setActiveIndex(i);
-                  }}
+                  onMouseEnter={(e) => handleCardMouseEnter(video, e.currentTarget)}
                   onMouseLeave={handleCardMouseLeave}
-                  style={{
-                    opacity,
-                    transform: `translateX(${translateX}px)`,
-                    transition: "transform 500ms cubic-bezier(.22,1,.36,1), opacity 400ms",
-                    zIndex: 20 - Math.abs(depth),
-                    pointerEvents: depth < 0 ? 'none' : 'auto'
-                  }}
                 >
                   {/* Base card (thumbnail) */}
                   <button
                     onClick={() => handlePlay(video)}
                     className="shrink-0 cursor-pointer transition-all duration-300"
                     style={{
+                      opacity: isSelected || isHovered ? 1 : 0.7,
                       transform: isHovered ? "translateY(-4px) scale(1.05)" : "translateY(0) scale(1)",
                       transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
                     }}

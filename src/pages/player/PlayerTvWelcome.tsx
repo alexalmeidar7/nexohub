@@ -309,8 +309,6 @@ export default function PlayerTvWelcome() {
     ? `${pairOrigin}/${userSlug}/pair?code=${code}`
     : `${pairOrigin}/${userSlug}/pair`;
 
-  const manualPairUrl = `${pairOrigin}/${userSlug}/pair`;
-
   // Encurta a URL para facilitar a digitação no navegador.
   useEffect(() => {
     if (!code) { setShortUrl(null); return; }
@@ -715,7 +713,7 @@ export default function PlayerTvWelcome() {
                         ou acesse no navegador
                       </p>
                       <p className="text-sm font-tv-bold tracking-tight text-white/85 mt-1 break-all drop-shadow">
-                        {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : manualPairUrl.replace(/^https?:\/\//, "")}
+                        {shortUrl ? shortUrl.replace(/^https?:\/\//, "") : `${window.location.host}/${userSlug}/pair`}
                       </p>
                     </div>
                   </div>
