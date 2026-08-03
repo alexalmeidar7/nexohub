@@ -1570,7 +1570,7 @@ export default function WelcomeScreen({
                       <div>
                         <label className={labelCls} style={labelStyle}>UF</label>
                         <select className="wsp-input" style={inputStyle} value={profile.estado}
-                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value, cidade: "" }))}>
+                          onChange={e => { setProfile(p => ({ ...p, estado: e.target.value, cidade: "" })); setCityFocused(!!e.target.value); }}>
                           <option value="">--</option>
                           {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                         </select>
@@ -1578,14 +1578,16 @@ export default function WelcomeScreen({
                       <div className="relative">
                         <label className={labelCls} style={labelStyle}>Cidade</label>
                         <input className="wsp-input" style={inputStyle} value={profile.cidade}
-                          placeholder={profile.estado ? "digite para buscar" : "selecione a UF"}
+                          placeholder={!profile.estado ? "selecione a UF" : cityLoading ? "carregando cidades..." : "escolha ou digite"}
                           disabled={!profile.estado}
                           autoComplete="off"
+                          readOnly={cityLoading}
                           onFocus={() => setCityFocused(true)}
+                          onClick={() => setCityFocused(true)}
                           onBlur={() => setTimeout(() => setCityFocused(false), 150)}
-                          onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                          onChange={e => { setProfile(p => ({ ...p, cidade: e.target.value })); setCityFocused(true); }} />
                         {cityFocused && citySuggestions.length > 0 && (
-                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl"
+                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl max-h-56 overflow-y-auto"
                             style={{ background: "rgba(20,20,20,0.92)", border: "1px solid rgba(255,255,255,0.14)" }}>
                             {citySuggestions.map(c => (
                               <button key={c} type="button"
@@ -1598,6 +1600,7 @@ export default function WelcomeScreen({
                           </div>
                         )}
                       </div>
+
 
                     </div>
                     <div className="mt-3">
