@@ -269,6 +269,7 @@ export default function BlitzPage() {
       
       const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
       // Só perguntar se não houver match exato E houver mais de 2 caracteres
+      // Evitar perguntas desnecessárias quando o cliente já existir.
       if (!exists && val.length > 2) {
         setNovoClienteNome(val);
         setConfirmCadastroOpen(true);
