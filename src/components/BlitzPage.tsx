@@ -124,6 +124,20 @@ export default function BlitzPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [nowTick, setNowTick] = useState(0);
 
+  // Estados para busca de clientes e popup de cadastro
+  const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
+  const [sugestoesClientes, setSugestoesClientes] = useState<{ id: string; nome: string }[]>([]);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [novoClienteData, setNovoClienteData] = useState({
+    nome: "",
+    cnpj: "",
+    endereco: "",
+    telefone: "",
+    executiva_venda: ""
+  });
+  const [cadastrandoCliente, setCadastrandoCliente] = useState(false);
+
   useEffect(() => {
     const iv = setInterval(() => setNowTick(t => t + 1), 1000);
     return () => clearInterval(iv);
@@ -181,7 +195,89 @@ export default function BlitzPage() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, [user?.id]);
+  const loadClientes = async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("logos_patrocinadores")
+      .select("id, nome")
+      .eq("excluido", false)
+      .order("nome");
+    
+    if (data) {
+      const unique = new Map();
+      data.forEach(d => {
+        if (d.nome) unique.set(d.nome.trim().toUpperCase(), { id: d.id, nome: d.nome });
+      });
+      setClientesDisponiveis(Array.from(unique.values()));
+    }
+  };
+
+  useEffect(() => { 
+    load(); 
+    loadClientes();
+  }, [user?.id]);
+
+  const handleClienteChange = (val: string) => {
+    setForm(prev => ({ ...prev, cliente: val }));
+    if (val.length > 1) {
+      const matched = clientesDisponiveis.filter(c => 
+        c.nome.toLowerCase().includes(val.toLowerCase())
+      );
+      setSugestoesClientes(matched);
+      setShowSugestoes(true);
+    } else {
+      setShowSugestoes(false);
+    }
+  };
+
+  const selectCliente = (c: { id: string; nome: string }) => {
+    setForm(prev => ({ ...prev, cliente: c.nome }));
+    setShowSugestoes(false);
+  };
+
+  const handleClienteBlur = () => {
+    // Pequeno delay para permitir clique na sugestão
+    setTimeout(async () => {
+      setShowSugestoes(false);
+      const val = form.cliente.trim();
+      if (!val) return;
+      
+      const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
+      if (!exists && val.length > 2) {
+        const confirm = window.confirm(`O cliente "${val}" não está cadastrado. Vamos cadastrar esse cliente?`);
+        if (confirm) {
+          setNovoClienteData(prev => ({ ...prev, nome: val }));
+          setCadastroOpen(true);
+        }
+      }
+    }, 200);
+  };
+
+  const saveNovoCliente = async () => {
+    if (!novoClienteData.nome || !novoClienteData.cnpj) {
+      toast({ title: "Razão Social e CNPJ são obrigatórios", variant: "destructive" });
+      return;
+    }
+    setCadastrandoCliente(true);
+    try {
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        nome: novoClienteData.nome.trim().toUpperCase(),
+        user_id: user?.id,
+        ativo: true,
+        excluido: false,
+        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
+      } as any);
+      if (error) throw error;
+      toast({ title: "Cliente cadastrado com sucesso!" });
+      setCadastroOpen(false);
+      await loadClientes();
+      setForm(prev => ({ ...prev, cliente: novoClienteData.nome.trim().toUpperCase() }));
+    } catch (e: any) {
+      toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
+    } finally {
+      setCadastrandoCliente(false);
+    }
+  };
 
   const reset = () => { setForm(emptyForm); setEditingId(null); };
 
@@ -474,7 +570,30 @@ export default function BlitzPage() {
           </div>
           <div>
             <label style={labelStyle}><Building2 size={11} style={{ display: "inline", marginRight: 4 }} /> Nome do cliente</label>
-            <input type="text" style={pillInput} placeholder="Ex: Supermercado ABC" value={form.cliente} onChange={e => setForm({ ...form, cliente: e.target.value })} maxLength={120} />
+            <div className="relative">
+              <input 
+                type="text" 
+                style={pillInput} 
+                placeholder="Ex: Supermercado ABC" 
+                value={form.cliente} 
+                onChange={e => handleClienteChange(e.target.value)} 
+                onBlur={handleClienteBlur}
+                maxLength={120} 
+              />
+              {showSugestoes && sugestoesClientes.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                  {sugestoesClientes.map(c => (
+                    <button
+                      key={c.id}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
+                      onClick={() => selectCliente(c)}
+                    >
+                      {c.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label style={labelStyle}><Users size={11} style={{ display: "inline", marginRight: 4 }} /> Equipe</label>
@@ -605,6 +724,94 @@ export default function BlitzPage() {
           </div>
         )}
       </div>
+      {/* Popup de Cadastro de Cliente */}
+      {cadastroOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            style={{ fontFamily: FONT }}
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500 flex items-center justify-center">
+                  <Building2 size={20} color="#fff" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Novo Cliente</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Cadastrar para Blitz</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCadastroOpen(false)}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1 md:col-span-2">
+                  <label style={labelStyle}>Razão Social</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    value={novoClienteData.nome}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, nome: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label style={labelStyle}>CNPJ</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="00.000.000/0000-00"
+                    value={novoClienteData.cnpj}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label style={labelStyle}>Telefone</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="(00) 0000-0000"
+                    value={novoClienteData.telefone}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, telefone: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label style={labelStyle}>Endereço</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="Rua, Número, Bairro, Cidade"
+                    value={novoClienteData.endereco}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, endereco: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  style={{ ...ghostBtn, flex: 1, border: "none", background: "#f1f5f9" }}
+                  onClick={() => setCadastroOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  style={{ ...limeBtn, flex: 1 }}
+                  onClick={saveNovoCliente}
+                  disabled={cadastrandoCliente}
+                >
+                  {cadastrandoCliente ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  Cadastrar Cliente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
