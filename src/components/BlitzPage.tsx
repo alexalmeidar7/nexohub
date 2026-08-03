@@ -267,11 +267,12 @@ export default function BlitzPage() {
       if (!val) return;
       
       const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
+      // Só perguntar se não houver match exato E houver mais de 2 caracteres
       if (!exists && val.length > 2) {
         setNovoClienteNome(val);
         setConfirmCadastroOpen(true);
       }
-    }, 200);
+    }, 250);
   };
 
   const saveNovoCliente = async () => {
