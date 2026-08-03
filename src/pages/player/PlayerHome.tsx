@@ -780,7 +780,7 @@ function HeroBanner({
                 Navegação por teclado
               </p>
               <p className="text-white/70 text-[11px] leading-relaxed mb-4">
-                Use as teclas do teclado para navegar pelos ícones, cards e menus do player.
+                Use as teclas do teclado para navegar pelos ícones, cards e menus do player, e garantir que o fundo não “mexa” em nenhum breakpoint.
               </p>
 
               <div className="flex flex-col items-center gap-1 mb-4">
