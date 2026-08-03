@@ -246,11 +246,8 @@ export default function BlitzPage() {
       
       const exists = clientesDisponiveis.some(c => c.nome.toUpperCase() === val.toUpperCase());
       if (!exists && val.length > 2) {
-        const confirm = window.confirm(`O cliente "${val}" não está cadastrado. Vamos cadastrar esse cliente?`);
-        if (confirm) {
-          setNovoClienteData(prev => ({ ...prev, nome: val }));
-          setCadastroOpen(true);
-        }
+        setNovoClienteNome(val);
+        setConfirmCadastroOpen(true);
       }
     }, 200);
   };
