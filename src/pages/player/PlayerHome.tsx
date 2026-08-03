@@ -1427,6 +1427,29 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   // TV-style keyboard navigation between focusable cards/buttons
   useEffect(() => {
+    // Foca sem provocar scroll dos contêineres (o scroll vertical fazia o
+    // background "pular"/se mover). Só ajustamos o scroll HORIZONTAL da
+    // própria fileira de cards, quando necessário.
+    const focusNoJump = (el: HTMLElement) => {
+      el.focus({ preventScroll: true });
+      let p: HTMLElement | null = el.parentElement;
+      while (p) {
+        const style = window.getComputedStyle(p);
+        if (/(auto|scroll)/.test(style.overflowX) && p.scrollWidth > p.clientWidth + 1) {
+          const pr = p.getBoundingClientRect();
+          const er = el.getBoundingClientRect();
+          const pad = 24;
+          if (er.left < pr.left + pad) {
+            p.scrollBy({ left: er.left - pr.left - pad, behavior: "smooth" });
+          } else if (er.right > pr.right - pad) {
+            p.scrollBy({ left: er.right - pr.right + pad, behavior: "smooth" });
+          }
+          break;
+        }
+        p = p.parentElement;
+      }
+    };
+
     const handler = (e: KeyboardEvent) => {
       if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
       const active = document.activeElement as HTMLElement | null;
@@ -1441,10 +1464,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (e.key === "ArrowDown" && active && (active.hasAttribute("data-tv-topnav") || active.hasAttribute("data-tv-topnav-extra") || !active.closest("[data-tv-row]"))) {
         const visibleRow = document.querySelector<HTMLElement>(`[data-tv-row="${activeRow}"]`);
         const firstCard = visibleRow?.querySelector<HTMLElement>("[data-tv-focusable]");
-        if (firstCard) { firstCard.focus(); firstCard.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+        if (firstCard) { focusNoJump(firstCard); return; }
       }
       let idx = active ? nodes.indexOf(active) : -1;
-      if (idx === -1) { nodes[0].focus(); nodes[0].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); return; }
+      if (idx === -1) { focusNoJump(nodes[0]); return; }
 
       const cur = nodes[idx].getBoundingClientRect();
       const curCX = cur.left + cur.width / 2;
@@ -1466,10 +1489,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         if (score < bestScore) { bestScore = score; best = i; }
       });
       if (best >= 0) {
-        nodes[best].focus();
-        nodes[best].scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+        focusNoJump(nodes[best]);
       }
     };
+
     // Enter/Space: aciona o elemento focado como se fosse um clique do mouse
     const enterHandler = (e: KeyboardEvent) => {
       if (e.key !== "Enter" && e.key !== " ") return;
