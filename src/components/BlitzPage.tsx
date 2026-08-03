@@ -140,6 +140,7 @@ export default function BlitzPage() {
     executiva_venda: ""
   });
   const [cadastrandoCliente, setCadastrandoCliente] = useState(false);
+  const [cadastroErrors, setCadastroErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const iv = setInterval(() => setNowTick(t => t + 1), 1000);
@@ -275,11 +276,21 @@ export default function BlitzPage() {
     }, 250);
   };
 
-  const saveNovoCliente = async () => {
-    if (!novoClienteData.nome || !novoClienteData.cnpj) {
-      toast({ title: "Razão Social e CNPJ são obrigatórios", variant: "destructive" });
-      return;
+  const validateCadastro = () => {
+    const errors: Record<string, string> = {};
+    if (!novoClienteData.nome || novoClienteData.nome.trim().length < 3) {
+      errors.nome = "Razão Social deve ter pelo menos 3 caracteres";
     }
+    const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
+    if (!cleanCnpj || cleanCnpj.length !== 14) {
+      errors.cnpj = "CNPJ deve ter 14 dígitos";
+    }
+    setCadastroErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const saveNovoCliente = async () => {
+    if (!validateCadastro()) return;
 
     const cleanNome = novoClienteData.nome.trim().toUpperCase();
     const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
@@ -289,23 +300,23 @@ export default function BlitzPage() {
     );
 
     if (alreadyExists) {
-      toast({ title: "Cliente já cadastrado", description: "Já existe um cliente com esta Razão Social.", variant: "destructive" });
-      setCadastroOpen(false);
+      setCadastroErrors({ nome: "Cliente já cadastrado com esta Razão Social" });
       return;
     }
 
     setCadastrandoCliente(true);
+    setCadastroErrors({});
+    
     try {
-      // @ts-ignore
-      const { data: cnpjExists } = await supabase
-        .from("logos_patrocinadores")
+      const query: any = supabase.from("logos_patrocinadores");
+      const { data: cnpjExists } = await query
         .select("id")
         .eq("cnpj", cleanCnpj)
         .eq("excluido", false)
         .maybeSingle();
 
       if (cnpjExists) {
-        toast({ title: "CNPJ duplicado", description: "Já existe um cliente cadastrado com este CNPJ.", variant: "destructive" });
+        setCadastroErrors({ cnpj: "Já existe um cliente cadastrado com este CNPJ" });
         setCadastrandoCliente(false);
         return;
       }
@@ -313,6 +324,8 @@ export default function BlitzPage() {
       const payload: any = {
         nome: cleanNome,
         cnpj: cleanCnpj,
+        telefone: novoClienteData.telefone || null,
+        endereco: novoClienteData.endereco || null,
         user_id: user?.id,
         ativo: true,
         excluido: false,
@@ -824,20 +837,36 @@ export default function BlitzPage() {
                   <label style={labelStyle}>Razão Social</label>
                   <input 
                     type="text" 
-                    style={pillInput} 
+                    style={{ ...pillInput, borderColor: cadastroErrors.nome ? "#ef4444" : undefined }} 
                     value={novoClienteData.nome}
-                    onChange={e => setNovoClienteData(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={e => {
+                      setNovoClienteData(prev => ({ ...prev, nome: e.target.value }));
+                      if (cadastroErrors.nome) setCadastroErrors(prev => {
+                        const next = { ...prev };
+                        delete next.nome;
+                        return next;
+                      });
+                    }}
                   />
+                  {cadastroErrors.nome && <p className="text-[10px] text-red-500 font-medium pl-2">{cadastroErrors.nome}</p>}
                 </div>
                 <div className="space-y-1">
                   <label style={labelStyle}>CNPJ</label>
                   <input 
                     type="text" 
-                    style={pillInput} 
+                    style={{ ...pillInput, borderColor: cadastroErrors.cnpj ? "#ef4444" : undefined }} 
                     placeholder="00.000.000/0000-00"
                     value={novoClienteData.cnpj}
-                    onChange={e => setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }))}
+                    onChange={e => {
+                      setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }));
+                      if (cadastroErrors.cnpj) setCadastroErrors(prev => {
+                        const next = { ...prev };
+                        delete next.cnpj;
+                        return next;
+                      });
+                    }}
                   />
+                  {cadastroErrors.cnpj && <p className="text-[10px] text-red-500 font-medium pl-2">{cadastroErrors.cnpj}</p>}
                 </div>
                 <div className="space-y-1">
                   <label style={labelStyle}>Telefone</label>
@@ -864,7 +893,10 @@ export default function BlitzPage() {
               <div className="flex gap-3 pt-4">
                 <button 
                   style={{ ...ghostBtn, flex: 1, border: "none", background: "#f1f5f9" }}
-                  onClick={() => setCadastroOpen(false)}
+                  onClick={() => {
+                    setCadastroOpen(false);
+                    setCadastroErrors({});
+                  }}
                 >
                   Cancelar
                 </button>
