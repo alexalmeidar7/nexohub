@@ -163,18 +163,6 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
         <div className="p-5 border-b border-slate-100">
           <InfoMusicSourceSelector />
         </div>
-        
-        {/* Bloco de Links/Upload XML conforme solicitado (Restaurado) */}
-        <div className="px-5 pb-5">
-          <XmlSection title="Fontes de Dados XML">
-            <XmlLinkRow 
-              label="Curiosidades Musicais" 
-              kicker="XML FEED"
-              scopeKey="infomusic"
-              xmlContent={undefined /* O conteúdo é gerado via worker/sync */}
-            />
-          </XmlSection>
-        </div>
 
         <Suspense fallback={<div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin text-cyan-500" /></div>}>
           <InfoMusicSection />
