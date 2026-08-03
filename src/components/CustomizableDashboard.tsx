@@ -798,10 +798,8 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
           <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
         </div>
-      </div>
-    </div>
-  );
-}
+        </div>
+      )}
 
       {/* Add Dialog */}
       {showAddDialog && (
@@ -972,6 +970,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
           <ChevronDown size={18} className="text-white/50 animate-bounce" />
         </div>
       )}
+      </div>
     </div>
   );
 }
