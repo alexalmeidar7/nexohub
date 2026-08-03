@@ -98,7 +98,9 @@ export default function OnAirWidget() {
     const update = () => {
       const r = target.getBoundingClientRect();
       const bottom = Math.max(0, Math.round(r.bottom));
+      const left = Math.max(0, Math.round(r.left));
       document.documentElement.style.setProperty("--onair-bottom", `${bottom}px`);
+      document.documentElement.style.setProperty("--onair-left", `${left}px`);
     };
     update();
     const ro = new ResizeObserver(update);
@@ -113,6 +115,7 @@ export default function OnAirWidget() {
       window.removeEventListener("scroll", onWin, true);
       clearInterval(interval);
       document.documentElement.style.removeProperty("--onair-bottom");
+      document.documentElement.style.removeProperty("--onair-left");
     };
   }, [loading, onAir, isHovered]);
 
