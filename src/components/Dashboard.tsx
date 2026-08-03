@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, Maximize2 } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -399,39 +399,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     menuLeaveTimer.current = setTimeout(() => setHoveredMenu(null), 450);
   }, [clearMenuLeaveTimer]);
   const [noArCollapsed, setNoArCollapsed] = useState(false);
-  const [musicaMinimizada, setMusicaMinimizada] = useState(false);
-  const [musicaDismissed, setMusicaDismissed] = useState(false);
-  const [activeBlitzCount, setActiveBlitzCount] = useState(0);
-
-
   const [empresa, setEmpresa] = useState<import("./ConfiguracoesPage").EmpresaConfig>({} as any);
   const [empresaTimezone, setEmpresaTimezone] = useState<string | null>(null);
   const [enabledModules, setEnabledModules] = useState<Set<string> | null>(null);
-
   const [planModules, setPlanModules] = useState<Set<string> | null>(null);
   const [subUserModules, setSubUserModules] = useState<Set<string> | null>(null); // null = not a sub-user
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null); // parent_user_id for sub-users
-
-  useEffect(() => {
-    if (!effectiveUserId) return;
-    const today = new Date().toISOString().split('T')[0];
-    const load = async () => {
-      const { data } = await supabase
-        .from("blitz_promocionais")
-        .select("id")
-        .eq("user_id", effectiveUserId)
-        .eq("dia", today)
-        .eq("realizada", false);
-      setActiveBlitzCount(data?.length || 0);
-    };
-    load();
-    const ch = supabase
-      .channel(`blitz-count-${effectiveUserId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "blitz_promocionais" }, load)
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [effectiveUserId]);
-
   const [parentEmail, setParentEmail] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [onAirThumb, setOnAirThumb] = useState<string | null>(null);
@@ -1679,52 +1652,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
               <div className="flex items-center gap-2">
-                <BackButton onClick={() => {
-                  if (currentPage === "musica") setMusicaMinimizada(false);
-                  setCurrentPage("dashboard");
-                }} />
-                {musicaMinimizada && !musicaDismissed && (
-                  <div
-                    style={{
-                      position: "fixed", left: "var(--onair-left, 18px)", bottom: activeBlitzCount > 0 ? 76 : 18, zIndex: 60,
-                      display: "flex", alignItems: "center", gap: 6,
-                      background: "#00BFF0", borderRadius: 999, padding: "4px 6px 4px 4px",
-                      boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: "'Montserrat', sans-serif",
-                      paddingLeft: "var(--onair-left-offset, 0px)",
-                      transition: "bottom 0.3s ease"
-                    }}
-                  >
-                    <button
-                      onClick={() => {
-                        setMusicaMinimizada(false);
-                        setCurrentPage("musica");
-                      }}
-                      style={{
-                        background: "transparent", color: "#fff", border: "none", borderRadius: 999,
-                        padding: "6px 10px", fontFamily: "'Montserrat', sans-serif", fontWeight: 800, fontSize: 12,
-                        textTransform: "uppercase", letterSpacing: 1, display: "flex", alignItems: "center", gap: 8,
-                        cursor: "pointer",
-                      }}
-                      title="Restaurar Música no Ar"
-                    >
-                      <Music size={14} /> Música no Ar <Maximize2 size={14} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMusicaMinimizada(false);
-                        setMusicaDismissed(true);
-                      }}
-                      style={{
-                        background: "rgba(255,255,255,0.22)", border: "none", borderRadius: 999,
-                        width: 22, height: 22, color: "#fff", cursor: "pointer",
-                        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                      }}
-                      title="Fechar"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                )}
+                <BackButton onClick={() => setCurrentPage("dashboard")} />
                 {currentPage === "musica" && (
                   <button
                     onClick={() => setCurrentPage("dashboard")}
@@ -1746,7 +1674,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div ref={contentScrollRef} className={`flex-1 h-full overflow-y-auto overflow-x-hidden rounded-2xl ${currentPage !== "dashboard" ? "mv-content-area" : ""}`} style={currentPage === "dashboard" ? {} : { padding: "1.25rem" }}>
             <Suspense fallback={<ModulePageSkeleton />}>
               {/* CustomizableDashboard stays mounted so audio player keeps streaming while user navigates */}
-              <div style={{ display: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "block" : "none", height: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "auto" : 0, overflow: (currentPage === "dashboard" || (currentPage === "musica" && musicaMinimizada)) ? "visible" : "hidden" }}>
+              <div style={{ display: currentPage === "dashboard" ? "block" : "none", height: currentPage === "dashboard" ? "auto" : 0, overflow: currentPage === "dashboard" ? "visible" : "hidden" }}>
                 {/* Both mounted so the player audio keeps streaming while user switches to Chatbot */}
                 <div style={{ display: displayedPill === "Chatbot" ? "block" : "none" }} className={displayedPill === "Chatbot" ? pillAnimClass : ""}>
                   <ChatbotHome />
@@ -1765,13 +1693,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: currentPage === "musica" && !musicaMinimizada ? "block" : "none" }}>
-                <MusicaNoAr effectiveUserId={effectiveUserId} onMinimize={() => {
-                  setMusicaMinimizada(true);
-                  setCurrentPage("dashboard");
-                }} />
+              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+                <MusicaNoAr effectiveUserId={effectiveUserId} />
               </div>
-
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
