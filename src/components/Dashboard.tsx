@@ -175,7 +175,7 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
-  { icon: Layers, label: "modulos", page: "modulos" },
+  { icon: Layers, label: "módulos", page: "modulos" },
   { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
 ];
 
@@ -291,7 +291,7 @@ const collectModuleKeys = (items: { label: string; page?: unknown; children?: an
 
 // Universe of keys that packages (pacotes) can control. Keys outside this set
 // are never blocked (avoids hiding menus that plans don't know about).
-const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes"]);
+const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes", "subusuarios", "pacotes"]);
 
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",

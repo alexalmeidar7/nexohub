@@ -22,6 +22,7 @@ const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
 
 interface Cliente {
+  id: string;
   user_id: string;
   nome: string | null;
   cnpj: string | null;
@@ -30,6 +31,7 @@ interface Cliente {
   cliente_desde: string | null;
   executiva_venda: string | null;
   ativo: boolean | null;
+  logo_url?: string | null;
 }
 
 interface Evento {
@@ -61,18 +63,42 @@ export default function ClientesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data: configData } = await supabase
-        .from("empresa_config")
-        .select("user_id, nome, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda, ativo")
+      // Usamos a tabela logos_patrocinadores como fonte para clientes,
+      // agrupando pelo nome para tratar cada marca como um cliente único.
+      const { data: logosData } = await supabase
+        .from("logos_patrocinadores")
+        .select("id, user_id, nome, logo_url, ativo, created_at")
+        .eq("excluido", false)
         .order("nome");
       
-      // Simulação ou busca de eventos contratados (como Blitz)
-      // Em um cenário real, teríamos uma tabela de eventos/contratos
       const { data: agendaData } = await supabase
-        .from("agenda_eventos" as any)
+        .from("blitz_promocionais")
         .select("*");
 
-      setClientes((configData as Cliente[]) || []);
+      // Deduplicar logos por nome para gerar a lista de clientes
+      const uniqueClients: Cliente[] = [];
+      const seenNames = new Set();
+
+      (logosData || []).forEach(item => {
+        const name = item.nome?.trim().toUpperCase();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueClients.push({
+            id: item.id,
+            user_id: item.user_id,
+            nome: item.nome,
+            logo_url: item.logo_url,
+            ativo: item.ativo,
+            cnpj: "00.000.000/0000-00", // Fallback pois não há coluna na DB
+            cliente_desde: item.created_at?.split('T')[0],
+            telefone_comercial: "(00) 0000-0000",
+            endereco: "Endereço não cadastrado",
+            executiva_venda: "Não atribuída"
+          });
+        }
+      });
+
+      setClientes(uniqueClients);
       setEventos((agendaData as any[]) || []);
     } catch (err) {
       console.error("Erro ao carregar clientes:", err);
@@ -93,24 +119,20 @@ export default function ClientesPage() {
 
     setCriando(true);
     try {
-      // Nota: empresa_config geralmente tem 1 linha por user_id. 
-      // Se estivermos cadastrando "clientes" como registros novos, 
-      // precisaríamos de uma tabela de clientes dedicada ou permissão para criar novos user_ids.
-      // Para o MVP solicitado, inserimos na empresa_config assumindo que ela aceita múltiplos registros.
-      
-      const { error } = await supabase.from("empresa_config").insert({
-        nome: novo.nome,
-        cnpj: novo.cnpj,
-        endereco: novo.endereco,
-        telefone_comercial: novo.telefone,
-        cliente_desde: novo.cliente_desde,
-        executiva_venda: novo.executiva_venda,
-        ativo: true
+      // Como não podemos criar uma tabela nova e empresa_config é 1:1,
+      // cadastramos o cliente como uma nova 'logo' sem programa associado,
+      // o que a torna visível na listagem de logos e aqui como cliente.
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        nome: novo.nome.trim().toUpperCase(),
+        user_id: user?.id,
+        ativo: true,
+        excluido: false,
+        data_final: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0] // Expiração padrão
       } as any);
 
       if (error) throw error;
 
-      toast.success("Cliente cadastrado com sucesso!");
+      toast.success("Cliente pré-cadastrado no sistema de logos!");
       setNovoOpen(false);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
@@ -125,13 +147,14 @@ export default function ClientesPage() {
     const q = busca.toLowerCase();
     return clientes.filter(c => 
       c.nome?.toLowerCase().includes(q) || 
-      c.cnpj?.includes(q)
+      (c.cnpj && c.cnpj.includes(q))
     );
   }, [clientes, busca]);
 
   const getEventosCliente = (clienteNome: string | null) => {
     if (!clienteNome) return 0;
-    return eventos.filter(e => (e as any).cliente_nome === clienteNome).length;
+    const q = clienteNome.trim().toUpperCase();
+    return eventos.filter(e => (e as any).cliente?.trim().toUpperCase() === q).length;
   };
 
   if (loading) {
@@ -266,9 +289,15 @@ export default function ClientesPage() {
               <TableRow key={cliente.user_id || idx} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-medium text-slate-800">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
-                      <Building2 size={16} />
-                    </div>
+                    {cliente.logo_url ? (
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200">
+                        <img src={cliente.logo_url} alt={cliente.nome || ""} className="w-full h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
+                        <Building2 size={16} />
+                      </div>
+                    )}
                     {cliente.nome}
                   </div>
                 </TableCell>
@@ -281,9 +310,9 @@ export default function ClientesPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-100 text-lime-700 text-[10px] font-bold uppercase">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-700 text-[10px] font-bold uppercase">
                     <Activity size={12} />
-                    {getEventosCliente(cliente.nome)} Eventos
+                    {getEventosCliente(cliente.nome)} Blitz/Eventos
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
