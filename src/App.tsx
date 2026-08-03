@@ -145,10 +145,23 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
 
   render() {
     if (this.state.hasError) {
+      const isPlayer = typeof window !== "undefined" && window.location.pathname.includes("/player");
+
+      if (isPlayer && this.state.retryCount < 3) {
+        return (
+          <div
+            className="h-screen w-screen flex items-center justify-center"
+            style={{ backgroundColor: "#000" }}
+          >
+            <LoadingSpinner size={32} />
+          </div>
+        );
+      }
+
       return (
         <div
           className="h-screen w-screen flex flex-col items-center justify-center gap-4"
-          style={{ backgroundColor: "#131519", color: "#fff" }}
+          style={{ backgroundColor: isPlayer ? "#000" : "#131519", color: "#fff" }}
         >
           {this.state.retryCount < 3 ? (
             <>
@@ -158,6 +171,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
               </p>
             </>
           ) : (
+
             <>
               <p className="text-lg font-semibold">Erro ao carregar a página</p>
               <div className="flex gap-3">
