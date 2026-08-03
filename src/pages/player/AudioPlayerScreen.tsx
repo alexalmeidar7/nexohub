@@ -18,6 +18,7 @@ import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import DjModeLayer from "@/components/player/DjModeLayer";
 import { toast } from "sonner";
+import { playerSignOut } from "@/lib/playerSignOut";
 
 const PlayerChat = lazy(() => import("@/components/PlayerChat"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
@@ -1511,9 +1512,8 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
                     onSwitchProfile={onSwitchProfile}
                     onAvatarChange={onAvatarChange}
                     onLogout={async () => {
-                      await signOut();
                       const dest = userSlug && !String(userSlug).startsWith(":") ? `/${userSlug}/player` : "/player";
-                      window.location.href = dest;
+                      await playerSignOut(signOut, dest);
                     }}
 
                   />

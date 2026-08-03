@@ -18,6 +18,7 @@ import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPla
 import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
+import { playerSignOut } from "@/lib/playerSignOut";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
 const PlayerGradeDialog = lazy(() => import("@/components/player/PlayerGradeDialog"));
 const CatalogDetailInline = lazy(() => import("@/components/player/CatalogDetailInline"));
@@ -2077,9 +2078,8 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   }, [visibleSection, scrollToSection]);
 
   const handleSignOut = async () => {
-    await signOut();
     const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
-    navigate(dest);
+    await playerSignOut(signOut, dest);
   };
 
 
