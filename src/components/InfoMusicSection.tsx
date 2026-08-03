@@ -25,8 +25,7 @@ export default function InfoMusicSection() {
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
-  const [excecoes, setExcecoes] = useState("");
-  const [excecoesInitial, setExcecoesInitial] = useState("");
+  const [excecoes, setExcecoes] = useState<any[]>([]);
   const [savingExcecoes, setSavingExcecoes] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
@@ -44,17 +43,26 @@ export default function InfoMusicSection() {
   const [showAiToggle, setShowAiToggle] = useState(false);
 
   const [newExcecao, setNewExcecao] = useState("");
+  const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
+  const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
 
   const loadExcecoes = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from("user_settings")
-      .select("infomusic_excecoes, infomusic_ai_enabled, infomusic_ai_monthly_count, last_manual_curiosity_id, dashboard_items")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const v = (data?.infomusic_excecoes || "") as string;
-    setExcecoes(v);
-    setExcecoesInitial(v);
+    const [settingsRes, exceptionsRes] = await Promise.all([
+      supabase
+        .from("user_settings")
+        .select("infomusic_ai_enabled, infomusic_ai_monthly_count, last_manual_curiosity_id, dashboard_items")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("infomusic_excecoes")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+    ]);
+
+    const data = settingsRes.data;
+    setExcecoes(exceptionsRes.data || []);
     setAiEnabled((data as { infomusic_ai_enabled?: boolean })?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
     setLastManualId(data?.last_manual_curiosity_id || null);
@@ -143,69 +151,51 @@ export default function InfoMusicSection() {
     }
   };
 
-  const saveExcecoesValue = async (val: string) => {
-    if (!user) return;
+  const addExcecao = async () => {
+    const v = newExcecao.trim();
+    if (!v) return;
+    if (excecoes.some((x) => x.termo.toLowerCase() === v.toLowerCase())) {
+      toast.error("Termo já cadastrado");
+      return;
+    }
+    
     setSavingExcecoes(true);
     try {
       const { error } = await supabase
-        .from("user_settings")
-        .upsert({ user_id: user.id, infomusic_excecoes: val }, { onConflict: "user_id" });
+        .from("infomusic_excecoes")
+        .insert({
+          user_id: user?.id,
+          termo: v,
+          capa_url: newExcecaoCapa.trim() || null,
+          background_url: newExcecaoFundo.trim() || null
+        });
+      
       if (error) throw error;
-      setExcecoes(val);
-      setExcecoesInitial(val);
-      // Ensure any track matching the current exception list is removed from "Tocadas"
-      const parsed = val.split(",").map((s) => s.trim()).filter(Boolean);
-      await purgeExceptionsFromTocadas(parsed);
+      
+      setNewExcecao("");
+      setNewExcecaoCapa("");
+      setNewExcecaoFundo("");
+      await loadExcecoes();
+      toast.success("Exceção adicionada");
     } catch (e) {
-      toast.error("Erro ao salvar exceções");
+      toast.error("Erro ao adicionar exceção");
     }
     setSavingExcecoes(false);
   };
 
-  const saveExcecoes = async () => {
-    await saveExcecoesValue(excecoes);
-    toast.success("Exceções salvas");
-  };
-
-  const excecaoList = useMemo(
-    () => excecoes.split(",").map((s) => s.trim()).filter(Boolean),
-    [excecoes]
-  );
-
-  const addExcecao = async () => {
-    const v = newExcecao.trim();
-    if (!v) return;
-    if (excecaoList.some((x) => x.toLowerCase() === v.toLowerCase())) {
-      toast.error("Palavra já cadastrada");
-      return;
+  const removeExcecao = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("infomusic_excecoes")
+        .delete()
+        .eq("id", id);
+      
+      if (error) throw error;
+      await loadExcecoes();
+      toast.success("Exceção removida");
+    } catch (e) {
+      toast.error("Erro ao remover exceção");
     }
-    // Novo item vai para o TOPO da lista
-    const next = [v, ...excecaoList].join(", ");
-    setNewExcecao("");
-    await saveExcecoesValue(next);
-    toast.success("Exceção adicionada", {
-      action: {
-        label: "Desfazer",
-        onClick: async () => {
-          const rollback = excecaoList.join(", ");
-          await saveExcecoesValue(rollback);
-        },
-      },
-    });
-  };
-
-  const removeExcecao = async (word: string) => {
-    const prev = excecaoList.slice();
-    const next = excecaoList.filter((x) => x !== word).join(", ");
-    await saveExcecoesValue(next);
-    toast.success(`"${word}" removida`, {
-      action: {
-        label: "Desfazer",
-        onClick: async () => {
-          await saveExcecoesValue(prev.join(", "));
-        },
-      },
-    });
   };
 
 
@@ -393,7 +383,7 @@ export default function InfoMusicSection() {
 
 
   const filteredMissing = useMemo(() => {
-    const excLower = excecaoList.map(w => w.trim().toLowerCase()).filter(Boolean);
+    const excLower = excecoes.map(ex => ex.termo.trim().toLowerCase());
     const notExcepted = missingRows.filter(m => {
       const a = (m.artista || "").toLowerCase();
       const mu = (m.musica || "").toLowerCase();
@@ -404,7 +394,7 @@ export default function InfoMusicSection() {
     return notExcepted.filter(m =>
       m.artista.toLowerCase().includes(q) || m.musica.toLowerCase().includes(q)
     );
-  }, [missingRows, search, excecaoList]);
+  }, [missingRows, search, excecoes]);
 
   const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const Highlight = ({ text, term }: { text: string; term: string }) => {
@@ -1537,31 +1527,22 @@ export default function InfoMusicSection() {
                        </td>
                        <td className="px-3 py-2 align-top text-center">
                          {(() => {
-                           const isEx = excecaoList.some(w => w.toLowerCase() === r.artista.trim().toLowerCase());
+                           const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
                            const handleToggle = async () => {
                              const nameRaw = r.artista.trim();
                              if (!nameRaw) return;
-                             const prevList = excecaoList.slice();
-                             if (isEx) {
-                               const next = excecaoList.filter(x => x.toLowerCase() !== nameRaw.toLowerCase()).join(", ");
-                               await saveExcecoesValue(next);
-                               toast.success(`"${nameRaw}" removido das exceções`, {
-                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
-                               });
+                             if (ex) {
+                               await removeExcecao(ex.id);
                              } else {
-                               const next = [nameRaw, ...excecaoList].join(", ");
-                               await saveExcecoesValue(next);
-                               toast.success(`"${nameRaw}" adicionado às exceções`, {
-                                 action: { label: "Desfazer", onClick: async () => { await saveExcecoesValue(prevList.join(", ")); } },
-                               });
+                               setNewExcecao(nameRaw);
                              }
                            };
                            return (
                              <div
                                className="inline-flex items-center justify-center"
-                               title={isEx ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções (oculta desta tabela)"}
+                               title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
                              >
-                               <Switch checked={isEx} onCheckedChange={handleToggle} />
+                               <Switch checked={!!ex} onCheckedChange={handleToggle} />
                              </div>
                            );
                          })()}
