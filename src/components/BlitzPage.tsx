@@ -124,6 +124,20 @@ export default function BlitzPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [nowTick, setNowTick] = useState(0);
 
+  // Estados para busca de clientes e popup de cadastro
+  const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
+  const [sugestoesClientes, setSugestoesClientes] = useState<{ id: string; nome: string }[]>([]);
+  const [showSugestoes, setShowSugestoes] = useState(false);
+  const [cadastroOpen, setCadastroOpen] = useState(false);
+  const [novoClienteData, setNovoClienteData] = useState({
+    nome: "",
+    cnpj: "",
+    endereco: "",
+    telefone: "",
+    executiva_venda: ""
+  });
+  const [cadastrandoCliente, setCadastrandoCliente] = useState(false);
+
   useEffect(() => {
     const iv = setInterval(() => setNowTick(t => t + 1), 1000);
     return () => clearInterval(iv);
