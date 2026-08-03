@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, Minus } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -290,7 +290,7 @@ const collectModuleKeys = (items: { label: string; page?: unknown; children?: an
 
 // Universe of keys that packages (pacotes) can control. Keys outside this set
 // are never blocked (avoids hiding menus that plans don't know about).
-const KNOWN_MODULE_KEYS = new Set(collectModuleKeys(adminModulosGroups as any));
+const KNOWN_MODULE_KEYS = new Set([...collectModuleKeys(adminModulosGroups as any), "clientes"]);
 
 const pageTitle: Record<Page, string> = {
   dashboard: "Home",
@@ -338,14 +338,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
-  const [musicaNoArMinimized, setMusicaNoArMinimized] = useState(false);
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
-        // Se navegou para qualquer coisa que não seja 'musica', garantimos que não está minimizado
-        if (resolved !== "musica") setMusicaNoArMinimized(false);
       }
       return resolved;
     });
@@ -1643,22 +1640,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
               <div className="flex items-center gap-2">
-                <BackButton onClick={() => {
-                  if (currentPage === "musica") {
-                    setMusicaNoArMinimized(false);
-                  }
-                  setCurrentPage("dashboard");
-                }} />
+                <BackButton onClick={() => setCurrentPage("dashboard")} />
                 {currentPage === "musica" && (
                   <button
-                    onClick={() => {
-                      setMusicaNoArMinimized(true);
-                      setCurrentPage("dashboard");
-                    }}
+                    onClick={() => setCurrentPage("dashboard")}
                     className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
                     title="Minimizar"
                   >
-                    <Minus size={20} />
+                    <div className="w-5 h-1 bg-white rounded-full" />
                   </button>
                 )}
               </div>
@@ -1692,23 +1681,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: (currentPage === "musica" || musicaNoArMinimized) ? "block" : "none" }}>
-                <MusicaNoAr 
-                  effectiveUserId={effectiveUserId} 
-                  minimized={musicaNoArMinimized}
-                  onMinimize={() => {
-                    setMusicaNoArMinimized(true);
-                    setCurrentPage("dashboard");
-                  }}
-                  onRestore={() => {
-                    setMusicaNoArMinimized(false);
-                    setCurrentPage("musica");
-                  }}
-                  onClose={() => {
-                    setMusicaNoArMinimized(false);
-                    setCurrentPage("dashboard");
-                  }}
-                />
+              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+                <MusicaNoAr effectiveUserId={effectiveUserId} />
               </div>
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
