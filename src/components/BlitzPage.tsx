@@ -128,6 +128,7 @@ export default function BlitzPage() {
   const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
   const [sugestoesClientes, setSugestoesClientes] = useState<{ id: string; nome: string }[]>([]);
   const [showSugestoes, setShowSugestoes] = useState(false);
+  const [activeSugestaoIndex, setActiveSugestaoIndex] = useState(-1);
   const [cadastroOpen, setCadastroOpen] = useState(false);
   const [confirmCadastroOpen, setConfirmCadastroOpen] = useState(false);
   const [novoClienteNome, setNovoClienteNome] = useState("");
