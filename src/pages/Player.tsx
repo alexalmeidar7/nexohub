@@ -1020,24 +1020,23 @@ export default function PlayerPage() {
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
       try {
-        // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
-        const [channelsRes, prerollRes] = await Promise.all([
+        // STAGE 1 — Critical: all data in a single parallel burst for faster hydration
+        const [channelsRes, prerollRes, programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           !prerollDone
             ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
+          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
+
         if (cancelled) return;
 
+        // Hydrate all critical states at once
         let canaisData = channelsRes.data as Canal[] | null;
-        let channelsError = channelsRes.error;
-
-        // No fallback to all channels — only show channels belonging to the authenticated user
-
-        if (!channelsError && canaisData) {
+        if (canaisData) {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
-        } else {
-          setCanais([]);
         }
 
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
@@ -1046,7 +1045,7 @@ export default function PlayerPage() {
             const selected = matching[Math.floor(Math.random() * matching.length)];
             setPrerollUrl(selected.video_url);
             setPrerollLinkUrl((selected as any).link_url || null);
-            setPrerollMediaType((selected as any).media_type || "video");
+            setPrerollMediaType(selected.media_type || "video");
             setPrerollYoutubeUrl((selected as any).youtube_url || null);
             setPrerollBackgroundUrl((selected as any).background_url || null);
             setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
@@ -1058,17 +1057,6 @@ export default function PlayerPage() {
           setPrerollDone(true);
         }
 
-        // UI is now visible — release loading gate
-        setLoading(false);
-
-        // STAGE 2 — Secondary: programas + apresentadores + empresa
-        const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
-          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
-        ]);
-        if (cancelled) return;
-
         const fetchedProgramas = (!programasRes.error && programasRes.data) ? programasRes.data as Programa[] : [];
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
@@ -1076,7 +1064,10 @@ export default function PlayerPage() {
         if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
         if (!empresaRes.error && empresaRes.data?.nome) setEmpresaNome(empresaRes.data.nome);
 
-        // STAGE 3 — Deferred: shop products
+        // UI is now visible — release loading gate
+        setLoading(false);
+
+        // STAGE 2 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
         let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0);
         if (currentProg) {
