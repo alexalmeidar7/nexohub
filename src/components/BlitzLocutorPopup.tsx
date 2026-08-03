@@ -96,7 +96,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
           display: "flex", alignItems: "center", gap: 6,
           background: CYAN, borderRadius: 999, padding: "4px 6px 4px 4px",
           boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: FONT,
-          paddingLeft: "1px",
+          paddingLeft: "var(--onair-left-offset, 0px)",
         }}
       >
         <button
