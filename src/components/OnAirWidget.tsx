@@ -99,8 +99,15 @@ export default function OnAirWidget() {
       const r = target.getBoundingClientRect();
       const bottom = Math.max(0, Math.round(r.bottom));
       const left = Math.max(0, Math.round(r.left));
+      
+      // Calculate specific offset to match the red line in the user's image (left-most edge of the inner content/photo)
+      // Usually the sidebar is 64px, and there's a margin.
+      // The user wants it aligned exactly with the "Widgets" and player widget inner line.
+      const leftOffset = window.innerWidth < 640 ? "0px" : "12px"; 
+
       document.documentElement.style.setProperty("--onair-bottom", `${bottom}px`);
       document.documentElement.style.setProperty("--onair-left", `${left}px`);
+      document.documentElement.style.setProperty("--onair-left-offset", leftOffset);
     };
     update();
     const ro = new ResizeObserver(update);
