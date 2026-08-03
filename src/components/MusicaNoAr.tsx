@@ -163,6 +163,7 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
         <div className="p-5 border-b border-slate-100">
           <InfoMusicSourceSelector />
         </div>
+
         <Suspense fallback={<div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin text-cyan-500" /></div>}>
           <InfoMusicSection />
         </Suspense>

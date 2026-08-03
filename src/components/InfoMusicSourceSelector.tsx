@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useAuth } from "@/hooks/useAuth";
-import { Radio, Database, Music, Server, Check } from "lucide-react";
+import { Radio, Database, Music, Server, Check, Link2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import XmlSection from "./XmlSection";
+import XmlLinkRow from "./XmlLinkRow";
 
 export default function InfoMusicSourceSelector() {
   const { user } = useAuth();
@@ -87,6 +89,26 @@ export default function InfoMusicSourceSelector() {
             </button>
           );
         })}
+      </div>
+
+      {/* Fontes XML restauradas conforme solicitado */}
+      <div className="pt-4 mt-4 border-t border-slate-100">
+        <XmlSection title="Conexão com Estúdio" count={2}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <XmlLinkRow 
+              label="Sync Link (XML)" 
+              kicker="LINK EXTERNO"
+              scopeKey="infomusic-link"
+              xmlContent={undefined}
+            />
+            <XmlLinkRow 
+              label="Upload de Arquivo" 
+              kicker="AUTO UPLOAD"
+              scopeKey="infomusic-upload"
+              xmlContent={undefined}
+            />
+          </div>
+        </XmlSection>
       </div>
     </div>
   );
