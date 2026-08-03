@@ -1575,18 +1575,31 @@ export default function WelcomeScreen({
             <DialogTitle className="text-white">Escolha seu avatar</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-3 gap-3 py-2">
-            {AVATARS.map(av => (
-              <button
-                key={av}
-                onClick={() => { setProfile(p => ({ ...p, avatar_url: av })); setAvatarPickerOpen(false); }}
-                className={`w-20 h-20 rounded-2xl overflow-hidden border-2 transition-colors mx-auto ${
-                  profile.avatar_url === av ? "border-white" : "border-transparent hover:border-white/40"
-                }`}
-              >
-                <img src={av} alt="Avatar" className="w-full h-full object-cover" />
-              </button>
-            ))}
+            {(() => {
+              const gIdentity = (user as any)?.identities?.find?.((i: any) => i.provider === "google");
+              const gData: any = gIdentity?.identity_data || {};
+              const meta: any = (user as any)?.user_metadata || {};
+              const googlePhoto: string | null =
+                gData.avatar_url || gData.picture || meta.avatar_url || meta.picture || null;
+              const options = googlePhoto ? [googlePhoto, ...AVATARS] : AVATARS;
+              return options.map((av, i) => (
+                <button
+                  key={`${av}-${i}`}
+                  onClick={() => { setProfile(p => ({ ...p, avatar_url: av })); setAvatarPickerOpen(false); }}
+                  className={`relative w-20 h-20 rounded-2xl overflow-hidden border-2 transition-colors mx-auto ${
+                    profile.avatar_url === av ? "border-white" : "border-transparent hover:border-white/40"
+                  }`}
+                  title={googlePhoto && i === 0 ? "foto da conta google" : "avatar"}
+                >
+                  <img src={av} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  {googlePhoto && i === 0 && (
+                    <span className="absolute bottom-0 inset-x-0 text-[9px] py-0.5 bg-black/60 lowercase">google</span>
+                  )}
+                </button>
+              ));
+            })()}
           </div>
+
         </DialogContent>
       </Dialog>
 
