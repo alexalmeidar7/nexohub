@@ -2056,9 +2056,10 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
           const bufferLeft = 100 - bufferPct;
           const playheadPct = Math.max(0, Math.min(100, (1 - currentOffset / TIMESHIFT_WINDOW) * 100));
           const isLive = currentOffset < 2;
-          const offsetLabel = isLive
+          const _offsetLabel = isLive
             ? "AO VIVO"
             : `-${Math.floor(currentOffset / 60)}:${String(Math.round(currentOffset % 60)).padStart(2, "0")}`;
+          void _offsetLabel;
           return (
             <div className="w-full">
               {/* Header: hint + return-to-live (só quando afastado do vivo) */}
