@@ -261,7 +261,6 @@ export default function BlitzPage() {
     const cleanNome = novoClienteData.nome.trim().toUpperCase();
     const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
 
-    // Verificação de duplicados local antes de tentar inserir
     const alreadyExists = clientesDisponiveis.some(c => 
       c.nome.toUpperCase() === cleanNome
     );
@@ -274,7 +273,6 @@ export default function BlitzPage() {
 
     setCadastrandoCliente(true);
     try {
-      // Verificar CNPJ no banco antes de inserir
       const { data: cnpjExists } = await supabase
         .from("logos_patrocinadores")
         .select("id")
@@ -288,15 +286,19 @@ export default function BlitzPage() {
         return;
       }
 
-      const { error } = await supabase.from("logos_patrocinadores").insert({
+      const payload: any = {
         nome: cleanNome,
         cnpj: cleanCnpj,
         user_id: user?.id,
         ativo: true,
         excluido: false,
-        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
-      } as any);
+        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0]
+      };
+
+      const { error } = await supabase.from("logos_patrocinadores").insert(payload);
+      
       if (error) throw error;
+      
       toast({ title: "Cliente cadastrado com sucesso!" });
       setCadastroOpen(false);
       await loadClientes();
