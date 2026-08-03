@@ -1841,7 +1841,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   });
   const [showVideo, setShowVideo] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
-  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string; excecao?: any } | null>(null);
 
   // Persist volume/mute per user
   useEffect(() => {
@@ -1932,7 +1932,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         if (titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa) return prev;
-            return { titulo, artista, capa };
+            return { titulo, artista, capa, excecao: di.music_current_excecao || null };
           });
         }
       } catch {}
@@ -1944,7 +1944,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         if (d && d.titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
-            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
+            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "", excecao: d.excecao || null };
           });
           return;
         }

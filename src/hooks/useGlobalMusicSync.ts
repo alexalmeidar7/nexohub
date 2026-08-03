@@ -169,6 +169,7 @@ export function useGlobalMusicSync(enabled: boolean = true) {
           artista: "",
           duracao: 0,
           capa: matchedExcecao.capa_url || photo || "",
+          excecao: matchedExcecao, // Store exception details for other widgets
         };
 
         writeMusicData(user.id, masked);
