@@ -320,7 +320,7 @@ export default function ClientesPage() {
           </TableHeader>
           <TableBody>
             {filtrados.map((cliente, idx) => (
-              <TableRow key={cliente.user_id || idx} className="hover:bg-slate-50/50 transition-colors">
+              <TableRow key={cliente.id || idx} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-medium text-slate-800">
                   <div className="flex items-center gap-3">
                     {cliente.logo_url ? (
