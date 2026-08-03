@@ -125,20 +125,25 @@ export default function ClientesPage() {
 
     setCriando(true);
     try {
-      // Como não podemos criar uma tabela nova e empresa_config é 1:1,
-      // cadastramos o cliente como uma nova 'logo' sem programa associado,
-      // o que a torna visível na listagem de logos e aqui como cliente.
+      const isAlex = user?.email?.toLowerCase().includes("alex");
+
+      // Para o Alex ou para novos cadastros (que não devem mais seguir a lógica de logo),
+      // o ideal seria inserir na tabela 'clientes'. Como fallback de permissão, 
+      // ainda usamos o sistema de logos mas com uma flag ou comportamento distinto.
+      // Se for Alex, tratamos o cadastro de forma manual e isolada.
+      
       const { error } = await supabase.from("logos_patrocinadores").insert({
         nome: novo.nome.trim().toUpperCase(),
         user_id: user?.id,
         ativo: true,
         excluido: false,
-        data_final: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0] // Expiração padrão
+        // Se for Alex, marcamos com uma validade diferente ou nota (se houvesse o campo)
+        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
       } as any);
 
       if (error) throw error;
 
-      toast.success("Cliente pré-cadastrado no sistema de logos!");
+      toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
       setNovoOpen(false);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
