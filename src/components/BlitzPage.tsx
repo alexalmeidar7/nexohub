@@ -724,6 +724,94 @@ export default function BlitzPage() {
           </div>
         )}
       </div>
+      {/* Popup de Cadastro de Cliente */}
+      {cadastroOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            style={{ fontFamily: FONT }}
+          >
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500 flex items-center justify-center">
+                  <Building2 size={20} color="#fff" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800">Novo Cliente</h3>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Cadastrar para Blitz</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCadastroOpen(false)}
+                className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-400"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1 md:col-span-2">
+                  <label style={labelStyle}>Razão Social</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    value={novoClienteData.nome}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, nome: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label style={labelStyle}>CNPJ</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="00.000.000/0000-00"
+                    value={novoClienteData.cnpj}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label style={labelStyle}>Telefone</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="(00) 0000-0000"
+                    value={novoClienteData.telefone}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, telefone: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1 md:col-span-2">
+                  <label style={labelStyle}>Endereço</label>
+                  <input 
+                    type="text" 
+                    style={pillInput} 
+                    placeholder="Rua, Número, Bairro, Cidade"
+                    value={novoClienteData.endereco}
+                    onChange={e => setNovoClienteData(prev => ({ ...prev, endereco: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  style={{ ...ghostBtn, flex: 1, border: "none", background: "#f1f5f9" }}
+                  onClick={() => setCadastroOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  style={{ ...limeBtn, flex: 1 }}
+                  onClick={saveNovoCliente}
+                  disabled={cadastrandoCliente}
+                >
+                  {cadastrandoCliente ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  Cadastrar Cliente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
