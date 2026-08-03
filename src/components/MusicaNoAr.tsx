@@ -44,7 +44,14 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
     if (!dataUserId) return;
     const poll = async () => {
       const d = await getMusicData(dataUserId);
-      if (d) setMusic({ titulo: d.titulo, artista: d.artista, duracao: d.duracao || 0, capa: d.capa || "" });
+      if (d && d.music) {
+        setMusic({ 
+          titulo: d.music.titulo, 
+          artista: d.music.artista, 
+          duracao: d.music.duracao || 0, 
+          capa: d.music.capa || "" 
+        });
+      }
     };
     poll();
     const iv = setInterval(poll, 3000);
@@ -112,7 +119,6 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
         </div>
       </div>
       
-      {/* ... rest of MusicaNoAr content ... */}
       <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
         <p className="text-slate-500">Conteúdo do módulo Música no Ar...</p>
       </div>
