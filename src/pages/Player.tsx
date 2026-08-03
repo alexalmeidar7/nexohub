@@ -1663,8 +1663,14 @@ export default function PlayerPage() {
       const handlePlayStarted = () => {
         if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
-        setPlaying(true);
-        setBuffering(false);
+        
+        // Safety timeout to ensure loading screen stays for at least 3s total from start
+        setTimeout(() => {
+          if (playbackSessionRef.current !== sessionId) return;
+          setStreamLoading(false);
+          setPlaying(true);
+          setBuffering(false);
+        }, 1500); // Buffer a bit more time for media to stabilize
       };
 
       const handlePlayBlocked = (label: string, error: unknown) => {
