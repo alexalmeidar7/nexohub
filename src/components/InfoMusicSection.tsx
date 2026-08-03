@@ -45,6 +45,7 @@ export default function InfoMusicSection() {
   const [newExcecao, setNewExcecao] = useState("");
   const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
   const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<{ active: boolean; stage: string; percent: number }>({ active: false, stage: "", percent: 0 });
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -160,31 +161,37 @@ export default function InfoMusicSection() {
     }
     
     setSavingExcecoes(true);
+    setUploadProgress({ active: true, stage: "Iniciando...", percent: 10 });
+    
     try {
       let capaFinal = newExcecaoCapa.trim();
       let fundoFinal = newExcecaoFundo.trim();
-
-      // Process base64 uploads if present
       const timestamp = Date.now();
+      const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+
       if (capaFinal.startsWith("data:") && user?.id) {
-        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        setUploadProgress({ active: true, stage: "Processando Capa...", percent: 30 });
         capaFinal = await uploadImageToStorage(
           capaFinal, 
           "empresa-assets", 
           `${user.id}/excecoes/${timestamp}_capa.webp`,
           1080
         );
+        setUploadProgress({ active: true, stage: "Capa concluída", percent: 50 });
       }
+
       if (fundoFinal.startsWith("data:") && user?.id) {
-        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        setUploadProgress({ active: true, stage: "Processando Fundo...", percent: 60 });
         fundoFinal = await uploadImageToStorage(
           fundoFinal, 
           "empresa-assets", 
           `${user.id}/excecoes/${timestamp}_fundo.webp`,
           1920
         );
+        setUploadProgress({ active: true, stage: "Fundo concluído", percent: 80 });
       }
 
+      setUploadProgress({ active: true, stage: "Salvando dados...", percent: 90 });
       const { error } = await supabase
         .from("infomusic_excecoes")
         .insert({
@@ -200,8 +207,11 @@ export default function InfoMusicSection() {
       setNewExcecaoCapa("");
       setNewExcecaoFundo("");
       await loadExcecoes();
+      setUploadProgress({ active: true, stage: "Sucesso!", percent: 100 });
+      setTimeout(() => setUploadProgress({ active: false, stage: "", percent: 0 }), 1000);
       toast.success("Exceção adicionada");
     } catch (e) {
+      setUploadProgress({ active: false, stage: "", percent: 0 });
       toast.error("Erro ao adicionar exceção");
     }
     setSavingExcecoes(false);
@@ -680,13 +690,42 @@ export default function InfoMusicSection() {
 
   return (
     <div
-      className="space-y-5 rounded-2xl p-5"
+      className="relative space-y-5 rounded-2xl p-5"
       style={{
         backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
         border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
         boxShadow: "0 8px 28px -14px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent)",
       }}
     >
+      {/* Upload Progress Overlay */}
+      {uploadProgress.active && (
+        <div 
+          className="absolute inset-0 z-[200] flex flex-col items-center justify-center rounded-2xl backdrop-blur-md"
+          style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 85%, transparent)" }}
+        >
+          <div className="w-full max-w-[280px] space-y-4 px-6">
+            <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <span className="flex items-center gap-2">
+                <Loader2 size={12} className="animate-spin text-cyan-500" />
+                {uploadProgress.stage}
+              </span>
+              <span className="tabular-nums">{uploadProgress.percent}%</span>
+            </div>
+            
+            <div className="h-1.5 w-full rounded-full bg-black/5 overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 transition-all duration-300 ease-out shadow-[0_0_8px_rgba(34,211,238,0.4)]"
+                style={{ width: `${uploadProgress.percent}%` }}
+              />
+            </div>
+            
+            <p className="text-[10px] text-center opacity-60 font-medium" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              Otimizando e salvando suas imagens de alta resolução...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Header row: status crédito IA + botão "?" ── */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         <button
