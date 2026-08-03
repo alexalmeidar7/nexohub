@@ -39,6 +39,9 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
   const { user } = useAuth();
   const dataUserId = effectiveUserId || user?.id || null;
   const [music, setMusic] = useState<MusicData | null>(null);
+  const [position, setPosition] = useState({ x: 18, y: 80 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; startPosX: number; startPosY: number } | null>(null);
 
   useEffect(() => {
     if (!dataUserId) return;
@@ -58,19 +61,65 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
     return () => clearInterval(iv);
   }, [dataUserId]);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!minimized) return;
+    setIsDragging(true);
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startPosX: position.x,
+      startPosY: position.y,
+    };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !dragRef.current) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const dy = e.clientY - dragRef.current.startY;
+      setPosition({
+        x: dragRef.current.startPosX + dx,
+        y: dragRef.current.startPosY + dy,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      dragRef.current = null;
+    };
+
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging]);
+
   if (minimized) {
     return (
       <div
+        onMouseDown={handleMouseDown}
         style={{
-          position: "fixed", left: 18, bottom: 80, zIndex: 60,
+          position: "fixed", 
+          left: position.x, 
+          bottom: position.y, 
+          zIndex: 60,
           display: "flex", alignItems: "center", gap: 6,
           background: DARK, borderRadius: 999, padding: "4px 6px 4px 4px",
           boxShadow: "0 12px 30px rgba(10,37,64,0.45)", fontFamily: FONT,
           border: `2px solid ${CYAN}`,
+          cursor: isDragging ? "grabbing" : "grab",
+          userSelect: "none",
+          transition: isDragging ? "none" : "all 0.2s ease-out",
         }}
       >
         <button
-          onClick={onRestore}
+          onClick={(e) => { e.stopPropagation(); onRestore(); }}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{
             background: "transparent", color: "#fff", border: "none", borderRadius: 999,
             padding: "6px 10px", fontFamily: FONT, fontWeight: 800, fontSize: 12,
@@ -81,7 +130,8 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
           <Music size={14} color={CYAN} /> {music?.titulo || "Música no Ar"} <Maximize2 size={14} />
         </button>
         <button
-          onClick={onClose}
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          onMouseDown={(e) => e.stopPropagation()}
           style={{
             background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 999,
             width: 22, height: 22, color: "#fff", cursor: "pointer",
