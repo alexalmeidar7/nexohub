@@ -279,11 +279,17 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     let cancelled = false;
     let intervalId: number | undefined;
 
-    const fetchWeather = async (lat: number, lon: number) => {
+    const fetchWeather = async (lat?: number | null, lon?: number | null) => {
       setWeatherLoading(true);
       try {
         const { data } = await supabase.functions.invoke("fetch-weather", {
-          body: { action: "forecast", lat, lon, forecast_days: 1 },
+          body: {
+            action: "forecast",
+            lat: lat ?? null,
+            lon: lon ?? null,
+            user_id: radioUserId,
+            forecast_days: 1,
+          },
         });
         const c = (data as any)?.data?.current;
         if (!cancelled && c && typeof c.temperature_2m === "number") {
@@ -295,20 +301,23 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     };
 
     (async () => {
+      let lat: number | null = null;
+      let lon: number | null = null;
       try {
         const { data: settings } = await supabase
           .from("user_settings")
           .select("weather_lat, weather_lon")
           .eq("user_id", radioUserId)
           .maybeSingle();
-        const lat = (settings as any)?.weather_lat;
-        const lon = (settings as any)?.weather_lon;
-        if (typeof lat === "number" && typeof lon === "number") {
-          fetchWeather(lat, lon);
-          intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
-        }
+        if (typeof (settings as any)?.weather_lat === "number") lat = (settings as any).weather_lat;
+        if (typeof (settings as any)?.weather_lon === "number") lon = (settings as any).weather_lon;
       } catch {}
+      // Mesmo sem coordenadas locais (ouvinte sem permissão de leitura),
+      // a edge function resolve as coordenadas da rádio pelo user_id.
+      fetchWeather(lat, lon);
+      intervalId = window.setInterval(() => fetchWeather(lat, lon), 5 * 60 * 1000);
     })();
+
 
     return () => {
       cancelled = true;
