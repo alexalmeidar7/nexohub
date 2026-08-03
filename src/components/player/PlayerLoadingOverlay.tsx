@@ -48,12 +48,8 @@ export default function PlayerLoadingOverlay({
         shouldFadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      <div className="flex flex-col items-center gap-4">
-        <ElegantLoader />
-        <p className="text-white/40 text-xs font-medium tracking-[0.2em] uppercase animate-pulse">
-          Carregando experiência...
-        </p>
-      </div>
+      <ElegantLoader size={44} />
+
     </div>
   );
 }
