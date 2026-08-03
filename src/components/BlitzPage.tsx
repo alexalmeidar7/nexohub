@@ -837,20 +837,36 @@ export default function BlitzPage() {
                   <label style={labelStyle}>Razão Social</label>
                   <input 
                     type="text" 
-                    style={pillInput} 
+                    style={{ ...pillInput, borderColor: cadastroErrors.nome ? "#ef4444" : undefined }} 
                     value={novoClienteData.nome}
-                    onChange={e => setNovoClienteData(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={e => {
+                      setNovoClienteData(prev => ({ ...prev, nome: e.target.value }));
+                      if (cadastroErrors.nome) setCadastroErrors(prev => {
+                        const next = { ...prev };
+                        delete next.nome;
+                        return next;
+                      });
+                    }}
                   />
+                  {cadastroErrors.nome && <p className="text-[10px] text-red-500 font-medium pl-2">{cadastroErrors.nome}</p>}
                 </div>
                 <div className="space-y-1">
                   <label style={labelStyle}>CNPJ</label>
                   <input 
                     type="text" 
-                    style={pillInput} 
+                    style={{ ...pillInput, borderColor: cadastroErrors.cnpj ? "#ef4444" : undefined }} 
                     placeholder="00.000.000/0000-00"
                     value={novoClienteData.cnpj}
-                    onChange={e => setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }))}
+                    onChange={e => {
+                      setNovoClienteData(prev => ({ ...prev, cnpj: e.target.value }));
+                      if (cadastroErrors.cnpj) setCadastroErrors(prev => {
+                        const next = { ...prev };
+                        delete next.cnpj;
+                        return next;
+                      });
+                    }}
                   />
+                  {cadastroErrors.cnpj && <p className="text-[10px] text-red-500 font-medium pl-2">{cadastroErrors.cnpj}</p>}
                 </div>
                 <div className="space-y-1">
                   <label style={labelStyle}>Telefone</label>
@@ -877,7 +893,10 @@ export default function BlitzPage() {
               <div className="flex gap-3 pt-4">
                 <button 
                   style={{ ...ghostBtn, flex: 1, border: "none", background: "#f1f5f9" }}
-                  onClick={() => setCadastroOpen(false)}
+                  onClick={() => {
+                    setCadastroOpen(false);
+                    setCadastroErrors({});
+                  }}
                 >
                   Cancelar
                 </button>
