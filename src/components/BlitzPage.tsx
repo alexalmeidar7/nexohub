@@ -257,10 +257,40 @@ export default function BlitzPage() {
       toast({ title: "Razão Social e CNPJ são obrigatórios", variant: "destructive" });
       return;
     }
+
+    const cleanNome = novoClienteData.nome.trim().toUpperCase();
+    const cleanCnpj = novoClienteData.cnpj.replace(/\D/g, "");
+
+    // Verificação de duplicados local antes de tentar inserir
+    const alreadyExists = clientesDisponiveis.some(c => 
+      c.nome.toUpperCase() === cleanNome
+    );
+
+    if (alreadyExists) {
+      toast({ title: "Cliente já cadastrado", description: "Já existe um cliente com esta Razão Social.", variant: "destructive" });
+      setCadastroOpen(false);
+      return;
+    }
+
     setCadastrandoCliente(true);
     try {
+      // Verificar CNPJ no banco antes de inserir
+      const { data: cnpjExists } = await supabase
+        .from("logos_patrocinadores")
+        .select("id")
+        .eq("cnpj", cleanCnpj)
+        .eq("excluido", false)
+        .maybeSingle();
+
+      if (cnpjExists) {
+        toast({ title: "CNPJ duplicado", description: "Já existe um cliente cadastrado com este CNPJ.", variant: "destructive" });
+        setCadastrandoCliente(false);
+        return;
+      }
+
       const { error } = await supabase.from("logos_patrocinadores").insert({
-        nome: novoClienteData.nome.trim().toUpperCase(),
+        nome: cleanNome,
+        cnpj: cleanCnpj,
         user_id: user?.id,
         ativo: true,
         excluido: false,
@@ -270,7 +300,7 @@ export default function BlitzPage() {
       toast({ title: "Cliente cadastrado com sucesso!" });
       setCadastroOpen(false);
       await loadClientes();
-      setForm(prev => ({ ...prev, cliente: novoClienteData.nome.trim().toUpperCase() }));
+      setForm(prev => ({ ...prev, cliente: cleanNome }));
     } catch (e: any) {
       toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
     } finally {
