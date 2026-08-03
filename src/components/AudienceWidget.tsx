@@ -612,7 +612,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
 
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
-  const viewersNow = (streamingCount || 0) + (videoCount || 0);
+  // YouTube Live só entra se houver live (valor > 0)
+  const viewersNow = (streamingCount || 0) + (videoCount || 0) + (youtubeLiveCount || 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -855,7 +856,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               className="text-[9px] font-bold uppercase truncate"
               style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              Total de seguidores
+              Seguidores (Redes Sociais)
             </span>
             {loadingConfig || loadingSocial ? (
               <Skeleton width={72} height={18} dark={dark} />
@@ -872,22 +873,45 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         <div className="flex items-center gap-2 min-w-0">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: dark }}
+            style={{ background: "#FF0000" }}
           >
-            <Radio size={16} style={{ color: bg }} />
+            <Youtube size={16} style={{ color: "#fff" }} />
           </div>
           <div className="flex flex-col min-w-0">
             <span
               className="text-[9px] font-bold uppercase truncate"
               style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              Espectadores agora
+              YouTube Live
             </span>
-            {(loadingStreaming && streamingCount === null) || (loadingVideo && videoCount === null) ? (
-              <span className="inline-flex items-center gap-1.5" style={{ color: dark }}>
-                <Loader2 size={16} className="animate-spin" />
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ opacity: 0.65 }}>Carregando</span>
+            {loadingVideo ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: "#FF0000" }}
+              >
+                {(youtubeLiveCount || 0) > 0 ? (youtubeLiveCount || 0).toLocaleString("pt-BR") : "OFF"}
               </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Users size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              Total Audiência
+            </span>
+            {loadingStreaming || loadingVideo ? (
+              <Skeleton width={72} height={18} dark={dark} />
             ) : (
               <span
                 className="text-xl font-black leading-none"
@@ -898,10 +922,52 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
             )}
           </div>
         </div>
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: dark }}
+          >
+            <Globe size={16} style={{ color: bg }} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span
+              className="text-[9px] font-bold uppercase truncate"
+              style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
+            >
+              No Site
+            </span>
+            {loadingSite ? (
+              <Skeleton width={72} height={18} dark={dark} />
+            ) : (
+              <span
+                className="text-xl font-black leading-none"
+                style={{ color: dark }}
+              >
+                {(siteCount || 0).toLocaleString("pt-BR")}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
 
-      <div className={`grid ${youtubeLiveCount && youtubeLiveCount > 0 ? "grid-cols-5" : "grid-cols-4"} gap-2 flex-1 min-h-0`}>
+      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
+        <StatCell
+          icon={<Radio size={14} />}
+          label="Áudio Streaming"
+          value={streamingCount}
+          loading={loadingStreaming && streamingCount === null}
+          dark={dark}
+          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
+        />
+        <StatCell
+          icon={<MonitorPlay size={14} />}
+          label="Vídeo Streaming"
+          value={videoCount}
+          loading={loadingVideo && videoCount === null}
+          dark={dark}
+          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
+        />
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
@@ -911,49 +977,16 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
           badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
         />
-        <StatCell
-          icon={<Radio size={14} />}
-          label="Rádio (áudio)"
-          value={streamingCount}
-          loading={loadingStreaming && streamingCount === null}
-          dark={dark}
-          badge={<PeakBadge peak={audioPeak} dark={dark} loading={audioPeak === null} />}
-        />
-        <StatCell
-          icon={<MonitorPlay size={14} />}
-          label="TV (vídeo)"
-          value={videoCount}
-          loading={loadingVideo && videoCount === null}
-          dark={dark}
-          badge={<PeakBadge peak={videoPeak} dark={dark} loading={videoPeak === null} />}
-        />
-        {youtubeLiveCount && youtubeLiveCount > 0 ? (
-          <StatCell
-            icon={<Youtube size={14} />}
-            label="Live YouTube"
-            value={youtubeLiveCount}
-            loading={false}
-            dark={dark}
-            badge={
-              <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider"
-                style={{ background: "#ef4444", color: "#fff" }}
-                title="Transmissão ao vivo"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                AO VIVO
-              </span>
-            }
-          />
-        ) : null}
-        <StatCell
-          icon={<Globe size={14} />}
-          label="Conectados no Player"
-          value={siteCount}
-          loading={loadingSite && siteCount === null}
-          dark={dark}
-        />
-
+        <div
+          className="rounded-2xl flex flex-col items-center justify-center p-3 relative cursor-pointer group"
+          onClick={() => setReportOpen(true)}
+          style={{ background: dark }}
+        >
+          <TrendingUp className="text-[#C6F03C] group-hover:scale-110 transition-transform mb-1" size={20} />
+          <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: "#fff" }}>
+            Ver Relatório
+          </span>
+        </div>
       </div>
 
       <Dialog
@@ -1588,15 +1621,34 @@ function AudienceReportDialog({
     if (filteredRows.length === 0) return null;
     const peakAudio = filteredRows.reduce((m, r) => (r.audio > m.audio ? r : m), filteredRows[0]);
     const peakVideo = filteredRows.reduce((m, r) => (r.video > m.video ? r : m), filteredRows[0]);
-    const peakYoutube = filteredRows.reduce((m, r) => ((r.youtube || 0) > (m.youtube || 0) ? r : m), filteredRows[0]);
-    const peakTotal = filteredRows.reduce((m, r) => ((r.audio + r.video + (r.youtube || 0)) > (m.audio + m.video + (m.youtube || 0)) ? r : m), filteredRows[0]);
+    // Regra: YouTube só conta quando youtube > 0 (Live ao vivo)
+    const liveRows = filteredRows.filter((r) => (r.youtube || 0) > 0);
+    const peakYoutube: HistRow = liveRows.length 
+      ? liveRows.reduce((m, r) => (r.youtube > m.youtube ? r : m), liveRows[0])
+      : { 
+          id: 'placeholder', 
+          created_at: filteredRows[0].created_at, 
+          audio: 0, 
+          video: 0, 
+          youtube: 0, 
+          programa: null 
+        };
+    
+    const peakTotal = filteredRows.reduce((m, r) => {
+      const curYt = (r.youtube || 0);
+      const mYt = (m.youtube || 0);
+      const curTotal = r.audio + r.video + curYt;
+      const mTotal = m.audio + m.video + mYt;
+      return curTotal > mTotal ? r : m;
+    }, filteredRows[0]);
+
     const avgAudio = Math.round(filteredRows.reduce((s, r) => s + r.audio, 0) / filteredRows.length);
     const avgVideo = Math.round(filteredRows.reduce((s, r) => s + r.video, 0) / filteredRows.length);
-    // YouTube: apenas amostras com viewers > 0 (programa efetivamente AO VIVO).
-    const liveRows = filteredRows.filter((r) => (r.youtube || 0) > 0);
+    
     const avgYoutube = liveRows.length
       ? Math.round(liveRows.reduce((s, r) => s + (r.youtube || 0), 0) / liveRows.length)
       : 0;
+    
     // Total "views durante a live" = soma dos picos por programa que teve live no dia.
     const peakByProg = new Map<string, number>();
     for (const r of liveRows) {
@@ -1606,10 +1658,11 @@ function AudienceReportDialog({
     }
     const sumYoutube = Array.from(peakByProg.values()).reduce((s, v) => s + v, 0);
     const hasYoutube = sumYoutube > 0;
-    // Faixa temporal (min/max hora) da(s) live(s) do dia — usado para destacar no gráfico.
+    
     const liveTimes = liveRows.map((r) => new Date(r.created_at).getTime());
     const liveStart = liveTimes.length ? new Date(Math.min(...liveTimes)) : null;
     const liveEnd = liveTimes.length ? new Date(Math.max(...liveTimes)) : null;
+    
     return { peakAudio, peakVideo, peakYoutube, peakTotal, avgAudio, avgVideo, avgYoutube, sumYoutube, hasYoutube, liveStart, liveEnd, liveProgramsCount: peakByProg.size };
   }, [filteredRows]);
 
