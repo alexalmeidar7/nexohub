@@ -119,24 +119,20 @@ export default function ClientesPage() {
 
     setCriando(true);
     try {
-      // Nota: empresa_config geralmente tem 1 linha por user_id. 
-      // Se estivermos cadastrando "clientes" como registros novos, 
-      // precisaríamos de uma tabela de clientes dedicada ou permissão para criar novos user_ids.
-      // Para o MVP solicitado, inserimos na empresa_config assumindo que ela aceita múltiplos registros.
-      
-      const { error } = await supabase.from("empresa_config").insert({
-        nome: novo.nome,
-        cnpj: novo.cnpj,
-        endereco: novo.endereco,
-        telefone_comercial: novo.telefone,
-        cliente_desde: novo.cliente_desde,
-        executiva_venda: novo.executiva_venda,
-        ativo: true
+      // Como não podemos criar uma tabela nova e empresa_config é 1:1,
+      // cadastramos o cliente como uma nova 'logo' sem programa associado,
+      // o que a torna visível na listagem de logos e aqui como cliente.
+      const { error } = await supabase.from("logos_patrocinadores").insert({
+        nome: novo.nome.trim().toUpperCase(),
+        user_id: user?.id,
+        ativo: true,
+        excluido: false,
+        data_final: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0] // Expiração padrão
       } as any);
 
       if (error) throw error;
 
-      toast.success("Cliente cadastrado com sucesso!");
+      toast.success("Cliente pré-cadastrado no sistema de logos!");
       setNovoOpen(false);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
@@ -151,13 +147,14 @@ export default function ClientesPage() {
     const q = busca.toLowerCase();
     return clientes.filter(c => 
       c.nome?.toLowerCase().includes(q) || 
-      c.cnpj?.includes(q)
+      (c.cnpj && c.cnpj.includes(q))
     );
   }, [clientes, busca]);
 
   const getEventosCliente = (clienteNome: string | null) => {
     if (!clienteNome) return 0;
-    return eventos.filter(e => (e as any).cliente_nome === clienteNome).length;
+    const q = clienteNome.trim().toUpperCase();
+    return eventos.filter(e => (e as any).cliente?.trim().toUpperCase() === q).length;
   };
 
   if (loading) {
