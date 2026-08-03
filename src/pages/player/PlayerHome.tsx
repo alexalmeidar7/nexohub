@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ElegantLoader from "@/components/player/ElegantLoader";
 import PlayerSlugBadge from "@/components/player/PlayerSlugBadge";
 import { loadMiniPlayerData, clearMiniPlayerData, destroyMiniAudio, type MiniPlayerData } from "@/components/player/MiniPlayerWidget";
+import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 import nexoPlayerLogo from "@/assets/nexo-player-logo.png.asset.json";
 import { resolveEffectiveOnAir } from "@/lib/onAirResolver";
 const MiniPlayerWidget = lazy(() => import("@/components/player/MiniPlayerWidget"));
@@ -1968,6 +1969,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     if (channelId) params.set("ch", channelId);
     if (videoId) params.set("vid", videoId);
     const qs = params.toString() ? `?${params.toString()}` : "";
+    
+    // Mostramos o loading overlay imediatamente se possível, ou apenas aguardamos o fadeOut
+    // O AudioPlayerScreen no destino cuidará do streamLoading=true baseado no param da URL
+    
     setTimeout(() => {
       const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
       const fromParams = new URLSearchParams(location.search);
@@ -2145,6 +2150,10 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
+      <PlayerLoadingOverlay 
+        isLoading={!dataLoaded || fadeOut} 
+        minDurationMs={3000}
+      />
       {/* Top loading bar */}
       {!dataLoaded && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50">
@@ -2192,13 +2201,16 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                           audioChannels[0] ||
                           streamingChannels[0];
                         if (!audio) return;
-                        // Navega direto ao player de áudio — sem splash / sem fade, retomando último canal
+                        // Navega direto ao player de áudio — retomando último canal
                         const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
                         navigate(`${watchPath}?ch=${audio.id}&autoplay=1`, { state: { fromPath: `${location.pathname}${location.search}` } });
                       }}
                       onAssistir={() => {
                         const video = streamingChannels.find(c => c.type === "video_live") || streamingChannels[0];
-                        if (video) goToPlayer(video.id);
+                        if (video) {
+                          const watchPath = userSlug ? `/user/${userSlug}/nexohub/player/watch` : "/user/nexohub/player/watch";
+                          navigate(`${watchPath}?ch=${video.id}`, { state: { fromPath: `${location.pathname}${location.search}` } });
+                        }
                       }}
                       onPlaylist={() => goToTop10()}
                       cardsVisible={activeRow === 0}

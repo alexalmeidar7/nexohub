@@ -56,6 +56,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
@@ -413,6 +414,19 @@ export default function PlayerPage() {
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [streamLoading, setStreamLoading] = useState(false);
+  
+  // Update streamLoading based on URL params to handle direct navigation
+  useEffect(() => {
+    const ch = searchParams.get("ch");
+    const vid = searchParams.get("vid");
+    const top10 = searchParams.get("top10") === "1";
+    const isWatch = location.pathname.includes("/watch") || searchParams.get("step") === "watch";
+    
+    if (isWatch && (ch || vid || top10)) {
+      setStreamLoading(true);
+    }
+  }, [location.pathname, searchParams]);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
    const [barVisible, setBarVisible] = useState(true);
    const [backBtnVisible, setBackBtnVisible] = useState(false);
@@ -1018,24 +1032,23 @@ export default function PlayerPage() {
       const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
       try {
-        // STAGE 1 — Critical: only channels + preroll (show UI ASAP)
-        const [channelsRes, prerollRes] = await Promise.all([
+        // STAGE 1 — Critical: all data in a single parallel burst for faster hydration
+        const [channelsRes, prerollRes, programasRes, apresentadoresRes, empresaRes] = await Promise.all([
           supabase.from("streaming_channels").select("*").eq("user_id", userId).eq("active", true).order("numero_canal"),
           !prerollDone
             ? supabase.from("comercial_preroll").select("*").eq("user_id", userId).eq("active", true).lte("horario_inicio", currentTime).gte("horario_fim", currentTime).order("priority", { ascending: true })
             : Promise.resolve({ data: null, error: null } as const),
+          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
+          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
+          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
         ]);
+
         if (cancelled) return;
 
+        // Hydrate all critical states at once
         let canaisData = channelsRes.data as Canal[] | null;
-        let channelsError = channelsRes.error;
-
-        // No fallback to all channels — only show channels belonging to the authenticated user
-
-        if (!channelsError && canaisData) {
+        if (canaisData) {
           setCanais(canaisData.filter(c => c.type !== "catalog" || c.id === requestedChannelId));
-        } else {
-          setCanais([]);
         }
 
         if (!prerollDone && prerollRes.data && prerollRes.data.length > 0) {
@@ -1044,7 +1057,7 @@ export default function PlayerPage() {
             const selected = matching[Math.floor(Math.random() * matching.length)];
             setPrerollUrl(selected.video_url);
             setPrerollLinkUrl((selected as any).link_url || null);
-            setPrerollMediaType((selected as any).media_type || "video");
+            setPrerollMediaType(selected.media_type || "video");
             setPrerollYoutubeUrl((selected as any).youtube_url || null);
             setPrerollBackgroundUrl((selected as any).background_url || null);
             setPrerollAspectRatio((selected as any).aspect_ratio || "16:9");
@@ -1056,17 +1069,6 @@ export default function PlayerPage() {
           setPrerollDone(true);
         }
 
-        // UI is now visible — release loading gate
-        setLoading(false);
-
-        // STAGE 2 — Secondary: programas + apresentadores + empresa
-        const [programasRes, apresentadoresRes, empresaRes] = await Promise.all([
-          supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo, selo, estudio, variavel, data_variavel, capa, thumb, descricao, apresentador_id, apresentadores_ids").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%").order("horario_inicio"),
-          supabase.from("apresentadores").select("id, nome, foto, instagram").eq("user_id", userId).eq("ativo", true),
-          supabase.from("empresa_config").select("telefone_participacao, logo, nome").eq("user_id", userId).maybeSingle(),
-        ]);
-        if (cancelled) return;
-
         const fetchedProgramas = (!programasRes.error && programasRes.data) ? programasRes.data as Programa[] : [];
         setProgramas(fetchedProgramas);
         if (!apresentadoresRes.error && apresentadoresRes.data) setApresentadores(apresentadoresRes.data as Apresentador[]);
@@ -1074,7 +1076,10 @@ export default function PlayerPage() {
         if (!empresaRes.error && empresaRes.data?.logo) setEmpresaLogo(empresaRes.data.logo);
         if (!empresaRes.error && empresaRes.data?.nome) setEmpresaNome(empresaRes.data.nome);
 
-        // STAGE 3 — Deferred: shop products
+        // UI is now visible — release loading gate
+        setLoading(false);
+
+        // STAGE 2 — Deferred: shop products
         const currentProg = getCurrentProgram(fetchedProgramas);
         let shopQuery = supabase.from("shopping_products").select("id, name, description, image_url, price, stock, program_id, payment_url").eq("user_id", userId).eq("active", true).gt("stock", 0);
         if (currentProg) {
@@ -1661,8 +1666,14 @@ export default function PlayerPage() {
       const handlePlayStarted = () => {
         if (playbackSessionRef.current !== sessionId) return;
         if (!shouldStartMuted) autoplayMutedRef.current = false;
-        setPlaying(true);
-        setBuffering(false);
+        
+        // Safety timeout to ensure loading screen stays for at least 3s total from start
+        setTimeout(() => {
+          if (playbackSessionRef.current !== sessionId) return;
+          setStreamLoading(false);
+          setPlaying(true);
+          setBuffering(false);
+        }, 1500); // Buffer a bit more time for media to stabilize
       };
 
       const handlePlayBlocked = (label: string, error: unknown) => {
@@ -1679,7 +1690,8 @@ export default function PlayerPage() {
             media.muted = true;
             media.play().then(() => {
               if (playbackSessionRef.current !== sessionId) return;
-              setPlaying(true);
+      setStreamLoading(false);
+      setPlaying(true);
               setBuffering(false);
             }).catch(() => {
               if (playbackSessionRef.current !== sessionId) return;
@@ -3003,7 +3015,11 @@ export default function PlayerPage() {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen w-screen bg-black overflow-hidden select-none cursor-default animate-fade-in">
+    <div ref={containerRef} className={`relative h-screen w-screen bg-black overflow-hidden select-none cursor-default nexo-player-container ${pageFadeOut ? 'opacity-0 scale-95 transition-all duration-700' : 'opacity-100 scale-100'}`}>
+      <PlayerLoadingOverlay 
+        isLoading={loading || streamLoading} 
+        minDurationMs={3000}
+      />
 
       {/* Dynamic background: gradient from user colors for audio, thumb for video/catalog */}
       {(() => {
@@ -3323,7 +3339,7 @@ export default function PlayerPage() {
 
       {/* Video element */}
       <video ref={videoRef} className={`absolute inset-0 w-full h-full object-contain bg-black ${isAudio || (isYoutube && !isCatalog) ? "hidden" : ""}`} muted={muted} playsInline autoPlay={false} src={isCatalog && requestedVideoId ? `https://www.youtube.com/embed/${requestedVideoId}` : undefined} />
-      <audio ref={audioRef} muted={!isAudio || muted} preload="none" />
+      <audio ref={audioRef} muted={!isAudio || muted} preload="auto" />
 
       {/* Volume OSD — centered overlay */}
       {volumeOsd && (
@@ -3342,7 +3358,7 @@ export default function PlayerPage() {
 
 
       {/* Buffering overlay — hidden for catalog channels */}
-      {streamStalled && playing && !isCatalog && (
+      {streamStalled && playing && !isCatalog && !streamLoading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/60 gap-4">
           <ElegantLoader size={56} />
           <span className="text-white text-sm font-bold tracking-wide uppercase animate-pulse">Sintonizando canal...</span>
