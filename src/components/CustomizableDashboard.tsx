@@ -2376,7 +2376,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => { cancelled = true; };
   }, [currentMusic?.artista]);
 
-  const displayArt = artistBgUrl || currentMusic?.capa || channelLogo;
+  const displayArt = artistBgUrl || currentMusic?.capa || currentMusic?.excecao?.capa_url || channelLogo;
 
   // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
@@ -2585,15 +2585,39 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-auto pr-16"}>
             <div className="min-w-0 flex-1">
               {currentMusic ? (
-                <>
-                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
-                    <AutoScrollText text={currentMusic.titulo || ""} />
-                  </p>
-                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
-                    <AutoScrollText text={currentMusic.artista || ""} />
-                  </p>
-
-                </>
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
+                      <AutoScrollText text={currentMusic.titulo || ""} />
+                    </p>
+                    <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
+                      <AutoScrollText text={currentMusic.artista || ""} />
+                    </p>
+                  </div>
+                  
+                  {/* CD Cover with sliding animation */}
+                  <div
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-2xl animate-slide-left flex-shrink-0"
+                    style={{
+                      border: "1.5px solid rgba(255,255,255,0.15)",
+                      background: "#111",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {currentMusic.excecao?.capa_url || currentMusic.capa ? (
+                      <img
+                        key={currentMusic.excecao?.capa_url || currentMusic.capa}
+                        src={currentMusic.excecao?.capa_url || currentMusic.capa}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-white/5">
+                        <Music size={16} className="text-white/20" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
                   <p className="text-[12px] font-extrabold leading-tight truncate text-white">
