@@ -2963,53 +2963,68 @@ export default function PlayerPage() {
   if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
       <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
-        <AudioPlayerScreen
-          audioRef={audioRef}
-          videoRef={videoRef}
-          canal={canal}
-          canais={canais}
-          liveChannels={liveChannels}
-          navigateChannel={navigateChannel}
-          programas={programas}
-          currentProg={currentProg}
-          nextProg={nextProg}
-          apresentadores={apresentadores}
-          musicData={musicData}
-          playing={playing}
-          muted={muted}
-          volume={volume}
-          buffering={buffering}
-          onTogglePlay={handlePlayCanal}
-          onSetMuted={setPlayerMuted}
-          onSetVolume={handleVolumeChange}
-          liked={liked}
-          onToggleLike={toggleLike}
-          chatOpen={chatOpen}
-          setChatOpen={setChatOpen}
-          gradeOpen={gradeOpen}
-          setGradeOpen={setGradeOpen}
-          karaokeEnabled={karaokeEnabled}
-          setKaraokeEnabled={setKaraokeEnabled}
-          watchProfileOpen={watchProfileOpen}
-          setWatchProfileOpen={setWatchProfileOpen}
-          empresaLogo={empresaLogo}
-          empresaNome={empresaNome}
-          user={user}
-          profileAvatar={profileAvatar}
-          userDisplayName={userDisplayName}
-          userEmail={user?.email ?? null}
-          signOut={signOut}
-          effectiveUserId={effectiveUserId}
-          isPublicMode={isPublicMode}
-          userSlug={userSlug}
-          onBackHome={handleHomeClick}
-          onEditProfile={handleEditProfile}
-          onSwitchProfile={handleSwitchProfile}
-          radioUserId={profileRadioUserId}
-          onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
-          isVideoChannel={isVideo}
-          isCatalog={isCatalog}
-        />
+        {step === "home" ? (
+          <PlayerHome 
+            canais={canais}
+            currentIndex={currentIndex}
+            onSelectChannel={(idx) => {
+              setStreamLoading(true);
+              setCurrentIndex(idx);
+              setStep("watch");
+            }}
+            programas={programas}
+            apresentadores={apresentadores}
+            onBackToAccess={onBackHome}
+          />
+        ) : (
+          <AudioPlayerScreen
+            audioRef={audioRef}
+            videoRef={videoRef}
+            canal={canal}
+            canais={canais}
+            liveChannels={liveChannels}
+            navigateChannel={navigateChannel}
+            programas={programas}
+            currentProg={currentProg}
+            nextProg={nextProg}
+            apresentadores={apresentadores}
+            musicData={musicData}
+            playing={playing}
+            muted={muted}
+            volume={volume}
+            buffering={buffering}
+            onTogglePlay={handlePlayCanal}
+            onSetMuted={setPlayerMuted}
+            onSetVolume={handleVolumeChange}
+            liked={liked}
+            onToggleLike={toggleLike}
+            chatOpen={chatOpen}
+            setChatOpen={setChatOpen}
+            gradeOpen={gradeOpen}
+            setGradeOpen={setGradeOpen}
+            karaokeEnabled={karaokeEnabled}
+            setKaraokeEnabled={setKaraokeEnabled}
+            watchProfileOpen={watchProfileOpen}
+            setWatchProfileOpen={setWatchProfileOpen}
+            empresaLogo={empresaLogo}
+            empresaNome={empresaNome}
+            user={user}
+            profileAvatar={profileAvatar}
+            userDisplayName={userDisplayName}
+            userEmail={user?.email ?? null}
+            signOut={signOut}
+            effectiveUserId={effectiveUserId}
+            isPublicMode={isPublicMode}
+            userSlug={userSlug}
+            onBackHome={handleHomeClick}
+            onEditProfile={handleEditProfile}
+            onSwitchProfile={handleSwitchProfile}
+            radioUserId={profileRadioUserId}
+            onAvatarChange={(url) => { setProfileAvatar(url); emitProfileChanged({ userId: user?.id ?? null, radioUserId: profileRadioUserId, avatar_url: url, reason: "avatar" }); }}
+            isVideoChannel={isVideo}
+            isCatalog={isCatalog}
+          />
+        )}
       </Suspense>
     );
   }
