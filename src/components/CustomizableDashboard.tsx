@@ -2594,29 +2594,6 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
                       <AutoScrollText text={currentMusic.artista || ""} />
                     </p>
                   </div>
-                  
-                  {/* CD Cover with sliding animation */}
-                  <div
-                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-2xl animate-slide-left flex-shrink-0"
-                    style={{
-                      border: "1.5px solid rgba(255,255,255,0.15)",
-                      background: "#111",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-                    }}
-                  >
-                    {currentMusic.excecao?.capa_url || currentMusic.capa ? (
-                      <img
-                        key={currentMusic.excecao?.capa_url || currentMusic.capa}
-                        src={currentMusic.excecao?.capa_url || currentMusic.capa}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-white/5">
-                        <Music size={16} className="text-white/20" />
-                      </div>
-                    )}
-                  </div>
                 </div>
               ) : (
                 <>
