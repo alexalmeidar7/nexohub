@@ -63,8 +63,12 @@ export default function ClientesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      // Usamos a tabela logos_patrocinadores como fonte para clientes,
-      // agrupando pelo nome para tratar cada marca como um cliente único.
+      const isAlex = user?.email?.toLowerCase().includes("alex");
+
+      // Se for Alex, não fazemos o pré-cadastro automático via logos
+      // Se não for Alex, mantemos a regra de carregar logos como clientes por enquanto
+      // até que a tabela definitiva esteja 100% operacional em todas as instâncias.
+      
       const { data: logosData } = await supabase
         .from("logos_patrocinadores")
         .select("id, user_id, nome, logo_url, ativo, created_at")
@@ -75,12 +79,14 @@ export default function ClientesPage() {
         .from("blitz_promocionais")
         .select("*");
 
-      // Deduplicar logos por nome para gerar a lista de clientes
       const uniqueClients: Cliente[] = [];
       const seenNames = new Set();
 
       (logosData || []).forEach(item => {
         const name = item.nome?.trim().toUpperCase();
+        // Filtro para não aplicar a regra automática no Alex
+        if (isAlex && item.user_id === user?.id) return;
+
         if (name && !seenNames.has(name)) {
           seenNames.add(name);
           uniqueClients.push({
@@ -89,7 +95,7 @@ export default function ClientesPage() {
             nome: item.nome,
             logo_url: item.logo_url,
             ativo: item.ativo,
-            cnpj: "00.000.000/0000-00", // Fallback pois não há coluna na DB
+            cnpj: "00.000.000/0000-00",
             cliente_desde: item.created_at?.split('T')[0],
             telefone_comercial: "(00) 0000-0000",
             endereco: "Endereço não cadastrado",
