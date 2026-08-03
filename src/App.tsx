@@ -57,6 +57,8 @@ initGlobalNotifications();
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import PlayerSyncLoader from "@/components/player/PlayerSyncLoader";
+
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
 import DailyUpdateGuard from "@/components/DailyUpdateGuard";
