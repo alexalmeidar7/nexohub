@@ -234,6 +234,46 @@ export default function InfoMusicSection() {
   };
 
 
+  const updateExcecaoAsset = async (id: string, field: "capa_url" | "background_url", value: string | null) => {
+    if (!user) return;
+    setSavingExcecoes(true);
+    try {
+      let finalValue = value;
+      if (value && value.startsWith("data:")) {
+        const timestamp = Date.now();
+        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        const suffix = field === "capa_url" ? "capa" : "fundo";
+        const size = field === "capa_url" ? 1080 : 1920;
+        
+        setUploadProgress({ active: true, stage: `Processando ${field === "capa_url" ? "Capa" : "Fundo"}...`, percent: 40 });
+        
+        finalValue = await uploadImageToStorage(
+          value,
+          "empresa-assets",
+          `${user.id}/excecoes/${timestamp}_${suffix}.webp`,
+          size
+        );
+        setUploadProgress({ active: true, stage: "Upload concluído", percent: 80 });
+      }
+
+      const { error } = await supabase
+        .from("infomusic_excecoes")
+        .update({ [field]: finalValue })
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      await loadExcecoes();
+      setUploadProgress({ active: true, stage: "Sucesso!", percent: 100 });
+      setTimeout(() => setUploadProgress({ active: false, stage: "", percent: 0 }), 1000);
+      toast.success(field === "capa_url" ? "Capa atualizada" : "Fundo atualizado");
+    } catch (e) {
+      setUploadProgress({ active: false, stage: "", percent: 0 });
+      toast.error("Erro ao atualizar asset");
+    }
+    setSavingExcecoes(false);
+  };
+
   const PAGE_SIZE = 50;
   const HARD_CAP = Number.POSITIVE_INFINITY;
   const [totalCount, setTotalCount] = useState(0);
@@ -1207,21 +1247,73 @@ export default function InfoMusicSection() {
                         <td className="px-3 py-2 text-[10px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-0.5">
                             {ex.capa_url ? (
-                              <button 
-                                onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
-                                className="text-emerald-500 font-bold hover:underline text-left"
-                              >
-                                ✓ Capa
-                              </button>
-                            ) : <span>—</span>}
+                              <div className="flex items-center gap-1.5 group/asset">
+                                <button 
+                                  onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
+                                  className="text-emerald-500 font-bold hover:underline text-left"
+                                >
+                                  ✓ Capa
+                                </button>
+                                <button 
+                                  onClick={() => updateExcecaoAsset(ex.id, "capa_url", null)}
+                                  className="opacity-0 group-hover/asset:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                  title="Remover Capa"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer text-[9px] text-cyan-600 hover:underline flex items-center gap-1">
+                                <Plus size={10} /> Adicionar Capa
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => updateExcecaoAsset(ex.id, "capa_url", ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
                             {ex.background_url ? (
-                              <button 
-                                onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
-                                className="text-emerald-500 font-bold hover:underline text-left"
-                              >
-                                ✓ Fundo
-                              </button>
-                            ) : <span>—</span>}
+                              <div className="flex items-center gap-1.5 group/asset">
+                                <button 
+                                  onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
+                                  className="text-emerald-500 font-bold hover:underline text-left"
+                                >
+                                  ✓ Fundo
+                                </button>
+                                <button 
+                                  onClick={() => updateExcecaoAsset(ex.id, "background_url", null)}
+                                  className="opacity-0 group-hover/asset:opacity-100 text-red-400 hover:text-red-600 transition-opacity"
+                                  title="Remover Fundo"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ) : (
+                              <label className="cursor-pointer text-[9px] text-cyan-600 hover:underline flex items-center gap-1">
+                                <Plus size={10} /> Adicionar Fundo
+                                <input 
+                                  type="file" 
+                                  accept="image/*" 
+                                  className="hidden" 
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onload = (ev) => updateExcecaoAsset(ex.id, "background_url", ev.target?.result as string);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </label>
+                            )}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-right">
