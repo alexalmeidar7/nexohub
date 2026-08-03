@@ -1644,10 +1644,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {currentPage === "musica" && (
                   <button
                     onClick={() => setCurrentPage("dashboard")}
-                    className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
+                    className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] hover:bg-[#00BFF0]/80 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95 group relative"
                     title="Minimizar"
                   >
-                    <div className="w-5 h-1 bg-white rounded-full" />
+                    <div className="w-5 h-[3px] bg-white rounded-full group-hover:scale-x-110 transition-transform" />
                   </button>
                 )}
               </div>
