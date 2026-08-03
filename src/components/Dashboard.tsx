@@ -1671,7 +1671,7 @@ export default function Dashboard({ onLogout, musicaMinimizada, onRestaurarMusic
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
+                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} musicaMinimizada={musicaMinimizada} onRestaurarMusica={onRestaurarMusica} onFecharMusica={onFecharMusica} />}
                 </div>
               </div>
 
