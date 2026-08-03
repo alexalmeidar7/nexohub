@@ -631,10 +631,37 @@ export default function WelcomeScreen({
       data_nascimento: profile.data_nascimento || null,
       avatar_url: profile.avatar_url,
     } as any);
+
+    // Atualiza a pontuação conforme as REGRAS DE PONTUAÇÃO do cadastro de ouvinte
+    let novaPontuacao: number | null = null;
+    try {
+      const { data: res } = await supabase.functions.invoke("sync-listener-points", {
+        body: {
+          radio_user_id: radioUserId || user.id,
+          profile: {
+            nome: profile.nome, email: profile.email, cpf: profile.cpf,
+            telefone: profile.whatsapp, sexo: profile.sexo,
+            data_nascimento: profile.data_nascimento,
+            estado: profile.estado, cidade: profile.cidade, setor: profile.setor,
+          },
+        },
+      });
+      if ((res as any)?.ok && typeof (res as any).pontuacao === "number") {
+        novaPontuacao = (res as any).pontuacao as number;
+        setPoints(novaPontuacao);
+      }
+    } catch { /* ignore */ }
+
     setSaving(false);
     if (error) toast.error("Erro ao salvar perfil");
-    else { toast.success("Perfil atualizado!"); setEditOpen(false); }
+    else {
+      toast.success(
+        novaPontuacao != null ? `Perfil atualizado! ${novaPontuacao} pts` : "Perfil atualizado!",
+      );
+      setEditOpen(false);
+    }
   };
+
 
   const [authError, setAuthError] = useState<string | null>(null);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
