@@ -1766,7 +1766,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
               <div style={{ display: currentPage === "musica" && !musicaMinimizada ? "block" : "none" }}>
-                <MusicaNoAr effectiveUserId={effectiveUserId} onMinimize={() => setMusicaMinimizada(true)} />
+                <MusicaNoAr effectiveUserId={effectiveUserId} onMinimize={() => {
+                  setMusicaMinimizada(true);
+                  setCurrentPage("dashboard");
+                }} />
               </div>
 
               {currentPage === "agenda" && <AgendaPage />}
