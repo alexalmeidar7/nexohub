@@ -92,10 +92,11 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     return (
       <div
         style={{
-          position: "fixed", left: 18, bottom: 18, zIndex: 60,
+          position: "fixed", left: "var(--onair-left, 18px)", bottom: 18, zIndex: 60,
           display: "flex", alignItems: "center", gap: 6,
           background: CYAN, borderRadius: 999, padding: "4px 6px 4px 4px",
           boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: FONT,
+          paddingLeft: "1px",
         }}
       >
         <button
