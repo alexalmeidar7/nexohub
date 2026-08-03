@@ -57,6 +57,7 @@ const VmixPage = lazy(() => import("./VmixPage"));
 const TeleprompterPage = lazy(() => import("./TeleprompterPage"));
 const CustomizableDashboard = lazy(() => import("./CustomizableDashboard"));
 const AdminClientsDashboard = lazy(() => import("./AdminClientsDashboard"));
+const AdminInfoMusicPage = lazy(() => import("./AdminInfoMusicPage"));
 const ChatbotHome = lazy(() => import("./ChatbotHome"));
 
 const PropostasPage = lazy(() => import("./PropostasPage"));
@@ -82,7 +83,7 @@ import BotsStatusBox from "./BotsStatusBox";
 import InlineNotification from "./InlineNotification";
 import nexoCantoLogo from "@/assets/nexo_canto.png";
 
-type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes";
+type Page = "dashboard" | "previsao" | "noticias" | "apresentadores" | "ouvintes" | "programas" | "musica" | "agenda" | "configuracoes" | "testemunhais" | "promocoes" | "logos" | "curtidas" | "shopping" | "preroll" | "cortevideo" | "playerconfig" | "vmix" | "propostas" | "tp" | "cenario" | "fans" | "configtelapromo" | "broadcast" | "batalha" | "enquete" | "quiz" | "site" | "sorteios" | "blitz" | "clientes" | "modulos" | "subusuarios" | "pacotes" | "admininfomusic";
 
 // Sidebar structured menu
 interface MenuChild {
@@ -175,6 +176,7 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
+  { icon: Music, label: "info music", page: "admininfomusic" },
   { icon: Layers, label: "módulos", page: "modulos" },
   { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
 ];
@@ -328,6 +330,7 @@ const pageTitle: Record<Page, string> = {
   modulos: "Módulos",
   subusuarios: "Subusuários",
   pacotes: "Pacotes",
+  admininfomusic: "Info Music",
 };
 
 interface DashboardProps {
@@ -1685,6 +1688,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               </div>
 
 
+              {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
