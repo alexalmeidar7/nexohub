@@ -165,6 +165,7 @@ const sidebarMenu: MenuItem[] = [
 
 
 // Menu exclusivo do super admin: apenas Cadastro > Clientes e o agrupador MODULOS
+// O submenu clientes deve estar liberado para todos os usuários que o possuem no pacote assinado.
 const adminSidebarMenu: MenuItem[] = [
   { icon: Home, label: "home", page: "dashboard" },
   {
