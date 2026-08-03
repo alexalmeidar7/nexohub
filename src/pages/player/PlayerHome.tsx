@@ -2095,6 +2095,22 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     contentScrollRef.current?.scrollTo({ top: 0 });
   }, [visibleSection]);
 
+  // Trava o scroll vertical do conteúdo na home: se algo (foco, âncora, teclado)
+  // tentar rolar o container, voltamos imediatamente ao topo — assim o menu,
+  // o hero e o fundo nunca se mexem; só as fileiras de cards animam.
+  useEffect(() => {
+    if (visibleSection !== "home") return;
+    const container = contentScrollRef.current;
+    if (!container) return;
+    const reset = () => {
+      if (container.scrollTop !== 0) container.scrollTop = 0;
+      if (container.scrollLeft !== 0) container.scrollLeft = 0;
+    };
+    reset();
+    container.addEventListener("scroll", reset, { passive: true });
+    return () => container.removeEventListener("scroll", reset);
+  }, [visibleSection]);
+
 
   const handleSignOut = async () => {
     const dest = userSlug && userSlug !== ":userSlug" ? `/${userSlug}/player` : "/player";
