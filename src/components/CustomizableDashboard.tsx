@@ -1015,7 +1015,7 @@ function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } =
       try {
         const d = readMusicData(dataUserId) as any;
         if (d) {
-          if (d.titulo) setMusic(d);
+          if (d.titulo !== undefined || d.excecao) setMusic(d);
           if (d.programa) setPrograma(d.programa);
         }
       } catch {}
@@ -1026,8 +1026,8 @@ function MusicaPreview({ dataUserId: dataUserIdProp }: { dataUserId?: string } =
   }, [dataUserId]);
   return music ? (
     <div className="flex items-center gap-2.5">
-      {music.capa ? (
-        <img src={music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
+      {(music.excecao?.capa_url || music.capa) ? (
+        <img src={music.excecao?.capa_url || music.capa} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 shadow-md" />
       ) : (
         <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "color-mix(in srgb, var(--layout-accent-color) 14%, transparent)" }}>
           <Music size={16} style={{ color: "var(--layout-accent-color)" }} />
@@ -1427,7 +1427,7 @@ function DashboardAgendaWidget({ dataUserId, onNavigate }: { dataUserId?: string
 function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
   const { user } = useAuth();
   const uid = dataUserId || user?.id;
-  const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [music, setMusic] = useState<{ titulo: string; artista: string; capa: string; excecao?: any } | null>(null);
   const [musicKey, setMusicKey] = useState(0);
   const [programa, setPrograma] = useState<string>("");
   const [currentProgram, setCurrentProgram] = useState<any>(null);
@@ -1442,7 +1442,7 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
       try {
         const d = readMusicData(dataUserId) as any;
         if (d) {
-          if (d.titulo && d.titulo !== prevTitle) {
+          if ((d.titulo !== undefined || d.excecao) && d.titulo !== prevTitle) {
             prevTitle = d.titulo;
             setMusic(d);
             setMusicKey(k => k + 1);
@@ -1564,8 +1564,8 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
       {/* Music */}
       {music ? (
         <div key={`music-${musicKey}`} className="flex items-center gap-3 animate-fade-in">
-          {music.capa && (
-            <img src={music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+          {(music.excecao?.capa_url || music.capa) && (
+            <img src={music.excecao?.capa_url || music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
           )}
           <div className="min-w-0">
             <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{music.titulo}</p>
@@ -1841,7 +1841,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
   });
   const [showVideo, setShowVideo] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
-  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string } | null>(null);
+  const [currentMusic, setCurrentMusic] = useState<{ titulo: string; artista: string; capa: string; excecao?: any } | null>(null);
 
   // Persist volume/mute per user
   useEffect(() => {
@@ -1932,7 +1932,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         if (titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === titulo && prev?.artista === artista && prev?.capa === capa) return prev;
-            return { titulo, artista, capa };
+            return { titulo, artista, capa, excecao: di.music_current_excecao || null };
           });
         }
       } catch {}
@@ -1944,7 +1944,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
         if (d && d.titulo) {
           setCurrentMusic(prev => {
             if (prev?.titulo === d.titulo && prev?.artista === (d.artista || "") && prev?.capa === (d.capa || "")) return prev;
-            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "" };
+            return { titulo: d.titulo, artista: d.artista || "", capa: d.capa || "", excecao: d.excecao || null };
           });
           return;
         }
@@ -2376,7 +2376,7 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
     return () => { cancelled = true; };
   }, [currentMusic?.artista]);
 
-  const displayArt = artistBgUrl || currentMusic?.capa || channelLogo;
+  const displayArt = artistBgUrl || currentMusic?.capa || currentMusic?.excecao?.capa_url || channelLogo;
 
   // Crossfade for background art
   const [visibleArt, setVisibleArt] = useState(displayArt);
@@ -2585,15 +2585,39 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
           <div className={compactMode ? "flex items-center gap-2 min-w-0 flex-1" : "flex items-end justify-between gap-2 mt-auto pr-16"}>
             <div className="min-w-0 flex-1">
               {currentMusic ? (
-                <>
-                  <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
-                    <AutoScrollText text={currentMusic.titulo || ""} />
-                  </p>
-                  <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
-                    <AutoScrollText text={currentMusic.artista || ""} />
-                  </p>
-
-                </>
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] sm:text-[13px] font-extrabold leading-[1.1]" style={{ color: "#c8ff00" }}>
+                      <AutoScrollText text={currentMusic.titulo || ""} />
+                    </p>
+                    <p className="text-[10px] sm:text-[11px] font-extrabold leading-[1.15]" style={{ color: "#ffffff" }}>
+                      <AutoScrollText text={currentMusic.artista || ""} />
+                    </p>
+                  </div>
+                  
+                  {/* CD Cover with sliding animation */}
+                  <div
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-2xl animate-slide-left flex-shrink-0"
+                    style={{
+                      border: "1.5px solid rgba(255,255,255,0.15)",
+                      background: "#111",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {currentMusic.excecao?.capa_url || currentMusic.capa ? (
+                      <img
+                        key={currentMusic.excecao?.capa_url || currentMusic.capa}
+                        src={currentMusic.excecao?.capa_url || currentMusic.capa}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-white/5">
+                        <Music size={16} className="text-white/20" />
+                      </div>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <>
                   <p className="text-[12px] font-extrabold leading-tight truncate text-white">
