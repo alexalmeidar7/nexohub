@@ -1539,7 +1539,11 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     const t = window.setTimeout(() => {
       const rowEl = document.querySelector(`[data-tv-row="${activeRow}"]`) as HTMLElement | null;
       const first = rowEl?.querySelector<HTMLElement>("[data-tv-focusable]");
-      first?.focus({ preventScroll: true });
+      // Ensure we don't cause page scroll during focus if the row is intended to be off-screen
+      // or handled by our own transforms
+      if (first && document.activeElement !== first) {
+        first.focus({ preventScroll: true });
+      }
     }, 60);
     return () => window.clearTimeout(t);
   }, [activeRow]);
@@ -2138,7 +2142,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
   return (
     <div
-      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out ${fadeOut ? "opacity-0" : "opacity-100"}`}
+      className={`fixed inset-0 text-white flex flex-col antialiased transition-opacity duration-400 ease-in-out overflow-hidden ${fadeOut ? "opacity-0" : "opacity-100"}`}
       style={{ background: `hsl(var(--player-bg))` }}
     >
       {/* Top loading bar */}
