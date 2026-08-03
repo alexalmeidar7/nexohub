@@ -169,8 +169,10 @@ export default function MusicaNoAr({ effectiveUserId, minimized, onMinimize, onR
         </div>
       </div>
       
-      <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm">
-        <p className="text-slate-500">Conteúdo do módulo Música no Ar...</p>
+      <div className="bg-white rounded-2xl border border-slate-200 p-0 shadow-sm overflow-hidden">
+        <Suspense fallback={<div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin text-cyan-500" /></div>}>
+          <InfoMusicSection />
+        </Suspense>
       </div>
     </div>
   );
