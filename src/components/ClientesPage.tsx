@@ -128,31 +128,53 @@ export default function ClientesPage() {
     try {
       const isAlex = user?.email?.toLowerCase().includes("alex");
 
-      // Para o Alex ou para novos cadastros (que não devem mais seguir a lógica de logo),
-      // o ideal seria inserir na tabela 'clientes'. Como fallback de permissão, 
-      // ainda usamos o sistema de logos mas com uma flag ou comportamento distinto.
-      // Se for Alex, tratamos o cadastro de forma manual e isolada.
-      
-      const { error } = await supabase.from("logos_patrocinadores").insert({
-        nome: novo.nome.trim().toUpperCase(),
-        user_id: user?.id,
-        ativo: true,
-        excluido: false,
-        // Se for Alex, marcamos com uma validade diferente ou nota (se houvesse o campo)
-        data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
-      } as any);
+      if (editingId) {
+        // Lógica de edição
+        const { error } = await supabase
+          .from("logos_patrocinadores")
+          .update({
+            nome: novo.nome.trim().toUpperCase(),
+          } as any)
+          .eq("id", editingId);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Dados do cliente atualizados!");
+      } else {
+        // Lógica de inserção
+        const { error } = await supabase.from("logos_patrocinadores").insert({
+          nome: novo.nome.trim().toUpperCase(),
+          user_id: user?.id,
+          ativo: true,
+          excluido: false,
+          data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0] 
+        } as any);
 
-      toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
+        if (error) throw error;
+        toast.success(isAlex ? "Cliente cadastrado manualmente." : "Cliente pré-cadastrado no sistema!");
+      }
+
       setNovoOpen(false);
+      setEditingId(null);
       setNovo({ nome: "", cnpj: "", endereco: "", telefone: "", cliente_desde: "", executiva_venda: "" });
       load();
     } catch (e: any) {
-      toast.error(e.message || "Erro ao cadastrar cliente.");
+      toast.error(e.message || "Erro ao salvar cliente.");
     } finally {
       setCriando(false);
     }
+  };
+
+  const handleEdit = (cliente: Cliente) => {
+    setEditingId(cliente.id);
+    setNovo({
+      nome: cliente.nome || "",
+      cnpj: cliente.cnpj || "",
+      endereco: cliente.endereco || "",
+      telefone: cliente.telefone_comercial || "",
+      cliente_desde: cliente.cliente_desde || "",
+      executiva_venda: cliente.executiva_venda || ""
+    });
+    setNovoOpen(true);
   };
 
   const filtrados = useMemo(() => {
