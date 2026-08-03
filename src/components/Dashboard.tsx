@@ -492,7 +492,7 @@ export default function Dashboard({
       window.removeEventListener("changePage", onChangePage);
       window.removeEventListener("minimizeMusica", onMinimize);
     };
-  }, []);
+  }, [onFecharMusica]);
   useEffect(() => {
     const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
