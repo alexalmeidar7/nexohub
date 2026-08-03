@@ -338,11 +338,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  const [musicaNoArMinimized, setMusicaNoArMinimized] = useState(false);
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+        // Se navegou para qualquer coisa que não seja 'musica', garantimos que não está minimizado
+        if (resolved !== "musica") setMusicaNoArMinimized(false);
       }
       return resolved;
     });
