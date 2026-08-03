@@ -352,15 +352,29 @@ export default function WelcomeScreen({
   const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
   const [ufCities, setUfCities] = useState<string[]>([]);
   const [cityFocused, setCityFocused] = useState(false);
+  const [cityLoading, setCityLoading] = useState(false);
 
   useEffect(() => {
     const uf = (profile.estado || "").toUpperCase();
     if (uf.length !== 2) { setUfCities([]); return; }
     let cancelled = false;
+    setCityLoading(true);
     fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
       .then(r => r.json())
-      .then((list: any[]) => { if (!cancelled) setUfCities((list || []).map(m => m.nome)); })
-      .catch(() => { if (!cancelled) setUfCities([]); });
+      .then((list: any[]) => {
+        if (cancelled) return;
+        const nomes = (list || []).map(m => m.nome);
+        // cidades "mais relevantes" da UF primeiro (capital e principais municípios)
+        const prio = (ANIVERSARIOS_CIDADES[uf] || []).map(c => c.cidade);
+        const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const rank = (n: string) => {
+          const i = prio.findIndex(p => norm(p) === norm(n));
+          return i === -1 ? 999 : i;
+        };
+        setUfCities([...nomes].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, "pt-BR")));
+      })
+      .catch(() => { if (!cancelled) setUfCities([]); })
+      .finally(() => { if (!cancelled) setCityLoading(false); });
     return () => { cancelled = true; };
   }, [profile.estado]);
 
@@ -369,8 +383,9 @@ export default function WelcomeScreen({
     if (!ufCities.length) return [];
     const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const nq = norm(q);
-    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 8);
+    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 12);
   })();
+
 
 
 
