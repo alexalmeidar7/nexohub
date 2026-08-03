@@ -46,6 +46,7 @@ export default function InfoMusicSection() {
   const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
   const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
   const [uploadProgress, setUploadProgress] = useState<{ active: boolean; stage: string; percent: number }>({ active: false, stage: "", percent: 0 });
+  const [previewImage, setPreviewImage] = useState<{ url: string; type: "Capa" | "Fundo" } | null>(null);
 
   const loadExcecoes = async () => {
     if (!user) return;
@@ -1076,7 +1077,17 @@ export default function InfoMusicSection() {
                       />
                     </label>
                   </div>
-                  {newExcecaoCapa && <div className="text-[9px] opacity-60 font-bold text-cyan-600 px-1">Capa carregada ✓</div>}
+                  {newExcecaoCapa && (
+                    <div className="flex items-center gap-1 px-1">
+                      <div className="text-[9px] opacity-60 font-bold text-cyan-600">Capa carregada ✓</div>
+                      <button 
+                        onClick={() => setPreviewImage({ url: newExcecaoCapa, type: "Capa" })}
+                        className="text-[9px] text-cyan-600 hover:underline font-bold"
+                      >
+                        (Ver prévia)
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-1">
@@ -1110,7 +1121,17 @@ export default function InfoMusicSection() {
                       />
                     </label>
                   </div>
-                  {newExcecaoFundo && <div className="text-[9px] opacity-60 font-bold text-cyan-600 px-1">Fundo carregado ✓</div>}
+                  {newExcecaoFundo && (
+                    <div className="flex items-center gap-1 px-1">
+                      <div className="text-[9px] opacity-60 font-bold text-cyan-600">Fundo carregado ✓</div>
+                      <button 
+                        onClick={() => setPreviewImage({ url: newExcecaoFundo, type: "Fundo" })}
+                        className="text-[9px] text-cyan-600 hover:underline font-bold"
+                      >
+                        (Ver prévia)
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
               <Button variant="save" className="w-full" onClick={addExcecao} disabled={savingExcecoes || !newExcecao.trim()}>
@@ -1118,6 +1139,27 @@ export default function InfoMusicSection() {
                 Adicionar Exceção
               </Button>
             </div>
+
+            <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
+              <DialogContent className="max-w-[90vw] w-fit p-0 overflow-hidden border-none bg-black/90">
+                <div className="relative group">
+                  <img 
+                    src={previewImage?.url} 
+                    alt={`Prévia ${previewImage?.type}`}
+                    className="max-h-[85vh] object-contain"
+                  />
+                  <div className="absolute top-4 left-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/10">
+                    Prévia: {previewImage?.type}
+                  </div>
+                  <button 
+                    onClick={() => setPreviewImage(null)}
+                    className="absolute top-4 right-4 p-2 bg-black/60 backdrop-blur-md rounded-full text-white hover:bg-black/80 transition-colors border border-white/10"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </DialogContent>
+            </Dialog>
             <div
               className="rounded-xl overflow-hidden"
               style={{
@@ -1164,8 +1206,22 @@ export default function InfoMusicSection() {
                         </td>
                         <td className="px-3 py-2 text-[10px] opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                           <div className="flex flex-col gap-0.5">
-                            {ex.capa_url ? <span className="text-emerald-500 font-bold">✓ Capa</span> : <span>—</span>}
-                            {ex.background_url ? <span className="text-emerald-500 font-bold">✓ Fundo</span> : <span>—</span>}
+                            {ex.capa_url ? (
+                              <button 
+                                onClick={() => setPreviewImage({ url: ex.capa_url, type: "Capa" })}
+                                className="text-emerald-500 font-bold hover:underline text-left"
+                              >
+                                ✓ Capa
+                              </button>
+                            ) : <span>—</span>}
+                            {ex.background_url ? (
+                              <button 
+                                onClick={() => setPreviewImage({ url: ex.background_url, type: "Fundo" })}
+                                className="text-emerald-500 font-bold hover:underline text-left"
+                              >
+                                ✓ Fundo
+                              </button>
+                            ) : <span>—</span>}
                           </div>
                         </td>
                         <td className="px-3 py-2 text-right">
