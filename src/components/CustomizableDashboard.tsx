@@ -475,22 +475,30 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
         {musicaMinimizada && (
           <div className="mb-6">
             <div className="bg-[#D6F4FB]/50 dark:bg-[#00BFF0]/10 border border-[#00BFF0]/20 rounded-2xl p-4 backdrop-blur-md flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-[#00BFF0] flex items-center justify-center shadow-lg shadow-[#00BFF0]/20">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-xl bg-[#00BFF0] flex items-center justify-center shadow-lg shadow-[#00BFF0]/20 shrink-0">
                   <Music className="text-white w-6 h-6" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-[#00BFF0] uppercase tracking-wider">Música no Ar</h3>
-                  <p className="text-xs text-muted-foreground">Página minimizada • Clique para restaurar</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="flex h-2 w-2 relative">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00BFF0] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00BFF0]"></span>
+                    </span>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-md italic">
+                      {currentMusic ? `${currentMusic.titulo} - ${currentMusic.artista}` : "Música minimizada • Clique para restaurar"}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button 
                   onClick={onRestaurarMusica}
                   className="px-4 py-2 bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white text-xs font-bold rounded-full transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20 flex items-center gap-2"
                 >
                   <Maximize2 size={14} />
-                  RESTAURAR
+                  <span className="hidden sm:inline">RESTAURAR</span>
                 </button>
                 <button 
                   onClick={onFecharMusica}
