@@ -681,6 +681,11 @@ export default function InfoMusicSection() {
   return (
     <div
       className="relative space-y-5 rounded-2xl p-5"
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
+        boxShadow: "0 8px 28px -14px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent)",
+      }}
     >
       {/* Upload Progress Overlay */}
       {uploadProgress.active && (
@@ -711,13 +716,6 @@ export default function InfoMusicSection() {
         </div>
       )}
 
-
-      style={{
-        backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
-        border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
-        boxShadow: "0 8px 28px -14px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 22%, transparent)",
-      }}
-    >
       {/* ── Header row: status crédito IA + botão "?" ── */}
       <div className="flex items-center justify-end gap-2 flex-wrap">
         <button
