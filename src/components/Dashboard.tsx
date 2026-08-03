@@ -1639,7 +1639,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <BackButton onClick={() => setCurrentPage("dashboard")} />
+              <div className="flex items-center gap-2">
+                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                {currentPage === "musica" && (
+                  <button
+                    onClick={() => setCurrentPage("dashboard")}
+                    className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
+                    title="Minimizar"
+                  >
+                    <div className="w-5 h-1 bg-white rounded-full" />
+                  </button>
+                )}
+              </div>
               <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
                 <span>Home</span>
                 <span className="opacity-50">/</span>

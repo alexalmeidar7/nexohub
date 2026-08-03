@@ -2645,21 +2645,32 @@ function DashboardPlayerWidget({ dataUserId, onVideoChange, onCompactChange }: {
               toggleMute={toggleMute}
               handleVolume={handleVolume}
             />
-            {isVideo && videoActive && !compactMode && (
+            {isVideo && !compactMode && (
               <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const el = videoRef.current as any;
-                  if (!el) return;
-                  const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-                  try { req?.call(el); } catch { /* noop */ }
+                  if (videoActive) {
+                    const el = videoRef.current as any;
+                    if (!el) return;
+                    const req = el.requestFullscreen || el.webkitEnterFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+                    try { req?.call(el); } catch { /* noop */ }
+                  } else {
+                    onVideoChange?.(true);
+                  }
                 }}
-                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg relative"
                 style={{ background: "#001e2d" }}
-                title="Tela cheia"
+                title={videoActive ? "Tela cheia" : "Ativar vídeo"}
               >
-                <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+                {videoActive ? (
+                  <Maximize2 size={12} style={{ color: "#c8ff00" }} />
+                ) : (
+                  <>
+                    <Tv size={12} style={{ color: "#c8ff00" }} />
+                    <div className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#c8ff00] animate-pulse" />
+                  </>
+                )}
               </button>
             )}
 

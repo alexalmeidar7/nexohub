@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
@@ -389,7 +389,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
 
   // Source health tracking — tracks last SUCCESSFUL response (not song change)
   const lastOnlineSuccessRef = useRef<number>(0);
@@ -1422,6 +1422,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>
                 Música no Ar
               </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowConfig(!showConfig)}
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-all border border-black/10 text-[#0d0446]/60 hover:text-[#0d0446]"
+                  title={showConfig ? "Fechar Configuração" : "Restaurar Configuração"}
+                >
+                  {showConfig ? <X size={18} /> : <Settings size={18} />}
+                </button>
+              </div>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {bothActive && (
                   <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
