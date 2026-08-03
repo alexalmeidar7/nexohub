@@ -1049,7 +1049,24 @@ export default function WelcomeScreen({
                   );
                 })}
 
+                {profilesLoading && subProfiles.length === 0 && (
+                  <div
+                    className="shrink-0 rounded-[28px] flex items-center justify-center"
+                    style={{
+                      width: "clamp(110px, 11vw, 150px)",
+                      height: "clamp(110px, 11vw, 150px)",
+                      background: "rgba(255,255,255,0.05)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      backdropFilter: "blur(6px)",
+                    }}
+                    aria-label="Carregando perfis"
+                  >
+                    <span className="inline-block w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" aria-hidden />
+                  </div>
+                )}
+
                 <button
+
                   onClick={() => { cancelAutoAdvance(); setAddProfileOpen(true); }}
                   data-ws-focusable="true"
                   aria-label="Adicionar novo perfil"
