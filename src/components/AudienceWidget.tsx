@@ -979,16 +979,6 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
           rotationKey={current ? `${current.key}-${rotIdx}` : "empty"}
           badge={current ? <DeltaBadge delta={socialDelta[current.key]} dark={dark} loading={loadingConfig || loadingSocial} /> : null}
         />
-        <div
-          className="rounded-2xl flex flex-col items-center justify-center p-3 relative cursor-pointer group"
-          onClick={() => setReportOpen(true)}
-          style={{ background: dark }}
-        >
-          <TrendingUp className="text-[#C6F03C] group-hover:scale-110 transition-transform mb-1" size={20} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: "#fff" }}>
-            Ver Relatório
-          </span>
-        </div>
       </div>
 
       <Dialog
