@@ -441,7 +441,7 @@ export default function InfoMusicSection() {
       if (filterField === "curiosidade") return curiosidade.includes(q);
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
-  }, [rows, search, filterField, excecaoList]);
+  }, [rows, search, filterField, excecoes]);
 
   const load = async () => {
     setLoading(true);
@@ -579,7 +579,7 @@ export default function InfoMusicSection() {
       }
     })();
     return () => { cancelled = true; };
-  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user, excecaoList]);
+  }, [nowPlaying?.musica, nowPlaying?.artista, nowPlaying?.curiosity, user, excecoes]);
 
   // ============ XML Verifier ============
   // Fetch the live broadcast XML and compare its <curiosidade> value with the text
