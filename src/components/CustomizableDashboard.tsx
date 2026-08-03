@@ -472,44 +472,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
   return (
     <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1 no-scrollbar overflow-y-auto">
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
-        {musicaMinimizada && (
-          <div className="mb-6">
-            <div className="bg-[#D6F4FB]/50 dark:bg-[#00BFF0]/10 border border-[#00BFF0]/20 rounded-2xl p-4 backdrop-blur-md flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500">
-              <div className="flex items-center gap-4 min-w-0">
-                <div className="w-12 h-12 rounded-xl bg-[#00BFF0] flex items-center justify-center shadow-lg shadow-[#00BFF0]/20 shrink-0">
-                  <Music className="text-white w-6 h-6" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-[#00BFF0] uppercase tracking-wider">Música no Ar</h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00BFF0] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00BFF0]"></span>
-                    </span>
-                    <p className="text-xs text-muted-foreground truncate max-w-[200px] sm:max-w-md italic">
-                      {currentMusic ? `${currentMusic.titulo} - ${currentMusic.artista}` : "Música minimizada • Clique para restaurar"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button 
-                  onClick={onRestaurarMusica}
-                  className="px-4 py-2 bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white text-xs font-bold rounded-full transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20 flex items-center gap-2"
-                >
-                  <Maximize2 size={14} />
-                  <span className="hidden sm:inline">RESTAURAR</span>
-                </button>
-                <button 
-                  onClick={onFecharMusica}
-                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
 
       {/* Section: Atalhos */}
@@ -782,10 +744,47 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
                   </div>
                 </div>
                 {item.widgetType === "player" && (
-                  <div className="flex-1 min-w-0 h-full">
+                  <div className="flex-1 min-w-0 h-full flex flex-col gap-2">
                     <Suspense fallback={<div style={{ height: "100%", borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
                       <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
                     </Suspense>
+                    
+                    {musicaMinimizada && (
+                      <div className="bg-[#D6F4FB]/50 dark:bg-[#00BFF0]/10 border border-[#00BFF0]/20 rounded-2xl p-4 backdrop-blur-md flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-[#00BFF0] flex items-center justify-center shadow-lg shadow-[#00BFF0]/20 shrink-0">
+                            <Music className="text-white w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-[10px] font-bold text-[#00BFF0] uppercase tracking-wider">Música no Ar</h3>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="flex h-1.5 w-1.5 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00BFF0] opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00BFF0]"></span>
+                              </span>
+                              <p className="text-[11px] text-muted-foreground truncate max-w-[150px] italic font-medium">
+                                {currentMusic ? `${currentMusic.titulo} - ${currentMusic.artista}` : "Minimizado"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button 
+                            onClick={onRestaurarMusica}
+                            className="w-8 h-8 flex items-center justify-center bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white rounded-full transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20"
+                            title="Restaurar"
+                          >
+                            <Maximize2 size={14} />
+                          </button>
+                          <button 
+                            onClick={onFecharMusica}
+                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 </div>
