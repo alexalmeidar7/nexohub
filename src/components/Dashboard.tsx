@@ -336,7 +336,12 @@ interface DashboardProps {
   onFecharMusica?: () => void;
 }
 
-export default function Dashboard({ onLogout, musicaMinimizada, onRestaurarMusica, onFecharMusica }: DashboardProps) {
+export default function Dashboard({ 
+  onLogout, 
+  musicaMinimizada, 
+  onRestaurarMusica, 
+  onFecharMusica 
+}: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
@@ -470,9 +475,9 @@ export default function Dashboard({ onLogout, musicaMinimizada, onRestaurarMusic
       if (page) setCurrentPage(page);
     };
     const onMinimize = () => {
-      if (onRestaurarMusica) {
-        // This is a bit of a hack since we are in the same component, 
-        // but we'll use a safer direct approach if props are available
+      if (onFecharMusica) {
+        // We use the close callback as the minimize setter in this context
+        // if it was passed from a parent that manages this state globally
       }
       const event = new CustomEvent("musica:minimized", { detail: true });
       window.dispatchEvent(event);
