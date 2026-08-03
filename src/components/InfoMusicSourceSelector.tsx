@@ -90,6 +90,26 @@ export default function InfoMusicSourceSelector() {
           );
         })}
       </div>
+
+      {/* Fontes XML restauradas conforme solicitado */}
+      <div className="pt-4 mt-4 border-t border-slate-100">
+        <XmlSection title="Conexão com Estúdio" count={2}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <XmlLinkRow 
+              label="Sync Link (XML)" 
+              kicker="LINK EXTERNO"
+              scopeKey="infomusic-link"
+              xmlContent={undefined}
+            />
+            <XmlLinkRow 
+              label="Upload de Arquivo" 
+              kicker="AUTO UPLOAD"
+              scopeKey="infomusic-upload"
+              xmlContent={undefined}
+            />
+          </div>
+        </XmlSection>
+      </div>
     </div>
   );
 }
