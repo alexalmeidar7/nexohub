@@ -22,6 +22,7 @@ const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
 
 interface Cliente {
+  id: string;
   user_id: string;
   nome: string | null;
   cnpj: string | null;
@@ -30,6 +31,7 @@ interface Cliente {
   cliente_desde: string | null;
   executiva_venda: string | null;
   ativo: boolean | null;
+  logo_url?: string | null;
 }
 
 interface Evento {
