@@ -1535,9 +1535,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
       <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
-        <button
-          onClick={() => setShowConfig(!showConfig)}
-          className="w-full flex items-center justify-between text-left transition-all hover:bg-[#FFFFFF]/50 group"
+        <div 
+          className="w-full flex items-center justify-between text-left transition-all"
           style={{ 
             padding: "20px 24px", 
             borderBottom: showConfig ? `2px solid ${NEXO_CYAN}` : "none",
@@ -1556,10 +1555,27 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </span>
             )}
           </span>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border-2 border-[#E5F7FD] transition-all group-hover:border-[#00BFF0]">
-            {showConfig ? <ChevronUp size={20} style={{ color: NEXO_DARK }} /> : <ChevronDown size={20} style={{ color: NEXO_DARK }} />}
-          </div>
-        </button>
+          <button
+            onClick={() => setShowConfig(!showConfig)}
+            className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BFF0] border border-white/10 transition shrink-0 relative group"
+          >
+            <div 
+              className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
+              style={{
+                background: "linear-gradient(#00BFF0, #C6F03C) border-box",
+                WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+                WebkitMaskComposite: "destination-out",
+                maskComposite: "exclude",
+                animation: "interactSpin 3s linear infinite"
+              }} 
+            />
+            {showConfig ? (
+              <ChevronUp size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
+            ) : (
+              <Settings size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
+            )}
+          </button>
+        </div>
 
         {showConfig && (
           <div className="p-5 space-y-5">
