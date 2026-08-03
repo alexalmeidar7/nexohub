@@ -1681,7 +1681,8 @@ export default function PlayerPage() {
             media.muted = true;
             media.play().then(() => {
               if (playbackSessionRef.current !== sessionId) return;
-              setPlaying(true);
+      setStreamLoading(false);
+      setPlaying(true);
               setBuffering(false);
             }).catch(() => {
               if (playbackSessionRef.current !== sessionId) return;
