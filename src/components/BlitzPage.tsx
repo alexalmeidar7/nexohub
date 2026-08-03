@@ -222,13 +222,34 @@ export default function BlitzPage() {
 
   const handleClienteChange = (val: string) => {
     setForm(prev => ({ ...prev, cliente: val }));
-    if (val.length > 1) {
+    if (val.length > 0) {
       const matched = clientesDisponiveis.filter(c => 
         c.nome.toLowerCase().includes(val.toLowerCase())
       );
       setSugestoesClientes(matched);
       setShowSugestoes(true);
+      setActiveSugestaoIndex(-1);
     } else {
+      setShowSugestoes(false);
+      setActiveSugestaoIndex(-1);
+    }
+  };
+
+  const handleClienteKeyDown = (e: React.KeyboardEvent) => {
+    if (!showSugestoes || sugestoesClientes.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveSugestaoIndex(prev => (prev < sugestoesClientes.length - 1 ? prev + 1 : prev));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveSugestaoIndex(prev => (prev > 0 ? prev - 1 : prev));
+    } else if (e.key === "Enter") {
+      if (activeSugestaoIndex >= 0) {
+        e.preventDefault();
+        selectCliente(sugestoesClientes[activeSugestaoIndex]);
+      }
+    } else if (e.key === "Escape") {
       setShowSugestoes(false);
     }
   };
