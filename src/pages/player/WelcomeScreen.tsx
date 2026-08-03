@@ -348,6 +348,32 @@ export default function WelcomeScreen({
     avatar_url: avatarUrl || "/avatars/usr-default.png",
   });
 
+  // UFs brasileiras + cidades (IBGE)
+  const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+  const [ufCities, setUfCities] = useState<string[]>([]);
+  const [cityFocused, setCityFocused] = useState(false);
+
+  useEffect(() => {
+    const uf = (profile.estado || "").toUpperCase();
+    if (uf.length !== 2) { setUfCities([]); return; }
+    let cancelled = false;
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios`)
+      .then(r => r.json())
+      .then((list: any[]) => { if (!cancelled) setUfCities((list || []).map(m => m.nome)); })
+      .catch(() => { if (!cancelled) setUfCities([]); });
+    return () => { cancelled = true; };
+  }, [profile.estado]);
+
+  const citySuggestions = (() => {
+    const q = (profile.cidade || "").trim().toLowerCase();
+    if (!ufCities.length) return [];
+    const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const nq = norm(q);
+    return (nq ? ufCities.filter(c => norm(c).includes(nq)) : ufCities).slice(0, 8);
+  })();
+
+
+
 
   useEffect(() => {
     if (!user || !radioUserId) return;
@@ -1526,15 +1552,36 @@ export default function WelcomeScreen({
                     <div className="grid grid-cols-[80px_1fr] gap-3">
                       <div>
                         <label className={labelCls} style={labelStyle}>UF</label>
-                        <input className="wsp-input" style={inputStyle} value={profile.estado} maxLength={2}
-                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value.toUpperCase() }))}
-                          placeholder="SP" />
+                        <select className="wsp-input" style={inputStyle} value={profile.estado}
+                          onChange={e => setProfile(p => ({ ...p, estado: e.target.value, cidade: "" }))}>
+                          <option value="">--</option>
+                          {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                        </select>
                       </div>
-                      <div>
+                      <div className="relative">
                         <label className={labelCls} style={labelStyle}>Cidade</label>
                         <input className="wsp-input" style={inputStyle} value={profile.cidade}
+                          placeholder={profile.estado ? "digite para buscar" : "selecione a UF"}
+                          disabled={!profile.estado}
+                          autoComplete="off"
+                          onFocus={() => setCityFocused(true)}
+                          onBlur={() => setTimeout(() => setCityFocused(false), 150)}
                           onChange={e => setProfile(p => ({ ...p, cidade: e.target.value }))} />
+                        {cityFocused && citySuggestions.length > 0 && (
+                          <div className="absolute z-50 left-0 right-0 top-full mt-1 rounded-xl overflow-hidden backdrop-blur-xl"
+                            style={{ background: "rgba(20,20,20,0.92)", border: "1px solid rgba(255,255,255,0.14)" }}>
+                            {citySuggestions.map(c => (
+                              <button key={c} type="button"
+                                className="w-full text-left px-3 py-2 text-xs hover:bg-white/10"
+                                onMouseDown={e => e.preventDefault()}
+                                onClick={() => { setProfile(p => ({ ...p, cidade: c })); setCityFocused(false); }}>
+                                {c}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
+
                     </div>
                     <div className="mt-3">
                       <label className={labelCls} style={labelStyle}>Bairro / Setor</label>
