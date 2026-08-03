@@ -1077,17 +1077,34 @@ export default function WelcomeScreen({
             <div className="w-full flex items-center justify-center gap-5">
               {[
                 { key: "login", label: "entrar", icon: <LogIn className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: true },
+                {
+                  key: "google",
+                  label: "entrar com google",
+                  icon: (
+                    <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden>
+                      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35.5 24 35.5c-6.4 0-11.5-5.1-11.5-11.5S17.6 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 6.4 29.1 4.5 24 4.5 13.2 4.5 4.5 13.2 4.5 24S13.2 43.5 24 43.5c10.8 0 19.5-8.7 19.5-19.5 0-1.2-.1-2.3-.4-3.5z"/>
+                      <path fill="#FF3D00" d="M6.3 14.1l6.6 4.8C14.7 15.1 19 12.5 24 12.5c2.9 0 5.6 1.1 7.6 2.9l5.7-5.7C33.7 6.4 29.1 4.5 24 4.5 16.3 4.5 9.7 8.9 6.3 14.1z"/>
+                      <path fill="#4CAF50" d="M24 43.5c5.1 0 9.7-1.9 13.2-5l-6.1-5c-2 1.4-4.4 2.3-7.1 2.3-5.3 0-9.7-3.1-11.3-7.5l-6.5 5C9.6 39 16.2 43.5 24 43.5z"/>
+                      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.1 5C41.7 34.9 43.5 30 43.5 24c0-1.2-.1-2.3-.4-3.5z"/>
+                    </svg>
+                  ),
+                  primary: true,
+                },
                 { key: "signup", label: "cadastre-se", icon: <Plus className="w-5 h-5 text-white/90" strokeWidth={1.6} />, primary: false },
               ].map((btn) => (
                 <button
                   key={btn.key}
-                  onClick={() => setAuthMode(btn.key as "login" | "signup")}
+                  onClick={() => {
+                    if (btn.key === "google") { void handleGoogleLogin(); return; }
+                    setAuthMode(btn.key as "login" | "signup");
+                  }}
                   data-ws-focusable="true"
                   disabled={signingIn}
                   aria-busy={signingIn}
                   aria-label={btn.label}
                   className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px] disabled:opacity-60 disabled:cursor-not-allowed"
                 >
+
                   <div
                     className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04] flex flex-col items-center justify-center gap-2"
                     style={{
@@ -1118,13 +1135,14 @@ export default function WelcomeScreen({
                       }}
                     />
                     <div className="relative flex items-center justify-center w-11 h-11 rounded-full" style={{ background: "rgba(0,0,0,0.22)", border: "1px solid rgba(255,255,255,0.16)", backdropFilter: "blur(6px)" }}>
-                      {signingIn && btn.primary ? (
+                      {signingIn && btn.key === "google" ? (
                         <span className="inline-block w-4 h-4 rounded-full border-2 border-white/25 border-t-white animate-spin" aria-hidden />
                       ) : btn.icon}
                     </div>
-                    <span className="relative text-white text-sm font-medium lowercase" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}>
-                      {signingIn && btn.primary ? "autenticando..." : btn.label}
+                    <span className="relative text-white text-sm font-medium lowercase text-center px-2" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.55)" }}>
+                      {signingIn && btn.key === "google" ? "autenticando..." : btn.label}
                     </span>
+
                   </div>
                 </button>
               ))}
