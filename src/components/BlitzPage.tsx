@@ -296,6 +296,7 @@ export default function BlitzPage() {
         data_final: new Date(new Date().getFullYear() + 10, 11, 31).toISOString().split('T')[0]
       };
 
+      // @ts-ignore
       const { error } = await supabase.from("logos_patrocinadores").insert(payload);
       
       if (error) throw error;
