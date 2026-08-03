@@ -63,18 +63,42 @@ export default function ClientesPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const { data: configData } = await supabase
-        .from("empresa_config")
-        .select("user_id, nome, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda, ativo")
+      // Usamos a tabela logos_patrocinadores como fonte para clientes,
+      // agrupando pelo nome para tratar cada marca como um cliente único.
+      const { data: logosData } = await supabase
+        .from("logos_patrocinadores")
+        .select("id, user_id, nome, logo_url, ativo, created_at")
+        .eq("excluido", false)
         .order("nome");
       
-      // Simulação ou busca de eventos contratados (como Blitz)
-      // Em um cenário real, teríamos uma tabela de eventos/contratos
       const { data: agendaData } = await supabase
-        .from("agenda_eventos" as any)
+        .from("blitz_promocionais")
         .select("*");
 
-      setClientes((configData as Cliente[]) || []);
+      // Deduplicar logos por nome para gerar a lista de clientes
+      const uniqueClients: Cliente[] = [];
+      const seenNames = new Set();
+
+      (logosData || []).forEach(item => {
+        const name = item.nome?.trim().toUpperCase();
+        if (name && !seenNames.has(name)) {
+          seenNames.add(name);
+          uniqueClients.push({
+            id: item.id,
+            user_id: item.user_id,
+            nome: item.nome,
+            logo_url: item.logo_url,
+            ativo: item.ativo,
+            cnpj: "00.000.000/0000-00", // Fallback pois não há coluna na DB
+            cliente_desde: item.created_at?.split('T')[0],
+            telefone_comercial: "(00) 0000-0000",
+            endereco: "Endereço não cadastrado",
+            executiva_venda: "Não atribuída"
+          });
+        }
+      });
+
+      setClientes(uniqueClients);
       setEventos((agendaData as any[]) || []);
     } catch (err) {
       console.error("Erro ao carregar clientes:", err);
