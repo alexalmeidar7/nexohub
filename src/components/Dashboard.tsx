@@ -338,11 +338,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  const [musicaNoArMinimized, setMusicaNoArMinimized] = useState(false);
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
+        // Se navegou para qualquer coisa que não seja 'musica', garantimos que não está minimizado
+        if (resolved !== "musica") setMusicaNoArMinimized(false);
       }
       return resolved;
     });
@@ -1640,10 +1643,18 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center gap-3 mb-4 ml-1">
               <div className="flex items-center gap-2">
-                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                <BackButton onClick={() => {
+                  if (currentPage === "musica") {
+                    setMusicaNoArMinimized(false);
+                  }
+                  setCurrentPage("dashboard");
+                }} />
                 {currentPage === "musica" && (
                   <button
-                    onClick={() => setCurrentPage("dashboard")}
+                    onClick={() => {
+                      setMusicaNoArMinimized(true);
+                      setCurrentPage("dashboard");
+                    }}
                     className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
                     title="Minimizar"
                   >
@@ -1681,8 +1692,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
-                <MusicaNoAr effectiveUserId={effectiveUserId} />
+              <div style={{ display: (currentPage === "musica" || musicaNoArMinimized) ? "block" : "none" }}>
+                <MusicaNoAr 
+                  effectiveUserId={effectiveUserId} 
+                  minimized={musicaNoArMinimized}
+                  onMinimize={() => {
+                    setMusicaNoArMinimized(true);
+                    setCurrentPage("dashboard");
+                  }}
+                  onRestore={() => {
+                    setMusicaNoArMinimized(false);
+                    setCurrentPage("musica");
+                  }}
+                  onClose={() => {
+                    setMusicaNoArMinimized(false);
+                    setCurrentPage("dashboard");
+                  }}
+                />
               </div>
               {currentPage === "agenda" && <AgendaPage />}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
