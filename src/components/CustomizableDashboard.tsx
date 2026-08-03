@@ -798,6 +798,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
           <p className="text-sm font-bold mb-1" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.6 }}>Área de trabalho vazia</p>
           <p className="text-xs mb-5 max-w-xs" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.3 }}>Adicione atalhos e widgets para personalizar seu painel</p>
         </div>
+      </div>
       )}
 
       {/* Add Dialog */}
