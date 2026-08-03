@@ -2950,19 +2950,16 @@ export default function PlayerPage() {
   }, [handleHomeClick, user, is991Channel, shopActive]);
 
   if (loading) {
-    // Minimal loading: apenas loader central em fundo preto (sem splash)
-    return (
-      <div className="h-screen w-screen bg-black flex items-center justify-center animate-fade-in">
-        <ElegantLoader size={44} />
-      </div>
-    );
+    // Padrão global de sincronização do player
+    return <PlayerSyncLoader />;
   }
 
 
   // ===== New Apple-TV player screen (for audio and video channels) =====
   if (canal && (isAudio || isVideo) && (!isYoutube || isCatalog)) {
     return (
-      <Suspense fallback={<div className="h-screen w-screen bg-black" />}>
+      <Suspense fallback={<PlayerSyncLoader />}>
+
         <AudioPlayerScreen
           audioRef={audioRef}
           videoRef={videoRef}
