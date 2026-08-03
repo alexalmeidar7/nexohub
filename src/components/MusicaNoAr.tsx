@@ -1537,20 +1537,28 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
         <button
           onClick={() => setShowConfig(!showConfig)}
-          className="w-full flex items-center justify-between text-left transition-colors"
-          style={{ padding: "18px 24px", borderBottom: showConfig ? `1px solid ${NEXO_CYAN}33` : "none" }}
+          className="w-full flex items-center justify-between text-left transition-all hover:bg-[#FFFFFF]/50 group"
+          style={{ 
+            padding: "20px 24px", 
+            borderBottom: showConfig ? `2px solid ${NEXO_CYAN}` : "none",
+            backgroundColor: showConfig ? "#FFFFFF" : "transparent"
+          }}
         >
-          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
-            <Monitor size={16} style={{ color: NEXO_CYAN }} />
+          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 14, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: NEXO_CYAN, boxShadow: `0 4px 12px ${NEXO_CYAN}44` }}>
+              <Monitor size={18} className="text-white" />
+            </div>
             Configuração das Origens
             {localMonitoring && (
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }} />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
               </span>
             )}
           </span>
-          {showConfig ? <ChevronUp size={18} style={{ color: NEXO_DARK }} /> : <ChevronDown size={18} style={{ color: NEXO_DARK }} />}
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border-2 border-[#E5F7FD] transition-all group-hover:border-[#00BFF0]">
+            {showConfig ? <ChevronUp size={20} style={{ color: NEXO_DARK }} /> : <ChevronDown size={20} style={{ color: NEXO_DARK }} />}
+          </div>
         </button>
 
         {showConfig && (
