@@ -45,6 +45,7 @@ export default function InfoMusicSection() {
   const [newExcecao, setNewExcecao] = useState("");
   const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
   const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
+  const [uploadProgress, setUploadProgress] = useState<{ active: boolean; stage: string; percent: number }>({ active: false, stage: "", percent: 0 });
 
   const loadExcecoes = async () => {
     if (!user) return;
