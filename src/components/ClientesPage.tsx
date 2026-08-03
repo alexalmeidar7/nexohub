@@ -17,7 +17,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { confirmDialog } from "@/lib/confirmDialog";
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
@@ -61,20 +60,25 @@ export default function ClientesPage() {
 
   const load = async () => {
     setLoading(true);
-    const { data: configData } = await supabase
-      .from("empresa_config")
-      .select("user_id, nome, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda, ativo")
-      .order("nome");
-    
-    // Simulação ou busca de eventos contratados (como Blitz)
-    // Em um cenário real, teríamos uma tabela de eventos/contratos
-    const { data: agendaData } = await supabase
-      .from("agenda_eventos" as any)
-      .select("*");
+    try {
+      const { data: configData } = await supabase
+        .from("empresa_config")
+        .select("user_id, nome, cnpj, telefone_comercial, endereco, cliente_desde, executiva_venda, ativo")
+        .order("nome");
+      
+      // Simulação ou busca de eventos contratados (como Blitz)
+      // Em um cenário real, teríamos uma tabela de eventos/contratos
+      const { data: agendaData } = await supabase
+        .from("agenda_eventos" as any)
+        .select("*");
 
-    setClientes((configData as Cliente[]) || []);
-    setEventos((agendaData as any[]) || []);
-    setLoading(false);
+      setClientes((configData as Cliente[]) || []);
+      setEventos((agendaData as any[]) || []);
+    } catch (err) {
+      console.error("Erro ao carregar clientes:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -89,9 +93,10 @@ export default function ClientesPage() {
 
     setCriando(true);
     try {
-      // Nota: Aqui idealmente criaríamos um usuário no auth.users via Edge Function,
-      // mas o pedido foca no formulário de cadastro de clientes.
-      // Vamos inserir na empresa_config como um placeholder ou usar a lógica existente se houver.
+      // Nota: empresa_config geralmente tem 1 linha por user_id. 
+      // Se estivermos cadastrando "clientes" como registros novos, 
+      // precisaríamos de uma tabela de clientes dedicada ou permissão para criar novos user_ids.
+      // Para o MVP solicitado, inserimos na empresa_config assumindo que ela aceita múltiplos registros.
       
       const { error } = await supabase.from("empresa_config").insert({
         nome: novo.nome,
@@ -101,7 +106,7 @@ export default function ClientesPage() {
         cliente_desde: novo.cliente_desde,
         executiva_venda: novo.executiva_venda,
         ativo: true
-      });
+      } as any);
 
       if (error) throw error;
 
@@ -124,14 +129,17 @@ export default function ClientesPage() {
     );
   }, [clientes, busca]);
 
-  const getEventosCliente = (clienteId: string) => {
-    // Lógica para filtrar eventos vinculados ao cliente
-    // Como ainda não temos a relação clara no banco, mostramos um placeholder ou buscamos por nome
-    return eventos.filter(e => (e as any).cliente_nome === filtrados.find(c => c.user_id === clienteId)?.nome).length;
+  const getEventosCliente = (clienteNome: string | null) => {
+    if (!clienteNome) return 0;
+    return eventos.filter(e => (e as any).cliente_nome === clienteNome).length;
   };
 
   if (loading) {
-    return <div className="p-8 flex items-center justify-center"><Loader2 className="animate-spin text-cyan-500" /></div>;
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <Loader2 className="animate-spin text-cyan-500" size={32} />
+      </div>
+    );
   }
 
   return (
@@ -254,8 +262,8 @@ export default function ClientesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtrados.map((cliente) => (
-              <TableRow key={cliente.user_id} className="hover:bg-slate-50/50 transition-colors">
+            {filtrados.map((cliente, idx) => (
+              <TableRow key={cliente.user_id || idx} className="hover:bg-slate-50/50 transition-colors">
                 <TableCell className="font-medium text-slate-800">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
@@ -275,7 +283,7 @@ export default function ClientesPage() {
                 <TableCell>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-100 text-lime-700 text-[10px] font-bold uppercase">
                     <Activity size={12} />
-                    {getEventosCliente(cliente.user_id)} Eventos
+                    {getEventosCliente(cliente.nome)} Eventos
                   </span>
                 </TableCell>
                 <TableCell className="text-right">
