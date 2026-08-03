@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, ArrowLeft, Minimize2 } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
@@ -11,7 +11,6 @@ import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
 import { matchesMusicException } from "@/lib/musicExceptions";
-import { BackButton } from "@/components/ui/back-button";
 
 interface MusicData {
   titulo: string;
@@ -1423,6 +1422,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: NEXO_DARK, textTransform: "uppercase", margin: 0 }}>
                 Música no Ar
               </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowConfig(!showConfig)}
+                  className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 transition-all border border-black/10 text-[#0d0446]/60 hover:text-[#0d0446]"
+                  title={showConfig ? "Fechar Configuração" : "Restaurar Configuração"}
+                >
+                  {showConfig ? <X size={18} /> : <Settings size={18} />}
+                </button>
+              </div>
               <div className="flex items-center gap-2 mt-1 flex-wrap">
                 {bothActive && (
                   <span className="inline-flex items-center gap-1" style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", padding: "3px 10px", borderRadius: 999, background: "#FFFFFF", border: "2px solid #16a34a", color: "#16a34a" }}>
@@ -1450,19 +1458,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                window.dispatchEvent(new Event("minimizeMusica"));
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20"
-              style={{ background: NEXO_CYAN, color: "#FFFFFF" }}
-            >
-              <Minimize2 size={14} />
-              Minimizar
-            </button>
-            <BackButton />
           </div>
         </div>
 
@@ -1546,6 +1541,384 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
       </section>
 
+      {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
+      <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
+        <button
+          onClick={() => setShowConfig(!showConfig)}
+          className="w-full flex items-center justify-between text-left transition-colors"
+          style={{ padding: "18px 24px", borderBottom: showConfig ? `1px solid ${NEXO_CYAN}33` : "none" }}
+        >
+          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 13, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase" }}>
+            <Monitor size={16} style={{ color: NEXO_CYAN }} />
+            Configuração das Origens
+            {localMonitoring && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
+                <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: "#22c55e" }} />
+              </span>
+            )}
+          </span>
+          {showConfig ? <ChevronUp size={18} style={{ color: NEXO_DARK }} /> : <ChevronDown size={18} style={{ color: NEXO_DARK }} />}
+        </button>
+
+        {showConfig && (
+          <div className="p-5 space-y-5">
+            {/* Two columns with center divider */}
+            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 lg:gap-0 items-stretch">
+              {/* ── ONLINE SOURCE ── */}
+              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)" }}>
+                    <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
+                  </span>
+                  Origem Online
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
+                    <input
+                      value={xmlUrl}
+                      onChange={(e) => {
+                        const nextValue = e.target.value;
+                        setXmlUrl(nextValue);
+                        if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
+                          setOnlineError(null);
+                        }
+                      }}
+                      className="flex-1 text-xs outline-none bg-transparent"
+                      style={{ color: "var(--layout-page-text, #0d0446)" }}
+                      placeholder="Cole ou digite uma URL .xml"
+                    />
+                  </div>
+                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
+                    <Check size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleOnlineSource}
+                    disabled={!hasValidOnlineUrl}
+                    aria-pressed={isOnlineSelected}
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    style={{
+                      backgroundColor: isOnlineSelected ? "#C6F03C" : "#ffffff",
+                      color: "#0d0446",
+                      border: isOnlineSelected ? "2px solid #0d0446" : "1px solid #0d0446",
+                      opacity: hasValidOnlineUrl ? 1 : 0.45,
+                      boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                    }}
+                  >
+                    {onlineActivating ? <Loader2 size={12} className="animate-spin" /> : isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{onlineActivating ? "LENDO..." : "LER ESSA"}</span>
+                  </button>
+                </div>
+
+                {(() => {
+                  const st = buildStatus({ selected: isOnlineSelected, activating: onlineActivating, error: onlineError, lastReadAt: onlineLastReadAt, hasSource: hasValidOnlineUrl, delayed: !!onlineDelay });
+                  const ago = formatAgo(onlineLastReadAt);
+                  return (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {st.key === "ativando" || st.key === "atrasado" ? (
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                        ) : (
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
+                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                      </div>
+                      {ago && st.key !== "inativa" && st.key !== "erro" && (
+                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+                {onlineError && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <AlertTriangle size={11} />
+                    <span>{onlineError}</span>
+                  </div>
+                )}
+              </div>
+
+                <div className="flex flex-col items-center justify-center lg:px-2 w-full lg:w-auto" style={{ minWidth: 0 }}>
+                  <div
+                    className={`rounded-2xl px-3 py-3 lg:py-4 flex lg:flex-col items-center justify-center gap-2 w-full lg:w-[110px] ${bothActive ? "music-dual-monitor-blink" : ""}`}
+                    style={{
+                      background: bothActive
+                        ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
+                        : "linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%)",
+                      color: bothActive ? "#ffffff" : "#0d0446",
+                      border: bothActive ? "1px solid #00BFF0" : "1px dashed color-mix(in srgb, #0d0446 25%, transparent)",
+                      boxShadow: bothActive ? "0 4px 12px rgba(0,191,240,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
+                      Lendo as duas origens
+                    </span>
+                  </div>
+                </div>
+
+              {/* ── LOCAL SOURCE ── */}
+              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
+                    <FolderOpen size={12} style={{ color: "#16a34a" }} />
+                  </span>
+                  Origem Local
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
+                    <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
+                    <span className="flex-1 min-w-0 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if ('showOpenFilePicker' in window) {
+                        handleFileSelect();
+                      } else {
+                        fileInputRef.current?.click();
+                      }
+                    }}
+                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2"
+                    style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
+                  >
+                    <Upload size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={toggleLocalSource}
+                    disabled={!hasValidLocalSource}
+                    aria-pressed={isLocalSelected}
+                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    style={{
+                      backgroundColor: isLocalSelected ? "#C6F03C" : "#ffffff",
+                      color: "#0d0446",
+                      border: isLocalSelected ? "2px solid #0d0446" : "1px solid #0d0446",
+                      opacity: hasValidLocalSource ? 1 : 0.45,
+                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                    }}
+                  >
+                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
+                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
+                  </button>
+                </div>
+
+                <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
+
+                {/* Device name — editable */}
+                {localMonitoring && (
+                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                    <span>lendo no computador</span>
+                    {editingDeviceName ? (
+                      <span className="flex items-center gap-1">
+                        <input
+                          value={deviceNameInput}
+                          onChange={e => setDeviceNameInput(e.target.value)}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-mono outline-none"
+                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "var(--layout-page-text, #0d0446)", width: 140 }}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              const v = deviceNameInput.trim() || deriveDeviceName();
+                              localStorage.setItem(DEVICE_NAME_KEY, v);
+                              setCurrentDeviceName(v);
+                              setEditingDeviceName(false);
+                            }
+                          }}
+                        />
+                        <button onClick={() => {
+                          const v = deviceNameInput.trim() || deriveDeviceName();
+                          localStorage.setItem(DEVICE_NAME_KEY, v);
+                          setCurrentDeviceName(v);
+                          setEditingDeviceName(false);
+                        }} className="text-green-600"><Check size={12} /></button>
+                      </span>
+                    ) : (
+                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>
+                        {currentDeviceName}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {(() => {
+                  const st = buildStatus({ selected: isLocalSelected && localMonitoring, activating: localActivating, error: localError, lastReadAt: localLastReadAt, hasSource: !!localFileName, delayed: !!localDelay });
+                  const ago = formatAgo(localLastReadAt);
+                  return (
+                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {st.key === "ativando" || st.key === "atrasado" ? (
+                          <Loader2 size={12} className="animate-spin shrink-0" />
+                        ) : (
+                          <span className="relative flex h-2 w-2 shrink-0">
+                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
+                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                          </span>
+                        )}
+                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                      </div>
+                      {ago && st.key !== "inativa" && st.key !== "erro" && (
+                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                      )}
+                    </div>
+                  );
+                })()}
+                {localError && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <AlertTriangle size={11} />
+                    <span>{localError}</span>
+                  </div>
+                )}
+
+                {/* Live parse preview — shows what Title/Artist were extracted
+                    from the current file BEFORE it enters the music pipeline. */}
+                {localFileContent && (() => {
+                  const preview = parseXmlString(localFileContent);
+                  const stopped = !preview && isStoppedXmlPayload(localFileContent);
+                  return (
+                    <div className="rounded-lg p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)" }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Prévia da leitura</span>
+                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: preview ? "rgba(34,197,94,0.12)" : "rgba(234,179,8,0.15)", color: preview ? "#16a34a" : "#a16207" }}>
+                          {preview ? "OK" : stopped ? "STANDBY" : "SEM DADOS"}
+                        </span>
+                      </div>
+                      {preview ? (
+                        <div className="space-y-1">
+                          <div className="flex gap-2 text-[11px]">
+                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Música</span>
+                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.titulo || "—"}</span>
+                          </div>
+                          <div className="flex gap-2 text-[11px]">
+                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista</span>
+                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.artista || "—"}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                          {stopped ? "Automação sem música no ar." : "Não foi possível extrair Título/Artista deste arquivo."}
+                        </p>
+                      )}
+                      {dataUserId === CULTURA_FM_USER_ID && (
+                        <div className="mt-2 pt-2 flex items-center justify-between text-[9px] font-semibold" style={{ borderTop: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                          <span className="uppercase tracking-wider">Última sincronia Cultura FM</span>
+                          <span className="font-mono" style={{ color: culturaLastSync ? "#16a34a" : "#a16207" }}>
+                            {culturaLastSync
+                              ? `${new Date(culturaLastSync).toLocaleTimeString("pt-BR")} · ${formatAgo(culturaLastSync) || "agora"}`
+                              : "nunca"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                  );
+                })()}
+
+                {/* Remote device warning */}
+                {!localFileName && (() => {
+                  const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
+                  if (lastLocal?.deviceName && lastLocal.deviceName !== currentDeviceName) {
+                    return (
+                      <div className="rounded-lg p-2 flex items-start gap-2" style={{ backgroundColor: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)" }}>
+                        <Monitor size={12} className="shrink-0 mt-0.5" style={{ color: "#ca8a04" }} />
+                        <p className="text-[9px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                          XML carregado em outro computador: <span className="font-mono" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>{lastLocal.deviceName}</span>
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+            </div>
+
+            {/* Info Music — Curiosidades por IA */}
+            <div className="rounded-xl p-4" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+              <p className="text-[10px] mb-3 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                <Sparkles size={10} /> Info Music — Curiosidades por IA
+              </p>
+              <Suspense fallback={<div className="flex items-center gap-2 text-xs py-4 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={14} className="animate-spin" /> Carregando...</div>}>
+                <InfoMusicSection />
+              </Suspense>
+            </div>
+
+            {/* Upload History — últimas 3 atualizações */}
+            {uploadHistory.length > 0 && (
+              <div>
+                <p className="text-[10px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+                  <Clock size={10} /> Histórico de atualizações
+                  <span className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-black" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, transparent)", color: "var(--layout-page-text, #0d0446)" }}>últimas 3</span>
+                </p>
+                <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+                  <table className="w-full text-[10px]">
+                    <thead>
+                      <tr style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), color-mix(in srgb, var(--layout-header-bg, #0d0446) 4%, transparent))" }}>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Origem</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Data</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Hora</th>
+                        <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista — Música</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {uploadHistory.map((entry, i) => {
+                        // Fallback: if legacy row has no artist/music, use the live playing track
+                        // for the most recent entry so the column always reflects "o que estava tocando".
+                        const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
+                        const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
+                        const showArtist = entry.artista || fallbackArtist;
+                        const showMusic = entry.musica || fallbackMusic;
+                        return (
+                        <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
+                          <td className="px-3 py-2 font-semibold">
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold cursor-help"
+                              title={entry.source === "pasta" ? (entry.deviceName ? `Computador: ${entry.deviceName}` : "Computador: desconhecido") : "Leitura online"}
+                              style={{
+                                backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
+                                color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
+                              }}
+                            >
+                              {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                              {entry.source === "pasta" ? "Leitura local" : "Online"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
+                          <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
+                          <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                            {showArtist || showMusic ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <span className="font-bold truncate max-w-[140px]" title={showArtist}>{showArtist || "—"}</span>
+                                <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                                <span className="truncate max-w-[180px]" title={showMusic} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{showMusic || "—"}</span>
+                              </span>
+                            ) : (
+                              <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* XML Output Link */}
+      {/* XML Output Link */}
+      {music && (
+        <XmlSection title="XML Música Agora">
+          <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} />
+        </XmlSection>
+      )}
     </div>
   );
 }

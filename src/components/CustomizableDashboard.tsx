@@ -142,12 +142,9 @@ function getIcon(name: string) {
 interface Props {
   onNavigate: (page: Page) => void;
   effectiveUserId?: string | null;
-  musicaMinimizada?: boolean;
-  onRestaurarMusica?: () => void;
-  onFecharMusica?: () => void;
 }
 
-export default function CustomizableDashboard({ onNavigate, effectiveUserId, musicaMinimizada, onRestaurarMusica, onFecharMusica }: Props) {
+export default function CustomizableDashboard({ onNavigate, effectiveUserId }: Props) {
   const { user } = useAuth();
   const [items, setItems] = useState<DashboardItem[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -470,8 +467,7 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
   }, [items]);
 
   return (
-    <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1 no-scrollbar overflow-y-auto">
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <div ref={scrollRef} data-home-scroll className="flex flex-col h-full overflow-hidden relative pt-1">
 
 
       {/* Section: Atalhos */}
@@ -744,47 +740,10 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
                   </div>
                 </div>
                 {item.widgetType === "player" && (
-                  <div className="flex-1 min-w-0 h-full flex flex-col gap-2">
+                  <div className="flex-1 min-w-0 h-full">
                     <Suspense fallback={<div style={{ height: "100%", borderRadius: 24, background: "#d9ff65", opacity: 0.6 }} />}>
                       <AudienceWidget dataUserId={dataUserId || undefined} heightPx={audienceHeight} />
                     </Suspense>
-                    
-                    {musicaMinimizada && (
-                      <div className="bg-[#D6F4FB]/50 dark:bg-[#00BFF0]/10 border border-[#00BFF0]/20 rounded-2xl p-4 backdrop-blur-md flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500 shadow-sm">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-xl bg-[#00BFF0] flex items-center justify-center shadow-lg shadow-[#00BFF0]/20 shrink-0">
-                            <Music className="text-white w-4 h-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="text-[10px] font-bold text-[#00BFF0] uppercase tracking-wider">Música no Ar</h3>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="flex h-1.5 w-1.5 relative">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00BFF0] opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00BFF0]"></span>
-                              </span>
-                              <p className="text-[11px] text-muted-foreground truncate max-w-[150px] italic font-medium">
-                                {currentMusic ? `${currentMusic.titulo} - ${currentMusic.artista}` : "Minimizado"}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button 
-                            onClick={onRestaurarMusica}
-                            className="w-8 h-8 flex items-center justify-center bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white rounded-full transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20"
-                            title="Restaurar"
-                          >
-                            <Maximize2 size={14} />
-                          </button>
-                          <button 
-                            onClick={onFecharMusica}
-                            className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-red-500/10 text-muted-foreground hover:text-red-500 transition-colors"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
                 </div>
@@ -976,7 +935,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
           <ChevronDown size={18} className="text-white/50 animate-bounce" />
         </div>
       )}
-      </div>
     </div>
   );
 }

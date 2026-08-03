@@ -331,17 +331,9 @@ const pageTitle: Record<Page, string> = {
 
 interface DashboardProps {
   onLogout?: () => void;
-  musicaMinimizada?: boolean;
-  onRestaurarMusica?: () => void;
-  onFecharMusica?: () => void;
 }
 
-export default function Dashboard({ 
-  onLogout, 
-  musicaMinimizada, 
-  onRestaurarMusica, 
-  onFecharMusica 
-}: DashboardProps) {
+export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
@@ -464,35 +456,14 @@ export default function Dashboard({
   const [nowTick, setNowTick] = useState(() => Date.now());
   // Global player state (mirrored from CustomizableDashboard via window events)
   const [playerState, setPlayerState] = useState<{ isPlaying: boolean; isLoading: boolean; hasChannel: boolean; channelName: string }>({ isPlaying: false, isLoading: false, hasChannel: false, channelName: "" });
-  
   useEffect(() => {
     const onState = (e: Event) => {
       const d = (e as CustomEvent).detail;
       if (d) setPlayerState(d);
     };
-    const onChangePage = (e: Event) => {
-      const page = (e as CustomEvent).detail;
-      if (page) setCurrentPage(page);
-    };
-    const onMinimize = () => {
-      if (onFecharMusica) {
-        // We use the close callback as the minimize setter in this context
-        // if it was passed from a parent that manages this state globally
-      }
-      const event = new CustomEvent("musica:minimized", { detail: true });
-      window.dispatchEvent(event);
-    };
-    
     window.addEventListener("player:state", onState);
-    window.addEventListener("changePage", onChangePage);
-    window.addEventListener("minimizeMusica", onMinimize);
-    
-    return () => {
-      window.removeEventListener("player:state", onState);
-      window.removeEventListener("changePage", onChangePage);
-      window.removeEventListener("minimizeMusica", onMinimize);
-    };
-  }, [onFecharMusica]);
+    return () => window.removeEventListener("player:state", onState);
+  }, []);
   useEffect(() => {
     const iv = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(iv);
@@ -1673,10 +1644,10 @@ export default function Dashboard({
                 {currentPage === "musica" && (
                   <button
                     onClick={() => setCurrentPage("dashboard")}
-                    className="flex items-center justify-center w-11 h-11 rounded-full bg-[#00BFF0] hover:bg-[#00BFF0]/80 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95 group relative"
+                    className="flex items-center justify-center w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all shadow-lg backdrop-blur-md border border-white/20 active:scale-95"
                     title="Minimizar"
                   >
-                    <div className="w-5 h-[3px] bg-white rounded-full group-hover:scale-x-110 transition-transform" />
+                    <div className="w-5 h-1 bg-white rounded-full" />
                   </button>
                 )}
               </div>
@@ -1697,7 +1668,7 @@ export default function Dashboard({
                   <ChatbotHome />
                 </div>
                 <div style={{ display: displayedPill === "Chatbot" ? "none" : "block" }} className={displayedPill !== "Chatbot" ? pillAnimClass : ""}>
-                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} musicaMinimizada={musicaMinimizada} onRestaurarMusica={onRestaurarMusica} onFecharMusica={onFecharMusica} />}
+                  {isAdmin ? <AdminClientsDashboard /> : <CustomizableDashboard onNavigate={setCurrentPage} effectiveUserId={effectiveUserId} />}
                 </div>
               </div>
 
