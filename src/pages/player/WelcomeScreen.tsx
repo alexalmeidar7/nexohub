@@ -91,21 +91,39 @@ export default function WelcomeScreen({
   const [newProfileName, setNewProfileName] = useState("");
   const [newProfileAvatar, setNewProfileAvatar] = useState<string>("/avatars/usr-default.png");
   const [subProfiles, setSubProfiles] = useState<Array<{ id: string; name: string; avatar_url: string }>>([]);
+  const [profilesLoading, setProfilesLoading] = useState(false);
+  // Permite recarregar a lista de perfis após o login com Google.
+  const [profilesReloadKey, setProfilesReloadKey] = useState(0);
 
   // Load sub-profiles scoped by radio so the same listener can belong to multiple stations.
   useEffect(() => {
-    if (!user || !radioUserId) { setSubProfiles([]); return; }
+    if (!user || !radioUserId) { setSubProfiles([]); setProfilesLoading(false); return; }
     const cacheKey = `nexohub_sub_profiles_${user.id}_${radioUserId}`;
+    let hadCache = false;
     try {
       const raw = localStorage.getItem(cacheKey);
-      if (raw) setSubProfiles(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length) { setSubProfiles(parsed); hadCache = true; }
+      }
     } catch { /* ignore */ }
-    fetchPlayerListenerProfile(user, radioUserId, userName).then((data) => {
-      const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
-      setSubProfiles(remote);
-      try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
-    });
-  }, [user, radioUserId, userName]);
+    let cancelled = false;
+    setProfilesLoading(!hadCache);
+    fetchPlayerListenerProfile(user, radioUserId, userName)
+      .then((data) => {
+        if (cancelled) return;
+        const remote = Array.isArray(data.sub_profiles) ? data.sub_profiles : [];
+        // Só sobrescreve o cache quando o backend retornou perfis, evitando
+        // "piscar" uma lista vazia logo após o login com o Google.
+        if (remote.length || !hadCache) {
+          setSubProfiles(remote);
+          try { localStorage.setItem(cacheKey, JSON.stringify(remote)); } catch { /* ignore */ }
+        }
+      })
+      .finally(() => { if (!cancelled) setProfilesLoading(false); });
+    return () => { cancelled = true; };
+  }, [user, radioUserId, userName, profilesReloadKey]);
+
 
   // Após autenticar com o Google, verifica se o e-mail já possui cadastro na
   // base de ouvintes da rádio. Se sim, avisa o usuário e mantém/leva ele para a
