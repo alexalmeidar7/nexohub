@@ -1435,6 +1435,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <Minimize2 size={18} className="text-white" />
             </button>
             <div className="w-[1px] h-8 mx-1 bg-[#0A2540]/10" />
+          </div>
+          <div className="flex items-center gap-3">
             <div
               className="flex items-center justify-center"
               style={{ width: 40, height: 40, borderRadius: 999, background: "#FFFFFF", border: `2px solid ${NEXO_CYAN}` }}
