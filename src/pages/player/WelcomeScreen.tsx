@@ -427,12 +427,14 @@ export default function WelcomeScreen({
           ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
           : d.avatar_url,
       });
+      // Pontuação oficial do cadastro de ouvinte + bônus de curtidas
+      const base = Number(listener?.pontuacao) || 0;
+      const { count } = await supabase.from("music_likes").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("radio_user_id", radioUserId);
+      setPoints(base + ((count ?? 0) as number) * 4);
     });
-    // Simple points tally from music likes
-    supabase.from("music_likes").select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("radio_user_id", radioUserId)
-      .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
+
   }, [user, userName, radioUserId]);
 
 
