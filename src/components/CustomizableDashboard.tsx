@@ -784,11 +784,8 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId, mus
                 </Fragment>
               );
             })}
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
       )}
 
 
