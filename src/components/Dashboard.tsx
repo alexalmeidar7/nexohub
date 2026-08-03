@@ -175,7 +175,7 @@ const adminSidebarMenu: MenuItem[] = [
       { icon: Layers, label: "pacotes", page: "pacotes" },
     ]
   },
-  { icon: Layers, label: "modulos", page: "modulos" },
+  { icon: Layers, label: "módulos", page: "modulos" },
   { icon: Building2, label: "business", page: "dashboard", pillMode: "Business" },
 ];
 

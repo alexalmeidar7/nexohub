@@ -310,7 +310,7 @@ export default function ClientesPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-lime-100 text-lime-700 text-[10px] font-bold uppercase">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-700 text-[10px] font-bold uppercase">
                     <Activity size={12} />
                     {getEventosCliente(cliente.nome)} Blitz/Eventos
                   </span>
