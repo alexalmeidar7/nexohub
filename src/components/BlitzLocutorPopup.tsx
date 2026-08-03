@@ -92,10 +92,11 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     return (
       <div
         style={{
-          position: "fixed", left: 18, bottom: 18, zIndex: 60,
+          position: "fixed", left: "var(--onair-left, 18px)", bottom: 18, zIndex: 60,
           display: "flex", alignItems: "center", gap: 6,
           background: CYAN, borderRadius: 999, padding: "4px 6px 4px 4px",
           boxShadow: "0 12px 30px rgba(0,191,240,0.45)", fontFamily: FONT,
+          paddingLeft: "var(--onair-left-offset, 0px)",
         }}
       >
         <button
@@ -129,7 +130,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
   return (
     <div
       style={{
-        position: "fixed", left: "var(--onair-left, 18px)", bottom: 18, zIndex: 60, width: 320,
+        position: "fixed", left: "var(--onair-left, 18px)", bottom: 18, zIndex: 60, width: 320, paddingLeft: "var(--onair-left-offset, 0px)",
         background: "rgba(255,255,255,0.96)", backdropFilter: "blur(8px)",
         borderRadius: 22, boxShadow: "0 24px 60px rgba(10,37,64,0.35)",
         border: `2px solid ${CYAN}`, fontFamily: FONT, overflow: "hidden",
