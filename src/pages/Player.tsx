@@ -415,6 +415,18 @@ export default function PlayerPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [streamLoading, setStreamLoading] = useState(false);
+  
+  // Update streamLoading based on URL params to handle direct navigation
+  useEffect(() => {
+    const ch = searchParams.get("ch");
+    const vid = searchParams.get("vid");
+    const top10 = searchParams.get("top10") === "1";
+    const isWatch = location.pathname.includes("/watch") || searchParams.get("step") === "watch";
+    
+    if (isWatch && (ch || vid || top10)) {
+      setStreamLoading(true);
+    }
+  }, [location.pathname, searchParams]);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
    const [barVisible, setBarVisible] = useState(true);
    const [backBtnVisible, setBackBtnVisible] = useState(false);
