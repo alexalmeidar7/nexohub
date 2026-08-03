@@ -59,6 +59,7 @@ import { Loader2 } from "lucide-react";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import LayoutVersionGuard from "@/components/LayoutVersionGuard";
 import PlayerSplashPrefetch from "@/components/PlayerSplashPrefetch";
+import DailyUpdateGuard from "@/components/DailyUpdateGuard";
 
 // Retry wrapper for lazy imports — retries the import promise up to `retries`
 // times on chunk load failure, with exponential backoff. IMPORTANT: retries
@@ -200,6 +201,7 @@ const App = () => (
     <TooltipProvider>
       <InlineNotification mode="fixed" />
       <LayoutVersionGuard />
+      <DailyUpdateGuard />
       
       <AuthProvider>
         <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
