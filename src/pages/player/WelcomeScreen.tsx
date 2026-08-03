@@ -427,12 +427,14 @@ export default function WelcomeScreen({
           ? (googlePhoto || d.avatar_url || "/avatars/usr-default.png")
           : d.avatar_url,
       });
+      // Pontuação oficial do cadastro de ouvinte + bônus de curtidas
+      const base = Number(listener?.pontuacao) || 0;
+      const { count } = await supabase.from("music_likes").select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("radio_user_id", radioUserId);
+      setPoints(base + ((count ?? 0) as number) * 4);
     });
-    // Simple points tally from music likes
-    supabase.from("music_likes").select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("radio_user_id", radioUserId)
-      .then(({ count }) => setPoints(((count ?? 0) as number) * 4));
+
   }, [user, userName, radioUserId]);
 
 
@@ -631,10 +633,37 @@ export default function WelcomeScreen({
       data_nascimento: profile.data_nascimento || null,
       avatar_url: profile.avatar_url,
     } as any);
+
+    // Atualiza a pontuação conforme as REGRAS DE PONTUAÇÃO do cadastro de ouvinte
+    let novaPontuacao: number | null = null;
+    try {
+      const { data: res } = await supabase.functions.invoke("sync-listener-points", {
+        body: {
+          radio_user_id: radioUserId || user.id,
+          profile: {
+            nome: profile.nome, email: profile.email, cpf: profile.cpf,
+            telefone: profile.whatsapp, sexo: profile.sexo,
+            data_nascimento: profile.data_nascimento,
+            estado: profile.estado, cidade: profile.cidade, setor: profile.setor,
+          },
+        },
+      });
+      if ((res as any)?.ok && typeof (res as any).pontuacao === "number") {
+        novaPontuacao = (res as any).pontuacao as number;
+        setPoints(novaPontuacao);
+      }
+    } catch { /* ignore */ }
+
     setSaving(false);
     if (error) toast.error("Erro ao salvar perfil");
-    else { toast.success("Perfil atualizado!"); setEditOpen(false); }
+    else {
+      toast.success(
+        novaPontuacao != null ? `Perfil atualizado! ${novaPontuacao} pts` : "Perfil atualizado!",
+      );
+      setEditOpen(false);
+    }
   };
+
 
   const [authError, setAuthError] = useState<string | null>(null);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
