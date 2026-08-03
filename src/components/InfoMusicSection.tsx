@@ -161,31 +161,37 @@ export default function InfoMusicSection() {
     }
     
     setSavingExcecoes(true);
+    setUploadProgress({ active: true, stage: "Iniciando...", percent: 10 });
+    
     try {
       let capaFinal = newExcecaoCapa.trim();
       let fundoFinal = newExcecaoFundo.trim();
-
-      // Process base64 uploads if present
       const timestamp = Date.now();
+      const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+
       if (capaFinal.startsWith("data:") && user?.id) {
-        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        setUploadProgress({ active: true, stage: "Processando Capa...", percent: 30 });
         capaFinal = await uploadImageToStorage(
           capaFinal, 
           "empresa-assets", 
           `${user.id}/excecoes/${timestamp}_capa.webp`,
           1080
         );
+        setUploadProgress({ active: true, stage: "Capa concluída", percent: 50 });
       }
+
       if (fundoFinal.startsWith("data:") && user?.id) {
-        const { uploadImageToStorage } = await import("@/lib/uploadImageToStorage");
+        setUploadProgress({ active: true, stage: "Processando Fundo...", percent: 60 });
         fundoFinal = await uploadImageToStorage(
           fundoFinal, 
           "empresa-assets", 
           `${user.id}/excecoes/${timestamp}_fundo.webp`,
           1920
         );
+        setUploadProgress({ active: true, stage: "Fundo concluído", percent: 80 });
       }
 
+      setUploadProgress({ active: true, stage: "Salvando dados...", percent: 90 });
       const { error } = await supabase
         .from("infomusic_excecoes")
         .insert({
@@ -201,8 +207,11 @@ export default function InfoMusicSection() {
       setNewExcecaoCapa("");
       setNewExcecaoFundo("");
       await loadExcecoes();
+      setUploadProgress({ active: true, stage: "Sucesso!", percent: 100 });
+      setTimeout(() => setUploadProgress({ active: false, stage: "", percent: 0 }), 1000);
       toast.success("Exceção adicionada");
     } catch (e) {
+      setUploadProgress({ active: false, stage: "", percent: 0 });
       toast.error("Erro ao adicionar exceção");
     }
     setSavingExcecoes(false);
