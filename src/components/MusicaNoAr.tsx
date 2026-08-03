@@ -1450,6 +1450,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
             </div>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                const event = new CustomEvent("musica:minimizar");
+                window.dispatchEvent(event);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full font-bold text-[10px] uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-md shadow-[#00BFF0]/20"
+              style={{ background: NEXO_CYAN, color: "#FFFFFF" }}
+            >
+              <Minimize2 size={14} />
+              Minimizar
+            </button>
+            <BackButton />
+          </div>
         </div>
 
 
