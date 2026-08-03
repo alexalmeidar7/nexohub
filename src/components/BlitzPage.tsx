@@ -570,7 +570,30 @@ export default function BlitzPage() {
           </div>
           <div>
             <label style={labelStyle}><Building2 size={11} style={{ display: "inline", marginRight: 4 }} /> Nome do cliente</label>
-            <input type="text" style={pillInput} placeholder="Ex: Supermercado ABC" value={form.cliente} onChange={e => setForm({ ...form, cliente: e.target.value })} maxLength={120} />
+            <div className="relative">
+              <input 
+                type="text" 
+                style={pillInput} 
+                placeholder="Ex: Supermercado ABC" 
+                value={form.cliente} 
+                onChange={e => handleClienteChange(e.target.value)} 
+                onBlur={handleClienteBlur}
+                maxLength={120} 
+              />
+              {showSugestoes && sugestoesClientes.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                  {sugestoesClientes.map(c => (
+                    <button
+                      key={c.id}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0"
+                      onClick={() => selectCliente(c)}
+                    >
+                      {c.nome}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
           <div>
             <label style={labelStyle}><Users size={11} style={{ display: "inline", marginRight: 4 }} /> Equipe</label>
