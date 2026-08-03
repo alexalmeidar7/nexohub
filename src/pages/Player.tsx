@@ -56,6 +56,7 @@ import PlayerShopProduct from "@/components/player/PlayerShopProduct";
 import PreRollOverlay from "@/components/PreRollOverlay";
 import { saveMiniPlayerData, clearMiniPlayerData, unlockAndPrepareMiniAudio, destroyMiniAudio } from "@/components/player/MiniPlayerWidget";
 import PlayerSkeleton from "@/components/skeletons/PlayerSkeleton";
+import PlayerLoadingOverlay from "@/components/player/PlayerLoadingOverlay";
 const AudioPlayerScreen = lazy(() => import("@/pages/player/AudioPlayerScreen"));
 
 import { normalizeMusicText } from "@/lib/textEncoding";
@@ -413,6 +414,7 @@ export default function PlayerPage() {
   const volumeHideTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [fullscreen, setFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [streamLoading, setStreamLoading] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState("Iniciando...");
    const [barVisible, setBarVisible] = useState(true);
    const [backBtnVisible, setBackBtnVisible] = useState(false);
