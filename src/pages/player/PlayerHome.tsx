@@ -643,6 +643,9 @@ function HeroBanner({
         .ph-kenburns { animation: ph-kenburns 30s ease-in-out infinite alternate; will-change: transform; }
         .ph-bg-layer { transition: opacity 1.6s ease-in-out; }
       `}</style>
+      {/* Camada de fundo ancorada à viewport: não acompanha o scroll do conteúdo
+          (evitava o efeito de "pulo"/deslocamento ao navegar com teclado ou mouse) */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
       {bgSources.length > 0 ? (
         <>
           {bgSources.map((src, i) => {
@@ -678,6 +681,8 @@ function HeroBanner({
           style={{ background: "radial-gradient(120% 80% at 30% 20%, #1e2430 0%, #131519 55%, #08090b 100%)" }}
         />
       )}
+      </div>
+
 
 
 
