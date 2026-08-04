@@ -11,6 +11,7 @@ interface Programa {
   id: string;
   nome: string;
   apresentadorId: string;
+  apresentadoresIds: string[];
   selo: string;
   diasSemana: string[];
   horarioInicio: string;
@@ -24,12 +25,13 @@ const DIAS_MAP: Record<number, string> = {
 };
 
 async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id").ilike("estudio", "%fm%");
+  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id, apresentadores_ids").ilike("estudio", "%fm%");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
     nome: p.nome,
     apresentadorId: p.apresentador_id || "",
+    apresentadoresIds: p.apresentadores_ids || [],
     selo: p.selo || p.thumb || "",
     diasSemana: p.dias_semana || [],
     horarioInicio: p.horario_inicio,
@@ -78,8 +80,8 @@ export default function OnAirWidget() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [onAir, setOnAir] = useState<{ programa: Programa; progress: number } | null>(null);
-  const [apresentadorNome, setApresentadorNome] = useState("");
-  const [apresentadorFoto, setApresentadorFoto] = useState("");
+  const [apresentadoresAtuais, setApresentadoresAtuais] = useState<ApresentadorInfo[]>([]);
+  const [apresentadorIndex, setApresentadorIndex] = useState(0);
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
@@ -147,8 +149,6 @@ export default function OnAirWidget() {
     const update = async () => {
       const [programasData, apresentadoresData] = await Promise.all([getProgramas(), getApresentadores()]);
       
-      
-      // Filter out programmes that have a cancelled event today
       let filteredProgramas = programasData;
       if (user) {
         const today = new Date().toISOString().split("T")[0];
@@ -168,9 +168,16 @@ export default function OnAirWidget() {
       const current = findCurrentProgram(filteredProgramas);
       setOnAir(current);
       if (current) {
-        const ap = apresentadoresData.find(a => a.id === current.programa.apresentadorId);
-        setApresentadorNome(ap?.nome || "—");
-        setApresentadorFoto(ap?.foto || "");
+        const ids = current.programa.apresentadoresIds && current.programa.apresentadoresIds.length > 0 
+          ? current.programa.apresentadoresIds 
+          : [current.programa.apresentadorId];
+        
+        const list = ids
+          .map(id => apresentadoresData.find(a => a.id === id))
+          .filter(Boolean) as ApresentadorInfo[];
+        
+        setApresentadoresAtuais(list.length > 0 ? list : [{ nome: "—", foto: "" }]);
+        setApresentadorIndex(0);
       }
       const nexts = findNextPrograms(filteredProgramas, 3);
       setNextPrograms(nexts);
@@ -185,7 +192,21 @@ export default function OnAirWidget() {
     update();
     const interval = setInterval(update, 30 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
+
+  // Rotate presenters every 10 seconds if there's more than one
+  useEffect(() => {
+    if (apresentadoresAtuais.length <= 1) return;
+    const interval = setInterval(() => {
+      setApresentadorIndex(prev => (prev + 1) % apresentadoresAtuais.length);
+    }, 1000); // 10s logic: the user said 10s, but we usually add a bit of buffer or handle transition
+    // Note: 1000 is 1s, the user asked for 10s. Fixing to 10000.
+    clearInterval(interval);
+    const rotationInterval = setInterval(() => {
+      setApresentadorIndex(prev => (prev + 1) % apresentadoresAtuais.length);
+    }, 10000);
+    return () => clearInterval(rotationInterval);
+  }, [apresentadoresAtuais]);
 
   // Pré-carrega a foto e o selo do próximo programa quando restar <= 60s
   // para o programa atual, evitando o "flash vazio" na virada.
@@ -353,15 +374,26 @@ export default function OnAirWidget() {
         style={{ opacity: isHovered ? 0 : 1 }}
       >
         {/* Presenter photo - anchored to bottom, larger. Animates on change. */}
-        {apresentadorFoto && (
-          <img
-            key={`foto-${programa.id}-${apresentadorFoto}`}
-            src={apresentadorFoto}
-            alt={apresentadorNome}
-            className="absolute object-contain pointer-events-none animate-fade-in"
-            style={{ right: 0, bottom: 0, width: "60%", height: "100%", objectPosition: "right bottom", animationDuration: "600ms" }}
-          />
-        )}
+        {apresentadoresAtuais.map((ap, idx) => (
+          ap.foto && (
+            <img
+              key={`foto-${programa.id}-${ap.foto}-${idx}`}
+              src={ap.foto}
+              alt={ap.nome}
+              className={`absolute object-contain pointer-events-none transition-all duration-1000 ${
+                idx === apresentadorIndex ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-95 translate-x-4"
+              }`}
+              style={{ 
+                right: 0, 
+                bottom: 0, 
+                width: "60%", 
+                height: "100%", 
+                objectPosition: "right bottom",
+                zIndex: idx === apresentadorIndex ? 5 : 0
+              }}
+            />
+          )
+        ))}
 
         {/* Top right buttons */}
         <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
@@ -420,9 +452,9 @@ export default function OnAirWidget() {
         </div>
 
 
-        <div key={`ap-${apresentadorNome}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "500ms" }}>
+        <div key={`ap-${apresentadoresAtuais[apresentadorIndex]?.nome}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "500ms" }}>
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
-          <p className="font-semibold text-white/80 text-xs">{apresentadorNome}</p>
+          <p className="font-semibold text-white/80 text-xs">{apresentadoresAtuais[apresentadorIndex]?.nome || "—"}</p>
           <button
             onClick={() => setGradeOpen(true)}
             className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer ml-1"
