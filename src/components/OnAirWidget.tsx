@@ -452,9 +452,9 @@ export default function OnAirWidget() {
         </div>
 
 
-        <div key={`ap-${apresentadoresAtuais[apresentadorIndex]?.nome}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "500ms" }}>
+        <div key={`ap-${apresentadoresAtuais[apresentadorIndex]?.nome}-${apresentadorIndex}`} className="z-10 mb-4 flex items-center gap-1.5 animate-fade-in" style={{ animationDuration: "1000ms" }}>
           <Mic size={12} style={{ color: "var(--layout-accent-color)" }} />
-          <p className="font-semibold text-white/80 text-xs">{apresentadoresAtuais[apresentadorIndex]?.nome || "—"}</p>
+          <p className="font-semibold text-white/80 text-xs transition-all duration-1000">{apresentadoresAtuais[apresentadorIndex]?.nome || "—"}</p>
           <button
             onClick={() => setGradeOpen(true)}
             className="w-5 h-5 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors cursor-pointer ml-1"
