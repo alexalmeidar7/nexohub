@@ -31,6 +31,7 @@ interface ProgramaGrade {
   mergedIds: string[];
   nome: string;
   apresentadorId: string;
+  apresentadoresIds: string[];
   selo: string;
   capa: string;
   diasSemana: string[];
@@ -267,7 +268,7 @@ export default function PromocoesKiosk() {
       }
 
       const mapped = (data.programas || []).map((p: any) => ({
-        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
         schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
@@ -336,7 +337,7 @@ export default function PromocoesKiosk() {
       setTestemunhais(activeTestemunhais);
 
       const mapped = (progsData || []).map((p: any) => ({
-        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", selo: p.selo || "",
+        id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
         capa: p.capa || "", diasSemana: p.dias_semana || [], horarioInicio: p.horario_inicio,
         horarioFim: p.horario_fim, descricao: p.descricao || "",
         schedules: [{ dias: p.dias_semana || [], horarioInicio: p.horario_inicio, horarioFim: p.horario_fim }],
