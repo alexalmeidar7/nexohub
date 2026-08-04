@@ -423,13 +423,14 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
           id: p.id,
           nome: p.nome,
           apresentadorId: p.apresentadorId || "",
+          apresentadoresIds: p.apresentadoresIds || [],
           selo: p.selo || "",
           diasSemana: p.diasSemana || [],
           horarioInicio: p.horarioInicio,
           horarioFim: p.horarioFim,
           estudio: p.estudio || "",
           classificacaoEtaria: p.classificacaoEtaria || "",
-        }) as any));
+        })));
         setOnAirId(cur?.programa?.id || null);
       } catch { setOnAirId(null); }
     };
@@ -892,13 +893,14 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
           id: p.id,
           nome: p.nome,
           apresentadorId: p.apresentadorId || "",
+          apresentadoresIds: p.apresentadoresIds || [],
           selo: p.selo || "",
           diasSemana: p.diasSemana || [],
           horarioInicio: p.horarioInicio,
           horarioFim: p.horarioFim,
           estudio: p.estudio || "",
           classificacaoEtaria: p.classificacaoEtaria || "",
-        }) as any));
+        })));
         setProgramaNoAr(cur ? programas.find(p => p.id === cur.programa.id) || null : null);
       } catch { setProgramaNoAr(null); }
     };
