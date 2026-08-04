@@ -124,6 +124,7 @@ interface ProgramaLite {
   id: string;
   nome: string;
   apresentadorId?: string;
+  apresentadoresIds?: string[];
   selo?: string;
   diasSemana?: string[];
   horarioInicio?: string;
@@ -161,7 +162,7 @@ export default function SorteiosPage() {
       supabase.from("sorteio_premios").select("*").order("created_at", { ascending: false }),
       supabase.from("sorteio_sorteios").select("*").order("data_sorteio", { ascending: false }),
       supabase.from("ouvintes").select("id, nome, telefone, cidade, pontuacao").order("pontuacao", { ascending: false }),
-      supabase.from("programas").select("*").ilike("estudio", "%fm%").order("nome"),
+      supabase.from("programas").select("*, apresentadores_ids").ilike("estudio", "%fm%").order("nome"),
       supabase.from("apresentadores").select("id, nome"),
     ]);
     if (p.error) toast({ title: "Erro ao carregar prêmios", description: p.error.message, variant: "destructive" });
@@ -173,12 +174,13 @@ export default function SorteiosPage() {
       id: x.id,
       nome: x.nome,
       apresentadorId: x.apresentador_id || "",
+      apresentadoresIds: x.apresentadores_ids || [],
       selo: x.selo || "",
       diasSemana: x.dias_semana || [],
       horarioInicio: x.horario_inicio,
       horarioFim: x.horario_fim,
       estudio: x.estudio || "",
-      classificacaoEtaria: x.classificacao_etaria || "",
+      classificacaoEtaria: x.classificacao_etaria || ""
     })));
     if (!ap.error) setApresentadores((ap.data as any) || []);
     setLoading(false);
@@ -423,13 +425,14 @@ function ListaPremiosTab({ premios, programas, userId, onStockChanged }: { premi
           id: p.id,
           nome: p.nome,
           apresentadorId: p.apresentadorId || "",
+          apresentadoresIds: p.apresentadoresIds || [],
           selo: p.selo || "",
           diasSemana: p.diasSemana || [],
           horarioInicio: p.horarioInicio,
           horarioFim: p.horarioFim,
           estudio: p.estudio || "",
           classificacaoEtaria: p.classificacaoEtaria || "",
-        }) as any));
+        })));
         setOnAirId(cur?.programa?.id || null);
       } catch { setOnAirId(null); }
     };
@@ -892,13 +895,14 @@ function SorteioTab({ premios, ouvintes, sorteios, programas, apresentadores, us
           id: p.id,
           nome: p.nome,
           apresentadorId: p.apresentadorId || "",
+          apresentadoresIds: p.apresentadoresIds || [],
           selo: p.selo || "",
           diasSemana: p.diasSemana || [],
           horarioInicio: p.horarioInicio,
           horarioFim: p.horarioFim,
           estudio: p.estudio || "",
           classificacaoEtaria: p.classificacaoEtaria || "",
-        }) as any));
+        })));
         setProgramaNoAr(cur ? programas.find(p => p.id === cur.programa.id) || null : null);
       } catch { setProgramaNoAr(null); }
     };
