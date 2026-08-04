@@ -124,6 +124,7 @@ interface ProgramaLite {
   id: string;
   nome: string;
   apresentadorId?: string;
+  apresentadoresIds?: string[];
   selo?: string;
   diasSemana?: string[];
   horarioInicio?: string;
