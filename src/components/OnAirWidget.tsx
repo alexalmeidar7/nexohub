@@ -7,7 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const DashboardGradeDialog = lazy(() => import("./DashboardGradeDialog"));
 
-interface Programa {
+export interface Programa {
   id: string;
   nome: string;
   apresentadorId: string;
