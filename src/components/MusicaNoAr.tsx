@@ -506,7 +506,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   useEffect(() => {
     const fetchPresenter = async () => {
       const [{ data: progsData }, apresentadores] = await Promise.all([
-        supabase.from("programas").select("*").ilike("estudio", "%fm%"),
+        supabase.from("programas").select("*, apresentadores_ids").ilike("estudio", "%fm%"),
         getApresentadores(),
       ]);
       if (!progsData) return;
@@ -514,6 +514,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         id: p.id,
         nome: p.nome,
         apresentadorId: p.apresentador_id || "",
+        apresentadoresIds: p.apresentadores_ids || [],
         selo: p.selo || "",
         diasSemana: p.dias_semana || [],
         horarioInicio: p.horario_inicio,
