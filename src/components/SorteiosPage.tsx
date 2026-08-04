@@ -182,9 +182,6 @@ export default function SorteiosPage() {
       estudio: x.estudio || "",
       classificacaoEtaria: x.classificacao_etaria || ""
     })));
-      estudio: x.estudio || "",
-      classificacaoEtaria: x.classificacao_etaria || "",
-    })));
     if (!ap.error) setApresentadores((ap.data as any) || []);
     setLoading(false);
   };
