@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
-import logoMixControl from "@/assets/logo-mixcontrol.png"; // User requested logo change, but the asset is managed by Lovable. I will keep using the project's logo variable.
+import vmixControlLogo from "@/assets/vmixcontrol.png.asset.json";
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
 export default function VmixControl() {
@@ -71,7 +71,7 @@ export default function VmixControl() {
           style={{ backgroundColor: "#ffffff", boxShadow: "0 8px 40px rgba(0,0,0,0.3)" }}
         >
           <div className="flex flex-col items-center gap-2 mb-2">
-            <img src={logoMixControl} alt="Mix Control" className="h-8" />
+            <img src={vmixControlLogo.url} alt="Mix Control" className="h-8" />
             <p className="text-xs" style={{ color: "#6b7280" }}>Faça login para acessar o controle</p>
           </div>
 
@@ -142,7 +142,7 @@ export default function VmixControl() {
           </button>
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <img src={logoMixControl} alt="NEXO VMIX CONTROL" className="h-6" />
+          <img src={vmixControlLogo.url} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
