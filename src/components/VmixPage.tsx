@@ -2608,9 +2608,24 @@ export default function VmixPage() {
                     setStudioName("");
                     setSavedUrl("");
                   }}
+                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 flex items-center gap-2"
+                  style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12", color: "#fff" }}
+                  title="Voltar para a tela de nova conexão"
+                >
+                  <RefreshCw size={14} /> Nova Conexão
+                </button>
+                <button
+                  onClick={() => {
+                    setConnected(false);
+                    setSelectedConnectionId(null);
+                    setVmixUrl("");
+                    setStudioName("");
+                    setSavedUrl("");
+                    supabase.auth.signOut();
+                  }}
                   className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
                   style={{ backgroundColor: "#dc26261a", color: "#f87171", border: "1px solid #dc262640" }}
-                  title="Desconectar"
+                  title="Desconectar da conta"
                 >
                   Sair
                 </button>
