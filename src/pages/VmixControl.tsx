@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { LogOut, Loader2, Clock, ExternalLink } from "lucide-react";
+import { LogOut, Loader2, Clock, ExternalLink, RefreshCw } from "lucide-react";
 import VmixPage from "@/components/VmixPage";
 import type { User } from "@supabase/supabase-js";
 import vmixControlLogo from "@/assets/vmixcontrol.png.asset.json";
