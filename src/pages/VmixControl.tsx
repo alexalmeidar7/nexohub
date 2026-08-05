@@ -146,6 +146,16 @@ export default function VmixControl() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
+          <button 
+            onClick={() => {
+              localStorage.removeItem(`vmix_active_conn_${user.id}`);
+              window.location.reload();
+            }} 
+            className="text-white/50 hover:text-white transition-colors flex items-center gap-1 text-[10px] uppercase font-bold tracking-widest" 
+            title="Voltar para tela de nova conexão"
+          >
+            <RefreshCw size={14} /> Voltar
+          </button>
           <button onClick={handleLogout} className="text-white/50 hover:text-white transition-colors" title="Sair">
             <LogOut size={16} />
           </button>
