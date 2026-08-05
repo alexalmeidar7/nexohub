@@ -2,8 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { CalendarIcon, Plus, Trash2, MapPin, Users, Instagram, Pencil, X, AlertTriangle, History, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, addMinutes } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { getZonedNow } from "@/lib/onAirResolver";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -490,7 +491,15 @@ export default function AgendaPage() {
   useEffect(() => {
     const loadAll = async () => {
       setLoadingData(true);
-      await Promise.all([fetchProgramas(), fetchEventos(), fetchApresentadores()]);
+      const [{ data: emp }] = await Promise.all([
+        supabase.from("empresa_config").select("timezone").eq("user_id", user.id).maybeSingle(),
+        fetchProgramas(),
+        fetchEventos(),
+        fetchApresentadores()
+      ]);
+      if (emp?.timezone && user) {
+        (user as any).timezone = emp.timezone;
+      }
       setLoadingData(false);
     };
     loadAll();

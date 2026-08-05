@@ -4,6 +4,7 @@ import { format, addDays, startOfWeek, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getZonedNow } from "@/lib/onAirResolver";
 
 type Page = string;
 
@@ -133,8 +134,12 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
 
   const dayHasEvents = (d: Date) => {
     const nowD = new Date();
+    // Use user-configured timezone if available for time comparisons
+    const tz = (user as any)?.timezone;
+    const { hhmm: nowHM } = getZonedNow(tz, nowD);
+
     if (d < nowD && !isSameDay(d, nowD)) return false;
-    const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
+    
     const hasExplicit = eventos.some(e => {
       if (!matches(e, d)) return false;
       if (e.status === "cancelado" || e.status === "concluido") return false;
@@ -166,7 +171,8 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
   // Cada slot representa um dia com sua lista de eventos (pode estar vazia).
   const timeline = useMemo(() => {
     const nowD = new Date();
-    const nowHM = `${String(nowD.getHours()).padStart(2, "0")}:${String(nowD.getMinutes()).padStart(2, "0")}`;
+    const tz = (user as any)?.timezone;
+    const { hhmm: nowHM } = getZonedNow(tz, nowD);
     const days: { date: Date; events: Evt[] }[] = [];
     const DAYS_AHEAD = 14;
     let totalEvents = 0;
