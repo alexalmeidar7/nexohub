@@ -25,7 +25,7 @@ const DIAS_MAP: Record<number, string> = {
 };
 
 async function getProgramas(): Promise<Programa[]> {
-  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id, apresentadores_ids").ilike("estudio", "%fm%");
+  const { data } = await supabase.from("programas").select("*, thumb, apresentador_id, apresentadores_ids").order("horario_inicio");
   if (!data) return [];
   return data.map(p => ({
     id: p.id,
@@ -142,7 +142,7 @@ export default function OnAirWidget() {
   // Fetch stereo from streaming channel
   useEffect(() => {
     if (!user) return;
-    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).ilike("estudio", "%fm%").limit(1).maybeSingle()
+    supabase.from("streaming_channels").select("is_stereo").eq("user_id", user.id).eq("active", true).limit(1).maybeSingle()
       .then(({ data }) => { setIsStereo(!!data?.is_stereo); });
   }, [user]);
   useEffect(() => {
