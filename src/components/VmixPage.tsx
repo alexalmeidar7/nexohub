@@ -2350,6 +2350,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       streaming={streaming}
       recording={recording}
       overlays={overlays}
+
       setStreaming={setStreaming}
       setRecording={setRecording}
       setOverlays={setOverlays}
