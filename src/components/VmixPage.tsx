@@ -2088,18 +2088,12 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     return (
       <div className="max-w-4xl mx-auto py-10 px-6">
         <div className="flex flex-col gap-10">
-          {/* Top Bar with User Info */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <div className="flex items-center gap-3">
               <img src={logoMixControl} alt="VMIXCONTROL" className="h-6" />
             </div>
-            {user && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-[10px] text-white/60 font-medium tracking-wider">{user.email}</span>
-              </div>
-            )}
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {/* NEW CONNECTION BUTTON */}
