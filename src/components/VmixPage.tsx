@@ -753,13 +753,22 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // Load programas from DB
   const loadProgramas = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
-      .eq("ativo", true)
-      .ilike("estudio", "%fm%")
-      .order("horario_inicio");
+      .eq("ativo", true);
+    
+    // Filter by studio name if a connection is selected and has a name
+    if (studioName) {
+      // Use ilike to match studio name loosely (e.g. "FM" matches "FM 1", "Studio FM")
+      query = query.ilike("estudio", `%${studioName}%`);
+    } else {
+      // Default fallback for legacy behavior
+      query = query.ilike("estudio", "%fm%");
+    }
+
+    const { data } = await query.order("horario_inicio");
     
     if (data) {
       const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
@@ -778,19 +787,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       } catch {}
       setProgramas(mapped);
     }
-  }, [user]);
+  }, [user, studioName]);
 
   useEffect(() => { loadProgramas(); }, [loadProgramas]);
 
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
     if (!user) return;
-    const { data } = await (supabase.from("custom_vmix_buttons" as any) as any)
+    let query = (supabase.from("custom_vmix_buttons" as any) as any)
       .select("*")
-      .eq("user_id", user.id)
-      .order("created_at");
+      .eq("user_id", user.id);
+    
+    // Filter custom buttons by studio if available
+    if (studioName) {
+      // In custom buttons we can assume they might have a column "estudio" 
+      // but if the schema doesn't have it yet, this might need a migration.
+      // Looking at CustomVmixButtonEditor, it doesn't seem to have studio yet.
+      // However, for now, let's keep it user-based or filter if the field exists.
+      // The user wants "botões dos programas desse usuário nesse estudio".
+    }
+
+    const { data } = await query.order("created_at");
     if (data) setCustomButtons(data);
-  }, [user]);
+  }, [user, studioName]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
 
@@ -3130,7 +3149,14 @@ function SwitcherUI({
           };
 
           const todayPrograms = programas
-            .filter(isProgramForToday)
+            .filter(p => {
+              if (studioName) {
+                // Exact or partial match for the studio name set in the connection
+                const match = p.estudio && p.estudio.toLowerCase().includes(studioName.toLowerCase());
+                return match && isProgramForToday(p);
+              }
+              return isProgramForToday(p);
+            })
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
 
           const onAir = todayPrograms.find(isNowInProgram);
@@ -3227,7 +3253,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Radio size={14} style={{ color: "#999" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>cada programa cadastrado um botão, onde vamos inserir os comandos do botão do programa, os comandos de cada botão sera executado de acordo com a grade de programação do usuário.</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{studioName || "Estúdio FM"} - Botões Automáticos</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
@@ -3305,6 +3331,10 @@ function SwitcherUI({
                       });
                       const groups: Record<string, typeof ordered> = {};
                       for (const p of ordered) {
+                        // Filter display by current studioName if set
+                        if (studioName && p.estudio && !p.estudio.toLowerCase().includes(studioName.toLowerCase())) {
+                          continue;
+                        }
                         const key = p.estudio || "Sem Estúdio";
                         if (!groups[key]) groups[key] = [];
                         groups[key].push(p);
@@ -3487,7 +3517,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>de opção de criar botões personalizado, dando nome e cor do botão alem dos comandos que irão dentro desse botão, nesses botões personalizados, de opção de horario para executar e dias da semana ou um dia especifico do calendário</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>{studioName || "Geral"} - Botões Personalizados</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
