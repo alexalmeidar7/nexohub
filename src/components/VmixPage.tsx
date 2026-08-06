@@ -2627,7 +2627,8 @@ function SwitcherUI({
             </span>
             <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
           </button>
-          <StatusPill />
+          <SwitcherStatusPill />
+
         </div>
         {!monitorsCollapsed && (
         <div className="flex items-stretch gap-[1px]">
