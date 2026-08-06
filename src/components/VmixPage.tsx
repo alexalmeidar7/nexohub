@@ -720,12 +720,6 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [connected, forcedConnected, navigate]);
   
-  // Initial load effect already handled by loadProgramas callback
-  useEffect(() => {
-    if (user) {
-      loadProgramas();
-    }
-  }, [user, loadProgramas]);
   const loadProgramas = useCallback(async () => {
     if (!user) return;
     
@@ -757,7 +751,12 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [user]);
 
-  useEffect(() => { loadProgramas(); }, [loadProgramas]);
+  // Initial load effect
+  useEffect(() => {
+    if (user) {
+      loadProgramas();
+    }
+  }, [user, loadProgramas]);
 
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
