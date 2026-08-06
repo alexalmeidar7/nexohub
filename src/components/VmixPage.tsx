@@ -2350,6 +2350,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       streaming={streaming}
       recording={recording}
       overlays={overlays}
+
       setStreaming={setStreaming}
       setRecording={setRecording}
       setOverlays={setOverlays}
@@ -2525,12 +2526,34 @@ function SwitcherUI({
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="relative flex flex-col xl:flex-row xl:items-center justify-center gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex flex-wrap items-center gap-4">
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
             </div>
+
+            {/* Status Indicator */}
+            <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
+                <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
+                  {connected ? "Conectado" : "Desconectado"}
+                </span>
+              </div>
+              {connected && (
+                <>
+                  <div className="w-px h-3 bg-white/10" />
+                  <div className="flex items-center gap-2">
+                    <Activity size={12} className="text-white/20" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                      Latência: <span className="text-white/80">18ms</span>
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
+
 
           {effectiveConnected && selectedConnectionId && (
             <div className="absolute right-4 flex items-center gap-2">
