@@ -149,8 +149,10 @@ export default function VmixControl() {
           <button 
             onClick={() => {
               localStorage.removeItem(`vmix_active_conn_${user.id}`);
+              localStorage.removeItem(`vmix_last_connected_${user.id}`);
               window.location.reload();
             }} 
+
             className="text-white/50 hover:text-white transition-colors flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10" 
             title="Voltar para tela de nova conexão"
           >
