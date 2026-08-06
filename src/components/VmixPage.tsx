@@ -2395,6 +2395,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       reloadFallback={reloadFallback}
       reloadInputsAndSources={reloadInputsAndSources}
       inputShortcuts={inputShortcuts}
+      setInputShortcuts={setInputShortcuts}
       capturingShortcut={capturingShortcut}
       setCapturingShortcut={setCapturingShortcut}
       manualNdiHost={manualNdiHost}
