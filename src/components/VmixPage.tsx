@@ -2469,10 +2469,6 @@ function SwitcherUI({
 
             {effectiveConnected && selectedConnectionId && (
               <div className="flex flex-wrap items-center gap-2">
-                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
-                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{studioName || "vMix Studio"}</p>
-                </div>
                 <button
                   onClick={() => {
                     setConnected(false);
@@ -2490,6 +2486,7 @@ function SwitcherUI({
               </div>
             )}
           </div>
+
 
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
