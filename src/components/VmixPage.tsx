@@ -677,7 +677,7 @@ export default function VmixPage() {
     } catch { return {}; }
   });
   
-  const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
+  const connectToVmixRef = useRef<((isAutoConnect?: boolean) => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
   const silentFailCountRef = useRef(0);
 
@@ -833,10 +833,13 @@ export default function VmixPage() {
         
         setLoading(false);
         
-        // Auto-connect
-        setTimeout(() => {
-          connectToVmixRef.current?.();
-        }, 800);
+        // Auto-connect if it was connected before reload
+        const lastConnectedId = localStorage.getItem(`vmix_last_connected_${user.id}`);
+        if (lastConnectedId === def.id) {
+          setTimeout(() => {
+            connectToVmixRef.current?.(true);
+          }, 800);
+        }
       } else {
         // Fallback to old user_settings if no connections in new table yet
         const { data: oldData } = await supabase
@@ -871,7 +874,11 @@ export default function VmixPage() {
   // Persist the active connection so it auto-applies on every future visit
   const persistActiveConnection = useCallback(async (connId: string) => {
     if (!user || !connId) return;
-    try { localStorage.setItem(`vmix_active_conn_${user.id}`, connId); } catch {}
+    try { 
+      localStorage.setItem(`vmix_active_conn_${user.id}`, connId);
+      // Mark this as truly "connected" so we can auto-connect on reload
+      localStorage.setItem(`vmix_last_connected_${user.id}`, connId);
+    } catch {}
     try {
       await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: false })
@@ -1220,7 +1227,7 @@ export default function VmixPage() {
     }
   }, [savedUrl, vmixDirectFetch, vmixProxyFetch, toast]);
 
-  const connectToVmix = useCallback(async () => {
+  const connectToVmix = useCallback(async (isAutoConnect = false) => {
     if (!savedUrl) return;
 
     const isLocal = isPrivateIp(savedUrl);
@@ -1258,12 +1265,18 @@ export default function VmixPage() {
       persistVmixSnapshot(vmixState);
 
       setConnected(true);
-      if (selectedConnectionId) persistActiveConnection(selectedConnectionId);
+      if (selectedConnectionId) {
+        persistActiveConnection(selectedConnectionId);
+        localStorage.setItem(`vmix_last_connected_${user.id}`, selectedConnectionId);
+      }
+      
       // Auto-navigate to main Nexo Control panel (switcher) once connected
       setActiveTab("controls");
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
-      toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+      if (!isAutoConnect) {
+        toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+      }
 
       // Auto-reload inputs + NDI sources with retry/fallback
       setTimeout(() => reloadInputsAndSources(), 400);
@@ -2269,7 +2282,7 @@ export default function VmixPage() {
                       </Button>
                       {savedUrl && (
                         <button
-                          onClick={connectToVmix}
+                          onClick={() => connectToVmix()}
                           disabled={connecting}
                           className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
                           style={{ backgroundColor: "#22c55e" }}
@@ -2559,7 +2572,7 @@ export default function VmixPage() {
       )}
       {connStatus !== "online" && (savedUrl || vmixUrl) && (
         <button
-          onClick={connectToVmix}
+          onClick={() => connectToVmix()}
           disabled={connecting}
           className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
           style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
@@ -2640,7 +2653,7 @@ export default function VmixPage() {
                   className="h-10 w-44 px-3 rounded-xl text-[11px] outline-none bg-[#0a0a0d] text-white border border-white/10 font-mono"
                 />
                 <button
-                  onClick={connectToVmix}
+                  onClick={() => connectToVmix()}
                   disabled={connecting}
                   className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
                   style={{ backgroundColor: "#dc2626", color: "#fff" }}
