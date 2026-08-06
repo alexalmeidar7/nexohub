@@ -2138,20 +2138,50 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {vmixConnections.length > 0 ? (
                   vmixConnections.map((conn) => (
-                    <button
+                    <div
                       key={conn.id}
-                      onClick={() => handleSelectConnection(conn)}
                       className="group relative aspect-square rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-3 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30"
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-colors">
-                        <Monitor size={28} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
+                      <button
+                        onClick={() => handleSelectConnection(conn)}
+                        className="flex flex-col items-center justify-center gap-3 w-full h-full"
+                      >
+                        <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-colors">
+                          <Monitor size={28} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
+                        </div>
+                        <span className="text-xs font-bold text-white/80 group-hover:text-white uppercase tracking-wider">{conn.name}</span>
+                      </button>
+
+                      <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedConnectionId(conn.id);
+                            setVmixUrl(conn.url);
+                            setStudioName(conn.name);
+                            setVmixUser(conn.username || "");
+                            setVmixPass(conn.password || "");
+                            setShowStudioSelector(true);
+                          }}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors text-white/40 hover:text-white"
+                          title="Editar"
+                        >
+                          <Wand2 size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConnection(conn.id);
+                          }}
+                          className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 transition-colors text-white/40 hover:text-red-500"
+                          title="Excluir"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
-                      <span className="text-xs font-bold text-white/80 group-hover:text-white uppercase tracking-wider">{conn.name}</span>
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <RefreshCw size={14} className="text-white/20" />
-                      </div>
-                    </button>
+                    </div>
                   ))
+
                 ) : (
                   <div className="col-span-full aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
                     <Monitor size={32} className="text-white/5" />
