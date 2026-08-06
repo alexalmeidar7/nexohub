@@ -2445,7 +2445,7 @@ function SwitcherUI({
   setPreviewInput, setActiveInput, setMonitorStreamUrls, setMonitorIframeMode, toast,
   monitorStreamUrls, monitorIframeMode, setEditingMonitorStream, editingMonitorStream,
   setMonitorStreamTemp, monitorStreamTemp, getMonitorContent, ndiSources, addNdiInput,
-  reloadingInputs, reloadFallback, reloadInputsAndSources, inputShortcuts,
+  reloadingInputs, reloadFallback, reloadInputsAndSources, inputShortcuts, setInputShortcuts,
   capturingShortcut, setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
   ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
   editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
