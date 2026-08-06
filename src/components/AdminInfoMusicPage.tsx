@@ -181,7 +181,7 @@ export default function AdminInfoMusicPage() {
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
 
-  const thClass = "px-4 py-3 font-black text-slate-700 dark:text-foreground";
+  const thClass = "px-4 py-3 font-black text-[#00BFF0] dark:text-[#00BFF0]";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
   const trClass =
     "border-t border-border/60 odd:bg-slate-50/50 dark:odd:bg-transparent even:bg-white dark:even:bg-transparent hover:bg-primary/5 transition-colors text-foreground";
