@@ -2470,7 +2470,8 @@ function SwitcherUI({
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
               <div className="w-px h-5 bg-white/10" />
-              <StatusPill />
+              <SwitcherStatusPill />
+
             </div>
 
             {effectiveConnected && selectedConnectionId ? (
