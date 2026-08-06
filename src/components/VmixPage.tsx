@@ -394,7 +394,7 @@ interface NetworkInterfaceInfo {
   recommendation?: string;
 }
 
-export default function VmixPage() {
+export default function VmixPage({ forcedConnected = false }: { forcedConnected?: boolean }) {
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
@@ -2261,6 +2261,14 @@ export default function VmixPage() {
       </div>
     );
   }
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (connected && !forcedConnected) {
+      navigate("/vmix-control/switcher");
+    }
+  }, [connected, forcedConnected, navigate]);
+
 
 
   // ── Connected layout ──
