@@ -2530,10 +2530,7 @@ function SwitcherUI({
         {/* Top Header with Logo, Navigation, and Status */}
         <div className="relative flex items-center justify-between gap-4 p-4 pl-6" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex items-center gap-8">
-            {/* Logo */}
-            <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
-              <img src={logoMixControl} alt="Mix Control" className="h-5" />
-            </div>
+            {/* Logo removed as requested */}
 
             {/* Main Navigation */}
             <div className="flex items-center gap-2">
