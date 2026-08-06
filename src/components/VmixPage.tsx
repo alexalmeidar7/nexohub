@@ -2075,449 +2075,193 @@ export default function VmixPage() {
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="max-w-2xl mx-auto space-y-5 py-4">
-        {/* ── CONNECTION CARD ── */}
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff0a", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
-          {/* Card Header */}
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #242430, #2a2a36)", borderBottom: "1px solid #ffffff08" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#ffffff08" }}>
-              <Wifi size={18} style={{ color: "#888" }} />
+      <div className="max-w-4xl mx-auto py-10 px-6">
+        <div className="flex flex-col gap-10">
+          {/* Top Bar with User Info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={logoMixControl} alt="VMIXCONTROL" className="h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-white/90">Conexão vMix</h3>
-              <p className="text-[10px] text-white/35">Configure o endereço IP do computador com vMix</p>
-            </div>
+            {user && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] text-white/60 font-medium tracking-wider">{user.email}</span>
+              </div>
+            )}
           </div>
 
-          {/* Card Body */}
-          <div className="p-6 space-y-5">
-            {/* Studio Name Input */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Nome do Estúdio</label>
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
-                <input
-                  type="text"
-                  value={studioName}
-                  onChange={e => setStudioName(e.target.value)}
-                  placeholder="Ex: Estúdio A, Control Room..."
-                  className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* NEW CONNECTION BUTTON */}
+            <div className="flex flex-col gap-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Nova Conexão</p>
+              <button
+                onClick={() => setShowStudioSelector(true)}
+                className="group relative aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-4 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+              >
+                <div className="w-24 h-24 rounded-full bg-[#C6F03C]/10 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Plus size={40} className="text-[#C6F03C]" />
+                </div>
+                <div className="absolute inset-0 rounded-[40px] border-2 border-transparent group-hover:border-[#C6F03C]/20 transition-all" />
+              </button>
             </div>
 
-            {/* LAN Status & Connection Hint */}
-            {savedUrl && isPrivateIp(savedUrl) && (
-              <div className={`mb-4 rounded-xl p-4 flex items-start gap-3 border ${
-                lanStatus === "same_lan" 
-                  ? "bg-green-500/10 border-green-500/20 text-green-400" 
-                  : lanStatus === "different_network"
-                  ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
-                  : "bg-white/5 border-white/10 text-white/40"
-              }`}>
-                {lanStatus === "checking" ? <Loader2 size={16} className="animate-spin mt-0.5" /> : 
-                 lanStatus === "same_lan" ? <CheckCircle size={16} className="mt-0.5" /> : 
-                 <WifiOff size={16} className="mt-0.5" />}
-                <div className="flex-1">
-                  <p className="text-[11px] font-bold uppercase tracking-wider mb-1">
-                    {lanStatus === "checking" ? "Verificando rede..." :
-                     lanStatus === "same_lan" ? "Rede Local Detectada" :
-                     "Rede vMix Não Encontrada"}
-                  </p>
-                  <p className="text-[10px] leading-relaxed opacity-80">
-                    {lanStatus === "checking" ? "Testando se seu dispositivo consegue ver o vMix diretamente." :
-                     lanStatus === "same_lan" ? "Você está na mesma rede LAN que o vMix. O controle direto deve funcionar perfeitamente." :
-                     "Não detectamos o vMix na sua rede local atual. Certifique-se de estar no mesmo Wi-Fi/Rede do vMix ou use um IP público com modo Proxy."}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Network Interface Recommendation */}
-            {networkInfo && (
-              <div className={`rounded-xl p-4 flex items-start gap-3 border ${
-                networkInfo.type === 'ethernet' 
-                  ? "bg-blue-500/10 border-blue-500/20 text-blue-400" 
-                  : "bg-white/5 border-white/10 text-white/50"
-              }`}>
-                {networkInfo.type === 'ethernet' ? <Zap size={16} className="mt-0.5" /> : <Network size={16} className="mt-0.5" />}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="text-[11px] font-bold uppercase tracking-wider">
-                      Interface: {
-                        networkInfo.type === 'wifi' ? 'Wi-Fi' : 
-                        networkInfo.type === 'ethernet' ? 'Ethernet (Cabo)' : 
-                        networkInfo.type === 'cellular' ? 'Dados Móveis' : 
-                        'Rede Ativa'
-                      }
-                    </p>
-                    <span className="px-1.5 py-0.5 rounded text-[8px] bg-white/10 text-white/60 font-mono">
-                      {networkInfo.effectiveType}
-                    </span>
-                  </div>
-                  {networkInfo.recommendation && (
-                    <p className="text-[10px] leading-relaxed opacity-80 italic">
-                      {networkInfo.recommendation}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* URL Input Group */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30">Endereço do vMix</label>
-                <div className="flex bg-[#111115] p-0.5 rounded-lg border border-white/5">
-                  <button
-                    onClick={() => {
-                      setConnectionMode("direct");
-                      toast({ title: "Modo Direto selecionado", description: "Conexão direta pelo navegador." });
-                    }}
-                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "direct" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
-                    title="Conexão direta pelo navegador (Ideal para rede local/LAN)"
-                  >
-                    DIRETO
-                  </button>
-                  <button
-                    onClick={() => {
-                      setConnectionMode("proxy");
-                      toast({ title: "Modo Proxy selecionado", description: "Conexão via servidor na nuvem." });
-                    }}
-                    className={`px-2 py-0.5 rounded text-[8px] font-bold transition-all ${connectionMode === "proxy" ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}
-                    title="Conexão via Proxy (Ideal para IPs públicos ou evitar erros de SSL/CORS)"
-                  >
-                    PROXY
-                  </button>
-                </div>
-              </div>
-              {(() => {
-                const parts = parseVmixUrlParts(vmixUrl);
-                const validationError = validateVmixParts(parts.protocol, parts.host, parts.port);
-                const updateParts = (next: Partial<typeof parts>) => {
-                  const merged = { ...parts, ...next };
-                  setVmixUrl(composeVmixUrl(merged.protocol, merged.host, merged.port));
-                  setDirectTestResult(null);
-                };
-                const testDirect = async () => {
-                  if (validationError) {
-                    setDirectTestResult({ ok: false, message: validationError });
-                    return;
-                  }
-                  setDirectTesting(true);
-                  setDirectTestResult(null);
-                  const base = composeVmixUrl(parts.protocol, parts.host, parts.port);
-                  try {
-                    if (window.location.protocol === "https:" && parts.protocol === "http") {
-                      throw new Error("Mixed Content: página HTTPS não permite testar vMix em HTTP. Abra o painel em HTTP ou use o Modo Proxy.");
-                    }
-                    const res = await fetch(`${base}/api/`, { mode: "cors", cache: "no-store", signal: AbortSignal.timeout(6000) });
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const text = await res.text();
-                    const vmixState = parseVmixXml(text);
-                    setDirectTestResult({ ok: true, message: `Conectado ao vMix em ${base} (${vmixState.inputs.length} inputs)` });
-                  } catch (e) {
-                    const msg = e instanceof Error ? e.message : String(e);
-                    setDirectTestResult({ ok: false, message: msg.length > 160 ? msg.slice(0, 160) + "…" : msg });
-                  } finally {
-                    setDirectTesting(false);
-                  }
-                };
-                return (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex gap-2 items-stretch flex-wrap">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Protocolo</span>
-                        <select
-                          value={parts.protocol}
-                          onChange={e => updateParts({ protocol: e.target.value as "http" | "https" })}
-                          className="px-3 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30"
-                        >
-                          <option value="http">http</option>
-                          <option value="https">https</option>
-                        </select>
-                      </div>
-                      <div className="flex-1 min-w-[180px] flex flex-col gap-1">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Host / IP</span>
-                        <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                          <Wifi size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
-                          <input
-                            type="text"
-                            value={parts.host}
-                            onChange={e => updateParts({ host: e.target.value.trim() })}
-                            placeholder="192.168.x.x ou localhost"
-                            className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1 w-[110px]">
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/25">Porta</span>
-                        <input
-                          type="number"
-                          min={1}
-                          max={65535}
-                          value={parts.port}
-                          onChange={e => updateParts({ port: e.target.value.replace(/\D/g, "").slice(0, 5) })}
-                          placeholder="8088"
-                          className="px-4 py-2.5 rounded-xl text-sm bg-[#2a2a30] text-white border border-white/10 outline-none focus:border-white/30 placeholder:text-white/20"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2 items-center flex-wrap">
-                      <button
-                        onClick={testDirect}
-                        disabled={directTesting || !!validationError}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
-                        style={{ backgroundColor: "#4a4a56" }}
-                        title={validationError || "Testa a conexão direta com o vMix sem salvar"}
-                      >
-                        {directTesting ? <Loader2 size={13} className="animate-spin" /> : <Wifi size={13} />}
-                        {directTesting ? "Testando…" : "Testar Conexão"}
-                      </button>
-                      <Button variant="save"
-                        onClick={saveUrl}
-                        disabled={!!validationError}
-                      >
-                        {selectedConnectionId ? "Atualizar" : "Salvar Novo"}
-                      </Button>
-                      {savedUrl && (
-                        <button
-                          onClick={() => connectToVmix()}
-                          disabled={connecting}
-                          className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{ backgroundColor: "#22c55e" }}
-                        >
-                          {connecting ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                          {connecting ? "Conectando..." : "Conectar"}
-                        </button>
-                      )}
-                      <span className="text-[10px] font-mono text-white/30 truncate">
-                        {composeVmixUrl(parts.protocol, parts.host, parts.port) || "—"}
-                      </span>
-                    </div>
-                    {validationError && (
-                      <p className="text-[10px] text-amber-400/80">⚠ {validationError}</p>
-                    )}
-                    {directTestResult && (
-                      <p className={`text-[10px] leading-relaxed ${directTestResult.ok ? "text-emerald-400/90" : "text-red-400/90"}`}>
-                        {directTestResult.ok ? "✅" : "❌"} {directTestResult.message}
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
-            </div>
-
-            {/* Saved Connections List */}
-            {vmixConnections.length > 0 && (
-              <div className="pt-4 border-t border-white/5">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-3">Conexões Salvas</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {vmixConnections.map((conn) => (
-                    <div 
+            {/* SAVED CONNECTIONS LIST */}
+            <div className="flex flex-col gap-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Conexões Salvas</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {vmixConnections.length > 0 ? (
+                  vmixConnections.map((conn) => (
+                    <button
                       key={conn.id}
                       onClick={() => handleSelectConnection(conn)}
-                      className={`group relative p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                        selectedConnectionId === conn.id 
-                          ? "bg-blue-500/10 border-blue-500/50" 
-                          : "bg-white/5 border-white/5 hover:bg-white/10"
-                      }`}
+                      className="group relative aspect-square rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-3 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30"
                     >
-                      <div className="flex items-center gap-3 overflow-hidden">
-                        <div className={`w-2 h-2 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]" : "bg-white/20"}`} />
-                        <div className="overflow-hidden">
-                          <p className="text-[11px] font-bold text-white/90 truncate">{conn.name}</p>
-                          <p className="text-[9px] text-white/40 truncate">{conn.url}</p>
-                        </div>
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-colors">
+                        <Monitor size={28} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
                       </div>
-                      <button 
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (confirm(`Excluir conexão "${conn.name}"?`)) {
-                            await (supabase.from("vmix_connections" as any) as any).delete().eq("id", conn.id);
-                            if (selectedConnectionId === conn.id) setSelectedConnectionId(null);
-                            loadConnections();
-                            toast({ title: "Conexão excluída" });
-                          }
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-white/20 hover:text-red-400 transition-all"
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  ))}
-                  <button 
-                    onClick={() => {
-                      setSelectedConnectionId(null);
-                      setStudioName("");
-                      setVmixUrl("");
-                      setVmixUser("");
-                      setVmixPass("");
-                      setConnected(false);
-                    }}
-                    className="p-3 rounded-xl border border-dashed border-white/10 bg-white/[0.02] hover:bg-white/5 transition-all flex items-center justify-center gap-2"
-                  >
-                    <Plus size={12} className="text-white/40" />
-                    <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Nova Conexão</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Diagnostic Button */}
-            {savedUrl && (
-              <div className="space-y-4">
-                <div className="h-px" style={{ backgroundColor: "#ffffff08" }} />
-                <button
-                  onClick={runDiagnostic}
-                  disabled={diagRunning}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110 disabled:opacity-50"
-                  style={{ backgroundColor: "#f59e0b20", color: "#f59e0b", border: "1px solid #f59e0b30" }}
-                >
-                  {diagRunning ? <Loader2 size={14} className="animate-spin" /> : <Activity size={14} />}
-                  {diagRunning ? "Diagnosticando..." : "🔧 Corrigir Conexão"}
-                </button>
-
-                {diagResult && (
-                  <div className="rounded-xl p-5 space-y-4" style={{ backgroundColor: "#16161c", border: "1px solid #ffffff08" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Activity size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Resultado do Diagnóstico</span>
-                    </div>
-
-                    {/* URL Analysis */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Tipo de IP</p>
-                        <p className="text-xs font-bold" style={{ color: diagResult.urlType === "local" ? "#22c55e" : "#60a5fa" }}>
-                          {diagResult.urlType === "local" ? "🏠 Local" : "🌐 Público"}
-                        </p>
+                      <span className="text-xs font-bold text-white/80 group-hover:text-white uppercase tracking-wider">{conn.name}</span>
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <RefreshCw size={14} className="text-white/20" />
                       </div>
-                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Protocolo</p>
-                        <p className="text-xs font-bold" style={{ color: diagResult.protocol === "https" ? "#22c55e" : "#f59e0b" }}>
-                          {diagResult.protocol.toUpperCase()}
-                        </p>
-                      </div>
-                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">App HTTPS</p>
-                        <p className="text-xs font-bold" style={{ color: diagResult.isSecureContext ? "#f59e0b" : "#22c55e" }}>
-                          {diagResult.isSecureContext ? "⚡ Sim" : "✓ Não"}
-                        </p>
-                      </div>
-                      <div className="rounded-lg p-2.5" style={{ backgroundColor: "#ffffff06" }}>
-                        <p className="text-[9px] font-bold uppercase text-white/30 mb-1">Mixed Content</p>
-                        <p className="text-xs font-bold" style={{ color: diagResult.mixedContentBlocked ? "#dc2626" : "#22c55e" }}>
-                          {diagResult.mixedContentBlocked ? "🚫 Bloqueado" : "✓ OK"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Connection Tests */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div className="rounded-lg p-3" style={{
-                        backgroundColor: diagResult.directResult === "ok" ? "#22c55e10" : diagResult.directResult === "fail" ? "#dc262610" : "#ffffff06",
-                        border: `1px solid ${diagResult.directResult === "ok" ? "#22c55e30" : diagResult.directResult === "fail" ? "#dc262630" : "#ffffff08"}`,
-                      }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          {diagResult.directResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
-                           diagResult.directResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
-                           <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
-                          <span className="text-xs font-bold" style={{
-                            color: diagResult.directResult === "ok" ? "#22c55e" : diagResult.directResult === "fail" ? "#dc2626" : "#ffffff40",
-                          }}>Modo Direto</span>
-                        </div>
-                        {diagResult.directError && <p className="text-[10px] text-white/40 mt-1">{diagResult.directError}</p>}
-                        {diagResult.directResult === "ok" && <p className="text-[10px] text-white/40 mt-1">Conexão direta funcionando!</p>}
-                      </div>
-                      <div className="rounded-lg p-3" style={{
-                        backgroundColor: diagResult.proxyResult === "ok" ? "#22c55e10" : diagResult.proxyResult === "fail" ? "#dc262610" : "#ffffff06",
-                        border: `1px solid ${diagResult.proxyResult === "ok" ? "#22c55e30" : diagResult.proxyResult === "fail" ? "#dc262630" : "#ffffff08"}`,
-                      }}>
-                        <div className="flex items-center gap-2 mb-1">
-                          {diagResult.proxyResult === "ok" ? <CheckCircle size={14} style={{ color: "#22c55e" }} /> :
-                           diagResult.proxyResult === "fail" ? <XCircle size={14} style={{ color: "#dc2626" }} /> :
-                           diagResult.proxyResult === "skipped" ? <Shield size={14} style={{ color: "#ffffff30" }} /> :
-                           <AlertTriangle size={14} style={{ color: "#ffffff30" }} />}
-                          <span className="text-xs font-bold" style={{
-                            color: diagResult.proxyResult === "ok" ? "#22c55e" : diagResult.proxyResult === "fail" ? "#dc2626" : "#ffffff40",
-                          }}>Modo Proxy</span>
-                        </div>
-                        {diagResult.proxyError && <p className="text-[10px] text-white/40 mt-1">{diagResult.proxyError}</p>}
-                        {diagResult.proxyResult === "ok" && <p className="text-[10px] text-white/40 mt-1">Conexão via proxy funcionando!</p>}
-                      </div>
-                    </div>
-
-                    {/* Recommendation */}
-                    <div className="rounded-lg p-3" style={{ backgroundColor: "#f59e0b10", border: "1px solid #f59e0b30" }}>
-                      <p className="text-[11px] font-medium" style={{ color: "#fbbf24", lineHeight: 1.6 }}>
-                        {diagResult.recommendation}
-                      </p>
-                    </div>
-
-                    {/* Auto-connect status */}
-                    {(diagResult.directResult === "ok" || diagResult.proxyResult === "ok") && (
-                      <div className="flex items-center gap-2 rounded-lg p-2.5" style={{ backgroundColor: "#22c55e10", border: "1px solid #22c55e30" }}>
-                        <Loader2 size={14} className="animate-spin" style={{ color: "#22c55e" }} />
-                        <span className="text-[11px] font-bold" style={{ color: "#22c55e" }}>Conectando automaticamente no modo {diagResult.directResult === "ok" ? "Direto" : "Proxy"}...</span>
-                      </div>
-                    )}
-
-                    {/* Retry button */}
-                    {diagResult.directResult !== "ok" && diagResult.proxyResult !== "ok" && (
-                      <button
-                        onClick={runDiagnostic}
-                        className="w-full py-2.5 rounded-xl text-xs font-bold transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#f59e0b20", color: "#f59e0b", border: "1px solid #f59e0b30" }}
-                      >
-                        🔄 Tentar novamente
-                      </button>
-                    )}
+                    </button>
+                  ))
+                ) : (
+                  <div className="col-span-full aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
+                    <Monitor size={32} className="text-white/5" />
+                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Nenhuma salva</p>
                   </div>
                 )}
               </div>
-            )}
+            </div>
+          </div>
 
-            {!diagResult && !savedUrl && (
-              <p className="text-xs text-white/15 py-4 text-center">Digite o endereço IP do computador com vMix e clique em Salvar</p>
-            )}
-            {!diagResult && savedUrl && (
-              <p className="text-xs text-white/15 py-4 text-center">Use 'Direto' para rede local (192.168.x.x) ou 'Proxy' com IP público + port forwarding.</p>
-            )}
+          <div className="mt-10 pt-10 border-t border-white/5 flex justify-center">
+             <p className="text-[9px] text-white/10 uppercase font-black tracking-[0.3em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
           </div>
         </div>
 
-        {/* ── WARNING BANNER ── */}
-        {showNewTabBanner && (
-          <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #f59e0b25", boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
-            <div className="px-6 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #f59e0b15, #f59e0b08)", borderBottom: "1px solid #f59e0b15" }}>
-              <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
-              <span className="text-xs font-bold" style={{ color: "#fbbf24" }}>Habilite "Conteúdo não seguro"</span>
-            </div>
-            <div className="p-6">
-              <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#ffffff60" }}>
-                O preview roda em HTTPS e bloqueia requisições HTTP para IPs locais ({savedUrl}). 
-                Siga os passos abaixo <strong style={{ color: "#fff" }}>uma única vez</strong> para permitir a conexão:
-              </p>
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
-                {[
-                  <>Abra esta URL em uma aba separada: <button onClick={() => window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer")} className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110" style={{ backgroundColor: "#f59e0b20", color: "#fbbf24", border: "1px solid #f59e0b30" }}><ExternalLink size={10} />{previewDomain.replace("https://", "").slice(0, 30)}...</button></>,
-                  <>Na barra de endereço, clique no ícone <strong style={{ color: "#fff" }}>🔒 cadeado</strong> → <strong style={{ color: "#fff" }}>Configurações do site</strong></>,
-                  <>Encontre <strong style={{ color: "#fff" }}>Conteúdo não seguro</strong> → mude para <strong style={{ color: "#22c55e" }}>Permitir</strong></>,
-                  <><strong style={{ color: "#fff" }}>Feche a aba</strong> e volte aqui. Clique <strong style={{ color: "#22c55e" }}>Conectar</strong> — agora vai funcionar! ✅</>,
-                ].map((content, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>{i + 1}</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff80" }}>{content}</p>
+        {/* CONNECTION MODAL */}
+        <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
+          <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-0 overflow-hidden">
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
+                <p className="text-xs text-white/40 leading-relaxed">Insira os dados do vMix para iniciar o controle remoto do estúdio.</p>
+              </div>
+
+              <div className="space-y-5">
+                {/* Studio Name Select */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Estúdio</label>
+                  <select
+                    value={studioName}
+                    onChange={e => setStudioName(e.target.value)}
+                    className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                  >
+                    <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
+                    {programas
+                      .map(p => p.estudio)
+                      .filter((v, i, a) => v && a.indexOf(v) === i)
+                      .map(estudio => (
+                        <option key={estudio} value={estudio!} className="bg-[#1a1a1f]">{estudio}</option>
+                      ))
+                    }
+                    <option value="Estúdio Principal" className="bg-[#1a1a1f]">Estúdio Principal</option>
+                    <option value="Estúdio B" className="bg-[#1a1a1f]">Estúdio B</option>
+                  </select>
+                </div>
+
+                {/* URL Parts */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Endereço do vMix</label>
+                  <div className="grid grid-cols-12 gap-2">
+                    <div className="col-span-4">
+                      <select
+                        value={parseVmixUrlParts(vmixUrl).protocol}
+                        onChange={e => {
+                          const parts = parseVmixUrlParts(vmixUrl);
+                          setVmixUrl(composeVmixUrl(e.target.value as "http" | "https", parts.host, parts.port));
+                        }}
+                        className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                      >
+                        <option value="http" className="bg-[#1a1a1f]">http</option>
+                        <option value="https" className="bg-[#1a1a1f]">https</option>
+                      </select>
+                    </div>
+                    <div className="col-span-8">
+                      <input
+                        type="text"
+                        value={parseVmixUrlParts(vmixUrl).host}
+                        onChange={e => {
+                          const parts = parseVmixUrlParts(vmixUrl);
+                          setVmixUrl(composeVmixUrl(parts.protocol, e.target.value.trim(), parts.port));
+                        }}
+                        placeholder="IP ou Host"
+                        className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all placeholder:text-white/10"
+                      />
+                    </div>
                   </div>
-                ))}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Porta</label>
+                    <input
+                      type="text"
+                      value={parseVmixUrlParts(vmixUrl).port}
+                      onChange={e => {
+                        const parts = parseVmixUrlParts(vmixUrl);
+                        setVmixUrl(composeVmixUrl(parts.protocol, parts.host, e.target.value.replace(/\D/g, "").slice(0, 5)));
+                      }}
+                      placeholder="8088"
+                      className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Modo</label>
+                    <div className="flex h-[54px] p-1.5 rounded-2xl bg-white/5 border border-white/10">
+                      <button
+                        onClick={() => setConnectionMode("direct")}
+                        className={`flex-1 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${connectionMode === "direct" ? "bg-[#C6F03C] text-black" : "text-white/40 hover:text-white"}`}
+                      >
+                        Direto
+                      </button>
+                      <button
+                        onClick={() => setConnectionMode("proxy")}
+                        className={`flex-1 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${connectionMode === "proxy" ? "bg-[#C6F03C] text-black" : "text-white/40 hover:text-white"}`}
+                      >
+                        Proxy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col gap-3">
+                <button
+                  onClick={async () => {
+                    await saveUrl();
+                    setShowStudioSelector(false);
+                    connectToVmix();
+                  }}
+                  className="w-full py-5 rounded-2xl bg-[#C6F03C] text-black text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_30px_rgba(198,240,60,0.2)]"
+                >
+                  Conectar ao Estúdio
+                </button>
+                <button
+                  onClick={() => setShowStudioSelector(false)}
+                  className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
-          </div>
-        )}
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
+
 
   // ── Connected layout ──
   const activeInputObj = inputs.find(i => i.number === activeInput);
@@ -4180,60 +3924,6 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* ── Studio Selector Dialog ── */}
-      <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
-        <DialogContent className="bg-[#1e1e24] border-[#ffffff10] text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Trocar Estúdio</DialogTitle>
-            <DialogDescription className="text-white/40">
-              Selecione qual estúdio você deseja controlar agora.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-3 mt-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
-            {vmixConnections.map((conn) => (
-              <div 
-                key={conn.id}
-                onClick={() => {
-                  handleSelectConnection(conn);
-                  setShowStudioSelector(false);
-                  // Trigger connection automatically after selection
-                  setTimeout(() => connectToVmix(), 300);
-                }}
-                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                  selectedConnectionId === conn.id 
-                    ? "bg-blue-600/20 border-blue-500/50" 
-                    : "bg-white/5 border-white/5 hover:bg-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-3 h-3 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" : "bg-white/10"}`} />
-                  <div>
-                    <p className="text-sm font-bold text-white/90">{conn.name || "Estúdio sem nome"}</p>
-                    <p className="text-[10px] text-white/30 font-mono mt-0.5">{conn.url}</p>
-                  </div>
-                </div>
-                {selectedConnectionId === conn.id && <CheckCircle size={16} className="text-blue-500" />}
-              </div>
-            ))}
-            
-            {vmixConnections.length === 0 && (
-              <div className="text-center py-10 text-white/20">
-                <Monitor size={32} className="mx-auto mb-2 opacity-20" />
-                <p className="text-xs">Nenhum estúdio salvo encontrado.</p>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="mt-4 border-t border-white/5 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowStudioSelector(false)} 
-              className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
-            >
-              Cancelar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
