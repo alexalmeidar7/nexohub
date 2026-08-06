@@ -2355,13 +2355,14 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setActiveCustomButton={setActiveCustomButton}
       user={user}
       runCommandsUnified={runCommandsUnified}
-      loadProgramas={() => {}}
-      loadCustomButtons={() => {}}
+      loadProgramas={loadProgramas}
+      loadCustomButtons={loadCustomButtons}
       setVmixLogs={setVmixLogs}
       ndiScanning={ndiScanning}
-      scanNdiSources={() => {}}
+      scanNdiSources={scanNdiSources}
       ndiInputs={ndiInputs}
       inputMapping={inputMapping}
+
     />
   );
 }
