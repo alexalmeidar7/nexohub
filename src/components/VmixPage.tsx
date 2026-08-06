@@ -792,15 +792,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       .select("*")
       .eq("user_id", user.id);
     
-    // Filter custom buttons by studio if available
-    if (studioName) {
-      // In custom buttons we can assume they might have a column "estudio" 
-      // but if the schema doesn't have it yet, this might need a migration.
-      // Looking at CustomVmixButtonEditor, it doesn't seem to have studio yet.
-      // However, for now, let's keep it user-based or filter if the field exists.
-      // The user wants "botões dos programas desse usuário nesse estudio".
-    }
-
+    // No automatic studio filtering for custom buttons display - show all
     const { data } = await query.order("created_at");
     if (data) setCustomButtons(data);
   }, [user]);
