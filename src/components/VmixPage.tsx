@@ -2425,6 +2425,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       scanNdiSources={scanNdiSources}
       ndiInputs={ndiInputs}
       inputMapping={inputMapping}
+      capturingShortcut={capturingShortcut}
 
     />
   );
