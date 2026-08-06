@@ -2209,9 +2209,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
           <p className="text-[10px] text-white/10 uppercase font-black tracking-[0.4em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
         </div>
       </div>
+    );
+  }
 
-
-        {/* CONNECTION MODAL */}
         <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
           <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-0 overflow-hidden">
             <div className="p-8 space-y-6">
