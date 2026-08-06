@@ -2598,6 +2598,59 @@ function SwitcherUI({
           </div>
         </div>
 
+        {/* Shortcut Capture Dialog */}
+        <Dialog open={!!capturingShortcut} onOpenChange={(open) => !open && setCapturingShortcut(null)}>
+          <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-8">
+            <div className="flex flex-col items-center text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                <Keyboard size={32} className="text-amber-500" />
+              </div>
+              <div className="space-y-2">
+                <DialogTitle className="text-xl font-black uppercase tracking-tight text-white">Configurar Atalho</DialogTitle>
+                <DialogDescription className="text-xs text-white/40 leading-relaxed">
+                  Pressione a tecla ou combinação de teclas que deseja vincular ao botão.
+                </DialogDescription>
+              </div>
+
+              <div className="w-full p-8 rounded-2xl bg-black/40 border border-white/5 flex flex-col items-center justify-center gap-4 min-h-[120px]">
+                {capturingShortcut && (
+                  <>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                      Input: {inputs.find(i => (i.key || i.number) === capturingShortcut)?.title || capturingShortcut}
+                    </span>
+                    <div className="px-6 py-3 rounded-xl bg-amber-500 text-black font-mono font-bold text-lg shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-pulse">
+                      {inputShortcuts[capturingShortcut] ? inputShortcuts[capturingShortcut].toUpperCase() : "PRESS..."}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 w-full">
+                <button
+                  onClick={() => {
+                    if (capturingShortcut) {
+                      setInputShortcuts(prev => {
+                        const next = { ...prev };
+                        delete next[capturingShortcut];
+                        return next;
+                      });
+                    }
+                    setCapturingShortcut(null);
+                  }}
+                  className="py-3 rounded-xl bg-white/5 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5"
+                >
+                  Limpar
+                </button>
+                <button
+                  onClick={() => setCapturingShortcut(null)}
+                  className="py-3 rounded-xl bg-[#C6F03C] text-black text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-[0_10px_20px_rgba(198,240,60,0.2)]"
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
 
