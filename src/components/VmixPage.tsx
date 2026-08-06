@@ -3246,7 +3246,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Radio size={14} style={{ color: "#999" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>cada programa cadastrado um botão, onde vamos inserir os comandos do botão do programa, os comandos de cada botão sera executado de acordo com a grade de programação do usuário.</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{studioName || "Estúdio FM"} - Botões Automáticos</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
