@@ -809,7 +809,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
     const { data } = await query.order("created_at");
     if (data) setCustomButtons(data);
-  }, [user, studioName]);
+  }, [user]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
 
