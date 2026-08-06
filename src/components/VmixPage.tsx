@@ -2656,11 +2656,9 @@ function SwitcherUI({
 
 
       {/* Tab Content (Main Switcher Area) */}
+      {/* Tab Content (Main Switcher Area) */}
       <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
-
-      {/* ── Tab Content ── */}
-      <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
