@@ -1773,8 +1773,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 
   // ── Demo mode: show connected UI with mock data in preview ──
   const isEmbeddedPreview = window.self !== window.top;
-   const [demoMode, setDemoMode] = useState(false);
-  const effectiveConnected = connected || demoMode;
+  const [demoMode, setDemoMode] = useState(false);
+  const isActuallyConnected = connected || forcedConnected || demoMode;
+
 
   useEffect(() => {
     if (!loading && !connected && isEmbeddedPreview) {
