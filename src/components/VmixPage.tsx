@@ -3331,10 +3331,6 @@ function SwitcherUI({
                       });
                       const groups: Record<string, typeof ordered> = {};
                       for (const p of ordered) {
-                        // Filter display by current studioName if set
-                        if (studioName && p.estudio && !p.estudio.toLowerCase().includes(studioName.toLowerCase())) {
-                          continue;
-                        }
                         const key = p.estudio || "Sem Estúdio";
                         if (!groups[key]) groups[key] = [];
                         groups[key].push(p);
