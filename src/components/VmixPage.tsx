@@ -2639,45 +2639,18 @@ function SwitcherUI({
               </div>
             )}
 
-            {/* ATEM-style console */}
+            {/* ATEM-style console reorganized */}
             <div className="rounded-lg overflow-hidden" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
-              <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px]">
-                {/* LEFT: Program + Preview + Style + CUT/AUTO */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr_1.2fr]">
+                
+                {/* 1. LEFT: PRE-VISUALIZAÇÃO (Inputs) */}
                 <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333" }}>
-                  {/* PROGRAM row */}
-                  <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
-                      {inputs.length === 0 && (
-                        <span className="col-span-full text-[10px] text-white/30">Nenhum input encontrado no vMix.</span>
-                      )}
-                      {inputs.map(input => {
-                        const isActive = activeInput === input.number;
-                        return (
-                          <button
-                            key={`pgm-${input.key || input.number}`}
-                            onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }}
-                            title={input.title}
-                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
-                            style={{
-                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
-                              color: isActive ? "#fff" : "#ddd",
-                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
-                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
-                            }}
-                          >
-                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
-                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  {/* PREVIEW row */}
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-emerald-400/80">◐ Pré-Visualização</h3>
-                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(6, Math.min(10, inputs.length || 8))}, minmax(0,1fr))` }}>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
+                      {inputs.length === 0 && (
+                        <span className="col-span-full text-[10px] text-white/30">Nenhum input.</span>
+                      )}
                       {inputs.map(input => {
                         const isPreview = previewInput === input.number;
                         const isActive = activeInput === input.number;
@@ -2686,7 +2659,7 @@ function SwitcherUI({
                             key={`pvw-${input.key || input.number}`}
                             onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }}
                             title={input.title}
-                            className="h-14 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
                               color: isPreview ? "#fff" : "#ddd",
@@ -2695,89 +2668,21 @@ function SwitcherUI({
                               opacity: isActive && !isPreview ? 0.55 : 1,
                             }}
                           >
-                            <span className="text-[9px] font-black opacity-70 leading-none">{input.number}</span>
-                            <span className="truncate max-w-full px-1 leading-tight mt-0.5">{input.title}</span>
+                            <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
                           </button>
                         );
                       })}
                     </div>
                   </section>
-
-                  {/* Style + CUT/AUTO */}
-                  <section className="grid grid-cols-[1fr_auto] gap-6 items-end">
-                    <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Estilo de Transição</h3>
-                      <div className="grid grid-cols-6 gap-2">
-                        {[
-                          { label: "MIX", fn: "Fade" },
-                          { label: "DIP", fn: "Merge" },
-                          { label: "WIPE", fn: "Wipe" },
-                          { label: "STING", fn: "Stinger1" },
-                          { label: "DVE", fn: "Zoom" },
-                          { label: "SLIDE", fn: "Slide" },
-                        ].map(s => {
-                          const active = transitionStyle === s.fn;
-                          return (
-                            <button
-                              key={s.fn}
-                              onClick={() => { setTransitionStyle(s.fn); localStorage.setItem("vmix_transition_style", s.fn); }}
-                              className="h-10 rounded border text-[10px] font-black tracking-wider transition-all"
-                              style={{
-                                backgroundColor: active ? "#f59e0b" : "#3a3a3a",
-                                color: active ? "#111" : "#ddd",
-                                borderColor: active ? "#fcd34d" : "#4a4a4a",
-                                boxShadow: active ? "0 0 12px rgba(245,158,11,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
-                              }}
-                            >
-                              {s.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="flex items-center gap-2 mt-3">
-                        <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
-                        <input
-                          type="range"
-                          min={200} max={4000} step={100}
-                          value={transitionDuration}
-                          onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
-                          className="flex-1 accent-amber-500"
-                        />
-                        <span className="text-[10px] font-mono text-amber-400 w-14 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 min-w-[280px]">
-                      <button
-                        onClick={() => sendCommand("Cut")}
-                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1), 0 0 12px rgba(220,38,38,0.35)" }}
-                      >
-                        CUT
-                      </button>
-                      <button
-                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
-                        className="h-16 rounded border text-[13px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)" }}
-                      >
-                        AUTO
-                      </button>
-                      <button
-                        onClick={() => sendCommand("FadeToBlack")}
-                        className="h-16 rounded border text-[11px] font-black tracking-widest transition-all hover:brightness-110"
-                        style={{ backgroundColor: "#111", color: "#dc2626", borderColor: "#7f1d1d", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6)" }}
-                      >
-                        FTB
-                      </button>
-                    </div>
-                  </section>
                 </div>
 
-                {/* RIGHT: Próxima Transição + Overlays (Keys) */}
-                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#252525" }}>
+                {/* 2. MIDDLE: TRANSIÇÕES (Keys 1-4 + BKGD) */}
+                <div className="p-5 flex flex-col gap-6" style={{ borderRight: "1px solid #333", backgroundColor: "#222225" }}>
                   <section>
                     <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Próxima Transição</h3>
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="h-12 rounded border flex items-center justify-center text-[10px] font-black"
+                      <div className="h-16 rounded border flex items-center justify-center text-[10px] font-black uppercase tracking-wider"
                         style={{ backgroundColor: "#f59e0b", color: "#111", borderColor: "#fcd34d", boxShadow: "0 0 10px rgba(245,158,11,0.35)" }}>
                         BKGD
                       </div>
@@ -2791,59 +2696,79 @@ function SwitcherUI({
                               sendCommand(cmd);
                               setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
                             }}
-                            className="h-12 rounded border text-[10px] font-black tracking-wider transition-all"
+                            className="h-16 rounded border text-[10px] font-black tracking-wider transition-all"
                             style={{
                               backgroundColor: isOn ? "#dc2626" : "#3a3a3a",
                               color: isOn ? "#fff" : "#ddd",
                               borderColor: isOn ? "#fca5a5" : "#4a4a4a",
                               boxShadow: isOn ? "0 0 12px rgba(220,38,38,0.5)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
                             }}
-                            title={`Overlay ${n} — ${isOn ? "ON AIR" : "OFF"}`}
                           >
                             KEY {n}
-                            {isOn && <span className="block text-[7px] mt-0.5 opacity-90">ON AIR</span>}
+                            {isOn && <span className="block text-[8px] mt-0.5 opacity-90">ON AIR</span>}
                           </button>
                         );
                       })}
                     </div>
                   </section>
 
+                  {/* Transition Controls inside Middle section */}
                   <section>
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-white/50">Atalhos & Status</h3>
-                    <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#1d1d1d", border: "1px solid #333" }}>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider">Estilo ativo</span>
-                        <span className="font-mono text-amber-400 font-bold">{transitionStyle}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider">Duração</span>
-                        <span className="font-mono text-amber-400 font-bold">{(transitionDuration/1000).toFixed(1)}s</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider">Inputs</span>
-                        <span className="font-mono text-white/70 font-bold">{inputs.length}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-white/40 uppercase tracking-wider">Fontes NDI</span>
-                        <span className="font-mono text-emerald-400 font-bold">{ndiSources.length}</span>
-                      </div>
+                    <div className="flex items-center gap-2 mb-2">
+                       <span className="text-[9px] uppercase tracking-widest text-white/40 font-bold">Duração</span>
+                       <input
+                         type="range"
+                         min={200} max={4000} step={100}
+                         value={transitionDuration}
+                         onChange={e => { const v = Number(e.target.value); setTransitionDuration(v); localStorage.setItem("vmix_transition_duration", String(v)); }}
+                         className="flex-1 accent-amber-500"
+                       />
+                       <span className="text-[10px] font-mono text-amber-400 w-12 text-right">{(transitionDuration/1000).toFixed(1)}s</span>
                     </div>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      {inputs.slice(0, 6).map(input => (
-                        <button
-                          key={`sc-${input.key || input.number}`}
-                          onClick={() => setCapturingShortcut(input.number)}
-                          className="h-8 rounded border text-[9px] font-black uppercase tracking-wider transition-all truncate px-2"
-                          style={{
-                            backgroundColor: "#1d1d1d",
-                            color: inputShortcuts[input.number] ? "#fbbf24" : "#666",
-                            borderColor: inputShortcuts[input.number] ? "#f59e0b60" : "#333",
-                          }}
-                          title={`Atalho para ${input.title}`}
-                        >
-                          {input.number}: {inputShortcuts[input.number] || "—"}
-                        </button>
-                      ))}
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => sendCommand("Cut")}
+                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#7f1d1d", color: "#fff", borderColor: "#b91c1c", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)" }}
+                      >
+                        CUT
+                      </button>
+                      <button
+                        onClick={() => sendCommand(transitionStyle, undefined, String(transitionDuration))}
+                        className="h-14 rounded border text-[12px] font-black tracking-widest transition-all hover:brightness-110"
+                        style={{ backgroundColor: "#3a3a3a", color: "#f59e0b", borderColor: "#f59e0b60" }}
+                      >
+                        AUTO
+                      </button>
+                    </div>
+                  </section>
+                </div>
+
+                {/* 3. RIGHT: PROGRAMA (No Ar) */}
+                <div className="p-5 flex flex-col gap-6" style={{ backgroundColor: "#1d1d1d" }}>
+                  <section>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.25em] mb-2.5 text-red-500/80">● Programa (No Ar)</h3>
+                    <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
+                      {inputs.map(input => {
+                        const isActive = activeInput === input.number;
+                        return (
+                          <button
+                            key={`pgm-${input.key || input.number}`}
+                            onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }}
+                            title={input.title}
+                            className="h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            style={{
+                              backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
+                              color: isActive ? "#fff" : "#ddd",
+                              borderColor: isActive ? "#fca5a5" : "#4a4a4a",
+                              boxShadow: isActive ? "0 0 18px rgba(220,38,38,0.55), inset 0 1px 0 rgba(255,255,255,0.1)" : "inset 0 1px 0 rgba(255,255,255,0.05)",
+                            }}
+                          >
+                            <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
+                            <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </section>
                 </div>
