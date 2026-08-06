@@ -759,14 +759,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       .eq("user_id", user.id)
       .eq("ativo", true);
     
-    // Filter by studio name if a connection is selected and has a name
-    if (studioName) {
-      // Use ilike to match studio name loosely (e.g. "FM" matches "FM 1", "Studio FM")
-      query = query.ilike("estudio", `%${studioName}%`);
-    } else {
-      // Default fallback for legacy behavior
-      query = query.ilike("estudio", "%fm%");
-    }
+    // Filter display to only show FM programs by default
+    query = query.ilike("estudio", "%fm%");
 
     const { data } = await query.order("horario_inicio");
     
@@ -787,7 +781,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       } catch {}
       setProgramas(mapped);
     }
-  }, [user, studioName]);
+  }, [user]);
 
   useEffect(() => { loadProgramas(); }, [loadProgramas]);
 
@@ -798,18 +792,10 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       .select("*")
       .eq("user_id", user.id);
     
-    // Filter custom buttons by studio if available
-    if (studioName) {
-      // In custom buttons we can assume they might have a column "estudio" 
-      // but if the schema doesn't have it yet, this might need a migration.
-      // Looking at CustomVmixButtonEditor, it doesn't seem to have studio yet.
-      // However, for now, let's keep it user-based or filter if the field exists.
-      // The user wants "botões dos programas desse usuário nesse estudio".
-    }
-
+    // No automatic studio filtering for custom buttons display - show all
     const { data } = await query.order("created_at");
     if (data) setCustomButtons(data);
-  }, [user, studioName]);
+  }, [user]);
 
   useEffect(() => { loadCustomButtons(); }, [loadCustomButtons]);
 
@@ -3331,10 +3317,6 @@ function SwitcherUI({
                       });
                       const groups: Record<string, typeof ordered> = {};
                       for (const p of ordered) {
-                        // Filter display by current studioName if set
-                        if (studioName && p.estudio && !p.estudio.toLowerCase().includes(studioName.toLowerCase())) {
-                          continue;
-                        }
                         const key = p.estudio || "Sem Estúdio";
                         if (!groups[key]) groups[key] = [];
                         groups[key].push(p);
@@ -3517,7 +3499,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>{studioName || "Geral"} - Botões Personalizados</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Botões Personalizados</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
