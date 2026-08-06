@@ -53,7 +53,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card text-card-foreground overflow-hidden shadow-sm">
+    <section className="rounded-2xl border border-border bg-white dark:bg-card text-card-foreground overflow-hidden shadow-sm">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted">
         <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           {icon}
