@@ -947,15 +947,20 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       is_default: true 
     };
 
+    let savedConn;
     if (selectedConnectionId) {
-      await (supabase.from("vmix_connections" as any) as any)
+      const { data } = await (supabase.from("vmix_connections" as any) as any)
         .update(payload)
-        .eq("id", selectedConnectionId);
+        .eq("id", selectedConnectionId)
+        .select()
+        .single();
+      savedConn = data;
     } else {
       const { data } = await (supabase.from("vmix_connections" as any) as any)
         .insert(payload)
         .select()
         .single();
+      savedConn = data;
       if (data) setSelectedConnectionId(data.id);
     }
     
@@ -978,7 +983,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
     }
     toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
+    return savedConn;
   };
+
+  const deleteConnection = async (id: string) => {
+    if (!user || !id) return;
+    const { error } = await (supabase.from("vmix_connections" as any) as any)
+      .delete()
+      .eq("id", id);
+    
+    if (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Conexão excluída" });
+      loadConnections();
+      if (selectedConnectionId === id) {
+        setSelectedConnectionId(null);
+        setVmixUrl("");
+        setSavedUrl("");
+        setStudioName("");
+      }
+    }
+  };
+
 
   useEffect(() => {
     directBaseUrlRef.current = null;
@@ -2086,62 +2113,106 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="max-w-4xl mx-auto py-10 px-6">
-        <div className="flex flex-col gap-10">
+      <div className="w-full max-w-7xl mx-auto py-20 px-6 min-h-[90vh] flex flex-col justify-center">
+        <div className="flex flex-col gap-16">
 
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-start">
             {/* NEW CONNECTION BUTTON */}
-            <div className="flex flex-col gap-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Nova Conexão</p>
+            <div className="flex flex-col gap-6">
+              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Nova Conexão</p>
               <button
-                onClick={() => setShowStudioSelector(true)}
-                className="group relative aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-4 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+                onClick={() => {
+                  setSelectedConnectionId(null);
+                  setVmixUrl("");
+                  setStudioName("");
+                  setVmixUser("");
+                  setVmixPass("");
+                  setShowStudioSelector(true);
+                }}
+                className="group relative aspect-square w-full rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"
               >
-                <div className="w-24 h-24 rounded-full bg-[#C6F03C]/10 flex items-center justify-center transition-transform group-hover:scale-110">
-                  <Plus size={40} className="text-[#C6F03C]" />
+                <div className="w-28 h-28 rounded-full bg-[#C6F03C]/5 flex items-center justify-center transition-all duration-500 group-hover:bg-[#C6F03C]/10 group-hover:scale-110">
+                  <Plus size={44} className="text-[#C6F03C]" />
                 </div>
-                <div className="absolute inset-0 rounded-[40px] border-2 border-transparent group-hover:border-[#C6F03C]/20 transition-all" />
+                <div className="flex flex-col items-center gap-1">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C6F03C]/60 group-hover:text-[#C6F03C] transition-colors">Adicionar</span>
+                  <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-white/20">Configurar novo estúdio</span>
+                </div>
+                <div className="absolute inset-0 rounded-[48px] border-2 border-transparent group-hover:border-[#C6F03C]/10 transition-all" />
               </button>
             </div>
 
             {/* SAVED CONNECTIONS LIST */}
-            <div className="flex flex-col gap-4">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Conexões Salvas</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {vmixConnections.length > 0 ? (
-                  vmixConnections.map((conn) => (
+            {vmixConnections.map((conn) => (
+              <div key={conn.id} className="flex flex-col gap-6">
+                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Estúdio Salvo</p>
+                <div
+                  className="group relative aspect-square rounded-[48px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-5 transition-all duration-500 hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_40px_80px_rgba(0,0,0,0.6)] hover:-translate-y-2"
+                >
+                  <button
+                    onClick={() => handleSelectConnection(conn)}
+                    className="flex flex-col items-center justify-center gap-5 w-full h-full"
+                  >
+                    <div className="w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-all duration-500 group-hover:scale-105">
+                      <Monitor size={32} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
+                    </div>
+                    <div className="flex flex-col items-center gap-1 px-6">
+                      <span className="text-sm font-black text-white/80 group-hover:text-white uppercase tracking-widest text-center truncate w-full">{conn.name}</span>
+                      <span className="text-[8px] font-bold text-white/20 uppercase tracking-widest">{conn.url.replace(/^https?:\/\//, "")}</span>
+                    </div>
+                  </button>
+
+                  <div className="absolute top-8 right-8 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
                     <button
-                      key={conn.id}
-                      onClick={() => handleSelectConnection(conn)}
-                      className="group relative aspect-square rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-3 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedConnectionId(conn.id);
+                        setVmixUrl(conn.url);
+                        setStudioName(conn.name);
+                        setVmixUser(conn.username || "");
+                        setVmixPass(conn.password || "");
+                        setShowStudioSelector(true);
+                      }}
+                      className="w-10 h-10 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 transition-all text-white/40 hover:text-white hover:scale-110 active:scale-95"
+                      title="Editar"
                     >
-                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-colors">
-                        <Monitor size={28} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
-                      </div>
-                      <span className="text-xs font-bold text-white/80 group-hover:text-white uppercase tracking-wider">{conn.name}</span>
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <RefreshCw size={14} className="text-white/20" />
-                      </div>
+                      <Wand2 size={16} />
                     </button>
-                  ))
-                ) : (
-                  <div className="col-span-full aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
-                    <Monitor size={32} className="text-white/5" />
-                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Nenhuma salva</p>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteConnection(conn.id);
+                      }}
+                      className="w-10 h-10 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-red-500/20 transition-all text-white/40 hover:text-red-500 hover:scale-110 active:scale-95"
+                      title="Excluir"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            ))}
+
+            {vmixConnections.length === 0 && (
+              <div className="flex flex-col gap-6 opacity-40">
+                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Vazio</p>
+                <div className="aspect-square w-full rounded-[48px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-4">
+                  <Monitor size={40} className="text-white/5" />
+                  <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Nenhuma conexão salva</p>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="mt-10 pt-10 border-t border-white/5 flex justify-center">
-             <p className="text-[9px] text-white/10 uppercase font-black tracking-[0.3em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
-          </div>
+        </div>
+
+        <div className="mt-20 pt-10 border-t border-white/5 flex justify-center">
+          <p className="text-[10px] text-white/10 uppercase font-black tracking-[0.4em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
         </div>
 
         {/* CONNECTION MODAL */}
         <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
+
           <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-0 overflow-hidden">
             <div className="p-8 space-y-6">
               <div className="space-y-2">
