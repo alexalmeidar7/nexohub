@@ -720,48 +720,16 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [connected, forcedConnected, navigate]);
   
-  // Load programas from DB
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("programas")
-      .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
-      .eq("user_id", user.id)
-      .eq("ativo", true)
-      .order("horario_inicio")
-      .then(({ data }) => {
-        if (data) {
-          const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
-          try {
-            const savedOrder = JSON.parse(localStorage.getItem("vmix_preset_order") || "[]") as string[];
-            if (savedOrder.length > 0) {
-              mapped.sort((a: any, b: any) => {
-                const ai = savedOrder.indexOf(a.id);
-                const bi = savedOrder.indexOf(b.id);
-                if (ai === -1 && bi === -1) return 0;
-                if (ai === -1) return 1;
-                if (bi === -1) return 1;
-                return ai - bi;
-              });
-            }
-          } catch {}
-          setProgramas(mapped);
-        }
-      });
-  }, [user]);
-
-  // Load programas from DB
   const loadProgramas = useCallback(async () => {
     if (!user) return;
+    
+    // First, try to fetch all programs for the user
     let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true);
     
-    // Filter display to only show FM programs by default
-    query = query.ilike("estudio", "%fm%");
-
     const { data } = await query.order("horario_inicio");
     
     if (data) {
@@ -783,7 +751,12 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     }
   }, [user]);
 
-  useEffect(() => { loadProgramas(); }, [loadProgramas]);
+  // Initial load effect
+  useEffect(() => {
+    if (user) {
+      loadProgramas();
+    }
+  }, [user, loadProgramas]);
 
   // Load custom buttons
   const loadCustomButtons = useCallback(async () => {
