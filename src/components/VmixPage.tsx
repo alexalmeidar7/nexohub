@@ -2452,7 +2452,8 @@ function SwitcherUI({
   customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
-  ndiInputs, inputMapping
+  ndiInputs, inputMapping,
+  navigate
 }: any) {
 
 
