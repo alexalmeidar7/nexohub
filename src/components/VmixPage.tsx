@@ -833,11 +833,11 @@ export default function VmixPage() {
         
         setLoading(false);
         
-        // Auto-connect
+        // Auto-connect if it was connected before reload
         const lastConnectedId = localStorage.getItem(`vmix_last_connected_${user.id}`);
         if (lastConnectedId === def.id) {
           setTimeout(() => {
-            connectToVmixRef.current?.();
+            connectToVmixRef.current?.(true);
           }, 800);
         }
       } else {
@@ -1227,7 +1227,7 @@ export default function VmixPage() {
     }
   }, [savedUrl, vmixDirectFetch, vmixProxyFetch, toast]);
 
-  const connectToVmix = useCallback(async () => {
+  const connectToVmix = useCallback(async (isAutoConnect = false) => {
     if (!savedUrl) return;
 
     const isLocal = isPrivateIp(savedUrl);
@@ -1269,11 +1269,14 @@ export default function VmixPage() {
         persistActiveConnection(selectedConnectionId);
         localStorage.setItem(`vmix_last_connected_${user.id}`, selectedConnectionId);
       }
+      
       // Auto-navigate to main Nexo Control panel (switcher) once connected
       setActiveTab("controls");
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
       const inputCount = parsedInputs.length;
-      toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+      if (!isAutoConnect) {
+        toast({ title: "Conectado!", description: `${inputCount} inputs detectados no vMix.` });
+      }
 
       // Auto-reload inputs + NDI sources with retry/fallback
       setTimeout(() => reloadInputsAndSources(), 400);
