@@ -2425,7 +2425,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       scanNdiSources={scanNdiSources}
       ndiInputs={ndiInputs}
       inputMapping={inputMapping}
-
+      navigate={navigate}
     />
   );
 }
@@ -2452,7 +2452,8 @@ function SwitcherUI({
   customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
-  ndiInputs, inputMapping
+  ndiInputs, inputMapping,
+  navigate
 }: any) {
 
 
@@ -2564,6 +2565,7 @@ function SwitcherUI({
                   setVmixUrl("");
                   setStudioName("");
                   setSavedUrl("");
+                  navigate("/vmix-control");
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#777] hover:text-white transition-all"
               >
