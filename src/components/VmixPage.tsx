@@ -834,9 +834,12 @@ export default function VmixPage() {
         setLoading(false);
         
         // Auto-connect
-        setTimeout(() => {
-          connectToVmixRef.current?.();
-        }, 800);
+        const lastConnectedId = localStorage.getItem(`vmix_last_connected_${user.id}`);
+        if (lastConnectedId === def.id) {
+          setTimeout(() => {
+            connectToVmixRef.current?.();
+          }, 800);
+        }
       } else {
         // Fallback to old user_settings if no connections in new table yet
         const { data: oldData } = await supabase
