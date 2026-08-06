@@ -2075,36 +2075,193 @@ export default function VmixPage() {
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="max-w-2xl mx-auto space-y-5 py-4">
-        {/* ── CONNECTION CARD ── */}
-        <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: "#1e1e24", border: "1px solid #ffffff0a", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}>
-          {/* Card Header */}
-          <div className="px-6 py-4 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #242430, #2a2a36)", borderBottom: "1px solid #ffffff08" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#ffffff08" }}>
-              <Wifi size={18} style={{ color: "#888" }} />
+      <div className="max-w-4xl mx-auto py-10 px-6">
+        <div className="flex flex-col gap-10">
+          {/* Top Bar with User Info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img src={logoMixControl} alt="VMIXCONTROL" className="h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-white/90">Conexão vMix</h3>
-              <p className="text-[10px] text-white/35">Configure o endereço IP do computador com vMix</p>
+            {user && (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[10px] text-white/60 font-medium tracking-wider">{user.email}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            {/* NEW CONNECTION BUTTON */}
+            <div className="flex flex-col gap-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Nova Conexão</p>
+              <button
+                onClick={() => setShowStudioSelector(true)}
+                className="group relative aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-4 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30 hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
+              >
+                <div className="w-24 h-24 rounded-full bg-[#C6F03C]/10 flex items-center justify-center transition-transform group-hover:scale-110">
+                  <Plus size={40} className="text-[#C6F03C]" />
+                </div>
+                <div className="absolute inset-0 rounded-[40px] border-2 border-transparent group-hover:border-[#C6F03C]/20 transition-all" />
+              </button>
+            </div>
+
+            {/* SAVED CONNECTIONS LIST */}
+            <div className="flex flex-col gap-4">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/30 ml-1">Conexões Salvas</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {vmixConnections.length > 0 ? (
+                  vmixConnections.map((conn) => (
+                    <button
+                      key={conn.id}
+                      onClick={() => handleSelectConnection(conn)}
+                      className="group relative aspect-square rounded-[40px] bg-[#1a1a1a] border border-white/5 flex flex-col items-center justify-center gap-3 transition-all hover:bg-[#222] hover:border-[#C6F03C]/30"
+                    >
+                      <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#C6F03C]/10 transition-colors">
+                        <Monitor size={28} className="text-white/20 group-hover:text-[#C6F03C] transition-colors" />
+                      </div>
+                      <span className="text-xs font-bold text-white/80 group-hover:text-white uppercase tracking-wider">{conn.name}</span>
+                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <RefreshCw size={14} className="text-white/20" />
+                      </div>
+                    </button>
+                  ))
+                ) : (
+                  <div className="col-span-full aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
+                    <Monitor size={32} className="text-white/5" />
+                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Nenhuma salva</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Card Body */}
-          <div className="p-6 space-y-5">
-            {/* Studio Name Input */}
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-widest text-white/30 block mb-2">Nome do Estúdio</label>
-              <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all" style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}>
-                <Monitor size={14} className="shrink-0" style={{ color: "#ffffff25" }} />
-                <input
-                  type="text"
-                  value={studioName}
-                  onChange={e => setStudioName(e.target.value)}
-                  placeholder="Ex: Estúdio A, Control Room..."
-                  className="flex-1 text-sm outline-none bg-transparent text-white placeholder:text-white/20"
-                />
+          <div className="mt-10 pt-10 border-t border-white/5 flex justify-center">
+             <p className="text-[9px] text-white/10 uppercase font-black tracking-[0.3em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
+          </div>
+        </div>
+
+        {/* CONNECTION MODAL */}
+        <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
+          <DialogContent className="bg-[#1a1a1f] border-white/10 text-white sm:max-w-md rounded-3xl p-0 overflow-hidden">
+            <div className="p-8 space-y-6">
+              <div className="space-y-2">
+                <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
+                <p className="text-xs text-white/40 leading-relaxed">Insira os dados do vMix para iniciar o controle remoto do estúdio.</p>
+              </div>
+
+              <div className="space-y-5">
+                {/* Studio Name Select */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Estúdio</label>
+                  <select
+                    value={studioName}
+                    onChange={e => setStudioName(e.target.value)}
+                    className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-medium outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                  >
+                    <option value="" className="bg-[#1a1a1f]">Selecione um estúdio</option>
+                    {programas
+                      .map(p => p.estudio)
+                      .filter((v, i, a) => v && a.indexOf(v) === i)
+                      .map(estudio => (
+                        <option key={estudio} value={estudio!} className="bg-[#1a1a1f]">{estudio}</option>
+                      ))
+                    }
+                    <option value="Estúdio Principal" className="bg-[#1a1a1f]">Estúdio Principal</option>
+                    <option value="Estúdio B" className="bg-[#1a1a1f]">Estúdio B</option>
+                  </select>
+                </div>
+
+                {/* URL Parts */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Endereço do vMix</label>
+                  <div className="grid grid-cols-12 gap-2">
+                    <div className="col-span-4">
+                      <select
+                        value={parseVmixUrlParts(vmixUrl).protocol}
+                        onChange={e => {
+                          const parts = parseVmixUrlParts(vmixUrl);
+                          setVmixUrl(composeVmixUrl(e.target.value as "http" | "https", parts.host, parts.port));
+                        }}
+                        className="w-full px-4 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all appearance-none"
+                      >
+                        <option value="http" className="bg-[#1a1a1f]">http</option>
+                        <option value="https" className="bg-[#1a1a1f]">https</option>
+                      </select>
+                    </div>
+                    <div className="col-span-8">
+                      <input
+                        type="text"
+                        value={parseVmixUrlParts(vmixUrl).host}
+                        onChange={e => {
+                          const parts = parseVmixUrlParts(vmixUrl);
+                          setVmixUrl(composeVmixUrl(parts.protocol, e.target.value.trim(), parts.port));
+                        }}
+                        placeholder="IP ou Host"
+                        className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all placeholder:text-white/10"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Porta</label>
+                    <input
+                      type="text"
+                      value={parseVmixUrlParts(vmixUrl).port}
+                      onChange={e => {
+                        const parts = parseVmixUrlParts(vmixUrl);
+                        setVmixUrl(composeVmixUrl(parts.protocol, parts.host, e.target.value.replace(/\D/g, "").slice(0, 5)));
+                      }}
+                      placeholder="8088"
+                      className="w-full px-5 py-4 rounded-2xl bg-white/5 border border-white/10 text-sm font-mono outline-none focus:border-[#C6F03C]/50 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 ml-1">Modo</label>
+                    <div className="flex h-[54px] p-1.5 rounded-2xl bg-white/5 border border-white/10">
+                      <button
+                        onClick={() => setConnectionMode("direct")}
+                        className={`flex-1 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${connectionMode === "direct" ? "bg-[#C6F03C] text-black" : "text-white/40 hover:text-white"}`}
+                      >
+                        Direto
+                      </button>
+                      <button
+                        onClick={() => setConnectionMode("proxy")}
+                        className={`flex-1 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${connectionMode === "proxy" ? "bg-[#C6F03C] text-black" : "text-white/40 hover:text-white"}`}
+                      >
+                        Proxy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col gap-3">
+                <button
+                  onClick={async () => {
+                    await saveUrl();
+                    setShowStudioSelector(false);
+                    connectToVmix();
+                  }}
+                  className="w-full py-5 rounded-2xl bg-[#C6F03C] text-black text-xs font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_10px_30px_rgba(198,240,60,0.2)]"
+                >
+                  Conectar ao Estúdio
+                </button>
+                <button
+                  onClick={() => setShowStudioSelector(false)}
+                  className="w-full py-4 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white transition-colors"
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
+          </div>
+        </Dialog>
+      </div>
+    );
+  }
+
 
             {/* LAN Status & Connection Hint */}
             {savedUrl && isPrivateIp(savedUrl) && (
