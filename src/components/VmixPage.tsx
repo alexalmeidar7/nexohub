@@ -2464,27 +2464,15 @@ function SwitcherUI({
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
               <div className="w-px h-5 bg-white/10" />
-              <SwitcherStatusPill />
-
+              <SwitcherStatusPill compact />
             </div>
 
-            {effectiveConnected && selectedConnectionId ? (
+            {effectiveConnected && selectedConnectionId && (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
                   <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{studioName || "vMix Studio"}</p>
                 </div>
-                <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
-                  <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Rota</p>
-                  <p className="text-sm font-black uppercase tracking-wider text-white leading-tight">{connectionRouteLabel}</p>
-                </div>
-                <button
-                  onClick={() => setShowStudioSelector(true)}
-                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white transition-all hover:brightness-110"
-                  style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12" }}
-                >
-                  Trocar
-                </button>
                 <button
                   onClick={() => {
                     setConnected(false);
@@ -2497,36 +2485,12 @@ function SwitcherUI({
                   style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12", color: "#fff" }}
                   title="Voltar para a tela de nova conexão"
                 >
-                  <RefreshCw size={14} /> Nova Conexão
-                </button>
-                <button
-                  onClick={() => {
-                    setConnected(false);
-                    setSelectedConnectionId(null);
-                    setVmixUrl("");
-                    setStudioName("");
-                    setSavedUrl("");
-                    supabase.auth.signOut();
-                  }}
-                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110"
-                  style={{ backgroundColor: "#dc26261a", color: "#f87171", border: "1px solid #dc262640" }}
-                  title="Desconectar da conta"
-                >
-                  Sair
+                  <RefreshCw size={14} /> Voltar
                 </button>
               </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={vmixUrl}
-                  onChange={e => setVmixUrl(e.target.value)}
-                  placeholder="IP vMix"
-                  className="h-10 w-44 px-3 rounded-xl text-[11px] outline-none bg-[#0a0a0d] text-white border border-white/10 font-mono"
-                />
-                <button
-                  onClick={() => connectToVmix()}
-                  disabled={connecting}
+            )}
+          </div>
+
                   className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
                   style={{ backgroundColor: "#dc2626", color: "#fff" }}
                 >
