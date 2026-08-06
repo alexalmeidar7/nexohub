@@ -2113,8 +2113,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="w-full max-w-5xl mx-auto py-20 px-6 min-h-[80vh] flex flex-col justify-center">
-        <div className="flex flex-col gap-12">
+      <div className="w-full max-w-7xl mx-auto py-20 px-6 min-h-[90vh] flex flex-col justify-center">
+        <div className="flex flex-col gap-16">
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
             {/* NEW CONNECTION BUTTON */}
             <div className="flex flex-col gap-6">
