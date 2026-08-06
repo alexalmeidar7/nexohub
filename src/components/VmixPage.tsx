@@ -759,14 +759,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       .eq("user_id", user.id)
       .eq("ativo", true);
     
-    // Filter by studio name if a connection is selected and has a name
-    if (studioName) {
-      // Use ilike to match studio name loosely (e.g. "FM" matches "FM 1", "Studio FM")
-      query = query.ilike("estudio", `%${studioName}%`);
-    } else {
-      // Default fallback for legacy behavior
-      query = query.ilike("estudio", "%fm%");
-    }
+    // Filter display to only show FM programs by default
+    query = query.ilike("estudio", "%fm%");
 
     const { data } = await query.order("horario_inicio");
     
