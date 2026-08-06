@@ -753,15 +753,14 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // Load programas from DB
   const loadProgramas = useCallback(async () => {
     if (!user) return;
+    
+    // First, try to fetch all programs for the user
     let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
       .eq("ativo", true);
     
-    // Filter display to only show FM programs by default
-    query = query.ilike("estudio", "%fm%");
-
     const { data } = await query.order("horario_inicio");
     
     if (data) {
