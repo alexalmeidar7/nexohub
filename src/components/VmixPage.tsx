@@ -2459,13 +2459,12 @@ function SwitcherUI({
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+        <div className="flex flex-col xl:flex-row xl:items-center justify-center gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex flex-wrap items-center gap-3">
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
-              <div className="w-px h-5 bg-white/10" />
-              <SwitcherStatusPill compact />
             </div>
+
 
             {effectiveConnected && selectedConnectionId && (
               <div className="flex flex-wrap items-center gap-2">
