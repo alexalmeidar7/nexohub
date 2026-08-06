@@ -2327,16 +2327,14 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
 // Actual Switcher UI (used when effectiveConnected)
 function SwitcherUI({ 
   inputs, activeInput, previewInput, connectionMode, savedUrl, 
-  connecting, connected, statusColor, statusLabel, endpointLabel, 
-  connectionRouteLabel, logoMixControl, studioName, selectedConnectionId,
-  tabs: parentTabs, activeTab, setActiveTab, StatusPill: ParentStatusPill, streaming, recording, overlays,
+  connecting, connected, logoMixControl, studioName, selectedConnectionId,
+  activeTab, setActiveTab, streaming, recording, overlays,
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
   transitionDuration, setTransitionDuration, sendCommand, setLogsOpen, 
-  vmixLogs, logsOpen, activeInputObj: parentActiveInputObj, previewInputObj: parentPreviewInputObj, 
-  activeTitle: parentActiveTitle, previewTitle: parentPreviewTitle,
-  connectToVmix, vmixUrl, setVmixUrl, setConnected, setSelectedConnectionId,
-  setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected
+  vmixLogs, logsOpen, connectToVmix, vmixUrl, setVmixUrl, setConnected, 
+  setSelectedConnectionId, setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected
 }: any) {
+
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
 
