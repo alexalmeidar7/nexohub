@@ -3506,7 +3506,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>de opção de criar botões personalizado, dando nome e cor do botão alem dos comandos que irão dentro desse botão, nesses botões personalizados, de opção de horario para executar e dias da semana ou um dia especifico do calendário</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>{studioName || "Geral"} - Botões Personalizados</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
