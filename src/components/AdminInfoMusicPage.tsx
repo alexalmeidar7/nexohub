@@ -184,7 +184,7 @@ export default function AdminInfoMusicPage() {
   const thClass = "px-4 py-3 font-black text-foreground";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
   const trClass =
-    "border-t border-border/60 odd:bg-muted/10 even:bg-card/30 hover:bg-primary/5 transition-colors text-foreground";
+    "border-t border-border/60 hover:bg-primary/5 transition-colors text-foreground";
 
   return (
     <div className="space-y-5 animate-fade-in">
