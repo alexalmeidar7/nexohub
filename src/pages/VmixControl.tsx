@@ -6,7 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import vmixControlLogo from "@/assets/vmixcontrol.png.asset.json";
 import VmixControlSkeleton from "@/components/skeletons/VmixControlSkeleton";
 
-export default function VmixControl() {
+export default function VmixControl({ forcedConnected = false }: { forcedConnected?: boolean }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -164,7 +164,7 @@ export default function VmixControl() {
         </div>
       </header>
       <main className="flex-1 p-6" style={{ backgroundColor: "#191919" }}>
-        <VmixPage />
+        <VmixPage forcedConnected={forcedConnected} />
       </main>
     </div>
   );

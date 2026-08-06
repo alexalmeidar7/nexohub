@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -394,7 +395,8 @@ interface NetworkInterfaceInfo {
   recommendation?: string;
 }
 
-export default function VmixPage() {
+export default function VmixPage({ forcedConnected = false }: { forcedConnected?: boolean }) {
+  const navigate = useNavigate();
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
@@ -709,6 +711,14 @@ export default function VmixPage() {
     localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
   }, [monitorIframeMode]);
 
+  const effectiveConnected = connected || forcedConnected;
+
+  useEffect(() => {
+    if (connected && !forcedConnected) {
+      navigate("/vmix-control/switcher");
+    }
+  }, [connected, forcedConnected, navigate]);
+  
   // Load programas from DB
   useEffect(() => {
     if (!user) return;
@@ -1763,8 +1773,9 @@ export default function VmixPage() {
 
   // ── Demo mode: show connected UI with mock data in preview ──
   const isEmbeddedPreview = window.self !== window.top;
-   const [demoMode, setDemoMode] = useState(false);
-  const effectiveConnected = connected || demoMode;
+  const [demoMode, setDemoMode] = useState(false);
+  const isActuallyConnected = connected || forcedConnected || demoMode;
+
 
   useEffect(() => {
     if (!loading && !connected && isEmbeddedPreview) {
@@ -1820,7 +1831,7 @@ export default function VmixPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [effectiveConnected, capturingShortcut]);
+  }, [isActuallyConnected, capturingShortcut]);
 
   // Group inputs for combo: regular inputs and NDI inputs
   const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
@@ -2262,9 +2273,130 @@ export default function VmixPage() {
     );
   }
 
+  return (
+    <SwitcherUI
+      inputs={inputs}
+      activeInput={activeInput}
+      previewInput={previewInput}
+      connectionMode={connectionMode}
+      savedUrl={savedUrl}
+      connecting={connecting}
+      connected={connected}
+      logoMixControl={logoMixControl}
+      studioName={studioName}
+      selectedConnectionId={selectedConnectionId}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      streaming={streaming}
+      recording={recording}
+      overlays={overlays}
+      setStreaming={setStreaming}
+      setRecording={setRecording}
+      setOverlays={setOverlays}
+      transitionStyle={transitionStyle}
+      setTransitionStyle={setTransitionStyle}
+      transitionDuration={transitionDuration}
+      setTransitionDuration={setTransitionDuration}
+      sendCommand={sendCommand}
+      setLogsOpen={setLogsOpen}
+      vmixLogs={vmixLogs}
+      logsOpen={logsOpen}
+      connectToVmix={connectToVmix}
+      vmixUrl={vmixUrl}
+      setVmixUrl={setVmixUrl}
+      setConnected={setConnected}
+      setSelectedConnectionId={setSelectedConnectionId}
+      setStudioName={setStudioName}
+      setSavedUrl={setSavedUrl}
+      setShowStudioSelector={setShowStudioSelector}
+      effectiveConnected={effectiveConnected}
+      runDiagnostic={runDiagnostic}
+      diagRunning={diagRunning}
+      monitorsCollapsed={monitorsCollapsed}
+      setMonitorsCollapsed={setMonitorsCollapsed}
+      renderInputSelect={renderInputSelect}
+      setPreviewInput={setPreviewInput}
+      setActiveInput={setActiveInput}
+      setMonitorStreamUrls={setMonitorStreamUrls}
+      setMonitorIframeMode={setMonitorIframeMode}
+      toast={toast}
+      monitorStreamUrls={monitorStreamUrls}
+      monitorIframeMode={monitorIframeMode}
+      setEditingMonitorStream={setEditingMonitorStream}
+      editingMonitorStream={editingMonitorStream}
+      setMonitorStreamTemp={setMonitorStreamTemp}
+      monitorStreamTemp={monitorStreamTemp}
+      getMonitorContent={getMonitorContent}
+      ndiSources={ndiSources}
+      addNdiInput={addNdiInput}
+      reloadingInputs={reloadingInputs}
+      reloadFallback={reloadFallback}
+      reloadInputsAndSources={reloadInputsAndSources}
+      inputShortcuts={inputShortcuts}
+      setCapturingShortcut={setCapturingShortcut}
+      manualNdiHost={manualNdiHost}
+      setManualNdiHost={setManualNdiHost}
+      ThumbnailImg={ThumbnailImg}
+      ndiUrl={ndiUrl}
+      setNdiUrl={setNdiUrl}
+      programas={programas}
+      setProgramas={setProgramas}
+      activePreset={activePreset}
+      setActivePreset={setActivePreset}
+      editingPresetId={editingPresetId}
+      setEditingPresetId={setEditingPresetId}
+      dragPresetIdx={dragPresetIdx}
+      setDragPresetIdx={setDragPresetIdx}
+      customButtons={customButtons}
+      setCustomButtons={setCustomButtons}
+      editingCustomButtonId={editingCustomButtonId}
+      setEditingCustomButtonId={setEditingCustomButtonId}
+      activeCustomButton={activeCustomButton}
+      setActiveCustomButton={setActiveCustomButton}
+      user={user}
+      runCommandsUnified={runCommandsUnified}
+      loadProgramas={loadProgramas}
+      loadCustomButtons={loadCustomButtons}
+      setVmixLogs={setVmixLogs}
+      ndiScanning={ndiScanning}
+      scanNdiSources={scanNdiSources}
+      ndiInputs={ndiInputs}
+      inputMapping={inputMapping}
+
+    />
+  );
+}
+
+
+
+// Actual Switcher UI (used when effectiveConnected)
+function SwitcherUI({ 
+  inputs, activeInput, previewInput, connectionMode, savedUrl, 
+  connecting, connected, logoMixControl, studioName, selectedConnectionId,
+  activeTab, setActiveTab, streaming, recording, overlays,
+  setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
+  transitionDuration, setTransitionDuration, sendCommand, setLogsOpen, 
+  vmixLogs, logsOpen, connectToVmix, vmixUrl, setVmixUrl, setConnected, 
+  setSelectedConnectionId, setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected,
+  runDiagnostic, diagRunning, monitorsCollapsed, setMonitorsCollapsed, renderInputSelect,
+  setPreviewInput, setActiveInput, setMonitorStreamUrls, setMonitorIframeMode, toast,
+  monitorStreamUrls, monitorIframeMode, setEditingMonitorStream, editingMonitorStream,
+  setMonitorStreamTemp, monitorStreamTemp, getMonitorContent, ndiSources, addNdiInput,
+  reloadingInputs, reloadFallback, reloadInputsAndSources, inputShortcuts,
+  setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
+  ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
+  editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
+  customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
+  activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
+  loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
+  ndiInputs, inputMapping
+}: any) {
+
+
 
   // ── Connected layout ──
-  const activeInputObj = inputs.find(i => i.number === activeInput);
+  const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   const tabs = [
@@ -2286,7 +2418,7 @@ export default function VmixPage() {
   const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
   const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
 
-  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+  const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
       style={{ backgroundColor: "#0c0c0e", border: `1px solid ${statusColor}30` }}
@@ -2328,6 +2460,7 @@ export default function VmixPage() {
     </div>
   );
 
+
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
@@ -2337,10 +2470,11 @@ export default function VmixPage() {
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
               <div className="w-px h-5 bg-white/10" />
-              <StatusPill />
+              <SwitcherStatusPill />
+
             </div>
 
-            {connected && selectedConnectionId ? (
+            {effectiveConnected && selectedConnectionId ? (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
@@ -2493,7 +2627,8 @@ export default function VmixPage() {
             </span>
             <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
           </button>
-          <StatusPill />
+          <SwitcherStatusPill />
+
         </div>
         {!monitorsCollapsed && (
         <div className="flex items-stretch gap-[1px]">
@@ -2775,7 +2910,7 @@ export default function VmixPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher — Broadcast Console</span>
-              <StatusPill />
+              <SwitcherStatusPill />
             </div>
             {(reloadingInputs || reloadFallback) && (
               <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${

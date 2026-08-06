@@ -234,6 +234,7 @@ const App = () => (
             <Route path="/player/app" element={<PlayerApp />} />
             <Route path="/tp-externo" element={<TpExterno />} />
             <Route path="/vmix-control" element={<VmixControl />} />
+            <Route path="/vmix-control/switcher" element={<VmixControl forcedConnected={true} />} />
             <Route path="/cenario-tela" element={<CenarioTela />} />
             <Route path="/intercom" element={<IntercomListener />} />
             <Route path="/cenario-tela-full" element={<CenarioTelaFull />} />
