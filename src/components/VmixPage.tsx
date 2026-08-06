@@ -3499,7 +3499,7 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Wand2 size={14} style={{ color: "#f59e0b" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>{studioName || "Geral"} - Botões Personalizados</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>Botões Personalizados</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
