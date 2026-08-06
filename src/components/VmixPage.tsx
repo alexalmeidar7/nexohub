@@ -2273,35 +2273,6 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     );
   }
 
-  // ── Connection status helpers for UI ──
-  const connStatus: "online" | "connecting" | "offline" = connecting
-    ? "connecting"
-    : connected
-    ? "online"
-    : "offline";
-  const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
-  const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
-  const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
-  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
-
-  const tabs = [
-    { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
-    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
-    { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
-  ];
-
-  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
-    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: statusColor }} />
-      {!compact && <span className="text-[9px] font-black tracking-widest text-white/40 uppercase">{statusLabel}</span>}
-    </div>
-  );
-
-  const activeInputObj = inputs.find((i: any) => i.number === activeInput);
-  const previewInputObj = inputs.find(i => i.number === previewInput);
-  const activeTitle = activeInputObj?.title || "Sem programa";
-  const previewTitle = previewInputObj?.title || "Sem preview";
-
   return (
     <SwitcherUI
       inputs={inputs}
@@ -2339,9 +2310,62 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setSavedUrl={setSavedUrl}
       setShowStudioSelector={setShowStudioSelector}
       effectiveConnected={effectiveConnected}
+      runDiagnostic={runDiagnostic}
+      diagRunning={diagRunning}
+      monitorsCollapsed={monitorsCollapsed}
+      setMonitorsCollapsed={setMonitorsCollapsed}
+      renderInputSelect={renderInputSelect}
+      setPreviewInput={setPreviewInput}
+      setActiveInput={setActiveInput}
+      setMonitorStreamUrls={setMonitorStreamUrls}
+      setMonitorIframeMode={setMonitorIframeMode}
+      toast={toast}
+      monitorStreamUrls={monitorStreamUrls}
+      monitorIframeMode={monitorIframeMode}
+      setEditingMonitorStream={setEditingMonitorStream}
+      editingMonitorStream={editingMonitorStream}
+      setMonitorStreamTemp={setMonitorStreamTemp}
+      monitorStreamTemp={monitorStreamTemp}
+      getMonitorContent={getMonitorContent}
+      ndiSources={ndiSources}
+      addNdiInput={addNdiInput}
+      reloadingInputs={reloadingInputs}
+      reloadFallback={reloadFallback}
+      reloadInputsAndSources={reloadInputsAndSources}
+      inputShortcuts={inputShortcuts}
+      setCapturingShortcut={setCapturingShortcut}
+      manualNdiHost={manualNdiHost}
+      setManualNdiHost={setManualNdiHost}
+      ThumbnailImg={ThumbnailImg}
+      ndiUrl={ndiUrl}
+      setNdiUrl={setNdiUrl}
+      programas={programas}
+      setProgramas={setProgramas}
+      activePreset={activePreset}
+      setActivePreset={setActivePreset}
+      editingPresetId={editingPresetId}
+      setEditingPresetId={setEditingPresetId}
+      dragPresetIdx={dragPresetIdx}
+      setDragPresetIdx={setDragPresetIdx}
+      customButtons={customButtons}
+      setCustomButtons={setCustomButtons}
+      editingCustomButtonId={editingCustomButtonId}
+      setEditingCustomButtonId={setEditingCustomButtonId}
+      activeCustomButton={activeCustomButton}
+      setActiveCustomButton={setActiveCustomButton}
+      user={user}
+      runCommandsUnified={runCommandsUnified}
+      loadProgramas={() => {}}
+      loadCustomButtons={() => {}}
+      setVmixLogs={setVmixLogs}
+      ndiScanning={ndiScanning}
+      scanNdiSources={() => {}}
+      ndiInputs={ndiInputs}
+      inputMapping={inputMapping}
     />
   );
 }
+
 
 
 // Actual Switcher UI (used when effectiveConnected)
