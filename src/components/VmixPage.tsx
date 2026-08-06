@@ -1844,7 +1844,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
         e.stopPropagation();
         const keyName = formatKeyName(e);
         setInputShortcuts(prev => ({ ...prev, [capturingShortcut]: keyName }));
-        setCapturingShortcut(null);
+        // Note: we don't clear capturingShortcut here anymore because we'll use a dialog
         return;
       }
       // Otherwise, check if the pressed key matches a shortcut → send to PREVIEW only
