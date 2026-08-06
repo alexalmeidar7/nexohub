@@ -874,7 +874,11 @@ export default function VmixPage() {
   // Persist the active connection so it auto-applies on every future visit
   const persistActiveConnection = useCallback(async (connId: string) => {
     if (!user || !connId) return;
-    try { localStorage.setItem(`vmix_active_conn_${user.id}`, connId); } catch {}
+    try { 
+      localStorage.setItem(`vmix_active_conn_${user.id}`, connId);
+      // Mark this as truly "connected" so we can auto-connect on reload
+      localStorage.setItem(`vmix_last_connected_${user.id}`, connId);
+    } catch {}
     try {
       await (supabase.from("vmix_connections" as any) as any)
         .update({ is_default: false })
