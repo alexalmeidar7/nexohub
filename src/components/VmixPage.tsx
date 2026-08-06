@@ -2910,7 +2910,7 @@ function SwitcherUI({
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher — Broadcast Console</span>
-              <StatusPill />
+              <SwitcherStatusPill />
             </div>
             {(reloadingInputs || reloadFallback) && (
               <div className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${
