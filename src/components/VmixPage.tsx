@@ -2203,21 +2203,13 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             )}
           </div>
 
-
-                ) : (
-                  <div className="col-span-full aspect-square w-full max-w-[280px] rounded-[40px] bg-[#1a1a1a]/50 border border-dashed border-white/10 flex flex-col items-center justify-center gap-3">
-                    <Monitor size={32} className="text-white/5" />
-                    <p className="text-[10px] text-white/20 uppercase font-black tracking-widest">Nenhuma salva</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-10 pt-10 border-t border-white/5 flex justify-center">
-             <p className="text-[9px] text-white/10 uppercase font-black tracking-[0.3em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
-          </div>
         </div>
+
+        <div className="mt-20 pt-10 border-t border-white/5 flex justify-center">
+          <p className="text-[10px] text-white/10 uppercase font-black tracking-[0.4em]">Desenvolvido por Nexo Brasil - Soluções Visuais</p>
+        </div>
+      </div>
+
 
         {/* CONNECTION MODAL */}
         <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
