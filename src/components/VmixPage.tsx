@@ -2782,10 +2782,6 @@ function SwitcherUI({
                           <button
                             key={`pgm-${input.key || input.number}`}
                             onClick={(e) => {
-                              if (e.altKey || capturingShortcut) {
-                                setCapturingShortcut(input.key || input.number);
-                                return;
-                              }
                               sendCommand("CutDirect", input.number);
                               setActiveInput(input.number);
                             }}
