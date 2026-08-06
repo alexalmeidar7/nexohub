@@ -125,39 +125,14 @@ export default function VmixControl({ forcedConnected = false }: { forcedConnect
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#191919" }}>
       <header className="relative flex items-center justify-between px-6 py-3" style={{ backgroundColor: "#242424" }}>
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: "#111115", border: "1px solid #2a2a30", boxShadow: "inset 0 2px 6px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)" }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#dc2626", boxShadow: "0 0 6px #dc262660" }} />
-            <div className="flex flex-col items-end">
-              <span className="text-xs font-mono font-black tracking-[0.3em] tabular-nums leading-none" style={{ color: "#22c55e", textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>{clock.time}</span>
-              <span className="text-[7px] font-medium uppercase tracking-widest mt-0.5" style={{ color: "#666" }}>{clock.date}</span>
-            </div>
-          </div>
-          <button
-            onClick={() => window.open(window.location.pathname, "_blank", "noopener,noreferrer")}
-            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-105"
-            style={{ backgroundColor: "#2a2a30", border: "1px solid #3a3a40", color: "#888" }}
-            title="Abrir em nova aba"
-          >
-            <ExternalLink size={14} />
-          </button>
+          {/* Removido relógio e botão nova janela */}
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <img src={vmixControlLogo.url} alt="NEXO VMIX CONTROL" className="h-6" />
         </div>
         <div className="flex items-center gap-3">
           <span className="text-white/60 text-xs">{user.email}</span>
-          <button 
-            onClick={() => {
-              localStorage.removeItem(`vmix_active_conn_${user.id}`);
-              localStorage.removeItem(`vmix_last_connected_${user.id}`);
-              window.location.reload();
-            }} 
-
-            className="text-white/50 hover:text-white transition-colors flex items-center gap-1.5 text-[10px] uppercase font-bold tracking-widest px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10" 
-            title="Voltar para tela de nova conexão"
-          >
-            <RefreshCw size={12} /> <span>Voltar</span>
-          </button>
+          {/* Removido botão Voltar */}
           <button onClick={handleLogout} className="text-white/50 hover:text-white transition-colors" title="Sair">
             <LogOut size={16} />
           </button>
