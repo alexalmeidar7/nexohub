@@ -2596,63 +2596,6 @@ function SwitcherUI({
           </div>
         </div>
 
-        {/* Info Bar / Program-Preview & Controls */}
-        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff0a" }}>
-          <div className="flex flex-wrap items-center gap-3">
-            <SwitcherStatusPill compact />
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
-            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Program</p>
-              <p className="text-xs font-black uppercase text-white truncate">{activeTitle}</p>
-            </div>
-            <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Preview</p>
-              <p className="text-xs font-black uppercase text-white truncate">{previewTitle}</p>
-            </div>
-            <button
-              onClick={() => sendCommand(streaming ? "StopStreaming" : "StartStreaming")}
-              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
-              style={{ backgroundColor: streaming ? "#dc2626" : "#0f0f12", border: streaming ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
-            >
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Stream</p>
-              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><span className={`w-1.5 h-1.5 rounded-full ${streaming ? "bg-white animate-pulse" : "bg-white/25"}`} />{streaming ? "On Air" : "Go Live"}</p>
-            </button>
-            <button
-              onClick={() => sendCommand(recording ? "StopRecording" : "StartRecording")}
-              className="rounded-xl px-3 py-2 text-left transition-all hover:brightness-110"
-              style={{ backgroundColor: recording ? "#dc2626" : "#0f0f12", border: recording ? "1px solid #ef4444" : "1px solid #ffffff0d" }}
-            >
-              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">Gravação</p>
-              <p className="text-xs font-black uppercase text-white flex items-center gap-2"><Disc size={12} className={recording ? "animate-spin" : "opacity-40"} />{recording ? "REC" : "Standby"}</p>
-            </button>
-          </div>
-        </div>
-
-        {/* Diagnostic & Sync Bar */}
-        <div className="flex flex-wrap items-center justify-end gap-3 px-4 py-2" style={{ backgroundColor: "#111114" }}>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={runDiagnostic}
-              disabled={diagRunning}
-              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
-              style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b35" }}
-            >
-              {diagRunning ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />}
-              Diagnóstico
-            </button>
-            <button
-              onClick={() => connectToVmix()}
-              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
-              style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}
-              title="Atualizar estado do vMix"
-            >
-              <RefreshCw size={12} className={connecting ? "animate-spin" : ""} />
-              Sync
-            </button>
-          </div>
-        </div>
       </div>
 
 
