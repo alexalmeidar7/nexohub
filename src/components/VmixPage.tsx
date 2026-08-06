@@ -1831,7 +1831,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [effectiveConnected, capturingShortcut]);
+  }, [isActuallyConnected, capturingShortcut]);
 
   // Group inputs for combo: regular inputs and NDI inputs
   const ndiInputs = useMemo(() => inputs.filter(isNdiInput), [inputs]);
