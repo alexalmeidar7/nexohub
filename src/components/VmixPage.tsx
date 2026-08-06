@@ -3924,60 +3924,6 @@ export default function VmixPage() {
         </div>
       </div>
 
-      {/* ── Studio Selector Dialog ── */}
-      <Dialog open={showStudioSelector} onOpenChange={setShowStudioSelector}>
-        <DialogContent className="bg-[#1e1e24] border-[#ffffff10] text-white max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">Trocar Estúdio</DialogTitle>
-            <DialogDescription className="text-white/40">
-              Selecione qual estúdio você deseja controlar agora.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 gap-3 mt-2 max-h-[60vh] overflow-y-auto pr-1 custom-scrollbar">
-            {vmixConnections.map((conn) => (
-              <div 
-                key={conn.id}
-                onClick={() => {
-                  handleSelectConnection(conn);
-                  setShowStudioSelector(false);
-                  // Trigger connection automatically after selection
-                  setTimeout(() => connectToVmix(), 300);
-                }}
-                className={`p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
-                  selectedConnectionId === conn.id 
-                    ? "bg-blue-600/20 border-blue-500/50" 
-                    : "bg-white/5 border-white/5 hover:bg-white/10"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-3 h-3 rounded-full ${selectedConnectionId === conn.id ? "bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-pulse" : "bg-white/10"}`} />
-                  <div>
-                    <p className="text-sm font-bold text-white/90">{conn.name || "Estúdio sem nome"}</p>
-                    <p className="text-[10px] text-white/30 font-mono mt-0.5">{conn.url}</p>
-                  </div>
-                </div>
-                {selectedConnectionId === conn.id && <CheckCircle size={16} className="text-blue-500" />}
-              </div>
-            ))}
-            
-            {vmixConnections.length === 0 && (
-              <div className="text-center py-10 text-white/20">
-                <Monitor size={32} className="mx-auto mb-2 opacity-20" />
-                <p className="text-xs">Nenhum estúdio salvo encontrado.</p>
-              </div>
-            )}
-          </div>
-          <DialogFooter className="mt-4 border-t border-white/5 pt-4">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowStudioSelector(false)} 
-              className="w-full bg-white/5 border-white/10 hover:bg-white/10 text-white/70"
-            >
-              Cancelar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
