@@ -2482,15 +2482,9 @@ function SwitcherUI({
               >
                 <RefreshCw size={14} /> Voltar
               </button>
-            </div>
           )}
         </div>
 
-
-
-
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
             <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
               <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Program</p>
               <p className="text-xs font-black uppercase text-white truncate">{activeTitle}</p>
