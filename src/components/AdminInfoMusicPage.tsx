@@ -181,10 +181,10 @@ export default function AdminInfoMusicPage() {
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
 
-  const thClass = "px-4 py-3 font-bold text-card-foreground/80";
+  const thClass = "px-4 py-3 font-black text-foreground";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
   const trClass =
-    "border-t border-border/50 odd:bg-muted/30 hover:bg-primary/10 transition-colors text-card-foreground";
+    "border-t border-border/60 odd:bg-muted/10 even:bg-card/30 hover:bg-primary/5 transition-colors text-foreground";
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -244,12 +244,12 @@ export default function AdminInfoMusicPage() {
             )}
             {filtered.map((r) => (
               <tr key={r.id} className={trClass}>
-                <td className="px-4 py-2.5 whitespace-nowrap text-card-foreground/80">{formatDia(r.dia, r.created_at)}</td>
-                <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs text-card-foreground/80">{(r.horario || "").slice(0, 8)}</td>
-                <td className="px-4 py-2.5 font-semibold">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5 font-medium">{r.musica}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70">{r.artista}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70 text-xs">{r.programa || "—"}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap text-foreground">{formatDia(r.dia, r.created_at)}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs text-foreground/90">{(r.horario || "").slice(0, 8)}</td>
+                <td className="px-4 py-2.5 font-bold text-foreground">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5 font-bold text-primary">{r.musica}</td>
+                <td className="px-4 py-2.5 font-bold text-foreground/90">{r.artista}</td>
+                <td className="px-4 py-2.5 text-foreground/80 text-[11px] font-medium">{r.programa || "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -277,10 +277,10 @@ export default function AdminInfoMusicPage() {
             )}
             {curiosidadesFiltradas.map((c) => (
               <tr key={c.id} className={trClass}>
-                <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[c.user_id] || c.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5 font-medium">{c.musica}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70">{c.artista}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70 text-xs max-w-[520px] leading-relaxed">{c.curiosidade}</td>
+                <td className="px-4 py-2.5 font-bold text-foreground whitespace-nowrap">{clientes[c.user_id] || c.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5 font-bold text-primary">{c.musica}</td>
+                <td className="px-4 py-2.5 font-bold text-foreground/90">{c.artista}</td>
+                <td className="px-4 py-2.5 text-foreground text-xs max-w-[520px] leading-relaxed font-medium">{c.curiosidade}</td>
               </tr>
             ))}
           </tbody>
@@ -308,10 +308,10 @@ export default function AdminInfoMusicPage() {
             )}
             {semCuriosidade.map((r) => (
               <tr key={`sc-${r.id}`} className={trClass}>
-                <td className="px-4 py-2.5 font-semibold whitespace-nowrap">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
-                <td className="px-4 py-2.5 font-medium">{r.musica}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70">{r.artista}</td>
-                <td className="px-4 py-2.5 text-card-foreground/70 text-xs whitespace-nowrap">
+                <td className="px-4 py-2.5 font-bold text-foreground whitespace-nowrap">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
+                <td className="px-4 py-2.5 font-bold text-primary">{r.musica}</td>
+                <td className="px-4 py-2.5 font-bold text-foreground/90">{r.artista}</td>
+                <td className="px-4 py-2.5 text-foreground text-xs whitespace-nowrap font-medium">
                   {formatDia(r.dia, r.created_at)} {(r.horario || "").slice(0, 5)}
                 </td>
               </tr>
