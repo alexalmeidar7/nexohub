@@ -2464,7 +2464,6 @@ function SwitcherUI({
 
   const tabs = [
     { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
-    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
 
