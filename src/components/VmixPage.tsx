@@ -2540,7 +2540,6 @@ function SwitcherUI({
             <div className="flex items-center gap-1">
               {[
                 { label: "SWITCHER", key: "controls", icon: <Layout size={13} /> },
-                { label: "NDI", key: "ndi", icon: <Monitor size={13} /> },
                 { label: "AUTOMAÇÃO", key: "presets", icon: <Cpu size={13} /> },
               ].map(item => (
                 <button
