@@ -2256,40 +2256,12 @@ export default function VmixPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </DialogContent>
         </Dialog>
       </div>
     );
   }
 
-            <div className="px-6 py-3 flex items-center gap-2" style={{ background: "linear-gradient(135deg, #f59e0b15, #f59e0b08)", borderBottom: "1px solid #f59e0b15" }}>
-              <AlertTriangle size={14} style={{ color: "#f59e0b" }} />
-              <span className="text-xs font-bold" style={{ color: "#fbbf24" }}>Habilite "Conteúdo não seguro"</span>
-            </div>
-            <div className="p-6">
-              <p className="text-[11px] leading-relaxed mb-4" style={{ color: "#ffffff60" }}>
-                O preview roda em HTTPS e bloqueia requisições HTTP para IPs locais ({savedUrl}). 
-                Siga os passos abaixo <strong style={{ color: "#fff" }}>uma única vez</strong> para permitir a conexão:
-              </p>
-              <div className="rounded-xl p-4 space-y-3" style={{ backgroundColor: "#ffffff04", border: "1px solid #ffffff08" }}>
-                {[
-                  <>Abra esta URL em uma aba separada: <button onClick={() => window.open(previewDomain + "/vmix-control", "_blank", "noopener,noreferrer")} className="ml-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-all hover:brightness-110" style={{ backgroundColor: "#f59e0b20", color: "#fbbf24", border: "1px solid #f59e0b30" }}><ExternalLink size={10} />{previewDomain.replace("https://", "").slice(0, 30)}...</button></>,
-                  <>Na barra de endereço, clique no ícone <strong style={{ color: "#fff" }}>🔒 cadeado</strong> → <strong style={{ color: "#fff" }}>Configurações do site</strong></>,
-                  <>Encontre <strong style={{ color: "#fff" }}>Conteúdo não seguro</strong> → mude para <strong style={{ color: "#22c55e" }}>Permitir</strong></>,
-                  <><strong style={{ color: "#fff" }}>Feche a aba</strong> e volte aqui. Clique <strong style={{ color: "#22c55e" }}>Conectar</strong> — agora vai funcionar! ✅</>,
-                ].map((content, i) => (
-                  <div key={i} className="flex items-start gap-3">
-                    <span className="text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#f59e0b", color: "#000" }}>{i + 1}</span>
-                    <p className="text-[11px]" style={{ color: "#ffffff80" }}>{content}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
 
   // ── Connected layout ──
   const activeInputObj = inputs.find(i => i.number === activeInput);
