@@ -2273,9 +2273,53 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Redirection to switcher handled via useEffect in parent or sibling if needed */}
-    </div>
+    <SwitcherUI
+      inputs={inputs}
+      activeInput={activeInput}
+      previewInput={previewInput}
+      connectionMode={connectionMode}
+      savedUrl={savedUrl}
+      connecting={connecting}
+      connected={connected}
+      statusColor={statusColor}
+      statusLabel={statusLabel}
+      endpointLabel={endpointLabel}
+      connectionRouteLabel={connectionRouteLabel}
+      logoMixControl={logoMixControl}
+      studioName={studioName}
+      selectedConnectionId={selectedConnectionId}
+      tabs={tabs}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      StatusPill={StatusPill}
+      streaming={streaming}
+      recording={recording}
+      overlays={overlays}
+      setStreaming={setStreaming}
+      setRecording={setRecording}
+      setOverlays={setOverlays}
+      transitionStyle={transitionStyle}
+      setTransitionStyle={setTransitionStyle}
+      transitionDuration={transitionDuration}
+      setTransitionDuration={setTransitionDuration}
+      sendCommand={sendCommand}
+      setLogsOpen={setLogsOpen}
+      vmixLogs={vmixLogs}
+      logsOpen={logsOpen}
+      activeInputObj={activeInputObj}
+      previewInputObj={previewInputObj}
+      activeTitle={activeTitle}
+      previewTitle={previewTitle}
+      connectToVmix={connectToVmix}
+      vmixUrl={vmixUrl}
+      setVmixUrl={setVmixUrl}
+      setConnected={setConnected}
+      setSelectedConnectionId={setSelectedConnectionId}
+      setStudioName={setStudioName}
+      setSavedUrl={setSavedUrl}
+      setShowStudioSelector={setShowStudioSelector}
+      effectiveConnected={effectiveConnected}
+    />
   );
 }
 
@@ -2284,20 +2328,17 @@ function SwitcherUI({
   inputs, activeInput, previewInput, connectionMode, savedUrl, 
   connecting, connected, statusColor, statusLabel, endpointLabel, 
   connectionRouteLabel, logoMixControl, studioName, selectedConnectionId,
-  tabs, activeTab, setActiveTab, StatusPill, streaming, recording, overlays,
+  tabs: parentTabs, activeTab, setActiveTab, StatusPill: ParentStatusPill, streaming, recording, overlays,
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
   transitionDuration, setTransitionDuration, sendCommand, setLogsOpen, 
-  vmixLogs, logsOpen, activeInputObj, previewInputObj, activeTitle, previewTitle
+  vmixLogs, logsOpen, activeInputObj: parentActiveInputObj, previewInputObj: parentPreviewInputObj, 
+  activeTitle: parentActiveTitle, previewTitle: parentPreviewTitle,
+  connectToVmix, vmixUrl, setVmixUrl, setConnected, setSelectedConnectionId,
+  setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected
 }: any) {
-  return (
-    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
-      {/* ── Operator Header ── */}
-      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-
-
-
   // ── Connected layout ──
-  const activeInputObj = inputs.find(i => i.number === activeInput);
+  const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
   const tabs = [
