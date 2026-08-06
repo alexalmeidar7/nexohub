@@ -712,6 +712,12 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   }, [monitorIframeMode]);
 
   const effectiveConnected = connected || forcedConnected;
+
+  useEffect(() => {
+    if (connected && !forcedConnected) {
+      navigate("/vmix-control/switcher");
+    }
+  }, [connected, forcedConnected, navigate]);
   
   // Load programas from DB
   useEffect(() => {
