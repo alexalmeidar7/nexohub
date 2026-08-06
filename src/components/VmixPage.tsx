@@ -2266,16 +2266,27 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     );
   }
 
-  // Handle redirection to /switcher when connected
-  useEffect(() => {
-    if (connected && !forcedConnected) {
-      navigate("/vmix-control/switcher");
-    }
-  }, [connected, forcedConnected, navigate]);
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Redirection to switcher handled via useEffect in parent or sibling if needed */}
+    </div>
+  );
+}
 
-  if (!effectiveConnected) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
+// Actual Switcher UI (used when effectiveConnected)
+function SwitcherUI({ 
+  inputs, activeInput, previewInput, connectionMode, savedUrl, 
+  connecting, connected, statusColor, statusLabel, endpointLabel, 
+  connectionRouteLabel, logoMixControl, studioName, selectedConnectionId,
+  tabs, activeTab, setActiveTab, StatusPill, streaming, recording, overlays,
+  setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
+  transitionDuration, setTransitionDuration, sendCommand, setLogsOpen, 
+  vmixLogs, logsOpen, activeInputObj, previewInputObj, activeTitle, previewTitle
+}: any) {
+  return (
+    <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
+      {/* ── Operator Header ── */}
+      <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
 
 
 
