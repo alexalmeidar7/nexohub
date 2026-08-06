@@ -2352,8 +2352,15 @@ function SwitcherUI({
   setStreaming, setRecording, setOverlays, transitionStyle, setTransitionStyle,
   transitionDuration, setTransitionDuration, sendCommand, setLogsOpen, 
   vmixLogs, logsOpen, connectToVmix, vmixUrl, setVmixUrl, setConnected, 
-  setSelectedConnectionId, setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected
+  setSelectedConnectionId, setStudioName, setSavedUrl, setShowStudioSelector, effectiveConnected,
+  runDiagnostic, diagRunning, monitorsCollapsed, setMonitorsCollapsed, renderInputSelect,
+  setPreviewInput, setActiveInput, setMonitorStreamUrls, setMonitorIframeMode, toast,
+  monitorStreamUrls, monitorIframeMode, setEditingMonitorStream, editingMonitorStream,
+  setMonitorStreamTemp, monitorStreamTemp, getMonitorContent, ndiSources, addNdiInput,
+  reloadingInputs, reloadFallback, reloadInputsAndSources, StatusPill, inputShortcuts,
+  setCapturingShortcut, manualNdiHost, setManualNdiHost
 }: any) {
+
 
   // ── Connected layout ──
   const activeInputObj = inputs.find((i: any) => i.number === activeInput);
