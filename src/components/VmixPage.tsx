@@ -3149,7 +3149,14 @@ function SwitcherUI({
           };
 
           const todayPrograms = programas
-            .filter(isProgramForToday)
+            .filter(p => {
+              if (studioName) {
+                // Exact or partial match for the studio name set in the connection
+                const match = p.estudio && p.estudio.toLowerCase().includes(studioName.toLowerCase());
+                return match && isProgramForToday(p);
+              }
+              return isProgramForToday(p);
+            })
             .sort((a, b) => toMin(a.horario_inicio) - toMin(b.horario_inicio));
 
           const onAir = todayPrograms.find(isNowInProgram);
