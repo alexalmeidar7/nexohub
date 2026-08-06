@@ -2532,7 +2532,7 @@ function SwitcherUI({
           <div className="flex items-center gap-8">
             {/* Logo aligned to the left */}
             <div className="flex items-center gap-3">
-              <img src={logoMixControl} alt="Mix Control" className="h-6" />
+              {/* Logo removed as requested */}
             </div>
 
             {/* Main Navigation (Aligned right of the logo) */}
