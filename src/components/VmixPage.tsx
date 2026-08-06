@@ -947,15 +947,20 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       is_default: true 
     };
 
+    let savedConn;
     if (selectedConnectionId) {
-      await (supabase.from("vmix_connections" as any) as any)
+      const { data } = await (supabase.from("vmix_connections" as any) as any)
         .update(payload)
-        .eq("id", selectedConnectionId);
+        .eq("id", selectedConnectionId)
+        .select()
+        .single();
+      savedConn = data;
     } else {
       const { data } = await (supabase.from("vmix_connections" as any) as any)
         .insert(payload)
         .select()
         .single();
+      savedConn = data;
       if (data) setSelectedConnectionId(data.id);
     }
     
@@ -978,7 +983,29 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       toast({ title: "Modo alterado para Proxy", description: "IP público detectado." });
     }
     toast({ title: "Configuração salva", description: `Conexão "${studioName}" salva com sucesso.` });
+    return savedConn;
   };
+
+  const deleteConnection = async (id: string) => {
+    if (!user || !id) return;
+    const { error } = await (supabase.from("vmix_connections" as any) as any)
+      .delete()
+      .eq("id", id);
+    
+    if (error) {
+      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Conexão excluída" });
+      loadConnections();
+      if (selectedConnectionId === id) {
+        setSelectedConnectionId(null);
+        setVmixUrl("");
+        setSavedUrl("");
+        setStudioName("");
+      }
+    }
+  };
+
 
   useEffect(() => {
     directBaseUrlRef.current = null;
