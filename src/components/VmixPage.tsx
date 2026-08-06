@@ -2418,7 +2418,7 @@ function SwitcherUI({
   const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
   const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
 
-  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+  const SwitcherStatusPill = ({ compact = false }: { compact?: boolean }) => (
     <div
       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg"
       style={{ backgroundColor: "#0c0c0e", border: `1px solid ${statusColor}30` }}
@@ -2459,6 +2459,7 @@ function SwitcherUI({
       )}
     </div>
   );
+
 
   return (
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
