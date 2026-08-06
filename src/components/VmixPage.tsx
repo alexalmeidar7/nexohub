@@ -2491,14 +2491,6 @@ function SwitcherUI({
             )}
           </div>
 
-                  className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
-                  style={{ backgroundColor: "#dc2626", color: "#fff" }}
-                >
-                  {connecting ? "Conectando" : "Conectar"}
-                </button>
-              </div>
-            )}
-          </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 min-w-full xl:min-w-[520px]">
             <div className="rounded-xl px-3 py-2" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
