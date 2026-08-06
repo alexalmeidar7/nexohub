@@ -66,7 +66,7 @@ function SectionCard({
           {count}
         </span>
       </header>
-      <div className="max-h-[52vh] overflow-y-auto bg-card text-card-foreground">{children}</div>
+      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">{children}</div>
     </section>
   );
 }
