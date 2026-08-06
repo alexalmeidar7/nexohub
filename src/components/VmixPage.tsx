@@ -787,7 +787,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       } catch {}
       setProgramas(mapped);
     }
-  }, [user, studioName]);
+  }, [user]);
 
   useEffect(() => { loadProgramas(); }, [loadProgramas]);
 
