@@ -2273,6 +2273,35 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     );
   }
 
+  // ── Connection status helpers for UI ──
+  const connStatus: "online" | "connecting" | "offline" = connecting
+    ? "connecting"
+    : connected
+    ? "online"
+    : "offline";
+  const statusColor = connStatus === "online" ? "#22c55e" : connStatus === "connecting" ? "#f59e0b" : "#ef4444";
+  const statusLabel = connStatus === "online" ? "ONLINE" : connStatus === "connecting" ? "CONNECTING" : "OFFLINE";
+  const endpointLabel = savedUrl ? savedUrl.replace(/^https?:\/\//, "") : "sem endpoint";
+  const connectionRouteLabel = connectionMode === "direct" ? "Direto LAN" : "Proxy Web";
+
+  const tabs = [
+    { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
+    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
+    { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
+  ];
+
+  const StatusPill = ({ compact = false }: { compact?: boolean }) => (
+    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+      <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: statusColor }} />
+      {!compact && <span className="text-[9px] font-black tracking-widest text-white/40 uppercase">{statusLabel}</span>}
+    </div>
+  );
+
+  const activeInputObj = inputs.find((i: any) => i.number === activeInput);
+  const previewInputObj = inputs.find(i => i.number === previewInput);
+  const activeTitle = activeInputObj?.title || "Sem programa";
+  const previewTitle = previewInputObj?.title || "Sem preview";
+
   return (
     <SwitcherUI
       inputs={inputs}
@@ -2282,17 +2311,11 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       savedUrl={savedUrl}
       connecting={connecting}
       connected={connected}
-      statusColor={statusColor}
-      statusLabel={statusLabel}
-      endpointLabel={endpointLabel}
-      connectionRouteLabel={connectionRouteLabel}
       logoMixControl={logoMixControl}
       studioName={studioName}
       selectedConnectionId={selectedConnectionId}
-      tabs={tabs}
       activeTab={activeTab}
       setActiveTab={setActiveTab}
-      StatusPill={StatusPill}
       streaming={streaming}
       recording={recording}
       overlays={overlays}
@@ -2307,10 +2330,6 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setLogsOpen={setLogsOpen}
       vmixLogs={vmixLogs}
       logsOpen={logsOpen}
-      activeInputObj={activeInputObj}
-      previewInputObj={previewInputObj}
-      activeTitle={activeTitle}
-      previewTitle={previewTitle}
       connectToVmix={connectToVmix}
       vmixUrl={vmixUrl}
       setVmixUrl={setVmixUrl}
@@ -2323,6 +2342,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     />
   );
 }
+
 
 // Actual Switcher UI (used when effectiveConnected)
 function SwitcherUI({ 
