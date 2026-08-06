@@ -2266,12 +2266,16 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     );
   }
 
-  const navigate = useNavigate();
+  // Handle redirection to /switcher when connected
   useEffect(() => {
     if (connected && !forcedConnected) {
       navigate("/vmix-control/switcher");
     }
   }, [connected, forcedConnected, navigate]);
+
+  if (!effectiveConnected) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
 
 
 
