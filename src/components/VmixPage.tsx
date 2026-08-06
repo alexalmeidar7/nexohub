@@ -2526,37 +2526,37 @@ function SwitcherUI({
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
-          <div className="flex flex-wrap items-center gap-4">
+        {/* Top Header with Logo, Navigation, and Status */}
+        <div className="relative flex items-center justify-between gap-4 p-4 pl-6" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex items-center gap-8">
+            {/* Logo */}
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
             </div>
 
-            {/* Status Indicator */}
-            <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
-                <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
-                  {connected ? "Conectado" : "Desconectado"}
-                </span>
-              </div>
-              {connected && (
-                <>
-                  <div className="w-px h-3 bg-white/10" />
-                  <div className="flex items-center gap-2">
-                    <Activity size={12} className="text-white/20" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                      Latência: <span className="text-white/80">18ms</span>
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+            {/* Main Navigation */}
+            <div className="flex items-center gap-2">
+              {[
+                { label: "SWITCHER", key: "inputs", icon: <Layout size={13} /> },
+                { label: "NDI", key: "ndi", icon: <Monitor size={13} /> },
+                { label: "AUTOMAÇÃO", key: "presets", icon: <Cpu size={13} /> },
+              ].map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+                  style={{
+                    color: activeTab === item.key ? "#fff" : "#777",
+                    backgroundColor: activeTab === item.key ? "#2a2a30" : "transparent",
+                    border: activeTab === item.key ? "1px solid #dc262655" : "1px solid transparent",
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
 
+              <div className="w-px h-4 bg-white/10 mx-2" />
 
-          {effectiveConnected && selectedConnectionId && (
-            <div className="absolute right-4 flex items-center gap-2">
               <button
                 onClick={() => {
                   setConnected(false);
@@ -2565,16 +2565,36 @@ function SwitcherUI({
                   setStudioName("");
                   setSavedUrl("");
                 }}
-                className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 flex items-center gap-2"
-                style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12", color: "#fff" }}
-                title="Voltar para a tela de nova conexão"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#777] hover:text-white transition-all"
               >
-                <RefreshCw size={14} /> Voltar
+                <RefreshCw size={13} /> VOLTAR
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Status Indicator */}
+          <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
+                {connected ? "Conectado" : "Desconectado"}
+              </span>
+            </div>
+            {connected && (
+              <>
+                <div className="w-px h-3 bg-white/10" />
+                <div className="flex items-center gap-2">
+                  <Activity size={12} className="text-white/20" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                    Latência: <span className="text-white/80">18ms</span>
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
+        {/* Info Bar / Program-Preview & Controls */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex flex-wrap items-center gap-3">
             <SwitcherStatusPill compact />
@@ -2608,48 +2628,31 @@ function SwitcherUI({
           </div>
         </div>
 
-
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ backgroundColor: "#111114" }}>
-          <div className="flex flex-wrap items-center gap-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
-                style={{
-                  color: activeTab === tab.key ? "#fff" : "#777",
-                  backgroundColor: activeTab === tab.key ? "#2a2a30" : "#18181c",
-                  border: activeTab === tab.key ? "1px solid #dc262655" : "1px solid #ffffff0a",
-                  boxShadow: activeTab === tab.key ? "inset 0 1px 0 #ffffff14, 0 0 20px rgba(220,38,38,0.14)" : "none",
-                }}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-          </div>
-
+        {/* Diagnostic & Sync Bar */}
+        <div className="flex flex-wrap items-center justify-end gap-3 px-4 py-2" style={{ backgroundColor: "#111114" }}>
           <div className="flex items-center gap-2">
             <button
               onClick={runDiagnostic}
               disabled={diagRunning}
-              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
+              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
               style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b35" }}
             >
-              {diagRunning ? <Loader2 size={13} className="animate-spin" /> : <Activity size={13} />}
+              {diagRunning ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />}
               Diagnóstico
             </button>
             <button
               onClick={() => connectToVmix()}
-              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
+              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
               style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}
               title="Atualizar estado do vMix"
             >
-              <RefreshCw size={13} className={connecting ? "animate-spin" : ""} />
+              <RefreshCw size={12} className={connecting ? "animate-spin" : ""} />
               Sync
             </button>
           </div>
         </div>
       </div>
+
 
       {/* ── Preview / Transitions / Output ── */}
       <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
