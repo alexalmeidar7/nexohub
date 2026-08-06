@@ -2157,7 +2157,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             <div className="p-8 space-y-6">
               <div className="space-y-2">
                 <h2 className="text-xl font-black uppercase tracking-tight text-[#C6F03C]">Configurar Conexão</h2>
-                <p className="text-xs text-white/40 leading-relaxed">Insira os dados do vMix para iniciar o controle remoto do estúdio.</p>
+                <p className="text-xs text-white/40 leading-relaxed">essa lista de estudio, deve trazer os estudio cadastrados em grade de programação</p>
               </div>
 
               <div className="space-y-5">
