@@ -677,7 +677,7 @@ export default function VmixPage() {
     } catch { return {}; }
   });
   
-  const connectToVmixRef = useRef<(() => Promise<void>) | null>(null);
+  const connectToVmixRef = useRef<((isAutoConnect?: boolean) => Promise<void>) | null>(null);
   const ndiAutoScanDoneRef = useRef(false);
   const silentFailCountRef = useRef(0);
 
@@ -2282,7 +2282,7 @@ export default function VmixPage() {
                       </Button>
                       {savedUrl && (
                         <button
-                          onClick={connectToVmix}
+                          onClick={() => connectToVmix()}
                           disabled={connecting}
                           className="flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
                           style={{ backgroundColor: "#22c55e" }}
@@ -2572,7 +2572,7 @@ export default function VmixPage() {
       )}
       {connStatus !== "online" && (savedUrl || vmixUrl) && (
         <button
-          onClick={connectToVmix}
+          onClick={() => connectToVmix()}
           disabled={connecting}
           className="ml-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider disabled:opacity-50 hover:brightness-110"
           style={{ backgroundColor: statusColor, color: "#0a0a0a" }}
@@ -2653,7 +2653,7 @@ export default function VmixPage() {
                   className="h-10 w-44 px-3 rounded-xl text-[11px] outline-none bg-[#0a0a0d] text-white border border-white/10 font-mono"
                 />
                 <button
-                  onClick={connectToVmix}
+                  onClick={() => connectToVmix()}
                   disabled={connecting}
                   className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50 transition-all hover:brightness-110"
                   style={{ backgroundColor: "#dc2626", color: "#fff" }}
