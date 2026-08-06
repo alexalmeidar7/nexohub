@@ -1265,7 +1265,10 @@ export default function VmixPage() {
       persistVmixSnapshot(vmixState);
 
       setConnected(true);
-      if (selectedConnectionId) persistActiveConnection(selectedConnectionId);
+      if (selectedConnectionId) {
+        persistActiveConnection(selectedConnectionId);
+        localStorage.setItem(`vmix_last_connected_${user.id}`, selectedConnectionId);
+      }
       // Auto-navigate to main Nexo Control panel (switcher) once connected
       setActiveTab("controls");
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
