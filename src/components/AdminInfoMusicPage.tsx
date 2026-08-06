@@ -53,7 +53,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card text-card-foreground overflow-hidden shadow-sm">
+    <section className="rounded-2xl border border-border bg-white dark:bg-card text-card-foreground overflow-hidden shadow-sm">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted">
         <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           {icon}
@@ -66,7 +66,7 @@ function SectionCard({
           {count}
         </span>
       </header>
-      <div className="max-h-[52vh] overflow-y-auto bg-card text-card-foreground">{children}</div>
+      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">{children}</div>
     </section>
   );
 }
@@ -181,10 +181,10 @@ export default function AdminInfoMusicPage() {
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
 
-  const thClass = "px-4 py-3 font-black text-foreground";
+  const thClass = "px-4 py-3 font-black text-slate-700 dark:text-foreground";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
   const trClass =
-    "border-t border-border/60 hover:bg-primary/5 transition-colors text-foreground";
+    "border-t border-border/60 odd:bg-slate-50/50 dark:odd:bg-transparent even:bg-white dark:even:bg-transparent hover:bg-primary/5 transition-colors text-foreground";
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -225,7 +225,7 @@ export default function AdminInfoMusicPage() {
         count={filtered.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Data</th>
               <th className={thClass}>Horário</th>
@@ -263,7 +263,7 @@ export default function AdminInfoMusicPage() {
         count={curiosidadesFiltradas.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
@@ -294,7 +294,7 @@ export default function AdminInfoMusicPage() {
         count={semCuriosidade.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
