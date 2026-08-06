@@ -2088,11 +2088,6 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     return (
       <div className="max-w-4xl mx-auto py-10 px-6">
         <div className="flex flex-col gap-10">
-          <div className="flex items-center justify-center">
-            <div className="flex items-center gap-3">
-              <img src={logoMixControl} alt="VMIXCONTROL" className="h-6" />
-            </div>
-          </div>
 
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
