@@ -2395,6 +2395,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       reloadFallback={reloadFallback}
       reloadInputsAndSources={reloadInputsAndSources}
       inputShortcuts={inputShortcuts}
+      capturingShortcut={capturingShortcut}
       setCapturingShortcut={setCapturingShortcut}
       manualNdiHost={manualNdiHost}
       setManualNdiHost={setManualNdiHost}
@@ -2445,7 +2446,7 @@ function SwitcherUI({
   monitorStreamUrls, monitorIframeMode, setEditingMonitorStream, editingMonitorStream,
   setMonitorStreamTemp, monitorStreamTemp, getMonitorContent, ndiSources, addNdiInput,
   reloadingInputs, reloadFallback, reloadInputsAndSources, inputShortcuts,
-  setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
+  capturingShortcut, setCapturingShortcut, manualNdiHost, setManualNdiHost, ThumbnailImg,
   ndiUrl, setNdiUrl, programas, setProgramas, activePreset, setActivePreset,
   editingPresetId, setEditingPresetId, dragPresetIdx, setDragPresetIdx,
   customButtons, setCustomButtons, editingCustomButtonId, setEditingCustomButtonId,
@@ -2654,12 +2655,26 @@ function SwitcherUI({
                       {inputs.map(input => {
                         const isPreview = previewInput === input.number;
                         const isActive = activeInput === input.number;
+                        const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
+                        const isCapturing = capturingShortcut === (input.key || input.number);
+
                         return (
                           <button
                             key={`pvw-${input.key || input.number}`}
-                            onClick={() => { sendCommand("PreviewInput", input.number); setPreviewInput(input.number); }}
+                            onClick={(e) => {
+                              if (e.altKey || capturingShortcut) {
+                                setCapturingShortcut(input.key || input.number);
+                                return;
+                              }
+                              sendCommand("PreviewInput", input.number);
+                              setPreviewInput(input.number);
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              setCapturingShortcut(input.key || input.number);
+                            }}
                             title={input.title}
-                            className="h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isPreview ? "#16a34a" : "#3a3a3a",
                               color: isPreview ? "#fff" : "#ddd",
@@ -2670,6 +2685,19 @@ function SwitcherUI({
                           >
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
+
+                            {/* Keyboard Shortcut Indicator */}
+                            <div
+                              className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
+                                isCapturing
+                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10"
+                                  : shortcut
+                                    ? "bg-black/60 text-white/90 border-white/20"
+                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                              }`}
+                            >
+                              {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
+                            </div>
                           </button>
                         );
                       })}
@@ -2751,12 +2779,26 @@ function SwitcherUI({
                     <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.max(2, Math.min(4, inputs.length || 2))}, minmax(0,1fr))` }}>
                       {inputs.map(input => {
                         const isActive = activeInput === input.number;
+                        const shortcut = inputShortcuts[input.key] || inputShortcuts[input.number];
+                        const isCapturing = capturingShortcut === (input.key || input.number);
+
                         return (
                           <button
                             key={`pgm-${input.key || input.number}`}
-                            onClick={() => { sendCommand("CutDirect", input.number); setActiveInput(input.number); }}
+                            onClick={(e) => {
+                              if (e.altKey || capturingShortcut) {
+                                setCapturingShortcut(input.key || input.number);
+                                return;
+                              }
+                              sendCommand("CutDirect", input.number);
+                              setActiveInput(input.number);
+                            }}
+                            onContextMenu={(e) => {
+                              e.preventDefault();
+                              setCapturingShortcut(input.key || input.number);
+                            }}
                             title={input.title}
-                            className="h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
+                            className="group relative h-20 rounded border font-bold text-[11px] flex flex-col items-center justify-center transition-all"
                             style={{
                               backgroundColor: isActive ? "#dc2626" : "#3a3a3a",
                               color: isActive ? "#fff" : "#ddd",
@@ -2766,6 +2808,19 @@ function SwitcherUI({
                           >
                             <span className="text-[10px] font-black opacity-70 leading-none">{input.number}</span>
                             <span className="truncate max-w-full px-1 leading-tight mt-1 uppercase tracking-tight">{input.title}</span>
+                            
+                            {/* Keyboard Shortcut Indicator */}
+                            <div 
+                              className={`absolute -top-1 -right-1 px-1.5 py-0.5 rounded text-[8px] font-mono border transition-all ${
+                                isCapturing 
+                                  ? "bg-yellow-500 text-black border-yellow-300 animate-pulse z-10" 
+                                  : shortcut 
+                                    ? "bg-black/60 text-white/90 border-white/20" 
+                                    : "bg-black/20 text-white/30 border-transparent opacity-0 group-hover:opacity-100"
+                              }`}
+                            >
+                              {isCapturing ? "PRESS..." : shortcut ? shortcut.toUpperCase() : "SET"}
+                            </div>
                           </button>
                         );
                       })}
