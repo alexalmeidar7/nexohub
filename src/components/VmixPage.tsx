@@ -2528,17 +2528,19 @@ function SwitcherUI({
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
         {/* Top Header with Logo, Navigation, and Status */}
-        <div className="relative flex items-center justify-between gap-4 p-4 pl-6" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+        <div className="relative flex items-center justify-between gap-4 p-4 pl-8" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex items-center gap-8">
-            {/* Logo removed as requested */}
+            {/* Logo aligned to the left */}
+            <div className="flex items-center gap-3">
+              <img src={logoMixControl} alt="Mix Control" className="h-6" />
+            </div>
 
-            {/* Main Navigation */}
-            <div className="flex items-center gap-2">
+            {/* Main Navigation (Aligned right of the logo) */}
+            <div className="flex items-center gap-1">
               {[
                 { label: "SWITCHER", key: "controls", icon: <Layout size={13} /> },
                 { label: "NDI", key: "ndi", icon: <Monitor size={13} /> },
                 { label: "AUTOMAÇÃO", key: "presets", icon: <Cpu size={13} /> },
-
               ].map(item => (
                 <button
                   key={item.key}
@@ -2568,28 +2570,30 @@ function SwitcherUI({
               >
                 <RefreshCw size={13} /> VOLTAR
               </button>
-            </div>
-          </div>
 
-          {/* Status Indicator */}
-          <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
-                {connected ? "Conectado" : "Desconectado"}
-              </span>
-            </div>
-            {connected && (
-              <>
-                <div className="w-px h-3 bg-white/10" />
+              <div className="w-px h-4 bg-white/10 mx-2" />
+
+              {/* Status Indicator (Now part of the main button group) */}
+              <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e]/50 border border-white/5">
                 <div className="flex items-center gap-2">
-                  <Activity size={12} className="text-white/20" />
-                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                    Latência: <span className="text-white/80">18ms</span>
+                  <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
+                    {connected ? "STATUS: CONECTADO" : "STATUS: DESCONECTADO"}
                   </span>
                 </div>
-              </>
-            )}
+                {connected && (
+                  <>
+                    <div className="w-px h-3 bg-white/10" />
+                    <div className="flex items-center gap-2">
+                      <Activity size={12} className="text-white/20" />
+                      <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                        Latência: <span className="text-white/80">18ms</span>
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
