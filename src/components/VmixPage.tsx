@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import Hls from "hls.js";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -395,6 +396,7 @@ interface NetworkInterfaceInfo {
 }
 
 export default function VmixPage({ forcedConnected = false }: { forcedConnected?: boolean }) {
+  const navigate = useNavigate();
   const [networkInfo, setNetworkInfo] = useState<NetworkInterfaceInfo | null>(null);
   const [lanStatus, setLanStatus] = useState<"checking" | "same_lan" | "different_network" | "unknown">("checking");
   const { user } = useAuth();
@@ -709,6 +711,8 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
     localStorage.setItem("vmix_monitor_iframe", JSON.stringify(monitorIframeMode));
   }, [monitorIframeMode]);
 
+  const effectiveConnected = connected || forcedConnected;
+  
   // Load programas from DB
   useEffect(() => {
     if (!user) return;
@@ -2348,7 +2352,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
               <StatusPill />
             </div>
 
-            {connected && selectedConnectionId ? (
+            {effectiveConnected && selectedConnectionId ? (
               <div className="flex flex-wrap items-center gap-2">
                 <div className="px-4 py-2 rounded-xl" style={{ backgroundColor: "#0f0f12", border: "1px solid #ffffff0d" }}>
                   <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/25">Estúdio</p>
