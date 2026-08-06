@@ -753,13 +753,22 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // Load programas from DB
   const loadProgramas = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
       .eq("user_id", user.id)
-      .eq("ativo", true)
-      .ilike("estudio", "%fm%")
-      .order("horario_inicio");
+      .eq("ativo", true);
+    
+    // Filter by studio name if a connection is selected and has a name
+    if (studioName) {
+      // Use ilike to match studio name loosely (e.g. "FM" matches "FM 1", "Studio FM")
+      query = query.ilike("estudio", `%${studioName}%`);
+    } else {
+      // Default fallback for legacy behavior
+      query = query.ilike("estudio", "%fm%");
+    }
+
+    const { data } = await query.order("horario_inicio");
     
     if (data) {
       const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
