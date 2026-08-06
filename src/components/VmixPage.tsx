@@ -2464,7 +2464,6 @@ function SwitcherUI({
 
   const tabs = [
     { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
-    { key: "ndi" as const, label: "NDI", icon: <Network size={13} /> },
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
   ];
 
@@ -2540,7 +2539,6 @@ function SwitcherUI({
             <div className="flex items-center gap-1">
               {[
                 { label: "SWITCHER", key: "controls", icon: <Layout size={13} /> },
-                { label: "NDI", key: "ndi", icon: <Monitor size={13} /> },
                 { label: "AUTOMAÇÃO", key: "presets", icon: <Cpu size={13} /> },
               ].map(item => (
                 <button
