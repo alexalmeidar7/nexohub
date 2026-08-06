@@ -3212,7 +3212,14 @@ function SwitcherUI({
                   <div className="flex items-center justify-between px-4 py-2.5" style={{ backgroundColor: "#ffffff06", borderBottom: "1px solid #ffffff08" }}>
                     <div className="flex items-center gap-2">
                       <Radio size={14} style={{ color: "#999" }} />
-                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>{studioName || "Estúdio FM"} - Botões Automáticos</span>
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>
+                        {studioName || "Estúdio FM"} - Botões Automáticos 
+                        {programas.find(p => isProgramForToday(p) && isNowInProgram(p)) && (
+                          <span className="ml-2 text-[10px] text-red-500 animate-pulse">
+                            ● NO AR: {programas.find(p => isProgramForToday(p) && isNowInProgram(p))?.nome}
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
