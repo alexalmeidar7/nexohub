@@ -9,8 +9,9 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap, Layout, Cpu
 } from "lucide-react";
+
 import {
   Dialog,
   DialogContent,
@@ -2526,37 +2527,38 @@ function SwitcherUI({
     <div className="space-y-4 max-w-full pb-20" style={{ color: "#e7e7e7" }}>
       {/* ── Operator Header ── */}
       <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl" style={{ backgroundColor: "#151517" }}>
-        <div className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
-          <div className="flex flex-wrap items-center gap-4">
+        {/* Top Header with Logo, Navigation, and Status */}
+        <div className="relative flex items-center justify-between gap-4 p-4 pl-6" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
+          <div className="flex items-center gap-8">
+            {/* Logo */}
             <div className="h-11 px-3 rounded-xl flex items-center gap-3" style={{ backgroundColor: "#0c0c0e", border: "1px solid #ffffff12", boxShadow: "inset 0 1px 0 #ffffff0a" }}>
               <img src={logoMixControl} alt="Mix Control" className="h-5" />
             </div>
 
-            {/* Status Indicator */}
-            <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
-              <div className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
-                <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
-                  {connected ? "Conectado" : "Desconectado"}
-                </span>
-              </div>
-              {connected && (
-                <>
-                  <div className="w-px h-3 bg-white/10" />
-                  <div className="flex items-center gap-2">
-                    <Activity size={12} className="text-white/20" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
-                      Latência: <span className="text-white/80">18ms</span>
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+            {/* Main Navigation */}
+            <div className="flex items-center gap-2">
+              {[
+                { label: "SWITCHER", key: "controls", icon: <Layout size={13} /> },
+                { label: "NDI", key: "ndi", icon: <Monitor size={13} /> },
+                { label: "AUTOMAÇÃO", key: "presets", icon: <Cpu size={13} /> },
 
+              ].map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => setActiveTab(item.key)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300"
+                  style={{
+                    color: activeTab === item.key ? "#fff" : "#777",
+                    backgroundColor: activeTab === item.key ? "#2a2a30" : "transparent",
+                    border: activeTab === item.key ? "1px solid #dc262655" : "1px solid transparent",
+                  }}
+                >
+                  {item.icon} {item.label}
+                </button>
+              ))}
 
-          {effectiveConnected && selectedConnectionId && (
-            <div className="absolute right-4 flex items-center gap-2">
+              <div className="w-px h-4 bg-white/10 mx-2" />
+
               <button
                 onClick={() => {
                   setConnected(false);
@@ -2565,16 +2567,36 @@ function SwitcherUI({
                   setStudioName("");
                   setSavedUrl("");
                 }}
-                className="h-10 px-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 flex items-center gap-2"
-                style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff12", color: "#fff" }}
-                title="Voltar para a tela de nova conexão"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-[#777] hover:text-white transition-all"
               >
-                <RefreshCw size={14} /> Voltar
+                <RefreshCw size={13} /> VOLTAR
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Status Indicator */}
+          <div className="flex items-center gap-4 px-4 h-11 rounded-xl bg-[#0c0c0e] border border-white/5">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full animate-pulse ${connected ? "bg-[#C6F03C]" : "bg-red-500"}`} />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${connected ? "text-[#C6F03C]" : "text-red-500"}`}>
+                {connected ? "Conectado" : "Desconectado"}
+              </span>
+            </div>
+            {connected && (
+              <>
+                <div className="w-px h-3 bg-white/10" />
+                <div className="flex items-center gap-2">
+                  <Activity size={12} className="text-white/20" />
+                  <span className="text-[9px] font-black uppercase tracking-widest text-white/40">
+                    Latência: <span className="text-white/80">18ms</span>
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
+        {/* Info Bar / Program-Preview & Controls */}
         <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-4" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex flex-wrap items-center gap-3">
             <SwitcherStatusPill compact />
@@ -2608,341 +2630,36 @@ function SwitcherUI({
           </div>
         </div>
 
-
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3" style={{ backgroundColor: "#111114" }}>
-          <div className="flex flex-wrap items-center gap-2">
-            {tabs.map(tab => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300"
-                style={{
-                  color: activeTab === tab.key ? "#fff" : "#777",
-                  backgroundColor: activeTab === tab.key ? "#2a2a30" : "#18181c",
-                  border: activeTab === tab.key ? "1px solid #dc262655" : "1px solid #ffffff0a",
-                  boxShadow: activeTab === tab.key ? "inset 0 1px 0 #ffffff14, 0 0 20px rgba(220,38,38,0.14)" : "none",
-                }}
-              >
-                {tab.icon} {tab.label}
-              </button>
-            ))}
-          </div>
-
+        {/* Diagnostic & Sync Bar */}
+        <div className="flex flex-wrap items-center justify-end gap-3 px-4 py-2" style={{ backgroundColor: "#111114" }}>
           <div className="flex items-center gap-2">
             <button
               onClick={runDiagnostic}
               disabled={diagRunning}
-              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
+              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest transition-all hover:brightness-110 disabled:opacity-50"
               style={{ backgroundColor: "#f59e0b18", color: "#fbbf24", border: "1px solid #f59e0b35" }}
             >
-              {diagRunning ? <Loader2 size={13} className="animate-spin" /> : <Activity size={13} />}
+              {diagRunning ? <Loader2 size={12} className="animate-spin" /> : <Activity size={12} />}
               Diagnóstico
             </button>
             <button
               onClick={() => connectToVmix()}
-              className="h-9 px-3 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
+              className="h-8 px-3 rounded-xl flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/60 transition-all hover:text-white hover:brightness-110"
               style={{ backgroundColor: "#2a2a30", border: "1px solid #ffffff10" }}
               title="Atualizar estado do vMix"
             >
-              <RefreshCw size={13} className={connecting ? "animate-spin" : ""} />
+              <RefreshCw size={12} className={connecting ? "animate-spin" : ""} />
               Sync
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Preview / Transitions / Output ── */}
-      <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#111114", boxShadow: "0 4px 20px #00000060" }}>
-        <div
-          className="w-full flex items-center justify-between gap-3 px-4 py-2"
-          style={{ backgroundColor: "#18181c", borderBottom: monitorsCollapsed ? "none" : "1px solid #ffffff08" }}
-        >
-          <button
-            onClick={() => setMonitorsCollapsed(prev => !prev)}
-            className="flex items-center gap-2 transition-colors hover:brightness-110"
-          >
-            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-              🖥 Monitores Preview / Output
-            </span>
-            <span className="text-[10px]" style={{ color: "#666" }}>{monitorsCollapsed ? "▼" : "▲"}</span>
-          </button>
-          <SwitcherStatusPill />
 
-        </div>
-        {!monitorsCollapsed && (
-        <div className="flex items-stretch gap-[1px]">
-        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
-           <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
-            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#555", color: "#fff", letterSpacing: "0.15em" }}>Preview</span>
-            {renderInputSelect(previewInput, (val) => {
-              sendCommand("PreviewInput", val);
-              setPreviewInput(val);
-            })}
-            <div className="ml-auto flex gap-1">
-              <button
-                onClick={() => {
-                  const baseUrl = savedUrl.replace(/\/+$/, "");
-                  setMonitorStreamUrls(prev => ({ ...prev, preview: `${baseUrl}/mjpeg?Input=Preview` }));
-                  setMonitorIframeMode(prev => ({ ...prev, preview: false }));
-                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Preview." });
-                }}
-                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
-                style={{
-                  backgroundColor: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
-                  color: monitorStreamUrls.preview?.includes("mjpeg") ? "#dc2626" : "#666",
-                  border: `1px solid ${monitorStreamUrls.preview?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
-                }}
-                title="Ativar Live Preview (vMix NDI/MJPEG)"
-              >
-                <Monitor size={10} /> LIVE
-              </button>
-              <button
-                onClick={() => {
-                  setMonitorIframeMode(prev => ({ ...prev, preview: !prev.preview }));
-                  if (!monitorIframeMode.preview) setMonitorStreamUrls(prev => ({ ...prev, preview: "" }));
-                }}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: monitorIframeMode.preview ? "#3b82f620" : "#ffffff08",
-                  color: monitorIframeMode.preview ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorIframeMode.preview ? "#3b82f640" : "#ffffff10"}`,
-                }}
-                title="Modo Iframe (vMix Web Controller)"
-              >
-                ⬛
-              </button>
-              <button
-                onClick={() => {
-                  if (monitorIframeMode.preview) setMonitorIframeMode(prev => ({ ...prev, preview: false }));
-                  setEditingMonitorStream(editingMonitorStream === "preview" ? null : "preview");
-                  setMonitorStreamTemp(monitorStreamUrls.preview);
-                }}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.preview && !monitorStreamUrls.preview.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
-                }}
-                title="Configurar URL de stream manual (HLS/NDI Bridge)"
-              >
-                📡
-              </button>
-            </div>
-          </div>
-          {/* Stream URL editor */}
-          {editingMonitorStream === "preview" && (
-            <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
-              <input
-                type="text"
-                value={monitorStreamTemp}
-                onChange={e => setMonitorStreamTemp(e.target.value)}
-                placeholder="URL do stream (MJPEG, HLS .m3u8, ou JPEG)"
-                className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
-                style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
-                onKeyDown={e => { if (e.key === "Enter") { setMonitorStreamUrls(prev => ({ ...prev, preview: monitorStreamTemp.trim() })); setEditingMonitorStream(null); } }}
-              />
-              <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, preview: monitorStreamTemp.trim() })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}>✓</button>
-              {monitorStreamUrls.preview && <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, preview: "" })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}>✕</button>}
-            </div>
-          )}
-          <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {getMonitorContent("preview") || (
-              <div className="w-full h-full relative flex flex-col">
-                <div className="flex flex-1">
-                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="tv-static absolute inset-0" />
-                <div className="tv-scanlines absolute inset-0" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#888" }}>PVW — Sem sinal</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        {/* Transitions */}
-        <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-3" style={{ backgroundColor: "#1c1c22", minWidth: 84 }}>
-          {[
-            { label: "CUT", fn: "Cut" },
-            { label: "FADE", fn: "Fade", value: "1000" },
-            { label: "FTB", fn: "FadeToBlack" },
-          ].map(t => (
-            <button
-              key={t.label}
-              onClick={() => sendCommand(t.fn, undefined, t.value)}
-              className="w-full px-2 py-1.5 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 hover:scale-[1.05]"
-              style={{
-                backgroundColor: t.label === "CUT" ? "#6b1010" : "#2a2a30",
-                color: t.label === "CUT" ? "#fff" : "#aaa",
-                border: `1px solid ${t.label === "CUT" ? "#8b2020" : "#3a3a40"}`,
-              }}
-              onMouseEnter={e => { (e.target as HTMLElement).style.boxShadow = `0 0 14px ${t.label === "CUT" ? "#6b101060" : "#2a2a3060"}`; }}
-              onMouseLeave={e => { (e.target as HTMLElement).style.boxShadow = "none"; }}
-            >
-              {t.label}
-            </button>
-          ))}
-          <div className="w-full h-px my-1" style={{ backgroundColor: "#ffffff10" }} />
-          <div className="grid grid-cols-2 gap-1 w-full">
-            {[1, 2, 3, 4].map(n => {
-              const isOn = overlays[n];
-              return (
-                <button
-                  key={n}
-                  onClick={() => {
-                    const cmd = isOn ? `OverlayInput${n}Off` : `OverlayInput${n}`;
-                    sendCommand(cmd);
-                    setOverlays(prev => ({ ...prev, [n]: !prev[n] }));
-                  }}
-                  className="flex items-center justify-center rounded text-[9px] font-bold transition-all duration-200 hover:scale-[1.08]"
-                  style={{
-                    width: 30, height: 24,
-                    backgroundColor: isOn ? "#eab308" : "#3a3a3a",
-                    color: isOn ? "#000" : "#999",
-                    border: `1px solid ${isOn ? "#facc15" : "#555"}`,
-                    boxShadow: isOn ? "0 0 10px #eab30840" : "none",
-                  }}
-                >
-                  {n}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        {/* Output */}
-        <div className="relative flex-1 flex flex-col" style={{ backgroundColor: "#18181c", minHeight: 200 }}>
-          <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: "1px solid #ffffff06", backgroundColor: "#ffffff04" }}>
-            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-sm" style={{ backgroundColor: "#dc2626", color: "#fff", letterSpacing: "0.15em" }}>Output</span>
-            {renderInputSelect(activeInput, (val) => {
-              sendCommand("Cut", val);
-              setActiveInput(val);
-            })}
-            <div className="ml-auto flex gap-1">
-              <button
-                onClick={() => {
-                  const baseUrl = savedUrl.replace(/\/+$/, "");
-                  setMonitorStreamUrls(prev => ({ ...prev, output: `${baseUrl}/mjpeg` }));
-                  setMonitorIframeMode(prev => ({ ...prev, output: false }));
-                  toast({ title: "Vídeo NDI Ativado", description: "Carregando stream MJPEG do vMix Output." });
-                }}
-                className="text-[8px] px-2 py-0.5 rounded transition-all flex items-center gap-1"
-                style={{
-                  backgroundColor: monitorStreamUrls.output?.includes("mjpeg") ? "#dc262620" : "#ffffff08",
-                  color: monitorStreamUrls.output?.includes("mjpeg") ? "#dc2626" : "#666",
-                  border: `1px solid ${monitorStreamUrls.output?.includes("mjpeg") ? "#dc262640" : "#ffffff10"}`,
-                }}
-                title="Ativar Live Output (vMix NDI/MJPEG)"
-              >
-                <Monitor size={10} /> LIVE
-              </button>
-              <button
-                onClick={() => {
-                  setMonitorIframeMode(prev => ({ ...prev, output: !prev.output }));
-                  if (!monitorIframeMode.output) setMonitorStreamUrls(prev => ({ ...prev, output: "" }));
-                }}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: monitorIframeMode.output ? "#3b82f620" : "#ffffff08",
-                  color: monitorIframeMode.output ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorIframeMode.output ? "#3b82f640" : "#ffffff10"}`,
-                }}
-                title="Modo Iframe (vMix Web Controller)"
-              >
-                ⬛
-              </button>
-              <button
-                onClick={() => {
-                  if (monitorIframeMode.output) setMonitorIframeMode(prev => ({ ...prev, output: false }));
-                  setEditingMonitorStream(editingMonitorStream === "output" ? null : "output");
-                  setMonitorStreamTemp(monitorStreamUrls.output);
-                }}
-                className="text-[8px] px-1.5 py-0.5 rounded transition-all"
-                style={{
-                  backgroundColor: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f620" : "#ffffff08",
-                  color: monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f6" : "#666",
-                  border: `1px solid ${monitorStreamUrls.output && !monitorStreamUrls.output.includes("mjpeg") ? "#3b82f640" : "#ffffff10"}`,
-                }}
-                title="Configurar URL de stream manual (HLS/NDI Bridge)"
-              >
-                📡
-              </button>
-            </div>
-          </div>
-          {editingMonitorStream === "output" && (
-            <div className="flex gap-1 px-2 py-1.5" style={{ backgroundColor: "#111114", borderBottom: "1px solid #ffffff08" }}>
-              <input
-                type="text"
-                value={monitorStreamTemp}
-                onChange={e => setMonitorStreamTemp(e.target.value)}
-                placeholder="URL do stream (MJPEG, HLS .m3u8, ou JPEG)"
-                className="flex-1 text-[9px] px-2 py-1 rounded outline-none"
-                style={{ backgroundColor: "#1a1a20", color: "#ccc", border: "1px solid #333" }}
-                onKeyDown={e => { if (e.key === "Enter") { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); } }}
-              />
-              <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: monitorStreamTemp.trim() })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#22c55e20", color: "#22c55e", border: "1px solid #22c55e30" }}>✓</button>
-              {monitorStreamUrls.output && <button onClick={() => { setMonitorStreamUrls(prev => ({ ...prev, output: "" })); setEditingMonitorStream(null); }} className="text-[8px] px-1.5 rounded" style={{ backgroundColor: "#dc262620", color: "#dc2626", border: "1px solid #dc262630" }}>✕</button>}
-            </div>
-          )}
-          <div className="flex-1 flex items-center justify-center overflow-hidden" style={{ aspectRatio: "16/9" }}>
-            {getMonitorContent("output") || (
-              <div className="w-full h-full relative flex flex-col">
-                <div className="flex flex-1">
-                  {["#c0c0c0","#c0c000","#00c0c0","#00c000","#c000c0","#c00000","#0000c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#0000c0","#131313","#c000c0","#131313","#00c0c0","#131313","#c0c0c0"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="flex" style={{ height: "8%" }}>
-                  {["#00214c","#fff","#32006a","#131313","#131313","#131313","#131313"].map((c,i) => (
-                    <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-                  ))}
-                </div>
-                <div className="tv-static absolute inset-0" />
-                <div className="tv-scanlines absolute inset-0" />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded" style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#dc2626" }}>PGM — Sem sinal</span>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* NDI Network Sources Strip (Quick Access) */}
-          {ndiSources.length > 0 && (
-            <div className="flex gap-2 p-2 overflow-x-auto bg-black/40 border-t border-white/5 scrollbar-hide">
-              {ndiSources.map(source => (
-                <button
-                  key={source}
-                  onClick={() => addNdiInput(source)}
-                  className="whitespace-nowrap flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-[8px] font-black text-green-500 hover:bg-green-500/20 transition-all uppercase tracking-tighter"
-                  title={`Adicionar ${source} ao vMix`}
-                >
-                  <Radio size={10} /> {source}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-        )}
-      </div>
-
-      {/* ── Tab Content ── */}
+      {/* Tab Content (Main Switcher Area) */}
+      {/* Tab Content (Main Switcher Area) */}
       <div className="rounded-2xl p-5 space-y-4 border border-white/10" style={{ backgroundColor: "#1a1a1f", minHeight: 300 }}>
+
 
         {/* ══ CONTROLS TAB ══ */}
         {activeTab === "controls" && (
