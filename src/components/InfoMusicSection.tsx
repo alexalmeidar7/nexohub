@@ -1553,12 +1553,18 @@ export default function InfoMusicSection() {
               </div>
             </div>
             {loadingMissing ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-5 h-5 animate-spin opacity-50" />
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-[#f59e0b]" />
+                <span className="text-xs font-medium opacity-60">Carregando histórico de músicas...</span>
               </div>
             ) : filteredMissing.length === 0 ? (
-              <div className="text-center py-10 text-xs opacity-50 italic">
-                Nenhuma música pendente encontrada.
+              <div className="text-center py-10 px-4">
+                <p className="text-xs opacity-50 italic mb-2">
+                  Nenhuma música pendente encontrada.
+                </p>
+                <p className="text-[10px] opacity-40 leading-relaxed max-w-xs mx-auto">
+                  As músicas tocadas recentemente que ainda não possuem curiosidade cadastrada aparecerão aqui automaticamente.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-black/5">
