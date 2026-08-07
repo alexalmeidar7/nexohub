@@ -1527,8 +1527,8 @@ export default function InfoMusicSection() {
           )}
         </div>
       </div>
-      </div>
     </div>
+
 
 
 
