@@ -172,19 +172,13 @@ export default function AdminInfoMusicPage() {
 
   // Músicas tocadas (por cliente) que não possuem curiosidade cadastrada
   const semCuriosidade = useMemo(() => {
-    // Para "sem curiosidade", queremos mostrar as que REALMENTE não tem nada cadastrado por NINGUÉM ou pelo CLIENTE?
-    // O usuário disse: "verifique se na tabela de curiosidades cadastradas esta trazendo TODAS AS CURIOSIDADES ja cadastradas de todos os clientes"
-    // E "na tabela de musicas sem curiosidades cadastradas, verifique se o total de registro esta trazendo realmente o numero real de todos os clientes"
-    // Então a lógica deve ser global: se a música tem curiosidade em QUALQUER cliente, ela tem curiosidade.
     const cadastradasGlobais = new Set(curiosidades.map((c) => key(c.artista, c.musica)));
     const seen = new Set<string>();
     const out: Row[] = [];
     
-    // Como rows agora é limitado a 100 para "conferência", para a lista de "sem curiosidade" talvez precisássemos de mais?
-    // Mas vamos manter a coerência com o estado atual que usa 'rows'.
     rows.forEach((r) => {
-      const k = key(r.artista, r.musica);
-      if (cadastradasGlobais.has(k) || seen.has(k)) return;
+      const k = `${r.user_id}::${key(r.artista, r.musica)}`;
+      if (cadastradasGlobais.has(key(r.artista, r.musica)) || seen.has(k)) return;
       if (!norm(r.musica)) return;
       seen.add(k);
       out.push(r);
