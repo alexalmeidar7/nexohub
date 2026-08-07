@@ -54,22 +54,27 @@ function SectionCard({
 }) {
   return (
     <section className="rounded-2xl border border-border bg-white dark:bg-card text-card-foreground overflow-hidden shadow-sm">
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted">
-        <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          {icon}
+      <header className="flex items-center gap-3 px-6 py-4 border-b border-border bg-white dark:bg-card">
+        <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          {React.cloneElement(icon as React.ReactElement, { size: 20 })}
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
-          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+          <h2 className="text-base font-black text-foreground tracking-tight">{title}</h2>
+          <p className="text-xs text-muted-foreground font-medium">{subtitle}</p>
         </div>
-        <span className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-          {count}
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#00BFF0]/10 text-[#00BFF0] border border-[#00BFF0]/20 uppercase tracking-wider">
+            {count} REGISTROS
+          </span>
+        </div>
       </header>
-      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">{children}</div>
+      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">
+        {children}
+      </div>
     </section>
   );
 }
+
 
 export default function AdminInfoMusicPage() {
   const [rows, setRows] = useState<Row[]>([]);
