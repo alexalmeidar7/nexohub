@@ -1896,6 +1896,86 @@ export default function InfoMusicSection() {
               )}
             </div>
           )}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-1 h-5 rounded-full"
+                style={{ backgroundColor: "#10b981" }}
+              />
+              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Músicas com Curiosidades Cadastradas
+              </h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => importFileRef.current?.click()}
+                disabled={importingXlsx}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90 disabled:opacity-50"
+                style={{ backgroundColor: "color-mix(in srgb, #16a34a 12%, transparent)", color: "#16a34a", border: "1px solid color-mix(in srgb, #16a34a 25%, transparent)" }}
+              >
+                {importingXlsx ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                Importar Excel
+              </button>
+              <button
+                onClick={() => {
+                  try {
+                    const data = rows
+                      .filter(r => r.curiosidade && r.curiosidade.trim())
+                      .map(r => ({ ARTISTA: r.artista, MUSICA: r.musica, CURIOSIDADE: r.curiosidade }));
+                    if (!data.length) { toast.info("Nenhuma curiosidade para exportar"); return; }
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Curiosidades");
+                    XLSX.writeFile(wb, `curiosidades-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                    toast.success("Excel exportado com sucesso!");
+                  } catch (e) {
+                    toast.error("Erro ao exportar");
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 25%, transparent)" }}
+              >
+                <Download size={12} />
+                Exportar Excel
+              </button>
+            </div>
+          </div>
+          
+          <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[400px] overflow-y-auto">
+            <table className="w-full text-xs">
+              <thead className="sticky top-0 z-10 bg-[#00BFF0] text-white">
+                <tr>
+                  <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Artista</th>
+                  <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Música</th>
+                  <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Curiosidade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-4 py-10 text-center opacity-50 italic">
+                      Nenhuma música cadastrada com curiosidade no usuário.
+                    </td>
+                  </tr>
+                ) : (
+                  rows
+                    .filter(r => r.curiosidade && r.curiosidade.trim())
+                    .map((r, i) => (
+                      <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
+                        <td className="px-4 py-3 font-semibold">{r.artista}</td>
+                        <td className="px-4 py-3">{r.musica}</td>
+                        <td className="px-4 py-3 opacity-80 leading-relaxed">{r.curiosidade}</td>
+                      </tr>
+                    ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
