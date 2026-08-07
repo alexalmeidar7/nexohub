@@ -225,7 +225,7 @@ export default function InfoMusicSection() {
           <div className="flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
             </div>
             <div className="flex gap-1">
               <input 
