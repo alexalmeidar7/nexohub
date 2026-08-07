@@ -472,7 +472,6 @@ export default function InfoMusicSection() {
               </div>
             )}
             
-          </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
                 {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
@@ -571,7 +570,9 @@ export default function InfoMusicSection() {
               </tbody>
             </table>
           </div>
+        </div>
       </div>
+
 
       {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
       <div className="space-y-3 flex flex-col mt-6 w-full col-span-full">
