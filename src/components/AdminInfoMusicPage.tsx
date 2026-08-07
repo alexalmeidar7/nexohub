@@ -226,7 +226,36 @@ export default function AdminInfoMusicPage() {
               Músicas tocadas em todos os clientes — atualização em tempo real
               {lastUpdate ? ` · ${lastUpdate.toLocaleTimeString("pt-BR")}` : ""}
             </p>
-          </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+        {Object.entries(clientes).map(([userId, nome]) => {
+          const com = curiosidades.filter(c => c.user_id === userId).length;
+          const sem = semCuriosidade.filter(r => r.user_id === userId).length;
+          
+          if (com === 0 && sem === 0) return null;
+
+          return (
+            <div key={userId} className="bg-white dark:bg-card border border-border rounded-xl p-3 shadow-sm hover:shadow-md transition-all">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-xs font-black text-foreground truncate max-w-[140px]">{nome}</h3>
+                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-slate-50 dark:bg-muted/50 p-2 rounded-lg border border-border">
+                  <p className="text-[9px] font-bold text-primary uppercase mb-0.5">Com Curiosidade</p>
+                  <p className="text-lg font-black text-foreground leading-none">{com}</p>
+                </div>
+                <div className="bg-slate-50 dark:bg-muted/50 p-2 rounded-lg border border-border">
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase mb-0.5">Sem Curiosidade</p>
+                  <p className="text-lg font-black text-foreground leading-none">{sem}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
