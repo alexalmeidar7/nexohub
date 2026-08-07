@@ -472,7 +472,6 @@ export default function InfoMusicSection() {
               </div>
             )}
             
-          </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
                 {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
