@@ -170,7 +170,8 @@ export default function InfoMusicSection() {
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
     ]);
-    setExcecoes(exceptionsRes.data || []);
+    const exceptions = exceptionsRes.data || [];
+    setExcecoes(exceptions);
     const data = settingsRes.data;
     setAiEnabled(data?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
