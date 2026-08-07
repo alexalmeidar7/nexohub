@@ -1776,86 +1776,42 @@ export default function InfoMusicSection() {
                           </div>
                         </td>
                         <td className="px-3 py-2 align-top text-center">
-                          {(() => {
-                            const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
-                            const handleToggle = async () => {
-                              const nameRaw = r.artista.trim();
-                              if (!nameRaw) return;
-                              if (ex) {
-                                await removeExcecao(ex.id);
-                              } else {
-                                setNewExcecao(nameRaw);
+                          <button 
+                            onClick={async () => {
+                              try {
+                                const until = new Date(Date.now() + 30_000).toISOString();
+                                const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {};
+                                
+                                await supabase.from("user_settings").update({
+                                  last_manual_curiosity_id: r.id,
+                                  dashboard_items: {
+                                    ...currentDashboard,
+                                    music_curiosity_manual: r.curiosidade,
+                                    music_curiosity_manual_until: until,
+                                    music_curiosity_manual_img: r.deezer_artist_img || ""
+                                  }
+                                }).eq("user_id", user?.id);
+                                
+                                setLastManualId(r.id);
+                                
+                                window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
+                                toast.success("Enviado para o vMix!");
+                              } catch (e) {
+                                toast.error("Erro ao enviar");
                               }
-                            };
-                            return (
-                              <div
-                                className="inline-flex items-center justify-center"
-                                title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
-                              >
-                                <Switch checked={!!ex} onCheckedChange={handleToggle} />
-                              </div>
-                            );
-                          })()}
-                        </td>
-                      <td className="px-3 py-2 align-top text-center">
-                        <button 
-                          onClick={async () => {
-                            try {
-                              const until = new Date(Date.now() + 30_000).toISOString();
-                              const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {};
-                              
-                              await supabase.from("user_settings").update({
-                                last_manual_curiosity_id: r.id,
-                                dashboard_items: {
-                                  ...currentDashboard,
-                                  music_curiosity_manual: r.curiosidade,
-                                  music_curiosity_manual_until: until,
-                                  music_curiosity_manual_img: r.deezer_artist_img || ""
-                                }
-                              }).eq("user_id", user?.id);
-                              
-                              setLastManualId(r.id);
-                              
-                              window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
-                              toast.success("Enviado para o vMix!");
-                            } catch (e) {
-                              toast.error("Erro ao enviar");
-                            }
-                          }}
-                          className="p-1 rounded-lg hover:bg-black/5 transition-colors"
-                          style={{ color: "var(--layout-accent-color, #2563eb)" }}
-                          title="Enviar manualmente para o XML"
-                        >
-                          <Send size={14} />
-                         </button>
-                       </td>
-                       <td className="px-3 py-2 align-top text-center">
-                         {(() => {
-                           const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
-                           const handleToggle = async () => {
-                             const nameRaw = r.artista.trim();
-                             if (!nameRaw) return;
-                             if (ex) {
-                               await removeExcecao(ex.id);
-                             } else {
-                               setNewExcecao(nameRaw);
-                             }
-                           };
-                           return (
-                             <div
-                               className="inline-flex items-center justify-center"
-                               title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
-                             >
-                               <Switch checked={!!ex} onCheckedChange={handleToggle} />
-                             </div>
-                           );
-                         })()}
-                       </td>
-                       <td className="px-3 py-2 align-top text-right">
-                         <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
-                           <Trash2 size={13} />
-                         </button>
-                       </td>
+                            }}
+                            className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+                            style={{ color: "var(--layout-accent-color, #2563eb)" }}
+                            title="Enviar manualmente para o XML"
+                          >
+                            <Send size={14} />
+                           </button>
+                         </td>
+                         <td className="px-3 py-2 align-top text-right">
+                           <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
+                             <Trash2 size={13} />
+                           </button>
+                         </td>
                      </tr>
                     );
                   })}
