@@ -82,6 +82,16 @@ export default function InfoMusicSection() {
   // Efeito para busca automática sequencial
   useEffect(() => {
     if (!aiEnabled || isFetchingRef.current || !user) return;
+    
+    // Controle de velocidade: verifica se passou tempo suficiente desde a última requisição
+    const now = Date.now();
+    const minInterval = (60 / fetchSpeed) * 1000;
+    if (now - lastFetchTimeRef.current < minInterval) {
+      const timer = setTimeout(() => {
+        load(); // Trigger a re-render to re-run the effect
+      }, minInterval - (now - lastFetchTimeRef.current));
+      return () => clearTimeout(timer);
+    }
 
     const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
     
