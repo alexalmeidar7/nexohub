@@ -1523,10 +1523,10 @@ export default function InfoMusicSection() {
               XML e card com o mesmo texto de curiosidade.
             </p>
           )}
-          </div>
         </div>
       </div>
     </div>
+
 
 
     <div className="space-y-6">
