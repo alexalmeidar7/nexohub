@@ -1503,6 +1503,112 @@ export default function InfoMusicSection() {
     </div>
 
     <div className="space-y-6">
+        <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
+          <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
+          </p>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-1 h-5 rounded-full"
+                style={{ backgroundColor: "#f59e0b" }}
+              />
+              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Músicas SEM curiosidades cadastradas
+              </h4>
+            </div>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[400px] overflow-y-auto mb-6">
+            <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold gap-2 flex-wrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+              <span>{filteredMissing.length} música(s) pendentes</span>
+              <div className="flex items-center gap-1.5 normal-case">
+                <button
+                  onClick={handleExportMissing}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)" }}
+                >
+                  <Download size={11} /> Exportar
+                </button>
+                <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
+                  <RefreshCw size={10} /> Atualizar
+                </button>
+              </div>
+            </div>
+            {loadingMissing ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-5 h-5 animate-spin opacity-50" />
+              </div>
+            ) : filteredMissing.length === 0 ? (
+              <div className="text-center py-10 text-xs opacity-50 italic">
+                Nenhuma música pendente encontrada.
+              </div>
+            ) : (
+              <div className="divide-y divide-black/5">
+                {filteredMissing.map((m) => {
+                  const key = `${m.artista}::${m.musica}`.toLowerCase();
+                  const val = missingInputs[key] || "";
+                  const isSaving = savingMissingKey === key;
+                  return (
+                    <div key={key} className="p-3 bg-white/30 hover:bg-white/60 transition-colors">
+                      <div className="flex flex-col md:flex-row gap-3 items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold truncate text-[#00BFF0]">{m.artista}</div>
+                          <div className="text-[11px] font-semibold truncate opacity-80">{m.musica}</div>
+                        </div>
+                        <div className="flex-1 w-full md:w-auto flex flex-col gap-2">
+                          <textarea
+                            value={val}
+                            onChange={e => setMissingInputs(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder="Cadastrar curiosidade..."
+                            rows={1}
+                            className="w-full px-2 py-1.5 rounded-md text-xs outline-none border border-black/10 focus:border-[#00BFF0] transition-colors resize-none"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm"
+                              onClick={async () => {
+                                if (!val.trim() || !user) return;
+                                setSavingMissingKey(key);
+                                try {
+                                  const expiresAt = new Date();
+                                  expiresAt.setMonth(expiresAt.getMonth() + 6);
+                                  const { error } = await supabase.from("infomusic").insert({
+                                    user_id: user.id,
+                                    artista: m.artista,
+                                    musica: m.musica,
+                                    curiosidade: val.trim(),
+                                    deezer_artist_img: null,
+                                    expires_at: expiresAt.toISOString(),
+                                  });
+                                  if (error) throw error;
+                                  toast.success("Curiosidade cadastrada!");
+                                  setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
+                                  setMissingInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
+                                  await load();
+                                } catch (e) {
+                                  toast.error("Erro ao salvar");
+                                }
+                                setSavingMissingKey(null);
+                              }}
+                              disabled={isSaving || !val.trim()}
+                              className="h-7 text-[10px] font-bold uppercase px-3 bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white"
+                            >
+                              {isSaving ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />} Salvar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
         <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -1578,8 +1684,8 @@ export default function InfoMusicSection() {
             }}
           >
             <option value="all">Todas as músicas</option>
-            <option value="sem_curiosidade">Músicas sem curiosidade</option>
             <option value="artista">Músicas com curiosidades cadastradas</option>
+            <option value="sem_curiosidade">Músicas sem curiosidades cadastradas</option>
           </select>
 
         </div>
@@ -1588,146 +1694,7 @@ export default function InfoMusicSection() {
           backgroundColor: "var(--layout-page-bg, #fff)",
           boxShadow: "0 8px 24px -18px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
         }}>
-          {filterField === "sem_curiosidade" ? (
-            loadingMissing ? (
-              <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                <Loader2 size={14} className="animate-spin" /> Carregando músicas sem curiosidade...
-              </div>
-            ) : filteredMissing.length === 0 ? (
-              <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-                {missingRows.length === 0
-                  ? "Todas as músicas tocadas já possuem curiosidade cadastrada."
-                  : `Nenhum resultado para "${search}".`}
-                <div className="mt-3">
-                  <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
-                    <RefreshCw size={11} /> Recarregar
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="max-h-[420px] overflow-auto">
-                <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold gap-2 flex-wrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
-                  <span>{filteredMissing.length} música(s) sem curiosidade</span>
-                  <div className="flex items-center gap-1.5 normal-case">
-                    <button
-                      onClick={handleExportMissing}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90"
-                      style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)" }}
-                      title="Baixar Excel com as músicas sem curiosidade"
-                    >
-                      <Download size={11} /> Exportar
-                    </button>
-                    <button
-                      onClick={() => importFileRef.current?.click()}
-                      disabled={importingXlsx}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-50"
-                      style={{ backgroundColor: "color-mix(in srgb, #16a34a 14%, transparent)", color: "#15803d", border: "1px solid color-mix(in srgb, #16a34a 32%, transparent)" }}
-                      title="Importar Excel com curiosidades"
-                    >
-                      {importingXlsx ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />} Importar
-                    </button>
-                    <input
-                      ref={importFileRef}
-                      type="file"
-                      accept=".xlsx,.xls,.csv"
-                      className="hidden"
-                      onChange={handleImportMissing}
-                    />
-                    <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
-                      <RefreshCw size={10} /> Atualizar
-                    </button>
-                  </div>
-                </div>
-                {filteredMissing.map((m, i) => {
-                  const key = `${m.artista}::${m.musica}`.toLowerCase();
-                  const val = missingInputs[key] || "";
-                  const isSaving = savingMissingKey === key;
-                  return (
-                    <div key={key} className="p-3 flex flex-col md:flex-row gap-2 items-start md:items-center" style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" : undefined }}>
-                      <div className="min-w-0 md:w-56 shrink-0">
-                        <div className="text-xs font-semibold truncate" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Highlight text={m.artista} term={search} /></div>
-                        <div className="text-[11px] truncate opacity-70" style={{ color: "var(--layout-page-text, #1a1a1a)" }}><Highlight text={m.musica} term={search} /></div>
-                        <div className="text-[10px] opacity-50 mt-0.5 font-mono">{new Date(m.ultima).toLocaleDateString("pt-BR")}</div>
-                      </div>
-                      <input
-                        type="text"
-                        value={val}
-                        onChange={e => setMissingInputs(prev => ({ ...prev, [key]: e.target.value }))}
-                        placeholder="Digite uma curiosidade sobre esta música..."
-                        maxLength={280}
-                        className="flex-1 min-w-0 w-full px-3 py-2 rounded-lg text-xs outline-none"
-                        style={{
-                          backgroundColor: "var(--layout-page-bg, #fff)",
-                          color: "var(--layout-page-text, #1a1a1a)",
-                          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-                        }}
-                      />
-                      <Button variant="save"
-                        onClick={async () => {
-                          if (!val.trim() || !user) return;
-                          setSavingMissingKey(key);
-                          try {
-                            const expiresAt = new Date();
-                            expiresAt.setMonth(expiresAt.getMonth() + 6);
-                            const { error } = await supabase.from("infomusic").insert({
-                              user_id: user.id,
-                              artista: m.artista,
-                              musica: m.musica,
-                              curiosidade: val.trim(),
-                              deezer_artist_img: null,
-                              expires_at: expiresAt.toISOString(),
-                            });
-                            if (error) throw error;
-                            toast.success("Curiosidade cadastrada!");
-                            setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
-                            setMissingInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
-                            await load();
-                          } catch (e) {
-                            toast.error((e as Error).message || "Erro ao salvar");
-                          }
-                          setSavingMissingKey(null);
-                        }}
-                        disabled={isSaving || !val.trim()}
-                        className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-1.5 shrink-0"
-                        style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                      >
-                        {isSaving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
-                        Salvar
-                      </Button>
-                      <button
-                        onClick={async () => {
-                          const nameRaw = (m.artista || "").trim();
-                          if (!nameRaw) return;
-                          if (excecoes.some(x => x.termo.toLowerCase() === nameRaw.toLowerCase())) {
-                            toast.info(`"${nameRaw}" já está nas exceções`);
-                            setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
-                            return;
-                          }
-                          
-                          setSavingExcecoes(true);
-                          await supabase.from("infomusic_excecoes").insert({ user_id: user?.id, termo: nameRaw });
-                          await loadExcecoes();
-                          setSavingExcecoes(false);
-                          
-                          setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
-                          toast.success(`"${nameRaw}" adicionado às exceções`);
-                        }}
-                        title="Adicionar este artista à lista de exceções (não gera curiosidade)"
-                        className="px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1.5 shrink-0 transition-opacity hover:opacity-90"
-                        style={{
-                          backgroundColor: "color-mix(in srgb, #dc2626 12%, transparent)",
-                          color: "#dc2626",
-                          border: "1px solid color-mix(in srgb, #dc2626 30%, transparent)",
-                        }}
-                      >
-                        <Ban size={11} /> Exceção
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : loading ? (
+          {loading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
               <Loader2 size={14} className="animate-spin" /> Carregando...
             </div>
@@ -1747,12 +1714,10 @@ export default function InfoMusicSection() {
                   boxShadow: "0 1px 0 0 color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)",
                 }}>
                   <tr>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Artista</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data / Hora</th>
                     <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Música</th>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Curiosidade</th>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data/Hora</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Exceções</th>
                     <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Enviar</th>
-                    <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Exceções</th>
                     <th className="px-3 py-2.5"></th>
                   </tr>
                 </thead>
@@ -1766,55 +1731,70 @@ export default function InfoMusicSection() {
                           ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.10)"
                           : (i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined),
                       }}>
-                        <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          <div className="flex flex-col gap-1">
-                            {r.deezer_artist_img && (
-                              <img src={r.deezer_artist_img} alt={r.artista} className="w-8 h-8 rounded-full object-cover border border-white/10" />
-                            )}
-                            {(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          {(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}
-                        </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
-                          {r.curiosidade && r.curiosidade.trim() ? (
-                            <div className="line-clamp-3 leading-relaxed">
-                              {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
-                                Aguardando cadastro manual
-                              </span>
-                              <textarea
-                                value={pendingEdits[r.id] ?? ""}
-                                onChange={(e) => setPendingEdits(p => ({ ...p, [r.id]: e.target.value }))}
-                                placeholder="Digite a curiosidade sobre esta música..."
-                                rows={2}
-                                className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-y"
-                                style={{
-                                  backgroundColor: "var(--layout-page-bg, #fff)",
-                                  color: "var(--layout-page-text, #1a1a1a)",
-                                  border: "1px dashed color-mix(in srgb, #f59e0b 50%, transparent)",
-                                }}
-                              />
-                              <div className="flex justify-end">
-                                <Button
-                                  variant="save"
-                                  onClick={() => saveRowCuriosity(r)}
-                                  disabled={savingRowId === r.id || !(pendingEdits[r.id] ?? "").trim()}
-                                >
-                                  {savingRowId === r.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-                                  Salvar
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-
                         <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                           {new Date(r.created_at).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs">{(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}</span>
+                            <span className="text-[11px] opacity-70">{(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}</span>
+                            
+                            {r.curiosidade && r.curiosidade.trim() ? (
+                              <div className="mt-1.5 p-2 rounded-lg bg-black/5 text-[11px] leading-relaxed italic opacity-80 border-l-2 border-[#00BFF0]">
+                                {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
+                              </div>
+                            ) : (
+                              <div className="mt-2 flex flex-col gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
+                                  Aguardando cadastro manual
+                                </span>
+                                <textarea
+                                  value={pendingEdits[r.id] ?? ""}
+                                  onChange={(e) => setPendingEdits(p => ({ ...p, [r.id]: e.target.value }))}
+                                  placeholder="Digite a curiosidade sobre esta música..."
+                                  rows={2}
+                                  className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-y"
+                                  style={{
+                                    backgroundColor: "var(--layout-page-bg, #fff)",
+                                    color: "var(--layout-page-text, #1a1a1a)",
+                                    border: "1px dashed color-mix(in srgb, #f59e0b 50%, transparent)",
+                                  }}
+                                />
+                                <div className="flex justify-end">
+                                  <Button
+                                    variant="save"
+                                    onClick={() => saveRowCuriosity(r)}
+                                    disabled={savingRowId === r.id || !(pendingEdits[r.id] ?? "").trim()}
+                                  >
+                                    {savingRowId === r.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                                    Salvar
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 align-top text-center">
+                          {(() => {
+                            const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
+                            const handleToggle = async () => {
+                              const nameRaw = r.artista.trim();
+                              if (!nameRaw) return;
+                              if (ex) {
+                                await removeExcecao(ex.id);
+                              } else {
+                                setNewExcecao(nameRaw);
+                              }
+                            };
+                            return (
+                              <div
+                                className="inline-flex items-center justify-center"
+                                title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
+                              >
+                                <Switch checked={!!ex} onCheckedChange={handleToggle} />
+                              </div>
+                            );
+                          })()}
                         </td>
                       <td className="px-3 py-2 align-top text-center">
                         <button 
