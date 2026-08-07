@@ -1969,11 +1969,9 @@ export default function InfoMusicSection() {
                 )}
               </tbody>
             </table>
-          </table>
+          </div>
         </div>
       </div>
-    </div>
-  </div>
 
       <Dialog open={!!importSummary} onOpenChange={(o) => { if (!o) setImportSummary(null); }}>
         <DialogContent className="max-w-lg">
