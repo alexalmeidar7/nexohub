@@ -42,6 +42,7 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 export default function InfoMusicSection() {
   const { user } = useAuth();
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
+  const [rowsNoCuriosity, setRowsNoCuriosity] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
