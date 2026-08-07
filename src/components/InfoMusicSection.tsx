@@ -503,41 +503,6 @@ export default function InfoMusicSection() {
               </div>
             )}
             
-            {/* Indicador de Cota IA */}
-            <div className="flex items-center justify-between bg-black/5 p-2 rounded-lg border border-black/5">
-              <div className="flex flex-col">
-                <span className="text-[8px] font-bold uppercase opacity-60">Cota Mensal IA</span>
-                <span className={`text-[10px] font-black ${monthlyQuota.count >= monthlyQuota.limit ? "text-red-500" : "text-[#1a1a1a]"}`}>
-                  {monthlyQuota.count} / {monthlyQuota.limit}
-                </span>
-              </div>
-              {monthlyQuota.count >= monthlyQuota.limit * 0.8 && (
-                <div className="flex items-center gap-1 text-red-500 animate-pulse">
-                  <AlertTriangle size={12} />
-                  <span className="text-[8px] font-bold">LIMITE PRÓXIMO</span>
-                </div>
-              )}
-            </div>
-
-            {/* Controle de Velocidade */}
-            <div className="space-y-1 bg-black/5 p-2 rounded-lg border border-black/5">
-              <div className="flex justify-between items-center">
-                <span className="text-[8px] font-bold uppercase opacity-60">Velocidade da Busca</span>
-                <span className="text-[9px] font-bold text-[#00BFF0]">{fetchSpeed} req/min</span>
-              </div>
-              <input 
-                type="range" 
-                min="1" 
-                max="30" 
-                value={fetchSpeed} 
-                onChange={(e) => setFetchSpeed(parseInt(e.target.value))}
-                className="w-full h-1 bg-black/10 rounded-lg appearance-none cursor-pointer accent-[#00BFF0]"
-              />
-              <div className="flex justify-between text-[7px] opacity-40 font-bold">
-                <span>LENTA</span>
-                <span>RÁPIDA</span>
-              </div>
-            </div>
           </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
