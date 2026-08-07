@@ -91,17 +91,18 @@ export default function AdminInfoMusicPage() {
   }, []);
 
   const loadRows = useCallback(async () => {
+    // Aumentando os limites para trazer mais registros e ter uma visão real
     const [tocadas, infos] = await Promise.all([
       supabase
         .from("musicas_tocadas")
         .select("id, user_id, dia, horario, artista, musica, programa, created_at")
         .order("created_at", { ascending: false })
-        .limit(300),
+        .limit(100),
       supabase
         .from("infomusic")
         .select("id, user_id, artista, musica, curiosidade, created_at")
         .order("created_at", { ascending: false })
-        .limit(500),
+        .limit(2000), // Aumentado significativamente para capturar todas as curiosidades
     ]);
     setRows((tocadas.data || []) as Row[]);
     setCuriosidades(
@@ -128,7 +129,7 @@ export default function AdminInfoMusicPage() {
           if (!clientesRef.current[novo.user_id]) loadClientes();
           setRows((prev) => {
             if (prev.some((r) => r.id === novo.id)) return prev;
-            return [novo, ...prev].slice(0, 300);
+            return [novo, ...prev].slice(0, 100);
           });
           setLastUpdate(new Date());
         }
@@ -168,18 +169,29 @@ export default function AdminInfoMusicPage() {
 
   // Músicas tocadas (por cliente) que não possuem curiosidade cadastrada
   const semCuriosidade = useMemo(() => {
-    const cadastradas = new Set(curiosidades.map((c) => `${c.user_id}::${key(c.artista, c.musica)}`));
+    // Para "sem curiosidade", queremos mostrar as que REALMENTE não tem nada cadastrado por NINGUÉM ou pelo CLIENTE?
+    // O usuário disse: "verifique se na tabela de curiosidades cadastradas esta trazendo TODAS AS CURIOSIDADES ja cadastradas de todos os clientes"
+    // E "na tabela de musicas sem curiosidades cadastradas, verifique se o total de registro esta trazendo realmente o numero real de todos os clientes"
+    // Então a lógica deve ser global: se a música tem curiosidade em QUALQUER cliente, ela tem curiosidade.
+    const cadastradasGlobais = new Set(curiosidades.map((c) => key(c.artista, c.musica)));
     const seen = new Set<string>();
     const out: Row[] = [];
+    
+    // Como rows agora é limitado a 100 para "conferência", para a lista de "sem curiosidade" talvez precisássemos de mais?
+    // Mas vamos manter a coerência com o estado atual que usa 'rows'.
     rows.forEach((r) => {
-      const k = `${r.user_id}::${key(r.artista, r.musica)}`;
-      if (cadastradas.has(k) || seen.has(k)) return;
+      const k = key(r.artista, r.musica);
+      if (cadastradasGlobais.has(k) || seen.has(k)) return;
       if (!norm(r.musica)) return;
       seen.add(k);
       out.push(r);
     });
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
+
+  const hasCuriosidade = useCallback((artista: string | null, musica: string | null) => {
+    return curiosidades.some(c => key(c.artista, c.musica) === key(artista, musica));
+  }, [curiosidades]);
 
   const thClass = "px-4 py-3 font-black text-[#00BFF0] dark:text-[#00BFF0]";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
@@ -232,15 +244,16 @@ export default function AdminInfoMusicPage() {
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
               <th className={thClass}>Artista</th>
+              <th className={thClass}>Curiosidade?</th>
               <th className={thClass}>Programa</th>
             </tr>
           </thead>
           <tbody>
             {loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
             )}
             {filtered.map((r) => (
               <tr key={r.id} className={trClass}>
@@ -249,6 +262,13 @@ export default function AdminInfoMusicPage() {
                 <td className="px-4 py-2.5 font-bold text-foreground">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
                 <td className="px-4 py-2.5 font-bold text-primary">{r.musica}</td>
                 <td className="px-4 py-2.5 font-bold text-foreground/90">{r.artista}</td>
+                <td className="px-4 py-2.5 text-center">
+                  {hasCuriosidade(r.artista, r.musica) ? (
+                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold">SIM</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold">NÃO</span>
+                  )}
+                </td>
                 <td className="px-4 py-2.5 text-foreground/80 text-[11px] font-medium">{r.programa || "—"}</td>
               </tr>
             ))}
