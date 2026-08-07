@@ -502,8 +502,18 @@ export default function InfoMusicSection() {
                 {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
                   <tr key={r.id} className="hover:bg-red-50/30">
                     <td className="px-3 py-2">
-                      <div className="font-bold truncate">{r.musica}</div>
-                      <div className="opacity-60 truncate">{r.artista}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="font-bold truncate">{r.musica}</div>
+                          <div className="opacity-60 truncate">{r.artista}</div>
+                        </div>
+                        {fetchingIds.includes(r.id) && (
+                          <div className="flex items-center gap-1 text-[8px] text-red-400 animate-pulse font-bold bg-red-50 px-1 rounded border border-red-100">
+                            <Loader2 size={8} className="animate-spin" />
+                            BUSCANDO...
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-center">
                       <Button 
