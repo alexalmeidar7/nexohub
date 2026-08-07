@@ -157,7 +157,7 @@ export default function InfoMusicSection() {
     };
 
     fetchAiCuriosity();
-  }, [aiEnabled, rows, fetchingIds, user]);
+  }, [aiEnabled, rows, fetchingIds, user, fetchSpeed]);
 
 
   const load = async (append = false) => {
