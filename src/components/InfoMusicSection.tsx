@@ -74,6 +74,62 @@ export default function InfoMusicSection() {
   const [importingXlsx, setImportingXlsx] = useState(false);
   const [importSummary, setImportSummary] = useState<{ filled: number; inserted: number; overwritten: number; notFound: string[] } | null>(null);
   const importFileRef = useRef<HTMLInputElement | null>(null);
+  const [fetchingIds, setFetchingIds] = useState<string[]>([]);
+  const isFetchingRef = useRef(false);
+
+  // Efeito para busca automática sequencial
+  useEffect(() => {
+    if (!aiEnabled || isFetchingRef.current || !user) return;
+
+    const noCuriosity = rows
+      .filter(r => !r.curiosidade || !r.curiosidade.trim())
+      .filter(r => !fetchingIds.includes(r.id))
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // Começa pela última inserida
+
+    if (noCuriosity.length === 0) return;
+
+    const target = noCuriosity[0];
+    
+    const fetchAiCuriosity = async () => {
+      isFetchingRef.current = true;
+      setFetchingIds(prev => [...prev, target.id]);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke("fetch-ai-curiosity", {
+          body: { artista: target.artista, musica: target.musica }
+        });
+
+        if (error || !data?.curiosity) throw new Error("Falha na busca");
+
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+        const { error: updateError } = await supabase
+          .from("infomusic")
+          .update({ 
+            curiosidade: data.curiosity.trim(), 
+            expires_at: expiresAt.toISOString() 
+          })
+          .eq("id", target.id);
+
+        if (updateError) throw updateError;
+        
+        // Atualiza o estado local para mover a música de lista
+        setRows(prev => prev.map(r => 
+          r.id === target.id ? { ...r, curiosidade: data.curiosity.trim() } : r
+        ));
+        
+      } catch (e) {
+        console.error("Erro na busca automática:", e);
+      } finally {
+        setFetchingIds(prev => prev.filter(id => id !== target.id));
+        isFetchingRef.current = false;
+      }
+    };
+
+    fetchAiCuriosity();
+  }, [aiEnabled, rows, fetchingIds, user]);
+
 
   const load = async (append = false) => {
     if (!user) return;
@@ -446,8 +502,18 @@ export default function InfoMusicSection() {
                 {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
                   <tr key={r.id} className="hover:bg-red-50/30">
                     <td className="px-3 py-2">
-                      <div className="font-bold truncate">{r.musica}</div>
-                      <div className="opacity-60 truncate">{r.artista}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="font-bold truncate">{r.musica}</div>
+                          <div className="opacity-60 truncate">{r.artista}</div>
+                        </div>
+                        {fetchingIds.includes(r.id) && (
+                          <div className="flex items-center gap-1 text-[8px] text-red-400 animate-pulse font-bold bg-red-50 px-1 rounded border border-red-100">
+                            <Loader2 size={8} className="animate-spin" />
+                            BUSCANDO...
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-center">
                       <Button 
