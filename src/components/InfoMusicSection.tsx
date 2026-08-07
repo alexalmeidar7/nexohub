@@ -640,8 +640,7 @@ export default function InfoMusicSection() {
           </table>
         </div>
       </div>
-    </div>
-
+      
       {/* Modal de Edição */}
       <Dialog open={!!editMusic} onOpenChange={() => setEditMusic(null)}>
         <DialogContent>
