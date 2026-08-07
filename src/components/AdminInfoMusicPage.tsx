@@ -244,15 +244,16 @@ export default function AdminInfoMusicPage() {
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
               <th className={thClass}>Artista</th>
+              <th className={thClass}>Curiosidade?</th>
               <th className={thClass}>Programa</th>
             </tr>
           </thead>
           <tbody>
             {loading && rows.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Carregando…</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
             )}
             {filtered.map((r) => (
               <tr key={r.id} className={trClass}>
@@ -261,6 +262,13 @@ export default function AdminInfoMusicPage() {
                 <td className="px-4 py-2.5 font-bold text-foreground">{clientes[r.user_id] || r.user_id.slice(0, 8)}</td>
                 <td className="px-4 py-2.5 font-bold text-primary">{r.musica}</td>
                 <td className="px-4 py-2.5 font-bold text-foreground/90">{r.artista}</td>
+                <td className="px-4 py-2.5 text-center">
+                  {hasCuriosidade(r.artista, r.musica) ? (
+                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 text-[10px] font-bold">SIM</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold">NÃO</span>
+                  )}
+                </td>
                 <td className="px-4 py-2.5 text-foreground/80 text-[11px] font-medium">{r.programa || "—"}</td>
               </tr>
             ))}
