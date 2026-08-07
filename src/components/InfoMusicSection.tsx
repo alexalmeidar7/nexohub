@@ -1509,10 +1509,16 @@ export default function InfoMusicSection() {
     </div>
 
     <div className="space-y-6">
-        <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
+        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
           </p>
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+            <p className="text-[11px] font-medium text-emerald-800">
+              Músicas com curiosidades cadastradas (como <strong>MANCHILD - SABRINA CARPENTER</strong>) devem aparecer na lista azul abaixo após o carregamento.
+            </p>
+          </div>
         </div>
 
         <div>
