@@ -534,13 +534,19 @@ export default function InfoMusicSection() {
 
   const load = async () => {
     setLoading(true);
-    const { data, count } = await supabase
-      .from("infomusic")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(0, PAGE_SIZE - 1);
-    setRows(data || []);
-    setTotalCount(count || 0);
+    try {
+      const { data, count } = await supabase
+        .from("infomusic")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
+      
+      console.log("InfoMusic Loaded rows:", data?.length, "Total:", count);
+      setRows(data || []);
+      setTotalCount(count || 0);
+    } catch (e) {
+      console.error("Error loading infomusic:", e);
+    }
     setLoading(false);
   };
 
@@ -1503,10 +1509,16 @@ export default function InfoMusicSection() {
     </div>
 
     <div className="space-y-6">
-        <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
+        <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
           </p>
+          <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+            <p className="text-[11px] font-medium text-emerald-800">
+              Músicas com curiosidades cadastradas (como <strong>MANCHILD - SABRINA CARPENTER</strong>) devem aparecer na lista azul abaixo após o carregamento.
+            </p>
+          </div>
         </div>
 
         <div>
@@ -1940,8 +1952,9 @@ export default function InfoMusicSection() {
                     </td>
                   </tr>
                 ) : (
-                  rows
+                  [...rows]
                     .filter(r => r.curiosidade && r.curiosidade.trim())
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
                       <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
                         <td className="px-4 py-3 font-semibold">{r.artista}</td>
