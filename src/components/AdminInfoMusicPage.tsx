@@ -169,18 +169,29 @@ export default function AdminInfoMusicPage() {
 
   // Músicas tocadas (por cliente) que não possuem curiosidade cadastrada
   const semCuriosidade = useMemo(() => {
-    const cadastradas = new Set(curiosidades.map((c) => `${c.user_id}::${key(c.artista, c.musica)}`));
+    // Para "sem curiosidade", queremos mostrar as que REALMENTE não tem nada cadastrado por NINGUÉM ou pelo CLIENTE?
+    // O usuário disse: "verifique se na tabela de curiosidades cadastradas esta trazendo TODAS AS CURIOSIDADES ja cadastradas de todos os clientes"
+    // E "na tabela de musicas sem curiosidades cadastradas, verifique se o total de registro esta trazendo realmente o numero real de todos os clientes"
+    // Então a lógica deve ser global: se a música tem curiosidade em QUALQUER cliente, ela tem curiosidade.
+    const cadastradasGlobais = new Set(curiosidades.map((c) => key(c.artista, c.musica)));
     const seen = new Set<string>();
     const out: Row[] = [];
+    
+    // Como rows agora é limitado a 100 para "conferência", para a lista de "sem curiosidade" talvez precisássemos de mais?
+    // Mas vamos manter a coerência com o estado atual que usa 'rows'.
     rows.forEach((r) => {
-      const k = `${r.user_id}::${key(r.artista, r.musica)}`;
-      if (cadastradas.has(k) || seen.has(k)) return;
+      const k = key(r.artista, r.musica);
+      if (cadastradasGlobais.has(k) || seen.has(k)) return;
       if (!norm(r.musica)) return;
       seen.add(k);
       out.push(r);
     });
     return out.filter((r) => matches([clientes[r.user_id], r.musica, r.artista]));
   }, [rows, curiosidades, q, clientes]);
+
+  const hasCuriosidade = useCallback((artista: string | null, musica: string | null) => {
+    return curiosidades.some(c => key(c.artista, c.musica) === key(artista, musica));
+  }, [curiosidades]);
 
   const thClass = "px-4 py-3 font-black text-[#00BFF0] dark:text-[#00BFF0]";
   const headRow = "text-left text-[11px] uppercase tracking-wider";
