@@ -225,7 +225,7 @@ export default function InfoMusicSection() {
           <div className="flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
             </div>
             <div className="flex gap-1">
               <input 
@@ -273,7 +273,7 @@ export default function InfoMusicSection() {
         <div className="space-y-3 flex flex-col h-[600px]">
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
-            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
           </div>
           <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/50 flex-shrink-0">
             <h5 className="text-[9px] font-black uppercase text-amber-700 mb-2">Bloquear artista ou termo</h5>
@@ -354,7 +354,7 @@ export default function InfoMusicSection() {
         <div className="space-y-3 flex flex-col h-[600px]">
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-1 h-4 bg-red-500 rounded-full" />
-            <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
