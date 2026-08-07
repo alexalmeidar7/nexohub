@@ -1506,7 +1506,22 @@ export default function InfoMusicSection() {
                 color: "var(--layout-accent-color, #2563eb)",
               }}
             >
-              {search ? `${filteredRows.length} de ${rows.length}` : `${rows.length}${totalCount > rows.length ? ` de ${totalCount}` : ""}`}
+              {search ? `${filteredRows.length} de ${rows.length}` : (
+                <div className="flex items-center gap-2">
+                  <span>{rows.length}{totalCount > rows.length ? ` de ${totalCount}` : ""}</span>
+                  <div className="flex items-center gap-1.5 border-l border-primary/20 pl-2">
+                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 size={10} />
+                      {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length}
+                    </span>
+                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                      <HelpCircle size={10} />
+                      {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length}
+                    </span>
+                  </div>
+                </div>
+              )}
+
             </span>
           </div>
           <button onClick={load} className="text-[11px] font-semibold opacity-70 hover:opacity-100 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors hover:bg-black/5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
@@ -1550,7 +1565,9 @@ export default function InfoMusicSection() {
           >
             <option value="all">Todas as músicas</option>
             <option value="sem_curiosidade">Músicas sem curiosidade</option>
+            <option value="artista">Músicas com curiosidades cadastradas</option>
           </select>
+
         </div>
         <div className="rounded-2xl overflow-hidden" style={{
           border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
