@@ -1524,6 +1524,8 @@ export default function InfoMusicSection() {
     </div>
 
     <div className="space-y-6">
+      {/* 1. Músicas Pendentes (SEM curiosidade) */}
+      <div>
         <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
@@ -1541,160 +1543,50 @@ export default function InfoMusicSection() {
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div
-                className="w-1 h-5 rounded-full"
-                style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
-              />
-              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Últimas 50 Músicas Tocadas
-              </h4>
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
-              style={{
-                backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 12%, transparent)",
-                color: "var(--layout-accent-color, #2563eb)",
-              }}
-            >
-              {search ? `${filteredRows.length} de ${rows.length}` : (
-                <div className="flex items-center gap-2">
-                  <span>{rows.length}{totalCount > rows.length ? ` de ${totalCount}` : ""}</span>
-                  <div className="flex items-center gap-1.5 border-l border-primary/20 pl-2">
-                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 size={10} />
-                      {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length}
-                    </span>
-                    <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                      <HelpCircle size={10} />
-                      {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-            </span>
-          </div>
-          <button onClick={load} className="text-[11px] font-semibold opacity-70 hover:opacity-100 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg transition-colors hover:bg-black/5" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            <RefreshCw size={11} /> Atualizar
-          </button>
-        </div>
-        <div className="flex flex-col md:flex-row gap-2 mb-2">
-          <div className="flex-1 relative">
-            <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 opacity-50" style={{ color: "var(--layout-page-text, #1a1a1a)" }} />
-            <input
-              type="text"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por artista, música ou texto da curiosidade..."
-              className="w-full pl-8 pr-8 py-2 rounded-lg text-xs outline-none"
-              style={{
-                backgroundColor: "var(--layout-page-bg, #fff)",
-                color: "var(--layout-page-text, #1a1a1a)",
-                border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-              }}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-black/5"
-                title="Limpar busca"
-              >
-                <X size={12} className="opacity-60" />
-              </button>
-            )}
-          </div>
-          <select
-            value={filterField}
-            onChange={e => setFilterField(e.target.value as typeof filterField)}
-            className="px-3 py-2 rounded-lg text-xs outline-none cursor-pointer"
-            style={{
-              backgroundColor: "var(--layout-page-bg, #fff)",
-              color: "var(--layout-page-text, #1a1a1a)",
-              border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-            }}
-          >
-            <option value="all">Todas as músicas</option>
-            <option value="artista">Músicas com curiosidades cadastradas</option>
-            <option value="sem_curiosidade">Músicas sem curiosidades cadastradas</option>
-          </select>
-
-        </div>
-        <div className="rounded-2xl overflow-hidden mb-6" style={{
-          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
-          backgroundColor: "var(--layout-page-bg, #fff)",
-          boxShadow: "0 8px 24px -18px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
-        }}>
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-              <Loader2 size={14} className="animate-spin" /> Carregando...
-            </div>
-          ) : rows.length === 0 ? (
-            <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-              Nenhuma curiosidade salva ainda. As curiosidades aparecerão aqui automaticamente conforme as músicas tocarem.
-            </div>
-          ) : filteredRows.length === 0 ? (
-            <div className="text-center py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
-              Nenhuma curiosidade encontrada para "<strong>{search}</strong>".
-            </div>
-          ) : (
-            <div className="max-h-[420px] overflow-auto">
-              <table className="w-full text-xs">
-                <thead className="sticky top-0 z-10" style={{
-                  background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, var(--layout-page-bg, #fff)), color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff)))",
-                  boxShadow: "0 1px 0 0 color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)",
-                }}>
-                  <tr>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data / Hora</th>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Música</th>
+        <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[400px] overflow-y-auto">
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 z-10 bg-amber-500 text-white">
+              <tr>
+                <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Artista</th>
+                <th className="text-left px-4 py-3 font-bold uppercase tracking-wider">Música</th>
+                <th className="text-left px-4 py-3 font-bold uppercase tracking-wider w-24">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => {
+                const pendingRows = rows.filter(r => !r.curiosidade || !r.curiosidade.trim());
+                if (pendingRows.length === 0) {
+                  return (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-10 text-center opacity-50 italic">
+                        {loading ? "Carregando músicas pendentes..." : "Nenhuma música sem curiosidade encontrada."}
+                      </td>
+                    </tr>
+                  );
+                }
+                return pendingRows.map((r, i) => (
+                  <tr key={r.id || `pending-${i}`} className="border-t border-black/5 hover:bg-black/5 transition-colors">
+                    <td className="px-4 py-3 font-semibold">{r.artista}</td>
+                    <td className="px-4 py-3">{r.musica}</td>
+                    <td className="px-4 py-3">
+                      <button 
+                        onClick={() => {
+                          setEditMusic(r);
+                          setCuriosidadeText("");
+                        }}
+                        className="p-2 rounded-lg bg-[#00BFF0] text-white hover:opacity-90 transition-opacity"
+                        title="Cadastrar Curiosidade"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((r, i) => {
-                    return (
-                      <tr key={r.id} className="transition-colors hover:brightness-[0.98]" style={{ 
-                        borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 7%, transparent)" : undefined,
-                        backgroundColor: r.curiosidade && r.curiosidade.trim()
-                          ? "rgba(16, 185, 129, 0.1)" // Verde clarinho (emerald-500 equivalent)
-                          : "rgba(239, 68, 68, 0.1)", // Vermelho clarinho (red-500 equivalent)
-                      }}>
-                        <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
-                          {new Date(r.created_at).toLocaleString("pt-BR")}
-                        </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-xs">{(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}</span>
-                            <span className="text-[11px] opacity-70">{(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}</span>
-                            
-                            {r.curiosidade && r.curiosidade.trim() ? (
-                              <div className="mt-1.5 p-2 rounded-lg bg-black/5 text-[11px] leading-relaxed italic opacity-80 border-l-2 border-[#00BFF0]">
-                                {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
-                              </div>
-                            ) : null}
-                          </div>
-                        </td>
-                     </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              {rows.length < Math.min(totalCount, HARD_CAP) && (
-                <div className="p-3 flex items-center justify-center" style={{ borderTop: "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 6%, transparent)" }}>
-                  <button
-                    onClick={loadMore}
-                    disabled={loadingMore}
-                    className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wide transition-opacity hover:opacity-90 disabled:opacity-40 inline-flex items-center gap-2"
-                    style={{ backgroundColor: "var(--layout-accent-color, #2563eb)", color: "#fff" }}
-                  >
-                    {loadingMore ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
-                    Carregar mais ({Math.min(PAGE_SIZE, Math.min(totalCount, HARD_CAP) - rows.length)})
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                ));
+              })()}
+            </tbody>
+          </table>
         </div>
+      </div>
 
         <div>
           <div className="flex items-center justify-between mb-3">
