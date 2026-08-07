@@ -165,19 +165,32 @@ export default function InfoMusicSection() {
     if (!user) return;
     if (!append) setLoading(true); else setLoadingMore(true);
     try {
-      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      setTotalCount(count || 0);
-
-      const query = supabase
+      // 1. Carrega as últimas 100 músicas para a tabela principal
+      const queryMain = supabase
         .from("infomusic")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setRows(data || []);
+      const { data: dataMain, error: errorMain } = await queryMain;
+      if (errorMain) throw errorMain;
+      setRows(dataMain || []);
+
+      // 2. Carrega TODAS as músicas sem curiosidades (sem limite de 100)
+      const queryNoCuriosity = supabase
+        .from("infomusic")
+        .select("*")
+        .eq("user_id", user.id)
+        .is("curiosidade", null)
+        .order("created_at", { ascending: false });
+      
+      const { data: dataNoCuriosity, error: errorNoCuriosity } = await queryNoCuriosity;
+      if (errorNoCuriosity) throw errorNoCuriosity;
+      setRowsNoCuriosity(dataNoCuriosity || []);
+
+      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+      setTotalCount(count || 0);
     } catch (e) {
       toast.error("Erro ao carregar dados");
     } finally {
