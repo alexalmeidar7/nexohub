@@ -1748,10 +1748,9 @@ export default function InfoMusicSection() {
                   boxShadow: "0 1px 0 0 color-mix(in srgb, var(--layout-page-text, #1a1a1a) 12%, transparent)",
                 }}>
                   <tr>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Artista</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data / Hora</th>
                     <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Música</th>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Curiosidade</th>
-                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data/Hora</th>
+                    <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Exceções</th>
                     <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Enviar</th>
                     <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Exceções</th>
                     <th className="px-3 py-2.5"></th>
