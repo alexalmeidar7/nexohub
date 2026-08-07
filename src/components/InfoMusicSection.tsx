@@ -1545,6 +1545,7 @@ export default function InfoMusicSection() {
 
 
 
+
       {/* 1. Músicas Pendentes (SEM curiosidade) */}
       <div>
 
