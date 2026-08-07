@@ -1529,7 +1529,9 @@ export default function InfoMusicSection() {
 
 
 
+    </div>
     <div className="space-y-6">
+
 
       {/* 1. Músicas Pendentes (SEM curiosidade) */}
       <div>
