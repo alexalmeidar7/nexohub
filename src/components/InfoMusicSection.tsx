@@ -538,13 +538,16 @@ export default function InfoMusicSection() {
   const load = async () => {
     setLoading(true);
     try {
+      if (!user) return;
+      
       const { data, count } = await supabase
         .from("infomusic")
         .select("*", { count: "exact" })
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .range(0, PAGE_SIZE - 1);
+        .limit(HARD_CAP); // Load a large batch to ensure the "Registered" table is full
       
-      console.log("InfoMusic Loaded rows:", data?.length, "Total:", count);
+      console.log("InfoMusic Registered rows loaded:", data?.length, "Total available:", count);
       setRows(data || []);
       setTotalCount(count || 0);
     } catch (e) {
