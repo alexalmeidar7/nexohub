@@ -275,7 +275,7 @@ export default function InfoMusicSection() {
   };
 
   const PAGE_SIZE = 50;
-  const HARD_CAP = Number.POSITIVE_INFINITY;
+  const HARD_CAP = 50;
   const [totalCount, setTotalCount] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState("");
