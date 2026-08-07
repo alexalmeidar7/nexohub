@@ -259,7 +259,7 @@ export default function InfoMusicSection() {
                           size="icon" 
                           variant="ghost" 
                           className="h-6 w-6 text-amber-500 hover:bg-amber-50 flex-shrink-0"
-                          title="Inserir artista na lista de exceções"
+                          title="inserir esse registro na lista de exceções"
                           onClick={async () => {
                             if (!user) return;
                             try {
