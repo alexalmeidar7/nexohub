@@ -42,7 +42,6 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 export default function InfoMusicSection() {
   const { user } = useAuth();
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
-  const [rowsNoCuriosity, setRowsNoCuriosity] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
@@ -96,7 +95,7 @@ export default function InfoMusicSection() {
 
     const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
     
-    const noCuriosity = rowsNoCuriosity
+    const noCuriosity = rows
       .filter(r => !r.curiosidade || !r.curiosidade.trim())
       .filter(r => !fetchingIds.includes(r.id))
       .filter(r => {
@@ -165,32 +164,19 @@ export default function InfoMusicSection() {
     if (!user) return;
     if (!append) setLoading(true); else setLoadingMore(true);
     try {
-      // 1. Carrega as últimas 100 músicas para a tabela principal
-      const queryMain = supabase
+      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
+      setTotalCount(count || 0);
+
+      const query = supabase
         .from("infomusic")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const { data: dataMain, error: errorMain } = await queryMain;
-      if (errorMain) throw errorMain;
-      setRows(dataMain || []);
-
-      // 2. Carrega TODAS as músicas sem curiosidades (sem limite de 100)
-      const queryNoCuriosity = supabase
-        .from("infomusic")
-        .select("*")
-        .eq("user_id", user.id)
-        .is("curiosidade", null)
-        .order("created_at", { ascending: false });
-      
-      const { data: dataNoCuriosity, error: errorNoCuriosity } = await queryNoCuriosity;
-      if (errorNoCuriosity) throw errorNoCuriosity;
-      setRowsNoCuriosity(dataNoCuriosity || []);
-
-      const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
-      setTotalCount(count || 0);
+      const { data, error } = await query;
+      if (error) throw error;
+      setRows(data || []);
     } catch (e) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -472,10 +458,10 @@ export default function InfoMusicSection() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1 h-4 bg-red-500 rounded-full" />
-                <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rowsNoCuriosity.length})</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
               </div>
             </div>
-            {aiEnabled && rowsNoCuriosity.length > 0 && (
+            {aiEnabled && rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length > 0 && (
               <div className="w-full bg-black/5 rounded-full h-1.5 overflow-hidden">
                 <div 
                   className="bg-red-500 h-full transition-all duration-500" 
@@ -545,7 +531,7 @@ export default function InfoMusicSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                {rowsNoCuriosity.map(r => (
+                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
                   <tr key={r.id} className="hover:bg-red-50/30">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
@@ -577,7 +563,7 @@ export default function InfoMusicSection() {
                     </td>
                   </tr>
                 ))}
-                {rowsNoCuriosity.length === 0 && (
+                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length === 0 && (
                   <tr>
                     <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Tudo em dia!</td>
                   </tr>
