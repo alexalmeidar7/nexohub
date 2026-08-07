@@ -198,6 +198,23 @@ export default function AdminInfoMusicPage() {
   const trClass =
     "border-t border-border/60 odd:bg-slate-50/50 dark:odd:bg-transparent even:bg-white dark:even:bg-transparent hover:bg-primary/5 transition-colors text-foreground";
 
+  const handleDownloadCuriosidades = () => {
+    const headers = ["Cliente", "Música", "Artista", "Curiosidade", "Data de Cadastro"];
+    const csvContent = curiosidadesFiltradas.map(c => [
+      clientes[c.user_id] || c.user_id,
+      c.musica,
+      c.artista,
+      c.curiosidade?.replace(/,/g, ";"),
+      c.created_at
+    ].join(",")).join("\n");
+    
+    const blob = new Blob([headers.join(",") + "\n" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `curiosidades_nexo_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-3">
