@@ -172,9 +172,6 @@ export default function InfoMusicSection() {
           <h3 className="text-lg font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             Música no Ar & Curiosidades
           </h3>
-          <div className="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-black border border-black/10 shadow-sm opacity-50">
-            tire essas informações circulado em vermelho
-          </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
@@ -182,19 +179,8 @@ export default function InfoMusicSection() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Coluna Esquerda: Status e IA */}
+        {/* Coluna Esquerda: No Ar Agora */}
         <div className="md:col-span-1 space-y-4">
-          <div className="p-4 rounded-xl bg-white/50 border border-black/5">
-             <h4 className="text-xs font-bold uppercase mb-3 opacity-60">Status IA</h4>
-             <div className="flex items-center justify-between">
-               <span className="text-sm">Geração Automática</span>
-               <Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
-             </div>
-             <div className="mt-3 text-[10px] opacity-50">
-               Cota Mensal: {monthlyQuota.count} / {monthlyQuota.limit}
-             </div>
-          </div>
-          
           {nowPlaying && (
             <div className="p-4 rounded-xl bg-[#00BFF0]/10 border border-[#00BFF0]/20">
               <h4 className="text-[10px] font-bold uppercase text-[#00BFF0] mb-2">No Ar Agora</h4>
