@@ -475,7 +475,7 @@ export default function InfoMusicSection() {
                 <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rowsNoCuriosity.length})</h4>
               </div>
             </div>
-            {aiEnabled && rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length > 0 && (
+            {aiEnabled && rowsNoCuriosity.length > 0 && (
               <div className="w-full bg-black/5 rounded-full h-1.5 overflow-hidden">
                 <div 
                   className="bg-red-500 h-full transition-all duration-500" 
