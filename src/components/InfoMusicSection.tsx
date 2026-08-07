@@ -556,6 +556,9 @@ export default function InfoMusicSection() {
       console.log("InfoMusic DATA LOADED:", data?.length, "Total available:", count);
       setRows(data || []);
       setTotalCount(count || 0);
+      
+      // Trigger loadMissing when rows change to keep "Músicas SEM curiosidades" in sync
+      loadMissing();
     } catch (e) {
       console.error("Catch error loading infomusic:", e);
     }
@@ -1547,7 +1550,7 @@ export default function InfoMusicSection() {
               />
               <h4 className="text-sm font-black uppercase tracking-wider flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 Músicas SEM curiosidades cadastradas
-                <span className="text-[10px] font-normal lowercase opacity-40">(Histórico recente)</span>
+                <span className="text-[10px] font-normal lowercase opacity-40">(Histórico sincronizado)</span>
               </h4>
             </div>
           </div>
@@ -1653,7 +1656,7 @@ export default function InfoMusicSection() {
                 style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
               />
               <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Últimas 50 Músicas Tocadas (Ordem Cronológica)
+                Últimas 50 Músicas Tocadas
               </h4>
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
@@ -1752,8 +1755,6 @@ export default function InfoMusicSection() {
                   <tr>
                     <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Data / Hora</th>
                     <th className="text-left px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Música</th>
-                    <th className="text-center px-3 py-2.5 font-black uppercase text-[10px] tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 82%, transparent)" }}>Enviar</th>
-                    <th className="px-3 py-2.5 text-right font-black uppercase text-[10px] tracking-wider" style={{ color: "#dc2626" }}>Deletar</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1762,9 +1763,9 @@ export default function InfoMusicSection() {
                     return (
                       <tr key={r.id} className="transition-colors hover:brightness-[0.98]" style={{ 
                         borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 7%, transparent)" : undefined,
-                        backgroundColor: isLastManual
-                          ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.10)"
-                          : (i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined),
+                        backgroundColor: r.curiosidade && r.curiosidade.trim()
+                          ? "rgba(16, 185, 129, 0.1)" // Verde clarinho (emerald-500 equivalent)
+                          : "rgba(239, 68, 68, 0.1)", // Vermelho clarinho (red-500 equivalent)
                       }}>
                         <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                           {new Date(r.created_at).toLocaleString("pt-BR")}
@@ -1781,43 +1782,6 @@ export default function InfoMusicSection() {
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-3 py-2 align-top text-center">
-                          <button 
-                            onClick={async () => {
-                              try {
-                                const until = new Date(Date.now() + 30_000).toISOString();
-                                const currentDashboard = (await supabase.from("user_settings").select("dashboard_items").eq("user_id", user?.id).maybeSingle()).data?.dashboard_items as any || {};
-                                
-                                await supabase.from("user_settings").update({
-                                  last_manual_curiosity_id: r.id,
-                                  dashboard_items: {
-                                    ...currentDashboard,
-                                    music_curiosity_manual: r.curiosidade,
-                                    music_curiosity_manual_until: until,
-                                    music_curiosity_manual_img: r.deezer_artist_img || ""
-                                  }
-                                }).eq("user_id", user?.id);
-                                
-                                setLastManualId(r.id);
-                                
-                                window.dispatchEvent(new CustomEvent("manual-music-curiosity", { detail: { text: r.curiosidade } }));
-                                toast.success("Enviado para o vMix!");
-                              } catch (e) {
-                                toast.error("Erro ao enviar");
-                              }
-                            }}
-                            className="p-1 rounded-lg hover:bg-black/5 transition-colors"
-                            style={{ color: "var(--layout-accent-color, #2563eb)" }}
-                            title="Enviar manualmente para o XML"
-                          >
-                            <Send size={14} />
-                           </button>
-                         </td>
-                         <td className="px-3 py-2 align-top text-right">
-                           <button onClick={() => handleDelete(r.id)} className="opacity-50 hover:opacity-100 transition-opacity" style={{ color: "#dc2626" }}>
-                             <Trash2 size={13} />
-                           </button>
-                         </td>
                      </tr>
                     );
                   })}
