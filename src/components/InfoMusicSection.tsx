@@ -1530,6 +1530,7 @@ export default function InfoMusicSection() {
     <div className="space-y-6">
       {/* 1. Músicas Pendentes (SEM curiosidade) */}
       <div>
+
         <div className="flex flex-col gap-2 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
