@@ -86,8 +86,7 @@ export default function InfoMusicSection() {
         .from("infomusic")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(append ? rows.length + PAGE_SIZE : PAGE_SIZE);
+        .order("created_at", { ascending: false });
 
       const { data, error } = await query;
       if (error) throw error;
@@ -442,7 +441,7 @@ export default function InfoMusicSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
+              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length > 0 ? rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
                 <tr key={r.id} className="hover:bg-emerald-50/30">
                   <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-3 py-2">
@@ -466,8 +465,7 @@ export default function InfoMusicSection() {
                     </Button>
                   </td>
                 </tr>
-              ))}
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length === 0 && (
+              )) : (
                 <tr>
                   <td colSpan={4} className="px-3 py-10 text-center opacity-40 italic">Nenhuma curiosidade cadastrada</td>
                 </tr>
