@@ -1765,55 +1765,70 @@ export default function InfoMusicSection() {
                           ? "rgba(var(--layout-accent-color-rgb, 37, 99, 235), 0.10)"
                           : (i % 2 === 1 ? "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 3%, transparent)" : undefined),
                       }}>
-                        <td className="px-3 py-2 font-semibold align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          <div className="flex flex-col gap-1">
-                            {r.deezer_artist_img && (
-                              <img src={r.deezer_artist_img} alt={r.artista} className="w-8 h-8 rounded-full object-cover border border-white/10" />
-                            )}
-                            {(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}
-                          </div>
-                        </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                          {(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}
-                        </td>
-                        <td className="px-3 py-2 align-top" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 75%, transparent)", maxWidth: 480 }}>
-                          {r.curiosidade && r.curiosidade.trim() ? (
-                            <div className="line-clamp-3 leading-relaxed">
-                              {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
-                            </div>
-                          ) : (
-                            <div className="flex flex-col gap-1.5">
-                              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
-                                Aguardando cadastro manual
-                              </span>
-                              <textarea
-                                value={pendingEdits[r.id] ?? ""}
-                                onChange={(e) => setPendingEdits(p => ({ ...p, [r.id]: e.target.value }))}
-                                placeholder="Digite a curiosidade sobre esta música..."
-                                rows={2}
-                                className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-y"
-                                style={{
-                                  backgroundColor: "var(--layout-page-bg, #fff)",
-                                  color: "var(--layout-page-text, #1a1a1a)",
-                                  border: "1px dashed color-mix(in srgb, #f59e0b 50%, transparent)",
-                                }}
-                              />
-                              <div className="flex justify-end">
-                                <Button
-                                  variant="save"
-                                  onClick={() => saveRowCuriosity(r)}
-                                  disabled={savingRowId === r.id || !(pendingEdits[r.id] ?? "").trim()}
-                                >
-                                  {savingRowId === r.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
-                                  Salvar
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </td>
-
                         <td className="px-3 py-2 align-top font-mono text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
                           {new Date(r.created_at).toLocaleString("pt-BR")}
+                        </td>
+                        <td className="px-3 py-2 align-top" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs">{(filterField === "all" || filterField === "musica") ? <Highlight text={r.musica} term={search} /> : r.musica}</span>
+                            <span className="text-[11px] opacity-70">{(filterField === "all" || filterField === "artista") ? <Highlight text={r.artista} term={search} /> : r.artista}</span>
+                            
+                            {r.curiosidade && r.curiosidade.trim() ? (
+                              <div className="mt-1.5 p-2 rounded-lg bg-black/5 text-[11px] leading-relaxed italic opacity-80 border-l-2 border-[#00BFF0]">
+                                {(filterField === "all" || filterField === "curiosidade") ? <Highlight text={r.curiosidade} term={search} /> : r.curiosidade}
+                              </div>
+                            ) : (
+                              <div className="mt-2 flex flex-col gap-1.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#f59e0b" }}>
+                                  Aguardando cadastro manual
+                                </span>
+                                <textarea
+                                  value={pendingEdits[r.id] ?? ""}
+                                  onChange={(e) => setPendingEdits(p => ({ ...p, [r.id]: e.target.value }))}
+                                  placeholder="Digite a curiosidade sobre esta música..."
+                                  rows={2}
+                                  className="w-full px-2 py-1.5 rounded-md text-xs outline-none resize-y"
+                                  style={{
+                                    backgroundColor: "var(--layout-page-bg, #fff)",
+                                    color: "var(--layout-page-text, #1a1a1a)",
+                                    border: "1px dashed color-mix(in srgb, #f59e0b 50%, transparent)",
+                                  }}
+                                />
+                                <div className="flex justify-end">
+                                  <Button
+                                    variant="save"
+                                    onClick={() => saveRowCuriosity(r)}
+                                    disabled={savingRowId === r.id || !(pendingEdits[r.id] ?? "").trim()}
+                                  >
+                                    {savingRowId === r.id ? <Loader2 size={11} className="animate-spin" /> : <Plus size={11} />}
+                                    Salvar
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 align-top text-center">
+                          {(() => {
+                            const ex = excecoes.find(x => x.termo.toLowerCase() === r.artista.trim().toLowerCase());
+                            const handleToggle = async () => {
+                              const nameRaw = r.artista.trim();
+                              if (!nameRaw) return;
+                              if (ex) {
+                                await removeExcecao(ex.id);
+                              } else {
+                                setNewExcecao(nameRaw);
+                              }
+                            };
+                            return (
+                              <div
+                                className="inline-flex items-center justify-center"
+                                title={ex ? "Remover da lista de exceções" : "Adicionar artista à lista de exceções"}
+                              >
+                                <Switch checked={!!ex} onCheckedChange={handleToggle} />
+                              </div>
+                            );
+                          })()}
                         </td>
                       <td className="px-3 py-2 align-top text-center">
                         <button 
