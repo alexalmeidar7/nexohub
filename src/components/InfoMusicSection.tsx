@@ -110,7 +110,7 @@ export default function InfoMusicSection() {
         const { error: updateError } = await supabase
           .from("infomusic")
           .update({ 
-            curiosidade: data.curiosity.trim(), 
+            curiosidade: data.curiosidade.trim(), 
             expires_at: expiresAt.toISOString() 
           })
           .eq("id", target.id);
