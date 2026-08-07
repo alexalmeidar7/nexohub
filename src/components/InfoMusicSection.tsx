@@ -414,7 +414,12 @@ export default function InfoMusicSection() {
                   try {
                     const { error } = await supabase
                       .from("user_settings")
-                      .upsert({ user_id: user.id, infomusic_ai_enabled: val });
+                      .update({ 
+                        infomusic_ai_enabled: val,
+                        updated_at: new Date().toISOString()
+                      })
+                      .eq("user_id", user.id);
+                    
                     if (error) throw error;
                     setAiEnabled(val);
                     toast.success(val ? "Busca automática ativada" : "Busca automática desativada");
