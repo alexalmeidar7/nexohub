@@ -571,6 +571,8 @@ export default function InfoMusicSection() {
             </table>
           </div>
         </div>
+      </div>
+
 
       {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
       <div className="space-y-3 flex flex-col mt-6 w-full col-span-full">
