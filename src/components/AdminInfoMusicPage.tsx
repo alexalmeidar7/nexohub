@@ -198,6 +198,23 @@ export default function AdminInfoMusicPage() {
   const trClass =
     "border-t border-border/60 odd:bg-slate-50/50 dark:odd:bg-transparent even:bg-white dark:even:bg-transparent hover:bg-primary/5 transition-colors text-foreground";
 
+  const handleDownloadCuriosidades = () => {
+    const headers = ["Cliente", "Música", "Artista", "Curiosidade", "Data de Cadastro"];
+    const csvContent = curiosidadesFiltradas.map(c => [
+      clientes[c.user_id] || c.user_id,
+      c.musica,
+      c.artista,
+      c.curiosidade?.replace(/,/g, ";"),
+      c.created_at
+    ].join(",")).join("\n");
+    
+    const blob = new Blob([headers.join(",") + "\n" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `curiosidades_nexo_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -279,9 +296,17 @@ export default function AdminInfoMusicPage() {
       <SectionCard
         icon={<Sparkles size={16} />}
         title="Músicas com curiosidade cadastrada"
-        subtitle="Curiosidades registradas por todos os clientes"
+        subtitle="Curiosidades registradas por todos os clientes — Validade de 1 ano"
         count={curiosidadesFiltradas.length}
       >
+        <div className="flex justify-end p-2 border-b border-border bg-slate-50/50">
+          <button 
+            onClick={handleDownloadCuriosidades}
+            className="text-[10px] font-bold px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={10} className="rotate-90" /> BAIXAR EXCEL (CSV)
+          </button>
+        </div>
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
             <tr className={headRow}>
