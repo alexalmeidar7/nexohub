@@ -441,7 +441,7 @@ export default function InfoMusicSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
+              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length > 0 ? rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
                 <tr key={r.id} className="hover:bg-emerald-50/30">
                   <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-3 py-2">
