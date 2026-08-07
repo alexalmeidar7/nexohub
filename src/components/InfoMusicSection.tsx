@@ -1587,12 +1587,10 @@ export default function InfoMusicSection() {
           </table>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
-        <div>
-          <div className="flex items-center justify-between mb-3">
+      {/* 2. Últimas 50 Músicas Tocadas (MOVIMENTADA PARA O MEIO) */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div
                 className="w-1 h-5 rounded-full"
