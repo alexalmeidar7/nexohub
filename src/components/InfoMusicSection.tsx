@@ -1974,6 +1974,8 @@ export default function InfoMusicSection() {
               </tbody>
             </table>
           </div>
+          </div>
+        </div>
       </div>
 
       <Dialog open={!!importSummary} onOpenChange={(o) => { if (!o) setImportSummary(null); }}>
