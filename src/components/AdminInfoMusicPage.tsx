@@ -91,19 +91,22 @@ export default function AdminInfoMusicPage() {
   }, []);
 
   const loadRows = useCallback(async () => {
-    // Aumentando os limites para trazer mais registros e ter uma visão real
+    setLoading(true);
+    // Buscamos um volume maior de músicas tocadas para ter uma base estatística real por cliente
+    // E buscamos TODAS as curiosidades possíveis (aumentando o limite para cobrir a base histórica)
     const [tocadas, infos] = await Promise.all([
       supabase
         .from("musicas_tocadas")
         .select("id, user_id, dia, horario, artista, musica, programa, created_at")
         .order("created_at", { ascending: false })
-        .limit(100),
+        .limit(1000), // Aumentado de 100 para 1000 para estatísticas mais precisas
       supabase
         .from("infomusic")
         .select("id, user_id, artista, musica, curiosidade, created_at")
         .order("created_at", { ascending: false })
-        .limit(2000), // Aumentado significativamente para capturar todas as curiosidades
+        .limit(5000), // Aumentado para 5000 para garantir que pegamos todo o histórico de curiosidades
     ]);
+    
     setRows((tocadas.data || []) as Row[]);
     setCuriosidades(
       ((infos.data || []) as CuriosidadeRow[]).filter((c) => (c.curiosidade || "").trim().length > 0)
