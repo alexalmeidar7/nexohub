@@ -1653,15 +1653,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         {/* ===== MAIN CONTENT AREA ===== */}
         <div className="flex-1 min-h-0 px-3 lg:px-6 pb-4 relative z-[1]">
           {currentPage !== "dashboard" && (
-            <div className="flex items-center gap-3 mb-4 ml-1">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-6 ml-1">
+              <div className="flex items-center gap-4">
                 <BackButton onClick={() => setCurrentPage("dashboard")} />
+                
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
+                  <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
+                    <span className="opacity-40" style={{ color: layoutColors.pageText }}>Home</span>
+                    <ChevronRight size={10} className="opacity-20" />
+                    <span style={{ color: layoutColors.accentColor }}>{pageTitle[currentPage]}</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold opacity-30 select-none" style={{ color: layoutColors.pageText }}>
-                <span>Home</span>
-                <span className="opacity-50">/</span>
-                <span style={{ color: layoutColors.accentColor, opacity: 1 }}>{pageTitle[currentPage]}</span>
-              </div>
+
+              {/* Espaço reservado para ações globais do módulo, se necessário */}
+              <div id="module-actions-portal" className="flex items-center gap-2" />
             </div>
           )}
           <div className="relative flex-1 h-full">
