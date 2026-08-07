@@ -436,6 +436,7 @@ export default function InfoMusicSection() {
         const res = await supabase
           .from("infomusic")
           .select("artista, musica, curiosidade, created_at")
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .range(from, to);
         return { data: res.data, error: res.error };
