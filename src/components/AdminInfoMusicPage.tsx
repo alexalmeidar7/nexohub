@@ -296,9 +296,17 @@ export default function AdminInfoMusicPage() {
       <SectionCard
         icon={<Sparkles size={16} />}
         title="Músicas com curiosidade cadastrada"
-        subtitle="Curiosidades registradas por todos os clientes"
+        subtitle="Curiosidades registradas por todos os clientes — Validade de 1 ano"
         count={curiosidadesFiltradas.length}
       >
+        <div className="flex justify-end p-2 border-b border-border bg-slate-50/50">
+          <button 
+            onClick={handleDownloadCuriosidades}
+            className="text-[10px] font-bold px-3 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors flex items-center gap-1.5"
+          >
+            <RefreshCw size={10} className="rotate-90" /> BAIXAR EXCEL (CSV)
+          </button>
+        </div>
         <table className="w-full text-sm border-collapse">
           <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
             <tr className={headRow}>
