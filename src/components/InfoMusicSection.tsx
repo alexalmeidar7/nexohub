@@ -250,8 +250,34 @@ export default function InfoMusicSection() {
                   <tr key={r.id} className="transition-colors hover:bg-black/5" style={{ backgroundColor: r.curiosidade ? "rgba(16,185,129,0.03)" : "rgba(239,68,68,0.03)" }}>
                     <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                     <td className="px-3 py-2">
-                      <div className="font-bold text-[#1a1a1a] truncate">{r.musica}</div>
-                      <div className="opacity-60 truncate">{r.artista}</div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-[#1a1a1a] truncate">{r.musica}</div>
+                          <div className="opacity-60 truncate">{r.artista}</div>
+                        </div>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-6 w-6 text-amber-500 hover:bg-amber-50 flex-shrink-0"
+                          title="Inserir artista na lista de exceções"
+                          onClick={async () => {
+                            if (!user) return;
+                            try {
+                              const { error } = await supabase.from("infomusic_excecoes").insert({
+                                user_id: user.id,
+                                termo: r.artista
+                              });
+                              if (error) throw error;
+                              loadExcecoes();
+                              toast.success(`"${r.artista}" adicionado às exceções`);
+                            } catch (e) {
+                              toast.error("Erro ao adicionar exceção");
+                            }
+                          }}
+                        >
+                          <Ban size={12} />
+                        </Button>
+                      </div>
                       {r.curiosidade && (
                         <div className="mt-1 text-[9px] italic text-[#00BFF0] bg-[#00BFF0]/5 p-1 rounded border-l border-[#00BFF0] line-clamp-2">
                           {r.curiosidade}
