@@ -540,18 +540,24 @@ export default function InfoMusicSection() {
     try {
       if (!user) return;
       
-      const { data, count } = await supabase
+      const { data, count, error } = await supabase
         .from("infomusic")
         .select("*", { count: "exact" })
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(HARD_CAP); // Load a large batch to ensure the "Registered" table is full
+        .limit(HARD_CAP);
       
-      console.log("InfoMusic Registered rows loaded:", data?.length, "Total available:", count);
+      if (error) {
+        console.error("Supabase error loading infomusic:", error);
+        toast.error("Erro ao carregar curiosidades");
+        return;
+      }
+      
+      console.log("InfoMusic DATA LOADED:", data?.length, "Total available:", count);
       setRows(data || []);
       setTotalCount(count || 0);
     } catch (e) {
-      console.error("Error loading infomusic:", e);
+      console.error("Catch error loading infomusic:", e);
     }
     setLoading(false);
   };
