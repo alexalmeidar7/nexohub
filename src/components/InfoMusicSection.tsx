@@ -375,13 +375,14 @@ export default function InfoMusicSection() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="h-7 text-[9px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                        className="h-7 text-[9px] font-bold border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1"
                         onClick={() => {
                           setEditMusic(r);
                           setCuriosidadeText("");
                         }}
                       >
-                        ADD
+                        <Plus size={10} />
+                        ESCREVER
                       </Button>
                     </td>
                   </tr>
