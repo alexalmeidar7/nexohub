@@ -1833,7 +1833,7 @@ export default function InfoMusicSection() {
             </table>
         </div>
       </div>
-    </div>
+
 
 
       <Dialog open={!!importSummary} onOpenChange={(o) => { if (!o) setImportSummary(null); }}>
