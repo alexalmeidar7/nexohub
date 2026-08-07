@@ -556,6 +556,9 @@ export default function InfoMusicSection() {
       console.log("InfoMusic DATA LOADED:", data?.length, "Total available:", count);
       setRows(data || []);
       setTotalCount(count || 0);
+      
+      // Trigger loadMissing when rows change to keep "Músicas SEM curiosidades" in sync
+      loadMissing();
     } catch (e) {
       console.error("Catch error loading infomusic:", e);
     }
