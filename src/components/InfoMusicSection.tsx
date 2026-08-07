@@ -405,7 +405,7 @@ export default function InfoMusicSection() {
               <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-red-500">buscar automaticamente a curiosidade das musicas sem curiosidades ?</span>
+              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">busca automatica da curiosidade, deve ser uma curiosidade com texto curto, numa linaguagem espontânea</span>
               <Switch 
                 checked={aiEnabled}
                 onCheckedChange={async (val) => {
