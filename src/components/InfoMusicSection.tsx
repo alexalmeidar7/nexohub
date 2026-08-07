@@ -1587,6 +1587,9 @@ export default function InfoMusicSection() {
           </table>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
         <div>
           <div className="flex items-center justify-between mb-3">
