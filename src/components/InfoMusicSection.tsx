@@ -498,7 +498,7 @@ export default function InfoMusicSection() {
   };
 
   const filteredRows = useMemo(() => {
-    // Ocultar da tabela Tocadas qualquer artista/música que esteja na lista de Exceções
+    // 1. Filtrar Exceções
     const excLower = excecoes.map(ex => ex.termo.toLowerCase());
     const notExcepted = rows.filter(r => {
       const artista = (r.artista || "").toLowerCase();
@@ -506,16 +506,21 @@ export default function InfoMusicSection() {
       return !excLower.some(w => artista.includes(w) || musica.includes(w));
     });
 
+    const q = search.trim().toLowerCase();
+
+    // 2. Aplicar filtro de campo (somente se não houver busca, ou se o usuário explicitamente desejar)
+    // Regra: Se houver busca (q), ignoramos o filtro de "Músicas com curiosidades" para buscar em TUDO.
     const filteredByField = notExcepted.filter(r => {
+      if (q) return true; // Se está buscando, busca em todas as músicas carregadas
+      
       const hasCuriosity = !!(r.curiosidade && r.curiosidade.trim());
-      // Quando filterField é "artista", o sistema deve mostrar apenas músicas COM curiosidade
       if (filterField === "artista") return hasCuriosity;
       return true;
     });
 
-    const q = search.trim().toLowerCase();
     if (!q) return filteredByField;
 
+    // 3. Aplicar busca em todos os campos
     return filteredByField.filter(r => {
       const artista = (r.artista || "").toLowerCase();
       const musica = (r.musica || "").toLowerCase();
@@ -523,6 +528,7 @@ export default function InfoMusicSection() {
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
   }, [rows, search, filterField, excecoes]);
+
 
 
 
