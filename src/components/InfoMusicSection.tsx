@@ -185,14 +185,7 @@ export default function InfoMusicSection() {
         {/* Coluna Esquerda: Status e IA */}
         <div className="md:col-span-1 space-y-4">
           <div className="p-4 rounded-xl bg-white/50 border border-black/5">
-             <h4 className="text-xs font-bold uppercase mb-3 opacity-60">Status IA</h4>
-             <div className="flex items-center justify-between">
-               <span className="text-sm">Geração Automática</span>
-               <Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
-             </div>
-             <div className="mt-3 text-[10px] opacity-50">
-               Cota Mensal: {monthlyQuota.count} / {monthlyQuota.limit}
-             </div>
+             <h4 className="text-xs font-bold uppercase mb-3 opacity-60">TIRAR Status IA - GERAÇÃO AUTOMÁTICA</h4>
           </div>
           
           {nowPlaying && (
