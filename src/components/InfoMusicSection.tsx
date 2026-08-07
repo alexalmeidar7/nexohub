@@ -472,7 +472,7 @@ export default function InfoMusicSection() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-1 h-4 bg-red-500 rounded-full" />
-                <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rowsNoCuriosity.length})</h4>
               </div>
             </div>
             {aiEnabled && rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length > 0 && (
