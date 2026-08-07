@@ -1901,10 +1901,10 @@ export default function InfoMusicSection() {
                       </tr>
                     );
                   }
+                  console.log("Rendering Registered Rows:", registeredRows.length);
                   return registeredRows
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
-                      <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
+                      <tr key={r.id || `reg-${i}`} className="border-t border-black/5 hover:bg-black/5 transition-colors">
                         <td className="px-4 py-3 font-semibold">{r.artista}</td>
                         <td className="px-4 py-3">{r.musica}</td>
                         <td className="px-4 py-3 opacity-80 leading-relaxed">{r.curiosidade}</td>
