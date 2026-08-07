@@ -218,6 +218,18 @@ export default function InfoMusicSection() {
               <h4 className="text-xs font-bold uppercase tracking-wider">Músicas Pendentes</h4>
             </div>
             <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[300px] overflow-y-auto">
+              <div className="p-3 bg-white/50 border-b border-black/5">
+                <h5 className="text-[10px] font-black uppercase text-amber-600 mb-1">Todas as músicas cadastradas na lista de exceções</h5>
+                <div className="flex gap-2">
+                  <input 
+                    className="flex-1 text-[10px] px-2 py-1.5 rounded border bg-white focus:ring-1 focus:ring-amber-500 outline-none" 
+                    placeholder="Termo (ex.: jingle ou artista)"
+                  />
+                  <Button size="sm" className="bg-[#C6F03C] hover:bg-[#b5dc35] text-black text-[10px] font-bold h-auto py-1 px-3">
+                    + ADICIONAR EXCEÇÃO
+                  </Button>
+                </div>
+              </div>
               <table className="w-full text-[11px]">
                 <thead className="bg-amber-500 text-white sticky top-0">
                   <tr>
