@@ -129,7 +129,7 @@ export default function AdminInfoMusicPage() {
           if (!clientesRef.current[novo.user_id]) loadClientes();
           setRows((prev) => {
             if (prev.some((r) => r.id === novo.id)) return prev;
-            return [novo, ...prev].slice(0, 300);
+            return [novo, ...prev].slice(0, 100);
           });
           setLastUpdate(new Date());
         }
