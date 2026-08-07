@@ -503,11 +503,12 @@ export default function InfoMusicSection() {
     const notExcepted = rows.filter(r => {
       const artista = (r.artista || "").toLowerCase();
       const musica = (r.musica || "").toLowerCase();
-      return !excLower.some(w => artista.includes(w) || m.includes(ww));
+      return !excLower.some(w => artista.includes(w) || musica.includes(w));
     });
 
     const filteredByField = notExcepted.filter(r => {
       const hasCuriosity = !!(r.curiosidade && r.curiosidade.trim());
+      // Quando filterField é "artista", o sistema deve mostrar apenas músicas COM curiosidade
       if (filterField === "artista") return hasCuriosity;
       return true;
     });
@@ -522,6 +523,7 @@ export default function InfoMusicSection() {
       return artista.includes(q) || musica.includes(q) || curiosidade.includes(q);
     });
   }, [rows, search, filterField, excecoes]);
+
 
 
   const load = async () => {
