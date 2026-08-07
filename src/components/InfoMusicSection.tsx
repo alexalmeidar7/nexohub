@@ -1550,7 +1550,9 @@ export default function InfoMusicSection() {
           >
             <option value="all">Todas as músicas</option>
             <option value="sem_curiosidade">Músicas sem curiosidade</option>
+            <option value="artista">Músicas com curiosidades cadastradas</option>
           </select>
+
         </div>
         <div className="rounded-2xl overflow-hidden" style={{
           border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 20%, transparent)",
