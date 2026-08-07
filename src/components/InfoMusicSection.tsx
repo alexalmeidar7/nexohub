@@ -1656,7 +1656,7 @@ export default function InfoMusicSection() {
                 style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
               />
               <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-                Últimas 50 Músicas Tocadas (Ordem Cronológica)
+                Últimas 50 Músicas Tocadas
               </h4>
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
