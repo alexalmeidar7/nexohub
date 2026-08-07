@@ -111,6 +111,7 @@ export default function InfoMusicSection() {
     
     const fetchAiCuriosity = async () => {
       isFetchingRef.current = true;
+      lastFetchTimeRef.current = Date.now();
       setFetchingIds(prev => [...prev, target.id]);
       
       try {
