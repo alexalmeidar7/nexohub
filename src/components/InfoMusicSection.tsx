@@ -412,14 +412,22 @@ export default function InfoMusicSection() {
                   if (!user) return;
                   setTogglingAi(true);
                   try {
+                    // Primeiro verificamos se existe
+                    const { data: existing } = await supabase
+                      .from("user_settings")
+                      .select("id")
+                      .eq("user_id", user.id)
+                      .maybeSingle();
+
                     const { error } = await supabase
                       .from("user_settings")
                       .upsert(
                         { 
+                          ...(existing?.id ? { id: existing.id } : {}),
                           user_id: user.id, 
                           infomusic_ai_enabled: val,
                           updated_at: new Date().toISOString()
-                        }, 
+                        },
                         { onConflict: 'user_id' }
                       );
                     if (error) throw error;
