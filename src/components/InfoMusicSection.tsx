@@ -81,10 +81,17 @@ export default function InfoMusicSection() {
   useEffect(() => {
     if (!aiEnabled || isFetchingRef.current || !user) return;
 
+    const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
+    
     const noCuriosity = rows
       .filter(r => !r.curiosidade || !r.curiosidade.trim())
       .filter(r => !fetchingIds.includes(r.id))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // Começa pela última inserida
+      .filter(r => {
+        const artistaLower = r.artista.toLowerCase();
+        const musicaLower = r.musica.toLowerCase();
+        return !exceptionsArray.some(exc => artistaLower.includes(exc) || musicaLower.includes(exc));
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     if (noCuriosity.length === 0) return;
 
