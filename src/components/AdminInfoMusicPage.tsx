@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Music, RefreshCw, Search, Sparkles, HelpCircle } from "lucide-react";
@@ -54,22 +54,27 @@ function SectionCard({
 }) {
   return (
     <section className="rounded-2xl border border-border bg-white dark:bg-card text-card-foreground overflow-hidden shadow-sm">
-      <header className="flex items-center gap-3 px-4 py-3 border-b border-border bg-muted">
-        <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          {icon}
+      <header className="flex items-center gap-3 px-6 py-4 border-b border-border bg-white dark:bg-card">
+        <div className="h-10 w-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          {React.cloneElement(icon as React.ReactElement, { size: 20 })}
         </div>
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-foreground truncate">{title}</h2>
-          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
+          <h2 className="text-base font-black text-foreground tracking-tight">{title}</h2>
+          <p className="text-xs text-muted-foreground font-medium">{subtitle}</p>
         </div>
-        <span className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-          {count}
-        </span>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-[#00BFF0]/10 text-[#00BFF0] border border-[#00BFF0]/20 uppercase tracking-wider">
+            {count} REGISTROS
+          </span>
+        </div>
       </header>
-      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">{children}</div>
+      <div className="max-h-[52vh] overflow-y-auto bg-white dark:bg-card text-card-foreground">
+        {children}
+      </div>
     </section>
   );
 }
+
 
 export default function AdminInfoMusicPage() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -190,10 +195,11 @@ export default function AdminInfoMusicPage() {
     return curiosidades.some(c => key(c.artista, c.musica) === key(artista, musica));
   }, [curiosidades]);
 
-  const thClass = "px-4 py-3 font-black text-[#00BFF0] dark:text-[#00BFF0]";
-  const headRow = "text-left text-[11px] uppercase tracking-wider";
+  const thClass = "px-4 py-3 font-black text-white dark:text-white";
+  const headRow = "text-left text-[11px] uppercase tracking-wider bg-[#00BFF0]";
   const trClass =
     "border-t border-border/60 odd:bg-slate-50/50 dark:odd:bg-transparent even:bg-white dark:even:bg-transparent hover:bg-primary/5 transition-colors text-foreground";
+
 
   const handleDownloadCuriosidades = () => {
     const headers = ["Cliente", "Música", "Artista", "Curiosidade", "Data de Cadastro"];
@@ -280,7 +286,8 @@ export default function AdminInfoMusicPage() {
         count={filtered.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 shadow-sm">
+
             <tr className={headRow}>
               <th className={thClass}>Data</th>
               <th className={thClass}>Horário</th>
@@ -334,7 +341,8 @@ export default function AdminInfoMusicPage() {
           </button>
         </div>
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 shadow-sm">
+
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
@@ -365,7 +373,7 @@ export default function AdminInfoMusicPage() {
         count={semCuriosidade.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
