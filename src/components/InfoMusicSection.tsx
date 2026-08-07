@@ -202,21 +202,41 @@ export default function InfoMusicSection() {
 
         {/* Coluna Direita: Tabelas */}
         <div className="md:col-span-2 space-y-6">
-          {/* Pendentes */}
+          {/* Exceções */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-amber-500 rounded-full" />
-              <h4 className="text-xs font-bold uppercase tracking-wider">Músicas Pendentes</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider">Tabela EXCEÇÕES</h4>
             </div>
             <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[300px] overflow-y-auto">
               <div className="p-3 bg-white/50 border-b border-black/5">
-                <h5 className="text-[10px] font-black uppercase text-amber-600 mb-1">Todas as músicas cadastradas na lista de exceções</h5>
+                <h5 className="text-[10px] font-black uppercase text-amber-600 mb-1">Músicas cadastradas na lista de exceções</h5>
                 <div className="flex gap-2">
                   <input 
                     className="flex-1 text-[10px] px-2 py-1.5 rounded border bg-white focus:ring-1 focus:ring-amber-500 outline-none" 
                     placeholder="Termo (ex.: jingle ou artista)"
+                    value={newExcecao}
+                    onChange={(e) => setNewExcecao(e.target.value)}
                   />
-                  <Button size="sm" className="bg-[#C6F03C] hover:bg-[#b5dc35] text-black text-[10px] font-bold h-auto py-1 px-3">
+                  <Button 
+                    size="sm" 
+                    className="bg-[#C6F03C] hover:bg-[#b5dc35] text-black text-[10px] font-bold h-auto py-1 px-3"
+                    onClick={async () => {
+                      if (!newExcecao.trim() || !user) return;
+                      try {
+                        const { error } = await supabase.from("infomusic_excecoes").insert({
+                          user_id: user.id,
+                          termo: newExcecao.trim()
+                        });
+                        if (error) throw error;
+                        setNewExcecao("");
+                        loadExcecoes();
+                        toast.success("Exceção adicionada!");
+                      } catch (e) {
+                        toast.error("Erro ao adicionar");
+                      }
+                    }}
+                  >
                     + ADICIONAR EXCEÇÃO
                   </Button>
                 </div>
@@ -224,24 +244,42 @@ export default function InfoMusicSection() {
               <table className="w-full text-[11px]">
                 <thead className="bg-amber-500 text-white sticky top-0">
                   <tr>
-                    <th className="text-left px-3 py-2">Música / Artista</th>
+                    <th className="text-left px-3 py-2">Termo</th>
                     <th className="text-center px-3 py-2 w-16">Ação</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
-                    <tr key={r.id} className="border-t border-black/5">
+                  {excecoes.map(exc => (
+                    <tr key={exc.id} className="border-t border-black/5">
                       <td className="px-3 py-2">
-                        <div className="font-bold">{r.musica}</div>
-                        <div className="opacity-60">{r.artista}</div>
+                        <div className="font-bold">{exc.termo}</div>
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => { setEditMusic(r); setCuriosidadeText(""); }}>
-                          <Plus size={14} />
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="h-7 w-7 text-red-500 hover:text-red-700" 
+                          onClick={async () => {
+                            try {
+                              const { error } = await supabase.from("infomusic_excecoes").delete().eq("id", exc.id);
+                              if (error) throw error;
+                              loadExcecoes();
+                              toast.success("Exceção removida");
+                            } catch (e) {
+                              toast.error("Erro ao remover");
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
                         </Button>
                       </td>
                     </tr>
                   ))}
+                  {excecoes.length === 0 && (
+                    <tr>
+                      <td colSpan={2} className="px-3 py-4 text-center opacity-50 italic">Nenhuma exceção cadastrada</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
