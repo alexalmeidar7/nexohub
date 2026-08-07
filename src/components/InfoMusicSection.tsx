@@ -442,9 +442,11 @@ export default function InfoMusicSection() {
       });
 
       // Recent musicas_tocadas so played-but-never-in-infomusic tracks surface.
+      // Filter for current user to avoid cross-tenant pollution and ensure relevance.
       const { data: played } = await supabase
         .from("musicas_tocadas")
         .select("artista, musica, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(5000);
 
