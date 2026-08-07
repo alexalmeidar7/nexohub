@@ -1503,16 +1503,17 @@ export default function InfoMusicSection() {
       </div>
 
 
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <div
-              className="w-1 h-5 rounded-full"
-              style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
-            />
-            <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-              Tocadas
-            </h4>
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-1 h-5 rounded-full"
+                style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
+              />
+              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Últimas 50 Músicas Tocadas
+              </h4>
             <span
               className="text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums"
               style={{
