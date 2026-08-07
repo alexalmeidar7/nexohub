@@ -168,9 +168,14 @@ export default function InfoMusicSection() {
   return (
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-          Música no Ar & Curiosidades
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            Música no Ar & Curiosidades
+          </h3>
+          <div className="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-black border border-black/10 shadow-sm opacity-50">
+            tire essas informações circulado em vermelho
+          </div>
+        </div>
         <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
           <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
         </Button>
