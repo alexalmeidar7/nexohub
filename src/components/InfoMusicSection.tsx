@@ -166,15 +166,25 @@ export default function InfoMusicSection() {
 
   return (
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-3">
-          <h3 className="text-lg font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+          <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
+          <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             Música no Ar & Curiosidades
           </h3>
         </div>
-        <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
-          <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => load()} 
+            disabled={loading}
+            className="rounded-full bg-white/50 border-black/5 hover:bg-white shadow-sm"
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin mr-2" : "mr-2"} />
+            Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* No Ar Agora em destaque no topo */}
