@@ -399,9 +399,35 @@ export default function InfoMusicSection() {
 
         {/* Coluna 3: MUSICAS SEM CURIOSIDADES */}
         <div className="space-y-3 flex flex-col h-[600px]">
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-1 h-4 bg-red-500 rounded-full" />
-            <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+          <div className="flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-red-500 rounded-full" />
+              <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-bold text-red-500">buscar automaticamente a curiosidade das musicas sem curiosidades ?</span>
+              <Switch 
+                checked={aiEnabled}
+                onCheckedChange={async (val) => {
+                  if (!user) return;
+                  setTogglingAi(true);
+                  try {
+                    const { error } = await supabase
+                      .from("user_settings")
+                      .upsert({ user_id: user.id, infomusic_ai_enabled: val });
+                    if (error) throw error;
+                    setAiEnabled(val);
+                    toast.success(val ? "Busca automática ativada" : "Busca automática desativada");
+                  } catch (e) {
+                    toast.error("Erro ao atualizar configuração");
+                  } finally {
+                    setTogglingAi(false);
+                  }
+                }}
+                disabled={togglingAi}
+                className="scale-75 data-[state=checked]:bg-red-500"
+              />
+            </div>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
