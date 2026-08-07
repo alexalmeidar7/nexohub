@@ -1526,8 +1526,10 @@ export default function InfoMusicSection() {
             </p>
           )}
         </div>
+      </div>
     </div>
     <div className="space-y-6">
+
 
 
 
