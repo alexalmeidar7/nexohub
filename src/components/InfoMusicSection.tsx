@@ -769,9 +769,9 @@ export default function InfoMusicSection() {
   const quotaExhausted = monthlyQuota.count >= monthlyQuota.limit;
 
   return (
-    <>
     <div
       className="relative space-y-5 rounded-2xl p-5"
+
 
       style={{
         backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
