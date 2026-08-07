@@ -545,7 +545,7 @@ export default function InfoMusicSection() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
-                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
+                {rowsNoCuriosity.map(r => (
                   <tr key={r.id} className="hover:bg-red-50/30">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
@@ -577,7 +577,7 @@ export default function InfoMusicSection() {
                     </td>
                   </tr>
                 ))}
-                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length === 0 && (
+                {rowsNoCuriosity.length === 0 && (
                   <tr>
                     <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Tudo em dia!</td>
                   </tr>
