@@ -1940,8 +1940,9 @@ export default function InfoMusicSection() {
                     </td>
                   </tr>
                 ) : (
-                  rows
+                  [...rows]
                     .filter(r => r.curiosidade && r.curiosidade.trim())
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
                       <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
                         <td className="px-4 py-3 font-semibold">{r.artista}</td>
