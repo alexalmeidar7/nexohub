@@ -1839,7 +1839,7 @@ export default function InfoMusicSection() {
             </table>
         </div>
       </div>
-    </div>
+
 
 
 
