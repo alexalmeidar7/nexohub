@@ -478,24 +478,33 @@ export default function InfoMusicSection() {
               <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">busca automatica da curiosidade, deve ser uma curiosidade com texto curto, numa linaguagem espontânea</span>
-              <Switch 
-                checked={aiEnabled}
-                onCheckedChange={async (val) => {
+              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
+                {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
+              </span>
+              <Button
+                size="sm"
+                variant={aiEnabled ? "destructive" : "default"}
+                className={`h-7 px-3 text-[10px] font-bold rounded-full transition-all ${
+                  aiEnabled 
+                    ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20" 
+                    : "bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white shadow-lg shadow-[#00BFF0]/20"
+                }`}
+                onClick={async () => {
                   if (!user) return;
+                  const newVal = !aiEnabled;
                   setTogglingAi(true);
                   try {
                     const { error } = await supabase
                       .from("user_settings")
                       .update({ 
-                        infomusic_ai_enabled: val,
+                        infomusic_ai_enabled: newVal,
                         updated_at: new Date().toISOString()
                       })
                       .eq("user_id", user.id);
                     
                     if (error) throw error;
-                    setAiEnabled(val);
-                    toast.success(val ? "Busca automática ativada" : "Busca automática desativada");
+                    setAiEnabled(newVal);
+                    toast.success(newVal ? "Busca automática iniciada!" : "Busca automática pausada.");
                   } catch (e) {
                     toast.error("Erro ao atualizar configuração");
                   } finally {
@@ -503,8 +512,18 @@ export default function InfoMusicSection() {
                   }
                 }}
                 disabled={togglingAi}
-                className="scale-75 data-[state=checked]:bg-red-500"
-              />
+              >
+                {togglingAi ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : aiEnabled ? (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                    PAUSAR
+                  </div>
+                ) : (
+                  "INICIAR AGORA"
+                )}
+              </Button>
             </div>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
