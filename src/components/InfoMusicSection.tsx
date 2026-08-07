@@ -173,7 +173,7 @@ export default function InfoMusicSection() {
             Música no Ar & Curiosidades
           </h3>
           <div className="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-black border border-black/10 shadow-sm opacity-50">
-            tire essas informações circulado em vermelho
+            volta a seção das musicas cadastradas como EXCEÇÃO
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
