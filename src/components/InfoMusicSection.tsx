@@ -123,6 +123,12 @@ export default function InfoMusicSection() {
         ));
         
       } catch (e) {
+        if (e instanceof Error && e.message === "monthly_quota_exceeded") {
+          toast.error("Cota mensal de IA atingida (20/mês).");
+          setAiEnabled(false);
+        } else if (e instanceof Error && e.message === "ai_disabled") {
+          setAiEnabled(false);
+        }
         console.error("Erro na busca automática:", e);
       } finally {
         setFetchingIds(prev => prev.filter(id => id !== target.id));
