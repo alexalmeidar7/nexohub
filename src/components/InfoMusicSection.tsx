@@ -534,13 +534,19 @@ export default function InfoMusicSection() {
 
   const load = async () => {
     setLoading(true);
-    const { data, count } = await supabase
-      .from("infomusic")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(0, PAGE_SIZE - 1);
-    setRows(data || []);
-    setTotalCount(count || 0);
+    try {
+      const { data, count } = await supabase
+        .from("infomusic")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
+      
+      console.log("InfoMusic Loaded rows:", data?.length, "Total:", count);
+      setRows(data || []);
+      setTotalCount(count || 0);
+    } catch (e) {
+      console.error("Error loading infomusic:", e);
+    }
     setLoading(false);
   };
 
