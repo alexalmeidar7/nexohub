@@ -375,13 +375,14 @@ export default function InfoMusicSection() {
                       <Button 
                         size="sm" 
                         variant="outline" 
-                        className="h-7 text-[9px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                        className="h-7 text-[9px] font-bold border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1"
                         onClick={() => {
                           setEditMusic(r);
                           setCuriosidadeText("");
                         }}
                       >
-                        ADD
+                        <Plus size={10} />
+                        ESCREVER
                       </Button>
                     </td>
                   </tr>
@@ -394,7 +395,59 @@ export default function InfoMusicSection() {
               </tbody>
             </table>
           </div>
+      </div>
+
+      {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
+      <div className="space-y-3 flex flex-col mt-6">
+        <div className="flex items-center gap-2">
+          <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+          <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({rows.filter(r => r.curiosidade && r.curiosidade.trim()).length})</h4>
         </div>
+        <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
+          <table className="w-full text-[10px]">
+            <thead className="bg-emerald-500 text-white sticky top-0 z-10">
+              <tr>
+                <th className="text-left px-3 py-2 w-16">Hora</th>
+                <th className="text-left px-3 py-2">Música / Artista</th>
+                <th className="text-left px-3 py-2">Curiosidade</th>
+                <th className="text-center px-3 py-2 w-16">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/5">
+              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
+                <tr key={r.id} className="hover:bg-emerald-50/30">
+                  <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="px-3 py-2">
+                    <div className="font-bold truncate">{r.musica}</div>
+                    <div className="opacity-60 truncate">{r.artista}</div>
+                  </td>
+                  <td className="px-3 py-2">
+                    <div className="line-clamp-2 italic text-emerald-700">{r.curiosidade}</div>
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50"
+                      onClick={() => {
+                        setEditMusic(r);
+                        setCuriosidadeText(r.curiosidade);
+                      }}
+                    >
+                      <Plus size={14} />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-3 py-10 text-center opacity-40 italic">Nenhuma curiosidade cadastrada</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
       </div>
 
 
