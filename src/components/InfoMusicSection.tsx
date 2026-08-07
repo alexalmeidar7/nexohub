@@ -1499,10 +1499,6 @@ export default function InfoMusicSection() {
             </p>
           )}
         </div>
-      </div>
-      </div>
-
-
       <div className="space-y-6">
         <div>
           <div className="flex items-center justify-between mb-3">
