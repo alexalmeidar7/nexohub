@@ -368,7 +368,7 @@ export default function AdminInfoMusicPage() {
         count={semCuriosidade.length}
       >
         <table className="w-full text-sm border-collapse">
-          <thead className="sticky top-0 z-10 bg-slate-50 dark:bg-muted shadow-sm">
+          <thead className="sticky top-0 z-10 shadow-sm">
             <tr className={headRow}>
               <th className={thClass}>Cliente</th>
               <th className={thClass}>Música</th>
