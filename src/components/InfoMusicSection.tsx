@@ -1508,6 +1508,106 @@ export default function InfoMusicSection() {
             <div className="flex items-center gap-2">
               <div
                 className="w-1 h-5 rounded-full"
+                style={{ backgroundColor: "#f59e0b" }}
+              />
+              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+                Músicas SEM curiosidades cadastradas
+              </h4>
+            </div>
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[400px] overflow-y-auto mb-6">
+            <div className="flex items-center justify-between px-3 py-2 text-[10px] uppercase font-bold gap-2 flex-wrap" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)", backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 6%, var(--layout-page-bg, #fff))" }}>
+              <span>{filteredMissing.length} música(s) pendentes</span>
+              <div className="flex items-center gap-1.5 normal-case">
+                <button
+                  onClick={handleExportMissing}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide transition-opacity hover:opacity-90"
+                  style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 14%, transparent)", color: "var(--layout-accent-color, #2563eb)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 28%, transparent)" }}
+                >
+                  <Download size={11} /> Exportar
+                </button>
+                <button onClick={loadMissing} className="inline-flex items-center gap-1 opacity-70 hover:opacity-100">
+                  <RefreshCw size={10} /> Atualizar
+                </button>
+              </div>
+            </div>
+            {loadingMissing ? (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-5 h-5 animate-spin opacity-50" />
+              </div>
+            ) : filteredMissing.length === 0 ? (
+              <div className="text-center py-10 text-xs opacity-50 italic">
+                Nenhuma música pendente encontrada.
+              </div>
+            ) : (
+              <div className="divide-y divide-black/5">
+                {filteredMissing.map((m) => {
+                  const key = `${m.artista}::${m.musica}`.toLowerCase();
+                  const val = missingInputs[key] || "";
+                  const isSaving = savingMissingKey === key;
+                  return (
+                    <div key={key} className="p-3 bg-white/30 hover:bg-white/60 transition-colors">
+                      <div className="flex flex-col md:flex-row gap-3 items-start">
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold truncate text-[#00BFF0]">{m.artista}</div>
+                          <div className="text-[11px] font-semibold truncate opacity-80">{m.musica}</div>
+                        </div>
+                        <div className="flex-1 w-full md:w-auto flex flex-col gap-2">
+                          <textarea
+                            value={val}
+                            onChange={e => setMissingInputs(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder="Cadastrar curiosidade..."
+                            rows={1}
+                            className="w-full px-2 py-1.5 rounded-md text-xs outline-none border border-black/10 focus:border-[#00BFF0] transition-colors resize-none"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm"
+                              onClick={async () => {
+                                if (!val.trim() || !user) return;
+                                setSavingMissingKey(key);
+                                try {
+                                  const expiresAt = new Date();
+                                  expiresAt.setMonth(expiresAt.getMonth() + 6);
+                                  const { error } = await supabase.from("infomusic").insert({
+                                    user_id: user.id,
+                                    artista: m.artista,
+                                    musica: m.musica,
+                                    curiosidade: val.trim(),
+                                    deezer_artist_img: null,
+                                    expires_at: expiresAt.toISOString(),
+                                  });
+                                  if (error) throw error;
+                                  toast.success("Curiosidade cadastrada!");
+                                  setMissingRows(prev => prev.filter(x => `${x.artista}::${x.musica}`.toLowerCase() !== key));
+                                  setMissingInputs(prev => { const n = { ...prev }; delete n[key]; return n; });
+                                  await load();
+                                } catch (e) {
+                                  toast.error("Erro ao salvar");
+                                }
+                                setSavingMissingKey(null);
+                              }}
+                              disabled={isSaving || !val.trim()}
+                              className="h-7 text-[10px] font-bold uppercase px-3 bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white"
+                            >
+                              {isSaving ? <Loader2 size={10} className="animate-spin" /> : <Plus size={10} />} Salvar
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div
+                className="w-1 h-5 rounded-full"
                 style={{ backgroundColor: "var(--layout-accent-color, #2563eb)" }}
               />
               <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
