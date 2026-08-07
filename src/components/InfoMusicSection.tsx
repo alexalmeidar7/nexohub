@@ -171,7 +171,8 @@ export default function InfoMusicSection() {
         .from("infomusic")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       const { data, error } = await query;
       if (error) throw error;
