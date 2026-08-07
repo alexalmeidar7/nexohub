@@ -81,10 +81,17 @@ export default function InfoMusicSection() {
   useEffect(() => {
     if (!aiEnabled || isFetchingRef.current || !user) return;
 
+    const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
+    
     const noCuriosity = rows
       .filter(r => !r.curiosidade || !r.curiosidade.trim())
       .filter(r => !fetchingIds.includes(r.id))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()); // Começa pela última inserida
+      .filter(r => {
+        const artistaLower = r.artista.toLowerCase();
+        const musicaLower = r.musica.toLowerCase();
+        return !exceptionsArray.some(exc => artistaLower.includes(exc) || musicaLower.includes(exc));
+      })
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
     if (noCuriosity.length === 0) return;
 
@@ -95,11 +102,14 @@ export default function InfoMusicSection() {
       setFetchingIds(prev => [...prev, target.id]);
       
       try {
-        const { data, error } = await supabase.functions.invoke("fetch-ai-curiosity", {
-          body: { artista: target.artista, musica: target.musica }
+        const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: target.artista, musica: target.musica, userId: user.id }
         });
 
-        if (error || !data?.curiosity) throw new Error("Falha na busca");
+        if (error || !data?.curiosidade) {
+          console.warn("Retorno inválido ou pulado pela função:", data);
+          throw new Error(data?.reason || "Falha na busca");
+        }
 
         const expiresAt = new Date();
         expiresAt.setMonth(expiresAt.getMonth() + 6);
@@ -107,7 +117,7 @@ export default function InfoMusicSection() {
         const { error: updateError } = await supabase
           .from("infomusic")
           .update({ 
-            curiosidade: data.curiosity.trim(), 
+            curiosidade: data.curiosidade.trim(), 
             expires_at: expiresAt.toISOString() 
           })
           .eq("id", target.id);
@@ -116,10 +126,16 @@ export default function InfoMusicSection() {
         
         // Atualiza o estado local para mover a música de lista
         setRows(prev => prev.map(r => 
-          r.id === target.id ? { ...r, curiosidade: data.curiosity.trim() } : r
+          r.id === target.id ? { ...r, curiosidade: data.curiosidade.trim() } : r
         ));
         
       } catch (e) {
+        if (e instanceof Error && e.message === "monthly_quota_exceeded") {
+          toast.error("Cota mensal de IA atingida (20/mês).");
+          setAiEnabled(false);
+        } else if (e instanceof Error && e.message === "ai_disabled") {
+          setAiEnabled(false);
+        }
         console.error("Erro na busca automática:", e);
       } finally {
         setFetchingIds(prev => prev.filter(id => id !== target.id));
@@ -161,7 +177,8 @@ export default function InfoMusicSection() {
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
     ]);
-    setExcecoes(exceptionsRes.data || []);
+    const exceptions = exceptionsRes.data || [];
+    setExcecoes(exceptions);
     const data = settingsRes.data;
     setAiEnabled(data?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
