@@ -1953,7 +1953,7 @@ export default function InfoMusicSection() {
             </div>
           </div>
           
-          <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[400px] overflow-y-auto">
+          <div className="rounded-2xl overflow-hidden border border-black/10 bg-white/50 backdrop-blur-sm shadow-sm max-h-[600px] overflow-y-auto">
             <table className="w-full text-xs">
               <thead className="sticky top-0 z-10 bg-[#00BFF0] text-white">
                 <tr>
@@ -1963,15 +1963,18 @@ export default function InfoMusicSection() {
                 </tr>
               </thead>
               <tbody>
-                {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="px-4 py-10 text-center opacity-50 italic">
-                      Nenhuma música cadastrada com curiosidade no usuário.
-                    </td>
-                  </tr>
-                ) : (
-                  [...rows]
-                    .filter(r => r.curiosidade && r.curiosidade.trim())
+                {(() => {
+                  const registeredRows = rows.filter(r => r.curiosidade && r.curiosidade.trim());
+                  if (registeredRows.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={3} className="px-4 py-10 text-center opacity-50 italic">
+                          {loading ? "Carregando todas as curiosidades..." : "Nenhuma música cadastrada com curiosidade no usuário."}
+                        </td>
+                      </tr>
+                    );
+                  }
+                  return registeredRows
                     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
                       <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
@@ -1979,8 +1982,8 @@ export default function InfoMusicSection() {
                         <td className="px-4 py-3">{r.musica}</td>
                         <td className="px-4 py-3 opacity-80 leading-relaxed">{r.curiosidade}</td>
                       </tr>
-                    ))
-                )}
+                    ));
+                })()}
               </tbody>
             </table>
           </div>
