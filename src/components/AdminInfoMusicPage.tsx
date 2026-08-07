@@ -91,17 +91,18 @@ export default function AdminInfoMusicPage() {
   }, []);
 
   const loadRows = useCallback(async () => {
+    // Aumentando os limites para trazer mais registros e ter uma visão real
     const [tocadas, infos] = await Promise.all([
       supabase
         .from("musicas_tocadas")
         .select("id, user_id, dia, horario, artista, musica, programa, created_at")
         .order("created_at", { ascending: false })
-        .limit(300),
+        .limit(100),
       supabase
         .from("infomusic")
         .select("id, user_id, artista, musica, curiosidade, created_at")
         .order("created_at", { ascending: false })
-        .limit(500),
+        .limit(2000), // Aumentado significativamente para capturar todas as curiosidades
     ]);
     setRows((tocadas.data || []) as Row[]);
     setCuriosidades(
