@@ -99,7 +99,10 @@ export default function InfoMusicSection() {
           body: { artista: target.artista, musica: target.musica, userId: user.id }
         });
 
-        if (error || !data?.curiosity) throw new Error("Falha na busca");
+        if (error || !data?.curiosidade) {
+          console.warn("Retorno inválido ou pulado pela função:", data);
+          throw new Error(data?.reason || "Falha na busca");
+        }
 
         const expiresAt = new Date();
         expiresAt.setMonth(expiresAt.getMonth() + 6);
