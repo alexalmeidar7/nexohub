@@ -540,18 +540,24 @@ export default function InfoMusicSection() {
     try {
       if (!user) return;
       
-      const { data, count } = await supabase
+      const { data, count, error } = await supabase
         .from("infomusic")
         .select("*", { count: "exact" })
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
-        .limit(HARD_CAP); // Load a large batch to ensure the "Registered" table is full
+        .limit(HARD_CAP);
       
-      console.log("InfoMusic Registered rows loaded:", data?.length, "Total available:", count);
+      if (error) {
+        console.error("Supabase error loading infomusic:", error);
+        toast.error("Erro ao carregar curiosidades");
+        return;
+      }
+      
+      console.log("InfoMusic DATA LOADED:", data?.length, "Total available:", count);
       setRows(data || []);
       setTotalCount(count || 0);
     } catch (e) {
-      console.error("Error loading infomusic:", e);
+      console.error("Catch error loading infomusic:", e);
     }
     setLoading(false);
   };
@@ -1901,10 +1907,10 @@ export default function InfoMusicSection() {
                       </tr>
                     );
                   }
+                  console.log("Rendering Registered Rows:", registeredRows.length);
                   return registeredRows
-                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
                     .map((r, i) => (
-                      <tr key={r.id} className="border-t border-black/5 hover:bg-black/5 transition-colors">
+                      <tr key={r.id || `reg-${i}`} className="border-t border-black/5 hover:bg-black/5 transition-colors">
                         <td className="px-4 py-3 font-semibold">{r.artista}</td>
                         <td className="px-4 py-3">{r.musica}</td>
                         <td className="px-4 py-3 opacity-80 leading-relaxed">{r.curiosidade}</td>
