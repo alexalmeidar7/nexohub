@@ -409,38 +409,6 @@ export default function InfoMusicSection() {
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
             <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
           </div>
-          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/50 flex-shrink-0">
-            <h5 className="text-[9px] font-black uppercase text-amber-700 mb-2">Bloquear artista ou termo</h5>
-            <div className="flex gap-2">
-              <input 
-                className="flex-1 text-[10px] px-2 py-1.5 rounded border border-amber-200 bg-white focus:ring-1 focus:ring-amber-500 outline-none" 
-                placeholder="Ex: Jingle, Comercial..."
-                value={newExcecao}
-                onChange={(e) => setNewExcecao(e.target.value)}
-              />
-              <Button 
-                size="sm" 
-                className="bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-bold h-auto py-1 px-3"
-                onClick={async () => {
-                  if (!newExcecao.trim() || !user) return;
-                  try {
-                    const { error } = await supabase.from("infomusic_excecoes").insert({
-                      user_id: user.id,
-                      termo: newExcecao.trim()
-                    });
-                    if (error) throw error;
-                    setNewExcecao("");
-                    loadExcecoes();
-                    toast.success("Exceção adicionada!");
-                  } catch (e) {
-                    toast.error("Erro ao adicionar");
-                  }
-                }}
-              >
-                + ADD
-              </Button>
-            </div>
-          </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
               <thead className="bg-amber-500 text-white sticky top-0 z-10">
