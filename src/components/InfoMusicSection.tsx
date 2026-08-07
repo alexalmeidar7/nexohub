@@ -1503,6 +1503,12 @@ export default function InfoMusicSection() {
     </div>
 
     <div className="space-y-6">
+        <div className="flex flex-col gap-1.5 p-4 rounded-2xl bg-white/30 border border-black/5 mb-4">
+          <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+            O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
+          </p>
+        </div>
+
         <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
