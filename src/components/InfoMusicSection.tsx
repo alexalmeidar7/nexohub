@@ -640,7 +640,7 @@ export default function InfoMusicSection() {
           </table>
         </div>
       </div>
-      </div>
+    </div>
 
 
       {/* Modal de Edição */}
