@@ -173,7 +173,7 @@ export default function InfoMusicSection() {
             Música no Ar & Curiosidades
           </h3>
           <div className="px-2 py-0.5 rounded bg-white text-[10px] font-bold text-black border border-black/10 shadow-sm opacity-50">
-            EM MSUCIA NO AR... onde esta a seção das musicas cadastradas como EXCEÇÃO ?
+            tire essas informações circulado em vermelho
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => load()} disabled={loading}>
@@ -185,7 +185,14 @@ export default function InfoMusicSection() {
         {/* Coluna Esquerda: Status e IA */}
         <div className="md:col-span-1 space-y-4">
           <div className="p-4 rounded-xl bg-white/50 border border-black/5">
-             <h4 className="text-xs font-bold uppercase mb-3 opacity-60">TIRAR Status IA - GERAÇÃO AUTOMÁTICA</h4>
+             <h4 className="text-xs font-bold uppercase mb-3 opacity-60">Status IA</h4>
+             <div className="flex items-center justify-between">
+               <span className="text-sm">Geração Automática</span>
+               <Switch checked={aiEnabled} onCheckedChange={setAiEnabled} />
+             </div>
+             <div className="mt-3 text-[10px] opacity-50">
+               Cota Mensal: {monthlyQuota.count} / {monthlyQuota.limit}
+             </div>
           </div>
           
           {nowPlaying && (
