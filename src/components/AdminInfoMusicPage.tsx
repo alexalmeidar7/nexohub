@@ -298,7 +298,7 @@ export default function AdminInfoMusicPage() {
             {!loading && filtered.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
             )}
-            {filtered.map((r) => (
+            {filtered.slice(0, 100).map((r) => (
               <tr key={r.id} className={trClass}>
                 <td className="px-4 py-2.5 whitespace-nowrap text-foreground">{formatDia(r.dia, r.created_at)}</td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs text-foreground/90">{(r.horario || "").slice(0, 8)}</td>
