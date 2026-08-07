@@ -1689,9 +1689,7 @@ export default function InfoMusicSection() {
           backgroundColor: "var(--layout-page-bg, #fff)",
           boxShadow: "0 8px 24px -18px color-mix(in srgb, var(--layout-page-text, #1a1a1a) 30%, transparent)",
         }}>
-          {false ? (
-            <div />
-          ) : loading ? (
+          {loading ? (
             <div className="flex items-center justify-center gap-2 py-10 text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 55%, transparent)" }}>
               <Loader2 size={14} className="animate-spin" /> Carregando...
             </div>
