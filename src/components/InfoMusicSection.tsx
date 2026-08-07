@@ -1580,6 +1580,7 @@ export default function InfoMusicSection() {
             <option value="all">Todas as músicas</option>
             <option value="sem_curiosidade">Músicas sem curiosidade</option>
             <option value="artista">Músicas com curiosidades cadastradas</option>
+            <option value="sem_curiosidade">Músicas sem curiosidades cadastradas</option>
           </select>
 
         </div>
