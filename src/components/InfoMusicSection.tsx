@@ -472,11 +472,24 @@ export default function InfoMusicSection() {
 
         {/* Coluna 3: MUSICAS SEM CURIOSIDADES */}
         <div className="space-y-3 flex flex-col h-[600px]">
-          <div className="flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-1 h-4 bg-red-500 rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+          <div className="flex flex-col gap-2 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-red-500 rounded-full" />
+                <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+              </div>
             </div>
+            {aiEnabled && rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length > 0 && (
+              <div className="w-full bg-black/5 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className="bg-red-500 h-full transition-all duration-500" 
+                  style={{ 
+                    width: `${Math.round(((rows.filter(r => r.curiosidade && r.curiosidade.trim()).length) / rows.length) * 100)}%` 
+                  }}
+                />
+              </div>
+            )}
+          </div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
                 {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
