@@ -116,7 +116,7 @@ export default function InfoMusicSection() {
         
         // Atualiza o estado local para mover a música de lista
         setRows(prev => prev.map(r => 
-          r.id === target.id ? { ...r, curiosidade: data.curiosity.trim() } : r
+          r.id === target.id ? { ...r, curiosidade: data.curiosidade.trim() } : r
         ));
         
       } catch (e) {
