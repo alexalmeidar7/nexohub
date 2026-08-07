@@ -425,7 +425,7 @@ export default function InfoMusicSection() {
       </div>
 
       {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
-      <div className="space-y-3 flex flex-col mt-6">
+      <div className="space-y-3 flex flex-col mt-6 w-full col-span-full">
         <div className="flex items-center gap-2">
           <div className="w-1 h-4 bg-emerald-500 rounded-full" />
           <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({rows.filter(r => r.curiosidade && r.curiosidade.trim()).length})</h4>
