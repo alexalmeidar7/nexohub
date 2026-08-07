@@ -258,9 +258,10 @@ export default function InfoMusicSection() {
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          className="h-6 w-6 text-amber-500 hover:bg-amber-50 flex-shrink-0"
-                          title="inserir esse registro na lista de exceções"
-                          onClick={async () => {
+                          className="h-6 w-6 text-amber-500 hover:bg-amber-50 flex-shrink-0 relative z-20"
+                          title="INSERIR O REGISTRO NA LISTA DE EXCEÇÕES"
+                          onClick={async (e) => {
+                            e.stopPropagation();
                             if (!user) return;
                             try {
                               const { error } = await supabase.from("infomusic_excecoes").insert({
