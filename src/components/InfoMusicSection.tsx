@@ -436,15 +436,18 @@ export default function InfoMusicSection() {
         const res = await supabase
           .from("infomusic")
           .select("artista, musica, curiosidade, created_at")
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false })
           .range(from, to);
         return { data: res.data, error: res.error };
       });
 
       // Recent musicas_tocadas so played-but-never-in-infomusic tracks surface.
+      // Filter for current user to avoid cross-tenant pollution and ensure relevance.
       const { data: played } = await supabase
         .from("musicas_tocadas")
         .select("artista, musica, created_at")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(5000);
 
@@ -1513,10 +1516,15 @@ export default function InfoMusicSection() {
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
           </p>
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-            <p className="text-[11px] font-medium text-emerald-800">
-              Músicas com curiosidades cadastradas (como <strong>MANCHILD - SABRINA CARPENTER</strong>) devem aparecer na lista azul abaixo após o carregamento.
+          <div className="flex flex-col gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+              <p className="text-[11px] font-bold text-amber-800 uppercase tracking-tight">
+                Músicas sem curiosidade (Pendentes)
+              </p>
+            </div>
+            <p className="text-[11px] text-amber-900/70 leading-relaxed pl-5">
+              Esta tabela mostra as músicas que tocaram recentemente no seu estúdio mas ainda não têm curiosidade cadastrada. Clique em <strong>"Atualizar"</strong> para carregar o histórico mais recente.
             </p>
           </div>
         </div>
@@ -1528,8 +1536,9 @@ export default function InfoMusicSection() {
                 className="w-1 h-5 rounded-full"
                 style={{ backgroundColor: "#f59e0b" }}
               />
-              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <h4 className="text-sm font-black uppercase tracking-wider flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 Músicas SEM curiosidades cadastradas
+                <span className="text-[10px] font-normal lowercase opacity-40">(Histórico recente)</span>
               </h4>
             </div>
           </div>
@@ -1550,12 +1559,18 @@ export default function InfoMusicSection() {
               </div>
             </div>
             {loadingMissing ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-5 h-5 animate-spin opacity-50" />
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="w-6 h-6 animate-spin text-[#f59e0b]" />
+                <span className="text-xs font-medium opacity-60">Carregando histórico de músicas...</span>
               </div>
             ) : filteredMissing.length === 0 ? (
-              <div className="text-center py-10 text-xs opacity-50 italic">
-                Nenhuma música pendente encontrada.
+              <div className="text-center py-10 px-4">
+                <p className="text-xs opacity-50 italic mb-2">
+                  Nenhuma música pendente encontrada.
+                </p>
+                <p className="text-[10px] opacity-40 leading-relaxed max-w-xs mx-auto">
+                  As músicas tocadas recentemente que ainda não possuem curiosidade cadastrada aparecerão aqui automaticamente.
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-black/5">
