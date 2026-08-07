@@ -91,19 +91,22 @@ export default function AdminInfoMusicPage() {
   }, []);
 
   const loadRows = useCallback(async () => {
-    // Aumentando os limites para trazer mais registros e ter uma visão real
+    setLoading(true);
+    // Buscamos um volume maior de músicas tocadas para ter uma base estatística real por cliente
+    // E buscamos TODAS as curiosidades possíveis (aumentando o limite para cobrir a base histórica)
     const [tocadas, infos] = await Promise.all([
       supabase
         .from("musicas_tocadas")
         .select("id, user_id, dia, horario, artista, musica, programa, created_at")
         .order("created_at", { ascending: false })
-        .limit(100),
+        .limit(1000), // Aumentado de 100 para 1000 para estatísticas mais precisas
       supabase
         .from("infomusic")
         .select("id, user_id, artista, musica, curiosidade, created_at")
         .order("created_at", { ascending: false })
-        .limit(2000), // Aumentado significativamente para capturar todas as curiosidades
+        .limit(5000), // Aumentado para 5000 para garantir que pegamos todo o histórico de curiosidades
     ]);
+    
     setRows((tocadas.data || []) as Row[]);
     setCuriosidades(
       ((infos.data || []) as CuriosidadeRow[]).filter((c) => (c.curiosidade || "").trim().length > 0)
@@ -129,7 +132,7 @@ export default function AdminInfoMusicPage() {
           if (!clientesRef.current[novo.user_id]) loadClientes();
           setRows((prev) => {
             if (prev.some((r) => r.id === novo.id)) return prev;
-            return [novo, ...prev].slice(0, 100);
+            return [novo, ...prev].slice(0, 1000);
           });
           setLastUpdate(new Date());
         }
@@ -169,19 +172,13 @@ export default function AdminInfoMusicPage() {
 
   // Músicas tocadas (por cliente) que não possuem curiosidade cadastrada
   const semCuriosidade = useMemo(() => {
-    // Para "sem curiosidade", queremos mostrar as que REALMENTE não tem nada cadastrado por NINGUÉM ou pelo CLIENTE?
-    // O usuário disse: "verifique se na tabela de curiosidades cadastradas esta trazendo TODAS AS CURIOSIDADES ja cadastradas de todos os clientes"
-    // E "na tabela de musicas sem curiosidades cadastradas, verifique se o total de registro esta trazendo realmente o numero real de todos os clientes"
-    // Então a lógica deve ser global: se a música tem curiosidade em QUALQUER cliente, ela tem curiosidade.
     const cadastradasGlobais = new Set(curiosidades.map((c) => key(c.artista, c.musica)));
     const seen = new Set<string>();
     const out: Row[] = [];
     
-    // Como rows agora é limitado a 100 para "conferência", para a lista de "sem curiosidade" talvez precisássemos de mais?
-    // Mas vamos manter a coerência com o estado atual que usa 'rows'.
     rows.forEach((r) => {
-      const k = key(r.artista, r.musica);
-      if (cadastradasGlobais.has(k) || seen.has(k)) return;
+      const k = `${r.user_id}::${key(r.artista, r.musica)}`;
+      if (cadastradasGlobais.has(key(r.artista, r.musica)) || seen.has(k)) return;
       if (!norm(r.musica)) return;
       seen.add(k);
       out.push(r);
@@ -301,7 +298,7 @@ export default function AdminInfoMusicPage() {
             {!loading && filtered.length === 0 && (
               <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Nenhuma música registrada.</td></tr>
             )}
-            {filtered.map((r) => (
+            {filtered.slice(0, 100).map((r) => (
               <tr key={r.id} className={trClass}>
                 <td className="px-4 py-2.5 whitespace-nowrap text-foreground">{formatDia(r.dia, r.created_at)}</td>
                 <td className="px-4 py-2.5 whitespace-nowrap font-mono text-xs text-foreground/90">{(r.horario || "").slice(0, 8)}</td>
