@@ -1536,8 +1536,9 @@ export default function InfoMusicSection() {
                 className="w-1 h-5 rounded-full"
                 style={{ backgroundColor: "#f59e0b" }}
               />
-              <h4 className="text-sm font-black uppercase tracking-wider" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
+              <h4 className="text-sm font-black uppercase tracking-wider flex items-center gap-2" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
                 Músicas SEM curiosidades cadastradas
+                <span className="text-[10px] font-normal lowercase opacity-40">(Histórico recente)</span>
               </h4>
             </div>
           </div>
