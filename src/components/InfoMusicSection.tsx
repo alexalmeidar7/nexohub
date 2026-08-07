@@ -642,7 +642,6 @@ export default function InfoMusicSection() {
       </div>
     </div>
 
-
       {/* Modal de Edição */}
       <Dialog open={!!editMusic} onOpenChange={() => setEditMusic(null)}>
         <DialogContent>
