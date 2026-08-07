@@ -1516,10 +1516,15 @@ export default function InfoMusicSection() {
           <p className="text-xs leading-relaxed opacity-80" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             O usuário deve cadastrar as curiosidades. À medida que for cadastrando, as músicas vão entrando na tabela de <strong>Músicas com Curiosidades Cadastradas</strong>.
           </p>
-          <div className="flex items-center gap-2 p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-            <p className="text-[11px] font-medium text-emerald-800">
-              Músicas com curiosidades cadastradas (como <strong>MANCHILD - SABRINA CARPENTER</strong>) devem aparecer na lista azul abaixo após o carregamento.
+          <div className="flex flex-col gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={14} className="text-amber-600 shrink-0" />
+              <p className="text-[11px] font-bold text-amber-800 uppercase tracking-tight">
+                Músicas sem curiosidade (Pendentes)
+              </p>
+            </div>
+            <p className="text-[11px] text-amber-900/70 leading-relaxed pl-5">
+              Esta tabela mostra as músicas que tocaram recentemente no seu estúdio mas ainda não têm curiosidade cadastrada. Clique em <strong>"Atualizar"</strong> para carregar o histórico mais recente.
             </p>
           </div>
         </div>
