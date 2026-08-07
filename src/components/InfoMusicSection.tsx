@@ -46,7 +46,9 @@ export default function InfoMusicSection() {
   const [newExcecaoCapa, setNewExcecaoCapa] = useState("");
   const [newExcecaoFundo, setNewExcecaoFundo] = useState("");
   const [uploadProgress, setUploadProgress] = useState<{ active: boolean; stage: string; percent: number }>({ active: false, stage: "", percent: 0 });
-  const [previewImage, setPreviewImage] = useState<{ url: string; type: "Capa" | "Fundo" } | null>(null);
+  const [editMusic, setEditMusic] = useState<any | null>(null);
+  const [curiosidadeText, setCuriosidadeText] = useState("");
+
 
   const loadExcecoes = async () => {
     if (!user) return;
