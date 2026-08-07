@@ -273,7 +273,7 @@ export default function InfoMusicSection() {
         <div className="space-y-3 flex flex-col h-[600px]">
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
-            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
           </div>
           <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/50 flex-shrink-0">
             <h5 className="text-[9px] font-black uppercase text-amber-700 mb-2">Bloquear artista ou termo</h5>
