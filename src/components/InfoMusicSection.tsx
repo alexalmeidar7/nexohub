@@ -96,7 +96,7 @@ export default function InfoMusicSection() {
 
     const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
     
-    const noCuriosity = rows
+    const noCuriosity = rowsNoCuriosity
       .filter(r => !r.curiosidade || !r.curiosidade.trim())
       .filter(r => !fetchingIds.includes(r.id))
       .filter(r => {
