@@ -178,163 +178,225 @@ export default function InfoMusicSection() {
         </Button>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        {/* Coluna Esquerda: No Ar Agora */}
-        <div className="md:col-span-1 space-y-4">
-          {nowPlaying && (
-            <div className="p-4 rounded-xl bg-[#00BFF0]/10 border border-[#00BFF0]/20">
-              <h4 className="text-[10px] font-bold uppercase text-[#00BFF0] mb-2">No Ar Agora</h4>
-              <div className="flex gap-3">
-                {nowPlaying.capa && <img src={nowPlaying.capa} className="w-12 h-12 rounded object-cover" />}
-                <div className="min-w-0">
-                  <div className="font-bold text-sm truncate">{nowPlaying.musica}</div>
-                  <div className="text-xs opacity-70 truncate">{nowPlaying.artista}</div>
-                </div>
-              </div>
-              {nowPlaying.curiosity && (
-                <div className="mt-2 text-[11px] italic opacity-80 line-clamp-3">
-                  "{nowPlaying.curiosity}"
+      {/* No Ar Agora em destaque no topo */}
+      {nowPlaying && (
+        <div className="p-4 rounded-xl bg-[#00BFF0]/10 border border-[#00BFF0]/20 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 min-w-0">
+            <div className="relative group">
+              {nowPlaying.capa ? (
+                <img src={nowPlaying.capa} className="w-16 h-16 rounded-lg object-cover shadow-lg" alt="Capa" />
+              ) : (
+                <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <Music className="text-gray-400" size={24} />
                 </div>
               )}
+              <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">NO AR</div>
             </div>
-          )}
-        </div>
-
-        {/* Coluna Direita: Tabelas */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Exceções */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-1 h-4 bg-amber-500 rounded-full" />
-              <h4 className="text-xs font-bold uppercase tracking-wider">Tabela EXCEÇÕES</h4>
-            </div>
-            <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[300px] overflow-y-auto">
-              <div className="p-3 bg-white/50 border-b border-black/5">
-                <h5 className="text-[10px] font-black uppercase text-amber-600 mb-1">Músicas cadastradas na lista de exceções</h5>
-                <div className="flex gap-2">
-                  <input 
-                    className="flex-1 text-[10px] px-2 py-1.5 rounded border bg-white focus:ring-1 focus:ring-amber-500 outline-none" 
-                    placeholder="Termo (ex.: jingle ou artista)"
-                    value={newExcecao}
-                    onChange={(e) => setNewExcecao(e.target.value)}
-                  />
-                  <Button 
-                    size="sm" 
-                    className="bg-[#C6F03C] hover:bg-[#b5dc35] text-black text-[10px] font-bold h-auto py-1 px-3"
-                    onClick={async () => {
-                      if (!newExcecao.trim() || !user) return;
-                      try {
-                        const { error } = await supabase.from("infomusic_excecoes").insert({
-                          user_id: user.id,
-                          termo: newExcecao.trim()
-                        });
-                        if (error) throw error;
-                        setNewExcecao("");
-                        loadExcecoes();
-                        toast.success("Exceção adicionada!");
-                      } catch (e) {
-                        toast.error("Erro ao adicionar");
-                      }
-                    }}
-                  >
-                    + ADICIONAR EXCEÇÃO
-                  </Button>
-                </div>
-              </div>
-              <table className="w-full text-[11px]">
-                <thead className="bg-amber-500 text-white sticky top-0">
-                  <tr>
-                    <th className="text-left px-3 py-2">Termo</th>
-                    <th className="text-center px-3 py-2 w-16">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {excecoes.map(exc => (
-                    <tr key={exc.id} className="border-t border-black/5">
-                      <td className="px-3 py-2">
-                        <div className="font-bold">{exc.termo}</div>
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <Button 
-                          size="icon" 
-                          variant="ghost" 
-                          className="h-7 w-7 text-red-500 hover:text-red-700" 
-                          onClick={async () => {
-                            try {
-                              const { error } = await supabase.from("infomusic_excecoes").delete().eq("id", exc.id);
-                              if (error) throw error;
-                              loadExcecoes();
-                              toast.success("Exceção removida");
-                            } catch (e) {
-                              toast.error("Erro ao remover");
-                            }
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                  {excecoes.length === 0 && (
-                    <tr>
-                      <td colSpan={2} className="px-3 py-4 text-center opacity-50 italic">Nenhuma exceção cadastrada</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="min-w-0">
+              <h4 className="text-[10px] font-bold uppercase text-[#00BFF0] tracking-widest mb-1">Tocando Agora</h4>
+              <div className="font-black text-lg truncate leading-tight" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>{nowPlaying.musica}</div>
+              <div className="text-sm opacity-70 truncate font-medium">{nowPlaying.artista}</div>
             </div>
           </div>
+          {nowPlaying.curiosity && (
+            <div className="hidden md:block flex-1 max-w-xl bg-white/40 p-3 rounded-lg border border-white/60 italic text-xs leading-relaxed opacity-90 shadow-sm">
+              <Sparkles size={14} className="text-[#00BFF0] mb-1 inline mr-2" />
+              "{nowPlaying.curiosity}"
+            </div>
+          )}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex-shrink-0 text-[#00BFF0] hover:bg-[#00BFF0]/10"
+            onClick={() => {
+              setEditMusic({ musica: nowPlaying.musica, artista: nowPlaying.artista, id: "now-playing" });
+              setCuriosidadeText(nowPlaying.curiosity || "");
+            }}
+          >
+            <Plus size={16} className="mr-2" />
+            CADASTRAR CURIOSIDADE
+          </Button>
+        </div>
+      )}
 
-          {/* Histórico e Busca */}
-          <div className="space-y-3">
-             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-                  <h4 className="text-xs font-bold uppercase tracking-wider">Histórico Recente</h4>
-                </div>
-                <div className="flex gap-2">
-                  <input 
-                    className="text-[10px] px-2 py-1 rounded border bg-white/50 w-32" 
-                    placeholder="Buscar..." 
-                    value={search} 
-                    onChange={e => setSearch(e.target.value)}
-                  />
-                  <select 
-                    className="text-[10px] px-1 py-1 rounded border bg-white/50"
-                    value={filterField}
-                    onChange={e => setFilterField(e.target.value as any)}
-                  >
-                    <option value="all">Todos</option>
-                    <option value="artista">Com Curiosidade</option>
-                    <option value="sem_curiosidade">Sem Curiosidade</option>
-                  </select>
-                </div>
-             </div>
-             <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto">
-               <table className="w-full text-[11px]">
-                 <thead className="bg-[#00BFF0] text-white sticky top-0">
-                   <tr>
-                     <th className="text-left px-3 py-2">Data</th>
-                     <th className="text-left px-3 py-2">Música</th>
-                   </tr>
-                 </thead>
-                 <tbody>
-                   {filteredRows.map(r => (
-                     <tr key={r.id} className="border-t border-black/5" style={{ backgroundColor: r.curiosidade ? "rgba(16,185,129,0.05)" : "rgba(239,68,68,0.05)" }}>
-                       <td className="px-3 py-2 whitespace-nowrap opacity-50">{new Date(r.created_at).toLocaleTimeString()}</td>
-                       <td className="px-3 py-2">
-                         <div className="font-bold">{r.musica}</div>
-                         <div className="opacity-60">{r.artista}</div>
-                         {r.curiosidade && <div className="mt-1 text-[10px] italic border-l-2 border-[#00BFF0] pl-2 py-0.5">{r.curiosidade}</div>}
-                       </td>
-                     </tr>
-                   ))}
-                 </tbody>
-               </table>
-             </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Coluna 1: ULTIMAS TOCADAS */}
+        <div className="space-y-3 flex flex-col h-[600px]">
+          <div className="flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
+              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS</h4>
+            </div>
+            <div className="flex gap-1">
+              <input 
+                className="text-[9px] px-2 py-1 rounded border bg-white/50 w-24 outline-none focus:ring-1 focus:ring-[#00BFF0]" 
+                placeholder="Buscar..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
+            <table className="w-full text-[10px]">
+              <thead className="bg-[#00BFF0] text-white sticky top-0 z-10">
+                <tr>
+                  <th className="text-left px-3 py-2 w-16">Hora</th>
+                  <th className="text-left px-3 py-2">Música / Artista</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {filteredRows.map(r => (
+                  <tr key={r.id} className="transition-colors hover:bg-black/5" style={{ backgroundColor: r.curiosidade ? "rgba(16,185,129,0.03)" : "rgba(239,68,68,0.03)" }}>
+                    <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                    <td className="px-3 py-2">
+                      <div className="font-bold text-[#1a1a1a] truncate">{r.musica}</div>
+                      <div className="opacity-60 truncate">{r.artista}</div>
+                      {r.curiosidade && (
+                        <div className="mt-1 text-[9px] italic text-[#00BFF0] bg-[#00BFF0]/5 p-1 rounded border-l border-[#00BFF0] line-clamp-2">
+                          {r.curiosidade}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {filteredRows.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Nenhum registro encontrado</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Coluna 2: EXCEÇÕES */}
+        <div className="space-y-3 flex flex-col h-[600px]">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-1 h-4 bg-amber-500 rounded-full" />
+            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES</h4>
+          </div>
+          <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/50 flex-shrink-0">
+            <h5 className="text-[9px] font-black uppercase text-amber-700 mb-2">Bloquear artista ou termo</h5>
+            <div className="flex gap-2">
+              <input 
+                className="flex-1 text-[10px] px-2 py-1.5 rounded border border-amber-200 bg-white focus:ring-1 focus:ring-amber-500 outline-none" 
+                placeholder="Ex: Jingle, Comercial..."
+                value={newExcecao}
+                onChange={(e) => setNewExcecao(e.target.value)}
+              />
+              <Button 
+                size="sm" 
+                className="bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-bold h-auto py-1 px-3"
+                onClick={async () => {
+                  if (!newExcecao.trim() || !user) return;
+                  try {
+                    const { error } = await supabase.from("infomusic_excecoes").insert({
+                      user_id: user.id,
+                      termo: newExcecao.trim()
+                    });
+                    if (error) throw error;
+                    setNewExcecao("");
+                    loadExcecoes();
+                    toast.success("Exceção adicionada!");
+                  } catch (e) {
+                    toast.error("Erro ao adicionar");
+                  }
+                }}
+              >
+                + ADD
+              </Button>
+            </div>
+          </div>
+          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
+            <table className="w-full text-[10px]">
+              <thead className="bg-amber-500 text-white sticky top-0 z-10">
+                <tr>
+                  <th className="text-left px-3 py-2">Termo</th>
+                  <th className="text-center px-3 py-2 w-12"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {excecoes.map(exc => (
+                  <tr key={exc.id} className="hover:bg-amber-50/50">
+                    <td className="px-3 py-2 font-medium">{exc.termo}</td>
+                    <td className="px-3 py-2 text-center">
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6 text-red-400 hover:text-red-600 hover:bg-red-50" 
+                        onClick={async () => {
+                          try {
+                            const { error } = await supabase.from("infomusic_excecoes").delete().eq("id", exc.id);
+                            if (error) throw error;
+                            loadExcecoes();
+                            toast.success("Exceção removida");
+                          } catch (e) {
+                            toast.error("Erro ao remover");
+                          }
+                        }}
+                      >
+                        <X size={12} />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {excecoes.length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Nenhuma exceção</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Coluna 3: MUSICAS SEM CURIOSIDADES */}
+        <div className="space-y-3 flex flex-col h-[600px]">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="w-1 h-4 bg-red-500 rounded-full" />
+            <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES</h4>
+          </div>
+          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
+            <table className="w-full text-[10px]">
+              <thead className="bg-red-500 text-white sticky top-0 z-10">
+                <tr>
+                  <th className="text-left px-3 py-2">Música / Artista</th>
+                  <th className="text-center px-3 py-2 w-16">Ação</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-black/5">
+                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).map(r => (
+                  <tr key={r.id} className="hover:bg-red-50/30">
+                    <td className="px-3 py-2">
+                      <div className="font-bold truncate">{r.musica}</div>
+                      <div className="opacity-60 truncate">{r.artista}</div>
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="h-7 text-[9px] font-bold border-red-200 text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          setEditMusic(r);
+                          setCuriosidadeText("");
+                        }}
+                      >
+                        ADD
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+                {rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length === 0 && (
+                  <tr>
+                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Tudo em dia!</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
+
 
       {/* Modal de Edição */}
       <Dialog open={!!editMusic} onOpenChange={() => setEditMusic(null)}>
