@@ -95,8 +95,8 @@ export default function InfoMusicSection() {
       setFetchingIds(prev => [...prev, target.id]);
       
       try {
-        const { data, error } = await supabase.functions.invoke("fetch-ai-curiosity", {
-          body: { artista: target.artista, musica: target.musica }
+        const { data, error } = await supabase.functions.invoke("get-music-curiosity", {
+          body: { artista: target.artista, musica: target.musica, userId: user.id }
         });
 
         if (error || !data?.curiosity) throw new Error("Falha na busca");
