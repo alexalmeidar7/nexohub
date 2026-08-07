@@ -465,8 +465,7 @@ export default function InfoMusicSection() {
                     </Button>
                   </td>
                 </tr>
-              ))}
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length === 0 && (
+              )) : (
                 <tr>
                   <td colSpan={4} className="px-3 py-10 text-center opacity-40 italic">Nenhuma curiosidade cadastrada</td>
                 </tr>
