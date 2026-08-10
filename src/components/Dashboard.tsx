@@ -1890,7 +1890,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: layoutColors.accentColor }}
                 >
-                  {minimizedModule === "sorteios" ? <Gift size={16} color="#fff" /> : <Users size={16} color="#fff" />}
+                  {minimizedModule === "sorteios" ? (
+                    <Gift size={16} color="#fff" />
+                  ) : minimizedModule === "previsao" ? (
+                    <CloudRain size={16} color="#fff" />
+                  ) : (
+                    <Users size={16} color="#fff" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
