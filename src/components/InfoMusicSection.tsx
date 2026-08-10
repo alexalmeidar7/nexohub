@@ -370,7 +370,11 @@ export default function InfoMusicSection() {
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
       <div 
         className="flex items-center justify-between mb-2 cursor-pointer group" 
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          const next = !isOpen;
+          setIsOpen(next);
+          localStorage.setItem("nexohub_infomusic_open", String(next));
+        }}
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
