@@ -1584,36 +1584,57 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
 
         {showConfig && (
-          <div className="p-5 space-y-5">
+          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
             {/* Two columns grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch relative">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-300" style={{ background: "white", border: "1px solid #eef2f6", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)" }}>
-                    <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
-                  </span>
-                  Origem Online
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
-                    <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
-                    <input
-                      value={xmlUrl}
-                      onChange={(e) => {
-                        const nextValue = e.target.value;
-                        setXmlUrl(nextValue);
-                        if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
-                          setOnlineError(null);
-                        }
-                      }}
-                      className="flex-1 text-xs outline-none bg-transparent"
-                      style={{ color: "var(--layout-page-text, #0d0446)" }}
-                      placeholder="Cole ou digite uma URL .xml"
-                    />
+              <div className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(0, 191, 240, 0.1)" }}>
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: NEXO_CYAN }} />
+                
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover/source:rotate-12" style={{ backgroundColor: `${NEXO_CYAN}15` }}>
+                      <Globe size={18} style={{ color: NEXO_CYAN }} />
+                    </div>
+                    Origem Online
+                  </h4>
+                  {isOnlineSelected && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Ativo</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">URL do Feed XML</label>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                      <div className="pl-4">
+                        <Globe size={16} className="text-slate-400" />
+                      </div>
+                      <input
+                        value={xmlUrl}
+                        onChange={(e) => {
+                          const nextValue = e.target.value;
+                          setXmlUrl(nextValue);
+                          if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
+                            setOnlineError(null);
+                          }
+                        }}
+                        className="flex-1 py-3 text-sm font-semibold outline-none bg-transparent"
+                        style={{ color: NEXO_DARK }}
+                        placeholder="https://exemplo.com/feed.xml"
+                      />
+                      <button 
+                        onClick={() => void saveUrl(xmlUrl)} 
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-cyan-500/20" 
+                        style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
+                      >
+                        Salvar
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
                     <Check size={16} />
                   </button>
                   <button
