@@ -17,24 +17,25 @@ interface Promocao {
   data_fim: string;
 }
 
-export default function PromocoesPage() {
+export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Promocao[]>([]);
+  const ownerId = effectiveUserId || user?.id;
 
   useEffect(() => {
-    if (user) {
+    if (ownerId) {
       supabase
         .from("promocoes")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", ownerId)
         .order("data_inicio")
         .then(({ data }) => {
           if (data) setItems(data as Promocao[]);
           setLoading(false);
         });
     }
-  }, [user]);
+  }, [ownerId]);
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 
