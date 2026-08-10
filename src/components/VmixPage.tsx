@@ -2516,9 +2516,19 @@ function SwitcherUI({
         {/* Top Header with Logo, Navigation, and Status */}
         <div className="relative flex items-center justify-between gap-4 p-4 pl-8" style={{ background: "linear-gradient(180deg, #202024, #151517)", borderBottom: "1px solid #ffffff0a" }}>
           <div className="flex items-center gap-8">
-            {/* Logo aligned to the left */}
-            <div className="flex items-center gap-3">
-              {/* Logo removed as requested */}
+            {/* Logo and On Air indicator */}
+            <div className="flex items-center gap-6">
+              <img src={logoMixControl} alt="vMix Control" className="h-6 w-auto brightness-125" />
+              
+              <div className="flex flex-col">
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-white/20'}`} />
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
+                    {activeTitle}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Main Navigation (Aligned right of the logo) */}
