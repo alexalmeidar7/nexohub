@@ -1783,7 +1783,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {currentPage === "clientes" && <ClientesPage />}
+              {(currentPage === "clientes" || (minimizedModule === "clientes" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
+                  <ClientesPage />
+                </div>
+              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
