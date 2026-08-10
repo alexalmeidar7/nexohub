@@ -340,19 +340,47 @@ function useFeriadosNacionais() {
   }, []);
 }
 
-function DatasBox() {
+function DatasBox({ userId }: { userId?: string | null }) {
   const feriados = useFeriadosNacionais();
+  const [userState, setUserState] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("user_settings")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data && (data as any).state_code) setUserState((data as any).state_code);
+      });
+  }, [userId]);
+
+  const saveUserState = async (state: string) => {
+    if (!userId) return;
+    setUserState(state);
+    await supabase
+      .from("user_settings")
+      .update({ state_code: state } as any)
+      .eq("user_id", userId);
+  };
 
   const items = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const year = today.getFullYear();
 
-    const comem = DATAS_COMEMORATIVAS.map((d) => {
-      const thisYear = new Date(year, d.mes - 1, d.dia);
-      const nextYear = new Date(year + 1, d.mes - 1, d.dia);
-      return { date: thisYear >= today ? thisYear : nextYear, nome: d.nome, tag: "Nacional" };
-    });
+    const comem = DATAS_COMEMORATIVAS
+      .filter(d => !d.estado || d.estado === userState)
+      .map((d) => {
+        const thisYear = new Date(year, d.mes - 1, d.dia);
+        const nextYear = new Date(year + 1, d.mes - 1, d.dia);
+        return { 
+          date: thisYear >= today ? thisYear : nextYear, 
+          nome: d.nome, 
+          tag: d.estado ? d.estado : "Nacional" 
+        };
+      });
 
     const fers = feriados.map((f) => ({ date: f.date, nome: f.nome, tag: "Feriado" }));
 
@@ -360,7 +388,7 @@ function DatasBox() {
       .filter((it) => it.date >= today)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 12);
-  }, [feriados]);
+  }, [feriados, userState]);
 
   const [idx, setIdx] = useState(0);
 
@@ -420,6 +448,38 @@ function DatasBox() {
               ★ Hoje
             </span>
           )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ background: "rgba(255,255,255,0.08)", color: PROMO_TEXT }}
+                title="Configurar Estado"
+              >
+                <Settings size={9} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2 bg-[#0A2540] border-[#00BFF0]/30 shadow-2xl">
+              <div className="space-y-1">
+                <p className="text-[9px] font-bold text-[#00BFF0] uppercase tracking-wider mb-2 px-2">Filtrar por Estado</p>
+                {["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => saveUserState(st)}
+                    className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-colors ${userState === st ? "bg-[#00BFF0] text-[#0A2540]" : "text-white/70 hover:bg-white/5"}`}
+                  >
+                    {st}
+                  </button>
+                ))}
+                <button
+                  onClick={() => saveUserState("")}
+                  className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-colors ${!userState ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/5"}`}
+                >
+                  NACIONAL
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
           <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </span>
       </div>
@@ -798,7 +858,7 @@ export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon, us
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
     >
       <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
-      <DatasBox />
+      <DatasBox userId={userId} />
       <BlitzBox userId={userId} />
     </div>
   );
