@@ -532,19 +532,7 @@ export default function BlitzPage() {
   };
   const liveBlitz = useMemo(() => items.find(b => isAcontecendo(b)), [items, isAcontecendo]);
 
-  return (
-    <div className="nexo-scope space-y-4">
-      <div id="module-header-title" style={{ display: "none" }}>
-        Atendimento — Blitz
-      </div>
-      <div className="animate-fade-in space-y-5">
-        {agendadas.length > 0 ? agendadas.map(b => renderRow(b)) : <p>Nenhuma blitz pendente.</p>}
-      </div>
-    </div>
-  );
-}
-
-const secondsToEnd = (b: Blitz, nowTick: number) => {
+  const secondsToEnd = (b: Blitz) => {
     void nowTick;
     const fim = (b.horario_fim || "").slice(0, 5);
     if (!fim) return null;
