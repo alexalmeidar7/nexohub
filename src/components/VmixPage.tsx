@@ -2448,6 +2448,56 @@ function SwitcherUI({
 
   const previewInputObj = inputs.find(i => i.number === previewInput);
 
+  // Filter program based on current time and weekday
+  const currentProgram = useMemo(() => {
+    if (!programas || programas.length === 0) return null;
+    
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    const currentDay = now.getDay(); // 0-6 (Sun-Sat)
+    
+    // Convert day number to string if necessary based on your DB storage (e.g. 1, 2, 3...)
+    const dayMap: Record<number, string> = {
+      0: "domingo", 1: "segunda", 2: "terça", 3: "quarta", 
+      4: "quinta", 5: "sexta", 6: "sábado"
+    };
+    const dayName = dayMap[currentDay];
+
+    return programas.find(p => {
+      if (!p.horario_inicio || !p.horario_fim) return false;
+      
+      const [hStart, mStart] = p.horario_inicio.split(':').map(Number);
+      const [hEnd, mEnd] = p.horario_fim.split(':').map(Number);
+      
+      const startTotal = hStart * 60 + mStart;
+      let endTotal = hEnd * 60 + mEnd;
+      
+      // Handle programs that end after midnight
+      if (endTotal <= startTotal) endTotal += 1440;
+      
+      let timeMatch = currentTime >= startTotal && currentTime < endTotal;
+      
+      // Check if current time is in the early morning part of a program that started yesterday
+      if (!timeMatch && currentTime < endTotal - 1440) {
+        timeMatch = true;
+      }
+
+      if (!timeMatch) return false;
+
+      // Filter by weekday if present
+      if (p.dias_semana && p.dias_semana.length > 0) {
+        return p.dias_semana.some(d => 
+          d?.toLowerCase() === dayName || 
+          d === String(currentDay) ||
+          (currentDay === 0 && d?.toLowerCase().includes("dom")) ||
+          (currentDay === 6 && d?.toLowerCase().includes("sab"))
+        );
+      }
+      
+      return true;
+    });
+  }, [programas]);
+
   const tabs = [
     { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
