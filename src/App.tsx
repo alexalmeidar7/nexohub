@@ -163,7 +163,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
             <>
               <LoadingSpinner size={32} />
               <p className="text-sm opacity-60">
-                Sincronizando ambiente...
+                essa tela de sincronizando ambiente esta travando a navegação
               </p>
             </>
           ) : (
