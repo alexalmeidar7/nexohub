@@ -2576,11 +2576,11 @@ function SwitcherUI({
                   <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-white/20'}`} />
                   <div className="flex flex-col">
                     <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
-                      {programas.find((p: any) => p.ativo)?.nome || activeTitle}
+                      {currentProgram?.nome || activeTitle}
                     </span>
-                    {programas.find((p: any) => p.ativo) && (
+                    {currentProgram && (
                       <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
-                        {programas.find((p: any) => p.ativo).horario_inicio} - {programas.find((p: any) => p.ativo).horario_fim}
+                        {currentProgram.horario_inicio} - {currentProgram.horario_fim}
                       </span>
                     )}
                   </div>
