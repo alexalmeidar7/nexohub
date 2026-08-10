@@ -263,45 +263,62 @@ export default function EnquetePage() {
           <CalendarPlus className="text-[#00BFF0]" /> Próximas Enquetes
         </h2>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {enquetes.length > 0 ? enquetes.map(e => (
-            <div key={e.id} className="group relative p-5 bg-white rounded-2xl shadow-sm border border-[#00BFF0]/10 hover:border-[#00BFF0]/40 transition-all">
-              <div className="flex justify-between items-start">
-                <div className="space-y-1">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#00BFF0]/10 text-[#00BFF0] mb-2">
-                    {new Date(e.data_enquete + 'T12:00:00').toLocaleDateString('pt-BR')} | {e.horario_inicio} - {e.horario_fim}
-                  </div>
-                  <p className="font-bold text-lg text-[#0A2540]">{e.pergunta}</p>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-3">
-                    <span className="text-xs opacity-60">• {e.resposta1}</span>
-                    <span className="text-xs opacity-60">• {e.resposta2}</span>
-                    {e.resposta3 && <span className="text-xs opacity-60">• {e.resposta3}</span>}
-                    {e.resposta4 && <span className="text-xs opacity-60">• {e.resposta4}</span>}
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  onClick={() => handleDelete(e.id)}
-                  className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full"
-                >
-                  <Trash2 size={18} />
-                </Button>
-              </div>
-            </div>
-          )) : (
-            <div className="col-span-full py-12 text-center text-gray-400 bg-white/30 rounded-3xl border border-dashed border-gray-200">
-              <HelpCircle size={48} className="mx-auto mb-3 opacity-20" />
-              <p>Nenhuma enquete agendada no momento.</p>
-              <Button 
-                variant="link" 
-                onClick={() => setShowForm(true)}
-                className="text-[#00BFF0]"
-              >
-                Clique aqui para criar a primeira
-              </Button>
-            </div>
-          )}
+        <div className="overflow-hidden bg-white rounded-3xl border border-[#00BFF0]/10 shadow-sm">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-bottom border-gray-100">
+                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Data / Horário</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Pergunta</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Opções</th>
+                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider w-20 text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {enquetes.length > 0 ? enquetes.map(e => (
+                <tr key={e.id} className="group hover:bg-[#00BFF0]/5 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm text-[#0A2540]">
+                        {new Date(e.data_enquete + 'T12:00:00').toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="text-[10px] opacity-60">
+                        {e.horario_inicio} - {e.horario_fim}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-medium text-sm text-[#0A2540]">{e.pergunta}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-2">
+                      {[e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(Boolean).map((resp, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-gray-100 rounded-full text-[10px] text-gray-600">
+                          {resp}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleDelete(e.id)}
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full h-8 w-8"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={4} className="py-12 text-center text-gray-400">
+                    <HelpCircle size={48} className="mx-auto mb-3 opacity-20" />
+                    <p>Nenhuma enquete agendada no momento.</p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
