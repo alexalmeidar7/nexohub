@@ -1788,6 +1788,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ClientesPage />
                 </div>
               )}
+              {(currentPage === "previsao" || (minimizedModule === "previsao" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
+                  <PrevisaoTempo />
+                </div>
+              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
