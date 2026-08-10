@@ -1755,7 +1755,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
-              {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
               {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
@@ -1812,16 +1811,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {(currentPage === "clientes" || (minimizedModule === "clientes" && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
-                  <ClientesPage />
-                </div>
-              )}
-              {(currentPage === "previsao" || (minimizedModule === "previsao" && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
-                  <PrevisaoTempo />
-                </div>
-              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
