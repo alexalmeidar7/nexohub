@@ -1290,13 +1290,8 @@ export default function AgendaPage() {
       if (!m) return null;
       return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
     };
-    const isGravacao = evt.tipo_evento === "gravacao";
-    let start = isGravacao
-      ? toMin(evt.horario_gravacao) ?? toMin(evt.programa?.horario_inicio)
-      : toMin(evt.programa?.horario_inicio) ?? toMin(evt.horario_gravacao);
-    let end = isGravacao
-      ? toMin(evt.horario_gravacao_fim) ?? toMin(evt.programa?.horario_fim)
-      : toMin(evt.programa?.horario_fim) ?? toMin(evt.horario_gravacao_fim);
+    let start = toMin(evt.horario_gravacao) ?? toMin(evt.programa?.horario_inicio);
+    let end = toMin(evt.horario_gravacao_fim) ?? toMin(evt.programa?.horario_fim);
     if (start == null) start = 12 * 60;
     if (end == null || end <= start) end = start + 60;
 
