@@ -391,19 +391,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
-      // Handle automatic minimization logic when navigating AWAY from a minimizable module
-      // If we are on a minimizable page and navigate to dashboard or another page, we minimize it automatically
-      // except if explicitly excluded. This fulfills the requirement of "keep minimized pages always appearing"
-      if (prev !== "dashboard" && resolved === "dashboard" && MINIMIZABLE_PAGES.includes(prev)) {
-        setMinimizedModules(m => m.includes(prev) ? m : [...m, prev]);
-      }
+      // Removed automatic minimization logic when navigating AWAY.
+      // Pages only stay minimized if explicitly added to minimizedModules via the minimize button.
       
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
       }
       return resolved;
     });
-  }, [MINIMIZABLE_PAGES]);
+  }, []);
 
   useEffect(() => {
     (window as any).setCurrentPageGlobal = setCurrentPage;
@@ -1723,7 +1719,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <BackButton onClick={() => setCurrentPage("dashboard")} />
+                  <BackButton onClick={() => {
+                    setMinimizedModules(prev => prev.filter(p => p !== currentPage));
+                    setCurrentPage("dashboard");
+                  }} />
                   {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
@@ -1731,7 +1730,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           if (prev.includes(currentPage)) return prev;
                           return [...prev, currentPage];
                         });
-                        setCurrentPage("dashboard");
+                        setCurrentPageState("dashboard");
+                        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
                       title="Minimizar"
