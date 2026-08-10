@@ -275,6 +275,90 @@ export default function InfoMusicSection() {
     }
   };
 
+  const exportSemCuriosidadesExcel = () => {
+    try {
+      setExportingXlsx(true);
+      const semCuriosidade = rows.filter(r => !r.curiosidade || !r.curiosidade.trim());
+      
+      const data = semCuriosidade.map(r => ({
+        "ARTISTA": r.artista,
+        "MUSICA": r.musica,
+        "CURIOSIDADE": ""
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sem Curiosidades");
+      XLSX.writeFile(wb, "musicas_sem_curiosidades.xlsx");
+      toast.success("Excel exportado com sucesso!");
+    } catch (e) {
+      toast.error("Erro ao exportar Excel");
+    } finally {
+      setExportingXlsx(false);
+    }
+  };
+
+  const handleImportExcelNoCuriosity = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      setReadingExcel(true);
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const bstr = evt.target?.result;
+          const wb = XLSX.read(bstr, { type: "binary" });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+          let processed = 0;
+          for (const item of data) {
+            const artista = item.ARTISTA || item.Artista || item.artista;
+            const musica = item.MUSICA || item.Musica || item.musica;
+            const curiosidade = item.CURIOSIDADE || item.Curiosidade || item.curiosidade;
+
+            if (artista && musica && curiosidade && String(curiosidade).trim()) {
+              const expiresAt = new Date();
+              expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+              // Update in DB
+              const { error } = await supabase
+                .from("infomusic")
+                .update({ 
+                  curiosidade: String(curiosidade).trim(), 
+                  expires_at: expiresAt.toISOString() 
+                })
+                .eq("user_id", user.id)
+                .ilike("artista", artista.trim())
+                .ilike("musica", musica.trim());
+
+              if (!error) processed++;
+            }
+          }
+
+          if (processed > 0) {
+            toast.success(`${processed} curiosidades importadas com sucesso!`);
+            load();
+            loadExcecoes();
+          } else {
+            toast.info("Nenhuma curiosidade válida encontrada para importar.");
+          }
+        } catch (err) {
+          toast.error("Erro ao processar arquivo Excel");
+        } finally {
+          setReadingExcel(false);
+          if (importNoCuriosityRef.current) importNoCuriosityRef.current.value = "";
+        }
+      };
+      reader.readAsBinaryString(file);
+    } catch (err) {
+      toast.error("Erro ao ler arquivo");
+      setReadingExcel(false);
+    }
+  };
+
   return (
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
       <div className="flex items-center justify-between mb-2">
