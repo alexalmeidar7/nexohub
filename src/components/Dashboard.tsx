@@ -352,21 +352,37 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     "sorteios"
   ];
 
-  // State for minimized module
-  const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
+  // State for minimized modules (array to allow multiple)
+  const [minimizedModules, setMinimizedModules] = useState<Page[]>(() => {
     try {
-      const saved = localStorage.getItem("nexohub_minimized_module");
-      if (saved && MINIMIZABLE_PAGES.includes(saved as Page)) return saved as Page;
-      return null;
-    } catch { return null; }
+      const saved = localStorage.getItem("nexohub_minimized_modules");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p: any) => MINIMIZABLE_PAGES.includes(p as Page)) as Page[];
+        }
+      }
+      return [];
+    } catch { return []; }
   });
 
   useEffect(() => {
     try {
-      if (minimizedModule) localStorage.setItem("nexohub_minimized_module", minimizedModule);
-      else localStorage.removeItem("nexohub_minimized_module");
+      if (minimizedModules.length > 0) {
+        localStorage.setItem("nexohub_minimized_modules", JSON.stringify(minimizedModules));
+      } else {
+        localStorage.removeItem("nexohub_minimized_modules");
+      }
     } catch {}
-  }, [minimizedModule]);
+  }, [minimizedModules]);
+
+  // Compatibility for single minimized logic (refactoring to use the first or just keeping the state separate)
+  const [minimizedModule, setMinimizedModule] = useState<Page | null>(null);
+  
+  // Update legacy single state when array changes for compatibility with existing components if needed
+  useEffect(() => {
+    setMinimizedModule(minimizedModules.length > 0 ? minimizedModules[0] : null);
+  }, [minimizedModules]);
 
   const [currentPage, setCurrentPageState] = useState<Page>(() => {
     // If we have a minimized module, we should be on dashboard
@@ -376,6 +392,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
+      
+      // If navigating TO dashboard, we don't clear minimized modules
+      // If navigating AWAY from dashboard to a non-minimized module, we might want to keep them
+      
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
       }
@@ -1691,7 +1711,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
-                        setMinimizedModule(currentPage);
+                        setMinimizedModules(prev => {
+                          if (prev.includes(currentPage)) return prev;
+                          return [...prev, currentPage];
+                        });
                         setCurrentPage("dashboard");
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
@@ -1703,7 +1726,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
-                  {minimizedModule === currentPage && (
+                  {minimizedModules.includes(currentPage) && (
                     <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
                       {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : <Users size={14} className="text-[#00BFF0]" />}
                     </div>
@@ -1736,25 +1759,34 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
-              {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
-              {(currentPage === "apresentadores" || (minimizedModule === "apresentadores" && currentPage === "dashboard")) && (
+              {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm />
                 </div>
               )}
-              {(currentPage === "ouvintes" || (minimizedModule === "ouvintes" && currentPage === "dashboard")) && (
+              {(currentPage === "previsao" || (minimizedModules.includes("previsao") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
+                  <PrevisaoTempo />
+                </div>
+              )}
+              {(currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
+                  <ClientesPage />
+                </div>
+              )}
+              {(currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
                   <OuvintesPage />
                 </div>
               )}
-              {(currentPage === "sorteios" || (minimizedModule === "sorteios" && currentPage === "dashboard")) && (
+              {(currentPage === "sorteios" || (minimizedModules.includes("sorteios") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
                   <SorteiosPage />
                 </div>
               )}
               {currentPage === "blitz" && <BlitzPage />}
-              {(currentPage === "programas" || (minimizedModule === "programas" && currentPage === "dashboard")) && (
+              {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
                   <ProgramaForm />
                 </div>
@@ -1783,16 +1815,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {(currentPage === "clientes" || (minimizedModule === "clientes" && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
-                  <ClientesPage />
-                </div>
-              )}
-              {(currentPage === "previsao" || (minimizedModule === "previsao" && currentPage === "dashboard")) && (
-                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
-                  <PrevisaoTempo />
-                </div>
-              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
@@ -1878,53 +1900,65 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* Minimized Module Box */}
-        {minimizedModule && currentPage === "dashboard" && (
+        {/* Minimized Modules Bar */}
+        {minimizedModules.length > 0 && currentPage === "dashboard" && (
           <div 
-            className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
-            style={{ width: "240px" }}
+            className="fixed bottom-4 left-[80px] z-[70] flex flex-wrap gap-3 pointer-events-none p-2"
+            style={{ maxWidth: "calc(100vw - 120px)" }}
           >
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/80 border border-white/20 backdrop-blur-xl shadow-2xl">
-              <div className="flex items-center gap-3 overflow-hidden">
+            {minimizedModules.map((mod, idx) => (
+              <div 
+                key={mod}
+                className="animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
                 <div 
-                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: layoutColors.accentColor }}
+                  className="flex items-center justify-between px-3 py-2 rounded-2xl bg-black/40 border border-white/10 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[160px] group transition-all hover:bg-black/60 hover:scale-[1.02] hover:border-white/20 active:scale-95"
+                  style={{ borderLeft: `4px solid ${layoutColors.accentColor}` }}
                 >
-                  {minimizedModule === "sorteios" ? (
-                    <Gift size={16} color="#fff" />
-                  ) : minimizedModule === "previsao" ? (
-                    <CloudRain size={16} color="#fff" />
-                  ) : (
-                    <Users size={16} color="#fff" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
-                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>{pageTitle[minimizedModule] || minimizedModule}</p>
-                </div>
-              </div>
+                  <div className="flex items-center gap-3 overflow-hidden flex-1 cursor-pointer"
+                    onClick={() => {
+                      setMinimizedModules(prev => prev.filter(m => m !== mod));
+                      setCurrentPage(mod);
+                    }}
+                  >
+                    <div 
+                      className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${layoutColors.accentColor}, color-mix(in srgb, ${layoutColors.accentColor}, #000 30%))` 
+                      }}
+                    >
+                      {mod === "sorteios" ? (
+                        <Gift size={16} color="#fff" />
+                      ) : mod === "previsao" ? (
+                        <CloudRain size={16} color="#fff" />
+                      ) : (
+                        <Users size={16} color="#fff" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">Aberto</p>
+                      <p className="text-xs font-bold truncate text-white group-hover:text-[#00BFF0] transition-colors">
+                        {pageTitle[mod] || mod}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  onClick={() => {
-                    const mod = minimizedModule;
-                    setMinimizedModule(null);
-                    setCurrentPage(mod);
-                  }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
-                  title="Maximizar"
-                >
-                  <ChevronUp size={14} className="text-[#002132]" />
-                </button>
-                <button
-                  onClick={() => setMinimizedModule(null)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-[#ef4444] hover:text-white transition-all shadow-sm"
-                  title="Fechar"
-                >
-                  <X size={14} />
-                </button>
+                  <div className="flex items-center gap-1.5 ml-3">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMinimizedModules(prev => prev.filter(m => m !== mod));
+                      }}
+                      className="w-7 h-7 rounded-full flex items-center justify-center bg-white/5 hover:bg-red-500/20 text-white/40 hover:text-red-400 transition-all"
+                      title="Fechar"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         )}
 
