@@ -9,7 +9,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap, Layout, Cpu
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy
 } from "lucide-react";
 
 import {
@@ -3598,22 +3598,20 @@ function SwitcherUI({
                                         if (pError) throw pError;
 
                                         const { data: commands, error: cError } = await supabase
-                                          .from("preset_commands")
+                                          .from("preset_commands" as any)
                                           .select("*")
-                                          .eq("program_id", prog.id);
+                                          .eq("programa_id", prog.id);
 
                                         if (cError) throw cError;
 
-                                        if (commands && commands.length > 0) {
-                                          const newCommands = commands.map(c => ({
-                                            program_id: newProg.id,
-                                            fn: c.fn,
-                                            input: c.input,
-                                            value: c.value,
-                                            label: c.label,
-                                            order_index: c.order_index
+                                        if (commands && Array.isArray(commands) && commands.length > 0) {
+                                          const newCommands = commands.map((c: any) => ({
+                                            programa_id: newProg.id,
+                                            commands: c.commands,
+                                            custom_horario: c.custom_horario,
+                                            user_id: user?.id
                                           }));
-                                          const { error: insError } = await supabase.from("preset_commands").insert(newCommands);
+                                          const { error: insError } = await supabase.from("preset_commands" as any).insert(newCommands);
                                           if (insError) throw insError;
                                         }
 
