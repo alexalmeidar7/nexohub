@@ -723,15 +723,21 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   const loadProgramas = useCallback(async () => {
     if (!user) return;
     
-    // First, try to fetch all programs for the user
+    // Fetch all programs for the user
+    // We removed the strict .eq("ativo", true) here to ensure we get data,
+    // we will filter by activity status in the UI if needed.
     let query = supabase
       .from("programas")
       .select("id, nome, ativo, horario_inicio, horario_fim, dias_semana, estudio, apresentadores(id, nome, foto)")
-      .eq("user_id", user.id)
-      .eq("ativo", true);
+      .eq("user_id", user.id);
     
-    const { data } = await query.order("horario_inicio");
+    const { data, error } = await query.order("horario_inicio");
     
+    if (error) {
+      console.error("Error loading programs:", error);
+      return;
+    }
+
     if (data) {
       const mapped = data.map((p: any) => ({ ...p, apresentador_foto: p.apresentadores?.foto || null }));
       try {
@@ -742,7 +748,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
             const bi = savedOrder.indexOf(b.id);
             if (ai === -1 && bi === -1) return 0;
             if (ai === -1) return 1;
-            if (bi === -1) return 1;
+            if (bi === -1) return -1;
             return ai - bi;
           });
         }
@@ -3109,7 +3115,11 @@ function SwitcherUI({
 
           const todayPrograms = programas
             .filter(p => {
-              if (studioName) {
+              // Only show active programs in the automation section
+              if (!p.ativo) return false;
+              
+              // Only filter by studio if a specific studio name (other than default) is provided
+              if (studioName && studioName !== "vMix Studio" && studioName.trim() !== "") {
                 // Exact or partial match for the studio name set in the connection
                 const match = p.estudio && p.estudio.toLowerCase().includes(studioName.toLowerCase());
                 return match && isProgramForToday(p);
