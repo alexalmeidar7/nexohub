@@ -391,19 +391,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
-      // Handle automatic minimization logic when navigating AWAY from a minimizable module
-      // If we are on a minimizable page and navigate to dashboard or another page, we minimize it automatically
-      // except if explicitly excluded. This fulfills the requirement of "keep minimized pages always appearing"
-      if (prev !== "dashboard" && resolved === "dashboard" && MINIMIZABLE_PAGES.includes(prev)) {
-        setMinimizedModules(m => m.includes(prev) ? m : [...m, prev]);
-      }
+      // Removed automatic minimization logic when navigating AWAY.
+      // Pages only stay minimized if explicitly added to minimizedModules via the minimize button.
       
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
       }
       return resolved;
     });
-  }, [MINIMIZABLE_PAGES]);
+  }, []);
 
   useEffect(() => {
     (window as any).setCurrentPageGlobal = setCurrentPage;
