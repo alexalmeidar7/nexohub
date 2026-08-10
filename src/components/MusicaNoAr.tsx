@@ -1897,56 +1897,44 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
         {/* ═══ UPLOAD HISTORY (Legacy position) ═══ */}
         {showConfig && uploadHistory.length > 0 && (
-          <div className="mt-4 px-6 pb-6">
-            <p className="text-[10px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
-              <Clock size={10} /> Histórico de atualizações
-              <span className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-black" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, transparent)", color: "var(--layout-page-text, #0d0446)" }}>últimas 3</span>
-            </p>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
-              <table className="w-full text-[10px]">
+          <div className="mt-6 px-8 pb-8">
+            <div className="rounded-[32px] overflow-hidden" style={{ border: "1px solid #E2E8F0", backgroundColor: "#FFFFFF", boxShadow: "0 10px 30px -10px rgba(10, 37, 64, 0.05)" }}>
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), color-mix(in srgb, var(--layout-header-bg, #0d0446) 4%, transparent))" }}>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Origem</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Data</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Hora</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista — Música</th>
+                  <tr style={{ backgroundColor: "#F8FAFC" }}>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Origem</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Data</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Hora</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Música / Artista</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {uploadHistory.map((entry, i) => {
                     const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
                     const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
                     const showArtist = entry.artista || fallbackArtist;
                     const showMusic = entry.musica || fallbackMusic;
                     return (
-                    <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
-                      <td className="px-3 py-2 font-semibold">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold cursor-help"
-                          title={entry.source === "pasta" ? (entry.deviceName ? `Computador: ${entry.deviceName}` : "Computador: desconhecido") : "Leitura online"}
-                          style={{
-                            backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
-                            color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
-                          }}
-                        >
-                          {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
-                          {entry.source === "pasta" ? "Leitura local" : "Online"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
-                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
-                      <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                        {showArtist || showMusic ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="font-bold truncate max-w-[140px]" title={showArtist}>{showArtist || "—"}</span>
-                            <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
-                            <span className="truncate max-w-[180px]" title={showMusic} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{showMusic || "—"}</span>
+                      <tr key={i} className="group hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+                            style={{ 
+                              backgroundColor: entry.source === "pasta" ? "#F7FEE7" : "#ECFEFF",
+                              color: entry.source === "pasta" ? "#4D7C0F" : "#0891B2"
+                            }}>
+                            {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                            {entry.source === "pasta" ? "Local" : "Online"}
                           </span>
-                        ) : (
-                          <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-500 tabular-nums">{entry.date}</td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-500 tabular-nums">{entry.time}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold truncate text-slate-900" title={showMusic}>{showMusic || "—"}</span>
+                            <span className="text-[10px] font-semibold text-slate-400 truncate" title={showArtist}>{showArtist || "—"}</span>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
