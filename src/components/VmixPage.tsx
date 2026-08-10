@@ -408,6 +408,13 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   const [savedUrl, setSavedUrl] = useState("");
   const directBaseUrlRef = useRef<string | null>(null);
   const loopbackFallbackNotifiedRef = useRef(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const [vmixConnections, setVmixConnections] = useState<any[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [directTesting, setDirectTesting] = useState(false);
@@ -2391,6 +2398,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setNdiUrl={setNdiUrl}
       programas={programas}
       setProgramas={setProgramas}
+      currentTime={currentTime}
       activePreset={activePreset}
       setActivePreset={setActivePreset}
       editingPresetId={editingPresetId}
@@ -2440,7 +2448,8 @@ function SwitcherUI({
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
   ndiInputs, inputMapping,
-  navigate
+  navigate,
+  currentTime
 }: any) {
 
 
@@ -2647,6 +2656,29 @@ function SwitcherUI({
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* Digital Clock */}
+              <div className="flex items-center ml-auto pr-2">
+                <div 
+                  className="px-4 py-1.5 rounded-xl bg-black/40 border border-white/5 shadow-inner"
+                  style={{ minWidth: '120px', textAlign: 'center' }}
+                >
+                  <span 
+                    className="text-2xl tracking-widest text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                    style={{ 
+                      fontFamily: "'Digital-7', monospace",
+                      fontVariantNumeric: "tabular-nums"
+                    }}
+                  >
+                    {currentTime.toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit', 
+                      second: '2-digit',
+                      hour12: false 
+                    })}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

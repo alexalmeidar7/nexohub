@@ -109,6 +109,13 @@
   }
 }
 
+@font-face {
+  font-family: 'Digital-7';
+  src: url('https://fonts.cdnfonts.com/s/14352/digital-7.mono.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+
 @keyframes pulse-gentle {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.98; transform: scale(1.01); }
