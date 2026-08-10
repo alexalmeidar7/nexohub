@@ -348,11 +348,11 @@ function DatasBox({ userId }: { userId?: string | null }) {
     if (!userId) return;
     supabase
       .from("user_settings")
-      .select("state_code")
+      .select("*")
       .eq("user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
-        if (data?.state_code) setUserState(data.state_code);
+        if (data && (data as any).state_code) setUserState((data as any).state_code);
       });
   }, [userId]);
 
@@ -361,7 +361,7 @@ function DatasBox({ userId }: { userId?: string | null }) {
     setUserState(state);
     await supabase
       .from("user_settings")
-      .update({ state_code: state })
+      .update({ state_code: state } as any)
       .eq("user_id", userId);
   };
 
