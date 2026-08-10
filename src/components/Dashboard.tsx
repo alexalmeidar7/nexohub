@@ -342,11 +342,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   
-  // State for minimized module (TEST ONLY FOR SORTEIOS)
+  // Lista de páginas que suportam minimização (CADASTRO + SORTEIOS)
+  const MINIMIZABLE_PAGES: Page[] = [
+    "apresentadores",
+    "ouvintes",
+    "programas",
+    "clientes",
+    "previsao",
+    "sorteios"
+  ];
+
+  // State for minimized module
   const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
     try {
       const saved = localStorage.getItem("nexohub_minimized_module");
-      return (saved as Page) || null;
+      if (saved && MINIMIZABLE_PAGES.includes(saved as Page)) return saved as Page;
+      return null;
     } catch { return null; }
   });
 
