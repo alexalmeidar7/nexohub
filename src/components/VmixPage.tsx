@@ -2518,7 +2518,7 @@ function SwitcherUI({
           <div className="flex items-center gap-8">
             {/* Logo and On Air indicator */}
             <div className="flex items-center gap-6">
-              <img src={logoMixControl} alt="vMix Control" className="h-6 w-auto brightness-125" />
+              {/* Logo removed as requested */}
               
               <div className="flex flex-col">
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
