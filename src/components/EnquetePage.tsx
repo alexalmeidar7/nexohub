@@ -868,3 +868,4 @@ const renderEnquete = () => {
     </div>
   );
 }
+
