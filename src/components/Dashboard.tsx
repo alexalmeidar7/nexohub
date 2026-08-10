@@ -341,7 +341,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
-  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  
+  // State for minimized module (TEST ONLY FOR SORTEIOS)
+  const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
+    try {
+      const saved = localStorage.getItem("nexohub_minimized_module");
+      return (saved as Page) || null;
+    } catch { return null; }
+  });
+
+  useEffect(() => {
+    try {
+      if (minimizedModule) localStorage.setItem("nexohub_minimized_module", minimizedModule);
+      else localStorage.removeItem("nexohub_minimized_module");
+    } catch {}
+  }, [minimizedModule]);
+
+  const [currentPage, setCurrentPageState] = useState<Page>(() => {
+    // If we have a minimized module, we should be on dashboard
+    return "dashboard";
+  });
+
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
@@ -1655,9 +1675,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
-                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                <div className="flex items-center gap-2">
+                  <BackButton onClick={() => setCurrentPage("dashboard")} />
+                  {currentPage === "sorteios" && (
+                    <button
+                      onClick={() => {
+                        setMinimizedModule("sorteios");
+                        setCurrentPage("dashboard");
+                      }}
+                      className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
+                      title="Minimizar"
+                    >
+                      <ChevronDown size={20} className="text-[#002132] opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  )}
+                </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
+                  {currentPage === "sorteios" && (
+                    <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
+                      <Gift size={14} className="text-[#00BFF0]" />
+                    </div>
+                  )}
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
                     <span className="opacity-40" style={{ color: layoutColors.pageText }}>Home</span>
                     <ChevronRight size={10} className="opacity-20" />
@@ -1690,7 +1729,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "noticias" && <RoteiroPrograma />}
               {currentPage === "apresentadores" && <ApresentadorForm />}
               {currentPage === "ouvintes" && <OuvintesPage />}
-              {currentPage === "sorteios" && <SorteiosPage />}
+              {(currentPage === "sorteios" || minimizedModule === "sorteios") && (
+                <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
+                  <SorteiosPage />
+                </div>
+              )}
               {currentPage === "blitz" && <BlitzPage />}
               {currentPage === "programas" && <ProgramaForm />}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
@@ -1802,6 +1845,49 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             )}
           </div>
         </div>
+
+        {/* Minimized Module Box (TEST ONLY FOR SORTEIOS) */}
+        {minimizedModule && currentPage === "dashboard" && (
+          <div 
+            className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
+            style={{ width: "240px" }}
+          >
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/80 border border-white/20 backdrop-blur-xl shadow-2xl">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div 
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: layoutColors.accentColor }}
+                >
+                  <Gift size={16} color="#fff" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
+                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>Sorteios</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  onClick={() => {
+                    setMinimizedModule(null);
+                    setCurrentPage("sorteios");
+                  }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
+                  title="Maximizar"
+                >
+                  <ChevronUp size={14} className="text-[#002132]" />
+                </button>
+                <button
+                  onClick={() => setMinimizedModule(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-[#ef4444] hover:text-white transition-all shadow-sm"
+                  title="Fechar"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 relative z-[1]">
