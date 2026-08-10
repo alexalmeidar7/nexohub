@@ -1894,53 +1894,63 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* Minimized Module Box */}
-        {minimizedModule && currentPage === "dashboard" && (
+        {/* Minimized Modules Bar */}
+        {minimizedModules.length > 0 && currentPage === "dashboard" && (
           <div 
-            className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
-            style={{ width: "240px" }}
+            className="fixed bottom-4 left-[80px] z-[70] flex flex-wrap gap-2 pointer-events-none"
+            style={{ maxWidth: "calc(100vw - 120px)" }}
           >
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/80 border border-white/20 backdrop-blur-xl shadow-2xl">
-              <div className="flex items-center gap-3 overflow-hidden">
-                <div 
-                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ backgroundColor: layoutColors.accentColor }}
-                >
-                  {minimizedModule === "sorteios" ? (
-                    <Gift size={16} color="#fff" />
-                  ) : minimizedModule === "previsao" ? (
-                    <CloudRain size={16} color="#fff" />
-                  ) : (
-                    <Users size={16} color="#fff" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
-                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>{pageTitle[minimizedModule] || minimizedModule}</p>
-                </div>
-              </div>
+            {minimizedModules.map((mod, idx) => (
+              <div 
+                key={mod}
+                className="animate-in slide-in-from-bottom-4 duration-300 pointer-events-auto"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
+                <div className="flex items-center justify-between p-2 rounded-xl bg-white/10 border border-white/10 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-w-[140px] max-w-[200px] group transition-all hover:bg-white/15 hover:border-white/20">
+                  <div className="flex items-center gap-2 overflow-hidden flex-1">
+                    <div 
+                      className="flex-shrink-0 w-6 h-6 rounded-lg flex items-center justify-center shadow-lg"
+                      style={{ 
+                        background: `linear-gradient(135deg, ${layoutColors.accentColor}, color-mix(in srgb, ${layoutColors.accentColor}, #000 20%))` 
+                      }}
+                    >
+                      {mod === "sorteios" ? (
+                        <Gift size={12} color="#fff" />
+                      ) : mod === "previsao" ? (
+                        <CloudRain size={12} color="#fff" />
+                      ) : (
+                        <Users size={12} color="#fff" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold truncate text-white/90 group-hover:text-white transition-colors">
+                        {pageTitle[mod] || mod}
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-1 ml-2">
-                <button
-                  onClick={() => {
-                    const mod = minimizedModule;
-                    setMinimizedModule(null);
-                    setCurrentPage(mod);
-                  }}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
-                  title="Maximizar"
-                >
-                  <ChevronUp size={14} className="text-[#002132]" />
-                </button>
-                <button
-                  onClick={() => setMinimizedModule(null)}
-                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-[#ef4444] hover:text-white transition-all shadow-sm"
-                  title="Fechar"
-                >
-                  <X size={14} />
-                </button>
+                  <div className="flex items-center gap-1 ml-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => {
+                        setMinimizedModules(prev => prev.filter(m => m !== mod));
+                        setCurrentPage(mod);
+                      }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+                      title="Maximizar"
+                    >
+                      <ChevronUp size={12} className="text-white" />
+                    </button>
+                    <button
+                      onClick={() => setMinimizedModules(prev => prev.filter(m => m !== mod))}
+                      className="w-6 h-6 rounded-full flex items-center justify-center bg-white/10 hover:bg-red-500/80 transition-all"
+                      title="Fechar"
+                    >
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         )}
 
