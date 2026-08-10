@@ -745,8 +745,8 @@ export default function AgendaPage() {
       youtube_descricao: formTipoEvento === "live" ? formYoutubeDescricao : "",
       edicao_notas: formTipoEvento === "live" ? formEdicaoNotas : "",
       edicao_concluida: formTipoEvento === "live" ? formEdicaoConcluida : false,
-      horario_gravacao: formTipoEvento === "gravacao" ? formHorarioGravacao : null,
-      horario_gravacao_fim: formTipoEvento === "gravacao" ? formHorarioGravacaoFim : null,
+      horario_gravacao: formHorarioGravacao || null,
+      horario_gravacao_fim: formHorarioGravacaoFim || null,
       periodo_inicio: formRecorrencia !== "unico" ? (formPeriodoInicio || null) : null,
       periodo_fim: formRecorrencia !== "unico" ? (formPeriodoFim || null) : null,
     } as any;
