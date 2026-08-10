@@ -190,12 +190,23 @@ export default function InfoMusicSection() {
 
   const loadExcecoes = async () => {
     if (!user) return;
-    const [settingsRes, exceptionsRes] = await Promise.all([
+    setLoadingAllCuriosities(true);
+    const [settingsRes, exceptionsRes, curiositiesRes] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase
+        .from("infomusic")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("curiosidade", "is", null)
+        .neq("curiosidade", "")
+        .order("created_at", { ascending: false })
     ]);
     const exceptions = exceptionsRes.data || [];
     setExcecoes(exceptions);
+    setAllCuriosities(curiositiesRes.data || []);
+    setLoadingAllCuriosities(false);
+
     const data = settingsRes.data;
     setAiEnabled(data?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
