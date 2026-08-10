@@ -78,6 +78,9 @@ export default function InfoMusicSection() {
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const [fetchingIds, setFetchingIds] = useState<string[]>([]);
   const isFetchingRef = useRef(false);
+  const [allCuriosities, setAllCuriosities] = useState<InfoMusicRow[]>([]);
+  const [loadingAllCuriosities, setLoadingAllCuriosities] = useState(false);
+
 
   // Efeito para busca automática sequencial
   useEffect(() => {
@@ -142,6 +145,13 @@ export default function InfoMusicSection() {
           r.id === target.id ? { ...r, curiosidade: data.curiosidade.trim() } : r
         ));
         
+        // Atualiza a lista completa de curiosidades também
+        setAllCuriosities(prev => [
+          { ...target, curiosidade: data.curiosidade.trim() },
+          ...prev
+        ]);
+
+        
       } catch (e) {
         if (e instanceof Error && e.message === "monthly_quota_exceeded") {
           toast.error("Cota mensal de IA atingida (20/mês).");
@@ -187,12 +197,23 @@ export default function InfoMusicSection() {
 
   const loadExcecoes = async () => {
     if (!user) return;
-    const [settingsRes, exceptionsRes] = await Promise.all([
+    setLoadingAllCuriosities(true);
+    const [settingsRes, exceptionsRes, curiositiesRes] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
-      supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false })
+      supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase
+        .from("infomusic")
+        .select("*")
+        .eq("user_id", user.id)
+        .not("curiosidade", "is", null)
+        .neq("curiosidade", "")
+        .order("created_at", { ascending: false })
     ]);
     const exceptions = exceptionsRes.data || [];
     setExcecoes(exceptions);
+    setAllCuriosities(curiositiesRes.data || []);
+    setLoadingAllCuriosities(false);
+
     const data = settingsRes.data;
     setAiEnabled(data?.infomusic_ai_enabled !== false);
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
@@ -245,7 +266,8 @@ export default function InfoMusicSection() {
       toast.success("Curiosidade salva!");
       setEditMusic(null);
       setCuriosidadeText("");
-      await load();
+      await Promise.all([load(), loadExcecoes()]);
+
     } catch (e) {
       toast.error("Erro ao salvar");
     }
@@ -576,14 +598,18 @@ export default function InfoMusicSection() {
 
       {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
       <div className="space-y-3 flex flex-col mt-6 w-full col-span-full">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-          <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({rows.filter(r => r.curiosidade && r.curiosidade.trim()).length})</h4>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+            <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({allCuriosities.length})</h4>
+          </div>
+          {loadingAllCuriosities && <Loader2 size={14} className="animate-spin text-emerald-500" />}
         </div>
         <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
           <table className="w-full text-[10px]">
             <thead className="bg-emerald-500 text-white sticky top-0 z-10">
               <tr>
+                <th className="text-left px-3 py-2 w-16">Data</th>
                 <th className="text-left px-3 py-2 w-16">Hora</th>
                 <th className="text-left px-3 py-2">Música / Artista</th>
                 <th className="text-left px-3 py-2">Curiosidade</th>
@@ -591,9 +617,11 @@ export default function InfoMusicSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length > 0 ? rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
+              {allCuriosities.length > 0 ? allCuriosities.map(r => (
                 <tr key={r.id} className="hover:bg-emerald-50/30">
+                  <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td>
                   <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+
                   <td className="px-3 py-2">
                     <div className="font-bold truncate">{r.musica}</div>
                     <div className="opacity-60 truncate">{r.artista}</div>
