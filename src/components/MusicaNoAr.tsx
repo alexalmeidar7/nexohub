@@ -1838,6 +1838,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   );
                 })()}
 
+                {/* Local monitor indicator inside the box for visual feedback */}
+                {localMonitoring && (
+                  <div className="absolute bottom-2 right-4 flex items-center gap-2">
+                     <span className="text-[8px] font-black tracking-widest text-[#22c55e] opacity-40">AUTO-SYNC ACTIVE</span>
+                  </div>
+                )}
+
                 {/* Remote device warning */}
                 {!localFileName && (() => {
                   const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
