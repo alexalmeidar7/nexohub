@@ -925,7 +925,11 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
       </div>
 
 
-      <div className="grid grid-cols-4 gap-2 flex-1 min-h-0">
+      <div 
+        className={`grid gap-2 flex-1 min-h-0 ${
+          (youtubeLiveCount ?? 0) > 0 ? "grid-cols-4" : "grid-cols-3"
+        }`}
+      >
         <StatCell
           icon={current ? current.icon : <Users size={14} />}
           label={current ? current.label : "Redes sociais"}
