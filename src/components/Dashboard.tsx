@@ -1738,15 +1738,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
-              {currentPage === "apresentadores" && <ApresentadorForm />}
-              {currentPage === "ouvintes" && <OuvintesPage />}
-              {(currentPage === "sorteios" || minimizedModule === "sorteios") && (
+              {(currentPage === "apresentadores" || (minimizedModule === "apresentadores" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
+                  <ApresentadorForm />
+                </div>
+              )}
+              {(currentPage === "ouvintes" || (minimizedModule === "ouvintes" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
+                  <OuvintesPage />
+                </div>
+              )}
+              {(currentPage === "sorteios" || (minimizedModule === "sorteios" && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
                   <SorteiosPage />
                 </div>
               )}
               {currentPage === "blitz" && <BlitzPage />}
-              {currentPage === "programas" && <ProgramaForm />}
+              {(currentPage === "programas" || (minimizedModule === "programas" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
+                  <ProgramaForm />
+                </div>
+              )}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
               <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
                 <MusicaNoAr effectiveUserId={effectiveUserId} />
