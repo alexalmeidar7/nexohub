@@ -2398,6 +2398,7 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
       setNdiUrl={setNdiUrl}
       programas={programas}
       setProgramas={setProgramas}
+      currentTime={currentTime}
       activePreset={activePreset}
       setActivePreset={setActivePreset}
       editingPresetId={editingPresetId}
@@ -2447,7 +2448,8 @@ function SwitcherUI({
   activeCustomButton, setActiveCustomButton, user, runCommandsUnified,
   loadProgramas, loadCustomButtons, setVmixLogs, ndiScanning, scanNdiSources,
   ndiInputs, inputMapping,
-  navigate
+  navigate,
+  currentTime
 }: any) {
 
 
