@@ -678,10 +678,10 @@ export default function InfoMusicSection() {
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
-              <thead className="bg-red-500 text-white sticky top-0 z-10">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#EF4444" }}>
                 <tr>
-                  <th className="text-left px-3 py-2">Música / Artista</th>
-                  <th className="text-center px-3 py-2 w-16">Ação</th>
+                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
+                  <th className="text-center px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
