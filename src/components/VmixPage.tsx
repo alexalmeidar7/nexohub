@@ -2655,7 +2655,6 @@ function SwitcherUI({
                   </>
                 )}
               </div>
-              </div>
 
               {/* Digital Clock */}
               <div className="flex items-center ml-auto pr-2">
@@ -2681,7 +2680,6 @@ function SwitcherUI({
               </div>
             </div>
           </div>
-        </div>
         </div>
 
         {/* Shortcut Capture Dialog */}
