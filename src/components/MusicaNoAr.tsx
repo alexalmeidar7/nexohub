@@ -1928,13 +1928,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* INFO MUSIC (moved outside config) */}
-      <section className="rounded-xl p-4 mt-6" style={{ background: NEXO_CARD_BG, borderRadius: 28, boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
-        <p className="text-[12px] mb-4 font-black uppercase tracking-[0.2em] flex items-center gap-2.5" style={{ color: NEXO_DARK }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: NEXO_CYAN }}>
-            <Sparkles size={16} className="text-white" />
-          </div>
-          INFO MUSIC
-        </p>
+      <section className="mt-6">
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
+          <InfoMusicSection />
+        </Suspense>
+      </section>
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
           <InfoMusicSection />
         </Suspense>
