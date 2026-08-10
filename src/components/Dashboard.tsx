@@ -1688,10 +1688,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <BackButton onClick={() => setCurrentPage("dashboard")} />
-                  {currentPage === "sorteios" && (
+                  {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
-                        setMinimizedModule("sorteios");
+                        setMinimizedModule(currentPage);
                         setCurrentPage("dashboard");
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
@@ -1703,9 +1703,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
-                  {currentPage === "sorteios" && (
+                  {minimizedModule === currentPage && (
                     <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
-                      <Gift size={14} className="text-[#00BFF0]" />
+                      {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : <Users size={14} className="text-[#00BFF0]" />}
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
