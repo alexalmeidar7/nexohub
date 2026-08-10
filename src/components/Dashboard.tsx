@@ -341,7 +341,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const { user, role } = useAuth();
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
-  const [currentPage, setCurrentPageState] = useState<Page>("dashboard");
+  
+  // State for minimized module (TEST ONLY FOR SORTEIOS)
+  const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
+    try {
+      const saved = localStorage.getItem("nexohub_minimized_module");
+      return (saved as Page) || null;
+    } catch { return null; }
+  });
+
+  useEffect(() => {
+    try {
+      if (minimizedModule) localStorage.setItem("nexohub_minimized_module", minimizedModule);
+      else localStorage.removeItem("nexohub_minimized_module");
+    } catch {}
+  }, [minimizedModule]);
+
+  const [currentPage, setCurrentPageState] = useState<Page>(() => {
+    // If we have a minimized module, we should be on dashboard
+    return "dashboard";
+  });
+
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
