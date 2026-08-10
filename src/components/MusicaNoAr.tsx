@@ -1933,11 +1933,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           <InfoMusicSection />
         </Suspense>
       </section>
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
-          <InfoMusicSection />
-        </Suspense>
-      </section>
-
 
       {/* XML MUSICA AGORA */}
       {music && (
