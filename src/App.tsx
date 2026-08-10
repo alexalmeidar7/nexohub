@@ -70,7 +70,7 @@ import DailyUpdateGuard from "@/components/DailyUpdateGuard";
 export function lazyRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
   retries = 3,
-  delay = 800
+  delay = 400 // Reduced delay from 800ms to 400ms
 ) {
   return lazy(() => {
     const attempt = (left: number, wait: number): Promise<{ default: T }> =>
@@ -129,7 +129,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
     if (isChunkError && this.state.retryCount < 3) {
       this.retryTimer = setTimeout(() => {
         this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
-      }, 800);
+      }, 400); // Reduced delay from 800ms to 400ms
     }
   }
 
