@@ -1945,17 +1945,34 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* INFO MUSIC (moved outside config) */}
-      <section className="mt-6">
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
-          <InfoMusicSection />
-        </Suspense>
+      <section className="mt-8">
+        <div className="rounded-[32px] p-8 space-y-8" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(10, 37, 64, 0.05)" }}>
+          <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center text-slate-400"><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
+            <InfoMusicSection />
+          </Suspense>
+        </div>
       </section>
 
       {/* XML MUSICA AGORA */}
       {music && (
-        <XmlSection title="XML MUSICA AGORA">
-          <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} />
-        </XmlSection>
+        <section className="mt-8 mb-12">
+          <div className="rounded-[32px] p-8 space-y-6" style={{ background: "#0A2540", border: "1px solid #1E293B", boxShadow: "0 20px 40px -10px rgba(10, 37, 64, 0.3)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white/10">
+                <Music size={18} className="text-cyan-400" />
+              </div>
+              <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-white">XML Feed de Transmissão</h4>
+            </div>
+            
+            <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
+              <XmlLinkRow 
+                label="Feed de Integração vMix" 
+                scopeKey={dataUserId || undefined} 
+                xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} 
+              />
+            </div>
+          </div>
+        </section>
       )}
       </div>
     </div>
