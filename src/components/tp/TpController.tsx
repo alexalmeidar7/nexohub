@@ -416,7 +416,7 @@ export default function TpController({ user, onBack }: TpControllerProps) {
     : !(tpPresenceOnline || dbTpOnline)
       ? "Aguardando TP..."
       : !tpState
-        ? "essa tela de sincronizando ambiente esta travando a navegação"
+        ? "alterar texto"
         : "TP Conectado";
 
   const statusDotClass = isReconnecting
