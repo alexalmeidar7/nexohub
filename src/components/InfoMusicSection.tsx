@@ -362,14 +362,22 @@ export default function InfoMusicSection() {
 
   return (
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
-      <div className="flex items-center justify-between mb-2">
+      <div 
+        className="flex items-center justify-between mb-2 cursor-pointer group" 
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
           <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
             Música no Ar & Curiosidades
           </h3>
+          <div className="ml-2 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Button 
             variant="outline" 
             size="sm" 
@@ -382,6 +390,9 @@ export default function InfoMusicSection() {
           </Button>
         </div>
       </div>
+
+      {isOpen && (
+        <>
 
       {/* No Ar Agora em destaque no topo */}
       {nowPlaying && (
