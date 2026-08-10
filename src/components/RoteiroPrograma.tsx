@@ -730,9 +730,9 @@ export default function RoteiroPrograma() {
                                   const ok = await regenerateXmlForRoteiro(r);
                                   if (ok) {
                                     await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
-                                    toast.success("XML atualizado!");
+                                    toast.success("O XML atualizado com sucesso!");
                                   } else toast.error("Falha ao enviar XML");
-                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#00dbff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="Enviar para o XML">
+                                }} style={{ width: 30, height: 30, borderRadius: "50%", background: "#00dbff", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }} title="O XML' atualize a data e horário automáticamente">
                                   <Send size={13} style={{ color: "#FFFFFF" }} />
                                 </button>
                               )}
