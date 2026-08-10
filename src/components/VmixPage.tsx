@@ -3324,7 +3324,7 @@ function SwitcherUI({
                     <div className="flex items-center gap-2">
                       <Radio size={14} style={{ color: "#999" }} />
                       <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "#999" }}>
-                        {studioName || "Estúdio FM"} - Botões Automáticos 
+                        {studioName || "Estúdio FM"} - ABA AUTOMAÇÃO 
                         {programas.find(p => isProgramForToday(p) && isNowInProgram(p)) && (
                           <span className="ml-2 text-[10px] text-red-500 animate-pulse">
                             ● NO AR: {programas.find(p => isProgramForToday(p) && isNowInProgram(p))?.nome}
