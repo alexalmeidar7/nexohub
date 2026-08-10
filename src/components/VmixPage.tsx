@@ -9,7 +9,7 @@ import {
   Monitor, Radio, Disc, RefreshCw, Loader2, CheckCircle, XCircle,
   ExternalLink, Volume2, VolumeX, Play, Square, Camera, Tv,
   Layers, Wand2, Plus, Trash2, GripVertical, Send, Eye, Wifi, WifiOff, HelpCircle, Activity, AlertTriangle, Shield, Clock, Keyboard,
-  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap, Layout, Cpu
+  ScrollText, ChevronDown, ChevronUp, Lock, Download, Upload, Network, Zap, Layout, Cpu, Copy
 } from "lucide-react";
 
 import {
@@ -3550,45 +3550,119 @@ function SwitcherUI({
                               className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-1.5 opacity-0 group-hover/preset:opacity-100 transition-all duration-200 translate-y-full group-hover/preset:translate-y-0"
                               style={{ backgroundColor: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)" }}
                             >
-                              {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi > 0 ? (
+                              <div className="flex items-center gap-1">
+                                {(() => { 
+                                  const gi = programas.findIndex(p => p.id === prog.id); 
+                                  return gi > 0 ? (
+                                    <button
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        const arr = [...programas]; 
+                                        [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; 
+                                        setProgramas(arr); 
+                                        localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); 
+                                      }}
+                                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] hover:bg-white/20 transition-colors"
+                                      style={{ color: "#fff" }}
+                                      title="Mover para esquerda"
+                                    ><ChevronDown size={12} className="-rotate-90" /></button>
+                                  ) : <div className="w-6" />; 
+                                })()}
+                                
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi - 1], arr[gi]] = [arr[gi], arr[gi - 1]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
-                                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
-                                  style={{ color: "#ccc" }}
-                                  title="Mover para esquerda"
-                                >◀</button>
-                              ) : null; })()}
-                              {(() => { const gi = programas.findIndex(p => p.id === prog.id); return gi < programas.length - 1 ? (
+                                  onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
+                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-[#00BFF0]/40 transition-colors"
+                                  style={{ color: "#fff" }}
+                                  title="Editar ações"
+                                ><Wand2 size={12} /></button>
+
                                 <button
-                                  onClick={(e) => { e.stopPropagation(); const arr = [...programas]; [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; setProgramas(arr); localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); }}
-                                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] hover:bg-white/20 transition-colors"
-                                  style={{ color: "#ccc" }}
-                                  title="Mover para direita"
-                                >▶</button>
-                              ) : null; })()}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setEditingPresetId(prog.id); }}
-                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
-                                style={{ color: "#ccc" }}
-                                title="Editar ações"
-                              ><Wand2 size={10} /></button>
-                              <button
-                                onClick={async (e) => { 
-                                  e.stopPropagation(); 
-                                  if (confirm(`Excluir o programa "${prog.nome}" permanentemente?`)) {
-                                    const { error } = await supabase.from("programas").delete().eq("id", prog.id);
-                                    if (!error) {
-                                      setProgramas(prev => prev.filter(p => p.id !== prog.id));
-                                      toast({ title: "Excluído", description: "Programa removido com sucesso." });
-                                    } else {
-                                      toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+                                  onClick={async (e) => { 
+                                    e.stopPropagation(); 
+                                    if (confirm(`Deseja duplicar a automação "${prog.nome}"?`)) {
+                                      try {
+                                        const { data: newProg, error: pError } = await supabase
+                                          .from("programas")
+                                          .insert([{
+                                            nome: `${prog.nome} (Cópia)`,
+                                            horario_inicio: prog.horario_inicio,
+                                            horario_fim: prog.horario_fim,
+                                            dias_semana: prog.dias_semana,
+                                            estudio: prog.estudio,
+                                            ativo: prog.ativo,
+                                            user_id: user?.id
+                                          }])
+                                          .select()
+                                          .single();
+
+                                        if (pError) throw pError;
+
+                                        const { data: commands, error: cError } = await supabase
+                                          .from("preset_commands" as any)
+                                          .select("*")
+                                          .eq("programa_id", prog.id);
+
+                                        if (cError) throw cError;
+
+                                        if (commands && Array.isArray(commands) && commands.length > 0) {
+                                          const newCommands = commands.map((c: any) => ({
+                                            programa_id: newProg.id,
+                                            commands: c.commands,
+                                            custom_horario: c.custom_horario,
+                                            user_id: user?.id
+                                          }));
+                                          const { error: insError } = await supabase.from("preset_commands" as any).insert(newCommands);
+                                          if (insError) throw insError;
+                                        }
+
+                                        setProgramas(prev => [...prev, newProg]);
+                                        toast({ title: "Duplicado", description: "Automação duplicada com sucesso." });
+                                      } catch (err: any) {
+                                        toast({ title: "Erro ao duplicar", description: err.message, variant: "destructive" });
+                                      }
                                     }
-                                  }
-                                }}
-                                className="w-5 h-5 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
-                                style={{ color: "#f87171" }}
-                                title="Excluir"
-                              ><Trash2 size={10} /></button>
+                                  }}
+                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-white/20 transition-colors"
+                                  style={{ color: "#fff" }}
+                                  title="Duplicar"
+                                ><Copy size={12} /></button>
+
+                                <button
+                                  onClick={async (e) => { 
+                                    e.stopPropagation(); 
+                                    if (confirm(`Excluir a automação "${prog.nome}" permanentemente?`)) {
+                                      const { error } = await supabase.from("programas").delete().eq("id", prog.id);
+                                      if (!error) {
+                                        setProgramas(prev => prev.filter(p => p.id !== prog.id));
+                                        toast({ title: "Excluído", description: "Automação removida com sucesso." });
+                                      } else {
+                                        toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
+                                      }
+                                    }
+                                  }}
+                                  className="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/40 transition-colors"
+                                  style={{ color: "#ff4d4d" }}
+                                  title="Excluir"
+                                ><Trash2 size={12} /></button>
+
+                                {(() => { 
+                                  const gi = programas.findIndex(p => p.id === prog.id); 
+                                  return gi < programas.length - 1 ? (
+                                    <button
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        const arr = [...programas]; 
+                                        [arr[gi], arr[gi + 1]] = [arr[gi + 1], arr[gi]]; 
+                                        setProgramas(arr); 
+                                        localStorage.setItem("vmix_preset_order", JSON.stringify(arr.map(p => p.id))); 
+                                      }}
+                                      className="w-6 h-6 rounded flex items-center justify-center text-[10px] hover:bg-white/20 transition-colors"
+                                      style={{ color: "#fff" }}
+                                      title="Mover para direita"
+                                    ><ChevronDown size={12} className="rotate-90" /></button>
+                                  ) : <div className="w-6" />; 
+                                })()}
+                              </div>
 
                             </div>
                           </div>
