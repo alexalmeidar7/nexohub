@@ -80,7 +80,9 @@ export default function InfoMusicSection() {
   const isFetchingRef = useRef(false);
   const [allCuriosities, setAllCuriosities] = useState<InfoMusicRow[]>([]);
   const [loadingAllCuriosities, setLoadingAllCuriosities] = useState(false);
-
+  const [exportingXlsx, setExportingXlsx] = useState(false);
+  const importNoCuriosityRef = useRef<HTMLInputElement | null>(null);
+  const [readingExcel, setReadingExcel] = useState(false);
 
   // Efeito para busca automática sequencial
   useEffect(() => {
@@ -270,6 +272,90 @@ export default function InfoMusicSection() {
 
     } catch (e) {
       toast.error("Erro ao salvar");
+    }
+  };
+
+  const exportSemCuriosidadesExcel = () => {
+    try {
+      setExportingXlsx(true);
+      const semCuriosidade = rows.filter(r => !r.curiosidade || !r.curiosidade.trim());
+      
+      const data = semCuriosidade.map(r => ({
+        "ARTISTA": r.artista,
+        "MUSICA": r.musica,
+        "CURIOSIDADE": ""
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sem Curiosidades");
+      XLSX.writeFile(wb, "musicas_sem_curiosidades.xlsx");
+      toast.success("Excel exportado com sucesso!");
+    } catch (e) {
+      toast.error("Erro ao exportar Excel");
+    } finally {
+      setExportingXlsx(false);
+    }
+  };
+
+  const handleImportExcelNoCuriosity = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    try {
+      setReadingExcel(true);
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const bstr = evt.target?.result;
+          const wb = XLSX.read(bstr, { type: "binary" });
+          const wsname = wb.SheetNames[0];
+          const ws = wb.Sheets[wsname];
+          const data = XLSX.utils.sheet_to_json(ws) as any[];
+
+          let processed = 0;
+          for (const item of data) {
+            const artista = item.ARTISTA || item.Artista || item.artista;
+            const musica = item.MUSICA || item.Musica || item.musica;
+            const curiosidade = item.CURIOSIDADE || item.Curiosidade || item.curiosidade;
+
+            if (artista && musica && curiosidade && String(curiosidade).trim()) {
+              const expiresAt = new Date();
+              expiresAt.setMonth(expiresAt.getMonth() + 6);
+
+              // Update in DB
+              const { error } = await supabase
+                .from("infomusic")
+                .update({ 
+                  curiosidade: String(curiosidade).trim(), 
+                  expires_at: expiresAt.toISOString() 
+                })
+                .eq("user_id", user.id)
+                .ilike("artista", artista.trim())
+                .ilike("musica", musica.trim());
+
+              if (!error) processed++;
+            }
+          }
+
+          if (processed > 0) {
+            toast.success(`${processed} curiosidades importadas com sucesso!`);
+            load();
+            loadExcecoes();
+          } else {
+            toast.info("Nenhuma curiosidade válida encontrada para importar.");
+          }
+        } catch (err) {
+          toast.error("Erro ao processar arquivo Excel");
+        } finally {
+          setReadingExcel(false);
+          if (importNoCuriosityRef.current) importNoCuriosityRef.current.value = "";
+        }
+      };
+      reader.readAsBinaryString(file);
+    } catch (err) {
+      toast.error("Erro ao ler arquivo");
+      setReadingExcel(false);
     }
   };
 
@@ -541,6 +627,36 @@ export default function InfoMusicSection() {
                   "INICIAR AGORA"
                 )}
               </Button>
+
+              <div className="flex gap-1 ml-1">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".xlsx,.xls" 
+                  ref={importNoCuriosityRef}
+                  onChange={handleImportExcelNoCuriosity}
+                />
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-7 w-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full"
+                  title="Exportar musicas sem curiosidades para Excel"
+                  onClick={exportSemCuriosidadesExcel}
+                  disabled={exportingXlsx}
+                >
+                  {exportingXlsx ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-7 w-7 text-[#00BFF0] border-[#00BFF0]/20 hover:bg-[#00BFF0]/5 rounded-full"
+                  title="Importar curiosidades de Excel"
+                  onClick={() => importNoCuriosityRef.current?.click()}
+                  disabled={readingExcel}
+                >
+                  {readingExcel ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                </Button>
+              </div>
             </div>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
