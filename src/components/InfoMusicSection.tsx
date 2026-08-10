@@ -364,16 +364,12 @@ export default function InfoMusicSection() {
     <div className="relative space-y-5 rounded-2xl p-5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
       <div 
         className="flex items-center justify-between mb-2 cursor-pointer group" 
-        onClick={() => {
-          const next = !isOpen;
-          setIsOpen(next);
-          localStorage.setItem("nexohub_infomusic_open", String(next));
-        }}
+        onClick={() => setIsOpen(!isOpen)}
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
           <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Música no Ar & Curiosidades
+            INFO MUSIC
           </h3>
           <div className="ml-2 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
