@@ -1829,7 +1829,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   const preview = parseXmlString(localFileContent);
                   const stopped = !preview && isStoppedXmlPayload(localFileContent);
                   return (
-                    <div className="rounded-lg p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)" }}>
+                    <div className="rounded-2xl p-4" style={{ backgroundColor: "#F8FAFC", border: "1px dashed #CBD5E1" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Prévia da leitura</span>
                         <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: preview ? "rgba(34,197,94,0.12)" : "rgba(234,179,8,0.15)", color: preview ? "#16a34a" : "#a16207" }}>
