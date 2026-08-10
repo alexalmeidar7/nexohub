@@ -1580,10 +1580,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
         {showConfig && (
           <div className="p-5 space-y-5">
-            {/* Two columns with center divider */}
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 lg:gap-0 items-stretch">
+            {/* Two columns grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch relative">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+              <div className="rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-300" style={{ background: "white", border: "1px solid #eef2f6", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
                 <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
                 <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
                   <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)" }}>
@@ -1660,33 +1660,35 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-                <div className="flex flex-col items-center justify-center lg:px-2 w-full lg:w-auto" style={{ minWidth: 0 }}>
-                  <div
-                    className={`rounded-2xl px-3 py-3 lg:py-4 flex lg:flex-col items-center justify-center gap-2 w-full lg:w-[110px] ${bothActive ? "music-dual-monitor-blink" : ""}`}
-                    style={{
-                      background: bothActive
-                        ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
-                        : "linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%)",
-                      color: bothActive ? "#ffffff" : "#0d0446",
-                      border: bothActive ? "1px solid #00BFF0" : "1px dashed color-mix(in srgb, #0d0446 25%, transparent)",
-                      boxShadow: bothActive ? "0 4px 12px rgba(0,191,240,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.6)",
-                    }}
-                  >
-                    <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
-                      Lendo as duas origens
-                    </span>
-                  </div>
-                </div>
+{/* Middle Divider - REMOVED the "Lendo as duas origens" box per request */}
 
               {/* ── LOCAL SOURCE ── */}
-              <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
+              <div 
+                className={`rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-500 ${isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? 'ring-2 ring-[#22c55e] animate-pulse-gentle' : ''}`} 
+                style={{ 
+                  background: "white", 
+                  border: "1px solid #eef2f6", 
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                  ...(isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? { backgroundColor: "#f0fdf4" } : {})
+                }}
+              >
                 <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
-                    <FolderOpen size={12} style={{ color: "#16a34a" }} />
-                  </span>
-                  Origem Local
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-between" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
+                      <FolderOpen size={12} style={{ color: "#16a34a" }} />
+                    </span>
+                    Origem Local
+                  </div>
+                  {isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 && (
+                    <div className="flex items-center gap-1 text-[9px] text-[#22c55e]">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#22c55e]"></span>
+                      </span>
+                      LENDO AGORA
+                    </div>
+                  )}
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
@@ -1836,6 +1838,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   );
                 })()}
 
+                {/* Local monitor indicator inside the box for visual feedback */}
+                {localMonitoring && (
+                  <div className="absolute bottom-2 right-4 flex items-center gap-2">
+                     <span className="text-[8px] font-black tracking-widest text-[#22c55e] opacity-40">AUTO-SYNC ACTIVE</span>
+                  </div>
+                )}
+
                 {/* Remote device warning */}
                 {!localFileName && (() => {
                   const lastLocal = uploadHistory.find(e => e.source === "pasta" && e.deviceName);
@@ -1919,18 +1928,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* INFO MUSIC (moved outside config) */}
-      <section className="rounded-xl p-4 mt-6" style={{ background: NEXO_CARD_BG, borderRadius: 28, boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
-        <p className="text-[12px] mb-4 font-black uppercase tracking-[0.2em] flex items-center gap-2.5" style={{ color: NEXO_DARK }}>
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: NEXO_CYAN }}>
-            <Sparkles size={16} className="text-white" />
-          </div>
-          INFO MUSIC
-        </p>
+      <section className="mt-6">
         <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
           <InfoMusicSection />
         </Suspense>
       </section>
-
 
       {/* XML MUSICA AGORA */}
       {music && (

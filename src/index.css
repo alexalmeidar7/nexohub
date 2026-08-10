@@ -109,6 +109,14 @@
   }
 }
 
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.98; transform: scale(1.01); }
+}
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
 @layer base {
   * {
     @apply border-border;

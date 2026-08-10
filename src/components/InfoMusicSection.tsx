@@ -41,7 +41,7 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 
 export default function InfoMusicSection() {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false); // Changed to default closed
+  const [isOpen, setIsOpen] = useState(false); // Forced closed by default per user request
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
@@ -369,7 +369,7 @@ export default function InfoMusicSection() {
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
           <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            Música no Ar & Curiosidades
+            INFO MUSIC
           </h3>
           <div className="ml-2 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
