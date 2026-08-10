@@ -448,6 +448,38 @@ function DatasBox({ userId }: { userId?: string | null }) {
               ★ Hoje
             </span>
           )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                style={{ background: "rgba(255,255,255,0.08)", color: PROMO_TEXT }}
+                title="Configurar Estado"
+              >
+                <Settings size={9} />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2 bg-[#0A2540] border-[#00BFF0]/30 shadow-2xl">
+              <div className="space-y-1">
+                <p className="text-[9px] font-bold text-[#00BFF0] uppercase tracking-wider mb-2 px-2">Filtrar por Estado</p>
+                {["AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => saveUserState(st)}
+                    className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-colors ${userState === st ? "bg-[#00BFF0] text-[#0A2540]" : "text-white/70 hover:bg-white/5"}`}
+                  >
+                    {st}
+                  </button>
+                ))}
+                <button
+                  onClick={() => saveUserState("")}
+                  className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-colors ${!userState ? "bg-white/20 text-white" : "text-white/70 hover:bg-white/5"}`}
+                >
+                  NACIONAL
+                </button>
+              </div>
+            </PopoverContent>
+          </Popover>
           <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
         </span>
       </div>
