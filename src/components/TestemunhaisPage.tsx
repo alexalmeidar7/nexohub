@@ -17,24 +17,25 @@ interface Testemunhal {
   data_fim: string;
 }
 
-export default function TestemunhaisPage() {
+export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?: string | null }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Testemunhal[]>([]);
+  const ownerId = effectiveUserId || user?.id;
 
   useEffect(() => {
-    if (user) {
+    if (ownerId) {
       supabase
         .from("testemunhais")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", ownerId)
         .order("data_fim")
         .then(({ data }) => {
           if (data) setItems(data as Testemunhal[]);
           setLoading(false);
         });
     }
-  }, [user]);
+  }, [ownerId]);
 
   if (loading) return <ModulePageSkeleton variant="form" />;
 

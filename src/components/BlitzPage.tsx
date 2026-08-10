@@ -124,25 +124,7 @@ export default function BlitzPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [nowTick, setNowTick] = useState(0);
 
-  const renderRow = (b: Blitz) => {
-    const live = isAcontecendo(b);
-    const restante = live ? secondsToEnd(b, nowTick) : null;
-    return (
-      <div key={b.id} className="p-4 rounded-2xl bg-white/50 border border-[#00BFF0]/20">
-        <div className="flex justify-between items-center">
-          <div>
-            <h4 className="font-bold text-[#0A2540]">{b.cliente}</h4>
-            <p className="text-xs text-[#0A2540]/60">{fmtDate(b.dia)} às {fmtTime(b.horario)}</p>
-          </div>
-          {live && restante !== null && (
-            <div className="px-3 py-1 bg-[#C6F03C] text-[#0A2540] rounded-full text-[10px] font-bold animate-pulse">
-              LIVE: {fmtCountdown(restante)}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+
 
   // Estados para busca de clientes e popup de cadastro
   const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
@@ -532,19 +514,7 @@ export default function BlitzPage() {
   };
   const liveBlitz = useMemo(() => items.find(b => isAcontecendo(b)), [items, isAcontecendo]);
 
-  return (
-    <div className="nexo-scope space-y-4">
-      <div id="module-header-title" style={{ display: "none" }}>
-        Atendimento — Blitz
-      </div>
-      <div className="animate-fade-in space-y-5">
-        {agendadas.length > 0 ? agendadas.map(b => renderRow(b)) : <p>Nenhuma blitz pendente.</p>}
-      </div>
-    </div>
-  );
-}
-
-const secondsToEnd = (b: Blitz, nowTick: number) => {
+  const secondsToEnd = (b: Blitz) => {
     void nowTick;
     const fim = (b.horario_fim || "").slice(0, 5);
     if (!fim) return null;
@@ -648,6 +618,9 @@ const secondsToEnd = (b: Blitz, nowTick: number) => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto" style={{ fontFamily: FONT }}>
+      <div id="module-header-title" style={{ display: "none" }}>
+        Atendimento — Blitz
+      </div>
       <style>{blitzLiveCss}</style>
 
       {/* Header */}
