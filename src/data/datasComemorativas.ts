@@ -54,4 +54,12 @@ export const DATAS_COMEMORATIVAS: DataComemorativa[] = [
   { dia: 24, mes: 12, nome: "Véspera de Natal", categoria: "religiosa" },
   { dia: 25, mes: 12, nome: "Natal", categoria: "religiosa" },
   { dia: 31, mes: 12, nome: "Réveillon", categoria: "cultural" },
+  // Mato Grosso do Sul (MS)
+  { dia: 11, mes: 10, nome: "Criação do Estado do MS", categoria: "civica", estado: "MS" },
+  { dia: 13, mes: 6, nome: "Retomada de Corumbá", categoria: "civica", estado: "MS" },
+  { dia: 26, mes: 8, nome: "Aniversário de Campo Grande", categoria: "civica", estado: "MS" },
+  // Goiás (GO)
+  { dia: 26, mes: 7, nome: "Aniversário de Goiás (Cidade)", categoria: "civica", estado: "GO" },
+  { dia: 24, mes: 5, nome: "Nossa Senhora Auxiliadora (Goiânia)", categoria: "religiosa", estado: "GO" },
+  { dia: 24, mes: 10, nome: "Lançamento da Pedra Fundamental de Goiânia", categoria: "civica", estado: "GO" },
 ];
