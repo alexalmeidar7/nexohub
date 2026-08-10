@@ -1660,24 +1660,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-                <div className="flex flex-col items-center justify-center lg:px-2 w-full lg:w-auto" style={{ minWidth: 0 }}>
-                  <div
-                    className={`rounded-2xl px-3 py-3 lg:py-4 flex lg:flex-col items-center justify-center gap-2 w-full lg:w-[110px] ${bothActive ? "music-dual-monitor-blink" : ""}`}
-                    style={{
-                      background: bothActive
-                        ? "linear-gradient(135deg, #00BFF0 0%, #0d6feb 100%)"
-                        : "linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%)",
-                      color: bothActive ? "#ffffff" : "#0d0446",
-                      border: bothActive ? "1px solid #00BFF0" : "1px dashed color-mix(in srgb, #0d0446 25%, transparent)",
-                      boxShadow: bothActive ? "0 4px 12px rgba(0,191,240,0.35)" : "inset 0 1px 0 rgba(255,255,255,0.6)",
-                    }}
-                  >
-                    <span className="text-2xl leading-none" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>⇄</span>
-                    <span className="text-[9px] font-black uppercase tracking-wider text-center leading-tight" style={{ color: bothActive ? "#ffffff" : "#0d0446" }}>
-                      Lendo as duas origens
-                    </span>
-                  </div>
-                </div>
+{/* Middle Divider - REMOVED the "Lendo as duas origens" box per request */}
 
               {/* ── LOCAL SOURCE ── */}
               <div className="rounded-2xl p-5 space-y-3.5 relative overflow-hidden" style={{ background: "linear-gradient(160deg, color-mix(in srgb, var(--layout-page-bg, #ffffff) 92%, var(--layout-header-bg, #0d0446)) 0%, var(--layout-page-bg, #ffffff) 100%)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", boxShadow: "0 1px 3px color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), inset 0 1px 0 rgba(255,255,255,0.5)" }}>
