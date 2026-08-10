@@ -1333,8 +1333,8 @@ export default function AgendaPage() {
           <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>
             <CalendarIcon size={12} className="inline mr-1" />
             {format(new Date(evt.data + "T12:00:00"), "dd/MM/yyyy")}
-            {evt.tipo_evento === "gravacao" && (evt.horario_gravacao || evt.horario_gravacao_fim) ? (
-              ` • 🎬 Gravação: ${evt.horario_gravacao || ""} ${evt.horario_gravacao_fim ? `- ${evt.horario_gravacao_fim}` : ""}`
+            {evt.horario_gravacao || evt.horario_gravacao_fim ? (
+              ` • ${evt.tipo_evento === "gravacao" ? "🎬 Gravação" : "⏰ Agenda"}: ${evt.horario_gravacao || ""} ${evt.horario_gravacao_fim ? `- ${evt.horario_gravacao_fim}` : ""}`
             ) : (
               evt.programa && ` • ${evt.programa.horario_inicio} - ${evt.programa.horario_fim}`
             )}
