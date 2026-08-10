@@ -1683,18 +1683,31 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-{/* Middle Divider - REMOVED the "Lendo as duas origens" box per request */}
-
-              {/* ── LOCAL SOURCE ── */}
+              {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className={`rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-500 ${isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? 'ring-2 ring-[#22c55e] animate-pulse-gentle' : ''}`} 
+                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source-local" 
                 style={{ 
-                  background: "white", 
-                  border: "1px solid #eef2f6", 
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                  ...(isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? { backgroundColor: "#f0fdf4" } : {})
+                  background: "#FFFFFF", 
+                  border: "1px solid #E2E8F0", 
+                  boxShadow: "0 10px 30px -10px rgba(198, 240, 60, 0.15)",
                 }}
               >
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "#C6F03C" }} />
+
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
+                    <div className="w-10 h-10 rounded-2xl flex-center transition-transform group-hover/source-local:rotate-12" style={{ backgroundColor: "#C6F03C15", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <FolderOpen size={18} style={{ color: "#8BBD00" }} />
+                    </div>
+                    Origem Local (Pasta)
+                  </h4>
+                  {isLocalSelected && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Monitorando</span>
+                    </div>
+                  )}
+                </div>
                 <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
                 <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-between" style={{ color: "var(--layout-page-text, #0d0446)" }}>
                   <div className="flex items-center gap-2.5">
