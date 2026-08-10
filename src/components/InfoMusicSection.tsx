@@ -259,7 +259,8 @@ export default function InfoMusicSection() {
       toast.success("Curiosidade salva!");
       setEditMusic(null);
       setCuriosidadeText("");
-      await load();
+      await Promise.all([load(), loadExcecoes()]);
+
     } catch (e) {
       toast.error("Erro ao salvar");
     }
