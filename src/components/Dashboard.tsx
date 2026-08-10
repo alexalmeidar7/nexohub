@@ -1841,6 +1841,49 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
+        {/* Minimized Module Box (TEST ONLY FOR SORTEIOS) */}
+        {minimizedModule && currentPage === "dashboard" && (
+          <div 
+            className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
+            style={{ width: "240px" }}
+          >
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/80 border border-white/20 backdrop-blur-xl shadow-2xl">
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div 
+                  className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: layoutColors.accentColor }}
+                >
+                  <Gift size={16} color="#fff" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
+                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>Sorteios</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 ml-2">
+                <button
+                  onClick={() => {
+                    setMinimizedModule(null);
+                    setCurrentPage("sorteios");
+                  }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
+                  title="Maximizar"
+                >
+                  <ChevronUp size={14} className="text-[#002132]" />
+                </button>
+                <button
+                  onClick={() => setMinimizedModule(null)}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-[#ef4444] hover:text-white transition-all shadow-sm"
+                  title="Fechar"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
         <footer className="flex items-center justify-center gap-2 px-4 pb-3 pt-1 relative z-[1]">
           <img src={logoFooter} alt="Nexo" className="h-4" style={{ opacity: 0.5, filter: (() => {
