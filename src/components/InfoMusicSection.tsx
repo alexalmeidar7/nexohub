@@ -80,7 +80,9 @@ export default function InfoMusicSection() {
   const isFetchingRef = useRef(false);
   const [allCuriosities, setAllCuriosities] = useState<InfoMusicRow[]>([]);
   const [loadingAllCuriosities, setLoadingAllCuriosities] = useState(false);
-
+  const [exportingXlsx, setExportingXlsx] = useState(false);
+  const importNoCuriosityRef = useRef<HTMLInputElement | null>(null);
+  const [readingExcel, setReadingExcel] = useState(false);
 
   // Efeito para busca automática sequencial
   useEffect(() => {
