@@ -2524,9 +2524,16 @@ function SwitcherUI({
                 <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/30 leading-none mb-1">PROGRAMA NO AR</span>
                 <div className="flex items-center gap-2">
                   <div className={`w-1.5 h-1.5 rounded-full ${effectiveConnected ? 'bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'bg-white/20'}`} />
-                  <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
-                    {activeTitle}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] font-black uppercase tracking-[0.1em] text-white truncate max-w-[200px]">
+                      {programas.find((p: any) => p.ativo)?.nome || activeTitle}
+                    </span>
+                    {programas.find((p: any) => p.ativo) && (
+                      <span className="text-[9px] font-medium text-white/40 leading-none mt-0.5">
+                        {programas.find((p: any) => p.ativo).horario_inicio} - {programas.find((p: any) => p.ativo).horario_fim}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
