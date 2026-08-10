@@ -1635,24 +1635,21 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       </button>
                     </div>
                   </div>
-                    <Check size={16} />
-                  </button>
                   <button
                     type="button"
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
                     aria-pressed={isOnlineSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
                     style={{
-                      backgroundColor: isOnlineSelected ? "#C6F03C" : "#ffffff",
-                      color: "#0d0446",
-                      border: isOnlineSelected ? "2px solid #0d0446" : "1px solid #0d0446",
-                      opacity: hasValidOnlineUrl ? 1 : 0.45,
-                      boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                      backgroundColor: isOnlineSelected ? NEXO_CYAN : "#FFFFFF",
+                      color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
+                      border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
+                      boxShadow: isOnlineSelected ? "0 8px 20px -6px rgba(0, 191, 240, 0.4)" : "none",
                     }}
                   >
-                    {onlineActivating ? <Loader2 size={12} className="animate-spin" /> : isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{onlineActivating ? "LENDO..." : "LER ESSA"}</span>
+                    {onlineActivating ? <Loader2 size={16} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Origem Ativa" : "Ativar esta Origem"}
                   </button>
                 </div>
 
