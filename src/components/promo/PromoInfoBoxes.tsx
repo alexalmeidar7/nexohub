@@ -340,19 +340,47 @@ function useFeriadosNacionais() {
   }, []);
 }
 
-function DatasBox() {
+function DatasBox({ userId }: { userId?: string | null }) {
   const feriados = useFeriadosNacionais();
+  const [userState, setUserState] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase
+      .from("user_settings")
+      .select("state_code")
+      .eq("user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.state_code) setUserState(data.state_code);
+      });
+  }, [userId]);
+
+  const saveUserState = async (state: string) => {
+    if (!userId) return;
+    setUserState(state);
+    await supabase
+      .from("user_settings")
+      .update({ state_code: state })
+      .eq("user_id", userId);
+  };
 
   const items = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const year = today.getFullYear();
 
-    const comem = DATAS_COMEMORATIVAS.map((d) => {
-      const thisYear = new Date(year, d.mes - 1, d.dia);
-      const nextYear = new Date(year + 1, d.mes - 1, d.dia);
-      return { date: thisYear >= today ? thisYear : nextYear, nome: d.nome, tag: "Nacional" };
-    });
+    const comem = DATAS_COMEMORATIVAS
+      .filter(d => !d.estado || d.estado === userState)
+      .map((d) => {
+        const thisYear = new Date(year, d.mes - 1, d.dia);
+        const nextYear = new Date(year + 1, d.mes - 1, d.dia);
+        return { 
+          date: thisYear >= today ? thisYear : nextYear, 
+          nome: d.nome, 
+          tag: d.estado ? d.estado : "Nacional" 
+        };
+      });
 
     const fers = feriados.map((f) => ({ date: f.date, nome: f.nome, tag: "Feriado" }));
 
@@ -360,7 +388,7 @@ function DatasBox() {
       .filter((it) => it.date >= today)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .slice(0, 12);
-  }, [feriados]);
+  }, [feriados, userState]);
 
   const [idx, setIdx] = useState(0);
 
