@@ -78,6 +78,9 @@ export default function InfoMusicSection() {
   const importFileRef = useRef<HTMLInputElement | null>(null);
   const [fetchingIds, setFetchingIds] = useState<string[]>([]);
   const isFetchingRef = useRef(false);
+  const [allCuriosities, setAllCuriosities] = useState<InfoMusicRow[]>([]);
+  const [loadingAllCuriosities, setLoadingAllCuriosities] = useState(false);
+
 
   // Efeito para busca automática sequencial
   useEffect(() => {
