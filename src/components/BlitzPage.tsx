@@ -124,25 +124,7 @@ export default function BlitzPage() {
   const [showHistorico, setShowHistorico] = useState(false);
   const [nowTick, setNowTick] = useState(0);
 
-  const renderRow = (b: Blitz) => {
-    const live = isAcontecendo(b);
-    const restante = live ? secondsToEnd(b, nowTick) : null;
-    return (
-      <div key={b.id} className="p-4 rounded-2xl bg-white/50 border border-[#00BFF0]/20">
-        <div className="flex justify-between items-center">
-          <div>
-            <h4 className="font-bold text-[#0A2540]">{b.cliente}</h4>
-            <p className="text-xs text-[#0A2540]/60">{fmtDate(b.dia)} às {fmtTime(b.horario)}</p>
-          </div>
-          {live && restante !== null && (
-            <div className="px-3 py-1 bg-[#C6F03C] text-[#0A2540] rounded-full text-[10px] font-bold animate-pulse">
-              LIVE: {fmtCountdown(restante)}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  };
+
 
   // Estados para busca de clientes e popup de cadastro
   const [clientesDisponiveis, setClientesDisponiveis] = useState<{ id: string; nome: string }[]>([]);
