@@ -9,6 +9,7 @@ import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import PremiereTimeline from "./PremiereTimeline";
 import ClipPreview from "./ClipPreview";
+import { Slider } from "@/components/ui/slider";
 
 function toHMS(seconds: number): string {
   const total = Math.max(0, seconds);
