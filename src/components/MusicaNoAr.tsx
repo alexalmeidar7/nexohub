@@ -1757,8 +1757,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
                 {/* Device name — editable */}
                 {localMonitoring && (
-                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                    <span>lendo no computador</span>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: "#F1F5F9" }}>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      <Monitor size={14} />
+                      Dispositivo:
+                    </div>
                     {editingDeviceName ? (
                       <span className="flex items-center gap-1">
                         <input
