@@ -2098,10 +2098,11 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
   // ── Not connected ──
   if (!effectiveConnected) {
     return (
-      <div className="w-full max-w-7xl mx-auto py-20 px-6 min-h-[90vh] flex flex-col justify-center">
-        <div className="flex flex-col gap-16">
+      <div className="w-full max-w-7xl mx-auto py-12 px-6 min-h-[90vh] flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center gap-16 w-full">
+          <img src={logoMixControl} alt="NEXO VMIX CONTROL" className="h-12 w-auto brightness-125 mb-4" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-start justify-center w-full">
             {/* NEW CONNECTION BUTTON */}
             <div className="flex flex-col gap-6">
               <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Nova Conexão</p>
