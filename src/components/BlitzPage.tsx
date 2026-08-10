@@ -907,4 +907,20 @@ const secondsToEnd = (b: Blitz, nowTick: number) => {
                 </button>
                 <button 
                   style={{ ...limeBtn, flex: 1 }}
+                  onClick={() => {
+                    setConfirmCadastroOpen(false);
+                    setNovoClienteData(prev => ({ ...prev, nome: novoClienteNome }));
+                    setCadastroOpen(true);
+                  }}
+                >
+                  <Check size={16} className="mr-2" />
+                  Sim, cadastrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
