@@ -1708,58 +1708,48 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     </div>
                   )}
                 </div>
-                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-between" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
-                      <FolderOpen size={12} style={{ color: "#16a34a" }} />
-                    </span>
-                    Origem Local
-                  </div>
-                  {isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 && (
-                    <div className="flex items-center gap-1 text-[9px] text-[#22c55e]">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#22c55e]"></span>
-                      </span>
-                      LENDO AGORA
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                      <div className="pl-4">
+                        <FolderOpen size={16} className="text-slate-400" />
+                      </div>
+                      <div className="flex-1 py-3 text-sm font-semibold truncate" style={{ color: NEXO_DARK }}>
+                        {localFileName || <span className="text-slate-400 font-medium italic">Selecione o arquivo do player...</span>}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if ('showOpenFilePicker' in window) {
+                            handleFileSelect();
+                          } else {
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-slate-200"
+                        style={{ backgroundColor: NEXO_DARK, color: "#FFFFFF" }}
+                      >
+                        <Upload size={14} className="mr-2" />
+                        Arquivo
+                      </button>
                     </div>
-                  )}
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
-                    <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
-                    <span className="flex-1 min-w-0 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
                   </div>
-                  <button
-                    onClick={() => {
-                      if ('showOpenFilePicker' in window) {
-                        handleFileSelect();
-                      } else {
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2"
-                    style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
-                  >
-                    <Upload size={14} />
-                  </button>
+
                   <button
                     type="button"
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
                     style={{
-                      backgroundColor: isLocalSelected ? "#C6F03C" : "#ffffff",
-                      color: "#0d0446",
-                      border: isLocalSelected ? "2px solid #0d0446" : "1px solid #0d0446",
-                      opacity: hasValidLocalSource ? 1 : 0.45,
-                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                      backgroundColor: isLocalSelected ? "#C6F03C" : "#FFFFFF",
+                      color: NEXO_DARK,
+                      border: `2px solid ${isLocalSelected ? "#C6F03C" : "#E2E8F0"}`,
+                      boxShadow: isLocalSelected ? "0 8px 20px -6px rgba(198, 240, 60, 0.4)" : "none",
                     }}
                   >
-                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
+                    {localActivating ? <Loader2 size={16} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Monitoramento Ativo" : "Ativar Monitoramento"}
                   </button>
                 </div>
 
