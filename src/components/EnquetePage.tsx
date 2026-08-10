@@ -46,6 +46,12 @@ export default function EnquetePage() {
 
   const fetchEnquetes = async () => {
     if (!user) return;
+    
+    const now = new Date();
+    const today = todayInBrasilia();
+    const currentTime = now.toLocaleTimeString('pt-BR', { hour12: false, hour: '2-digit', minute: '2-digit' });
+
+    // Primeiro, buscar as enquetes do usuário
     const { data, error } = await supabase
       .from("enquetes_agendadas")
       .select("*")
@@ -54,8 +60,27 @@ export default function EnquetePage() {
 
     if (error) {
       toast.error("Erro ao carregar enquetes");
-    } else {
-      setEnquetes(data as EnqueteAgendada[]);
+    } else if (data) {
+      // Filtrar apenas as enquetes que ainda não terminaram
+      const validEnquetes = data.filter(e => {
+        if (e.data_enquete > today) return true;
+        if (e.data_enquete === today && e.horario_fim >= currentTime) return true;
+        return false;
+      });
+
+      // Identificar IDs de enquetes vencidas para remover do banco (opcional, mas solicitado)
+      const expiredIds = data
+        .filter(e => !validEnquetes.find(v => v.id === e.id))
+        .map(e => e.id);
+
+      if (expiredIds.length > 0) {
+        await supabase
+          .from("enquetes_agendadas")
+          .delete()
+          .in("id", expiredIds);
+      }
+
+      setEnquetes(validEnquetes as EnqueteAgendada[]);
     }
     setLoading(false);
   };
