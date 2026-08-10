@@ -807,6 +807,8 @@ export default function InfoMusicSection() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+        </>
+      )}
     </div>
   );
 }
