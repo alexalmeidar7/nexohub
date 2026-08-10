@@ -627,6 +627,36 @@ export default function InfoMusicSection() {
                   "INICIAR AGORA"
                 )}
               </Button>
+
+              <div className="flex gap-1 ml-1">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".xlsx,.xls" 
+                  ref={importNoCuriosityRef}
+                  onChange={handleImportExcelNoCuriosity}
+                />
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-7 w-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full"
+                  title="Exportar musicas sem curiosidades para Excel"
+                  onClick={exportSemCuriosidadesExcel}
+                  disabled={exportingXlsx}
+                >
+                  {exportingXlsx ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-7 w-7 text-[#00BFF0] border-[#00BFF0]/20 hover:bg-[#00BFF0]/5 rounded-full"
+                  title="Importar curiosidades de Excel"
+                  onClick={() => importNoCuriosityRef.current?.click()}
+                  disabled={readingExcel}
+                >
+                  {readingExcel ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                </Button>
+              </div>
             </div>
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
