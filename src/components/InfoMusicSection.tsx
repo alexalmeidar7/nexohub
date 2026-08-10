@@ -590,14 +590,18 @@ export default function InfoMusicSection() {
 
       {/* Seção inferior: MÚSICAS COM CURIOSIDADES CADASTRADAS */}
       <div className="space-y-3 flex flex-col mt-6 w-full col-span-full">
-        <div className="flex items-center gap-2">
-          <div className="w-1 h-4 bg-emerald-500 rounded-full" />
-          <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({rows.filter(r => r.curiosidade && r.curiosidade.trim()).length})</h4>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+            <h4 className="text-xs font-black uppercase tracking-wider">CURIOSIDADES CADASTRADAS ({allCuriosities.length})</h4>
+          </div>
+          {loadingAllCuriosities && <Loader2 size={14} className="animate-spin text-emerald-500" />}
         </div>
         <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
           <table className="w-full text-[10px]">
             <thead className="bg-emerald-500 text-white sticky top-0 z-10">
               <tr>
+                <th className="text-left px-3 py-2 w-16">Data</th>
                 <th className="text-left px-3 py-2 w-16">Hora</th>
                 <th className="text-left px-3 py-2">Música / Artista</th>
                 <th className="text-left px-3 py-2">Curiosidade</th>
@@ -605,9 +609,11 @@ export default function InfoMusicSection() {
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {rows.filter(r => r.curiosidade && r.curiosidade.trim()).length > 0 ? rows.filter(r => r.curiosidade && r.curiosidade.trim()).map(r => (
+              {allCuriosities.length > 0 ? allCuriosities.map(r => (
                 <tr key={r.id} className="hover:bg-emerald-50/30">
+                  <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td>
                   <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+
                   <td className="px-3 py-2">
                     <div className="font-bold truncate">{r.musica}</div>
                     <div className="opacity-60 truncate">{r.artista}</div>
