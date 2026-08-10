@@ -352,6 +352,7 @@ export default function RoteiroPrograma() {
           const filePath = decodeURIComponent(pathMatch[1]);
           const blob = new Blob([new TextEncoder().encode(xml)], { type: "application/xml" });
           await supabase.storage.from("empresa-assets").upload(filePath, blob, { upsert: true, contentType: "application/xml" });
+          await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", roteiro.id);
         }
       } catch (e) {
         console.warn("[TxtEdit] XML regen error:", e);
@@ -470,6 +471,7 @@ export default function RoteiroPrograma() {
         console.warn("[RegenXML] xml inválido", xml.slice(0, 200));
         return false;
       }
+      await supabase.from("roteiros").update({ xml_pushed_at: new Date().toISOString() }).eq("id", r.id);
       return true;
     } catch (e) {
       console.warn(`[RegenXML] Error on roteiro ${r?.id}:`, e);
