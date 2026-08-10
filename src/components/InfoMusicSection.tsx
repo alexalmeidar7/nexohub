@@ -41,7 +41,13 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 
 export default function InfoMusicSection() {
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false); // Changed to default closed
+  const [isOpen, setIsOpen] = useState(() => {
+    try {
+      return localStorage.getItem("nexohub_infomusic_open") === "true";
+    } catch {
+      return false;
+    }
+  });
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
