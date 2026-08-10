@@ -145,6 +145,13 @@ export default function InfoMusicSection() {
           r.id === target.id ? { ...r, curiosidade: data.curiosidade.trim() } : r
         ));
         
+        // Atualiza a lista completa de curiosidades também
+        setAllCuriosities(prev => [
+          { ...target, curiosidade: data.curiosidade.trim() },
+          ...prev
+        ]);
+
+        
       } catch (e) {
         if (e instanceof Error && e.message === "monthly_quota_exceeded") {
           toast.error("Cota mensal de IA atingida (20/mês).");
