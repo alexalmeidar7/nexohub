@@ -2120,10 +2120,40 @@ export default function AgendaPage() {
                   </div>
 
                   {selectedPrograma && (
-                    <p className="text-[10px] -mt-2 px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
-                      ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
-                      {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
-                    </p>
+                    <div className="space-y-3 -mt-2">
+                      <p className="text-[10px] px-1" style={{ color: "var(--layout-icon-color, #888888)" }}>
+                        ⏰ {selectedPrograma.horario_inicio} às {selectedPrograma.horario_fim}
+                        {selectedPrograma.estudio && ` • ${selectedPrograma.estudio}`}
+                      </p>
+                      
+                      {formTipoEvento === "live" && (
+                        <div className="rounded-xl p-3 space-y-2.5" style={{ backgroundColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 4%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}>
+                          <Label className="text-[10px] font-bold uppercase tracking-wider block" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 60%, transparent)" }}>⏰ Horário deste evento especifico da agenda</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-[8px] font-medium opacity-60 mb-1 block">Início</Label>
+                              <input
+                                type="time"
+                                value={formHorarioGravacao}
+                                onChange={(e) => setFormHorarioGravacao(e.target.value)}
+                                className="agenda-form-input h-8 w-full px-2 text-[11px]"
+                                style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "8px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[8px] font-medium opacity-60 mb-1 block">Fim</Label>
+                              <input
+                                type="time"
+                                value={formHorarioGravacaoFim}
+                                onChange={(e) => setFormHorarioGravacaoFim(e.target.value)}
+                                className="agenda-form-input h-8 w-full px-2 text-[11px]"
+                                style={{ borderColor: "color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)", borderRadius: "8px", backgroundColor: "#ffffff", color: "var(--layout-page-text, #1a1a1a)", border: "1px solid color-mix(in srgb, var(--layout-accent-color, #2563eb) 20%, transparent)" }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {/* Tipo (cards visuais AO VIVO / GRAVAÇÃO) */}
