@@ -352,21 +352,37 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     "sorteios"
   ];
 
-  // State for minimized module
-  const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
+  // State for minimized modules (array to allow multiple)
+  const [minimizedModules, setMinimizedModules] = useState<Page[]>(() => {
     try {
-      const saved = localStorage.getItem("nexohub_minimized_module");
-      if (saved && MINIMIZABLE_PAGES.includes(saved as Page)) return saved as Page;
-      return null;
-    } catch { return null; }
+      const saved = localStorage.getItem("nexohub_minimized_modules");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((p: any) => MINIMIZABLE_PAGES.includes(p as Page)) as Page[];
+        }
+      }
+      return [];
+    } catch { return []; }
   });
 
   useEffect(() => {
     try {
-      if (minimizedModule) localStorage.setItem("nexohub_minimized_module", minimizedModule);
-      else localStorage.removeItem("nexohub_minimized_module");
+      if (minimizedModules.length > 0) {
+        localStorage.setItem("nexohub_minimized_modules", JSON.stringify(minimizedModules));
+      } else {
+        localStorage.removeItem("nexohub_minimized_modules");
+      }
     } catch {}
-  }, [minimizedModule]);
+  }, [minimizedModules]);
+
+  // Compatibility for single minimized logic (refactoring to use the first or just keeping the state separate)
+  const [minimizedModule, setMinimizedModule] = useState<Page | null>(null);
+  
+  // Update legacy single state when array changes for compatibility with existing components if needed
+  useEffect(() => {
+    setMinimizedModule(minimizedModules.length > 0 ? minimizedModules[0] : null);
+  }, [minimizedModules]);
 
   const [currentPage, setCurrentPageState] = useState<Page>(() => {
     // If we have a minimized module, we should be on dashboard
