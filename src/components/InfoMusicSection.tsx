@@ -368,9 +368,14 @@ export default function InfoMusicSection() {
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
-            <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "#00BFF0" }}>
-              INFO MUSIC
-            </h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                <Music size={18} style={{ color: "#00BFF0" }} />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "#00BFF0" }}>
+                INFO MUSIC
+              </h3>
+            </div>
           <div className="ml-2 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
