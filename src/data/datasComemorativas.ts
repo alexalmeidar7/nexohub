@@ -4,6 +4,7 @@ export interface DataComemorativa {
   mes: number; // 1-12
   nome: string;
   categoria?: "religiosa" | "civica" | "cultural" | "familia" | "profissao";
+  estado?: string; // UF (ex: "MS", "GO") para datas estaduais
 }
 
 export const DATAS_COMEMORATIVAS: DataComemorativa[] = [
