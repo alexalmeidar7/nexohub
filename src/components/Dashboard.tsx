@@ -392,6 +392,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const setCurrentPage = useCallback((next: React.SetStateAction<Page>) => {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
+      
+      // If navigating TO dashboard, we don't clear minimized modules
+      // If navigating AWAY from dashboard to a non-minimized module, we might want to keep them
+      
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
       }
