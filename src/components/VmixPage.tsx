@@ -3282,11 +3282,12 @@ function SwitcherUI({
                       </button>
                       <button
                         onClick={() => setEditingPresetId("new")}
-                        className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-white/10 transition-colors"
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#22c55e10] hover:bg-[#22c55e20] border border-[#22c55e20] transition-colors"
                         style={{ color: "#22c55e" }}
                         title="Criar novo programa"
                       >
-                        <Plus size={14} />
+                        <Plus size={12} />
+                        <span className="text-[10px] font-black uppercase tracking-wider">+ nova automação</span>
                       </button>
                     </div>
                   </div>
