@@ -64,10 +64,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return t;
     };
 
-    // Hard safety net: if loading is still true after 15s, force it off
+    // Safety net: if loading is still true after 5s (reduced from 15s), force it off
     addTimer(() => {
       if (mounted && loadingRef.current) {
-        console.warn("Auth: safety timeout reached (15s), forcing load complete");
+        console.warn("Auth: safety timeout reached (5s), forcing load complete");
         finishLoading();
         // If we timed out, check if we have a backup session to fallback on
         if (!user && lastGoodSessionRef.current) {
