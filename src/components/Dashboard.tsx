@@ -1730,7 +1730,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                           if (prev.includes(currentPage)) return prev;
                           return [...prev, currentPage];
                         });
-                        setCurrentPage("dashboard");
+                        setCurrentPageState("dashboard");
+                        try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
                       title="Minimizar"
