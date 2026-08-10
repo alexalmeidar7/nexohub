@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react"
 import type React from "react";
 
 import { Calendar as CalendarUI } from "@/components/ui/calendar";
-import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette } from "lucide-react";
+import { Home, Sun, FileText, Mic2, PlaySquare, Music, CalendarDays, Settings, LogOut, Loader2, ShoppingBag, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, MessageSquareQuote, Tag, Image, ExternalLink, MonitorPlay, Heart, ShoppingCart, Film, Users, Newspaper, CloudSun, Wrench, Scissors, Menu, X, Monitor, Radio, Swords, HelpCircle, Star, Globe, Play, Pause, Gift, Siren, Layers, Building2, Bot, Smartphone, Palette, CloudRain } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
@@ -342,11 +342,22 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   
-  // State for minimized module (TEST ONLY FOR SORTEIOS)
+  // Lista de páginas que suportam minimização (CADASTRO + SORTEIOS)
+  const MINIMIZABLE_PAGES: Page[] = [
+    "apresentadores",
+    "ouvintes",
+    "programas",
+    "clientes",
+    "previsao",
+    "sorteios"
+  ];
+
+  // State for minimized module
   const [minimizedModule, setMinimizedModule] = useState<Page | null>(() => {
     try {
       const saved = localStorage.getItem("nexohub_minimized_module");
-      return (saved as Page) || null;
+      if (saved && MINIMIZABLE_PAGES.includes(saved as Page)) return saved as Page;
+      return null;
     } catch { return null; }
   });
 
@@ -1677,10 +1688,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <BackButton onClick={() => setCurrentPage("dashboard")} />
-                  {currentPage === "sorteios" && (
+                  {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
-                        setMinimizedModule("sorteios");
+                        setMinimizedModule(currentPage);
                         setCurrentPage("dashboard");
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
@@ -1692,9 +1703,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
-                  {currentPage === "sorteios" && (
+                  {minimizedModule === currentPage && (
                     <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
-                      <Gift size={14} className="text-[#00BFF0]" />
+                      {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : <Users size={14} className="text-[#00BFF0]" />}
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
@@ -1727,15 +1738,27 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
-              {currentPage === "apresentadores" && <ApresentadorForm />}
-              {currentPage === "ouvintes" && <OuvintesPage />}
-              {(currentPage === "sorteios" || minimizedModule === "sorteios") && (
+              {(currentPage === "apresentadores" || (minimizedModule === "apresentadores" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
+                  <ApresentadorForm />
+                </div>
+              )}
+              {(currentPage === "ouvintes" || (minimizedModule === "ouvintes" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
+                  <OuvintesPage />
+                </div>
+              )}
+              {(currentPage === "sorteios" || (minimizedModule === "sorteios" && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
                   <SorteiosPage />
                 </div>
               )}
               {currentPage === "blitz" && <BlitzPage />}
-              {currentPage === "programas" && <ProgramaForm />}
+              {(currentPage === "programas" || (minimizedModule === "programas" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
+                  <ProgramaForm />
+                </div>
+              )}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
               <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
                 <MusicaNoAr effectiveUserId={effectiveUserId} />
@@ -1760,7 +1783,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "enquete" && <EnquetePage />}
               {currentPage === "quiz" && <QuizPage />}
               {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
-              {currentPage === "clientes" && <ClientesPage />}
+              {(currentPage === "clientes" || (minimizedModule === "clientes" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
+                  <ClientesPage />
+                </div>
+              )}
+              {(currentPage === "previsao" || (minimizedModule === "previsao" && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
+                  <PrevisaoTempo />
+                </div>
+              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
@@ -1846,7 +1878,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* Minimized Module Box (TEST ONLY FOR SORTEIOS) */}
+        {/* Minimized Module Box */}
         {minimizedModule && currentPage === "dashboard" && (
           <div 
             className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
@@ -1858,19 +1890,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: layoutColors.accentColor }}
                 >
-                  <Gift size={16} color="#fff" />
+                  {minimizedModule === "sorteios" ? (
+                    <Gift size={16} color="#fff" />
+                  ) : minimizedModule === "previsao" ? (
+                    <CloudRain size={16} color="#fff" />
+                  ) : (
+                    <Users size={16} color="#fff" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
-                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>Sorteios</p>
+                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>{pageTitle[minimizedModule] || minimizedModule}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1 ml-2">
                 <button
                   onClick={() => {
+                    const mod = minimizedModule;
                     setMinimizedModule(null);
-                    setCurrentPage("sorteios");
+                    setCurrentPage(mod);
                   }}
                   className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
                   title="Maximizar"

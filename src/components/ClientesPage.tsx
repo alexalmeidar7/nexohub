@@ -201,9 +201,12 @@ export default function ClientesPage() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
+      {/* Header handled by Dashboard Portal */}
+      <div style={{ display: "none" }}>
+        <h1 className="text-2xl font-bold text-slate-800">Cadastro de Clientes</h1>
+      </div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Cadastro de Clientes</h1>
           <p className="text-slate-500 text-sm">Gerencie os clientes e seus contratos.</p>
         </div>
         
