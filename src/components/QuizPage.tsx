@@ -121,8 +121,48 @@ interface QuizAgendado {
 
 export default function QuizPage() {
   const { user } = useAuth();
-  const [pergunta, setPergunta] = useState("");
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+
   const [respostas, setRespostas] = useState(["", "", "", ""]);
+  const [correta, setCorreta] = useState(1);
+  const [dataQuiz, setDataQuiz] = useState("");
+  const [horarioInicio, setHorarioInicio] = useState("");
+  const [horarioFim, setHorarioFim] = useState("");
+  const [quizzes, setQuizzes] = useState<QuizAgendado[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [customCategories, setCustomCategories] = useState<Record<string, QuizItem[]>>({});
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [explicacao, setExplicacao] = useState("");
+  const [imagemResposta, setImagemResposta] = useState("");
+  const [imagemSkip, setImagemSkip] = useState(0);
+  const [loadingImage, setLoadingImage] = useState(false);
+  const [pergunta, setPergunta] = useState("");
+
+  const renderQuiz = () => {
+    return <div>Quiz Content</div>;
+  };
+
+  if (loading) return <ModulePageSkeleton variant="form" />;
+
+  return (
+    <div className="nexo-scope space-y-4">
+      <div id="module-header-title" style={{ display: "none" }}>
+        Quiz
+      </div>
+      <div className="animate-fade-in space-y-6">
+        {quizzes.length > 0 ? quizzes.map(q => <div key={q.id}>{q.pergunta}</div>) : <p>Nenhum quiz agendado.</p>}
+      </div>
+    </div>
+  );
+}
+
+const quizState = () => {
+  const [pergunta, setPergunta] = useState("");
   const [correta, setCorreta] = useState(1);
   const [dataQuiz, setDataQuiz] = useState("");
   const [horarioInicio, setHorarioInicio] = useState("");

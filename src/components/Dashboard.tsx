@@ -342,14 +342,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const isAdmin = role === "admin";
   const layoutColors = useLayoutColors();
   
-  // Lista de páginas que suportam minimização (CADASTRO + SORTEIOS)
+  // Lista de páginas que suportam minimização (Expandida para quase todos os módulos)
   const MINIMIZABLE_PAGES: Page[] = [
-    "apresentadores",
-    "ouvintes",
-    "programas",
-    "clientes",
-    "previsao",
-    "sorteios"
+    "apresentadores", "ouvintes", "programas", "clientes", "previsao", "sorteios",
+    "blitz", "noticias", "musica", "agenda", "site", "playerconfig", "preroll",
+    "testemunhais", "promocoes", "logos", "broadcast", "cenario", "batalha",
+    "enquete", "quiz", "cortevideo"
   ];
 
   // State for minimized modules (array to allow multiple)
@@ -393,15 +391,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     setCurrentPageState((prev) => {
       const resolved = typeof next === "function" ? (next as (p: Page) => Page)(prev) : next;
       
-      // If navigating TO dashboard, we don't clear minimized modules
-      // If navigating AWAY from dashboard to a non-minimized module, we might want to keep them
+      // Handle automatic minimization logic when navigating AWAY from a minimizable module
+      // If we are on a minimizable page and navigate to dashboard or another page, we minimize it automatically
+      // except if explicitly excluded. This fulfills the requirement of "keep minimized pages always appearing"
+      if (prev !== "dashboard" && resolved === "dashboard" && MINIMIZABLE_PAGES.includes(prev)) {
+        setMinimizedModules(m => m.includes(prev) ? m : [...m, prev]);
+      }
       
       if (resolved !== prev) {
         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
       }
       return resolved;
     });
-  }, []);
+  }, [MINIMIZABLE_PAGES]);
 
   useEffect(() => {
     (window as any).setCurrentPageGlobal = setCurrentPage;
@@ -1444,9 +1446,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <div className="flex items-center gap-4">
             <div>
               {!isDashboard && (
-                <p className="text-xs font-medium tracking-widest uppercase mb-0.5" style={{ color: layoutColors.accentColor }}>
-                  {pageTitle[currentPage]}
-                </p>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-xs font-medium tracking-widest uppercase" style={{ color: layoutColors.accentColor }}>
+                    {pageTitle[currentPage]}
+                  </p>
+                  {MINIMIZABLE_PAGES.includes(currentPage) && (
+                    <button
+                      onClick={() => {
+                        setMinimizedModules(m => m.includes(currentPage) ? m : [...m, currentPage]);
+                        setCurrentPage("dashboard");
+                      }}
+                      className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 text-black/40 hover:text-black/60 transition-colors"
+                      title="Minimizar módulo"
+                    >
+                      <ChevronDown size={14} />
+                    </button>
+                  )}
+                </div>
               )}
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
@@ -1728,7 +1744,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
                   {minimizedModules.includes(currentPage) && (
                     <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
-                      {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : <Users size={14} className="text-[#00BFF0]" />}
+                      {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : 
+                       currentPage === "previsao" ? <CloudRain size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "agenda" ? <CalendarDays size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "musica" ? <Music size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "blitz" ? <Siren size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "noticias" ? <FileText size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "broadcast" ? <Radio size={14} className="text-[#00BFF0]" /> :
+                       currentPage === "site" ? <Globe size={14} className="text-[#00BFF0]" /> :
+                       <Users size={14} className="text-[#00BFF0]" />}
                     </div>
                   )}
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
@@ -1785,36 +1809,97 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <SorteiosPage />
                 </div>
               )}
-              {currentPage === "blitz" && <BlitzPage />}
+              {(currentPage === "blitz" || (minimizedModules.includes("blitz") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "blitz" ? "block" : "none" }}>
+                  <BlitzPage />
+                </div>
+              )}
+              {(currentPage === "noticias" || (minimizedModules.includes("noticias") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "noticias" ? "block" : "none" }}>
+                  <RoteiroPrograma />
+                </div>
+              )}
               {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
                   <ProgramaForm />
                 </div>
               )}
               {/* MusicaNoAr stays mounted in background so local-XML upload to storage keeps running while user navigates other pages */}
-              <div style={{ display: currentPage === "musica" ? "block" : "none" }}>
+              <div style={{ display: currentPage === "musica" || (minimizedModules.includes("musica") && currentPage === "dashboard") ? "block" : "none" }}>
                 <MusicaNoAr effectiveUserId={effectiveUserId} />
               </div>
-              {currentPage === "agenda" && <AgendaPage />}
+              {(currentPage === "agenda" || (minimizedModules.includes("agenda") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "agenda" ? "block" : "none" }}>
+                  <AgendaPage />
+                </div>
+              )}
               {currentPage === "curtidas" && <MusicasCurtidasPage />}
               {currentPage === "configuracoes" && <ConfiguracoesPage section="empresa" />}
-              {currentPage === "playerconfig" && <ConfiguracoesPage section="player" />}
-              {currentPage === "testemunhais" && <TestemunhaisPage effectiveUserId={effectiveUserId} />}
-              {currentPage === "promocoes" && <PromocoesPage effectiveUserId={effectiveUserId} />}
+              {(currentPage === "playerconfig" || (minimizedModules.includes("playerconfig") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "playerconfig" ? "block" : "none" }}>
+                  <ConfiguracoesPage section="player" />
+                </div>
+              )}
+              {(currentPage === "testemunhais" || (minimizedModules.includes("testemunhais") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "testemunhais" ? "block" : "none" }}>
+                  <TestemunhaisPage effectiveUserId={effectiveUserId} />
+                </div>
+              )}
+              {(currentPage === "promocoes" || (minimizedModules.includes("promocoes") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "promocoes" ? "block" : "none" }}>
+                  <PromocoesPage effectiveUserId={effectiveUserId} />
+                </div>
+              )}
               {currentPage === "configtelapromo" && <ConfigTelaPromoPage />}
-              {currentPage === "logos" && <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />}
+              {(currentPage === "logos" || (minimizedModules.includes("logos") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "logos" ? "block" : "none" }}>
+                  <LogosPatrocinadoresPage effectiveUserId={effectiveUserId} />
+                </div>
+              )}
               {currentPage === "shopping" && <ShoppingPage />}
-              {currentPage === "preroll" && <PreRollPage />}
-              {currentPage === "cortevideo" && <CortesVideoPage />}
+              {(currentPage === "preroll" || (minimizedModules.includes("preroll") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "preroll" ? "block" : "none" }}>
+                  <PreRollPage />
+                </div>
+              )}
+              {(currentPage === "cortevideo" || (minimizedModules.includes("cortevideo") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "cortevideo" ? "block" : "none" }}>
+                  <CortesVideoPage />
+                </div>
+              )}
               {currentPage === "vmix" && <VmixPage />}
               {currentPage === "propostas" && <PropostasPage />}
               {currentPage === "tp" && <TeleprompterPage />}
-              {currentPage === "cenario" && <CenariosPage />}
-              {currentPage === "broadcast" && <BroadcastPage />}
-              {currentPage === "batalha" && <BatalhaMusicalPage />}
-              {currentPage === "enquete" && <EnquetePage />}
-              {currentPage === "quiz" && <QuizPage />}
-              {currentPage === "site" && <SitePage effectiveUserId={effectiveUserId || user?.id || null} />}
+              {(currentPage === "cenario" || (minimizedModules.includes("cenario") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "cenario" ? "block" : "none" }}>
+                  <CenariosPage />
+                </div>
+              )}
+              {(currentPage === "broadcast" || (minimizedModules.includes("broadcast") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "broadcast" ? "block" : "none" }}>
+                  <BroadcastPage />
+                </div>
+              )}
+              {(currentPage === "batalha" || (minimizedModules.includes("batalha") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "batalha" ? "block" : "none" }}>
+                  <BatalhaMusicalPage />
+                </div>
+              )}
+              {(currentPage === "enquete" || (minimizedModules.includes("enquete") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "enquete" ? "block" : "none" }}>
+                  <EnquetePage />
+                </div>
+              )}
+              {(currentPage === "quiz" || (minimizedModules.includes("quiz") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "quiz" ? "block" : "none" }}>
+                  <QuizPage />
+                </div>
+              )}
+              {(currentPage === "site" || (minimizedModules.includes("site") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "site" ? "block" : "none" }}>
+                  <SitePage effectiveUserId={effectiveUserId || user?.id || null} />
+                </div>
+              )}
               {currentPage === "pacotes" && <PacotesPage accentColor={layoutColors.accentColor} />}
               {currentPage === "subusuarios" && (
                 <SubUsuariosPage groups={subUsuarioModulosGroups as never} accentColor={layoutColors.accentColor} />
@@ -1928,13 +2013,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         background: `linear-gradient(135deg, ${layoutColors.accentColor}, color-mix(in srgb, ${layoutColors.accentColor}, #000 30%))` 
                       }}
                     >
-                      {mod === "sorteios" ? (
-                        <Gift size={16} color="#fff" />
-                      ) : mod === "previsao" ? (
-                        <CloudRain size={16} color="#fff" />
-                      ) : (
-                        <Users size={16} color="#fff" />
-                      )}
+                      {(() => {
+                        if (mod === "sorteios") return <Gift size={16} color="#fff" />;
+                        if (mod === "previsao") return <CloudRain size={16} color="#fff" />;
+                        if (mod === "agenda") return <CalendarDays size={16} color="#fff" />;
+                        if (mod === "musica") return <Music size={16} color="#fff" />;
+                        if (mod === "blitz") return <Siren size={16} color="#fff" />;
+                        if (mod === "noticias") return <FileText size={16} color="#fff" />;
+                        if (mod === "broadcast") return <Radio size={16} color="#fff" />;
+                        if (mod === "site") return <Globe size={16} color="#fff" />;
+                        if (mod === "promocoes") return <Tag size={16} color="#fff" />;
+                        if (mod === "logos") return <Image size={16} color="#fff" />;
+                        if (mod === "preroll") return <Film size={16} color="#fff" />;
+                        if (mod === "testemunhais") return <MessageSquareQuote size={16} color="#fff" />;
+                        if (mod === "cenario") return <MonitorPlay size={16} color="#fff" />;
+                        if (mod === "batalha") return <Swords size={16} color="#fff" />;
+                        if (mod === "enquete" || mod === "quiz") return <HelpCircle size={16} color="#fff" />;
+                        if (mod === "cortevideo") return <Scissors size={16} color="#fff" />;
+                        if (mod === "playerconfig") return <Settings size={16} color="#fff" />;
+                        return <Users size={16} color="#fff" />;
+                      })()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">Aberto</p>

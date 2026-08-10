@@ -147,6 +147,10 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
   const [programaId, setProgramaId] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
+
+  const renderTestemunhais = () => {
+    return <div>Citações</div>;
+  };
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
 
@@ -276,6 +280,8 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
     }
   };
 
+  if (loading) return <ModulePageSkeleton />;
+
   const resetForm = () => {
     setTexto("");
     if (editorRef.current) editorRef.current.innerHTML = "";
@@ -298,6 +304,23 @@ export default function TestemunhaisPage({ effectiveUserId }: TestemunhaisPagePr
 
   const stripHtml = (html: string) =>
     (html || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+
+  return (
+    <div className="nexo-scope space-y-4">
+      <div id="module-header-title" style={{ display: "none" }}>
+        ADS — Citações
+      </div>
+      <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+        {renderTestemunhais()}
+      </div>
+    </div>
+  );
+}
+
+const renderTestemunhais = () => {
+
+const previewTexto = (html: string, max = 110) => {
+
   const previewTexto = (html: string, max = 110) => {
     const clean = stripHtml(html);
     return clean.length > max ? clean.slice(0, max).trimEnd() + "…" : clean;

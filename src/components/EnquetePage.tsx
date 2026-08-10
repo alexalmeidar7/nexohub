@@ -113,6 +113,10 @@ export default function EnquetePage() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [loadingCategory, setLoadingCategory] = useState(false);
 
+  const renderEnquete = () => {
+    return <div>Conteúdo da Enquete</div>;
+  };
+
   // Auto-schedule state
   const [aiEnabled, setAiEnabled] = useState(true);
   const [autoMode, setAutoMode] = useState<"programa" | "custom">("programa");
@@ -458,19 +462,30 @@ export default function EnquetePage() {
   }
 
   return (
-    <div className="nexo-scope space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}>
-            <HelpCircle size={20} className="text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquete</h2>
-            <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Configure perguntas e respostas para exibição no ar</p>
+    <div className="nexo-scope space-y-4">
+      <div id="module-header-title" style={{ display: "none" }}>
+        Enquete
+      </div>
+      <div className="animate-fade-in space-y-6">
+        {renderEnquete()}
+      </div>
+    </div>
+  );
+}
+
+const renderEnquete = () => {
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, var(--layout-accent-color, #268ffa), color-mix(in srgb, var(--layout-accent-color, #268ffa) 70%, #000))" }}>
+              <HelpCircle size={20} className="text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>Enquete</h2>
+              <p className="text-xs" style={{ color: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 50%, transparent)" }}>Configure perguntas e respostas para exibição no ar</p>
+            </div>
           </div>
         </div>
-      </div>
       {/* Pre-built quizzes by category */}
       <div className="rounded-xl p-4" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #ffffff) 96%, var(--layout-accent-color, #268ffa))", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
         <div className="flex items-center gap-2 mb-3">

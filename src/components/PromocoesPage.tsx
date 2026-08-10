@@ -128,6 +128,10 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   const [texto, setTexto] = useState("");
   const [oferecimento, setOferecimento] = useState("");
   const [dataInicio, setDataInicio] = useState("");
+
+  const renderPromocoes = () => {
+    return <div>Promoções</div>;
+  };
   const [dataFim, setDataFim] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState("");
@@ -356,7 +360,6 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    fontWeight: 700,
     fontSize: 11,
     letterSpacing: 1.2,
     textTransform: "uppercase",
@@ -365,7 +368,18 @@ export default function PromocoesPage({ effectiveUserId }: PromocoesPageProps) {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="nexo-scope space-y-4">
+      <div id="module-header-title" style={{ display: "none" }}>
+        ADS — Promoções
+      </div>
+      <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+        {renderPromocoes()}
+      </div>
+    </div>
+  );
+}
+
+const renderPromocoes = () => {
       {/* FORM CARD */}
       <section
         style={{

@@ -908,6 +908,10 @@ export default function BroadcastPage() {
       style={{ fontFamily: "'Manrope', sans-serif", backgroundColor: "transparent" }}
     >
       <div className="w-full h-full min-h-0 flex flex-col gap-4">
+        {/* Header handled by Dashboard Portal */}
+        <div id="module-header-title" style={{ display: "none" }}>
+          vMix — Broadcast
+        </div>
 
         {/* ── Top toolbar: brand lockup + status console ── */}
         <div

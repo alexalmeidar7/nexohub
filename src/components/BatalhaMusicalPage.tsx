@@ -439,9 +439,15 @@ export default function BatalhaMusicalPage() {
   };
 
   return (
-    <div className="nexo-scope animate-fade-in space-y-6">
-      {/* Main Form Card */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+    <div className="nexo-scope space-y-4">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        Batalha Musical
+      </div>
+      <div className="animate-fade-in space-y-6">
+        {/* Main Form Card */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: cardBg, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}>
+
         {/* Card Header */}
         <div className="flex items-center gap-3 px-6 py-4" style={{ borderBottom: borderSubtle }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "rgba(45,191,244,0.15)" }}>
@@ -670,6 +676,7 @@ export default function BatalhaMusicalPage() {
           <XmlLinkRow label="XML BATALHA MUSICAL" permanentUrl={batalhaXmlUrl} />
         </XmlSection>
       )}
+      </div>
     </div>
   );
 }

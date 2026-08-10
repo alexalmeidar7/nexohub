@@ -360,8 +360,8 @@ export default function PrevisaoTempo() {
   return (
     <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
-      <div style={{ display: "none" }}>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: DARK, marginBottom: 20 }}>Cidade / Tempo</h2>
+      <div id="module-header-title" style={{ display: "none" }}>
+        Cidade / Tempo
       </div>
 
       {/* FORM CARD — Cadastro de Cidade / Tempo */}

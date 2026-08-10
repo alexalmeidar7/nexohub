@@ -194,8 +194,8 @@ export default function SorteiosPage() {
   return (
     <div style={{ fontFamily: FONT }}>
       {/* Header handled by Dashboard Portal */}
-      <div style={{ display: "none" }}>
-        <h1 style={{ fontSize: 18, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, margin: 0 }}>Sorteios</h1>
+      <div id="module-header-title" style={{ display: "none" }}>
+        Sorteios
       </div>
 
       {/* Tabs */}

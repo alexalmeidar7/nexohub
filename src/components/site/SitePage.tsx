@@ -126,7 +126,12 @@ export default function SitePage({ effectiveUserId }: Props) {
   const subtleBorder = "1px solid color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)";
 
   return (
-    <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
+    <div className="nexo-scope space-y-4">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        Site — Admin
+      </div>
+      <div className="nexo-scope animate-fade-in flex flex-col gap-4 h-full min-h-0" style={{ fontFamily: "Montserrat, system-ui, sans-serif" }}>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 rounded-2xl" style={{ background: "#ffffff", border: "2px solid #00BFF0" }} data-nexo-skip>
         <div className="flex items-center gap-3 min-w-0">
@@ -367,6 +372,7 @@ export default function SitePage({ effectiveUserId }: Props) {
 
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
