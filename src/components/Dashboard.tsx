@@ -1675,7 +1675,21 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           {currentPage !== "dashboard" && (
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
-                <BackButton onClick={() => setCurrentPage("dashboard")} />
+                <div className="flex items-center gap-2">
+                  <BackButton onClick={() => setCurrentPage("dashboard")} />
+                  {currentPage === "sorteios" && (
+                    <button
+                      onClick={() => {
+                        setMinimizedModule("sorteios");
+                        setCurrentPage("dashboard");
+                      }}
+                      className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
+                      title="Minimizar"
+                    >
+                      <ChevronDown size={20} className="text-[#002132] opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                  )}
+                </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
                   <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.12em] font-black select-none">
