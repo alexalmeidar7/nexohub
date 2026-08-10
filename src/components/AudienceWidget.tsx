@@ -98,6 +98,8 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const [social, setSocial] = useState<SocialCounts>({ youtube: null, instagram: null, facebook: null });
   const [videoCount, setVideoCount] = useState<number | null>(null);
   const [youtubeLiveCount, setYoutubeLiveCount] = useState<number | null>(null);
+  const isYoutubeLiveActiveRef = useRef(false);
+
   const [streamingCount, setStreamingCount] = useState<number | null>(null);
   const [siteCount, setSiteCount] = useState<number | null>(null);
   const [rotIdx, setRotIdx] = useState(0);
@@ -543,14 +545,17 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
         const d = data as any;
         if (cancelled || !d?.ok) return;
         const v = d.youtubeLive;
-        if (typeof v !== "number") return; // erro/desconhecido — mantém último valor
+        if (typeof v !== "number") return;
         if (v > 0) {
           zeroStreak = 0;
           setYoutubeLiveCount(v);
+          isYoutubeLiveActiveRef.current = true;
         } else {
-          // v === 0 → live encerrada. Confirma com uma segunda leitura para evitar flicker.
           zeroStreak += 1;
-          if (zeroStreak >= 2) setYoutubeLiveCount(0);
+          if (zeroStreak >= 2) {
+            setYoutubeLiveCount(0);
+            isYoutubeLiveActiveRef.current = false;
+          }
         }
       } catch { /* ignore */ }
     };
@@ -569,7 +574,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     const logNow = async () => {
       const audio = streamingRef.current ?? 0;
       const video = videoRef.current ?? 0;
-      const youtube = youtubeRef.current ?? 0;
+      const youtube = isYoutubeLiveActiveRef.current ? (youtubeRef.current ?? 0) : 0;
       if (audio === 0 && video === 0 && youtube === 0) return;
       // Descobre programa atual
       const now = new Date();
@@ -613,7 +618,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
   const socialTotal =
     (social.youtube || 0) + (social.instagram || 0) + (social.facebook || 0);
   // YouTube Live só entra se houver live (valor > 0)
-  const viewersNow = (streamingCount || 0) + (videoCount || 0) + (youtubeLiveCount || 0);
+  const viewersNow = (streamingCount || 0) + (videoCount || 0) + (isYoutubeLiveActiveRef.current ? (youtubeLiveCount || 0) : 0);
   const bg = "#d9ff65";
   const dark = "#0A2540";
 
@@ -626,7 +631,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     value: number | null;
   }[] = [];
   if (socialUrlsRef.current.youtube)
-    rotation.push({ key: "youtube", label: "YouTube", icon: <Youtube size={14} />, value: social.youtube });
+    rotation.push({ key: "youtube", label: "YouTube (Inscritos)", icon: <Youtube size={14} />, value: social.youtube });
   if (socialUrlsRef.current.instagram)
     rotation.push({ key: "instagram", label: "Instagram", icon: <Instagram size={14} />, value: social.instagram });
   if (socialUrlsRef.current.facebook)
@@ -856,7 +861,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
               className="text-[9px] font-bold uppercase truncate"
               style={{ color: dark, opacity: 0.6, letterSpacing: 1.2 }}
             >
-              Seguidores (Redes Sociais)
+              Inscritos (Redes Sociais)
             </span>
             {loadingConfig || loadingSocial ? (
               <Skeleton width={72} height={18} dark={dark} />
