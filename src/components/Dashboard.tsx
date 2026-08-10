@@ -1719,7 +1719,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             <div className="flex items-center justify-between mb-6 ml-1">
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <BackButton onClick={() => setCurrentPage("dashboard")} />
+                  <BackButton onClick={() => {
+                    setMinimizedModules(prev => prev.filter(p => p !== currentPage));
+                    setCurrentPage("dashboard");
+                  }} />
                   {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
