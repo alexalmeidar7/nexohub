@@ -541,7 +541,11 @@ export default function LogosPatrocinadoresPage({ effectiveUserId }: LogosPatroc
   }
 
   return (
-    <div className="nexo-scope animate-fade-in">
+    <div className="nexo-scope space-y-4 animate-fade-in">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        ADS — Logos Patrocinadores
+      </div>
       <div className="rounded-2xl" style={{ background: "#D6F4FB", boxShadow: "0 8px 32px rgba(0,191,240,0.15)", padding: "20px", border: "1.5px solid #00BFF0" }}>
 
         {/* Header */}

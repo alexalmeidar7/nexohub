@@ -1400,7 +1400,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const NEXO_DARK = "#0A2540";
 
   return (
-    <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+    <div className="nexo-scope space-y-4">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        Música no Ar
+      </div>
+      <div className="animate-fade-in space-y-3" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
       <section
         style={{
@@ -1940,6 +1945,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} />
         </XmlSection>
       )}
+      </div>
     </div>
   );
 }

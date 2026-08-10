@@ -783,6 +783,10 @@ export default function RoteiroPrograma() {
 
   return (
     <div className="animate-fade-in space-y-5" style={MONT}>
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        vMix — Roteiro de Programa
+      </div>
       <div className="px-6 pt-4 pb-2">
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
           <button

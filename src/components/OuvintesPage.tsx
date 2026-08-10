@@ -370,8 +370,8 @@ export default function OuvintesPage() {
   return (
     <div className="space-y-8 animate-fade-in" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
-      <div style={{ display: "none" }}>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: DARK, marginBottom: 20 }}>Cadastro de Ouvintes</h2>
+      <div id="module-header-title" style={{ display: "none" }}>
+        Cadastro de Ouvintes
       </div>
 
       {/* PONTUAÇÃO RULES (collapsed by default, above form) */}

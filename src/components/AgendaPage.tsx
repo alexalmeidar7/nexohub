@@ -1410,7 +1410,10 @@ export default function AgendaPage() {
     const cardBorder = "1px solid #E5F5FB";
     const cardShadow = "0 2px 12px rgba(10, 37, 64, 0.04)";
     return (
-      <>
+      <div className="nexo-scope space-y-4">
+        <div id="module-header-title" style={{ display: "none" }}>
+          Agenda
+        </div>
         <style>{`
           @keyframes agendaSkelShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
           .agenda-skel-bar { background: ${shimmer}; background-size: 800px 100%; animation: agendaSkelShimmer 1.4s linear infinite; border-radius: 6px; }
@@ -1523,13 +1526,17 @@ export default function AgendaPage() {
             </div>
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
-
   return (
-    <div className="animate-fade-in">
+    <div className="nexo-scope space-y-4">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        Agenda
+      </div>
+      <div className="animate-fade-in">
 
       {/* Diálogo: Período da recorrência */}
       <Dialog open={periodoDialogOpen} onOpenChange={setPeriodoDialogOpen}>
@@ -3130,6 +3137,7 @@ export default function AgendaPage() {
         <div className="mt-5 text-[10px] text-center opacity-50">
           * Use o calendário e a programação acima para navegar entre as datas.
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1006,8 +1006,8 @@ export default function ProgramaForm() {
   return (
     <div className="animate-fade-in space-y-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>
       {/* Header handled by Dashboard Portal */}
-      <div style={{ display: "none" }}>
-        <h2 style={{ fontSize: 24, fontWeight: 800, color: DARK, marginBottom: 20 }}>Cadastro de Programas</h2>
+      <div id="module-header-title" style={{ display: "none" }}>
+        Cadastro de Programas
       </div>
 
       {/* FORM CARD */}

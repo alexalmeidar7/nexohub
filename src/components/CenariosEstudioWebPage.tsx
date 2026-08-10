@@ -138,6 +138,10 @@ export default function CenariosEstudioWebPage() {
 
   return (
     <div className="space-y-5">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        vMix — Cenário Web
+      </div>
       {/* Header */}
       <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center gap-4">
         <div className="flex items-center gap-3 flex-1">

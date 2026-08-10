@@ -1740,6 +1740,10 @@ export default function CenarioInterativoPage() {
 
   return (
     <div className="animate-fade-in space-y-5">
+      {/* Header handled by Dashboard Portal */}
+      <div id="module-header-title" style={{ display: "none" }}>
+        vMix — Cenário Interativo
+      </div>
       {/* Header — Condensed broadcast dashboard */}
       <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
