@@ -1673,11 +1673,22 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 }}
               >
                 <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
-                    <FolderOpen size={12} style={{ color: "#16a34a" }} />
-                  </span>
-                  Origem Local
+                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-between" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
+                      <FolderOpen size={12} style={{ color: "#16a34a" }} />
+                    </span>
+                    Origem Local
+                  </div>
+                  {isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 && (
+                    <div className="flex items-center gap-1 text-[9px] text-[#22c55e]">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#22c55e]"></span>
+                      </span>
+                      LENDO AGORA
+                    </div>
+                  )}
                 </h4>
                 <div className="flex flex-wrap gap-1.5">
                   <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
