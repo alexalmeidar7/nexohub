@@ -193,15 +193,9 @@ export default function SorteiosPage() {
 
   return (
     <div style={{ fontFamily: FONT }}>
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <div style={{ width: 44, height: 44, borderRadius: 12, background: CYAN, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Gift size={22} color="#fff" />
-        </div>
-        <div>
-          <h1 style={{ fontSize: 18, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, margin: 0 }}>Sorteios</h1>
-          <p style={{ fontSize: 12, color: "#64748B", margin: 0 }}>Gestão de prêmios, sorteios e entregas</p>
-        </div>
+      {/* Header handled by Dashboard Portal */}
+      <div style={{ display: "none" }}>
+        <h1 style={{ fontSize: 18, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1, color: DARK, margin: 0 }}>Sorteios</h1>
       </div>
 
       {/* Tabs */}
