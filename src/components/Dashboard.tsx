@@ -1873,7 +1873,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           </div>
         </div>
 
-        {/* Minimized Module Box (TEST ONLY FOR SORTEIOS) */}
+        {/* Minimized Module Box */}
         {minimizedModule && currentPage === "dashboard" && (
           <div 
             className="fixed bottom-4 left-[80px] z-[70] animate-in slide-in-from-bottom-4 duration-300"
@@ -1885,19 +1885,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ backgroundColor: layoutColors.accentColor }}
                 >
-                  <Gift size={16} color="#fff" />
+                  {minimizedModule === "sorteios" ? <Gift size={16} color="#fff" /> : <Users size={16} color="#fff" />}
                 </div>
                 <div className="min-w-0">
                   <p className="text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">Módulo Aberto</p>
-                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>Sorteios</p>
+                  <p className="text-xs font-bold truncate" style={{ color: layoutColors.accentColor }}>{pageTitle[minimizedModule] || minimizedModule}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-1 ml-2">
                 <button
                   onClick={() => {
+                    const mod = minimizedModule;
                     setMinimizedModule(null);
-                    setCurrentPage("sorteios");
+                    setCurrentPage(mod);
                   }}
                   className="w-7 h-7 rounded-full flex items-center justify-center bg-white/50 hover:bg-white/80 transition-colors shadow-sm"
                   title="Maximizar"
