@@ -451,14 +451,15 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
                   </span>
                 ) : evt.tipo_evento === "gravacao" ? (
                   <span
-                    className="inline-flex items-center gap-1 shrink-0 rounded-full pl-1.5 pr-2 py-[2px] font-black text-[9px] tracking-[0.12em] uppercase"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-full px-1.5 py-[1px] font-semibold text-[9px] tracking-[0.08em] uppercase"
                     style={{
-                      background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)",
-                      color: "#fff",
-                      boxShadow: "0 0 0 1px rgba(255,255,255,0.15) inset, 0 2px 6px rgba(139,92,246,0.45)",
+                      background: "transparent",
+                      color: cardText,
+                      opacity: 0.6,
+                      border: "1px solid color-mix(in srgb, currentColor 35%, transparent)",
                     }}
                   >
-                    <Circle size={7} fill="#fff" strokeWidth={0} />
+                    <span className="inline-block w-1 h-1 rounded-full" style={{ background: "currentColor" }} />
                     REC
                   </span>
                 ) : (
