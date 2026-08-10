@@ -28,7 +28,7 @@ export default function EnquetePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [enquetes, setEnquetes] = useState<EnqueteAgendada[]>([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   
   const [formData, setFormData] = useState({
     pergunta: "",
