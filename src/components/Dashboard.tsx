@@ -1707,7 +1707,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   {MINIMIZABLE_PAGES.includes(currentPage) && (
                     <button
                       onClick={() => {
-                        setMinimizedModule(currentPage);
+                        setMinimizedModules(prev => {
+                          if (prev.includes(currentPage)) return prev;
+                          return [...prev, currentPage];
+                        });
                         setCurrentPage("dashboard");
                       }}
                       className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
@@ -1719,7 +1722,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </div>
                 
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/40 border border-white/20 backdrop-blur-sm shadow-sm">
-                  {minimizedModule === currentPage && (
+                  {minimizedModules.includes(currentPage) && (
                     <div className="flex items-center gap-2 mr-2 pr-2 border-r border-[#002132]/10">
                       {currentPage === "sorteios" ? <Gift size={14} className="text-[#00BFF0]" /> : <Users size={14} className="text-[#00BFF0]" />}
                     </div>
@@ -1754,23 +1757,23 @@ export default function Dashboard({ onLogout }: DashboardProps) {
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
               {currentPage === "previsao" && <PrevisaoTempo />}
               {currentPage === "noticias" && <RoteiroPrograma />}
-              {(currentPage === "apresentadores" || (minimizedModule === "apresentadores" && currentPage === "dashboard")) && (
+              {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm />
                 </div>
               )}
-              {(currentPage === "ouvintes" || (minimizedModule === "ouvintes" && currentPage === "dashboard")) && (
+              {(currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
                   <OuvintesPage />
                 </div>
               )}
-              {(currentPage === "sorteios" || (minimizedModule === "sorteios" && currentPage === "dashboard")) && (
+              {(currentPage === "sorteios" || (minimizedModules.includes("sorteios") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "sorteios" ? "block" : "none" }}>
                   <SorteiosPage />
                 </div>
               )}
               {currentPage === "blitz" && <BlitzPage />}
-              {(currentPage === "programas" || (minimizedModule === "programas" && currentPage === "dashboard")) && (
+              {(currentPage === "programas" || (minimizedModules.includes("programas") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "programas" ? "block" : "none" }}>
                   <ProgramaForm />
                 </div>
