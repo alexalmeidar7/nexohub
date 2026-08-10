@@ -41,6 +41,7 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
 
 export default function InfoMusicSection() {
   const { user } = useAuth();
+  const [isOpen, setIsOpen] = useState(false); // Changed to default closed
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
