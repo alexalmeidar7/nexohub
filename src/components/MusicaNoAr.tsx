@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
-import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings } from "lucide-react";
+import { Music, User, Loader2, Check, Globe, FolderOpen, Clock, Upload, Monitor, ChevronDown, ChevronUp, AlertTriangle, Circle, Sparkles, X, Settings, CheckCircle2 } from "lucide-react";
 const InfoMusicSection = lazy(() => import("./InfoMusicSection"));
 import XmlLinkRow from "./XmlLinkRow";
 import XmlSection from "./XmlSection";
@@ -1584,54 +1584,72 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
 
         {showConfig && (
-          <div className="p-5 space-y-5">
+          <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
             {/* Two columns grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch relative">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
               {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-300" style={{ background: "white", border: "1px solid #eef2f6", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
-                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, var(--layout-icon-color, #268ffa), color-mix(in srgb, var(--layout-icon-color, #268ffa) 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center gap-2.5" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)" }}>
-                    <Globe size={12} style={{ color: "var(--layout-icon-color, #268ffa)" }} />
-                  </span>
-                  Origem Online
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
-                    <Globe size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
-                    <input
-                      value={xmlUrl}
-                      onChange={(e) => {
-                        const nextValue = e.target.value;
-                        setXmlUrl(nextValue);
-                        if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
-                          setOnlineError(null);
-                        }
-                      }}
-                      className="flex-1 text-xs outline-none bg-transparent"
-                      style={{ color: "var(--layout-page-text, #0d0446)" }}
-                      placeholder="Cole ou digite uma URL .xml"
-                    />
+              <div className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(0, 191, 240, 0.1)" }}>
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: NEXO_CYAN }} />
+                
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
+                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover/source:rotate-12" style={{ backgroundColor: `${NEXO_CYAN}15` }}>
+                      <Globe size={18} style={{ color: NEXO_CYAN }} />
+                    </div>
+                    Origem Online
+                  </h4>
+                  {isOnlineSelected && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Ativo</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">URL do Feed XML</label>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                      <div className="pl-4">
+                        <Globe size={16} className="text-slate-400" />
+                      </div>
+                      <input
+                        value={xmlUrl}
+                        onChange={(e) => {
+                          const nextValue = e.target.value;
+                          setXmlUrl(nextValue);
+                          if (!nextValue.trim() || isValidXmlUrl(nextValue)) {
+                            setOnlineError(null);
+                          }
+                        }}
+                        className="flex-1 py-3 text-sm font-semibold outline-none bg-transparent"
+                        style={{ color: NEXO_DARK }}
+                        placeholder="https://exemplo.com/feed.xml"
+                      />
+                      <button 
+                        onClick={() => void saveUrl(xmlUrl)} 
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-cyan-500/20" 
+                        style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
+                      >
+                        Salvar
+                      </button>
+                    </div>
                   </div>
-                  <button onClick={() => void saveUrl(xmlUrl)} className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2" style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}>
-                    <Check size={16} />
-                  </button>
                   <button
                     type="button"
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
                     aria-pressed={isOnlineSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
                     style={{
-                      backgroundColor: isOnlineSelected ? "#C6F03C" : "#ffffff",
-                      color: "#0d0446",
-                      border: isOnlineSelected ? "2px solid #0d0446" : "1px solid #0d0446",
-                      opacity: hasValidOnlineUrl ? 1 : 0.45,
-                      boxShadow: isOnlineSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                      backgroundColor: isOnlineSelected ? NEXO_CYAN : "#FFFFFF",
+                      color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
+                      border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
+                      boxShadow: isOnlineSelected ? "0 8px 20px -6px rgba(0, 191, 240, 0.4)" : "none",
                     }}
                   >
-                    {onlineActivating ? <Loader2 size={12} className="animate-spin" /> : isOnlineSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{onlineActivating ? "LENDO..." : "LER ESSA"}</span>
+                    {onlineActivating ? <Loader2 size={16} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Origem Ativa" : "Ativar esta Origem"}
                   </button>
                 </div>
 
@@ -1665,70 +1683,73 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 )}
               </div>
 
-{/* Middle Divider - REMOVED the "Lendo as duas origens" box per request */}
-
-              {/* ── LOCAL SOURCE ── */}
+              {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className={`rounded-3xl p-6 space-y-4 relative overflow-hidden transition-all duration-500 ${isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? 'ring-2 ring-[#22c55e] animate-pulse-gentle' : ''}`} 
+                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source-local" 
                 style={{ 
-                  background: "white", 
-                  border: "1px solid #eef2f6", 
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
-                  ...(isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 ? { backgroundColor: "#f0fdf4" } : {})
+                  background: "#FFFFFF", 
+                  border: "1px solid #E2E8F0", 
+                  boxShadow: "0 10px 30px -10px rgba(198, 240, 60, 0.15)",
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ background: "linear-gradient(90deg, #22c55e, color-mix(in srgb, #22c55e 40%, transparent))" }} />
-                <h4 className="text-[11px] font-black uppercase tracking-[0.15em] flex items-center justify-between" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
-                      <FolderOpen size={12} style={{ color: "#16a34a" }} />
-                    </span>
-                    Origem Local
-                  </div>
-                  {isLocalSelected && !localError && (nowTick - (localLastReadAt || 0)) < 5000 && (
-                    <div className="flex items-center gap-1 text-[9px] text-[#22c55e]">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#22c55e] opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#22c55e]"></span>
-                      </span>
-                      LENDO AGORA
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "#C6F03C" }} />
+
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
+                    <div className="w-10 h-10 rounded-2xl flex-center transition-transform group-hover/source-local:rotate-12" style={{ backgroundColor: "#C6F03C15", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <FolderOpen size={18} style={{ color: "#8BBD00" }} />
+                    </div>
+                    Origem Local (Pasta)
+                  </h4>
+                  {isLocalSelected && (
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Monitorando</span>
                     </div>
                   )}
-                </h4>
-                <div className="flex flex-wrap gap-1.5">
-                  <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg transition-all min-w-0 basis-full sm:basis-0 sm:flex-1 order-1" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)" }}>
-                    <FolderOpen size={13} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }} />
-                    <span className="flex-1 min-w-0 text-xs truncate" style={{ color: localFileName ? "var(--layout-page-text, #0d0446)" : "color-mix(in srgb, var(--layout-page-text, #0d0446) 40%, transparent)" }}>{localFileName || "Nenhum arquivo"}</span>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                      <div className="pl-4">
+                        <FolderOpen size={16} className="text-slate-400" />
+                      </div>
+                      <div className="flex-1 py-3 text-sm font-semibold truncate" style={{ color: NEXO_DARK }}>
+                        {localFileName || <span className="text-slate-400 font-medium italic">Selecione o arquivo do player...</span>}
+                      </div>
+                      <button
+                        onClick={() => {
+                          if ('showOpenFilePicker' in window) {
+                            handleFileSelect();
+                          } else {
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-slate-200"
+                        style={{ backgroundColor: NEXO_DARK, color: "#FFFFFF" }}
+                      >
+                        <Upload size={14} className="mr-2" />
+                        Arquivo
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      if ('showOpenFilePicker' in window) {
-                        handleFileSelect();
-                      } else {
-                        fileInputRef.current?.click();
-                      }
-                    }}
-                    className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all hover:opacity-80 order-2"
-                    style={{ backgroundColor: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #ffffff)" }}
-                  >
-                    <Upload size={14} />
-                  </button>
+
                   <button
                     type="button"
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="h-10 w-[112px] flex items-center justify-center gap-1.5 px-3 rounded-lg select-none shrink-0 transition-all hover:opacity-90 disabled:cursor-not-allowed order-3 ml-auto sm:ml-0"
+                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
                     style={{
-                      backgroundColor: isLocalSelected ? "#C6F03C" : "#ffffff",
-                      color: "#0d0446",
-                      border: isLocalSelected ? "2px solid #0d0446" : "1px solid #0d0446",
-                      opacity: hasValidLocalSource ? 1 : 0.45,
-                      boxShadow: isLocalSelected ? "0 2px 6px rgba(13,4,70,0.35)" : "inset 0 -2px 0 rgba(0,0,0,0.08)",
+                      backgroundColor: isLocalSelected ? "#C6F03C" : "#FFFFFF",
+                      color: NEXO_DARK,
+                      border: `2px solid ${isLocalSelected ? "#C6F03C" : "#E2E8F0"}`,
+                      boxShadow: isLocalSelected ? "0 8px 20px -6px rgba(198, 240, 60, 0.4)" : "none",
                     }}
                   >
-                    {localActivating ? <Loader2 size={12} className="animate-spin" /> : isLocalSelected ? <Check size={13} strokeWidth={3} /> : <Circle size={11} strokeWidth={2.5} />}
-                    <span className="text-[10px] font-black whitespace-nowrap tracking-wider">{localActivating ? "LENDO..." : "LER ESSA"}</span>
+                    {localActivating ? <Loader2 size={16} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Monitoramento Ativo" : "Ativar Monitoramento"}
                   </button>
                 </div>
 
@@ -1736,8 +1757,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
                 {/* Device name — editable */}
                 {localMonitoring && (
-                  <div className="flex items-center gap-2 text-[10px] font-semibold" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                    <span>lendo no computador</span>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: "#F1F5F9" }}>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                      <Monitor size={14} />
+                      Dispositivo:
+                    </div>
                     {editingDeviceName ? (
                       <span className="flex items-center gap-1">
                         <input
@@ -1805,7 +1829,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   const preview = parseXmlString(localFileContent);
                   const stopped = !preview && isStoppedXmlPayload(localFileContent);
                   return (
-                    <div className="rounded-lg p-3" style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 25%, transparent)" }}>
+                    <div className="rounded-2xl p-4" style={{ backgroundColor: "#F8FAFC", border: "1px dashed #CBD5E1" }}>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Prévia da leitura</span>
                         <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: preview ? "rgba(34,197,94,0.12)" : "rgba(234,179,8,0.15)", color: preview ? "#16a34a" : "#a16207" }}>
@@ -1873,56 +1897,44 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
         {/* ═══ UPLOAD HISTORY (Legacy position) ═══ */}
         {showConfig && uploadHistory.length > 0 && (
-          <div className="mt-4 px-6 pb-6">
-            <p className="text-[10px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
-              <Clock size={10} /> Histórico de atualizações
-              <span className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-black" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, transparent)", color: "var(--layout-page-text, #0d0446)" }}>últimas 3</span>
-            </p>
-            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
-              <table className="w-full text-[10px]">
+          <div className="mt-6 px-8 pb-8">
+            <div className="rounded-[32px] overflow-hidden" style={{ border: "1px solid #E2E8F0", backgroundColor: "#FFFFFF", boxShadow: "0 10px 30px -10px rgba(10, 37, 64, 0.05)" }}>
+              <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), color-mix(in srgb, var(--layout-header-bg, #0d0446) 4%, transparent))" }}>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Origem</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Data</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Hora</th>
-                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista — Música</th>
+                  <tr style={{ backgroundColor: "#F8FAFC" }}>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Origem</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Data</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Hora</th>
+                    <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Música / Artista</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {uploadHistory.map((entry, i) => {
                     const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
                     const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
                     const showArtist = entry.artista || fallbackArtist;
                     const showMusic = entry.musica || fallbackMusic;
                     return (
-                    <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
-                      <td className="px-3 py-2 font-semibold">
-                        <span
-                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold cursor-help"
-                          title={entry.source === "pasta" ? (entry.deviceName ? `Computador: ${entry.deviceName}` : "Computador: desconhecido") : "Leitura online"}
-                          style={{
-                            backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
-                            color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
-                          }}
-                        >
-                          {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
-                          {entry.source === "pasta" ? "Leitura local" : "Online"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
-                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
-                      <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
-                        {showArtist || showMusic ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <span className="font-bold truncate max-w-[140px]" title={showArtist}>{showArtist || "—"}</span>
-                            <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
-                            <span className="truncate max-w-[180px]" title={showMusic} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{showMusic || "—"}</span>
+                      <tr key={i} className="group hover:bg-slate-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider"
+                            style={{ 
+                              backgroundColor: entry.source === "pasta" ? "#F7FEE7" : "#ECFEFF",
+                              color: entry.source === "pasta" ? "#4D7C0F" : "#0891B2"
+                            }}>
+                            {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                            {entry.source === "pasta" ? "Local" : "Online"}
                           </span>
-                        ) : (
-                          <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-500 tabular-nums">{entry.date}</td>
+                        <td className="px-6 py-4 text-[11px] font-bold text-slate-500 tabular-nums">{entry.time}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-bold truncate text-slate-900" title={showMusic}>{showMusic || "—"}</span>
+                            <span className="text-[10px] font-semibold text-slate-400 truncate" title={showArtist}>{showArtist || "—"}</span>
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -1933,17 +1945,34 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* INFO MUSIC (moved outside config) */}
-      <section className="mt-6">
-        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
-          <InfoMusicSection />
-        </Suspense>
+      <section className="mt-8">
+        <div className="rounded-[32px] p-8 space-y-8" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(10, 37, 64, 0.05)" }}>
+          <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center text-slate-400"><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
+            <InfoMusicSection />
+          </Suspense>
+        </div>
       </section>
 
       {/* XML MUSICA AGORA */}
       {music && (
-        <XmlSection title="XML MUSICA AGORA">
-          <XmlLinkRow label="XML MUSICA AGORA" scopeKey={dataUserId || undefined} xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} />
-        </XmlSection>
+        <section className="mt-8 mb-12">
+          <div className="rounded-[32px] p-8 space-y-6" style={{ background: "#0A2540", border: "1px solid #1E293B", boxShadow: "0 20px 40px -10px rgba(10, 37, 64, 0.3)" }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white/10">
+                <Music size={18} className="text-cyan-400" />
+              </div>
+              <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-white">XML Feed de Transmissão</h4>
+            </div>
+            
+            <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
+              <XmlLinkRow 
+                label="Feed de Integração vMix" 
+                scopeKey={dataUserId || undefined} 
+                xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} 
+              />
+            </div>
+          </div>
+        </section>
       )}
       </div>
     </div>

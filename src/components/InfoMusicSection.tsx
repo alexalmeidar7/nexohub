@@ -368,9 +368,14 @@ export default function InfoMusicSection() {
       >
         <div className="flex items-center gap-3">
           <div className="w-1.5 h-6 bg-[#00BFF0] rounded-full" />
-          <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "var(--layout-page-text, #1a1a1a)" }}>
-            INFO MUSIC
-          </h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                <Music size={18} style={{ color: "#00BFF0" }} />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-tighter" style={{ color: "#00BFF0" }}>
+                INFO MUSIC
+              </h3>
+            </div>
           <div className="ml-2 transition-transform duration-200" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -454,11 +459,11 @@ export default function InfoMusicSection() {
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
-              <thead className="bg-[#00BFF0] text-white sticky top-0 z-10">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#00BFF0" }}>
                 <tr>
-                  <th className="text-left px-3 py-2 w-16">Hora</th>
-                  <th className="text-left px-3 py-2">Música / Artista</th>
-                  <th className="text-center px-3 py-2 w-10">Exc</th>
+                  <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Hora</th>
+                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
+                  <th className="text-center px-3 py-3 w-10 text-white font-black uppercase tracking-wider">Exc</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
@@ -531,10 +536,10 @@ export default function InfoMusicSection() {
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
-              <thead className="bg-amber-500 text-white sticky top-0 z-10">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F59E0B" }}>
                 <tr>
-                  <th className="text-left px-3 py-2">Termo</th>
-                  <th className="text-center px-3 py-2 w-12"></th>
+                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Termo</th>
+                  <th className="text-center px-3 py-3 w-12 text-white font-black uppercase tracking-wider"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
@@ -673,10 +678,10 @@ export default function InfoMusicSection() {
           </div>
           <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
             <table className="w-full text-[10px]">
-              <thead className="bg-red-500 text-white sticky top-0 z-10">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#EF4444" }}>
                 <tr>
-                  <th className="text-left px-3 py-2">Música / Artista</th>
-                  <th className="text-center px-3 py-2 w-16">Ação</th>
+                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
+                  <th className="text-center px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Ação</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5">
@@ -735,13 +740,13 @@ export default function InfoMusicSection() {
         </div>
         <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
           <table className="w-full text-[10px]">
-            <thead className="bg-emerald-500 text-white sticky top-0 z-10">
+            <thead className="sticky top-0 z-10" style={{ backgroundColor: "#10B981" }}>
               <tr>
-                <th className="text-left px-3 py-2 w-16">Data</th>
-                <th className="text-left px-3 py-2 w-16">Hora</th>
-                <th className="text-left px-3 py-2">Música / Artista</th>
-                <th className="text-left px-3 py-2">Curiosidade</th>
-                <th className="text-center px-3 py-2 w-16">Ação</th>
+                <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Data</th>
+                <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Hora</th>
+                <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
+                <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Curiosidade</th>
+                <th className="text-center px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Ação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
