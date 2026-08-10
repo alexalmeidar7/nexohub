@@ -81,6 +81,21 @@ export default function EnquetePage() {
         }]);
 
       if (error) throw error;
+      
+      // Cleanup: Keep only last 20 polls
+      const { data: latestEnquetes } = await supabase
+        .from("enquetes_agendadas")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      
+      if (latestEnquetes && latestEnquetes.length > 20) {
+        const idsToDelete = latestEnquetes.slice(20).map(e => e.id);
+        await supabase
+          .from("enquetes_agendadas")
+          .delete()
+          .in("id", idsToDelete);
+      }
 
       toast.success("Enquete agendada com sucesso!");
       setShowForm(false);
