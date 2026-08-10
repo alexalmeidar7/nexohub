@@ -69,6 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (15s), forcing load complete");
         finishLoading();
+        // If we timed out, check if we have a backup session to fallback on
+        if (!user && lastGoodSessionRef.current) {
+           updateAuth(lastGoodSessionRef.current);
+        }
       }
     }, 15000);
 
