@@ -858,7 +858,7 @@ export default function PromoInfoBoxes({ weatherCity, weatherLat, weatherLon, us
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}
     >
       <WeatherBox weatherCity={weatherCity} weatherLat={weatherLat} weatherLon={weatherLon} />
-      <DatasBox />
+      <DatasBox userId={userId} />
       <BlitzBox userId={userId} />
     </div>
   );
