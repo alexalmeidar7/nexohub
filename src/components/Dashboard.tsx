@@ -1762,6 +1762,16 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <ApresentadorForm />
                 </div>
               )}
+              {(currentPage === "previsao" || (minimizedModules.includes("previsao") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "previsao" ? "block" : "none" }}>
+                  <PrevisaoTempo />
+                </div>
+              )}
+              {(currentPage === "clientes" || (minimizedModules.includes("clientes") && currentPage === "dashboard")) && (
+                <div style={{ display: currentPage === "clientes" ? "block" : "none" }}>
+                  <ClientesPage />
+                </div>
+              )}
               {(currentPage === "ouvintes" || (minimizedModules.includes("ouvintes") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "ouvintes" ? "block" : "none" }}>
                   <OuvintesPage />
