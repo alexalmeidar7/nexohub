@@ -2658,7 +2658,7 @@ function SwitcherUI({
         {activeTab === "controls" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Switcher — Broadcast Console</span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">em /vmix-control - mostre o programa que esta no ar</span>
               <SwitcherStatusPill />
             </div>
             {(reloadingInputs || reloadFallback) && (
