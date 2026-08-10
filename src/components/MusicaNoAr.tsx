@@ -1856,7 +1856,81 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
           </div>
         )}
+
+        {/* ═══ UPLOAD HISTORY (Legacy position) ═══ */}
+        {showConfig && uploadHistory.length > 0 && (
+          <div className="mt-4 px-6 pb-6">
+            <p className="text-[10px] mb-2 font-bold uppercase tracking-widest flex items-center gap-1.5" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
+              <Clock size={10} /> Histórico de atualizações
+              <span className="ml-1 px-1.5 py-0.5 rounded text-[8px] font-black" style={{ backgroundColor: "color-mix(in srgb, var(--layout-header-bg, #0d0446) 12%, transparent)", color: "var(--layout-page-text, #0d0446)" }}>últimas 3</span>
+            </p>
+            <div className="rounded-xl overflow-hidden" style={{ border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 10%, transparent)", backgroundColor: "var(--layout-page-bg, #ffffff)" }}>
+              <table className="w-full text-[10px]">
+                <thead>
+                  <tr style={{ background: "linear-gradient(180deg, color-mix(in srgb, var(--layout-header-bg, #0d0446) 8%, transparent), color-mix(in srgb, var(--layout-header-bg, #0d0446) 4%, transparent))" }}>
+                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Origem</th>
+                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Data</th>
+                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Hora</th>
+                    <th className="text-left px-3 py-2 font-black uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista — Música</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploadHistory.map((entry, i) => {
+                    const fallbackArtist = i === 0 && music?.artista && music.artista.toLowerCase() !== "desconhecido" ? music.artista : "";
+                    const fallbackMusic = i === 0 && music?.titulo && music.titulo.toLowerCase() !== "sem titulo" && music.titulo.toLowerCase() !== "sem título" ? music.titulo : "";
+                    const showArtist = entry.artista || fallbackArtist;
+                    const showMusic = entry.musica || fallbackMusic;
+                    return (
+                    <tr key={i} style={{ borderTop: i > 0 ? "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 6%, transparent)" : undefined }}>
+                      <td className="px-3 py-2 font-semibold">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-bold cursor-help"
+                          title={entry.source === "pasta" ? (entry.deviceName ? `Computador: ${entry.deviceName}` : "Computador: desconhecido") : "Leitura online"}
+                          style={{
+                            backgroundColor: entry.source === "pasta" ? "rgba(34,197,94,0.12)" : "color-mix(in srgb, var(--layout-icon-color, #268ffa) 15%, transparent)",
+                            color: entry.source === "pasta" ? "#16a34a" : "var(--layout-icon-color, #268ffa)",
+                          }}
+                        >
+                          {entry.source === "pasta" ? <FolderOpen size={10} /> : <Globe size={10} />}
+                          {entry.source === "pasta" ? "Leitura local" : "Online"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.date}</td>
+                      <td className="px-3 py-2 font-mono tabular-nums" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 70%, transparent)" }}>{entry.time}</td>
+                      <td className="px-3 py-2" style={{ color: "var(--layout-page-text, #0d0446)" }}>
+                        {showArtist || showMusic ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="font-bold truncate max-w-[140px]" title={showArtist}>{showArtist || "—"}</span>
+                            <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                            <span className="truncate max-w-[180px]" title={showMusic} style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 75%, transparent)" }}>{showMusic || "—"}</span>
+                          </span>
+                        ) : (
+                          <span style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 30%, transparent)" }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </section>
+
+      {/* INFO MUSIC (moved outside config) */}
+      <section className="rounded-xl p-4 mt-6" style={{ background: NEXO_CARD_BG, borderRadius: 28, boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
+        <p className="text-[12px] mb-4 font-black uppercase tracking-[0.2em] flex items-center gap-2.5" style={{ color: NEXO_DARK }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: NEXO_CYAN }}>
+            <Sparkles size={16} className="text-white" />
+          </div>
+          INFO MUSIC
+        </p>
+        <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
+          <InfoMusicSection />
+        </Suspense>
+      </section>
+
 
       {/* XML MUSICA AGORA */}
       {music && (
