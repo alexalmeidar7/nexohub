@@ -251,6 +251,17 @@ export default function BatalhaMusicalPage() {
 
     setLoading2(false);
     debounce2.current = setTimeout(async () => {
+      const cacheKey = artistName.toLowerCase();
+      const cachedUrl = imageCacheRef.current[cacheKey];
+
+      if (cachedUrl) {
+        setArtista2(prev => {
+          if (prev.nome.trim() !== artistName) return prev;
+          return { ...prev, imagemUrl: cachedUrl };
+        });
+        return;
+      }
+
       setLoading2(true);
       const url = await fetchArtistImage(artistName);
       if (request2Ref.current !== requestId) return;
