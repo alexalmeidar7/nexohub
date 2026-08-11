@@ -2027,10 +2027,11 @@ export default function CenarioTela() {
                                 </motion.div>
                               );
                             })}
-                          </div>
+                            </div>
+                          </motion.div>
                         </motion.div>
-                      </div>
-                    </AnimatePresence>
+                      </AnimatePresence>
+                    </div>
                   </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
