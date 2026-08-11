@@ -1902,118 +1902,162 @@ export default function CenarioTela() {
                 <div className="absolute inset-0" style={{ background: "transparent" }} />
                 <div className="absolute bottom-0 left-0 right-0" style={{ height: "40%", background: "transparent" }} />
                 <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}`, paddingLeft: `calc(${vhToPx(4)}${vu} + 50px)` }}>
-                  {liveWeather ? (<>
-                    {weatherSubTab === "today" && (
-                      <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
-                        <div className="text-center cenario-anim-text cenario-delay-1" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
-                          <div className="font-black leading-none" style={{ fontSize: `${vhToPx(5)}${vu}`, letterSpacing: "-0.03em", textShadow: "0 3px 20px rgba(0,0,0,1)" }}>{weatherCity || config.city || "Cidade"}</div>
-                          <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(1.8)}${vu}`, color: accentColor, marginTop: `${vhToPx(0.8)}${vu}`, letterSpacing: "0.2em" }}>Previsão do Tempo</div>
-                        </div>
-
-                        {config.weather.showCurrent && (
-                          <div className="rounded-[3vh] w-full max-w-[90%] cenario-anim-box cenario-delay-2" style={{ padding: `${vhToPx(3.5)}${vu}`, background: "rgba(0,0,0,0.35)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 50px rgba(0,0,0,0.4)" }}>
-                            <div className="flex items-center justify-center" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(2.5)}${vu}` }}>
-                              <div style={{ width: `${vhToPx(12)}${vu}`, height: `${vhToPx(12)}${vu}`, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.3))" }}>
-                                <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
-                              </div>
-                              <div className="flex flex-col">
-                                <div className="font-black" style={{ fontSize: `${vhToPx(8)}${vu}`, lineHeight: 0.9, textShadow: "0 3px 16px rgba(0,0,0,1)" }}>{liveWeather.current.temp}°</div>
-                                <div className="font-medium" style={{ fontSize: `${vhToPx(2)}${vu}`, opacity: 0.85, marginTop: `${vhToPx(0.5)}${vu}` }}>{getWLabel(liveWeather.current.code)}</div>
-                              </div>
+                  {liveWeather ? (
+                    <div className="flex flex-col items-center justify-center h-full w-full" style={{ padding: `${vhToPx(2)}${vu}` }}>
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={weatherSubTab + (currentTime.getSeconds() % 10 > 5 ? "alt" : "main")}
+                          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 1.1, y: -20 }}
+                          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                          className="w-full max-w-[95%] flex flex-col items-center"
+                          style={{ gap: `${vhToPx(3)}${vu}` }}
+                        >
+                          {/* Top Header: City & Title */}
+                          <div className="text-center">
+                            <motion.div 
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="font-black leading-none" 
+                              style={{ 
+                                fontSize: `${vhToPx(6)}${vu}`, 
+                                letterSpacing: "-0.03em", 
+                                textShadow: "0 4px 24px rgba(0,0,0,0.8)",
+                                color: "#fff"
+                              }}
+                            >
+                              {(weatherCity || config.city || "Cidade").toUpperCase()}
+                            </motion.div>
+                            <div className="font-bold uppercase tracking-[0.3em] flex items-center justify-center gap-2" style={{ fontSize: `${vhToPx(1.6)}${vu}`, color: accentColor, marginTop: `${vhToPx(1)}${vu}` }}>
+                              <MapPin size={vhToPx(1.6) * 12} /> Previsão do Tempo
                             </div>
-                            <div className="flex items-center justify-between rounded-2xl" style={{ padding: `${vhToPx(1.8)}${vu} ${vhToPx(2.5)}${vu}`, background: "rgba(0,0,0,0.15)", border: "none" }}>
-                              <div className="flex items-center" style={{ gap: `${vhToPx(1)}${vu}` }}>
-                                <Thermometer style={{ width: `${vhToPx(2.2)}${vu}`, height: `${vhToPx(2.2)}${vu}`, opacity: 0.7 }} />
-                                <span className="font-bold tabular-nums" style={{ fontSize: `${vhToPx(2.2)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}° / {liveWeather.daily[0]?.max ?? "--"}°</span>
+                          </div>
+
+                          {/* Main Glass Card */}
+                          <div 
+                            className="rounded-[4vh] w-full max-w-[850px] relative overflow-hidden" 
+                            style={{ 
+                              padding: `${vhToPx(4)}${vu}`, 
+                              background: "rgba(255,255,255,0.08)", 
+                              backdropFilter: "blur(30px)", 
+                              WebkitBackdropFilter: "blur(30px)", 
+                              border: "1px solid rgba(255,255,255,0.2)",
+                              boxShadow: "0 30px 60px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05)"
+                            }}
+                          >
+                            {/* Animated Background Pulse */}
+                            <motion.div 
+                              animate={{ 
+                                scale: [1, 1.05, 1],
+                                opacity: [0.3, 0.5, 0.3]
+                              }}
+                              transition={{ duration: 4, repeat: Infinity }}
+                              style={{
+                                position: "absolute",
+                                top: "-20%",
+                                right: "-10%",
+                                width: "60%",
+                                height: "60%",
+                                background: `radial-gradient(circle, ${accentColor}33 0%, transparent 70%)`,
+                                zIndex: 0,
+                                pointerEvents: "none"
+                              }}
+                            />
+
+                            <div className="relative z-10">
+                              <div className="flex items-center justify-between" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(3)}${vu}` }}>
+                                <div className="flex items-center" style={{ gap: `${vhToPx(3)}${vu}` }}>
+                                  <motion.div 
+                                    animate={{ y: [0, -10, 0] }}
+                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                    style={{ width: `${vhToPx(15)}${vu}`, height: `${vhToPx(15)}${vu}`, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.4))" }}
+                                  >
+                                    <WeatherIcon code={liveWeather.current.code} size={300} forceDay />
+                                  </motion.div>
+                                  <div className="flex flex-col">
+                                    <div className="font-black" style={{ fontSize: `${vhToPx(10)}${vu}`, lineHeight: 0.8, textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
+                                      {liveWeather.current.temp}°
+                                    </div>
+                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(2.2)}${vu}`, opacity: 0.9, marginTop: `${vhToPx(1)}${vu}`, color: accentColor }}>
+                                      {getWLabel(liveWeather.current.code)}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex flex-col items-end" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
+                                  <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
+                                    <div className="flex flex-col items-center">
+                                      <span style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.6, fontWeight: 700, textTransform: "uppercase" }}>Min</span>
+                                      <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}°</span>
+                                    </div>
+                                    <div style={{ width: "1px", height: "100%", background: "rgba(255,255,255,0.2)" }} />
+                                    <div className="flex flex-col items-center">
+                                      <span style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.6, fontWeight: 700, textTransform: "uppercase" }}>Max</span>
+                                      <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}` }}>{liveWeather.daily[0]?.max ?? "--"}°</span>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex items-center" style={{ gap: `${vhToPx(2)}${vu}`, fontSize: `${vhToPx(1.8)}${vu}` }}>
-                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}><Droplets style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: accentColor }} /> <span style={{ color: accentColor, fontWeight: 700 }}>{liveWeather.current.humidity}%</span></span>
-                                <span className="flex items-center" style={{ gap: `${vhToPx(0.5)}${vu}` }}><CloudRain style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "rgba(255,255,255,0.7)" }} /> <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 700 }}>{liveWeather.daily[0]?.precip ?? 0}%</span></span>
+
+                              {/* Stats Row */}
+                              <div className="grid grid-cols-3 gap-4">
+                                {[
+                                  { icon: <Droplets />, label: "Umidade", value: `${liveWeather.current.humidity}%`, color: "#00BFF0" },
+                                  { icon: <CloudRain />, label: "Chuva", value: `${liveWeather.daily[0]?.precip ?? 0}%`, color: "#7dd3fc" },
+                                  { icon: <Sun />, label: "Vento", value: `${liveWeather.current.windSpeed || 12} km/h`, color: "#fbbf24" }
+                                ].map((stat, i) => (
+                                  <div key={i} className="flex flex-col items-center p-4 rounded-3xl bg-black/20 border border-white/5">
+                                    <div style={{ color: stat.color, marginBottom: `${vhToPx(0.5)}${vu}` }}>
+                                      {stat.icon}
+                                    </div>
+                                    <span className="text-[1.2vh] font-bold uppercase tracking-tighter opacity-50">{stat.label}</span>
+                                    <span className="text-[2.2vh] font-black">{stat.value}</span>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           </div>
-                        )}
 
-                        {config.weather.showForecast3Days && (
-                          <div className="w-full flex flex-col cenario-anim-text cenario-delay-3" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
-                            <div className="flex items-center justify-center" style={{ gap: `${vhToPx(1)}${vu}`, marginBottom: `${vhToPx(0.3)}${vu}` }}>
-                              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, transparent, rgba(255,255,255,0.25))" }} />
-                              <div className="font-bold uppercase tracking-[0.35em]" style={{ fontSize: `${vhToPx(1.5)}${vu}`, opacity: 0.75, color: accentColor }}>Próximos Dias</div>
-                              <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(255,255,255,0.25))" }} />
-                            </div>
-                            <div className="grid" style={{ gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: `${vhToPx(0.6)}${vu}` }}>
+                          {/* 3-Day Forecast Bottom Row */}
+                          {config.weather.showForecast3Days && (
+                            <div className="w-full flex justify-center gap-6 mt-4">
                               {liveWeather.daily.slice(1, 4).map((d, i) => {
                                 const dt = new Date(d.date + "T12:00");
                                 const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
-                                const dayNum = dt.toLocaleDateString("pt-BR", { day: "2-digit" });
-                                const monthShort = dt.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
                                 return (
-                                  <div key={i} className={`flex flex-col items-center cenario-anim-row-${i + 1} cenario-delay-${i + 4}`} style={{
-                                    padding: `${vhToPx(1.4)}${vu} max(${vhToPx(0.2)}${vu}, 3cqi)`,
-                                    background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 60%, rgba(0,0,0,0.25) 100%)",
-                                    backdropFilter: "blur(16px)",
-                                    WebkitBackdropFilter: "blur(16px)",
-                                    borderRadius: `${vhToPx(2.4)}${vu}`,
-                                    border: "1px solid rgba(255,255,255,0.18)",
-                                    boxShadow: "0 14px 42px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.12)",
-                                    gap: `${vhToPx(0.7)}${vu}`,
-                                    position: "relative",
-                                    overflow: "hidden",
-                                    minWidth: 0,
-                                    containerType: "inline-size",
-                                  } as React.CSSProperties}>
-
-                                    <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: "60%", height: `${vhToPx(0.3)}${vu}`, background: `linear-gradient(to right, transparent, ${accentColor}, transparent)`, opacity: 0.7 }} />
-
-                                    <div className="flex items-baseline" style={{ gap: `${vhToPx(0.5)}${vu}` }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: "min(2.6vh, 22cqi)", lineHeight: 1, color: accentColor, textShadow: `0 0 18px ${accentColor}66` }}>{dayNum}</span>
-                                      <div className="flex flex-col items-start" style={{ lineHeight: 1 }}>
-                                        <span className="font-black tracking-wider" style={{ fontSize: "min(1.3vh, 12cqi)", opacity: 0.95 }}>{wk}</span>
-                                        <span className="font-bold tracking-widest" style={{ fontSize: "min(0.95vh, 9cqi)", opacity: 0.55 }}>{monthShort}</span>
-                                      </div>
+                                  <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.2 + (i * 0.1) }}
+                                    className="flex flex-col items-center" 
+                                    style={{ 
+                                      padding: `${vhToPx(2)}${vu} ${vhToPx(3)}${vu}`,
+                                      background: "rgba(255,255,255,0.05)",
+                                      backdropFilter: "blur(10px)",
+                                      borderRadius: `${vhToPx(2.5)}${vu}`,
+                                      border: "1px solid rgba(255,255,255,0.1)",
+                                      width: `${vhToPx(18)}${vu}`
+                                    }}
+                                  >
+                                    <span className="font-bold tracking-widest text-[1.2vh] opacity-60 mb-2">{wk}</span>
+                                    <div style={{ width: `${vhToPx(6)}${vu}`, height: `${vhToPx(6)}${vu}`, marginBottom: `${vhToPx(1)}${vu}` }}>
+                                      <WeatherIcon code={d.code} size={100} forceDay />
                                     </div>
-
-                                    <div style={{
-                                      width: `${vhToPx(9)}${vu}`,
-                                      height: `${vhToPx(9)}${vu}`,
-                                      maxWidth: "80cqi",
-                                      maxHeight: "80cqi",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      filter: `drop-shadow(0 6px 16px ${accentColor}55) drop-shadow(0 2px 4px rgba(0,0,0,0.5))`,
-                                    }}>
-                                      <WeatherIcon code={d.code} size={140} forceDay />
+                                    <div className="flex items-baseline gap-2">
+                                      <span className="font-black text-[2.2vh]">{d.max}°</span>
+                                      <span className="font-bold text-[1.6vh] opacity-40">{d.min}°</span>
                                     </div>
-
-                                    <div className="flex items-center justify-center flex-nowrap" style={{ gap: `${vhToPx(0.5)}${vu}`, whiteSpace: "nowrap", width: "100%", letterSpacing: "-0.03em", height: "min(3.4vh, 30cqi)", lineHeight: 1 }}>
-                                      <span className="font-black tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, height: "min(3.4vh, 30cqi)", display: "inline-flex", alignItems: "center", textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>{d.max}°</span>
-                                      <span className="font-bold tabular-nums" style={{ fontSize: "min(3.4vh, 30cqi)", lineHeight: 1, height: "min(3.4vh, 30cqi)", display: "inline-flex", alignItems: "center", opacity: 0.5 }}>{d.min}°</span>
-                                    </div>
-
-                                    <div style={{ width: "70%", height: "1px", background: "linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent)", margin: `${vhToPx(0.3)}${vu} 0` }} />
-
-                                    <div className="w-full flex items-center justify-around" style={{ fontSize: `${vhToPx(1.5)}${vu}` }}>
-                                      <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}>
-                                        <Droplets style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: accentColor, filter: `drop-shadow(0 0 4px ${accentColor}88)` }} />
-                                        <span className="font-black tabular-nums" style={{ color: accentColor }}>{d.humidity}%</span>
-                                      </div>
-                                      <div style={{ width: "1px", height: `${vhToPx(1.6)}${vu}`, background: "rgba(255,255,255,0.15)" }} />
-                                      <div className="flex items-center" style={{ gap: `${vhToPx(0.4)}${vu}` }}>
-                                        <CloudRain style={{ width: `${vhToPx(1.8)}${vu}`, height: `${vhToPx(1.8)}${vu}`, color: "#7dd3fc", filter: "drop-shadow(0 0 4px rgba(125,211,252,0.5))" }} />
-                                        <span className="font-black tabular-nums" style={{ color: "#7dd3fc" }}>{d.rainMm ?? 0}mm</span>
-                                      </div>
-                                    </div>
-                                  </div>
+                                  </motion.div>
                                 );
                               })}
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {weatherSubTab === "satellite" && null}
-                  </>) : (
+                          )}
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+                  ) : (
                     <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
                       <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
                         <div className="bg-white/10 rounded-lg cenario-skeleton" style={{ width: vhToPx(25), height: vhToPx(5) }} />
