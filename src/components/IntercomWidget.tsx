@@ -886,7 +886,13 @@ export default function IntercomWidget() {
           <Keyboard size={14} className={settingHotkey ? "text-yellow-400 animate-pulse" : ""} />
         </button>
 
+        <button onClick={handleMinimize}
+          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+          <ChevronDown size={14} />
+        </button>
+
         <button onClick={handleBack}
+
           className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Voltar">
           <ArrowLeft size={14} />
         </button>
