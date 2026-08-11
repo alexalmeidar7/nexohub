@@ -378,8 +378,10 @@ export default function IntercomWidget() {
           for (const c of collectedCandidates) {
             await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
           }
+          handleMinimize();
         }
       }, 1500);
+
 
       // Another retry at 3s
       setTimeout(async () => {
