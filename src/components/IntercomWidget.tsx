@@ -527,19 +527,18 @@ export default function IntercomWidget() {
   } as const;
 
   // ─── FAB / Minimized Indicator ───
-  // Note: Position is handled by the parent (Dashboard.tsx) using portals or absolute layout
-  // for "quando minimizar o intercom, coloque o icone no lugar do icone onde abre o intercom"
+  // Note: Position is handled by a marker element in Dashboard.tsx to stay on top of the icon
   if (minimized && role !== "none") {
     const isActive = talking || receiving;
     return (
       <div 
-        className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer"
-        style={{ 
-          top: '24px', 
-          right: 'calc(50vw - 110px)', // Aproximado para alinhar com a toolbar no desktop
-          transform: 'translateX(40px)' // Ajuste fino para sobrepor o ícone original
+        id="intercom-minimized-fab"
+        className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto"
+        onClick={(e) => { 
+          e.stopPropagation();
+          setOpen(true); 
+          setMinimized(false); 
         }}
-        onClick={() => { setOpen(true); setMinimized(false); }}
       >
         <div className="relative group">
           {isActive && (
