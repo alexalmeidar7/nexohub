@@ -1965,95 +1965,95 @@ export default function CenarioTela() {
                               }}
                             />
 
-                            <div className="relative z-10">
-                              <div className="flex items-center justify-between" style={{ gap: `${vhToPx(4)}${vu}`, marginBottom: `${vhToPx(3)}${vu}` }}>
-                                <div className="flex items-center" style={{ gap: `${vhToPx(3)}${vu}` }}>
-                                  <motion.div 
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                                    style={{ width: `${vhToPx(15)}${vu}`, height: `${vhToPx(15)}${vu}`, filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.4))" }}
-                                  >
-                                    <WeatherIcon code={liveWeather.current.code} size={300} forceDay />
-                                  </motion.div>
-                                  <div className="flex flex-col">
-                                    <div className="font-black" style={{ fontSize: `${vhToPx(10)}${vu}`, lineHeight: 0.8, textShadow: "0 4px 20px rgba(0,0,0,0.8)" }}>
-                                      {liveWeather.current.temp}°
-                                    </div>
-                                    <div className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(2.2)}${vu}`, opacity: 0.9, marginTop: `${vhToPx(1)}${vu}`, color: accentColor }}>
-                                      {getWLabel(liveWeather.current.code)}
-                                    </div>
-                                  </div>
-                                </div>
+                        <motion.div 
+                          key="weather-content"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className="flex flex-col items-center w-full max-w-[85%]"
+                        >
+                          {/* City & Title Section */}
+                          <div className="text-center mb-12">
+                            <h2 className="text-[6vh] font-black text-white tracking-tight flex flex-col items-center leading-none">
+                              {config.weather.city || "goiânia"}
+                              <span className="text-[1.8vh] font-bold text-[#00BFF0] uppercase tracking-[0.4em] mt-2">
+                                Previsão do Tempo
+                              </span>
+                            </h2>
+                          </div>
 
-                                <div className="flex flex-col items-end" style={{ gap: `${vhToPx(1.5)}${vu}` }}>
-                                  <div className="flex items-center gap-4 bg-white/10 rounded-2xl p-4 border border-white/10">
-                                    <div className="flex flex-col items-center">
-                                      <span style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.6, fontWeight: 700, textTransform: "uppercase" }}>Min</span>
-                                      <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}` }}>{liveWeather.daily[0]?.min ?? "--"}°</span>
-                                    </div>
-                                    <div style={{ width: "1px", height: "100%", background: "rgba(255,255,255,0.2)" }} />
-                                    <div className="flex flex-col items-center">
-                                      <span style={{ fontSize: `${vhToPx(1)}${vu}`, opacity: 0.6, fontWeight: 700, textTransform: "uppercase" }}>Max</span>
-                                      <span className="font-black" style={{ fontSize: `${vhToPx(2.4)}${vu}` }}>{liveWeather.daily[0]?.max ?? "--"}°</span>
-                                    </div>
-                                  </div>
-                                </div>
+                          {/* Current Weather Card */}
+                          <div className="w-full bg-[#0A2540]/60 rounded-[4vh] p-[4vh] border border-white/10 backdrop-blur-md mb-8 flex flex-col">
+                            <div className="flex items-center justify-between mb-8">
+                              <div className="relative">
+                                <motion.div
+                                  animate={{ y: [0, -vhToPx(1), 0] }}
+                                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                >
+                                  <WeatherIcon code={liveWeather.current.code} size={250} forceDay />
+                                </motion.div>
                               </div>
+                              <div className="text-right">
+                                <div className="text-[12vh] font-black text-white leading-none">{Math.round(liveWeather.current.temp)}°</div>
+                                <div className="text-[2.5vh] font-bold text-white/80 mt-2">{getWLabel(liveWeather.current.code)}</div>
+                              </div>
+                            </div>
 
-                              {/* Stats Row */}
-                              <div className="grid grid-cols-3 gap-4">
-                                {[
-                                  { icon: <Droplets />, label: "Umidade", value: `${liveWeather.current.humidity}%`, color: "#00BFF0" },
-                                  { icon: <CloudRain />, label: "Chuva", value: `${liveWeather.daily[0]?.precip ?? 0}%`, color: "#7dd3fc" },
-                                  { icon: <Sun />, label: "Vento", value: `12 km/h`, color: "#fbbf24" }
-                                ].map((stat, i) => (
-                                  <div key={i} className="flex flex-col items-center p-4 rounded-3xl bg-black/20 border border-white/5">
-                                    <div style={{ color: stat.color, marginBottom: `${vhToPx(0.5)}${vu}` }}>
-                                      {stat.icon}
-                                    </div>
-                                    <span className="text-[1.2vh] font-bold uppercase tracking-tighter opacity-50">{stat.label}</span>
-                                    <span className="text-[2.2vh] font-black">{stat.value}</span>
-                                  </div>
-                                ))}
+                            {/* Main Stats Bar */}
+                            <div className="bg-white/5 rounded-[2vh] py-[2vh] px-[4vh] flex items-center justify-between border border-white/5">
+                              <div className="flex items-center gap-[1.5vh]">
+                                <Thermometer className="text-white/40" style={{ width: '2.5vh', height: '2.5vh' }} />
+                                <span className="text-[2.8vh] font-bold text-white">{liveWeather.daily[0]?.min}° / {liveWeather.daily[0]?.max}°</span>
+                              </div>
+                              <div className="flex items-center gap-[1.5vh]">
+                                <Droplets className="text-[#00BFF0]" style={{ width: '2.5vh', height: '2.5vh' }} />
+                                <span className="text-[2.8vh] font-bold text-[#00BFF0]">{liveWeather.current.humidity}%</span>
+                              </div>
+                              <div className="flex items-center gap-[1.5vh]">
+                                <CloudRain className="text-white/40" style={{ width: '2.5vh', height: '2.5vh' }} />
+                                <span className="text-[2.8vh] font-bold text-white/60">{liveWeather.daily[0]?.precip ?? 0}%</span>
                               </div>
                             </div>
                           </div>
 
-                          {/* 3-Day Forecast Bottom Row */}
-                          {config.weather.showForecast3Days && (
-                            <div className="w-full flex justify-center gap-6 mt-4">
-                              {liveWeather.daily.slice(1, 4).map((d, i) => {
-                                const dt = new Date(d.date + "T12:00");
-                                const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
-                                return (
-                                  <motion.div 
-                                    key={i}
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.2 + (i * 0.1) }}
-                                    className="flex flex-col items-center" 
-                                    style={{ 
-                                      padding: `${vhToPx(2)}${vu} ${vhToPx(3)}${vu}`,
-                                      background: "rgba(255,255,255,0.05)",
-                                      backdropFilter: "blur(10px)",
-                                      borderRadius: `${vhToPx(2.5)}${vu}`,
-                                      border: "1px solid rgba(255,255,255,0.1)",
-                                      width: `${vhToPx(18)}${vu}`
-                                    }}
-                                  >
-                                    <span className="font-bold tracking-widest text-[1.2vh] opacity-60 mb-2">{wk}</span>
-                                    <div style={{ width: `${vhToPx(6)}${vu}`, height: `${vhToPx(6)}${vu}`, marginBottom: `${vhToPx(1)}${vu}` }}>
-                                      <WeatherIcon code={d.code} size={100} forceDay />
-                                    </div>
-                                    <div className="flex items-baseline gap-2">
-                                      <span className="font-black text-[2.2vh]">{d.max}°</span>
-                                      <span className="font-bold text-[1.6vh] opacity-40">{d.min}°</span>
-                                    </div>
-                                  </motion.div>
-                                );
-                              })}
+                          {/* Next Days Section */}
+                          <div className="w-full space-y-[2vh]">
+                            <div className="text-center mb-4">
+                              <span className="text-[1.4vh] font-black text-white/40 uppercase tracking-[0.3em]">Próximos Dias</span>
                             </div>
-                          )}
+                            
+                            {liveWeather.daily.slice(1, 4).map((d, i) => {
+                              const dt = new Date(d.date + "T12:00");
+                              const wk = dt.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").toUpperCase();
+                              const dayNum = dt.getDate();
+                              return (
+                                <motion.div 
+                                  key={i} 
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  transition={{ delay: i * 0.1 }}
+                                  className="bg-[#0A2540]/40 p-[3vh] rounded-[3vh] border border-white/10 flex items-center justify-between backdrop-blur-sm"
+                                >
+                                  <span className="text-[2.5vh] font-bold text-white/80 w-[15vh]">{wk}, {dayNum}</span>
+                                  <div className="flex items-center gap-[2vh]">
+                                    <div className="p-[1vh] bg-white/5 rounded-[1.5vh]" style={{ width: '6vh', height: '6vh' }}>
+                                      <WeatherIcon code={d.code} size={60} forceDay />
+                                    </div>
+                                    <div className="flex flex-col">
+                                      <span className="text-[1.4vh] font-black text-[#00BFF0] uppercase flex items-center gap-1">
+                                        <Droplets style={{ width: '1.2vh', height: '1.2vh' }} /> {d.precip}%
+                                      </span>
+                                      <span className="text-[1.4vh] font-bold text-white/40">{d.rainMm || 0}mm</span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-baseline gap-[1.5vh]">
+                                    <span className="text-[3.5vh] font-black text-white">{d.max}°</span>
+                                    <span className="text-[2vh] font-bold text-white/30">{d.min}°</span>
+                                  </div>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
                         </motion.div>
                       </AnimatePresence>
                     </div>
