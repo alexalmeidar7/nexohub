@@ -2673,6 +2673,7 @@ export type Database = {
           id: string
           imagem_url: string | null
           programa_id: string | null
+          programa_ids: string[] | null
           texto: string
           user_id: string
         }
@@ -2683,6 +2684,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           programa_id?: string | null
+          programa_ids?: string[] | null
           texto?: string
           user_id: string
         }
@@ -2693,6 +2695,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           programa_id?: string | null
+          programa_ids?: string[] | null
           texto?: string
           user_id?: string
         }
