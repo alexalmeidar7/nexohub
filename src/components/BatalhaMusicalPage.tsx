@@ -528,7 +528,7 @@ export default function BatalhaMusicalPage() {
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
                 <input value={artista1.nome} onChange={e => updateArtista1("nome", e.target.value)} placeholder="Ex: Bruno Mars"
                   className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
-                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+                  onFocus={handleInputFocus} onBlur={e => { handleInputBlur(e); updateArtista1("nome", artista1.nome.trim()); }} />
               </div>
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Música</label>
