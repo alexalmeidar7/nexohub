@@ -522,8 +522,8 @@ export default function IntercomWidget() {
     backgroundColor: "#ffffff",
     backdropFilter: "none",
     WebkitBackdropFilter: "none",
-    boxShadow: "0 20px 50px rgba(0,33,50,0.18), 0 0 0 4px rgba(0,191,240,0.06)",
-    border: "1px solid rgba(0,191,240,0.22)",
+    boxShadow: "0 10px 30px rgba(0,33,50,0.12), 0 0 0 1px rgba(0,191,240,0.08)",
+    border: "1px solid rgba(0,191,240,0.15)",
   } as const;
 
   // ─── FAB / Minimized Indicator ───
@@ -588,38 +588,31 @@ export default function IntercomWidget() {
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
-      <div className="nexo-scope fixed top-[30px] -translate-y-1/2 right-[130px] z-[100] rounded-2xl overflow-hidden animate-fade-in" style={{ ...glassStyle, width: 280 }} data-nexo-variant="popup">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Radio size={16} className="text-[#002132]/70" />
-            <span className="text-[#002132] text-xs font-bold">Intercomunicador</span>
-          </div>
-          <button onClick={handleClose} className="text-[#002132]/50 hover:text-[#00BFF0] p-1 rounded-lg hover:bg-[#00BFF0]/12 transition-all">
-            <X size={14} />
-          </button>
-        </div>
-        <div className="px-4 pb-4 flex flex-col gap-2">
+      <div className="nexo-scope fixed top-[43px] -translate-y-1/2 right-[182px] z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300" 
+           style={{ ...glassStyle, width: "auto" }}>
+        <div className="flex items-center gap-1.5 px-2 py-1.5">
           <button onClick={() => setRole("speaker")}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{ backgroundColor: "rgba(0,191,240,0.14)", border: "1px solid rgba(0,191,240,0.24)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(0,191,240,0.24)" }}>
-              <Mic size={16} className="text-[#00BFF0]" />
-            </div>
-            <div>
-              <p className="text-[#002132] text-xs font-semibold">Intercom</p>
-              <p className="text-[#002132]/50 text-[10px]">Falar com os ouvintes</p>
-            </div>
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:bg-[#00BFF0]/10 group"
+            title="Intercom - Falar com ouvintes">
+            <Mic size={14} className="text-[#00BFF0] transition-transform group-hover:scale-110" />
+            <span className="text-[#002132] text-[10px] font-bold">Intercom</span>
           </button>
-          <button onClick={() => { setRole("listener"); }}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{ backgroundColor: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.18)" }}>
-            <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,197,94,0.15)" }}>
-              <Headphones size={16} className="text-green-400" />
-            </div>
-            <div>
-              <p className="text-[#002132] text-xs font-semibold">Ouvinte</p>
-              <p className="text-[#002132]/50 text-[10px]">Receber áudio do intercom</p>
-            </div>
+          
+          <div className="w-px h-4 bg-[#00BFF0]/20" />
+          
+          <button onClick={() => setRole("listener")}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:bg-green-500/10 group"
+            title="Ouvinte - Receber áudio">
+            <Headphones size={14} className="text-green-500 transition-transform group-hover:scale-110" />
+            <span className="text-[#002132] text-[10px] font-bold">Ouvinte</span>
+          </button>
+
+          <div className="w-px h-4 bg-[#00BFF0]/20" />
+
+          <button onClick={handleClose} 
+            className="w-7 h-7 flex items-center justify-center rounded-full text-[#002132]/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
+            title="Fechar">
+            <X size={14} />
           </button>
         </div>
       </div>
