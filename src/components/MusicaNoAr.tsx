@@ -1543,48 +1543,57 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
-      <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
+      <section 
+        className="group/config"
+        style={{ 
+          background: "#FFFFFF", 
+          borderRadius: 28, 
+          overflow: "hidden", 
+          boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)",
+          border: `1px solid ${showConfig ? NEXO_CYAN : "#E2E8F0"}`,
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+        }}
+      >
         <div 
-          className="w-full flex items-center justify-between text-left transition-all"
+          className="w-full flex items-center justify-between transition-all"
           style={{ 
-            padding: "20px 24px", 
-            borderBottom: showConfig ? `2px solid ${NEXO_CYAN}` : "none",
-            backgroundColor: showConfig ? "#FFFFFF" : "transparent"
+            padding: "24px 32px", 
+            borderBottom: showConfig ? `1px solid ${NEXO_CYAN}22` : "none",
+            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, #FFFFFF)` : "transparent"
           }}
         >
-          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 14, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: NEXO_CYAN, boxShadow: `0 4px 12px ${NEXO_CYAN}44` }}>
-              <Monitor size={18} className="text-white" />
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg" 
+              style={{ 
+                background: showConfig ? NEXO_CYAN : NEXO_DARK, 
+                boxShadow: showConfig ? `0 8px 20px ${NEXO_CYAN}44` : "0 4px 12px rgba(10, 37, 64, 0.2)",
+                transform: showConfig ? "rotate(90deg)" : "rotate(0deg)"
+              }}
+            >
+              <Settings size={22} className="text-white" />
             </div>
-            Configuração das Origens
-            {localMonitoring && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
+            <div>
+              <span className="block" style={{ color: NEXO_DARK, fontSize: 16, fontBlack: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+                Configuração das Origens
               </span>
-            )}
-          </span>
+              <span style={{ fontSize: 10, fontBold: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+                XML Online, Pasta Local e Sincronização
+              </span>
+            </div>
+          </div>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BFF0] border border-white/10 transition shrink-0 relative group"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+            style={{ 
+              backgroundColor: showConfig ? NEXO_CYAN : "#F1F5F9",
+              color: showConfig ? "#FFFFFF" : NEXO_DARK,
+            }}
           >
-            <div 
-              className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-              style={{
-                background: "linear-gradient(#00BFF0, #C6F03C) border-box",
-                WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                WebkitMaskComposite: "destination-out",
-                maskComposite: "exclude",
-                animation: "interactSpin 3s linear infinite"
-              }} 
-            />
-            {showConfig ? (
-              <ChevronUp size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            ) : (
-              <Settings size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            )}
+            {showConfig ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
           </button>
         </div>
+
 
         {showConfig && (
           <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
