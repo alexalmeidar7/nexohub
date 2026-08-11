@@ -1715,29 +1715,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source-local" 
+                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl hover:-translate-y-1" 
                 style={{ 
                   background: "#FFFFFF", 
-                  border: "1px solid #E2E8F0", 
-                  boxShadow: "0 10px 30px -10px rgba(198, 240, 60, 0.15)",
+                  border: `2px solid ${isLocalSelected ? NEXO_LIME : "#F1F5F9"}`,
+                  boxShadow: isLocalSelected ? "0 20px 40px -20px rgba(198, 240, 60, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "#C6F03C" }} />
-
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
-                    <div className="w-10 h-10 rounded-2xl flex-center transition-transform group-hover/source-local:rotate-12" style={{ backgroundColor: "#C6F03C15", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <FolderOpen size={18} style={{ color: "#8BBD00" }} />
+                {isLocalSelected && (
+                  <div className="absolute top-0 right-0 p-4">
+                    <div className="w-3 h-3 rounded-full bg-lime-500 animate-ping opacity-75" />
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source-local:rotate-6" 
+                    style={{ 
+                      background: isLocalSelected ? NEXO_LIME : "#F1F5F9",
+                      boxShadow: isLocalSelected ? `0 8px 16px ${NEXO_LIME}44` : "none"
+                    }}
+                  >
+                    <FolderOpen size={24} style={{ color: NEXO_DARK }} />
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                      Origem Local
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
                     </div>
-                    Origem Local (Pasta)
-                  </h4>
-                  {isLocalSelected && (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Monitorando</span>
-                    </div>
-                  )}
+                  </div>
                 </div>
+
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
