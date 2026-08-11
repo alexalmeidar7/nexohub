@@ -72,7 +72,7 @@ function normalizeBattleState(value: unknown): BattleState {
 
 
 async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
-  const artist = artistName.trim();
+  const artist = artistName.trim().replace(/\s+/g, ' ');
   if (!artist) return "";
 
   try {
