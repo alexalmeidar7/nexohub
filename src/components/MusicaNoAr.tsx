@@ -1598,26 +1598,42 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
         {showConfig && (
           <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-            {/* Two columns grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
-              {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(0, 191, 240, 0.1)" }}>
-                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: NEXO_CYAN }} />
-                
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover/source:rotate-12" style={{ backgroundColor: `${NEXO_CYAN}15` }}>
-                      <Globe size={18} style={{ color: NEXO_CYAN }} />
-                    </div>
-                    Origem Online
-                  </h4>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
+                {/* ── ONLINE SOURCE ── */}
+                <div 
+                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl hover:-translate-y-1" 
+                  style={{ 
+                    background: "#FFFFFF", 
+                    border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#F1F5F9"}`,
+                    boxShadow: isOnlineSelected ? "0 20px 40px -20px rgba(0, 191, 240, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
+                  }}
+                >
                   {isOnlineSelected && (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Ativo</span>
+                    <div className="absolute top-0 right-0 p-4">
+                      <div className="w-3 h-3 rounded-full bg-cyan-500 animate-ping opacity-75" />
                     </div>
                   )}
-                </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source:rotate-6" 
+                      style={{ 
+                        background: isOnlineSelected ? NEXO_CYAN : "#F1F5F9",
+                        boxShadow: isOnlineSelected ? `0 8px 16px ${NEXO_CYAN}44` : "none"
+                      }}
+                    >
+                      <Globe size={24} style={{ color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK }} />
+                    </div>
+                    <div>
+                      <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                        Origem Online
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronização via XML</span>
+                      </div>
+                    </div>
+                  </div>
+
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
