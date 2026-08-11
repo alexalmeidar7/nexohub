@@ -531,7 +531,7 @@ export default function IntercomWidget() {
     const isActive = talking || receiving;
     return (
       <div 
-        className="fixed top-6 right-[300px] z-[100] animate-in zoom-in duration-300"
+        className="fixed top-6 right-6 z-[100] animate-in zoom-in duration-300"
         onClick={() => { setOpen(true); setMinimized(false); }}
       >
         <div className="relative group cursor-pointer">
