@@ -715,7 +715,13 @@ export default function IntercomWidget() {
             </div>
           )}
 
+          <button onClick={handleMinimize}
+            className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+            <ChevronDown size={14} />
+          </button>
+
           <button onClick={handleClose}
+
             className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Sair">
             <X size={14} />
           </button>
