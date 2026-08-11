@@ -2005,7 +2005,7 @@ export default function CenarioTela() {
                                 {[
                                   { icon: <Droplets />, label: "Umidade", value: `${liveWeather.current.humidity}%`, color: "#00BFF0" },
                                   { icon: <CloudRain />, label: "Chuva", value: `${liveWeather.daily[0]?.precip ?? 0}%`, color: "#7dd3fc" },
-                                  { icon: <Sun />, label: "Vento", value: `${liveWeather.current.windSpeed || 12} km/h`, color: "#fbbf24" }
+                                  { icon: <Sun />, label: "Vento", value: `12 km/h`, color: "#fbbf24" }
                                 ].map((stat, i) => (
                                   <div key={i} className="flex flex-col items-center p-4 rounded-3xl bg-black/20 border border-white/5">
                                     <div style={{ color: stat.color, marginBottom: `${vhToPx(0.5)}${vu}` }}>
