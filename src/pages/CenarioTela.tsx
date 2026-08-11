@@ -1934,12 +1934,14 @@ export default function CenarioTela() {
                             </div>
                           </div>
 
-                          {/* Main Glass Card content starts below */}
-                          key="weather-content"
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          className="flex flex-col items-center w-full max-w-[85%]"
+                          {/* Main Content */}
+                          <motion.div 
+                            key="weather-content"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="flex flex-col items-center w-full max-w-[85%]"
+                          >
                         >
                           {/* City & Title Section */}
                           <div className="text-center mb-12">
