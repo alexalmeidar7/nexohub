@@ -233,7 +233,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 2 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce2.current);
-    const artistName = artista2.nome;
+    const artistName = artista2.nome.trim().replace(/\s+/g, ' ');
     skip2Ref.current = 0;
     const requestId = ++request2Ref.current;
 
