@@ -180,7 +180,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce1.current);
-    const artistName = artista1.nome.trim();
+    const artistName = artista1.nome;
     skip1Ref.current = 0;
     const requestId = ++request1Ref.current;
 
@@ -229,7 +229,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 2 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce2.current);
-    const artistName = artista2.nome.trim();
+    const artistName = artista2.nome;
     skip2Ref.current = 0;
     const requestId = ++request2Ref.current;
 
@@ -528,7 +528,7 @@ export default function BatalhaMusicalPage() {
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
                 <input value={artista1.nome} onChange={e => updateArtista1("nome", e.target.value)} placeholder="Ex: Bruno Mars"
                   className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
-                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+                  onFocus={handleInputFocus} onBlur={e => { handleInputBlur(e); updateArtista1("nome", artista1.nome.trim()); }} />
               </div>
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Música</label>
@@ -587,7 +587,7 @@ export default function BatalhaMusicalPage() {
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Nome do Artista</label>
                 <input value={artista2.nome} onChange={e => updateArtista2("nome", e.target.value)} placeholder="Ex: The Weeknd"
                   className="w-full px-4 py-2 outline-none transition-all text-sm" style={inputStyle}
-                  onFocus={handleInputFocus} onBlur={handleInputBlur} />
+                  onFocus={handleInputFocus} onBlur={e => { handleInputBlur(e); updateArtista2("nome", artista2.nome.trim()); }} />
               </div>
               <div>
                 <label className="block text-[11px] mb-1.5 font-semibold uppercase tracking-wider" style={labelStyle}>Música</label>
