@@ -79,7 +79,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const [items, setItems] = useState<Testemunhal[]>([]);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = false;
+  const [saving, setSaving] = useState(false);
   const [showProgramCombo, setShowProgramCombo] = useState(false);
   const [form, setForm] = useState({
     texto: "",
