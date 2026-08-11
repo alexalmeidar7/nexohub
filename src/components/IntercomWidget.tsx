@@ -459,12 +459,19 @@ export default function IntercomWidget() {
     streamRef.current = null;
     setRole("none");
     setOpen(false);
+    setMinimized(false);
     setError(null);
     setConnectionState("");
     setReceiving(false);
     setListenerName("");
     setNameInput("");
   };
+
+  const handleMinimize = () => {
+    setOpen(false);
+    setMinimized(true);
+  };
+
 
   const handleBack = () => {
     stopTalking();
