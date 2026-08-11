@@ -1574,10 +1574,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <Settings size={22} className="text-white" />
             </div>
             <div>
-              <span className="block" style={{ color: NEXO_DARK, fontSize: 16, fontBlack: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+              <span className="block" style={{ color: NEXO_DARK, fontSize: 16, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
                 Configuração das Origens
               </span>
-              <span style={{ fontSize: 10, fontBold: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+
                 XML Online, Pasta Local e Sincronização
               </span>
             </div>
