@@ -527,6 +527,28 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [showContentScrollIndicator, setShowContentScrollIndicator] = useState(false);
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
+  
+  // Script para posicionar o FAB do Intercom minimizado sobre o ícone original
+  useEffect(() => {
+    const updatePosition = () => {
+      const marker = document.getElementById('intercom-toolbar-marker');
+      const fab = document.getElementById('intercom-minimized-fab');
+      if (marker && fab) {
+        const rect = marker.getBoundingClientRect();
+        fab.style.top = `${rect.top}px`;
+        fab.style.left = `${rect.left}px`;
+        fab.style.width = `${rect.width}px`;
+        fab.style.height = `${rect.height}px`;
+      }
+    };
+
+    const interval = setInterval(updatePosition, 100);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, []);
 
   // Trava scroll do body enquanto o menu mobile estiver aberto
   useEffect(() => {
@@ -1503,13 +1525,15 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             )}
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
-                  onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
-                  className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                  style={{ color: "#002132" }}
-                >
-                  <Radio size={18} />
-                </button>
+                <div className="relative" id="intercom-toolbar-marker">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent("intercom:open"))}
+                    className="nexo-toolbar-btn w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                    style={{ color: "#002132" }}
+                  >
+                    <Radio size={18} />
+                  </button>
+                </div>
               </TooltipTrigger>
               <TooltipContent side="bottom"><p className="text-xs">Intercomunicador</p></TooltipContent>
             </Tooltip>

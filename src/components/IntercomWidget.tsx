@@ -527,14 +527,20 @@ export default function IntercomWidget() {
   } as const;
 
   // ─── FAB / Minimized Indicator ───
+  // Note: Position is handled by a marker element in Dashboard.tsx to stay on top of the icon
   if (minimized && role !== "none") {
     const isActive = talking || receiving;
     return (
       <div 
-        className="fixed top-6 right-[300px] z-[100] animate-in zoom-in duration-300"
-        onClick={() => { setOpen(true); setMinimized(false); }}
+        id="intercom-minimized-fab"
+        className="fixed z-[110] animate-in zoom-in duration-300 cursor-pointer pointer-events-auto"
+        onClick={(e) => { 
+          e.stopPropagation();
+          setOpen(true); 
+          setMinimized(false); 
+        }}
       >
-        <div className="relative group cursor-pointer">
+        <div className="relative group">
           {isActive && (
             <>
               <div className="absolute inset-0 rounded-full animate-ping"
@@ -543,24 +549,22 @@ export default function IntercomWidget() {
                 style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,191,240,0.3)"}`, animationDuration: "2.5s" }} />
             </>
           )}
-          <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-2 hover:scale-110"
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 shadow-lg border hover:scale-110 bg-black"
             style={{
-              backgroundColor: "#000000",
               borderColor: talking ? "#ef4444" : receiving ? "#00BFF0" : "rgba(0,191,240,0.4)",
-              boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 8px 16px rgba(0,0,0,0.2)"
+              boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 4px 8px rgba(0,0,0,0.3)"
             }}>
             {talking ? (
-              <Mic size={20} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+              <Mic size={18} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
             ) : receiving ? (
-              <Volume2 size={20} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+              <Volume2 size={18} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
             ) : role === "speaker" ? (
-              <Mic size={20} className="text-white/40" />
+              <Mic size={18} className="text-white/40" />
             ) : (
-              <Headphones size={20} className="text-white/40" />
+              <Headphones size={18} className="text-white/40" />
             )}
           </div>
           
-          {/* Tooltip on hover */}
           <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded bg-black/80 text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             {talking ? "Transmitindo" : receiving ? "Recebendo" : "Intercom Ligado"}
           </div>
