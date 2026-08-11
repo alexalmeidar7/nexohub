@@ -1937,7 +1937,6 @@ export default function CenarioTela() {
                           {/* Main Glass Card */}
                           <div className="w-full relative flex justify-center">
                             <div className="w-full max-w-[85%]">
-                              {/* Content here */}
 
                         <motion.div 
                           key="weather-content"
@@ -2027,8 +2026,8 @@ export default function CenarioTela() {
                                 </motion.div>
                               );
                             })}
-                              </div>
                             </div>
+                          </div>
                           </motion.div>
                         </motion.div>
                       </AnimatePresence>
