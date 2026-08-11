@@ -212,11 +212,11 @@ export default function BatalhaMusicalPage() {
       let persistedUrl: string | null = null;
       setArtista1(prev => {
         if (prev.nome.trim() !== artistName) return prev;
-        // Never overwrite an existing image — only fill when empty
-        if (prev.imagemUrl) return prev;
-        if (!url) return prev;
-        persistedUrl = url;
-        return { ...prev, imagemUrl: url };
+        // Overwrite only if the current URL is empty OR it was automatically fetched (not manually pasted)
+        // We'll trust the fetcher to update when the name changes significantly.
+        const nextUrl = url || "";
+        persistedUrl = nextUrl;
+        return { ...prev, imagemUrl: nextUrl };
       });
       setLoading1(false);
       if (persistedUrl !== null && editingIdRef.current) {
@@ -261,10 +261,9 @@ export default function BatalhaMusicalPage() {
       let persistedUrl: string | null = null;
       setArtista2(prev => {
         if (prev.nome.trim() !== artistName) return prev;
-        if (prev.imagemUrl) return prev;
-        if (!url) return prev;
-        persistedUrl = url;
-        return { ...prev, imagemUrl: url };
+        const nextUrl = url || "";
+        persistedUrl = nextUrl;
+        return { ...prev, imagemUrl: nextUrl };
       });
       setLoading2(false);
       if (persistedUrl !== null && editingIdRef.current) {
