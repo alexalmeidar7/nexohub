@@ -1398,6 +1398,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const NEXO_CYAN = "#00BFF0";
   const NEXO_CARD_BG = "#D6F4FB";
   const NEXO_DARK = "#0A2540";
+  const NEXO_LIME = "#C6F03C";
+  const NEXO_LIGHT_BLUE = "#D6F4FB";
+
 
   return (
     <div className="nexo-scope space-y-4">
@@ -1517,20 +1520,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
 
               {/* Song Info */}
-              <div className="flex-1 flex flex-col justify-center min-w-0 gap-2">
-                <h2 className="text-lg lg:text-xl font-black tracking-tight truncate" style={{ color: musicTextColor, textShadow: musicTextShadow }}>
-                  {displayTitulo}
-                </h2>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: musicTextMuted, textShadow: musicTextShadow }}>
-                  <User size={14} />
-                  {displayArtista}
-                </span>
+              <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: musicTextColor, textShadow: musicTextShadow, letterSpacing: "-0.02em" }}>
+                    {displayTitulo}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full" 
+                      style={{ 
+                        color: "#FFFFFF", 
+                        backgroundColor: "rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(4px)",
+                        border: "1px solid rgba(255,255,255,0.2)"
+                      }}
+                    >
+                      <User size={14} className="opacity-80" />
+                      {displayArtista}
+                    </span>
+                  </div>
+                </div>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 flex items-center gap-1.5" style={{ textShadow: musicTextShadow }}>
-                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: musicTextColor }}>{formatTimeMs(elapsed)}</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted, opacity: 0.6 }}>/</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted }}>{formatTime(music.duracao)}</span>
+                  <div className="flex items-center gap-3 mt-1">
+                    <div 
+                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner" 
+                      style={{ backgroundColor: "rgba(0,0,0,0.3)", color: "#FFFFFF" }}
+                    >
+                      {formatTimeMs(elapsed)}
+                    </div>
+                    <div className="h-1 w-1 rounded-full bg-white/30" />
+                    <div className="text-sm font-mono font-bold opacity-60" style={{ color: "#FFFFFF" }}>
+                      {formatTime(music.duracao)}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1539,72 +1561,99 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
       </section>
 
+
       {/* ═══ COLLAPSIBLE CONFIG SECTION (Nexo Form style) ═══ */}
-      <section style={{ background: NEXO_CARD_BG, borderRadius: 28, overflow: "hidden", boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)" }}>
+      <section 
+        className="group/config"
+        style={{ 
+          background: "#FFFFFF", 
+          borderRadius: 28, 
+          overflow: "hidden", 
+          boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)",
+          border: `1px solid ${showConfig ? NEXO_CYAN : "#E2E8F0"}`,
+          transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+        }}
+      >
         <div 
-          className="w-full flex items-center justify-between text-left transition-all"
+          className="w-full flex items-center justify-between transition-all"
           style={{ 
-            padding: "20px 24px", 
-            borderBottom: showConfig ? `2px solid ${NEXO_CYAN}` : "none",
-            backgroundColor: showConfig ? "#FFFFFF" : "transparent"
+            padding: "24px 32px", 
+            borderBottom: showConfig ? `1px solid ${NEXO_CYAN}22` : "none",
+            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, #FFFFFF)` : "transparent"
           }}
         >
-          <span className="flex items-center gap-2.5" style={{ color: NEXO_DARK, fontSize: 14, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110" style={{ background: NEXO_CYAN, boxShadow: `0 4px 12px ${NEXO_CYAN}44` }}>
-              <Monitor size={18} className="text-white" />
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-lg" 
+              style={{ 
+                background: showConfig ? NEXO_CYAN : NEXO_DARK, 
+                boxShadow: showConfig ? `0 8px 20px ${NEXO_CYAN}44` : "0 4px 12px rgba(10, 37, 64, 0.2)",
+                transform: showConfig ? "rotate(90deg)" : "rotate(0deg)"
+              }}
+            >
+              <Settings size={22} className="text-white" />
             </div>
-            Configuração das Origens
-            {localMonitoring && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: "#22c55e" }} />
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: "#22c55e" }} />
+            <div>
+              <span className="block" style={{ color: NEXO_DARK, fontSize: 16, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>
+                Configuração das Origens
               </span>
-            )}
-          </span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: 1 }}>
+
+                XML Online, Pasta Local e Sincronização
+              </span>
+            </div>
+          </div>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="w-16 h-16 rounded-full flex items-center justify-center bg-white/8 hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00BFF0] border border-white/10 transition shrink-0 relative group"
+            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
+            style={{ 
+              backgroundColor: showConfig ? NEXO_CYAN : "#F1F5F9",
+              color: showConfig ? "#FFFFFF" : NEXO_DARK,
+            }}
           >
-            <div 
-              className="absolute inset-[-4px] rounded-full border-2 border-transparent group-hover:border-white/20 transition-all duration-300 pointer-events-none" 
-              style={{
-                background: "linear-gradient(#00BFF0, #C6F03C) border-box",
-                WebkitMask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-                WebkitMaskComposite: "destination-out",
-                maskComposite: "exclude",
-                animation: "interactSpin 3s linear infinite"
-              }} 
-            />
-            {showConfig ? (
-              <ChevronUp size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            ) : (
-              <Settings size={22} className="relative z-10" style={{ color: NEXO_DARK }} />
-            )}
+            {showConfig ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
           </button>
         </div>
 
+
         {showConfig && (
           <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-            {/* Two columns grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
-              {/* ── ONLINE SOURCE ── */}
-              <div className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(0, 191, 240, 0.1)" }}>
-                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: NEXO_CYAN }} />
-                
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
-                    <div className="w-10 h-10 rounded-2xl flex items-center justify-center transition-transform group-hover/source:rotate-12" style={{ backgroundColor: `${NEXO_CYAN}15` }}>
-                      <Globe size={18} style={{ color: NEXO_CYAN }} />
-                    </div>
-                    Origem Online
-                  </h4>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
+                {/* ── ONLINE SOURCE ── */}
+                <div 
+                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl hover:-translate-y-1" 
+                  style={{ 
+                    background: "#FFFFFF", 
+                    border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#F1F5F9"}`,
+                    boxShadow: isOnlineSelected ? "0 20px 40px -20px rgba(0, 191, 240, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
+                  }}
+                >
                   {isOnlineSelected && (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Ativo</span>
+                    <div className="absolute top-0 right-0 p-4">
+                      <div className="w-3 h-3 rounded-full bg-cyan-500 animate-ping opacity-75" />
                     </div>
                   )}
-                </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <div 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source:rotate-6" 
+                      style={{ 
+                        background: isOnlineSelected ? NEXO_CYAN : "#F1F5F9",
+                        boxShadow: isOnlineSelected ? `0 8px 16px ${NEXO_CYAN}44` : "none"
+                      }}
+                    >
+                      <Globe size={24} style={{ color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK }} />
+                    </div>
+                    <div>
+                      <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                        Origem Online
+                      </h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronização via XML</span>
+                      </div>
+                    </div>
+                  </div>
+
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
@@ -1640,17 +1689,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
                     aria-pressed={isOnlineSelected}
-                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: isOnlineSelected ? NEXO_CYAN : "#FFFFFF",
+                      backgroundColor: isOnlineSelected ? NEXO_DARK : "#FFFFFF",
                       color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
-                      border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
-                      boxShadow: isOnlineSelected ? "0 8px 20px -6px rgba(0, 191, 240, 0.4)" : "none",
+                      border: `2px solid ${isOnlineSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      boxShadow: isOnlineSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
-                    {onlineActivating ? <Loader2 size={16} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Origem Ativa" : "Ativar esta Origem"}
+                    {onlineActivating ? <Loader2 size={18} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Conectado" : "Conectar Fonte"}
                   </button>
+
                 </div>
 
                 {(() => {
@@ -1685,29 +1735,39 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-300 group/source-local" 
+                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl hover:-translate-y-1" 
                 style={{ 
                   background: "#FFFFFF", 
-                  border: "1px solid #E2E8F0", 
-                  boxShadow: "0 10px 30px -10px rgba(198, 240, 60, 0.15)",
+                  border: `2px solid ${isLocalSelected ? NEXO_LIME : "#F1F5F9"}`,
+                  boxShadow: isLocalSelected ? "0 20px 40px -20px rgba(198, 240, 60, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
                 }}
               >
-                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: "#C6F03C" }} />
-
-                <div className="flex items-center justify-between">
-                  <h4 className="text-[13px] font-black uppercase tracking-[0.2em] flex items-center gap-3" style={{ color: NEXO_DARK }}>
-                    <div className="w-10 h-10 rounded-2xl flex-center transition-transform group-hover/source-local:rotate-12" style={{ backgroundColor: "#C6F03C15", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <FolderOpen size={18} style={{ color: "#8BBD00" }} />
+                {isLocalSelected && (
+                  <div className="absolute top-0 right-0 p-4">
+                    <div className="w-3 h-3 rounded-full bg-lime-500 animate-ping opacity-75" />
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-4">
+                  <div 
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source-local:rotate-6" 
+                    style={{ 
+                      background: isLocalSelected ? NEXO_LIME : "#F1F5F9",
+                      boxShadow: isLocalSelected ? `0 8px 16px ${NEXO_LIME}44` : "none"
+                    }}
+                  >
+                    <FolderOpen size={24} style={{ color: NEXO_DARK }} />
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
+                      Origem Local
+                    </h4>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
                     </div>
-                    Origem Local (Pasta)
-                  </h4>
-                  {isLocalSelected && (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-50 border border-green-100">
-                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Monitorando</span>
-                    </div>
-                  )}
+                  </div>
                 </div>
+
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
@@ -1740,17 +1800,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: isLocalSelected ? "#C6F03C" : "#FFFFFF",
-                      color: NEXO_DARK,
-                      border: `2px solid ${isLocalSelected ? "#C6F03C" : "#E2E8F0"}`,
-                      boxShadow: isLocalSelected ? "0 8px 20px -6px rgba(198, 240, 60, 0.4)" : "none",
+                      backgroundColor: isLocalSelected ? NEXO_DARK : "#FFFFFF",
+                      color: isLocalSelected ? "#FFFFFF" : NEXO_DARK,
+                      border: `2px solid ${isLocalSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      boxShadow: isLocalSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
-                    {localActivating ? <Loader2 size={16} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Monitoramento Ativo" : "Ativar Monitoramento"}
+                    {localActivating ? <Loader2 size={18} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Conectado" : "Conectar Fonte"}
                   </button>
+
                 </div>
 
                 <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
@@ -1944,14 +2005,33 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         )}
       </section>
 
-      {/* INFO MUSIC (moved outside config) */}
-      <section className="mt-8">
-        <div className="rounded-[32px] p-8 space-y-8" style={{ background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "0 10px 30px -10px rgba(10, 37, 64, 0.05)" }}>
-          <Suspense fallback={<div className="flex items-center gap-2 text-xs py-10 justify-center text-slate-400"><Loader2 size={20} className="animate-spin" /> Carregando base de curiosidades...</div>}>
-            <InfoMusicSection />
-          </Suspense>
+      {/* ═══ INFO MUSIC & CURIOSIDADES ═══ */}
+      <section style={{ background: "#FFFFFF", borderRadius: 28, padding: 32, boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)", border: "1px solid #E2E8F0", marginTop: 24 }}>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: NEXO_CYAN, boxShadow: `0 8px 20px ${NEXO_CYAN}44` }}>
+            <Sparkles size={22} className="text-white" />
+          </div>
+          <div>
+            <h3 style={{ color: NEXO_DARK, fontSize: 18, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+              Música no Ar & Curiosidades
+            </h3>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", margin: 0 }}>
+              Gerencie curiosidades e acompanhe o histórico em tempo real
+            </p>
+          </div>
         </div>
+        
+        <Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="animate-spin" size={40} style={{ color: NEXO_CYAN }} /></div>}>
+          <InfoMusicSection 
+            music={music} 
+            effectiveUserId={dataUserId}
+            curiosidade={curiosidade}
+            setCuriosidade={setCuriosidade}
+            manualCuriosityRef={manualCuriosityRef}
+          />
+        </Suspense>
       </section>
+
 
       {/* XML MUSICA AGORA */}
       {music && (

@@ -39,7 +39,7 @@ const Highlight = ({ text, term }: { text: string; term: string }) => {
   );
 };
 
-export default function InfoMusicSection() {
+export default function InfoMusicSection({ music, effectiveUserId, curiosidade, setCuriosidade, manualCuriosityRef }: any) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false); // Forced closed by default per user request
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
