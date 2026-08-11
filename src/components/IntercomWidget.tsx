@@ -900,7 +900,28 @@ export default function IntercomWidget() {
         </div>
       )}
 
+      {/* Disconnect Option */}
+      <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+        <button 
+          onClick={() => {
+            stopTalking();
+            setRole("none");
+            setOpen(true);
+            setMinimized(false);
+          }}
+          className="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all hover:bg-red-500 hover:text-white"
+          style={{ 
+            backgroundColor: "rgba(239,68,68,0.1)", 
+            color: "#ef4444",
+            border: "1px solid rgba(239,68,68,0.2)"
+          }}
+        >
+          Desligar Intercom
+        </button>
+      </div>
+
       <style>{`
+
         @keyframes intercomBar {
           0% { transform: scaleY(0.4); }
           100% { transform: scaleY(1); }
