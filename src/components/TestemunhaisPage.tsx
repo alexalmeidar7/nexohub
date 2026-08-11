@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -79,7 +79,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const [items, setItems] = useState<Testemunhal[]>([]);
   const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] = false;
+  const [showProgramCombo, setShowProgramCombo] = useState(false);
   const [form, setForm] = useState({
     texto: "",
     data_inicio: new Date().toISOString().split("T")[0],
@@ -193,27 +194,54 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
             />
           </div>
 
-          <div>
+          <div className="relative">
             <label style={labelStyle}>Programas (Selecione um ou mais)</label>
-            <div className="flex flex-wrap gap-2">
-              {programas.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => {
-                    const next = form.programa_ids.includes(p.id) 
-                      ? form.programa_ids.filter(id => id !== p.id)
-                      : [...form.programa_ids, p.id];
-                    setForm({...form, programa_ids: next});
-                  }}
-                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
-                    form.programa_ids.includes(p.id) ? "bg-[#00BFF0] text-white" : "bg-white border border-[#00BFF0] text-[#0A2540]"
-                  }`}
-                >
-                  {p.nome}
-                </button>
-              ))}
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowProgramCombo(!showProgramCombo)}
+              style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <span className="truncate">
+                {form.programa_ids.length === 0 
+                  ? "Selecione os programas..." 
+                  : `${form.programa_ids.length} programa(s) selecionado(s)`}
+              </span>
+              <span className="text-[#00BFF0] ml-2">▼</span>
+            </button>
+            
+            {showProgramCombo && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowProgramCombo(false)}
+                />
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-2xl p-2 z-20 max-h-60 overflow-y-auto shadow-xl">
+                  {programas.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        const next = form.programa_ids.includes(p.id) 
+                          ? form.programa_ids.filter(id => id !== p.id)
+                          : [...form.programa_ids, p.id];
+                        setForm({...form, programa_ids: next});
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group"
+                    >
+                      <span className={`text-sm font-medium ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
+                        {p.nome}
+                      </span>
+                      {form.programa_ids.includes(p.id) && <Check size={16} className="text-[#00BFF0]" />}
+                    </button>
+                  ))}
+                  {programas.length === 0 && (
+                    <div className="p-4 text-center text-gray-400 text-xs italic">
+                      Nenhum programa cadastrado
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -249,8 +277,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
+                  <th className="p-4 text-xs uppercase font-bold">Programa</th>
                   <th className="p-4 text-xs uppercase font-bold">Citação</th>
-                  <th className="p-4 text-xs uppercase font-bold">Programas</th>
                   <th className="p-4 text-xs uppercase font-bold">Validade</th>
                   <th className="p-4 text-xs uppercase font-bold">Ações</th>
                 </tr>
@@ -258,7 +286,6 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
-                    <td className="p-4 text-sm text-[#0A2540]" dangerouslySetInnerHTML={{ __html: item.texto }}></td>
                     <td className="p-4 text-xs text-[#0A2540]/70">
                       <div className="flex flex-wrap gap-1">
                         {item.programa_ids && item.programa_ids.length > 0 ? (
@@ -275,8 +302,13 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                         )}
                       </div>
                     </td>
+                    <td className="p-4 text-sm text-[#0A2540]">
+                      <div className="max-w-xs truncate" title={item.texto.replace(/<[^>]*>?/gm, '')}>
+                        {item.texto.replace(/<[^>]*>?/gm, '').substring(0, 50)}
+                        {item.texto.replace(/<[^>]*>?/gm, '').length > 50 ? '...' : ''}
+                      </div>
+                    </td>
                     <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
-                      {new Date(item.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')} - 
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
                     <td className="p-4 flex gap-2">
