@@ -193,16 +193,22 @@ export default function BatalhaMusicalPage() {
     const cacheKey = artistName.toLowerCase();
     const cachedUrl = imageCacheRef.current[cacheKey];
 
-    if (cachedUrl) {
-      setLoading1(false);
-      setArtista1(prev => prev.nome.trim() === artistName && prev.imagemUrl !== cachedUrl
-        ? { ...prev, imagemUrl: cachedUrl }
-        : prev);
-      return;
-    }
+    // Even if cached, we proceed to ensure state is synced, 
+    // but the debounce logic below handles the actual fetching.
 
     setLoading1(false);
     debounce1.current = setTimeout(async () => {
+      const cacheKey = artistName.toLowerCase();
+      const cachedUrl = imageCacheRef.current[cacheKey];
+
+      if (cachedUrl) {
+        setArtista1(prev => {
+          if (prev.nome.trim() !== artistName) return prev;
+          return { ...prev, imagemUrl: cachedUrl };
+        });
+        return;
+      }
+
       setLoading1(true);
       const url = await fetchArtistImage(artistName);
       if (request1Ref.current !== requestId) return;
@@ -212,8 +218,6 @@ export default function BatalhaMusicalPage() {
       let persistedUrl: string | null = null;
       setArtista1(prev => {
         if (prev.nome.trim() !== artistName) return prev;
-        // Overwrite only if the current URL is empty OR it was automatically fetched (not manually pasted)
-        // We'll trust the fetcher to update when the name changes significantly.
         const nextUrl = url || "";
         persistedUrl = nextUrl;
         return { ...prev, imagemUrl: nextUrl };
@@ -242,16 +246,22 @@ export default function BatalhaMusicalPage() {
     const cacheKey = artistName.toLowerCase();
     const cachedUrl = imageCacheRef.current[cacheKey];
 
-    if (cachedUrl) {
-      setLoading2(false);
-      setArtista2(prev => prev.nome.trim() === artistName && prev.imagemUrl !== cachedUrl
-        ? { ...prev, imagemUrl: cachedUrl }
-        : prev);
-      return;
-    }
+    // Even if cached, we proceed to ensure state is synced,
+    // but the debounce logic below handles the actual fetching.
 
     setLoading2(false);
     debounce2.current = setTimeout(async () => {
+      const cacheKey = artistName.toLowerCase();
+      const cachedUrl = imageCacheRef.current[cacheKey];
+
+      if (cachedUrl) {
+        setArtista2(prev => {
+          if (prev.nome.trim() !== artistName) return prev;
+          return { ...prev, imagemUrl: cachedUrl };
+        });
+        return;
+      }
+
       setLoading2(true);
       const url = await fetchArtistImage(artistName);
       if (request2Ref.current !== requestId) return;
