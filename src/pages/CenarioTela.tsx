@@ -2027,6 +2027,7 @@ export default function CenarioTela() {
                                 </motion.div>
                               );
                             })}
+                              </div>
                             </div>
                           </motion.div>
                         </motion.div>
