@@ -17,11 +17,17 @@ interface ListenerInfo {
 export default function IntercomWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+
   useEffect(() => {
-    const openHandler = () => setOpen(true);
+    const openHandler = () => {
+      setOpen(true);
+      setMinimized(false);
+    };
     window.addEventListener("intercom:open", openHandler);
     return () => window.removeEventListener("intercom:open", openHandler);
   }, []);
+
   const [role, setRole] = useState<Role>("none");
   const [listenerName, setListenerName] = useState("");
   const [nameInput, setNameInput] = useState("");
