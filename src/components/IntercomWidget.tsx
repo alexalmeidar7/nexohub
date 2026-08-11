@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2 } from "lucide-react";
+import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,11 +17,17 @@ interface ListenerInfo {
 export default function IntercomWidget() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
+
   useEffect(() => {
-    const openHandler = () => setOpen(true);
+    const openHandler = () => {
+      setOpen(true);
+      setMinimized(false);
+    };
     window.addEventListener("intercom:open", openHandler);
     return () => window.removeEventListener("intercom:open", openHandler);
   }, []);
+
   const [role, setRole] = useState<Role>("none");
   const [listenerName, setListenerName] = useState("");
   const [nameInput, setNameInput] = useState("");
@@ -372,8 +378,10 @@ export default function IntercomWidget() {
           for (const c of collectedCandidates) {
             await channelRef.current.send({ type: "broadcast", event: "ice-candidate-speaker", payload: { candidate: c } });
           }
+          handleMinimize();
         }
       }, 1500);
+
 
       // Another retry at 3s
       setTimeout(async () => {
@@ -453,12 +461,19 @@ export default function IntercomWidget() {
     streamRef.current = null;
     setRole("none");
     setOpen(false);
+    setMinimized(false);
     setError(null);
     setConnectionState("");
     setReceiving(false);
     setListenerName("");
     setNameInput("");
   };
+
+  const handleMinimize = () => {
+    setOpen(false);
+    setMinimized(true);
+  };
+
 
   const handleBack = () => {
     stopTalking();
@@ -478,7 +493,9 @@ export default function IntercomWidget() {
     if (!trimmed) return;
     setListenerName(trimmed);
     setRole("listener");
+    handleMinimize();
   };
+
 
   // Autoplay unlock for listener
   const handleUnlockAudio = () => {
@@ -509,10 +526,60 @@ export default function IntercomWidget() {
     border: "1px solid rgba(0,191,240,0.22)",
   } as const;
 
-  // ─── FAB (hidden — trigger is provided by Dashboard box) ───
+  // ─── FAB / Minimized Indicator ───
+  if (minimized && role !== "none") {
+    const isActive = talking || receiving;
+    return (
+      <div 
+        className="fixed top-6 right-[300px] z-[100] animate-in zoom-in duration-300"
+        onClick={() => { setOpen(true); setMinimized(false); }}
+      >
+        <div className="relative group cursor-pointer">
+          {isActive && (
+            <>
+              <div className="absolute inset-0 rounded-full animate-ping"
+                style={{ border: `2px solid ${talking ? "#ef4444" : "#00BFF0"}`, animationDuration: "1.5s" }} />
+              <div className="absolute -inset-1 rounded-full animate-ping"
+                style={{ border: `1px solid ${talking ? "rgba(239,68,68,0.3)" : "rgba(0,191,240,0.3)"}`, animationDuration: "2.5s" }} />
+            </>
+          )}
+          <div className="w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-xl border-2 hover:scale-110"
+            style={{
+              backgroundColor: "#000000",
+              borderColor: talking ? "#ef4444" : receiving ? "#00BFF0" : "rgba(0,191,240,0.4)",
+              boxShadow: isActive ? `0 0 20px ${talking ? "rgba(239,68,68,0.4)" : "rgba(0,191,240,0.4)"}` : "0 8px 16px rgba(0,0,0,0.2)"
+            }}>
+            {talking ? (
+              <Mic size={20} className="text-white" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+            ) : receiving ? (
+              <Volume2 size={20} className="text-[#00BFF0]" style={{ animation: "intercomIconPulse 0.8s ease-in-out infinite" }} />
+            ) : role === "speaker" ? (
+              <Mic size={20} className="text-white/40" />
+            ) : (
+              <Headphones size={20} className="text-white/40" />
+            )}
+          </div>
+          
+          {/* Tooltip on hover */}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 rounded bg-black/80 text-white text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            {talking ? "Transmitindo" : receiving ? "Recebendo" : "Intercom Ligado"}
+          </div>
+        </div>
+        
+        <style>{`
+          @keyframes intercomIconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   if (!open) {
     return null;
   }
+
 
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
@@ -648,7 +715,13 @@ export default function IntercomWidget() {
             </div>
           )}
 
+          <button onClick={handleMinimize}
+            className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+            <ChevronDown size={14} />
+          </button>
+
           <button onClick={handleClose}
+
             className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Sair">
             <X size={14} />
           </button>
@@ -685,7 +758,32 @@ export default function IntercomWidget() {
           )}
         </div>
 
+        {/* Disconnect Option */}
+        <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+          <button 
+            onClick={() => {
+              setRole("none");
+              setOpen(true);
+              setMinimized(false);
+              const el = audioRef.current;
+              if (el) {
+                try { el.pause(); } catch {}
+                try { el.srcObject = null; } catch {}
+              }
+            }}
+            className="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all hover:bg-red-500 hover:text-white"
+            style={{ 
+              backgroundColor: "rgba(239,68,68,0.1)", 
+              color: "#ef4444",
+              border: "1px solid rgba(239,68,68,0.2)"
+            }}
+          >
+            Desligar Intercom
+          </button>
+        </div>
+
         {/* Receiving glow bar at bottom */}
+
         {receiving && (
           <div className="h-[2px] w-full" style={{
             background: "linear-gradient(90deg, transparent 0%, #00BFF0 30%, #00BFF0 70%, transparent 100%)",
@@ -794,7 +892,13 @@ export default function IntercomWidget() {
           <Keyboard size={14} className={settingHotkey ? "text-yellow-400 animate-pulse" : ""} />
         </button>
 
+        <button onClick={handleMinimize}
+          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+          <ChevronDown size={14} />
+        </button>
+
         <button onClick={handleBack}
+
           className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Voltar">
           <ArrowLeft size={14} />
         </button>
@@ -833,7 +937,28 @@ export default function IntercomWidget() {
         </div>
       )}
 
+      {/* Disconnect Option */}
+      <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+        <button 
+          onClick={() => {
+            stopTalking();
+            setRole("none");
+            setOpen(true);
+            setMinimized(false);
+          }}
+          className="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all hover:bg-red-500 hover:text-white"
+          style={{ 
+            backgroundColor: "rgba(239,68,68,0.1)", 
+            color: "#ef4444",
+            border: "1px solid rgba(239,68,68,0.2)"
+          }}
+        >
+          Desligar Intercom
+        </button>
+      </div>
+
       <style>{`
+
         @keyframes intercomBar {
           0% { transform: scaleY(0.4); }
           100% { transform: scaleY(1); }
