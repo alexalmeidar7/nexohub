@@ -193,13 +193,8 @@ export default function BatalhaMusicalPage() {
     const cacheKey = artistName.toLowerCase();
     const cachedUrl = imageCacheRef.current[cacheKey];
 
-    if (cachedUrl) {
-      setLoading1(false);
-      setArtista1(prev => prev.nome.trim() === artistName && prev.imagemUrl !== cachedUrl
-        ? { ...prev, imagemUrl: cachedUrl }
-        : prev);
-      return;
-    }
+    // Even if cached, we proceed to ensure state is synced, 
+    // but the debounce logic below handles the actual fetching.
 
     setLoading1(false);
     debounce1.current = setTimeout(async () => {
