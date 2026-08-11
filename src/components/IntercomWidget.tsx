@@ -491,7 +491,9 @@ export default function IntercomWidget() {
     if (!trimmed) return;
     setListenerName(trimmed);
     setRole("listener");
+    handleMinimize();
   };
+
 
   // Autoplay unlock for listener
   const handleUnlockAudio = () => {
