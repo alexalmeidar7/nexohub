@@ -752,7 +752,32 @@ export default function IntercomWidget() {
           )}
         </div>
 
+        {/* Disconnect Option */}
+        <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(0,33,50,0.08)" }}>
+          <button 
+            onClick={() => {
+              setRole("none");
+              setOpen(true);
+              setMinimized(false);
+              const el = audioRef.current;
+              if (el) {
+                try { el.pause(); } catch {}
+                try { el.srcObject = null; } catch {}
+              }
+            }}
+            className="w-full mt-2 py-2 rounded-xl text-xs font-bold transition-all hover:bg-red-500 hover:text-white"
+            style={{ 
+              backgroundColor: "rgba(239,68,68,0.1)", 
+              color: "#ef4444",
+              border: "1px solid rgba(239,68,68,0.2)"
+            }}
+          >
+            Desligar Intercom
+          </button>
+        </div>
+
         {/* Receiving glow bar at bottom */}
+
         {receiving && (
           <div className="h-[2px] w-full" style={{
             background: "linear-gradient(90deg, transparent 0%, #00BFF0 30%, #00BFF0 70%, transparent 100%)",
