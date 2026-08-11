@@ -22,7 +22,7 @@ export default function IntercomWidget() {
   useEffect(() => {
     const openHandler = () => {
       setOpen(true);
-      setMinimized(false);
+      // Removed setMinimized(false) to maintain state if it was already minimized while navigating
     };
     window.addEventListener("intercom:open", openHandler);
     return () => window.removeEventListener("intercom:open", openHandler);
