@@ -588,7 +588,7 @@ export default function IntercomWidget() {
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
-      <div className="nexo-scope fixed top-[43px] -translate-y-1/2 right-[182px] z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300" 
+      <div className="nexo-scope fixed top-[43px] -translate-y-1/2 right-[115px] z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300" 
            style={{ ...glassStyle, width: "auto" }}>
         <div className="flex items-center gap-1.5 px-2 py-1.5">
           <button onClick={() => setRole("speaker")}
