@@ -2418,8 +2418,10 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {config.weather.enabled && (
-                  <>
-                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                  <div className="mt-4">
+                    <AnimatedWeatherLayout />
+                    
+                    <div className="flex gap-1 rounded-lg p-1 mt-4" style={{ background: subTabBg }}>
                       {[
                         { key: "today", label: "Previsão do Tempo", icon: <Sun size={13} /> },
                         { key: "satellite", label: "Satélite", icon: <Satellite size={13} /> },
