@@ -1520,20 +1520,43 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </div>
 
               {/* Song Info */}
-              <div className="flex-1 flex flex-col justify-center min-w-0 gap-2">
-                <h2 className="text-lg lg:text-xl font-black tracking-tight truncate" style={{ color: musicTextColor, textShadow: musicTextShadow }}>
-                  {displayTitulo}
-                </h2>
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: musicTextMuted, textShadow: musicTextShadow }}>
-                  <User size={14} />
-                  {displayArtista}
-                </span>
+              <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
+                <div className="space-y-1">
+                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: musicTextColor, textShadow: musicTextShadow, letterSpacing: "-0.02em" }}>
+                    {displayTitulo}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <span 
+                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full" 
+                      style={{ 
+                        color: "#FFFFFF", 
+                        backgroundColor: "rgba(255,255,255,0.15)",
+                        backdropFilter: "blur(4px)",
+                        border: "1px solid rgba(255,255,255,0.2)"
+                      }}
+                    >
+                      <User size={14} className="opacity-80" />
+                      {displayArtista}
+                    </span>
+                  </div>
+                </div>
 
                 {music && music.duracao > 0 && (
-                  <div className="mt-2 flex items-center gap-1.5" style={{ textShadow: musicTextShadow }}>
-                    <span className="text-sm font-mono font-black tracking-wide" style={{ color: musicTextColor }}>{formatTimeMs(elapsed)}</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted, opacity: 0.6 }}>/</span>
-                    <span className="text-sm font-mono font-bold" style={{ color: musicTextMuted }}>{formatTime(music.duracao)}</span>
+                  <div className="flex items-center gap-3 mt-1">
+                    <div 
+                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner" 
+                      style={{ backgroundColor: "rgba(0,0,0,0.3)", color: "#FFFFFF" }}
+                    >
+                      {formatTimeMs(elapsed)}
+                    </div>
+                    <div className="h-1 w-1 rounded-full bg-white/30" />
+                    <div className="text-sm font-mono font-bold opacity-60" style={{ color: "#FFFFFF" }}>
+                      {formatTime(music.duracao)}
+                    </div>
+                  </div>
+                )}
+              </div>
+
                   </div>
                 )}
               </div>
