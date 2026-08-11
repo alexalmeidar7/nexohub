@@ -2028,6 +2028,7 @@ export default function CenarioTela() {
                               );
                             })}
                             </div>
+                          </div>
                           </motion.div>
                         </motion.div>
                       </AnimatePresence>
