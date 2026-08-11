@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2 } from "lucide-react";
+import { Mic, MicOff, Radio, X, Keyboard, Headphones, Users, ArrowLeft, Volume2, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
