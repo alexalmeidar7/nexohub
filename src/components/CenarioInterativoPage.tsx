@@ -2615,7 +2615,7 @@ export default function CenarioInterativoPage() {
                     )}
 
                     <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} userId={uid} category="weather" />
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
