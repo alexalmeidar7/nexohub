@@ -1780,17 +1780,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
                     aria-pressed={isLocalSelected}
-                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: isLocalSelected ? "#C6F03C" : "#FFFFFF",
-                      color: NEXO_DARK,
-                      border: `2px solid ${isLocalSelected ? "#C6F03C" : "#E2E8F0"}`,
-                      boxShadow: isLocalSelected ? "0 8px 20px -6px rgba(198, 240, 60, 0.4)" : "none",
+                      backgroundColor: isLocalSelected ? NEXO_DARK : "#FFFFFF",
+                      color: isLocalSelected ? "#FFFFFF" : NEXO_DARK,
+                      border: `2px solid ${isLocalSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      boxShadow: isLocalSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
-                    {localActivating ? <Loader2 size={16} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Monitoramento Ativo" : "Ativar Monitoramento"}
+                    {localActivating ? <Loader2 size={18} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Conectado" : "Conectar Fonte"}
                   </button>
+
                 </div>
 
                 <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
