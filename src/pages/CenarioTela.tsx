@@ -1934,11 +1934,7 @@ export default function CenarioTela() {
                             </div>
                           </div>
 
-                          {/* Main Glass Card */}
-                          <div className="w-full relative flex justify-center">
-                            <div className="w-full max-w-[85%]">
-
-                        <motion.div 
+                          {/* Main Glass Card content starts below */}
                           key="weather-content"
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
