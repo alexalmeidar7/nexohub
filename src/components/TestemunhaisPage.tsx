@@ -17,7 +17,7 @@ interface Testemunhal {
   texto: string;
   data_inicio: string;
   data_fim: string;
-  programa_ids: string[];
+  programa_ids?: string[];
 }
 
 const pillInput: React.CSSProperties = {
@@ -92,11 +92,11 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const loadData = async () => {
     if (!ownerId) return;
     setLoading(true);
-    const [ { data: testemunhais }, { data: pData } ] = await Promise.all([
+    const [ { data: tData }, { data: pData } ] = await Promise.all([
       supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome").eq("user_id", ownerId).eq("ativo", true)
     ]);
-    if (testemunhais) setItems(testemunhais as Testemunhal[]);
+    if (tData) setItems(tData as Testemunhal[]);
     if (pData) setProgramas(pData);
     setLoading(false);
   };
@@ -199,6 +199,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
               {programas.map(p => (
                 <button
                   key={p.id}
+                  type="button"
                   onClick={() => {
                     const next = form.programa_ids.includes(p.id) 
                       ? form.programa_ids.filter(id => id !== p.id)
@@ -245,23 +246,40 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">Nenhuma citação cadastrada.</p></div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-3 text-xs uppercase font-bold">Citação</th>
-                  <th className="p-3 text-xs uppercase font-bold">Validade</th>
-                  <th className="p-3 text-xs uppercase font-bold">Ações</th>
+                  <th className="p-4 text-xs uppercase font-bold">Citação</th>
+                  <th className="p-4 text-xs uppercase font-bold">Programas</th>
+                  <th className="p-4 text-xs uppercase font-bold">Validade</th>
+                  <th className="p-4 text-xs uppercase font-bold">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5">
-                    <td className="p-3 text-sm text-[#0A2540]" dangerouslySetInnerHTML={{ __html: item.texto }}></td>
-                    <td className="p-3 text-xs text-[#0A2540]/70">
+                  <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
+                    <td className="p-4 text-sm text-[#0A2540]" dangerouslySetInnerHTML={{ __html: item.texto }}></td>
+                    <td className="p-4 text-xs text-[#0A2540]/70">
+                      <div className="flex flex-wrap gap-1">
+                        {item.programa_ids && item.programa_ids.length > 0 ? (
+                          item.programa_ids.map(pid => {
+                            const prog = programas.find(p => p.id === pid);
+                            return prog ? (
+                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full">
+                                {prog.nome}
+                              </span>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="text-gray-400 italic">Nenhum</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
                       {new Date(item.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')} - 
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="p-3 flex gap-2">
+                    <td className="p-4 flex gap-2">
                       <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center'}} onClick={() => handleEdit(item)}><Pencil size={14}/></button>
                       <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderColor: '#ff4d4f', color: '#ff4d4f'}} onClick={() => handleDelete(item.id)}><Trash2 size={14}/></button>
                     </td>
