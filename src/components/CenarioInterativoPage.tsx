@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2 } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
+import AnimatedWeatherLayout from "./AnimatedWeatherLayout";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -2417,8 +2418,10 @@ export default function CenarioInterativoPage() {
                 </div>
 
                 {config.weather.enabled && (
-                  <>
-                    <div className="flex gap-1 rounded-lg p-1" style={{ background: subTabBg }}>
+                  <div className="mt-4">
+                    <AnimatedWeatherLayout />
+                    
+                    <div className="flex gap-1 rounded-lg p-1 mt-4" style={{ background: subTabBg }}>
                       {[
                         { key: "today", label: "Previsão do Tempo", icon: <Sun size={13} /> },
                         { key: "satellite", label: "Satélite", icon: <Satellite size={13} /> },
@@ -2612,7 +2615,7 @@ export default function CenarioInterativoPage() {
                     )}
 
                     <BgImageUpload value={config.weather.bgImage} onChange={v => updateWeather({ bgImage: v })} mutedText={mutedText} userId={uid} category="weather" />
-                  </>
+                  </div>
                 )}
               </TabsContent>
 
