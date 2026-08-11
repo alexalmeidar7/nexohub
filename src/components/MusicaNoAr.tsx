@@ -1669,17 +1669,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
                     aria-pressed={isOnlineSelected}
-                    className="w-full h-12 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[10px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed shadow-lg"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
                     style={{
-                      backgroundColor: isOnlineSelected ? NEXO_CYAN : "#FFFFFF",
+                      backgroundColor: isOnlineSelected ? NEXO_DARK : "#FFFFFF",
                       color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
-                      border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
-                      boxShadow: isOnlineSelected ? "0 8px 20px -6px rgba(0, 191, 240, 0.4)" : "none",
+                      border: `2px solid ${isOnlineSelected ? NEXO_DARK : "#E2E8F0"}`,
+                      boxShadow: isOnlineSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
-                    {onlineActivating ? <Loader2 size={16} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={16} /> : <Circle size={16} />}
-                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Origem Ativa" : "Ativar esta Origem"}
+                    {onlineActivating ? <Loader2 size={18} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Conectado" : "Conectar Fonte"}
                   </button>
+
                 </div>
 
                 {(() => {
