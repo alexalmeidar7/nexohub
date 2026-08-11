@@ -1935,14 +1935,14 @@ export default function CenarioTela() {
                           </div>
 
                           {/* Main Content */}
-                          <motion.div 
-                            key="weather-content"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className="flex flex-col items-center w-full max-w-[85%]"
-                          >
-                        >
+                          <div className="w-full max-w-[85%]">
+                            <motion.div 
+                              key="weather-content"
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              className="flex flex-col items-center w-full"
+                            >
                           {/* City & Title Section */}
                           <div className="text-center mb-12">
                             <h2 className="text-[6vh] font-black text-white tracking-tight flex flex-col items-center leading-none">
@@ -2024,6 +2024,7 @@ export default function CenarioTela() {
                                 </motion.div>
                               );
                             })}
+                              </motion.div>
                             </div>
                           </motion.div>
                         </AnimatePresence>
