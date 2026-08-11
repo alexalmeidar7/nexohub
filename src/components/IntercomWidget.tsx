@@ -611,7 +611,7 @@ export default function IntercomWidget() {
 
           <button onClick={handleClose} 
             className="w-7 h-7 flex items-center justify-center rounded-full text-[#002132]/40 hover:text-red-500 hover:bg-red-500/10 transition-all"
-            title="Fechar">
+            title="Desligar">
             <X size={14} />
           </button>
         </div>
