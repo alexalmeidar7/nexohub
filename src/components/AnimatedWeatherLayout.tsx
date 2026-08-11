@@ -12,79 +12,79 @@ export default function AnimatedWeatherLayout() {
   }, []);
 
   return (
-    <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-[#00BFF0]/10 via-white/5 to-[#C6F03C]/10 border border-[#00BFF0]/30 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.2)] relative overflow-hidden">
-      {/* Decorative Glow */}
-      <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-[#00BFF0]/20 blur-[80px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-[-20%] left-[-10%] w-64 h-64 bg-[#C6F03C]/20 blur-[80px] rounded-full pointer-events-none" />
+    <div className="p-8 rounded-[2.5rem] bg-[#0A2540]/60 border border-white/10 backdrop-blur-2xl shadow-[0_32px_64px_rgba(0,0,0,0.4)] relative overflow-hidden flex flex-col items-center">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl font-black text-white tracking-tight flex flex-col items-center gap-1">
+          goiânia
+          <span className="text-[0.6em] font-bold text-[#00BFF0] uppercase tracking-[0.4em] mt-[-0.2em]">
+            Previsão do Tempo
+          </span>
+        </h2>
+      </div>
 
-      <div className="relative z-10">
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h3 className="text-[#0A2540] font-black uppercase tracking-[0.3em] text-xs flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-[#00BFF0] animate-pulse" />
-              Previsão do Tempo
-            </h3>
-            <div className="text-3xl font-black text-[#0A2540] tracking-tight">SÃO PAULO, SP</div>
-          </div>
-          <div className="bg-white/60 px-4 py-2 rounded-2xl border border-white/50 shadow-sm">
-            <div className="text-[10px] font-bold text-[#0A2540]/60 uppercase tracking-widest text-center">Agora</div>
-            <div className="text-2xl font-black text-[#0A2540]">28°C</div>
-          </div>
-        </div>
-        
-        <div className="relative h-56 overflow-hidden rounded-[2rem] bg-white/40 border border-white/60 flex items-center justify-center shadow-inner">
-          <AnimatePresence mode="wait">
+      <div className="w-full max-w-md bg-white/5 rounded-[2.5rem] p-8 border border-white/10 backdrop-blur-md mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="relative">
             <motion.div
-              key={active ? "sunny" : "cloudy"}
-              initial={{ opacity: 0, scale: 0.8, rotate: active ? -10 : 10 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              exit={{ opacity: 0, scale: 1.2, rotate: active ? 10 : -10 }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col items-center gap-4"
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             >
-              <div className="relative">
-                <motion.div 
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                  className="w-28 h-28 bg-white/80 rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(0,0,0,0.1)] border-4 border-white"
-                >
-                  {active ? (
-                    <Sun size={64} className="text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)]" />
-                  ) : (
-                    <CloudSun size={64} className="text-[#00BFF0] drop-shadow-[0_0_15px_rgba(0,191,240,0.5)]" />
-                  )}
-                </motion.div>
-                {/* Secondary floating icon */}
-                <motion.div 
-                  animate={{ x: [0, 5, 0], y: [0, 5, 0] }}
-                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -bottom-2 -right-2 bg-white p-2 rounded-xl shadow-md border border-white/50"
-                >
-                  {active ? <Thermometer size={16} className="text-red-500" /> : <Droplets size={16} className="text-[#00BFF0]" />}
-                </motion.div>
-              </div>
-              <span className="font-black text-[#0A2540] uppercase tracking-[0.2em] text-sm bg-white/50 px-6 py-2 rounded-full border border-white/50">
-                {active ? "Céu Limpo" : "Parcialmente Nublado"}
-              </span>
+              <Sun size={84} className="text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.5)]" />
             </motion.div>
-          </AnimatePresence>
+          </div>
+          <div className="text-right">
+            <div className="text-7xl font-black text-white">33°</div>
+            <div className="text-lg font-bold text-white/80">Céu limpo</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-white/5 rounded-2xl py-3 px-6 flex items-center justify-between border border-white/5">
+            <div className="flex items-center gap-4">
+              <Thermometer size={18} className="text-white/40" />
+              <span className="text-lg font-bold text-white">22° / 34°</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <Droplets size={18} className="text-[#00BFF0]" />
+              <span className="text-lg font-bold text-[#00BFF0]">18%</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <CloudRain size={18} className="text-white/40" />
+              <span className="text-lg font-bold text-white/60">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full space-y-4">
+        <div className="text-center">
+          <span className="text-xs font-black text-white/40 uppercase tracking-[0.3em]">Próximos Dias</span>
         </div>
         
-        <div className="mt-8 grid grid-cols-3 gap-4">
-          {[
-            { label: "Mín/Máx", value: "22° / 30°", icon: <Thermometer size={14} />, color: "#F03C3C" },
-            { label: "Umidade", value: "65%", icon: <Droplets size={14} />, color: "#00BFF0" },
-            { label: "Chuva", value: "10%", icon: <CloudRain size={14} />, color: "#7dd3fc" }
-          ].map((item, i) => (
-            <div key={i} className="bg-white/50 p-4 rounded-3xl border border-white/60 flex flex-col items-center gap-1 hover:bg-white/80 transition-colors cursor-default">
-              <div style={{ color: item.color }} className="mb-1 opacity-80">
+        {[
+          { day: "Qua, 12", temp: "32°", min: "21°", icon: <CloudSun className="text-white" />, rain: "50%", mm: "0mm" },
+          { day: "Qui, 13", temp: "33°", min: "22°", icon: <CloudSun className="text-white" />, rain: "50%", mm: "0mm" },
+          { day: "Sex, 14", temp: "34°", min: "23°", icon: <CloudSun className="text-white" />, rain: "33%", mm: "0mm" }
+        ].map((item, i) => (
+          <div key={i} className="bg-white/5 p-5 rounded-[1.8rem] border border-white/10 flex items-center justify-between backdrop-blur-sm">
+            <span className="text-lg font-bold text-white/80 w-24">{item.day}</span>
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-white/5 rounded-xl">
                 {item.icon}
               </div>
-              <div className="text-[9px] font-black text-[#0A2540]/40 uppercase tracking-widest">{item.label}</div>
-              <div className="text-lg font-black text-[#0A2540]">{item.value}</div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-[#00BFF0] uppercase flex items-center gap-1">
+                  <Droplets size={8} /> {item.rain}
+                </span>
+                <span className="text-[10px] font-bold text-white/40">{item.mm}</span>
+              </div>
             </div>
-          ))}
-        </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-white">{item.temp}</span>
+              <span className="text-sm font-bold text-white/30">{item.min}</span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
