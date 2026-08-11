@@ -1398,6 +1398,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const NEXO_CYAN = "#00BFF0";
   const NEXO_CARD_BG = "#D6F4FB";
   const NEXO_DARK = "#0A2540";
+  const NEXO_LIME = "#C6F03C";
+  const NEXO_LIGHT_BLUE = "#D6F4FB";
+
 
   return (
     <div className="nexo-scope space-y-4">
