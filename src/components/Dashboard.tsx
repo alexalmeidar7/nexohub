@@ -2104,10 +2104,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <BlitzLocutorPopup userId={effectiveUserId || user?.id || null} />
       </Suspense>
 
-      {subUserModules === null && isDashboard && (
+      {subUserModules === null && (
         <>
           <Suspense fallback={null}><IntercomWidget /></Suspense>
-          <BotsStatusBox />
+          {isDashboard && <BotsStatusBox />}
         </>
       )}
     </div>
