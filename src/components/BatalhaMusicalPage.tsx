@@ -180,7 +180,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce1.current);
-    const artistName = artista1.nome.trim();
+    const artistName = artista1.nome;
     skip1Ref.current = 0;
     const requestId = ++request1Ref.current;
 
