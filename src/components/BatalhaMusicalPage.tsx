@@ -72,7 +72,7 @@ function normalizeBattleState(value: unknown): BattleState {
 
 
 async function fetchArtistImage(artistName: string, skip = 0): Promise<string> {
-  const artist = artistName.trim();
+  const artist = artistName.trim().replace(/\s+/g, ' ');
   if (!artist) return "";
 
   try {
@@ -180,7 +180,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 1 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce1.current);
-    const artistName = artista1.nome;
+    const artistName = artista1.nome.trim().replace(/\s+/g, ' ');
     skip1Ref.current = 0;
     const requestId = ++request1Ref.current;
 
@@ -233,7 +233,7 @@ export default function BatalhaMusicalPage() {
   // Fetch artist 2 image on name change (debounced)
   useEffect(() => {
     clearTimeout(debounce2.current);
-    const artistName = artista2.nome;
+    const artistName = artista2.nome.trim().replace(/\s+/g, ' ');
     skip2Ref.current = 0;
     const requestId = ++request2Ref.current;
 
