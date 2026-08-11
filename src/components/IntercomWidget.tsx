@@ -718,8 +718,7 @@ export default function IntercomWidget() {
           </button>
 
           <button onClick={handleClose}
-
-            className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Sair">
+            className="text-[#002132]/50 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
             <X size={14} />
           </button>
         </div>
@@ -901,7 +900,7 @@ export default function IntercomWidget() {
         </button>
 
         <button onClick={handleClose}
-          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Fechar">
+          className="text-[#002132]/50 hover:text-red-500 hover:bg-red-500/12 rounded-lg p-1.5 transition-all" title="Desligar">
           <X size={14} />
         </button>
       </div>
