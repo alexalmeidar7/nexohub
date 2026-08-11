@@ -86,5 +86,6 @@ export default function AnimatedWeatherLayout() {
           </div>
         ))}
       </div>
+    </div>
   );
 }

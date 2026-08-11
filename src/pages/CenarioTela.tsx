@@ -1936,34 +1936,8 @@ export default function CenarioTela() {
 
                           {/* Main Glass Card */}
                           <div 
-                            className="rounded-[4vh] w-full max-w-[850px] relative overflow-hidden" 
-                            style={{ 
-                              padding: `${vhToPx(4)}${vu}`, 
-                              background: "rgba(255,255,255,0.08)", 
-                              backdropFilter: "blur(30px)", 
-                              WebkitBackdropFilter: "blur(30px)", 
-                              border: "1px solid rgba(255,255,255,0.2)",
-                              boxShadow: "0 30px 60px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05)"
-                            }}
+                            className="w-full relative flex justify-center" 
                           >
-                            {/* Animated Background Pulse */}
-                            <motion.div 
-                              animate={{ 
-                                scale: [1, 1.05, 1],
-                                opacity: [0.3, 0.5, 0.3]
-                              }}
-                              transition={{ duration: 4, repeat: Infinity }}
-                              style={{
-                                position: "absolute",
-                                top: "-20%",
-                                right: "-10%",
-                                width: "60%",
-                                height: "60%",
-                                background: `radial-gradient(circle, ${accentColor}33 0%, transparent 70%)`,
-                                zIndex: 0,
-                                pointerEvents: "none"
-                              }}
-                            />
 
                         <motion.div 
                           key="weather-content"
