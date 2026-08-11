@@ -648,7 +648,7 @@ export default function IntercomWidget() {
             onChange={(e) => setNameInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") confirmListenerName(); }}
             placeholder="Seu nome..."
-            className="w-full px-3 py-2 rounded-lg text-xs text-white bg-[#00BFF0]/8 border border-[#00BFF0]/25 outline-none focus:border-[#00BFF0]/50 placeholder:text-[#002132]/30"
+            className="w-full px-3 py-2 rounded-lg text-xs text-[#002132] bg-[#00BFF0]/8 border border-[#00BFF0]/25 outline-none focus:border-[#00BFF0]/50 placeholder:text-[#002132]/30 font-medium"
             autoFocus
           />
           <button onClick={confirmListenerName} disabled={!nameInput.trim()}
