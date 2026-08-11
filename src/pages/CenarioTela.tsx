@@ -2033,6 +2033,7 @@ export default function CenarioTela() {
                       </AnimatePresence>
                     </div>
                   </div>
+                  </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: `${vhToPx(2)}${vu}`, padding: `${vhToPx(2)}${vu}`, marginTop: `-${vhToPx(2)}${vu}` }}>
                       <div className="text-center cenario-anim-text" style={{ marginBottom: `${vhToPx(1.5)}${vu}` }}>
