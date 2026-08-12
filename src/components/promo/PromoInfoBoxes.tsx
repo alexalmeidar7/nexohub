@@ -479,7 +479,7 @@ function DatasBox({ userId }: { userId?: string | null }) {
               </div>
             </PopoverContent>
           </Popover>
-          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+          {/* CollapseBtn removed as per user request */}
         </span>
       </div>
 
