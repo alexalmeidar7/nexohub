@@ -155,14 +155,19 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleEdit = (item: Testemunhal) => {
     setEditingId(item.id);
-    const itemProgIds = item.programa_ids || [];
+    const itemProgIds = Array.isArray(item.programa_ids) ? item.programa_ids : [];
+    
+    // Explicitly update the form state with a fresh object to ensure re-render
     setForm({
       texto: item.texto || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
-      programa_ids: itemProgIds,
+      programa_ids: [...itemProgIds],
     });
-    console.log("Editing citation, setting programa_ids:", itemProgIds);
+    
+    console.log("Editing citation, item:", item);
+    console.log("Setting form programa_ids to:", itemProgIds);
+    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
