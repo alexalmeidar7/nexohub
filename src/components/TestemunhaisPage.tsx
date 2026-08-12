@@ -21,8 +21,22 @@ interface Testemunhal {
   data_inicio: string;
   data_fim: string;
   programa_id?: string | null;
-  programa_ids?: string[];
+  programa_ids?: string[] | null;
 }
+
+const getLinkedProgramIds = (item: Pick<Testemunhal, "programa_id" | "programa_ids">) => {
+  const currentIds = Array.isArray(item.programa_ids)
+    ? item.programa_ids.filter((id): id is string => typeof id === "string" && id.length > 0)
+    : [];
+
+  // programa_ids is the current source of truth. programa_id only supports legacy rows
+  // that were created before the multi-program field existed.
+  return currentIds.length > 0
+    ? Array.from(new Set(currentIds))
+    : item.programa_id
+      ? [item.programa_id]
+      : [];
+};
 
 const pillInput: React.CSSProperties = {
   width: "100%",
@@ -155,32 +169,31 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     loadData();
   };
 
-  const handleEdit = (item: Testemunhal) => {
-    // Cadastros antigos usam programa_id; os novos usam programa_ids.
-    // Mesclar os dois formatos impede que um vínculo válido apareça como "Sem Programa".
-    const itemProgIds = Array.from(new Set([
-      ...(Array.isArray(item.programa_ids) ? item.programa_ids : []),
-      ...(item.programa_id ? [item.programa_id] : []),
-    ]));
-    
-    // Set editing ID first to switch form title
-    setEditingId(item.id);
-    
-    // Explicitly update the form state with the item data
-    // We use a fresh object and spread the array to ensure state detection
+  const handleEdit = async (item: Testemunhal) => {
+    // Re-read the selected row so consecutive edits never reuse stale list state.
+    const { data: freshItem, error } = await supabase
+      .from("testemunhais")
+      .select("id, texto, data_inicio, data_fim, programa_id, programa_ids")
+      .eq("id", item.id)
+      .eq("user_id", ownerId ?? "")
+      .maybeSingle();
+
+    if (error) {
+      toast({ title: "Erro ao carregar a citação", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const selectedItem = (freshItem ?? item) as Testemunhal;
+    const itemProgIds = getLinkedProgramIds(selectedItem);
+
+    setEditingId(selectedItem.id);
     setForm({
-      texto: item.texto || "",
-      data_inicio: item.data_inicio,
-      data_fim: item.data_fim,
+      texto: selectedItem.texto || "",
+      data_inicio: selectedItem.data_inicio,
+      data_fim: selectedItem.data_fim,
       programa_ids: itemProgIds,
     });
-    
-    // Close program selector if it was open
     setShowProgramCombo(false);
-    
-    console.log("Editing citation ID:", item.id);
-    console.log("Loaded program IDs:", itemProgIds);
-    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -245,7 +258,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                 ref={quillRef}
                 theme="snow"
                 value={form.texto}
-                onChange={(content) => setForm({ ...form, texto: content })}
+                onChange={(content) => setForm(current => ({ ...current, texto: content }))}
                 modules={{
                   toolbar: [
                     ['bold', 'italic'],
@@ -286,7 +299,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                       {prog?.nome || "Programa removido"}
                       <button
                         type="button"
-                        onClick={() => setForm({ ...form, programa_ids: form.programa_ids.filter(id => id !== pid) })}
+                        onClick={() => setForm(current => ({ ...current, programa_ids: current.programa_ids.filter(id => id !== pid) }))}
                         className="text-[#0A2540]/50 hover:text-[#ff4d4f] transition-colors"
                         aria-label={`Remover ${prog?.nome || "programa"}`}
                       >
@@ -312,10 +325,12 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                         key={p.id}
                         type="button"
                         onClick={() => {
-                          const next = selected
-                            ? form.programa_ids.filter(id => id !== p.id)
-                            : [...form.programa_ids, p.id];
-                          setForm({ ...form, programa_ids: next });
+                          setForm(current => ({
+                            ...current,
+                            programa_ids: current.programa_ids.includes(p.id)
+                              ? current.programa_ids.filter(id => id !== p.id)
+                              : [...current.programa_ids, p.id],
+                          }));
                         }}
                         className={`w-full text-left px-4 py-2.5 rounded-full flex items-center justify-between gap-3 transition-all ${selected ? 'bg-[#00BFF0] text-white shadow-md' : 'bg-[#D6F4FB]/60 text-[#0A2540] hover:bg-[#D6F4FB]'}`}
                       >
@@ -342,11 +357,11 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Data Início</label>
-              <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm({ ...form, data_inicio: e.target.value })}/>
+              <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm(current => ({ ...current, data_inicio: e.target.value }))}/>
             </div>
             <div>
               <label style={labelStyle}>Data Fim (Validade)</label>
-              <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm({ ...form, data_fim: e.target.value })}/>
+              <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm(current => ({ ...current, data_fim: e.target.value }))}/>
             </div>
           </div>
 
@@ -383,8 +398,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                   <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
                     <td className="p-4 text-xs text-[#0A2540]/70">
                       <div className="flex flex-wrap gap-1">
-                        {item.programa_ids && item.programa_ids.length > 0 ? (
-                          item.programa_ids.map(pid => {
+                        {getLinkedProgramIds(item).length > 0 ? (
+                          getLinkedProgramIds(item).map(pid => {
                             const prog = programas.find(p => p.id === pid);
                             return prog ? (
                               <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full">
