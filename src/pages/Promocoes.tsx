@@ -1462,9 +1462,6 @@ export default function PromocoesKiosk() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</div>
-                  <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {selectedProgram ? getTestemunhaisForProgram(selectedProgram).length : 0} disponível{selectedProgram && getTestemunhaisForProgram(selectedProgram).length === 1 ? "" : "is"}
-                  </div>
                 </div>
               </div>
 
