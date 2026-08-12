@@ -1532,7 +1532,7 @@ export default function PromocoesKiosk() {
 
 
                             <div
-                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0 break-words"
+                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0 break-words whitespace-pre-wrap"
                               style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
