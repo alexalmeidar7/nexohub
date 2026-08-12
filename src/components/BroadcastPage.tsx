@@ -2041,7 +2041,7 @@ function MockupPreview({
                 padding: "8px 20px 6px",
                 borderRadius: "6px 6px 0 0",
                 minWidth: 180,
-                minHeight: locutorFoto ? 72 : undefined,
+                minHeight: locutorFoto ? 84 : undefined,
               }}
             >
               {locutorFoto && (

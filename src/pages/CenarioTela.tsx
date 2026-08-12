@@ -48,7 +48,7 @@ const CURRENCY_API_MAP: Record<string, string> = {
 
 const COUNTRY_FLAG_MAP: Record<string, string> = {
   US: "🇺🇸", EU: "🇪🇺", GB: "🇬🇧", AR: "🇦🇷", JP: "🇯🇵", BT: "₿", ET: "Ξ",
-  BR: "🇧🇷", DE: "🇩🇪",
+  BR: "🇧🇷", DE: "🇩🇪", IT: "🇮🇹", FR: "🇫🇷", CA: "🇨🇦", AU: "🇦🇺", CN: "🇨🇳", CH: "🇨🇭",
 };
 interface LiveCurrency { code: string; name: string; value: string; change: string; direction: "up" | "down" | "neutral"; }
 async function fetchLiveCurrencies(codes: string[]): Promise<LiveCurrency[]> {
