@@ -206,8 +206,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
-    
-    // Mostrar os códigos HTML no campo de texto para permitir edição manual de tags como <b> e <i>
+    const itemProgIds = item.programa_ids || [];
     setForm({
       nome: item.nome || "",
       texto: item.texto || "",
@@ -216,8 +215,9 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",
       banner_l_url: item.banner_l_url || "",
-      programa_ids: item.programa_ids || [],
+      programa_ids: itemProgIds,
     });
+    console.log("Editing promotion, setting programa_ids:", itemProgIds);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

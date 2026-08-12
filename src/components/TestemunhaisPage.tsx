@@ -155,13 +155,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleEdit = (item: Testemunhal) => {
     setEditingId(item.id);
-    // Mostrar os códigos HTML no campo de texto para permitir edição manual de tags como <b> e <i>
+    const itemProgIds = item.programa_ids || [];
     setForm({
       texto: item.texto || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
-      programa_ids: item.programa_ids || [],
+      programa_ids: itemProgIds,
     });
+    console.log("Editing citation, setting programa_ids:", itemProgIds);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
