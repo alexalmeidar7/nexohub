@@ -50,6 +50,8 @@ interface Testemunhal {
   data_inicio: string;
   data_fim: string;
   imagem_url: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 const PROGRAMAS_VISIVEIS = [
@@ -517,13 +519,23 @@ export default function PromocoesKiosk() {
       if (normalizeProgramName(p.nome) === key) baseIds.add(p.id);
     }
 
-    return testemunhais.filter(t => {
+    const matches = testemunhais.filter(t => {
       const tIds = getTestemunhalProgramIds(t);
       if (tIds.length === 0) return false;
       const matchesId = tIds.some(id => baseIds.has(id));
       const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
       return matchesId && isWithinDate;
     });
+
+    // Cada programa possui uma única citação vigente. Registros antigos duplicados
+    // não devem aparecer como novas citações: prevalece o texto atualizado por último.
+    return matches
+      .sort((a, b) => {
+        const aTime = Date.parse(a.updated_at || a.created_at || a.data_inicio || "") || 0;
+        const bTime = Date.parse(b.updated_at || b.created_at || b.data_inicio || "") || 0;
+        return bTime - aTime;
+      })
+      .slice(0, 1);
   };
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
@@ -694,6 +706,7 @@ export default function PromocoesKiosk() {
   // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
+    const pending: HTMLImageElement[] = [];
     const timer = window.setTimeout(() => {
       const list = mergeProgramList(programas);
       if (!list.length) return;
@@ -711,7 +724,6 @@ export default function PromocoesKiosk() {
         for (const t of tests) if (t.imagem_url) urls.add(t.imagem_url);
       }
       const cache = preloadedUrlsRef.current;
-      const pending: HTMLImageElement[] = [];
       urls.forEach(url => {
         if (cache.has(url)) return;
         const img = new Image();
@@ -720,20 +732,15 @@ export default function PromocoesKiosk() {
         img.onload = img.onerror = () => cache.add(url);
         pending.push(img);
       });
-      // Guarda handles para cancelamento caso o efeito seja limpo antes de terminar
-      (timer as unknown as { pending?: HTMLImageElement[] }).pending = pending;
     }, 180);
 
     return () => {
       window.clearTimeout(timer);
-      const pending = (timer as unknown as { pending?: HTMLImageElement[] }).pending;
-      if (pending) {
-        for (const img of pending) {
-          if (!img.complete) {
-            img.onload = null;
-            img.onerror = null;
-            img.src = ""; // aborta o download em navegadores modernos
-          }
+      for (const img of pending) {
+        if (!img.complete) {
+          img.onload = null;
+          img.onerror = null;
+          img.src = ""; // aborta o download em navegadores modernos
         }
       }
     };
@@ -1519,7 +1526,7 @@ export default function PromocoesKiosk() {
                   }
                   return (
                     <div className="flex flex-col gap-4">
-                      {tests.map((t, i) => (
+                      {tests.map((t) => (
                         <div
                           key={t.id}
                           className="relative rounded-2xl overflow-hidden border border-white/10 shadow-lg"
@@ -1529,20 +1536,6 @@ export default function PromocoesKiosk() {
                           <div className="h-1 w-full" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }} />
 
                           <div className="p-5">
-                            {/* Badge de numeração */}
-                            <div className="flex items-center gap-2 mb-3">
-                              <span
-                                className="inline-flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold"
-                                style={{ backgroundColor: "var(--layout-accent-color, #a60101)", color: "white" }}
-                              >
-                                {i + 1}
-                              </span>
-                              <span className="text-[10px] uppercase tracking-wider font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>
-                                Citação {i + 1} de {tests.length}
-                              </span>
-                            </div>
-
-
                             <div
                               className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0 break-words whitespace-pre-wrap"
                               style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
