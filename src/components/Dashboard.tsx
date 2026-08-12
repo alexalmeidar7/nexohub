@@ -1474,7 +1474,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         setMinimizedModules(m => m.includes(currentPage) ? m : [...m, currentPage]);
                         setCurrentPage("dashboard");
                       }}
-                      className="w-5 h-5 rounded-full flex items-center justify-center hover:bg-black/5 text-black/40 hover:text-black/60 transition-colors"
+                      className="w-6 h-6 rounded-full flex items-center justify-center bg-[#00BFF0] text-white hover:brightness-110 shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all"
                       title="Minimizar módulo"
                     >
                       <ChevronDown size={14} />
@@ -1757,10 +1757,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         setCurrentPageState("dashboard");
                         try { window.dispatchEvent(new Event("app:page-change")); } catch { /* noop */ }
                       }}
-                      className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-white/40 border border-white/20 backdrop-blur-md shadow-sm transition-all duration-300 hover:bg-white/60 active:scale-95"
+                      className="group relative flex items-center justify-center w-[42px] h-[42px] rounded-full bg-[#00BFF0] text-white shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all duration-300 hover:brightness-110 active:scale-95"
                       title="Minimizar"
                     >
-                      <ChevronDown size={20} className="text-[#002132] opacity-70 group-hover:opacity-100 transition-opacity" />
+                      <ChevronDown size={20} className="text-white transition-opacity" />
                     </button>
                   )}
                 </div>
