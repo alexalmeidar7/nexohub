@@ -1464,7 +1464,28 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-12 [&>button]:h-12 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-[0_0_18px_rgba(255,255,255,0.35)] [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:hover:shadow-[0_0_22px_rgba(239,68,68,0.55)] [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button]:border-2 [&>button]:border-white/90 [&>button_svg]:w-6 [&>button_svg]:h-6" style={{ backgroundColor: "#111111" }}>
+          {/* Botões de ajuste de fonte ao lado esquerdo do botão fechar */}
+          <div className="absolute top-3 right-16 z-50 flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setFontSize(s => Math.max(12, s - 2))}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold hover:scale-110 transition shadow-[0_0_12px_rgba(0,0,0,0.4)]"
+              style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
+              title="Diminuir texto"
+            >
+              <Minus size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => setFontSize(s => Math.min(56, s + 2))}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold hover:scale-110 transition shadow-[0_0_12px_rgba(0,0,0,0.4)]"
+              style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
+              title="Aumentar texto"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Header com Logo e Horário */}
               <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
@@ -1495,10 +1516,6 @@ export default function PromocoesKiosk() {
                   </div>
               </div>
 
-              {/* Controles teleprompter - painel estilizado */}
-              <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-2">
-                {renderTeleprompterControls("program")}
-              </div>
 
               {/* Testemunhais com scroll, alinhado ao X */}
               <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px]">
