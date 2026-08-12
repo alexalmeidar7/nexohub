@@ -338,10 +338,10 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                       </div>
                     </td>
                     <td className="p-4 text-sm text-[#0A2540]">
-                      <div className="max-w-xs truncate" title={item.texto.replace(/<[^>]*>?/gm, '')}>
-                        {item.texto.replace(/<[^>]*>?/gm, '').substring(0, 50)}
-                        {item.texto.replace(/<[^>]*>?/gm, '').length > 50 ? '...' : ''}
-                      </div>
+                      <div 
+                        className="max-w-xs truncate" 
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
+                      />
                     </td>
                     <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
