@@ -225,27 +225,27 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
             <div className="flex flex-col gap-3 flex-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-inner">
-                    {weatherIcon(code ?? 0, 36)}
+                  <div className="p-1.5 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-inner">
+                    {weatherIcon(code ?? 0, 32)}
                   </div>
                   <div>
-                    <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, letterSpacing: -1 }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, lineHeight: 1, letterSpacing: -1 }}>
                       {temp != null ? Math.round(temp) : "—"}
-                      <span className="text-[14px] font-bold opacity-60 ml-0.5">°C</span>
+                      <span className="text-[12px] font-bold opacity-60 ml-0.5">°C</span>
                     </div>
-                    <div style={{ fontSize: 11, color: PROMO_MUTED, fontWeight: 600, marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: PROMO_MUTED, fontWeight: 600, marginTop: 1 }}>
                       {weatherLabel(code ?? 0)}
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ fontSize: 9, fontWeight: 700, color: PROMO_TEXT }}>
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ fontSize: 8, fontWeight: 700, color: PROMO_TEXT }}>
                     <MapPin size={8} className="mr-1 opacity-70" />
                     {weatherCity}
                   </div>
-                  <div className="mt-2 flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2" style={{ fontSize: 10, fontWeight: 700 }}>
+                  <div className="mt-1 flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2" style={{ fontSize: 9, fontWeight: 700 }}>
                       <span className="text-blue-400">Min {Math.round(tmin ?? 0)}°</span>
                       <span className="opacity-20">|</span>
                       <span className="text-orange-400">Max {Math.round(tmax ?? 0)}°</span>
@@ -254,35 +254,62 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 mt-auto pb-1">
-                <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
-                  <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Chuva</span>
-                  <div className="flex items-center gap-1 text-[11px] font-bold text-blue-400">
-                    <CloudRain size={10} /> {rain}%
+              <div className="grid grid-cols-3 gap-1.5 mt-auto">
+                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
+                  <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Chuva</span>
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-blue-400">
+                    <CloudRain size={9} /> {rain}%
                   </div>
                 </div>
                 
                 {humidity != null && (
-                  <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
-                    <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Umidade</span>
+                  <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Umidade</span>
                     <div 
-                      className="flex items-center gap-1 text-[11px] font-bold"
+                      className="flex items-center gap-1 text-[10px] font-bold"
                       style={{ 
                         color: humidity < 40 ? "#FF4D4D" : "inherit",
                         animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
                       }}
                     >
-                      <Wind size={10} /> {humidity}%
+                      <Wind size={9} /> {humidity}%
                     </div>
                   </div>
                 )}
 
-                <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
-                  <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Vento</span>
-                  <div className="flex items-center gap-1 text-[11px] font-bold">
-                    <Navigation size={10} className="rotate-[135deg]" /> {data?.current?.wind_speed_10m ?? 0} <span className="text-[8px] opacity-60">km/h</span>
+                <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
+                  <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Vento</span>
+                  <div className="flex items-center gap-1 text-[10px] font-bold">
+                    <Navigation size={9} className="rotate-[135deg]" /> {data?.current?.wind_speed_10m ?? 0} <span className="text-[7px] opacity-60">km/h</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Navigation Arrows for Today view */}
+              <div className="flex items-center justify-between mt-auto pt-1 border-t border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setDayIdx((v) => Math.max(0, v - 1))}
+                  disabled={idx === 0}
+                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx === 0 ? 0.35 : 1 }}
+                >
+                  <ChevronLeft size={11} />
+                </button>
+
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: PROMO_MUTED }}>
+                  {label}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={() => setDayIdx((v) => Math.min((days.length || 1) - 1, v + 1))}
+                  disabled={idx >= days.length - 1}
+                  className="w-5 h-5 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+                  style={{ background: `color-mix(in srgb, ${PROMO_BORDER} 12%, transparent)`, opacity: idx >= days.length - 1 ? 0.35 : 1 }}
+                >
+                  <ChevronRight size={11} />
+                </button>
               </div>
             </div>
           ) : (
