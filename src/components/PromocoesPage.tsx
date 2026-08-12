@@ -202,6 +202,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const stripHtml = (html: string) => {
       if (!html) return "";
       return html
+        .replace(/&nbsp;/gi, ' ')
         .replace(/<br\s*\/?>/gi, '\n')
         .replace(/<p>/gi, '')
         .replace(/<\/p>/gi, '\n')
