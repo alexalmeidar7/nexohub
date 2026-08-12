@@ -198,16 +198,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
     
-    // Helper function to strip HTML and normalize line breaks
-    const stripHtml = (html: string) => {
-      if (!html) return "";
-      return html
-        .replace(/&nbsp;/gi, ' ')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<p>/gi, '')
-        .replace(/<\/p>/gi, '\n')
-        .replace(/<[^>]*>?/gm, '');
-    };
+    // Maintain original formatting (HTML) when editing
+    const stripHtml = (html: string) => html || "";
 
     setForm({
       nome: item.nome || "",

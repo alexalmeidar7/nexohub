@@ -119,7 +119,7 @@ function QuoteCard({
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center" style={{ gap: `${size(1.5)}px`, minWidth: 0, flex: 1 }}>
-          <span style={{ fontSize: `${size(3.5)}px`, lineHeight: 1 }}>{leading}</span>
+          <span style={{ fontSize: `${size(3.5)}px`, lineHeight: 1, minWidth: `${size(4)}px`, textAlign: 'center' }}>{leading}</span>
           <div className="flex flex-col" style={{ minWidth: 0 }}>
             <span className="font-black truncate" style={{ fontSize: `${size(2.4)}px`, lineHeight: 1.1 }}>
               {title}
