@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
@@ -345,6 +345,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                   <th className="p-4 text-xs uppercase font-bold">Texto da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
                   <th className="p-4 text-xs uppercase font-bold">Validade</th>
+                  <th className="p-4 text-xs uppercase font-bold text-center">Banner</th>
+                  <th className="p-4 text-xs uppercase font-bold text-center">Banner L</th>
                   <th className="p-4 text-xs uppercase font-bold">Ações</th>
                 </tr>
               </thead>
@@ -367,6 +369,12 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                     </td>
                     <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="p-4 text-center">
+                      {item.imagem_url ? <Check size={18} className="text-green-500 mx-auto" /> : <X size={18} className="text-red-500 mx-auto" />}
+                    </td>
+                    <td className="p-4 text-center">
+                      {item.banner_l_url ? <Check size={18} className="text-green-500 mx-auto" /> : <X size={18} className="text-red-500 mx-auto" />}
                     </td>
                     <td className="p-4 flex gap-2">
                       <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center'}} onClick={() => handleEdit(item)}><Pencil size={14}/></button>
