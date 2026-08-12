@@ -205,9 +205,13 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   };
 
   const handleEdit = (item: Promocao) => {
-    setEditingId(item.id);
-    const itemProgIds = Array.isArray(item.programa_ids) ? item.programa_ids : [];
+    // Determine the program IDs, handling null/undefined correctly
+    const itemProgIds = Array.isArray(item.programa_ids) ? [...item.programa_ids] : [];
     
+    // Set editing ID first to switch form title
+    setEditingId(item.id);
+    
+    // Explicitly update the form state with the item data
     setForm({
       nome: item.nome || "",
       texto: item.texto || "",
@@ -216,11 +220,14 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",
       banner_l_url: item.banner_l_url || "",
-      programa_ids: [...itemProgIds],
+      programa_ids: itemProgIds,
     });
     
-    console.log("Editing promotion, item:", item);
-    console.log("Setting form programa_ids to:", itemProgIds);
+    // Close program selector if it was open
+    setShowProgramCombo(false);
+    
+    console.log("Editing promotion ID:", item.id);
+    console.log("Loaded program IDs:", itemProgIds);
     
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

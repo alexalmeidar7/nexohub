@@ -154,19 +154,26 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   };
 
   const handleEdit = (item: Testemunhal) => {
-    setEditingId(item.id);
-    const itemProgIds = Array.isArray(item.programa_ids) ? item.programa_ids : [];
+    // Determine the program IDs, handling null/undefined correctly
+    const itemProgIds = Array.isArray(item.programa_ids) ? [...item.programa_ids] : [];
     
-    // Explicitly update the form state with a fresh object to ensure re-render
+    // Set editing ID first to switch form title
+    setEditingId(item.id);
+    
+    // Explicitly update the form state with the item data
+    // We use a fresh object and spread the array to ensure state detection
     setForm({
       texto: item.texto || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
-      programa_ids: [...itemProgIds],
+      programa_ids: itemProgIds,
     });
     
-    console.log("Editing citation, item:", item);
-    console.log("Setting form programa_ids to:", itemProgIds);
+    // Close program selector if it was open
+    setShowProgramCombo(false);
+    
+    console.log("Editing citation ID:", item.id);
+    console.log("Loaded program IDs:", itemProgIds);
     
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
