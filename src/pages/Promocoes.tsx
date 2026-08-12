@@ -1544,8 +1544,8 @@ export default function PromocoesKiosk() {
 
                           <div className="p-6 sm:p-8">
                             <div
-                              className="max-w-none [&_*]:!bg-transparent [&_p]:!my-0 [&_p+p]:!mt-[0.6em] [&_p:empty]:!min-h-[0.9em] [&_p>br:only-child]:!block [&_ul]:!my-[0.6em] [&_ol]:!my-[0.6em] [&_li]:!mb-[0.25em] ql-editor !p-0 break-words whitespace-pre-wrap"
-                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white" }}
+                              className="max-w-none [&_*]:!bg-transparent [&_p]:!my-0 [&_p+p]:!mt-[0.6em] [&_p:empty]:!min-h-[0.9em] [&_p>br:only-child]:!block [&_ul]:!my-[0.6em] [&_ol]:!my-[0.6em] [&_li]:!mb-[0.25em] ql-editor !p-0 whitespace-pre-wrap"
+                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white", wordBreak: "normal", overflowWrap: "break-word", hyphens: "none" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
                                   .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
