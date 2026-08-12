@@ -259,7 +259,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <div>
               <label style={labelStyle}>Texto da Promoção</label>
               <textarea
-                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical" }}
+                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
                 value={form.texto}
                 onChange={(e) => setForm({ ...form, texto: e.target.value })}
                 placeholder="Ex: Ganhe um par de ingressos..."
@@ -268,7 +268,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <div>
               <label style={labelStyle}>Oferecimento / Patrocínio</label>
               <textarea
-                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical" }}
+                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
                 value={form.oferecimento}
                 onChange={(e) => setForm({ ...form, oferecimento: e.target.value })}
                 placeholder="Ex: Oferecimento Pizzaria do Zé..."
