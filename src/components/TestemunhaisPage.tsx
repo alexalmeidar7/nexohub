@@ -339,7 +339,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                     </td>
                     <td className="p-4 text-sm text-[#0A2540]">
                       <div 
-                        className="max-w-xs truncate" 
+                        className="max-w-xs truncate line-clamp-2" 
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
                       />
                     </td>
