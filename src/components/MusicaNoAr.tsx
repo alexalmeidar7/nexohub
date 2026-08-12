@@ -1482,7 +1482,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             style={{ 
               background: musicBoxBg,
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
-              transition: "background 1000ms ease",
+              transition: "background 1500ms cubic-bezier(0.4, 0, 0.2, 1)",
               minHeight: "180px"
             }}
           >
