@@ -143,7 +143,7 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <button
             onClick={() => setMinimized(true)}
-            style={{ background: "rgba(255,255,255,0.2)", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{ background: "#00BFF0", border: "none", borderRadius: 999, width: 26, height: 26, color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 14px -4px rgba(0,191,240,0.55)" }}
             title="Minimizar"
           >
             <Minus size={14} />

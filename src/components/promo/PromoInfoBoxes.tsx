@@ -101,8 +101,7 @@ function CollapseBtn({ collapsed, onToggle }: { collapsed: boolean; onToggle: ()
     <button
       type="button"
       onClick={onToggle}
-      className="w-5 h-5 rounded-full flex items-center justify-center transition-colors"
-      style={{ background: "rgba(255,255,255,0.08)", color: PROMO_TEXT }}
+      className="w-5 h-5 rounded-full flex items-center justify-center transition-all bg-[#00BFF0] text-white shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] hover:brightness-110"
       title={collapsed ? "Maximizar" : "Minimizar"}
     >
       {collapsed ? <Maximize2 size={9} /> : <Minimize2 size={9} />}

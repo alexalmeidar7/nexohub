@@ -91,7 +91,7 @@ export default function VideoPlayer() {
             </button>
             <button
               onClick={() => setMinimized(false)}
-              className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+              className="bg-[#00BFF0] hover:brightness-110 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]"
               title="Expandir"
             >
               <Maximize2 size={13} />
@@ -132,7 +132,7 @@ export default function VideoPlayer() {
           </button>
           <button
             onClick={() => setMinimized(true)}
-            className="bg-white/10 hover:bg-white/20 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all"
+            className="bg-[#00BFF0] hover:brightness-110 text-white rounded-full w-7 h-7 flex items-center justify-center transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]"
             title="Minimizar"
           >
             <Minimize2 size={13} />
