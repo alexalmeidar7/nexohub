@@ -528,17 +528,24 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   useEffect(() => () => clearMenuLeaveTimer(), [clearMenuLeaveTimer]);
   
-  // Script para posicionar o FAB do Intercom minimizado sobre o ícone original
+  // Script para posicionar o FAB do Intercom minimizado ou o menu de seleção sobre o ícone original
   useEffect(() => {
     const updatePosition = () => {
       const marker = document.getElementById('intercom-toolbar-marker');
       const fab = document.getElementById('intercom-minimized-fab');
-      if (marker && fab) {
+      const selectionMenu = document.getElementById('intercom-selection-menu');
+      
+      const target = fab || selectionMenu;
+      
+      if (marker && target) {
         const rect = marker.getBoundingClientRect();
-        fab.style.top = `${rect.top}px`;
-        fab.style.left = `${rect.left}px`;
-        fab.style.width = `${rect.width}px`;
-        fab.style.height = `${rect.height}px`;
+        target.style.top = `${rect.top}px`;
+        target.style.left = `${rect.left + rect.width + 8}px`; // Abre ao lado do ícone com 8px de gap
+        if (fab) {
+          target.style.width = `${rect.width}px`;
+          target.style.height = `${rect.height}px`;
+          target.style.left = `${rect.left}px`; // O FAB minimizado fica exatamente em cima
+        }
       }
     };
 
