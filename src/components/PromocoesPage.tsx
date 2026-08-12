@@ -198,13 +198,11 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
     
-    // Maintain original formatting (HTML) when editing
-    const stripHtml = (html: string) => html || "";
-
+    // Mostrar os códigos HTML no campo de texto para permitir edição manual de tags como <b> e <i>
     setForm({
       nome: item.nome || "",
-      texto: stripHtml(item.texto),
-      oferecimento: stripHtml(item.oferecimento),
+      texto: item.texto || "",
+      oferecimento: item.oferecimento || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",

@@ -151,11 +151,9 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleEdit = (item: Testemunhal) => {
     setEditingId(item.id);
-    // Maintain original formatting (HTML) when editing
-    const plainText = item.texto;
-    
+    // Mostrar os códigos HTML no campo de texto para permitir edição manual de tags como <b> e <i>
     setForm({
-      texto: plainText,
+      texto: item.texto || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
       programa_ids: item.programa_ids || [],
