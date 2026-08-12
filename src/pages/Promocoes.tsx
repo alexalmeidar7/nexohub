@@ -689,7 +689,7 @@ export default function PromocoesKiosk() {
     const timer = window.setTimeout(() => {
       const list = mergeProgramList(programas);
       if (!list.length) return;
-      const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
+      const onAirIdx = onAirProgram ? list.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : -1;
       const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
       const targets = [
         list[activeIdx],
