@@ -43,15 +43,11 @@ export default function BlitzLocutorPopup({ userId }: { userId: string | null })
     if (!userId) return;
     let cancelled = false;
     const load = async () => {
-      const { data } = await supabase
-        .from("blitz_promocionais")
-        .select("id,dia,horario,horario_fim,cliente,equipe,observacoes,realizada,agenda_evento_id")
-        .eq("user_id", userId)
-        .eq("dia", today)
-        .eq("realizada", false)
-        .order("horario");
+      const { data } = await supabase.functions.invoke("public-blitz-data", {
+        body: { userId, mode: "today" },
+      });
       if (cancelled) return;
-      setItems((data as Blitz[]) || []);
+      setItems((data?.ok ? (data.rows as Blitz[]) : []) || []);
     };
     load();
     const ch = supabase

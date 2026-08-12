@@ -258,12 +258,10 @@ export default function PlayerTvWelcome() {
     let cancelled = false;
     const poll = async () => {
       if (claimedRef.current) return;
-      const { data } = await supabase
-        .from("tv_pairing_codes")
-        .select("status, paired_user_id, paired_email, paired_name, paired_avatar")
-        .eq("code", code)
-        .maybeSingle();
-      if (!cancelled) handleClaimedRow(data);
+      const { data } = await supabase.functions.invoke("tv-pair-status", {
+        body: { code, tvSessionId },
+      });
+      if (!cancelled) handleClaimedRow(data?.ok ? data.row : null);
     };
     poll();
     const iv = window.setInterval(poll, 2000);
