@@ -811,6 +811,7 @@ export default function PromocoesKiosk() {
       </div>
       
       <div className="flex items-center gap-2 flex-[4] justify-center px-4">
+        <span className="text-[11px] font-bold uppercase tracking-wider opacity-60">Aumentar e diminuir o tamanho do texto</span>
       </div>
       <div className="flex-1" />
     </div>
