@@ -472,7 +472,7 @@ export default function PromocoesKiosk() {
       const current = findCurrentProgram(programas as any);
       if (current) {
         setOnAirProgram({
-          nome: current.programa.nome,
+          nome: current.programa.nome || "",
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
           progress: Math.min(100, Math.max(0, current.progress)),
