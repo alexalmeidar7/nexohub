@@ -1140,7 +1140,7 @@ export default function PromocoesKiosk() {
           // Programas ordenados pela grade (horário de início), deduplicados por nome
           const scheduleList = mergeProgramList(programas);
           const onAirIdx = onAirProgram
-            ? scheduleList.findIndex(p => p.nome === onAirProgram.nome)
+            ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
           const currentProg = scheduleList[activeIdx] ?? null;
