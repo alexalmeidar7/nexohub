@@ -1392,19 +1392,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     );
   }
 
-  const preferredSource = sourceStats.online >= sourceStats.pasta ? "online" : "pasta";
   const bothActive = isOnlineSelected && isLocalSelected;
-
-  // Nexo Form palette (mesmo do Cadastro de Ouvinte)
-  const NEXO_CYAN = "#00BFF0";
-  const NEXO_CARD_BG = "#D6F4FB";
-  const NEXO_DARK = "#0A2540";
-  const NEXO_LIME = "#C6F03C";
-  const NEXO_LIGHT_BLUE = "#D6F4FB";
-
 
   return (
     <div className="nexo-scope space-y-4">
+
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
         Música no Ar
