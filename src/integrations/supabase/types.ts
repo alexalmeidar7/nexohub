@@ -1801,6 +1801,7 @@ export type Database = {
           data_inicio: string
           id: string
           imagem_url: string | null
+          nome: string | null
           oferecimento: string | null
           texto: string
           user_id: string
@@ -1813,6 +1814,7 @@ export type Database = {
           data_inicio: string
           id?: string
           imagem_url?: string | null
+          nome?: string | null
           oferecimento?: string | null
           texto?: string
           user_id: string
@@ -1825,6 +1827,7 @@ export type Database = {
           data_inicio?: string
           id?: string
           imagem_url?: string | null
+          nome?: string | null
           oferecimento?: string | null
           texto?: string
           user_id?: string
