@@ -685,7 +685,7 @@ function BlitzBox({ userId }: { userId?: string | null }) {
 
   return (
     <>
-      <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
+      <div style={cardStyle}>
         <div style={titleStyle} className="justify-between">
           <span className="flex items-center gap-1.5 min-w-0">
             <Sparkles size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
