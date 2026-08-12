@@ -472,7 +472,7 @@ export default function PromocoesKiosk() {
       const current = findCurrentProgram(programas as any);
       if (current) {
         setOnAirProgram({
-          nome: current.programa.nome,
+          nome: current.programa.nome || "",
           horarioInicio: (current.programa as any).horarioInicio,
           horarioFim: (current.programa as any).horarioFim,
           progress: Math.min(100, Math.max(0, current.progress)),
@@ -689,7 +689,7 @@ export default function PromocoesKiosk() {
     const timer = window.setTimeout(() => {
       const list = mergeProgramList(programas);
       if (!list.length) return;
-      const onAirIdx = onAirProgram ? list.findIndex(p => p.nome === onAirProgram.nome) : -1;
+      const onAirIdx = onAirProgram ? list.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome)) : -1;
       const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
       const targets = [
         list[activeIdx],
@@ -1140,7 +1140,7 @@ export default function PromocoesKiosk() {
           // Programas ordenados pela grade (horário de início), deduplicados por nome
           const scheduleList = mergeProgramList(programas);
           const onAirIdx = onAirProgram
-            ? scheduleList.findIndex(p => p.nome === onAirProgram.nome)
+            ? scheduleList.findIndex(p => normalizeProgramName(p.nome) === normalizeProgramName(onAirProgram.nome))
             : -1;
           const activeIdx = coverIndex ?? (onAirIdx >= 0 ? onAirIdx : 0);
           const currentProg = scheduleList[activeIdx] ?? null;
@@ -1207,7 +1207,7 @@ export default function PromocoesKiosk() {
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
-                  onClick={() => { if (currentProg) setSelectedProgram(currentProg); }}
+                  onClick={(e) => { e.stopPropagation(); if (currentProg) { setSelectedProgram({...currentProg}); stopAutoScroll(); } }}
                   title="Citações"
                 >
                     <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
