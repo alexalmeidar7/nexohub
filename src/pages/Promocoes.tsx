@@ -562,16 +562,22 @@ export default function PromocoesKiosk() {
   const todayDateStr = new Date().toISOString().split("T")[0];
   const programIdsWithTestemunhais = new Set(
     testemunhais
-      .filter(t => 
-        t.programa_id && 
-        t.data_inicio && t.data_fim && 
+      .filter(t =>
+        t.data_inicio && t.data_fim &&
         t.data_inicio <= todayDateStr && t.data_fim >= todayDateStr
       )
-      .map(t => t.programa_id)
+      .flatMap(t => getTestemunhalProgramIds(t))
+  );
+
+  // Nomes normalizados que possuem citação (para incluir grades duplicadas do mesmo programa)
+  const programNamesWithTestemunhais = new Set(
+    programas
+      .filter(p => programIdsWithTestemunhais.has(p.id))
+      .map(p => normalizeProgramName(p.nome))
   );
 
   const filteredPrograms = mergeProgramList(
-    programas.filter(p => programIdsWithTestemunhais.has(p.id))
+    programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
   const todayDateNow = new Date().toISOString().split("T")[0];
