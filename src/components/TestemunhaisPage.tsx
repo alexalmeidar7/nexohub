@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check } from "lucide-react";
+import { Loader2, Trash2, Pencil, Save, X, MessageSquareQuote, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import DOMPurify from 'dompurify';
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
@@ -81,6 +84,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [showProgramCombo, setShowProgramCombo] = useState(false);
+  const quillRef = useRef<ReactQuill>(null);
   const [form, setForm] = useState({
     texto: "",
     data_inicio: new Date().toISOString().split("T")[0],
@@ -178,6 +182,26 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     <div className="nexo-scope space-y-6" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Citações</div>
 
+      <style>{`
+        .nexo-quill-editor .ql-container {
+          border-bottom-left-radius: 24px;
+          border-bottom-right-radius: 24px;
+          background: #FFFFFF;
+          font-family: ${FONT};
+          min-height: 200px;
+        }
+        .nexo-quill-editor .ql-toolbar {
+          border-top-left-radius: 24px;
+          border-top-right-radius: 24px;
+          background: #FFFFFF;
+          border-bottom: 1px solid ${CYAN}33;
+        }
+        .nexo-quill-editor .ql-editor {
+          font-size: 14px;
+          line-height: 1.6;
+        }
+      `}</style>
+
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <MessageSquareQuote className="text-[#00BFF0]" /> 
@@ -186,52 +210,23 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         
         <div className="space-y-4">
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label style={labelStyle}>Texto da Citação</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const textarea = document.getElementById('texto-citacao') as HTMLTextAreaElement;
-                    if (!textarea) return;
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const text = form.texto;
-                    const selectedText = text.substring(start, end);
-                    const newText = text.substring(0, start) + `<b>${selectedText}</b>` + text.substring(end);
-                    setForm({ ...form, texto: newText });
-                  }}
-                  className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold hover:bg-[#00BFF0] hover:text-white transition-colors"
-                  title="Negrito"
-                >
-                  B
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const textarea = document.getElementById('texto-citacao') as HTMLTextAreaElement;
-                    if (!textarea) return;
-                    const start = textarea.selectionStart;
-                    const end = textarea.selectionEnd;
-                    const text = form.texto;
-                    const selectedText = text.substring(start, end);
-                    const newText = text.substring(0, start) + `<i>${selectedText}</i>` + text.substring(end);
-                    setForm({ ...form, texto: newText });
-                  }}
-                  className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold italic hover:bg-[#00BFF0] hover:text-white transition-colors"
-                  title="Itálico"
-                >
-                  I
-                </button>
-              </div>
+            <label style={labelStyle}>Texto da Citação</label>
+            <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+              <ReactQuill
+                ref={quillRef}
+                theme="snow"
+                value={form.texto}
+                onChange={(content) => setForm({ ...form, texto: content })}
+                modules={{
+                  toolbar: [
+                    ['bold', 'italic'],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    ['clean']
+                  ],
+                }}
+                placeholder="Digite o conteúdo da citação..."
+              />
             </div>
-            <textarea
-              id="texto-citacao"
-              style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
-              value={form.texto}
-              onChange={(e) => setForm({ ...form, texto: e.target.value })}
-              placeholder="Digite o conteúdo da citação..."
-            />
           </div>
 
           <div className="relative">

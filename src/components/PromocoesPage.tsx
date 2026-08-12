@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check, Bold, Italic } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
+import DOMPurify from 'dompurify';
 
 const CYAN = "#00BFF0";
 const LIME = "#C6F03C";
@@ -228,6 +231,26 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     <div className="nexo-scope space-y-6" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Promoções</div>
 
+      <style>{`
+        .nexo-quill-editor .ql-container {
+          border-bottom-left-radius: 24px;
+          border-bottom-right-radius: 24px;
+          background: #FFFFFF;
+          font-family: ${FONT};
+          min-height: 200px;
+        }
+        .nexo-quill-editor .ql-toolbar {
+          border-top-left-radius: 24px;
+          border-top-right-radius: 24px;
+          background: #FFFFFF;
+          border-bottom: 1px solid ${CYAN}33;
+        }
+        .nexo-quill-editor .ql-editor {
+          font-size: 14px;
+          line-height: 1.6;
+        }
+      `}</style>
+
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Tag className="text-[#00BFF0]" /> 
@@ -248,100 +271,40 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label style={labelStyle}>Texto da Promoção</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const textarea = document.getElementById('texto-promo') as HTMLTextAreaElement;
-                      if (!textarea) return;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const text = form.texto;
-                      const selectedText = text.substring(start, end);
-                      const newText = text.substring(0, start) + `<b>${selectedText}</b>` + text.substring(end);
-                      setForm({ ...form, texto: newText });
-                    }}
-                    className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold hover:bg-[#00BFF0] hover:text-white transition-colors"
-                    title="Negrito"
-                  >
-                    B
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const textarea = document.getElementById('texto-promo') as HTMLTextAreaElement;
-                      if (!textarea) return;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const text = form.texto;
-                      const selectedText = text.substring(start, end);
-                      const newText = text.substring(0, start) + `<i>${selectedText}</i>` + text.substring(end);
-                      setForm({ ...form, texto: newText });
-                    }}
-                    className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold italic hover:bg-[#00BFF0] hover:text-white transition-colors"
-                    title="Itálico"
-                  >
-                    I
-                  </button>
-                </div>
+              <label style={labelStyle}>Texto da Promoção</label>
+              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+                <ReactQuill
+                  theme="snow"
+                  value={form.texto}
+                  onChange={(content) => setForm({ ...form, texto: content })}
+                  modules={{
+                    toolbar: [
+                      ['bold', 'italic'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['clean']
+                    ],
+                  }}
+                  placeholder="Ex: Ganhe um par de ingressos..."
+                />
               </div>
-              <textarea
-                id="texto-promo"
-                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
-                value={form.texto}
-                onChange={(e) => setForm({ ...form, texto: e.target.value })}
-                placeholder="Ex: Ganhe um par de ingressos..."
-              />
             </div>
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label style={labelStyle}>Oferecimento / Patrocínio</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const textarea = document.getElementById('oferecimento-promo') as HTMLTextAreaElement;
-                      if (!textarea) return;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const text = form.oferecimento;
-                      const selectedText = text.substring(start, end);
-                      const newText = text.substring(0, start) + `<b>${selectedText}</b>` + text.substring(end);
-                      setForm({ ...form, oferecimento: newText });
-                    }}
-                    className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold hover:bg-[#00BFF0] hover:text-white transition-colors"
-                    title="Negrito"
-                  >
-                    B
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const textarea = document.getElementById('oferecimento-promo') as HTMLTextAreaElement;
-                      if (!textarea) return;
-                      const start = textarea.selectionStart;
-                      const end = textarea.selectionEnd;
-                      const text = form.oferecimento;
-                      const selectedText = text.substring(start, end);
-                      const newText = text.substring(0, start) + `<i>${selectedText}</i>` + text.substring(end);
-                      setForm({ ...form, oferecimento: newText });
-                    }}
-                    className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold italic hover:bg-[#00BFF0] hover:text-white transition-colors"
-                    title="Itálico"
-                  >
-                    I
-                  </button>
-                </div>
+              <label style={labelStyle}>Oferecimento / Patrocínio</label>
+              <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
+                <ReactQuill
+                  theme="snow"
+                  value={form.oferecimento}
+                  onChange={(content) => setForm({ ...form, oferecimento: content })}
+                  modules={{
+                    toolbar: [
+                      ['bold', 'italic'],
+                      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                      ['clean']
+                    ],
+                  }}
+                  placeholder="Ex: Oferecimento Pizzaria do Zé..."
+                />
               </div>
-              <textarea
-                id="oferecimento-promo"
-                style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
-                value={form.oferecimento}
-                onChange={(e) => setForm({ ...form, oferecimento: e.target.value })}
-                placeholder="Ex: Oferecimento Pizzaria do Zé..."
-              />
             </div>
           </div>
 
