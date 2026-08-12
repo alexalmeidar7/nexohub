@@ -238,6 +238,18 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                   {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
                 </div>
                 <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
+                {humidity != null && (
+                  <div 
+                    style={{ 
+                      fontSize: 9, 
+                      color: humidity < 40 ? "#FF4D4D" : PROMO_MUTED,
+                      animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
+                      fontWeight: humidity < 40 ? 800 : 400
+                    }}
+                  >
+                    ☁️ {humidity}% hum.
+                  </div>
+                )}
               </div>
             </div>
           ) : (
