@@ -588,8 +588,11 @@ export default function IntercomWidget() {
   // ─── Role Selection ───
   if (role === "none" && !listenerName) {
     return (
-      <div className="nexo-scope fixed top-[43px] right-[115px] z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-right-10 duration-500 ease-out" 
-           style={{ ...glassStyle, width: "auto" }}>
+      <div 
+        id="intercom-selection-menu"
+        className="nexo-scope fixed z-[100] rounded-full overflow-hidden animate-in fade-in slide-in-from-left-2 duration-300 ease-out" 
+        style={{ ...glassStyle, width: "auto" }}
+      >
         <div className="flex items-center gap-1.5 px-2 py-1.5">
           <button onClick={() => setRole("speaker")}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:bg-[#00BFF0]/10 group"
@@ -606,7 +609,7 @@ export default function IntercomWidget() {
             <Headphones size={14} className="text-green-500 transition-transform group-hover:scale-110" />
             <span className="text-[#002132] text-[10px] font-bold">Ouvinte</span>
           </button>
-
+          
           <div className="w-px h-4 bg-[#00BFF0]/20" />
 
           <button onClick={handleClose} 
