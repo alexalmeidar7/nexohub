@@ -14,11 +14,13 @@ const FONT = "'Montserrat', sans-serif";
 
 interface Promocao {
   id: string;
+  nome: string;
   texto: string;
   oferecimento: string;
   data_inicio: string;
   data_fim: string;
   imagem_url: string;
+  banner_l_url: string;
 }
 
 const pillInput: React.CSSProperties = {
@@ -81,13 +83,16 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
+    nome: "",
     texto: "",
     oferecimento: "",
     data_inicio: new Date().toISOString().split("T")[0],
     data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     imagem_url: "",
+    banner_l_url: "",
   });
-  const [uploading, setUploading] = useState(false);
+  const [uploading1, setUploading1] = useState(false);
+  const [uploading2, setUploading2] = useState(false);
 
   const ownerId = effectiveUserId || user?.id;
 
@@ -109,23 +114,28 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const reset = () => {
     setForm({
+      nome: "",
       texto: "",
       oferecimento: "",
       data_inicio: new Date().toISOString().split("T")[0],
       data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: "",
+      banner_l_url: "",
     });
     setEditingId(null);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imagem_url' | 'banner_l_url') => {
     const file = e.target.files?.[0];
     if (!file || !ownerId) return;
 
-    setUploading(true);
+    const isField1 = field === 'imagem_url';
+    if (isField1) setUploading1(true); else setUploading2(true);
+
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${ownerId}/promos/${Date.now()}.${fileExt}`;
+      const folder = isField1 ? 'promos' : 'promos_l';
+      const fileName = `${ownerId}/${folder}/${Date.now()}.${fileExt}`;
       const { error: uploadError } = await supabase.storage
         .from('comercial')
         .upload(fileName, file);
@@ -136,17 +146,21 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
         .from('comercial')
         .getPublicUrl(fileName);
 
-      setForm({ ...form, imagem_url: publicUrl });
-      toast({ title: "Imagem enviada com sucesso" });
+      setForm(prev => ({ ...prev, [field]: publicUrl }));
+      toast({ title: `Imagem ${isField1 ? '1' : '2'} enviada com sucesso` });
     } catch (error: any) {
       toast({ title: "Erro no upload", description: error.message, variant: "destructive" });
     } finally {
-      setUploading(false);
+      if (isField1) setUploading1(false); else setUploading2(false);
     }
   };
 
   const handleSave = async () => {
     if (!ownerId) return;
+    if (!form.nome.trim()) {
+      toast({ title: "O nome da promoção é obrigatório", variant: "destructive" });
+      return;
+    }
     if (!form.texto.trim()) {
       toast({ title: "O texto da promoção é obrigatório", variant: "destructive" });
       return;
@@ -155,11 +169,13 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     setSaving(true);
     const payload = {
       user_id: ownerId,
+      nome: form.nome.trim(),
       texto: form.texto.trim(),
       oferecimento: form.oferecimento.trim(),
       data_inicio: form.data_inicio,
       data_fim: form.data_fim,
       imagem_url: form.imagem_url,
+      banner_l_url: form.banner_l_url,
     };
 
     const query = editingId
@@ -181,7 +197,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
-    // Strip HTML tags and normalize whitespace/newlines when editing
     const plainText = item.texto
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<p>/gi, '')
@@ -189,11 +204,13 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       .replace(/<[^>]*>?/gm, '');
 
     setForm({
+      nome: item.nome || "",
       texto: plainText,
       oferecimento: item.oferecimento || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",
+      banner_l_url: item.banner_l_url || "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -215,7 +232,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     <div className="nexo-scope space-y-6" style={{ fontFamily: FONT }}>
       <div id="module-header-title" style={{ display: "none" }}>ADS — Promoções</div>
 
-      {/* Form Section */}
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Tag className="text-[#00BFF0]" /> 
@@ -223,6 +239,17 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
         </h2>
         
         <div className="space-y-4">
+          <div>
+            <label style={labelStyle}>Nome da Promoção</label>
+            <input 
+              type="text" 
+              style={pillInput} 
+              value={form.nome} 
+              onChange={(e) => setForm({ ...form, nome: e.target.value })}
+              placeholder="Ex: Sorteio de Ingressos 2026"
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Texto da Promoção</label>
@@ -244,7 +271,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Data Início</label>
               <input type="date" style={pillInput} value={form.data_inicio} onChange={(e) => setForm({ ...form, data_inicio: e.target.value })}/>
@@ -253,19 +280,39 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <label style={labelStyle}>Data Fim (Validade)</label>
               <input type="date" style={pillInput} value={form.data_fim} onChange={(e) => setForm({ ...form, data_fim: e.target.value })}/>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>Imagem da Promoção</label>
+              <label style={labelStyle}>Imagem 1 - Banner Promoção</label>
               <div className="flex gap-2">
                 <label className="flex-1">
                   <div style={{...pillInput, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', overflow: 'hidden'}}>
-                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                    <span className="truncate text-xs">{form.imagem_url ? "Trocar Imagem" : "Upload Imagem"}</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                    {uploading1 ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    <span className="truncate text-xs">{form.imagem_url ? "Trocar Imagem 1" : "Upload Banner"}</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'imagem_url')} disabled={uploading1} />
                   </div>
                 </label>
                 {form.imagem_url && (
-                  <div className="w-11 h-11 rounded-full border-2 border-[#00BFF0] overflow-hidden bg-white">
-                    <img src={form.imagem_url} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="w-11 h-11 rounded-lg border-2 border-[#00BFF0] overflow-hidden bg-white">
+                    <img src={form.imagem_url} alt="Preview 1" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+            </div>
+            <div>
+              <label style={labelStyle}>Imagem 2 - Banner L</label>
+              <div className="flex gap-2">
+                <label className="flex-1">
+                  <div style={{...pillInput, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', overflow: 'hidden'}}>
+                    {uploading2 ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    <span className="truncate text-xs">{form.banner_l_url ? "Trocar Imagem 2" : "Upload Banner L"}</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'banner_l_url')} disabled={uploading2} />
+                  </div>
+                </label>
+                {form.banner_l_url && (
+                  <div className="w-11 h-11 rounded-lg border-2 border-[#00BFF0] overflow-hidden bg-white">
+                    <img src={form.banner_l_url} alt="Preview 2" className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
@@ -282,7 +329,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
         </div>
       </div>
 
-      {/* Table Section */}
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Calendar className="text-[#00BFF0]" /> Promoções Cadastradas ({items.length})
@@ -295,9 +341,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold w-16">Imagem</th>
+                  <th className="p-4 text-xs uppercase font-bold w-16">Banner</th>
+                  <th className="p-4 text-xs uppercase font-bold w-16">Banner L</th>
                   <th className="p-4 text-xs uppercase font-bold">Promoção</th>
-                  <th className="p-4 text-xs uppercase font-bold">Oferecimento</th>
+                  <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
                   <th className="p-4 text-xs uppercase font-bold">Validade</th>
                   <th className="p-4 text-xs uppercase font-bold">Ações</th>
                 </tr>
@@ -312,10 +359,19 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                         <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon size={16} className="text-gray-400" /></div>
                       )}
                     </td>
-                    <td className="p-4 text-sm text-[#0A2540]" dangerouslySetInnerHTML={{ __html: item.texto }}></td>
+                    <td className="p-4">
+                      {item.banner_l_url ? (
+                        <img src={item.banner_l_url} className="w-10 h-10 rounded-lg object-cover border border-[#00BFF0]/20" alt="" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon size={16} className="text-gray-400" /></div>
+                      )}
+                    </td>
+                    <td className="p-4 text-sm text-[#0A2540]">
+                      <div className="font-bold mb-1">{item.nome || "Sem Nome"}</div>
+                      <div className="text-xs text-[#0A2540]/70 line-clamp-2" dangerouslySetInnerHTML={{ __html: item.texto }}></div>
+                    </td>
                     <td className="p-4 text-sm text-[#0A2540]/70 italic">{item.oferecimento || "-"}</td>
                     <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
-                      {new Date(item.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')} - 
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
                     <td className="p-4 flex gap-2">
