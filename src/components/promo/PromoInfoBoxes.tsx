@@ -194,6 +194,7 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
     : (daily && (daily.temperature_2m_max[idx] + daily.temperature_2m_min[idx]) / 2);
   const code = isToday ? data?.current?.weather_code : daily?.weather_code?.[idx];
   const rain = daily?.precipitation_probability_max?.[idx] ?? 0;
+  const humidity = isToday ? data?.current?.relative_humidity_2m : null;
   const tmax = daily?.temperature_2m_max?.[idx];
   const tmin = daily?.temperature_2m_min?.[idx];
 
@@ -237,6 +238,18 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                   {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
                 </div>
                 <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
+                {humidity != null && (
+                  <div 
+                    style={{ 
+                      fontSize: 9, 
+                      color: humidity < 40 ? "#FF4D4D" : PROMO_MUTED,
+                      animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
+                      fontWeight: humidity < 40 ? 800 : 400
+                    }}
+                  >
+                    ☁️ {humidity}% hum.
+                  </div>
+                )}
               </div>
             </div>
           ) : (
@@ -576,6 +589,9 @@ function DatasBox({ userId }: { userId?: string | null }) {
       ))}
 
       <style>{`
+        @keyframes promo-weather-blink {
+          to { visibility: hidden; }
+        }
         @keyframes promo-datas-pulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.05); }
