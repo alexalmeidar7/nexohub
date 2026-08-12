@@ -17,10 +17,6 @@ export default function CenariosEstudioTabs() {
 
   return (
     <div className="space-y-4">
-      {/* Header handled by Dashboard Portal */}
-      <div id="module-header-title" style={{ display: "none" }}>
-        vMix — Cenários Estúdio
-      </div>
       <div
         className="inline-flex items-center gap-1 p-1 rounded-full"
         style={{
