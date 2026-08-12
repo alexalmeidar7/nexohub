@@ -1464,7 +1464,7 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="border-zinc-800 text-white max-w-4xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Header com Logo e Horário */}
               <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
@@ -1495,23 +1495,13 @@ export default function PromocoesKiosk() {
                   </div>
               </div>
 
-              {/* Header Citações */}
-              <div className="px-4 pt-2 pb-1 flex-shrink-0 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>
-                  <MessageSquareQuote size={16} style={{ color: "white" }} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</div>
-                </div>
-              </div>
-
               {/* Controles teleprompter - painel estilizado */}
-              <div className="flex-shrink-0 px-4 pt-1 pb-2">
+              <div className="flex-shrink-0 px-4 sm:px-6 pt-3 pb-2">
                 {renderTeleprompterControls("program")}
               </div>
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px]">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
@@ -1529,16 +1519,16 @@ export default function PromocoesKiosk() {
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-lg"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
                           <div className="h-1 w-full" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }} />
 
-                          <div className="p-5">
+                          <div className="p-6 sm:p-8">
                             <div
-                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0 break-words whitespace-pre-wrap"
-                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
+                              className="max-w-none [&_*]:!bg-transparent [&_p]:!my-0 [&_p+p]:!mt-[0.6em] [&_p:empty]:!min-h-[0.9em] [&_p>br:only-child]:!block [&_ul]:!my-[0.6em] [&_ol]:!my-[0.6em] [&_li]:!mb-[0.25em] ql-editor !p-0 break-words whitespace-pre-wrap"
+                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
                                   .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
@@ -1558,6 +1548,7 @@ export default function PromocoesKiosk() {
                     </div>
                   );
                 })()}
+
               </div>
             </div>
         </DialogContent>
