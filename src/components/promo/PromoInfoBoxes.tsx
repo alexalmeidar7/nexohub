@@ -125,14 +125,21 @@ function collapsedCardStyle(base: React.CSSProperties): React.CSSProperties {
 function weatherIcon(code: number, size = 26) {
   const c = code;
   const cls = { color: PROMO_TEXT } as React.CSSProperties;
-  if (c === 0 || c === 1) return <Sun size={size} style={{ ...cls, color: PROMO_BORDER }} />;
-  if (c <= 3) return <Cloud size={size} style={cls} />;
-  if (c === 45 || c === 48) return <Wind size={size} style={cls} />;
-  if (c >= 51 && c <= 67) return <CloudRain size={size} style={{ ...cls, color: PROMO_ACCENT_B }} />;
-  if (c >= 71 && c <= 77) return <CloudSnow size={size} style={cls} />;
-  if (c >= 80 && c <= 82) return <CloudRain size={size} style={{ ...cls, color: PROMO_ACCENT_B }} />;
-  if (c >= 95) return <CloudLightning size={size} style={{ ...cls, color: PROMO_BORDER }} />;
-  return <Cloud size={size} style={cls} />;
+  
+  const iconProps = {
+    size,
+    style: cls,
+    className: "animate-pulse-gentle"
+  };
+
+  if (c === 0 || c === 1) return <Sun {...iconProps} style={{ ...cls, color: "#FFD700" }} />;
+  if (c <= 3) return <Cloud {...iconProps} />;
+  if (c === 45 || c === 48) return <Wind {...iconProps} />;
+  if (c >= 51 && c <= 67) return <CloudRain {...iconProps} style={{ ...cls, color: "#00BFF0" }} />;
+  if (c >= 71 && c <= 77) return <CloudSnow {...iconProps} />;
+  if (c >= 80 && c <= 82) return <CloudRain {...iconProps} style={{ ...cls, color: "#00BFF0" }} />;
+  if (c >= 95) return <CloudLightning {...iconProps} style={{ ...cls, color: "#FFD700" }} />;
+  return <Cloud {...iconProps} />;
 }
 
 function weatherLabel(code: number) {
@@ -215,41 +222,67 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
       ) : data ? (
         <>
           {idx === 0 ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                {weatherIcon(code ?? 0, 32)}
-                <div className="min-w-0">
-                  <div style={{ fontSize: 22, fontWeight: 900, lineHeight: 1 }}>
-                    {temp != null ? Math.round(temp) : "—"}°
-                    <span style={{ fontSize: 11, fontWeight: 700, opacity: 0.7 }}>C</span>
+            <div className="flex flex-col gap-3 flex-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white/5 backdrop-blur-md border border-white/10 shadow-inner">
+                    {weatherIcon(code ?? 0, 36)}
                   </div>
-                  <div className="truncate" style={{ fontSize: 10, color: PROMO_MUTED, marginTop: 2 }}>
-                    {weatherLabel(code ?? 0)}
+                  <div>
+                    <div style={{ fontSize: 26, fontWeight: 900, lineHeight: 1, letterSpacing: -1 }}>
+                      {temp != null ? Math.round(temp) : "—"}
+                      <span className="text-[14px] font-bold opacity-60 ml-0.5">°C</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: PROMO_MUTED, fontWeight: 600, marginTop: 2 }}>
+                      {weatherLabel(code ?? 0)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-right">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-white/5 border border-white/10" style={{ fontSize: 9, fontWeight: 700, color: PROMO_TEXT }}>
+                    <MapPin size={8} className="mr-1 opacity-70" />
+                    {weatherCity}
+                  </div>
+                  <div className="mt-2 flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2" style={{ fontSize: 10, fontWeight: 700 }}>
+                      <span className="text-blue-400">Min {Math.round(tmin ?? 0)}°</span>
+                      <span className="opacity-20">|</span>
+                      <span className="text-orange-400">Max {Math.round(tmax ?? 0)}°</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: PROMO_TEXT, opacity: 0.9 }} className="truncate max-w-[110px]">
-                  <MapPin size={9} className="inline -mt-0.5 mr-0.5" />
-                  {weatherCity}
+              <div className="grid grid-cols-3 gap-2 mt-auto pb-1">
+                <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
+                  <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Chuva</span>
+                  <div className="flex items-center gap-1 text-[11px] font-bold text-blue-400">
+                    <CloudRain size={10} /> {rain}%
+                  </div>
                 </div>
-                <div style={{ fontSize: 9, color: PROMO_MUTED, marginTop: 1 }}>
-                  {tmin != null && tmax != null ? `${Math.round(tmin)}° / ${Math.round(tmax)}°` : ""}
-                </div>
-                <div style={{ fontSize: 9, color: PROMO_MUTED }}>💧 {rain}%</div>
+                
                 {humidity != null && (
-                  <div 
-                    style={{ 
-                      fontSize: 9, 
-                      color: humidity < 40 ? "#FF4D4D" : PROMO_MUTED,
-                      animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
-                      fontWeight: humidity < 40 ? 800 : 400
-                    }}
-                  >
-                    ☁️ {humidity}% hum.
+                  <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
+                    <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Umidade</span>
+                    <div 
+                      className="flex items-center gap-1 text-[11px] font-bold"
+                      style={{ 
+                        color: humidity < 40 ? "#FF4D4D" : "inherit",
+                        animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
+                      }}
+                    >
+                      <Wind size={10} /> {humidity}%
+                    </div>
                   </div>
                 )}
+
+                <div className="bg-white/5 rounded-lg p-2 flex flex-col items-center justify-center border border-white/5">
+                  <span className="text-[9px] uppercase font-bold opacity-40 mb-0.5">Vento</span>
+                  <div className="flex items-center gap-1 text-[11px] font-bold">
+                    <Navigation size={10} className="rotate-[135deg]" /> {data?.current?.wind_speed_10m ?? 0} <span className="text-[8px] opacity-60">km/h</span>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (
