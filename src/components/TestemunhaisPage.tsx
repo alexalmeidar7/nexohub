@@ -194,7 +194,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <div>
             <label style={labelStyle}>Texto da Citação</label>
             <textarea
-              style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical" }}
+              style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
               value={form.texto}
               onChange={(e) => setForm({ ...form, texto: e.target.value })}
               placeholder="Digite o conteúdo da citação..."
