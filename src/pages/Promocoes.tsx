@@ -788,23 +788,40 @@ export default function PromocoesKiosk() {
 
    // Inline teleprompter controls renderer (not a component to avoid remount)
   const renderTeleprompterControls = (target: "promo" | "program") => (
-    <div className="flex items-center gap-3 p-[15px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
-      <div className="flex items-center gap-2 flex-1">
-        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "color-mix(in srgb, var(--layout-page-text, #ffffff) 60%, transparent)" }}>Velocidade do scroll</span>
+    <div className="flex items-center gap-3 p-[10px] rounded-xl" style={{ backgroundColor: "var(--layout-slider-bg, #1b1b1d)" }}>
+      <div className="flex items-center gap-1.5 flex-1 pl-2">
+        <button 
+          type="button" 
+          onClick={() => setFontSize(s => Math.max(12, s - 2))} 
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" 
+          style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
+          title="Diminuir texto"
+        >
+          <Minus size={14} />
+        </button>
+        <button 
+          type="button" 
+          onClick={() => setFontSize(s => Math.min(56, s + 2))} 
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" 
+          style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}
+          title="Aumentar texto"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+      
+      <div className="flex items-center gap-2 flex-[4] justify-center px-4">
         <Slider
           value={[scrollSpeed]}
           min={1}
           max={100}
           step={1}
           onValueChange={([v]) => setScrollSpeed(v)}
-          className="flex-1 max-w-[300px] [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[var(--layout-accent-color,#a60101)] [&_[role=slider]]:border-[var(--layout-accent-color,#a60101)] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[var(--layout-accent-color,#a60101)]"
+          className="flex-1 max-w-[400px] [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[var(--layout-accent-color,#a60101)] [&_[role=slider]]:border-[var(--layout-accent-color,#a60101)] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[var(--layout-accent-color,#a60101)]"
         />
-        <span className="text-[11px] font-black tabular-nums" style={{ color: "var(--layout-accent-color, #a60101)" }}>{scrollSpeed}%</span>
+        <span className="text-[11px] font-black tabular-nums min-w-[32px]" style={{ color: "var(--layout-accent-color, #a60101)" }}>{scrollSpeed}%</span>
       </div>
-      <div className="flex items-center gap-1 ml-auto">
-        <button type="button" onClick={() => setFontSize(s => Math.max(12, s - 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A-</button>
-        <button type="button" onClick={() => setFontSize(s => Math.min(56, s + 2))} className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold hover:brightness-125 transition" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }}>A+</button>
-      </div>
+      <div className="flex-1" />
     </div>
   );
 
