@@ -1405,7 +1405,7 @@ export default function PromocoesKiosk() {
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
             <div
-              className="font-bold promo-html-content"
+              className="font-bold promo-html-content whitespace-pre-wrap"
               style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
