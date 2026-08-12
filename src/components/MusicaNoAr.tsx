@@ -1300,10 +1300,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   // Paleta extraída da capa para gradiente elegante do box de música
   const coverPalette = useCoverPalette(displayCover || null);
   const paletteContrast = getPaletteContrast(coverPalette);
+  
+  // Gradiente elegante pegando dois pontos de cores da imagem da capa
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
     : NEXO_DARK;
-
 
   const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
   const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
@@ -1470,11 +1471,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             key={`${displayTitulo}-${displayArtista}`}
             className="rounded-2xl overflow-hidden relative animate-fade-in group"
             style={{ 
-              background: musicBoxBg, 
+              background: musicBoxBg,
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
-              transition: "background 1000ms ease" 
+              transition: "background 1000ms ease",
+              minHeight: "180px"
             }}
-
           >
             {/* Gradient progress fill */}
             <div
