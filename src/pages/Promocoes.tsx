@@ -1403,16 +1403,15 @@ export default function PromocoesKiosk() {
           </div>
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
-          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
+          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-6 pb-6 mr-[1px]">
             <div
-              className="font-bold promo-html-content whitespace-pre-wrap"
+              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0"
               style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
-                  .replace(/\/\//g, "<br/>")
                   .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
                   .replace(/color:\s*#000(?:000)?/gi, "color: white"), {
-                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div'],
+                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
                   ALLOWED_ATTR: ['style', 'class']
                 }),
               }}
@@ -1493,7 +1492,7 @@ export default function PromocoesKiosk() {
               </div>
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 pb-4 mr-[1px]">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-6 pb-6 mr-[1px]">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
@@ -1533,18 +1532,17 @@ export default function PromocoesKiosk() {
 
 
                             <div
-                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3"
+                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0"
                               style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
-                                  .replace(/\/\//g, "<br/>")
                                   .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
                                   .replace(/color:\s*#000(?:000)?/gi, "color: white")
                                   .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
                                   .replace(/font-size\s*:\s*[^;\"]+;?/gi, "")
                                   .replace(/line-height\s*:\s*[^;\"]+;?/gi, "")
                                   .replace(/margin-(?:top|bottom)\s*:\s*[^;\"]+;?/gi, ""), {
-                                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div'],
+                                  ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
                                   ALLOWED_ATTR: ['style', 'class']
                                 }),
                               }}
