@@ -1383,7 +1383,7 @@ export default function PromocoesKiosk() {
       </Dialog>
 
       <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
-        <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
+        <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
             <div className="flex-shrink-0 pt-4 px-4">
@@ -1403,9 +1403,9 @@ export default function PromocoesKiosk() {
           </div>
 
           {/* Corpo: texto + oferecimento dentro do scroll, alinhado ao X */}
-          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-6 pb-6 mr-[1px]">
+          <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
             <div
-              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0"
+              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 break-words"
               style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
@@ -1422,7 +1422,7 @@ export default function PromocoesKiosk() {
               <div className="mt-6 pt-4 border-t border-white/10 text-center">
                 <span className="text-sm uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.5)" }}>Oferecimento</span>
                 <div
-                  className="text-xl font-bold mt-2 promo-html-content"
+                  className="text-lg sm:text-xl font-bold mt-2 promo-html-content break-words"
                   style={{ color: "white" }}
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(selectedPromo.oferecimento
@@ -1442,10 +1442,10 @@ export default function PromocoesKiosk() {
 
       {/* Modal de Programação */}
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
-        <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-4xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
               {/* Header com Logo e Horário */}
-              <div className="px-6 py-4 flex items-center justify-between border-b border-white/10 flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+              <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-white/10 flex-shrink-0 gap-3" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
                   <div className="flex items-center gap-4">
                     {selectedProgram?.capa && (
                       <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10">
@@ -1492,7 +1492,7 @@ export default function PromocoesKiosk() {
               </div>
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-6 pb-6 mr-[1px]">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
@@ -1532,7 +1532,7 @@ export default function PromocoesKiosk() {
 
 
                             <div
-                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0"
+                              className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3 ql-editor !p-0 break-words"
                               style={{ fontSize: `${fontSize}px`, lineHeight: 1.45, color: "white" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
