@@ -181,8 +181,15 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
+    // Strip HTML tags and normalize whitespace/newlines when editing
+    const plainText = item.texto
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<p>/gi, '')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]*>?/gm, '');
+
     setForm({
-      texto: item.texto,
+      texto: plainText,
       oferecimento: item.oferecimento || "",
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,

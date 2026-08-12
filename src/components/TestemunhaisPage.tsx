@@ -151,8 +151,15 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleEdit = (item: Testemunhal) => {
     setEditingId(item.id);
+    // Strip HTML tags and normalize whitespace/newlines when editing
+    const plainText = item.texto
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<p>/gi, '')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<[^>]*>?/gm, '');
+    
     setForm({
-      texto: item.texto,
+      texto: plainText,
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
       programa_ids: item.programa_ids || [],
