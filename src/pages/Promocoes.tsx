@@ -504,7 +504,19 @@ export default function PromocoesKiosk() {
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
     const ids = new Set(prog.mergedIds || [prog.id]);
-    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
+    
+    // Debug log to verify ids and comparison
+    console.log("Checking witness for program:", prog.nome, "IDs:", Array.from(ids));
+    
+    return testemunhais.filter(t => {
+      if (!t.programa_id) return false;
+      
+      // Handle both string and array of IDs if it ever changes, but currently it's a string programa_id
+      const matchesId = ids.has(t.programa_id);
+      const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
+      
+      return matchesId && isWithinDate;
+    });
   };
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
@@ -1190,7 +1202,14 @@ export default function PromocoesKiosk() {
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
-                  onClick={(e) => { e.stopPropagation(); if (currentProg) { setSelectedProgram({...currentProg}); stopAutoScroll(); } }}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (currentProg) { 
+                      const progWithLatestIds = programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(currentProg.nome));
+                      setSelectedProgram(progWithLatestIds ? {...progWithLatestIds} : {...currentProg}); 
+                      stopAutoScroll(); 
+                    } 
+                  }}
                   title="Citações"
                 >
                     <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
