@@ -1510,7 +1510,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
             {/* Scrim adaptativo por luminância do gradiente */}
             {paletteContrast && (
-              <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{ background: paletteContrast.scrimBackground, zIndex: 2 }} />
+              <div 
+                className="absolute inset-0 pointer-events-none rounded-2xl" 
+                style={{ 
+                  background: paletteContrast.scrimBackground, 
+                  zIndex: 2,
+                  mixBlendMode: "multiply",
+                  opacity: 0.4
+                }} 
+              />
             )}
 
             <div className="relative z-10 p-4 flex gap-4 items-center">
