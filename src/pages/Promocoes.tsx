@@ -1524,20 +1524,33 @@ export default function PromocoesKiosk() {
       <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
         <DialogContent className="border-zinc-800 text-white max-w-4xl h-[80vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           <div className="flex flex-col flex-1 min-h-0 min-w-0 h-full">
-              {/* Horário em destaque */}
-              <div className="px-4 pt-4 pb-1 flex-shrink-0">
-                  {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
-                    selectedProgram.schedules.map((s, i) => (
-                      <div key={i} className="text-lg font-bold" style={{ color: "white" }}>
-                        {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
-                        {s.dias.length > 0 && <span className="text-xs ml-2 font-normal" style={{ color: "rgba(255, 255, 255, 0.6)" }}>{s.dias.join(", ")}</span>}
+              {/* Header com Logo e Horário */}
+              <div className="px-6 py-4 flex items-center justify-between border-b border-white/10 flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.03)" }}>
+                  <div className="flex items-center gap-4">
+                    {selectedProgram?.capa && (
+                      <div className="w-16 h-16 rounded-xl overflow-hidden shadow-lg border border-white/10">
+                        <img src={selectedProgram.capa} alt={selectedProgram.nome} className="w-full h-full object-cover" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-lg font-bold" style={{ color: "white" }}>
-                      {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                    )}
+                    <div className="flex flex-col">
+                      <h2 className="text-xl font-black tracking-tight" style={{ color: "white" }}>{selectedProgram?.nome}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Clock size={14} className="text-white/40" />
+                        {selectedProgram?.schedules && selectedProgram.schedules.length > 0 ? (
+                          selectedProgram.schedules.map((s, i) => (
+                            <div key={i} className="text-sm font-bold" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                              {s.horarioInicio.slice(0, 5)} às {s.horarioFim.slice(0, 5)}
+                              {s.dias.length > 0 && <span className="text-[10px] ml-1 opacity-50 font-normal">({s.dias.join(", ")})</span>}
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-sm font-bold" style={{ color: "rgba(255, 255, 255, 0.7)" }}>
+                            {selectedProgram?.horarioInicio.slice(0, 5)} às {selectedProgram?.horarioFim.slice(0, 5)}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
               </div>
 
               {/* Header Citações */}
