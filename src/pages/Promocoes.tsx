@@ -44,7 +44,8 @@ interface ProgramaGrade {
 
 interface Testemunhal {
   id: string;
-  programa_id: string;
+  programa_id: string | null;
+  programa_ids?: string[] | null;
   texto: string;
   data_inicio: string;
   data_fim: string;
