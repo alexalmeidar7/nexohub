@@ -341,9 +341,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold w-16">Banner</th>
-                  <th className="p-4 text-xs uppercase font-bold w-16">Banner L</th>
-                  <th className="p-4 text-xs uppercase font-bold">Promoção</th>
+                  <th className="p-4 text-xs uppercase font-bold">Nome da Promoção</th>
+                  <th className="p-4 text-xs uppercase font-bold">Texto da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
                   <th className="p-4 text-xs uppercase font-bold">Validade</th>
                   <th className="p-4 text-xs uppercase font-bold">Ações</th>
@@ -352,25 +351,20 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
-                    <td className="p-4">
-                      {item.imagem_url ? (
-                        <img src={item.imagem_url} className="w-10 h-10 rounded-lg object-cover border border-[#00BFF0]/20" alt="" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon size={16} className="text-gray-400" /></div>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      {item.banner_l_url ? (
-                        <img src={item.banner_l_url} className="w-10 h-10 rounded-lg object-cover border border-[#00BFF0]/20" alt="" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center"><ImageIcon size={16} className="text-gray-400" /></div>
-                      )}
+                    <td className="p-4 text-sm font-bold text-[#0A2540]">
+                      {item.nome || "Sem Nome"}
                     </td>
                     <td className="p-4 text-sm text-[#0A2540]">
-                      <div className="font-bold mb-1">{item.nome || "Sem Nome"}</div>
-                      <div className="text-xs text-[#0A2540]/70 line-clamp-2" dangerouslySetInnerHTML={{ __html: item.texto }}></div>
+                      <div className="max-w-xs truncate" title={item.texto.replace(/<[^>]*>?/gm, '')}>
+                        {item.texto.replace(/<[^>]*>?/gm, '').substring(0, 50)}
+                        {item.texto.replace(/<[^>]*>?/gm, '').length > 50 ? '...' : ''}
+                      </div>
                     </td>
-                    <td className="p-4 text-sm text-[#0A2540]/70 italic">{item.oferecimento || "-"}</td>
+                    <td className="p-4 text-sm text-[#0A2540]/70 italic">
+                      <div className="max-w-xs truncate" title={item.oferecimento}>
+                        {item.oferecimento ? (item.oferecimento.substring(0, 30) + (item.oferecimento.length > 30 ? '...' : '')) : "-"}
+                      </div>
+                    </td>
                     <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
