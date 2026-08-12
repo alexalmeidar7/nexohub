@@ -26,19 +26,32 @@ export function usePlayerHeartbeat(userId?: string | null) {
     if (!userId) return;
     const sessionId = getSessionId();
     let cancelled = false;
+    // Transient 5xx from the edge runtime must never break the Player:
+    // back off exponentially and keep going silently.
+    let skipCycles = 0;
+    let failures = 0;
 
-    const ping = () => {
+    const ping = async () => {
       if (cancelled) return;
       // Skip when tab is hidden to avoid inflating counts with idle tabs.
       if (typeof document !== "undefined" && document.hidden) return;
-      supabase.functions.invoke("player-heartbeat", {
-        body: { userId, sessionId },
-      }).catch(() => {});
+      if (skipCycles > 0) { skipCycles -= 1; return; }
+      try {
+        const { error } = await supabase.functions.invoke("player-heartbeat", {
+          body: { userId, sessionId },
+        });
+        if (error) throw error;
+        failures = 0;
+      } catch {
+        failures = Math.min(failures + 1, 5);
+        // 1 → 2 → 4 → 8 → 16 skipped cycles (20s each)
+        skipCycles = Math.pow(2, failures - 1);
+      }
     };
 
-    ping();
-    const iv = setInterval(ping, HEARTBEAT_MS);
-    const onVis = () => { if (!document.hidden) ping(); };
+    void ping();
+    const iv = setInterval(() => { void ping(); }, HEARTBEAT_MS);
+    const onVis = () => { if (!document.hidden) void ping(); };
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
