@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import DOMPurify from "dompurify";
 import { useParams, Navigate } from "react-router-dom";
 import { usePageTitle, applyPublicHead, usePublicHead } from "@/hooks/usePageTitle";
 import { supabase } from "@/integrations/supabase/client";
