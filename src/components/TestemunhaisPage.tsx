@@ -151,13 +151,8 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
 
   const handleEdit = (item: Testemunhal) => {
     setEditingId(item.id);
-    // Strip HTML tags and normalize whitespace/newlines when editing
-    const plainText = item.texto
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<p>/gi, '')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<[^>]*>?/gm, '');
+    // Maintain original formatting (HTML) when editing
+    const plainText = item.texto;
     
     setForm({
       texto: plainText,
