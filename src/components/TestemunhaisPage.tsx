@@ -205,7 +205,15 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <MessageSquareQuote className="text-[#00BFF0]" /> 
-          {editingId ? "Editar Citação" : "Nova Citação"}
+          {editingId ? (
+            <span>
+              Editar Citação: <span className="text-[#00BFF0] italic ml-1">
+                {form.programa_ids.length > 0 
+                  ? form.programa_ids.map(id => programas.find(p => p.id === id)?.nome).filter(Boolean).join(", ")
+                  : "Sem Programa"}
+              </span>
+            </span>
+          ) : "Nova Citação"}
         </h2>
         
         <div className="space-y-4">

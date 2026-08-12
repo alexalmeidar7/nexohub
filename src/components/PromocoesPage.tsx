@@ -261,7 +261,15 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       <div style={cardStyle}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           <Tag className="text-[#00BFF0]" /> 
-          {editingId ? "Editar Promoção" : "Nova Promoção"}
+          {editingId ? (
+            <span>
+              Editar Promoção: <span className="text-[#00BFF0] italic ml-1">
+                {form.programa_ids.length > 0 
+                  ? form.programa_ids.map(id => programas.find(p => p.id === id)?.nome).filter(Boolean).join(", ")
+                  : "Sem Programa"}
+              </span>
+            </span>
+          ) : "Nova Promoção"}
         </h2>
         
         <div className="space-y-4">
