@@ -188,8 +188,47 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         
         <div className="space-y-4">
           <div>
-            <label style={labelStyle}>Texto da Citação</label>
+            <div className="flex items-center justify-between mb-2">
+              <label style={labelStyle}>Texto da Citação</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const textarea = document.getElementById('texto-citacao') as HTMLTextAreaElement;
+                    if (!textarea) return;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = form.texto;
+                    const selectedText = text.substring(start, end);
+                    const newText = text.substring(0, start) + `<b>${selectedText}</b>` + text.substring(end);
+                    setForm({ ...form, texto: newText });
+                  }}
+                  className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold hover:bg-[#00BFF0] hover:text-white transition-colors"
+                  title="Negrito"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const textarea = document.getElementById('texto-citacao') as HTMLTextAreaElement;
+                    if (!textarea) return;
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+                    const text = form.texto;
+                    const selectedText = text.substring(start, end);
+                    const newText = text.substring(0, start) + `<i>${selectedText}</i>` + text.substring(end);
+                    setForm({ ...form, texto: newText });
+                  }}
+                  className="px-3 py-1 bg-white border border-[#00BFF0] text-[#00BFF0] rounded-lg text-xs font-bold italic hover:bg-[#00BFF0] hover:text-white transition-colors"
+                  title="Itálico"
+                >
+                  I
+                </button>
+              </div>
+            </div>
             <textarea
+              id="texto-citacao"
               style={{ ...pillInput, height: 250, borderRadius: 24, padding: "16px 20px", resize: "vertical", background: "#FFFFFF" }}
               value={form.texto}
               onChange={(e) => setForm({ ...form, texto: e.target.value })}
