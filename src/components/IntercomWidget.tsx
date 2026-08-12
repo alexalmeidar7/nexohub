@@ -714,7 +714,7 @@ export default function IntercomWidget() {
           )}
 
           <button onClick={handleMinimize}
-            className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+            className="bg-[#00BFF0] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]" title="Minimizar">
             <ChevronDown size={14} />
           </button>
 
@@ -890,7 +890,7 @@ export default function IntercomWidget() {
         </button>
 
         <button onClick={handleMinimize}
-          className="text-[#002132]/50 hover:text-[#00BFF0] hover:bg-[#00BFF0]/12 rounded-lg p-1.5 transition-all" title="Minimizar">
+          className="bg-[#00BFF0] text-white hover:brightness-110 p-1.5 rounded-lg transition-all shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)]" title="Minimizar">
           <ChevronDown size={14} />
         </button>
 
