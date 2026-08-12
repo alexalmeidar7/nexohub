@@ -627,19 +627,11 @@ export default function PromocoesKiosk() {
 
   const handleAutoPlayChange = (enabled: boolean) => {
     setAutoPlay(enabled);
-
+    
     if (autoPlayTimerRef.current) {
       clearTimeout(autoPlayTimerRef.current);
       autoPlayTimerRef.current = null;
     }
-
-    const hasOpenModal = !!selectedPromo || !!selectedProgram;
-    if (!enabled || !hasOpenModal) return;
-
-    autoPlayTimerRef.current = setTimeout(() => {
-      if (selectedProgram) startAutoScroll("program");
-      if (selectedPromo) startAutoScroll("promo");
-    }, 3000);
   };
 
   const closePromoModal = () => {
