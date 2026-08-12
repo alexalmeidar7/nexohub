@@ -665,11 +665,6 @@ export default function PromocoesKiosk() {
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
 
-  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
-    const today = new Date().toISOString().split("T")[0];
-    const ids = new Set(prog.mergedIds);
-    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
-  };
 
   // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
