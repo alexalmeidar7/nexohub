@@ -1301,10 +1301,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const coverPalette = useCoverPalette(displayCover || null);
   const paletteContrast = getPaletteContrast(coverPalette);
   
+  // Persist background to avoid "blinking" while new palette is extracted
+  const lastValidBgRef = useRef(NEXO_DARK);
+  
   // Gradiente elegante pegando dois pontos de cores da imagem da capa
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
-    : NEXO_DARK;
+    : lastValidBgRef.current;
+
+  useEffect(() => {
+    if (coverPalette) {
+      lastValidBgRef.current = `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`;
+    }
+  }, [coverPalette]);
 
   const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
   const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
