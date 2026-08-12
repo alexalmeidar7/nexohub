@@ -501,6 +501,12 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
+    const today = new Date().toISOString().split("T")[0];
+    const ids = new Set(prog.mergedIds || [prog.id]);
+    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
+  };
+
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
   const canonicalCoverByName = useMemo(() => {
     const map = new Map<string, string>();
@@ -627,19 +633,11 @@ export default function PromocoesKiosk() {
 
   const handleAutoPlayChange = (enabled: boolean) => {
     setAutoPlay(enabled);
-
+    
     if (autoPlayTimerRef.current) {
       clearTimeout(autoPlayTimerRef.current);
       autoPlayTimerRef.current = null;
     }
-
-    const hasOpenModal = !!selectedPromo || !!selectedProgram;
-    if (!enabled || !hasOpenModal) return;
-
-    autoPlayTimerRef.current = setTimeout(() => {
-      if (selectedProgram) startAutoScroll("program");
-      if (selectedPromo) startAutoScroll("promo");
-    }, 3000);
   };
 
   const closePromoModal = () => {
@@ -654,34 +652,19 @@ export default function PromocoesKiosk() {
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
-  // Auto-play on modal open
+  // Auto-play on modal open disabled
   useEffect(() => {
-    if (selectedPromo && autoPlay) {
-      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = setTimeout(() => startAutoScroll("promo"), 3000);
-    }
-
     return () => {
       if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
     };
   }, [selectedPromo, autoPlay, startAutoScroll]);
 
   useEffect(() => {
-    if (selectedProgram && autoPlay) {
-      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = setTimeout(() => startAutoScroll("program"), 3000);
-    }
-
     return () => {
       if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
     };
   }, [selectedProgram, autoPlay, startAutoScroll]);
 
-  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
-    const today = new Date().toISOString().split("T")[0];
-    const ids = new Set(prog.mergedIds);
-    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
-  };
 
   // Pré-carrega imagens do programa atual/anterior/próximo com debounce + cancelamento
   const preloadedUrlsRef = useRef<Set<string>>(new Set());
@@ -1480,9 +1463,6 @@ export default function PromocoesKiosk() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold" style={{ color: "var(--layout-accent-color, #FF0000)" }}>Citações</div>
-                  <div className="text-[10px]" style={{ color: "rgba(255,255,255,0.5)" }}>
-                    {selectedProgram ? getTestemunhaisForProgram(selectedProgram).length : 0} disponível{selectedProgram && getTestemunhaisForProgram(selectedProgram).length === 1 ? "" : "is"}
-                  </div>
                 </div>
               </div>
 
