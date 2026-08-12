@@ -540,7 +540,7 @@ export default function AudienceWidget({ dataUserId, heightPx }: Props) {
     const tick = async () => {
       try {
         const { data } = await supabase.functions.invoke("count-video-viewers", {
-          body: { userId: dataUserId, youtubeOnly: true },
+          body: { userId: dataUserId, youtubeOnly: true, youtubeChannelId: sources.youtube_channel_id },
         });
         const d = data as any;
         if (cancelled || !d?.ok) return;
