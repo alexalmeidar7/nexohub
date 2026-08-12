@@ -416,7 +416,7 @@ function DatasBox({ userId }: { userId?: string | null }) {
   };
 
   return (
-    <div style={collapsed ? collapsedCardStyle(baseStyle) : baseStyle}>
+    <div style={baseStyle}>
       <div style={titleStyle} className="justify-between">
         <span className="flex items-center gap-1.5 min-w-0">
           <Star size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
@@ -479,7 +479,7 @@ function DatasBox({ userId }: { userId?: string | null }) {
               </div>
             </PopoverContent>
           </Popover>
-          <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+          {/* CollapseBtn removed as per user request */}
         </span>
       </div>
 
@@ -685,7 +685,7 @@ function BlitzBox({ userId }: { userId?: string | null }) {
 
   return (
     <>
-      <div style={collapsed ? collapsedCardStyle(cardStyle) : cardStyle}>
+      <div style={cardStyle}>
         <div style={titleStyle} className="justify-between">
           <span className="flex items-center gap-1.5 min-w-0">
             <Sparkles size={11} style={{ color: PROMO_BORDER, flexShrink: 0 }} />
@@ -706,10 +706,10 @@ function BlitzBox({ userId }: { userId?: string | null }) {
                   animation: "promo-datas-pulse 1.4s ease-in-out infinite",
                 }}
               >
-                ● AO VIVO
+                 ● AO VIVO
               </span>
             )}
-            <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+            {/* CollapseBtn removed as per user request */}
           </span>
         </div>
 
