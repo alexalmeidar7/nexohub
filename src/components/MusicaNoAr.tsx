@@ -1290,12 +1290,20 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
   const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
 
+  // Nexo Form palette
+  const NEXO_DARK = "#0A2540";
+  const NEXO_CYAN = "#00BFF0";
+  const NEXO_CARD_BG = "#D6F4FB";
+  const NEXO_LIME = "#C6F03C";
+  const NEXO_LIGHT_BLUE = "#D6F4FB";
+
   // Paleta extraída da capa para gradiente elegante do box de música
   const coverPalette = useCoverPalette(displayCover || null);
   const paletteContrast = getPaletteContrast(coverPalette);
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
     : NEXO_DARK;
+
 
   const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
   const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
