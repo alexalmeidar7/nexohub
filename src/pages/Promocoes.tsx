@@ -811,15 +811,6 @@ export default function PromocoesKiosk() {
       </div>
       
       <div className="flex items-center gap-2 flex-[4] justify-center px-4">
-        <Slider
-          value={[scrollSpeed]}
-          min={1}
-          max={100}
-          step={1}
-          onValueChange={([v]) => setScrollSpeed(v)}
-          className="flex-1 max-w-[400px] [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:bg-[var(--layout-accent-color,#a60101)] [&_[role=slider]]:border-[var(--layout-accent-color,#a60101)] [&_.relative]:bg-white/20 [&_[data-orientation=horizontal]>.absolute]:bg-[var(--layout-accent-color,#a60101)]"
-        />
-        <span className="text-[11px] font-black tabular-nums min-w-[32px]" style={{ color: "var(--layout-accent-color, #a60101)" }}>{scrollSpeed}%</span>
       </div>
       <div className="flex-1" />
     </div>
