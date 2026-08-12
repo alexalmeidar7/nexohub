@@ -71,3 +71,9 @@ verify_jwt = false
 
 [functions.probe-stream-xpath]
 verify_jwt = false
+
+[functions.tv-pair-status]
+verify_jwt = false
+
+[functions.public-blitz-data]
+verify_jwt = false

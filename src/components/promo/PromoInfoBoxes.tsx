@@ -712,17 +712,11 @@ function BlitzBox({ userId }: { userId?: string | null }) {
     if (!userId) { setRows([]); return; }
     let cancelled = false;
     const load = async () => {
-      const today = todayBrasilia();
-      const { data } = await supabase
-        .from("blitz_promocionais")
-        .select("id,dia,horario,horario_fim,cliente,equipe,observacoes,realizada")
-        .eq("user_id", userId)
-        .gte("dia", today)
-        .eq("realizada", false)
-        .order("dia")
-        .order("horario");
+      const { data } = await supabase.functions.invoke("public-blitz-data", {
+        body: { userId, mode: "upcoming" },
+      });
       if (cancelled) return;
-      setRows((data as BlitzRow[]) || []);
+      setRows((data?.ok ? (data.rows as BlitzRow[]) : []) || []);
     };
     load();
     const iv = setInterval(load, 60000);
