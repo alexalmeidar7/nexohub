@@ -226,13 +226,15 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
           <MessageSquareQuote className="text-[#00BFF0]" /> 
           {editingId ? (
             <span>
-              Editar Citação: <span className="text-[#00BFF0] italic ml-1">
-                {form.programa_ids.length > 0 
-                  ? form.programa_ids.map(id => programas.find(p => p.id === id)?.nome).filter(Boolean).join(", ")
-                  : "Sem Programa"}
-              </span>
+              Editar Citação
+              {form.programa_ids.length > 0 && (
+                <span className="text-[#00BFF0] italic ml-2">
+                  {form.programa_ids.map(id => programas.find(p => p.id === id)?.nome).filter(Boolean).join(", ")}
+                </span>
+              )}
             </span>
           ) : "Nova Citação"}
+
         </h2>
         
         <div className="space-y-4">
@@ -263,13 +265,38 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
               onClick={() => setShowProgramCombo(!showProgramCombo)}
               style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
             >
-              <span className="truncate">
+              <span className="truncate font-semibold">
                 {form.programa_ids.length === 0 
                   ? "Selecione os programas..." 
                   : `${form.programa_ids.length} programa(s) selecionado(s)`}
               </span>
               <span className="text-[#00BFF0] ml-2">▼</span>
             </button>
+
+            {form.programa_ids.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {form.programa_ids.map(pid => {
+                  const prog = programas.find(p => p.id === pid);
+                  return (
+                    <span
+                      key={pid}
+                      className="inline-flex items-center gap-2 bg-white border-2 border-[#00BFF0] text-[#0A2540] text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full"
+                    >
+                      <Check size={12} className="text-[#00BFF0]" />
+                      {prog?.nome || "Programa removido"}
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, programa_ids: form.programa_ids.filter(id => id !== pid) })}
+                        className="text-[#0A2540]/50 hover:text-[#ff4d4f] transition-colors"
+                        aria-label={`Remover ${prog?.nome || "programa"}`}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             
             {showProgramCombo && (
               <>
@@ -277,25 +304,30 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                   className="fixed inset-0 z-10" 
                   onClick={() => setShowProgramCombo(false)}
                 />
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-2xl p-2 z-20 max-h-60 overflow-y-auto shadow-xl">
-                  {programas.map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        const next = form.programa_ids.includes(p.id) 
-                          ? form.programa_ids.filter(id => id !== p.id)
-                          : [...form.programa_ids, p.id];
-                        setForm({...form, programa_ids: next});
-                      }}
-                      className={`w-full text-left px-4 py-2 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group ${form.programa_ids.includes(p.id) ? 'bg-[#D6F4FB]/50 border-l-4 border-[#00BFF0]' : 'border-l-4 border-transparent'}`}
-                    >
-                      <span className={`text-xs font-semibold ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
-                        {p.nome}
-                      </span>
-                      {form.programa_ids.includes(p.id) && <Check size={14} className="text-[#00BFF0]" />}
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-3xl p-2 z-20 max-h-72 overflow-y-auto shadow-2xl space-y-1">
+                  {programas.map(p => {
+                    const selected = form.programa_ids.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          const next = selected
+                            ? form.programa_ids.filter(id => id !== p.id)
+                            : [...form.programa_ids, p.id];
+                          setForm({ ...form, programa_ids: next });
+                        }}
+                        className={`w-full text-left px-4 py-2.5 rounded-full flex items-center justify-between gap-3 transition-all ${selected ? 'bg-[#00BFF0] text-white shadow-md' : 'bg-[#D6F4FB]/60 text-[#0A2540] hover:bg-[#D6F4FB]'}`}
+                      >
+                        <span className="text-xs font-bold uppercase tracking-wide truncate">{p.nome}</span>
+                        <span
+                          className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center border-2 ${selected ? 'bg-white border-white' : 'border-[#00BFF0]/40'}`}
+                        >
+                          {selected && <Check size={12} className="text-[#00BFF0]" />}
+                        </span>
+                      </button>
+                    );
+                  })}
                   {programas.length === 0 && (
                     <div className="p-4 text-center text-gray-400 text-xs italic">
                       Nenhum programa cadastrado
@@ -305,6 +337,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
               </>
             )}
           </div>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
