@@ -197,16 +197,21 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
   const handleEdit = (item: Promocao) => {
     setEditingId(item.id);
-    const plainText = item.texto
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<p>/gi, '')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<[^>]*>?/gm, '');
+    
+    // Helper function to strip HTML and normalize line breaks
+    const stripHtml = (html: string) => {
+      if (!html) return "";
+      return html
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<p>/gi, '')
+        .replace(/<\/p>/gi, '\n')
+        .replace(/<[^>]*>?/gm, '');
+    };
 
     setForm({
       nome: item.nome || "",
-      texto: plainText,
-      oferecimento: item.oferecimento || "",
+      texto: stripHtml(item.texto),
+      oferecimento: stripHtml(item.oferecimento),
       data_inicio: item.data_inicio,
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",
