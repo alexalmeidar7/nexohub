@@ -706,10 +706,10 @@ function BlitzBox({ userId }: { userId?: string | null }) {
                   animation: "promo-datas-pulse 1.4s ease-in-out infinite",
                 }}
               >
-                ● AO VIVO
+                 ● AO VIVO
               </span>
             )}
-            <CollapseBtn collapsed={collapsed} onToggle={toggleCollapsed} />
+            {/* CollapseBtn removed as per user request */}
           </span>
         </div>
 
