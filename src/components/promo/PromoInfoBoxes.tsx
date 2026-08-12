@@ -589,6 +589,9 @@ function DatasBox({ userId }: { userId?: string | null }) {
       ))}
 
       <style>{`
+        @keyframes promo-weather-blink {
+          to { visibility: hidden; }
+        }
         @keyframes promo-datas-pulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.05); }
