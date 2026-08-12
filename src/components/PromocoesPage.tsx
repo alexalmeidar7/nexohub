@@ -276,6 +276,56 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             />
           </div>
 
+          <div className="relative">
+            <label style={labelStyle}>Programas (Selecione um ou mais)</label>
+            <button
+              type="button"
+              onClick={() => setShowProgramCombo(!showProgramCombo)}
+              style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+            >
+              <span className="truncate">
+                {form.programa_ids.length === 0 
+                  ? "Selecione os programas..." 
+                  : `${form.programa_ids.length} programa(s) selecionado(s)`}
+              </span>
+              <span className="text-[#00BFF0] ml-2">▼</span>
+            </button>
+            
+            {showProgramCombo && (
+              <>
+                <div 
+                  className="fixed inset-0 z-10" 
+                  onClick={() => setShowProgramCombo(false)}
+                />
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-2xl p-2 z-20 max-h-60 overflow-y-auto shadow-xl">
+                  {programas.map(p => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        const next = form.programa_ids.includes(p.id) 
+                          ? form.programa_ids.filter(id => id !== p.id)
+                          : [...form.programa_ids, p.id];
+                        setForm({...form, programa_ids: next});
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group ${form.programa_ids.includes(p.id) ? 'bg-[#D6F4FB]/50 border-l-4 border-[#00BFF0]' : 'border-l-4 border-transparent'}`}
+                    >
+                      <span className={`text-xs font-semibold ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
+                        {p.nome}
+                      </span>
+                      {form.programa_ids.includes(p.id) && <Check size={14} className="text-[#00BFF0]" />}
+                    </button>
+                  ))}
+                  {programas.length === 0 && (
+                    <div className="p-4 text-center text-gray-400 text-xs italic">
+                      Nenhum programa cadastrado
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label style={labelStyle}>Texto da Promoção</label>
@@ -385,6 +435,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
+                  <th className="p-4 text-xs uppercase font-bold">Programa</th>
                   <th className="p-4 text-xs uppercase font-bold">Nome da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Texto da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
@@ -397,6 +448,22 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
+                    <td className="p-4 text-xs text-[#0A2540]/70">
+                      <div className="flex flex-wrap gap-1">
+                        {item.programa_ids && item.programa_ids.length > 0 ? (
+                          item.programa_ids.map(pid => {
+                            const prog = programas.find(p => p.id === pid);
+                            return prog ? (
+                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full">
+                                {prog.nome}
+                              </span>
+                            ) : null;
+                          })
+                        ) : (
+                          <span className="text-gray-400 italic">Nenhum</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="p-4 text-sm font-bold text-[#0A2540]">
                       {item.nome || "Sem Nome"}
                     </td>
