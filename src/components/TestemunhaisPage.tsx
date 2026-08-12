@@ -20,6 +20,7 @@ interface Testemunhal {
   texto: string;
   data_inicio: string;
   data_fim: string;
+  programa_id?: string | null;
   programa_ids?: string[];
 }
 
@@ -99,7 +100,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     setLoading(true);
     const [ { data: tData }, { data: pData } ] = await Promise.all([
       supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", ownerId).eq("ativo", true)
+      supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome")
     ]);
     if (tData) setItems(tData as Testemunhal[]);
     if (pData) setProgramas(pData);
@@ -134,6 +135,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       data_inicio: form.data_inicio,
       data_fim: form.data_fim,
       programa_ids: form.programa_ids,
+      programa_id: form.programa_ids[0] ?? null,
     };
 
     const query = editingId
@@ -154,8 +156,12 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   };
 
   const handleEdit = (item: Testemunhal) => {
-    // Determine the program IDs, handling null/undefined correctly
-    const itemProgIds = Array.isArray(item.programa_ids) ? [...item.programa_ids] : [];
+    // Cadastros antigos usam programa_id; os novos usam programa_ids.
+    // Mesclar os dois formatos impede que um vínculo válido apareça como "Sem Programa".
+    const itemProgIds = Array.from(new Set([
+      ...(Array.isArray(item.programa_ids) ? item.programa_ids : []),
+      ...(item.programa_id ? [item.programa_id] : []),
+    ]));
     
     // Set editing ID first to switch form title
     setEditingId(item.id);
