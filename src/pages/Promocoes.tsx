@@ -1505,10 +1505,13 @@ export default function PromocoesKiosk() {
                   className="text-xl font-bold mt-2 promo-html-content"
                   style={{ color: "white" }}
                   dangerouslySetInnerHTML={{
-                    __html: selectedPromo.oferecimento
+                    __html: DOMPurify.sanitize(selectedPromo.oferecimento
                       .replace(/\/\//g, "<br/>")
                       .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
-                      .replace(/color:\s*#000(?:000)?/gi, "color: white"),
+                      .replace(/color:\s*#000(?:000)?/gi, "color: white"), {
+                      ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div'],
+                      ALLOWED_ATTR: ['style', 'class']
+                    }),
                   }}
                 />
               </div>
