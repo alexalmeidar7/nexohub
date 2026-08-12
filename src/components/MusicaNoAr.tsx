@@ -1295,7 +1295,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const paletteContrast = getPaletteContrast(coverPalette);
   const musicBoxBg = coverPalette
     ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
-    : "var(--layout-slider-bg, #0d0d0d)";
+    : NEXO_DARK;
+
   const musicTextColor = paletteContrast?.textColor ?? "#ffffff";
   const musicTextMuted = paletteContrast?.textMutedColor ?? "rgba(255,255,255,0.65)";
   const musicTextShadow = paletteContrast?.textShadow ?? "none";
@@ -1467,8 +1468,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         <div className="px-4 pb-4">
           <div
             key={`${displayTitulo}-${displayArtista}`}
-            className="rounded-2xl overflow-hidden relative animate-fade-in"
-            style={{ background: musicBoxBg, boxShadow: "0 4px 20px rgba(0,0,0,0.2)", transition: "background 800ms ease" }}
+            className="rounded-2xl overflow-hidden relative animate-fade-in group"
+            style={{ 
+              background: musicBoxBg, 
+              boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
+              transition: "background 1000ms ease" 
+            }}
+
           >
             {/* Gradient progress fill */}
             <div
