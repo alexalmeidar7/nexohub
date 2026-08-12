@@ -504,7 +504,19 @@ export default function PromocoesKiosk() {
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
     const ids = new Set(prog.mergedIds || [prog.id]);
-    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
+    
+    // Debug log to verify ids and comparison
+    console.log("Checking witness for program:", prog.nome, "IDs:", Array.from(ids));
+    
+    return testemunhais.filter(t => {
+      if (!t.programa_id) return false;
+      
+      // Handle both string and array of IDs if it ever changes, but currently it's a string programa_id
+      const matchesId = ids.has(t.programa_id);
+      const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
+      
+      return matchesId && isWithinDate;
+    });
   };
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
