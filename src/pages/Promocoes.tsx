@@ -1202,7 +1202,14 @@ export default function PromocoesKiosk() {
                 <div
                   className="group/cover flex-shrink-0 rounded-xl overflow-hidden relative cursor-pointer transition-transform duration-200 hover:scale-[1.03]"
                   style={{ width: 207, height: 276, contain: "paint", isolation: "isolate" }}
-                  onClick={(e) => { e.stopPropagation(); if (currentProg) { setSelectedProgram({...currentProg}); stopAutoScroll(); } }}
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    if (currentProg) { 
+                      const progWithLatestIds = programas.find(p => normalizeProgramName(p.nome) === normalizeProgramName(currentProg.nome));
+                      setSelectedProgram(progWithLatestIds ? {...progWithLatestIds} : {...currentProg}); 
+                      stopAutoScroll(); 
+                    } 
+                  }}
                   title="Citações"
                 >
                     <div className="pointer-events-none absolute top-2 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-full text-[11px] font-semibold backdrop-blur-md opacity-0 group-hover/cover:opacity-100 transition-opacity duration-200 z-20 whitespace-nowrap shadow-lg" style={{ background: promoDarkGradient, color: telaPromoConfig.btn_text_color }}>
