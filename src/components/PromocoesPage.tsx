@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar } from "lucide-react";
+import { Loader2, Trash2, Upload, ImageIcon, Pencil, X, Save, Tag, Calendar, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 import { confirmDialog } from "@/lib/confirmDialog";
