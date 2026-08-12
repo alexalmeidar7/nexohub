@@ -646,24 +646,14 @@ export default function PromocoesKiosk() {
     if (autoPlayTimerRef.current) { clearTimeout(autoPlayTimerRef.current); autoPlayTimerRef.current = null; }
   };
 
-  // Auto-play on modal open
+  // Auto-play on modal open disabled
   useEffect(() => {
-    if (selectedPromo && autoPlay) {
-      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = setTimeout(() => startAutoScroll("promo"), 3000);
-    }
-
     return () => {
       if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
     };
   }, [selectedPromo, autoPlay, startAutoScroll]);
 
   useEffect(() => {
-    if (selectedProgram && autoPlay) {
-      if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
-      autoPlayTimerRef.current = setTimeout(() => startAutoScroll("program"), 3000);
-    }
-
     return () => {
       if (autoPlayTimerRef.current) clearTimeout(autoPlayTimerRef.current);
     };
