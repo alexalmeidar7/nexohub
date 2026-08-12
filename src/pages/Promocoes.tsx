@@ -501,6 +501,12 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
+    const today = new Date().toISOString().split("T")[0];
+    const ids = new Set(prog.mergedIds || [prog.id]);
+    return testemunhais.filter(t => t.programa_id && ids.has(t.programa_id) && t.data_inicio <= today && t.data_fim >= today);
+  };
+
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
   const canonicalCoverByName = useMemo(() => {
     const map = new Map<string, string>();
