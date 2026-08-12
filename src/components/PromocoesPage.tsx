@@ -24,6 +24,7 @@ interface Promocao {
   data_fim: string;
   imagem_url: string;
   banner_l_url: string;
+  programa_ids?: string[];
 }
 
 const pillInput: React.CSSProperties = {
@@ -83,8 +84,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Promocao[]>([]);
+  const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showProgramCombo, setShowProgramCombo] = useState(false);
   const [form, setForm] = useState({
     nome: "",
     texto: "",
@@ -93,6 +96,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     imagem_url: "",
     banner_l_url: "",
+    programa_ids: [] as string[],
   });
   const [uploading1, setUploading1] = useState(false);
   const [uploading2, setUploading2] = useState(false);
@@ -102,12 +106,12 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const loadData = async () => {
     if (!ownerId) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("promocoes")
-      .select("*")
-      .eq("user_id", ownerId)
-      .order("created_at", { ascending: false });
-    if (data) setItems(data as Promocao[]);
+    const [ { data: promosData }, { data: progsData } ] = await Promise.all([
+      supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
+      supabase.from("programas").select("id, nome").eq("user_id", ownerId).eq("ativo", true)
+    ]);
+    if (promosData) setItems(promosData as Promocao[]);
+    if (progsData) setProgramas(progsData);
     setLoading(false);
   };
 
@@ -124,6 +128,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: "",
       banner_l_url: "",
+      programa_ids: [],
     });
     setEditingId(null);
   };
@@ -179,6 +184,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: form.data_fim,
       imagem_url: form.imagem_url,
       banner_l_url: form.banner_l_url,
+      programa_ids: form.programa_ids,
     };
 
     const query = editingId
@@ -210,6 +216,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: item.data_fim,
       imagem_url: item.imagem_url || "",
       banner_l_url: item.banner_l_url || "",
+      programa_ids: item.programa_ids || [],
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
