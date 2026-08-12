@@ -44,7 +44,8 @@ interface ProgramaGrade {
 
 interface Testemunhal {
   id: string;
-  programa_id: string;
+  programa_id: string | null;
+  programa_ids?: string[] | null;
   texto: string;
   data_inicio: string;
   data_fim: string;
@@ -501,20 +502,26 @@ export default function PromocoesKiosk() {
       .trim()
       .toUpperCase();
 
+  const getTestemunhalProgramIds = (t: Testemunhal) => {
+    const list = Array.isArray(t.programa_ids) ? t.programa_ids.filter(Boolean) : [];
+    if (t.programa_id) list.push(t.programa_id);
+    return Array.from(new Set(list));
+  };
+
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
-    const ids = new Set(prog.mergedIds || [prog.id]);
-    
-    // Debug log to verify ids and comparison
-    console.log("Checking witness for program:", prog.nome, "IDs:", Array.from(ids));
-    
+    const baseIds = new Set(prog.mergedIds || [prog.id]);
+    // Inclui todos os IDs de programas com o mesmo nome normalizado (grade duplicada)
+    const key = normalizeProgramName(prog.nome);
+    for (const p of programas) {
+      if (normalizeProgramName(p.nome) === key) baseIds.add(p.id);
+    }
+
     return testemunhais.filter(t => {
-      if (!t.programa_id) return false;
-      
-      // Handle both string and array of IDs if it ever changes, but currently it's a string programa_id
-      const matchesId = ids.has(t.programa_id);
+      const tIds = getTestemunhalProgramIds(t);
+      if (tIds.length === 0) return false;
+      const matchesId = tIds.some(id => baseIds.has(id));
       const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
-      
       return matchesId && isWithinDate;
     });
   };
@@ -555,16 +562,22 @@ export default function PromocoesKiosk() {
   const todayDateStr = new Date().toISOString().split("T")[0];
   const programIdsWithTestemunhais = new Set(
     testemunhais
-      .filter(t => 
-        t.programa_id && 
-        t.data_inicio && t.data_fim && 
+      .filter(t =>
+        t.data_inicio && t.data_fim &&
         t.data_inicio <= todayDateStr && t.data_fim >= todayDateStr
       )
-      .map(t => t.programa_id)
+      .flatMap(t => getTestemunhalProgramIds(t))
+  );
+
+  // Nomes normalizados que possuem citação (para incluir grades duplicadas do mesmo programa)
+  const programNamesWithTestemunhais = new Set(
+    programas
+      .filter(p => programIdsWithTestemunhais.has(p.id))
+      .map(p => normalizeProgramName(p.nome))
   );
 
   const filteredPrograms = mergeProgramList(
-    programas.filter(p => programIdsWithTestemunhais.has(p.id))
+    programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
   const todayDateNow = new Date().toISOString().split("T")[0];
