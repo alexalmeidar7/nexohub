@@ -17,10 +17,6 @@ export default function CenariosPage() {
 
   return (
     <div className="nexo-scope space-y-4">
-      {/* Header handled by Dashboard Portal */}
-      <div id="module-header-title" style={{ display: "none" }}>
-        vMix — Cenários
-      </div>
       {/* Themed pill tabs — matches the "Criar novo template" button style */}
       <div
         className="inline-flex items-center gap-1 p-1 rounded-full"

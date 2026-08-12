@@ -1470,25 +1470,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         <div className="hidden lg:flex items-center justify-between px-8 pt-6 pb-2 relative z-[10]">
           <div className="flex items-center gap-4">
             <div>
-              {!isDashboard && (
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-xs font-medium tracking-widest uppercase" style={{ color: layoutColors.accentColor }}>
-                    {pageTitle[currentPage]}
-                  </p>
-                  {MINIMIZABLE_PAGES.includes(currentPage) && (
-                    <button
-                      onClick={() => {
-                        setMinimizedModules(m => m.includes(currentPage) ? m : [...m, currentPage]);
-                        setCurrentPage("dashboard");
-                      }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center bg-[#00BFF0] text-white hover:brightness-110 shadow-[0_4px_14px_-4px_rgba(0,191,240,0.55)] transition-all"
-                      title="Minimizar módulo"
-                    >
-                      <ChevronDown size={14} />
-                    </button>
-                  )}
-                </div>
-              )}
               <div className="flex items-center gap-3">
                 <h1 className="text-2xl font-light" style={{ color: "#002132" }}>
                   {empresa.nome || "NexoHUB"}
