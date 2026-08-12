@@ -1590,11 +1590,6 @@ export default function PromocoesKiosk() {
                               </span>
                             </div>
 
-                            {t.imagem_url && (
-                              <div className="mb-4 rounded-xl overflow-hidden border border-white/5" style={{ backgroundColor: "rgba(0,0,0,0.3)" }}>
-                                <img src={t.imagem_url} alt="" className="w-full object-contain max-h-[260px]" />
-                              </div>
-                            )}
 
                             <div
                               className="max-w-none leading-[1.45] [&_*]:!bg-transparent [&_*]:leading-[1.45] [&_p]:!my-0 [&_p+p]:!mt-3"
