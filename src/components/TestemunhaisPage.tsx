@@ -233,12 +233,12 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                           : [...form.programa_ids, p.id];
                         setForm({...form, programa_ids: next});
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group"
+                      className={`w-full text-left px-4 py-2 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group ${form.programa_ids.includes(p.id) ? 'bg-[#D6F4FB]/50 border-l-4 border-[#00BFF0]' : 'border-l-4 border-transparent'}`}
                     >
-                      <span className={`text-sm font-medium ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
+                      <span className={`text-xs font-semibold ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
                         {p.nome}
                       </span>
-                      {form.programa_ids.includes(p.id) && <Check size={16} className="text-[#00BFF0]" />}
+                      {form.programa_ids.includes(p.id) && <Check size={14} className="text-[#00BFF0]" />}
                     </button>
                   ))}
                   {programas.length === 0 && (
