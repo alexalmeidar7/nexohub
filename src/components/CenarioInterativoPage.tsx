@@ -1766,7 +1766,7 @@ export default function CenarioInterativoPage() {
     <div className="animate-fade-in space-y-5">
       {/* Header handled by Dashboard Portal */}
       <div id="module-header-title" style={{ display: "none" }}>
-        vMix — Cenário Interativo
+        vMix — CENÁRIO 1 E 2
       </div>
       {/* Header — Condensed broadcast dashboard */}
       <div className="bg-white border-2 border-[#00BFF0] rounded-2xl p-4 flex items-center justify-between gap-4">
@@ -1775,7 +1775,7 @@ export default function CenarioInterativoPage() {
             <MonitorPlay className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest leading-none">Cenário Interativo</h1>
+            <h1 className="text-[#0A2540] text-sm font-bold uppercase tracking-widest leading-none">CENÁRIO 1 E 2</h1>
             <p className="text-[11px] text-[#64748B] mt-1">Configure os elementos do cenário para suas transmissões</p>
           </div>
         </div>
