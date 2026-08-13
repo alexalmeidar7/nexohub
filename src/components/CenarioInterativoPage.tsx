@@ -716,6 +716,22 @@ export default function CenarioInterativoPage() {
     }
   }, [activeTab, updateChatMessages]);
 
+  const fetchEnquetesData = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("enquetes_agendadas")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("data_enquete", { ascending: false });
+    if (data) setEnquetes(data);
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchEnquetesData();
+    const interval = setInterval(fetchEnquetesData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchEnquetesData]);
+
   useEffect(() => {
     const canvas = previewCanvasRef.current;
     if (!canvas) return;
