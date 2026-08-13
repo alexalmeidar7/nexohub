@@ -3131,7 +3131,7 @@ export default function CenarioInterativoPage() {
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="flex items-center gap-2">
                 <Eye size={16} style={{ color: mutedText }} />
-                <span className="text-sm font-semibold whitespace-nowrap">Preview cenário interativo</span>
+                <span className="text-sm font-semibold whitespace-nowrap">PREVIEW CENÁRIO</span>
               </div>
               <div className="flex items-center gap-1.5">
                 {externalConnected && (
