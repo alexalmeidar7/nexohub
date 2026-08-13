@@ -359,6 +359,8 @@ export default function CenarioInterativoPage() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
+  const [enquetes, setEnquetes] = useState<any[]>([]);
+  
   // Sincroniza a exibição do satélite com a opção de configuração
   useEffect(() => {
     if (weatherSubTab === "satellite" && !config.weather.showSatellite) {
