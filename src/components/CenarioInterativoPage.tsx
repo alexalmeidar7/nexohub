@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2 } from "lucide-react";
+import { MonitorPlay, CloudSun, CloudRain, Car, DollarSign, MessageCircle, Trash2, Eye, EyeOff, Settings, Home, MapPin, Satellite, Sun, CalendarDays, Search, Upload, Image, Clock, Loader2, Droplets, Wind, Thermometer, ExternalLink, TrendingUp, TrendingDown, Minus, Plus, ChevronUp, ChevronDown, Pen, Eraser, Wifi, WifiOff, RefreshCw, Palette, Undo2, Shapes, Square, Circle, Triangle, ArrowUp, ArrowRight, ArrowDown, ArrowLeft, Star, Hexagon, Diamond, Music, Mic, RotateCw, Play, Maximize2, Tag } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import AnimatedWeatherLayout from "./AnimatedWeatherLayout";
 import DraggableElement, { ElementPosition, defaultPositions } from "@/components/cenario/DraggableElement";
@@ -105,6 +105,7 @@ interface CenarioConfig {
   traffic: TrafficConfig;
   currency: CurrencyConfig;
   chat: ChatConfig;
+  enquete: { enabled: boolean; bgImage: string };
 }
 
 function buildHomeGradient(h: HomeConfig): string {
@@ -135,6 +136,7 @@ const defaultConfig: CenarioConfig = {
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
+  enquete: { enabled: true, bgImage: "" },
 };
 
 const CURRENCY_OPTIONS = [
@@ -356,6 +358,8 @@ export default function CenarioInterativoPage() {
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [weatherSubTab, setWeatherSubTab] = useState("today");
+  
+  const [enquetes, setEnquetes] = useState<any[]>([]);
   
   // Sincroniza a exibição do satélite com a opção de configuração
   useEffect(() => {
@@ -711,6 +715,22 @@ export default function CenarioInterativoPage() {
       return () => clearInterval(interval);
     }
   }, [activeTab, updateChatMessages]);
+
+  const fetchEnquetesData = useCallback(async () => {
+    if (!user?.id) return;
+    const { data } = await supabase
+      .from("enquetes_agendadas")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("data_enquete", { ascending: false });
+    if (data) setEnquetes(data);
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchEnquetesData();
+    const interval = setInterval(fetchEnquetesData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchEnquetesData]);
 
   useEffect(() => {
     const canvas = previewCanvasRef.current;
@@ -1778,11 +1798,17 @@ export default function CenarioInterativoPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList className="w-full grid grid-cols-5 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
+              <TabsList className="w-full grid grid-cols-6 mb-4" style={{ background: "color-mix(in srgb, var(--layout-page-text, #1a1a1a) 8%, transparent)" }}>
                 <TabsTrigger value="home" className="text-xs gap-1 data-[state=active]:shadow-sm"><Home size={14} /> Home</TabsTrigger>
                 <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
                 <TabsTrigger value="traffic" className="text-xs gap-1 data-[state=active]:shadow-sm"><Car size={14} /> Trânsito</TabsTrigger>
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
+                <TabsTrigger value="enquete" className="text-xs gap-1 data-[state=active]:shadow-sm relative">
+                  <Tag size={14} /> Enquete
+                  {enquetes.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Enquetes disponíveis" />
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
 
@@ -3002,6 +3028,67 @@ export default function CenarioInterativoPage() {
                 )}
               </TabsContent>
 
+              <TabsContent value="enquete" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Exibir Enquete no Cenário</Label>
+                  <Switch 
+                    checked={config.enquete?.enabled} 
+                    onCheckedChange={v => setConfig(prev => ({ ...prev, enquete: { ...prev.enquete, enabled: v } }))} 
+                  />
+                </div>
+                {config.enquete?.enabled && (
+                  <div className="space-y-4">
+                    <p className="text-xs" style={{ color: mutedText }}>
+                      A enquete configurada será exibida automaticamente quando estiver dentro do horário agendado.
+                    </p>
+                    
+                    {enquetes.length > 0 ? (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-wider font-bold" style={{ color: mutedText }}>Enquetes Agendadas</Label>
+                        <div className="grid gap-2">
+                          {enquetes.slice(0, 5).map(e => {
+                            const today = new Date().toISOString().split('T')[0];
+                            const isToday = e.data_enquete === today;
+                            return (
+                              <div key={e.id} className="p-3 rounded-xl border flex flex-col gap-1 transition-all" 
+                                   style={{ 
+                                     background: isToday ? "rgba(0,191,240,0.05)" : "white",
+                                     borderColor: isToday ? "#00BFF0" : "rgba(0,0,0,0.05)"
+                                   }}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" 
+                                        style={{ 
+                                          background: isToday ? "#00BFF0" : "#64748B",
+                                          color: "white" 
+                                        }}>
+                                    {isToday ? "HOJE" : e.data_enquete.split('-').reverse().join('/')}
+                                  </span>
+                                  <span className="text-[10px] font-medium opacity-60">{e.horario_inicio} - {e.horario_fim}</span>
+                                </div>
+                                <p className="text-sm font-bold mt-1">{e.pergunta}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-black/5 rounded-xl border border-dashed border-black/10">
+                        <Tag className="mx-auto mb-2 opacity-20" size={32} />
+                        <p className="text-xs opacity-50">Nenhuma enquete agendada</p>
+                      </div>
+                    )}
+
+                    <BgImageUpload 
+                      value={config.enquete?.bgImage || ""} 
+                      onChange={v => setConfig(prev => ({ ...prev, enquete: { ...prev.enquete, bgImage: v } }))} 
+                      mutedText={mutedText} 
+                      userId={uid} 
+                      category="enquete" 
+                    />
+                  </div>
+                )}
+              </TabsContent>
+
               {/* ═══ Chat ═══ */}
               <TabsContent value="chat" className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -3242,10 +3329,10 @@ export default function CenarioInterativoPage() {
                               <Home style={{ width: iS, height: iS }} />
                             </button>
                             <div className="flex flex-col items-center" style={{ padding: `${pvh(0.4)}px`, opacity: config.weather.enabled ? 1 : 0.35 }}>
-                              <button onClick={() => { if (activeTab === "weather") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather"), border: "none", color: btnIcon(activeTab === "weather"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                              <button onClick={() => { if (activeTab === "weather" || activeTab === "enquete") { handleTabChange("home"); } else { handleTabChange("weather"); handleWeatherSubTabChange("today"); } }} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, background: btnBg(activeTab === "weather" || activeTab === "enquete"), border: "none", color: btnIcon(activeTab === "weather" || activeTab === "enquete"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                                 <CloudSun style={{ width: iS, height: iS }} />
                               </button>
-                              <div style={{ overflow: "hidden", maxHeight: activeTab === "weather" ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: activeTab === "weather" ? 1 : 0 }}>
+                              <div style={{ overflow: "hidden", maxHeight: (activeTab === "weather" || activeTab === "enquete") ? `${pvh(20)}px` : "0", transition: "max-height 0.35s cubic-bezier(0.4,0,0.2,1)", opacity: (activeTab === "weather" || activeTab === "enquete") ? 1 : 0 }}>
                                 <div className="flex flex-col items-center" style={{ gap: `${pvh(0.4)}px`, paddingTop: `${pvh(0.4)}px` }}>
                                   {config.weather.enabled && (
                                     <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("today"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "today"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "today"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>1</button>
@@ -3253,9 +3340,14 @@ export default function CenarioInterativoPage() {
                                   {config.weather.enabled && config.weather.showSatellite && (
                                     <button onClick={() => { handleTabChange("weather"); handleWeatherSubTabChange("satellite"); }} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "weather" && weatherSubTab === "satellite"), border: "none", color: btnIcon(activeTab === "weather" && weatherSubTab === "satellite"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>2</button>
                                   )}
+                                    <button onClick={() => handleTabChange("enquete")} className="rounded-full flex items-center justify-center font-bold cursor-pointer transition-all relative" style={{ width: sBS, height: sBS, fontSize: sFS, background: btnBg(activeTab === "enquete"), border: "none", color: btnIcon(activeTab === "enquete"), textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                                      3
+                                      {enquetes.length > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse" />}
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+
                             <button onClick={() => config.traffic.enabled && handleTabChange("traffic")} className="rounded-full flex items-center justify-center cursor-pointer" style={{ width: bS, height: bS, marginTop: `${pvh(0.3)}px`, background: btnBg(activeTab === "traffic"), border: "none", color: btnIcon(activeTab === "traffic"), opacity: config.traffic.enabled ? 1 : 0.35, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                               <Car style={{ width: iS, height: iS }} />
                             </button>
@@ -3564,7 +3656,48 @@ export default function CenarioInterativoPage() {
                         );
                       })()}
 
+                      {/* ═══ ENQUETE ═══ */}
+                      {activeTab === "enquete" && (
+                        <div className="flex flex-col items-center justify-center h-full w-full" style={{ gap: pvh(4) }}>
+                          <div className="text-center">
+                            <div className="font-black leading-tight" style={{ fontSize: pvh(6), textShadow: "0 4px 20px rgba(0,0,0,0.5)" }}>ENQUETE</div>
+                            <div className="font-bold uppercase tracking-[0.3em] mt-2" style={{ fontSize: pvh(1.5), color: accentColor }}>Interativa</div>
+                          </div>
+
+                          {(() => {
+                            const today = new Date().toISOString().split('T')[0];
+                            const nowTimeStr = new Date().toTimeString().slice(0, 5);
+                            const activePoll = enquetes.find(e => e.data_enquete === today && e.horario_inicio <= nowTimeStr && e.horario_fim >= nowTimeStr);
+
+                            if (activePoll) {
+                              return (
+                                <div className="w-full flex flex-col gap-[3vh] px-[4vh]">
+                                  <div className="p-[3vh] rounded-[2vh] bg-black/40 backdrop-blur-md border border-white/10 text-center">
+                                    <h3 className="font-bold leading-tight" style={{ fontSize: pvh(3.5) }}>{activePoll.pergunta}</h3>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-[2vh]">
+                                    {[activePoll.resposta1, activePoll.resposta2, activePoll.resposta3, activePoll.resposta4].filter(Boolean).map((resp, idx) => (
+                                      <div key={idx} className="p-[2vh] rounded-[1.5vh] border border-white/10 flex items-center gap-[1.5vh]" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                        <div className="w-[4vh] h-[4vh] rounded-full flex items-center justify-center font-black text-[2vh]" style={{ background: accentColor }}>{idx + 1}</div>
+                                        <span className="font-bold text-[1.8vh] truncate">{resp}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="opacity-40 flex flex-col items-center">
+                                <Tag size={pvh(8)} className="mb-2" />
+                                <div className="font-bold uppercase tracking-widest text-xs">Nenhuma enquete ativa</div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      )}
+
                       {/* ═══ WEATHER ═══ */}
+
                       {activeTab === "weather" && weatherSubTab !== "satellite" && (
                         <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
                           {!config.weather.bgImage && <div className="absolute inset-0" style={{ background: "linear-gradient(160deg, #0a1628 0%, #0d2847 30%, #134e7a 60%, #1a6fad 85%, #4a9fd4 100%)" }} />}

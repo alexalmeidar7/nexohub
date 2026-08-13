@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CloudRain, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play, MapPin, Sun } from "lucide-react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CloudRain, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play, MapPin, Sun, Tag } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,9 +15,24 @@ import { extractDominantPair } from "@/lib/dominantColors";
 interface WeatherConfig { enabled: boolean; showCurrent: boolean; showForecast3Days: boolean; showSatellite: boolean; city: string; bgImage: string; }
 interface TrafficConfig { enabled: boolean; city: string; points: any[]; bgImage: string; lat: number | null; lon: number | null; zoom: number; }
 interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: string; }
+interface EnqueteConfig { enabled: boolean; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; showMusicCover?: boolean; showProgramThumb?: boolean; colorButtonBgOff?: string; colorButtonBgOn?: string; colorButtonOff?: string; colorButtonOn?: string; colorClock?: string; colorDate?: string; colorMusicName?: string; colorMusicTitle?: string; colorASeguirLabel?: string; colorNextProgram?: string; colorProgressBar?: string; }
-interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; enquete: EnqueteConfig; chat: ChatConfig; }
+
+interface PublicCenarioPayload {
+  ok: boolean;
+  cenario_config: CenarioConfig;
+  currentProgram: any;
+  nextProgram: any;
+  sponsorLogos: any[];
+  musicData: any;
+  musicStartTime: number | null;
+  accentColor: string | null;
+  musicXmlUrl: string | null;
+  youtubeChatMessages: any[] | null;
+  enquetes?: any[];
+}
 
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
@@ -33,6 +48,7 @@ const defaultConfig: CenarioConfig = {
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
+  enquete: { enabled: true, bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
 
@@ -140,18 +156,6 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm: number; windMax: number }[];
 }
 
-type PublicCenarioPayload = {
-  ok: boolean;
-  cenario_config: any;
-  currentProgram: any;
-  nextProgram?: any;
-  sponsorLogos: any[];
-  musicData?: { titulo: string; artista: string; capa: string } | null;
-  musicStartTime?: number | null;
-  accentColor?: string | null;
-  musicXmlUrl?: string | null;
-  youtubeChatMessages?: { user: string; text: string; avatar?: string }[] | null;
-};
 
 const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
@@ -360,6 +364,7 @@ export default function CenarioTela() {
   const musicStartRef = useRef<number>(Date.now());
   const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [enquetes, setEnquetes] = useState<any[]>([]);
 
   const musicXmlUrlRef = useRef<string | null>(null);
 
@@ -831,6 +836,7 @@ export default function CenarioTela() {
             setCurrentProgram(result.currentProgram);
             setSponsorLogos(result.sponsorLogos || []);
             setNextProgram(result.nextProgram || null);
+            if (result.enquetes) setEnquetes(result.enquetes);
           }
           if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
@@ -2188,6 +2194,83 @@ export default function CenarioTela() {
                     </div>
                   ) : (
                     <div className="flex-1 flex items-center justify-center opacity-100" style={{ fontSize: `${vhToPx(1.8)}${vu}`, textShadow: "0 1px 4px rgba(0,0,0,1)" }}>Chat desativado</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ═══ ENQUETE ═══ */}
+            {activeTab === "enquete" && (
+              <div className="absolute inset-0 flex flex-col overflow-hidden" style={{ color: "#fff" }}>
+                {config.enquete?.bgImage && <img src={config.enquete.bgImage} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                {!config.enquete?.bgImage && <div className="absolute inset-0" style={{ background: "transparent" }} />}
+                <div className="relative z-10 flex flex-col h-full items-center justify-center" style={{ padding: `${vhToPx(4)}${vu}` }}>
+                  {config.enquete?.enabled ? (
+                    <div className="w-full max-w-[85%] flex flex-col items-center">
+                      <div className="text-center mb-[6vh]">
+                        <motion.div 
+                          initial={{ opacity: 0, y: -20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="font-black leading-tight" 
+                          style={{ fontSize: `${vhToPx(7)}${vu}`, textShadow: "0 4px 30px rgba(0,0,0,0.8)" }}
+                        >
+                          ENQUETE INTERATIVA
+                        </motion.div>
+                        <div className="font-bold uppercase tracking-[0.4em] mt-[1.5vh]" style={{ fontSize: `${vhToPx(2)}${vu}`, color: accentColor }}>
+                          PARTICIPE AGORA
+                        </div>
+                      </div>
+
+                      {(() => {
+                        const today = new Date().toISOString().split('T')[0];
+                        const nowTimeStr = currentTime.toTimeString().slice(0, 5);
+                        const activePoll = enquetes.find(e => e.data_enquete === today && e.horario_inicio <= nowTimeStr && e.horario_fim >= nowTimeStr);
+
+                        if (activePoll) {
+                          return (
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="w-full flex flex-col items-center gap-[4vh]"
+                            >
+                              <div className="w-full p-[4vh] rounded-[3vh] bg-black/40 backdrop-blur-xl border border-white/10 text-center shadow-2xl">
+                                <h3 className="font-black leading-tight" style={{ fontSize: `${vhToPx(4.5)}${vu}`, color: '#fff' }}>{activePoll.pergunta}</h3>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-[3vh] w-full">
+                                {[activePoll.resposta1, activePoll.resposta2, activePoll.resposta3, activePoll.resposta4].filter(Boolean).map((resp, idx) => (
+                                  <motion.div
+                                    key={idx}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 + idx * 0.1 }}
+                                    className="p-[3vh] rounded-[2vh] border-2 flex items-center gap-[2vh]"
+                                    style={{ 
+                                      background: 'rgba(255, 255, 255, 0.05)',
+                                      borderColor: 'rgba(255, 255, 255, 0.1)',
+                                    }}
+                                  >
+                                    <div className="w-[6vh] h-[6vh] rounded-full flex items-center justify-center font-black text-[3vh]" style={{ background: accentColor, color: '#fff' }}>
+                                      {idx + 1}
+                                    </div>
+                                    <span className="font-bold text-[2.8vh] text-white">{resp}</span>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </motion.div>
+                          );
+                        }
+
+                        return (
+                          <div className="flex-1 flex flex-col items-center justify-center opacity-40">
+                            <Tag size={vhToPx(10)} className="mb-4" />
+                            <p className="font-bold uppercase tracking-widest" style={{ fontSize: `${vhToPx(2)}${vu}` }}>Nenhuma enquete ativa no momento</p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center opacity-40" style={{ fontSize: `${vhToPx(2)}${vu}` }}>Enquete desativada</div>
                   )}
                 </div>
               </div>

@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       ]);
 
     // Parallelise independent DB reads with timeout
-    const [settingsResult, progsResult] = await withTimeout(
+    const [settingsResult, progsResult, enquetesResult] = await withTimeout(
       Promise.all([
         supabase
           .from("user_settings")
@@ -122,12 +122,18 @@ Deno.serve(async (req) => {
           .select("id, nome, selo, thumb, capa, horario_inicio, horario_fim, dias_semana, apresentador_id, apresentadores_ids, tipo_programa")
           .eq("user_id", userId)
           .eq("ativo", true),
+        supabase
+          .from("enquetes_agendadas")
+          .select("*")
+          .eq("user_id", userId)
+          .order("data_enquete", { ascending: false }),
       ]),
-      "settings+progs"
+      "settings+progs+enquetes"
     );
 
     const settings = settingsResult.data;
     const progs = progsResult.data;
+    const enquetes = enquetesResult.data;
 
     let currentProgram = null;
     let sponsorLogos: any[] = [];
@@ -331,6 +337,7 @@ Deno.serve(async (req) => {
       accentColor,
       musicXmlUrl: (settings as any)?.music_xml_url || null,
       youtubeChatMessages: youtubeChatMessages.length > 0 ? youtubeChatMessages : null,
+      enquetes: enquetes || [],
     };
 
     // Store in cache
