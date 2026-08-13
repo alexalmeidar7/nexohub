@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
     if (channelId) {
       try {
         // Resolve current live video ID from channel
-        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
+        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live?_t=${Date.now()}`, {
           headers: { "User-Agent": "Mozilla/5.0" },
           signal: AbortSignal.timeout(4000),
         });
@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
     if (videoId) {
       try {
         console.log(`Fetching YouTube chat for discovered videoId: ${videoId}`);
-        const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}`, {
+        const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}&_t=${Date.now()}`, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
