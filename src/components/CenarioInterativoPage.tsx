@@ -2529,27 +2529,6 @@ export default function CenarioInterativoPage() {
 
                         {!weatherLoading && liveWeather && (
                           <div className="space-y-3">
-                            {config.weather.showCurrent && (
-                              <div className="rounded-lg p-3 space-y-2 border" style={{ background: subTabBg, borderColor: "rgba(255,255,255,0.05)" }}>
-                                <div className="flex items-center gap-3">
-                                  <span className="text-3xl">{getWIcon(liveWeather.current.code)}</span>
-                                  <div>
-                                    <div className="text-2xl font-bold">{liveWeather.current.temp}°C</div>
-                                    <div className="text-xs font-medium" style={{ color: mutedText }}>{getWLabel(liveWeather.current.code)}</div>
-                                  </div>
-                                </div>
-                                <div className="flex gap-4 text-xs" style={{ color: mutedText }}>
-                                  <span className="flex items-center gap-1"><Droplets size={12} /> {liveWeather.current.humidity}%</span>
-                                  {liveWeather.daily[0] && (
-                                    <>
-                                      <span className="flex items-center gap-1"><Thermometer size={12} /> {liveWeather.daily[0].min}° / {liveWeather.daily[0].max}°</span>
-                                      <span>🌧️ {liveWeather.daily[0].precip}%</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
                             {config.weather.showForecast3Days && (
                               <div className="space-y-2">
                                 <Label className="text-[10px] uppercase tracking-wider font-bold opacity-50 block px-1">Próximos Dias</Label>
