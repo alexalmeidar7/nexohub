@@ -239,72 +239,83 @@ Deno.serve(async (req) => {
       musicStartTime = dashItems.music_start_time || null;
     }
 
-    // ─── YouTube Chat data: scrape live chat if URL is provided ───
+    // ─── YouTube Chat data: scrape live chat from channel auto-discovery ───
     let youtubeChatMessages: { user: string; text: string; avatar?: string }[] = [];
-    const cenarioConfig = (settings as any)?.cenario_config as any;
-    const ytUrl = cenarioConfig?.chat?.youtubeVideoUrl;
+    
+    // Fetch empresa_config to get youtube_channel_id or legacy youtube URL
+    const { data: empresaConfig } = await withTimeout(
+      supabase
+        .from("empresa_config")
+        .select("youtube, youtube_channel_id")
+        .eq("user_id", userId)
+        .maybeSingle(),
+      "empresa_config"
+    );
 
-    if (ytUrl) {
+    let videoId: string | null = null;
+    const channelId = empresaConfig?.youtube_channel_id;
+    const youtubeUrl = empresaConfig?.youtube;
+
+    if (channelId) {
       try {
-        const m1 = ytUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
-        const m2 = ytUrl.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
-        const m3 = ytUrl.match(/\/live\/([a-zA-Z0-9_-]{11})/);
-        const videoId = m1?.[1] || m2?.[1] || m3?.[1];
+        // Resolve current live video ID from channel
+        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (r.ok) {
+          const text = await r.text();
+          const m = text.match(/\"videoId\":\"([a-zA-Z0-9_-]{11})\"/);
+          if (m?.[1]) videoId = m[1];
+        }
+      } catch (err) {
+        console.error("YouTube live ID discovery error:", err);
+      }
+    } else if (youtubeUrl) {
+      // Fallback to URL parsing if channel ID is not set
+      const m1 = youtubeUrl.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+      const m2 = youtubeUrl.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+      const m3 = youtubeUrl.match(/\/live\/([a-zA-Z0-9_-]{11})/);
+      videoId = m1?.[1] || m2?.[1] || m3?.[1];
+    }
 
-        if (videoId) {
-          console.log(`Fetching YouTube chat for videoId: ${videoId}`);
-          const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}`, {
-            headers: {
-              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
-              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-              "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
-            },
-            signal: AbortSignal.timeout(6000),
-          });
+    if (videoId) {
+      try {
+        console.log(`Fetching YouTube chat for discovered videoId: ${videoId}`);
+        const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}`, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+          },
+          signal: AbortSignal.timeout(6000),
+        });
 
-          if (ytResp.ok) {
-            const html = await ytResp.text();
-            
-            // Refined regex to capture message text and author name from the specific live chat HTML structure
-            // YouTube uses "addChatItemAction" in the initial data
-            const actionsMatch = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
-            
-            if (actionsMatch) {
-              console.log(`Found ${actionsMatch.length} chat actions`);
-              youtubeChatMessages = actionsMatch.map(act => {
-                const msgMatch = act.match(/\"text\":\"(.*?)\"/);
-                const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
-                
-                // Cleanup: handle escaped characters and common HTML entities
-                const text = msgMatch ? msgMatch[1].replace(/\\u0026/g, '&').replace(/\\"/g, '"') : "";
-                const user = authorMatch ? authorMatch[1].replace(/\\u0026/g, '&').replace(/\\"/g, '"') : "Usuário";
-                
-                return { user, text };
-              }).filter(m => m.text && m.text.length > 0 && !m.text.includes("Welcome to live chat"));
-              
-              // Only keep the last 20 messages
-              youtubeChatMessages = youtubeChatMessages.slice(-20);
-            } else {
-              // Try another common pattern for live chat runs
-              const runActions = html.match(/\"authorName\":\{.*?\"simpleText\":\"(.*?)\".*?\"runs\":\[\{.*?\"text\":\"(.*?)\"/g);
-              if (runActions) {
-                console.log(`Found ${runActions.length} run actions`);
-                youtubeChatMessages = runActions.map(act => {
-                  const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
-                  const msgMatch = act.match(/\"runs\":\[\{.*?\"text\":\"(.*?)\"/);
-                  
-                  const user = authorMatch ? authorMatch[1] : "Usuário";
-                  const text = msgMatch ? msgMatch[1] : "";
-                  return { user, text };
-                }).filter(m => m.text && m.text.length > 0);
-                
-                youtubeChatMessages = youtubeChatMessages.slice(-20);
-              }
-            }
-            
-            console.log(`Processed ${youtubeChatMessages.length} total messages`);
+        if (ytResp.ok) {
+          const html = await ytResp.text();
+          const actionsMatch = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
+          
+          if (actionsMatch) {
+            youtubeChatMessages = actionsMatch.map(act => {
+              const msgMatch = act.match(/\"text\":\"(.*?)\"/);
+              const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+              const text = msgMatch ? msgMatch[1].replace(/\\u0026/g, '&').replace(/\\"/g, '"') : "";
+              const user = authorMatch ? authorMatch[1].replace(/\\u0026/g, '&').replace(/\\"/g, '"') : "Usuário";
+              return { user, text };
+            }).filter(m => m.text && m.text.length > 0 && !m.text.includes("Welcome to live chat"));
+            youtubeChatMessages = youtubeChatMessages.slice(-20);
           } else {
-            console.error(`YouTube fetch failed with status: ${ytResp.status}`);
+            const runActions = html.match(/\"authorName\":\{.*?\"simpleText\":\"(.*?)\".*?\"runs\":\[\{.*?\"text\":\"(.*?)\"/g);
+            if (runActions) {
+              youtubeChatMessages = runActions.map(act => {
+                const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+                const msgMatch = act.match(/\"runs\":\[\{.*?\"text\":\"(.*?)\"/);
+                const user = authorMatch ? authorMatch[1] : "Usuário";
+                const text = msgMatch ? msgMatch[1] : "";
+                return { user, text };
+              }).filter(m => m.text && m.text.length > 0);
+              youtubeChatMessages = youtubeChatMessages.slice(-20);
+            }
           }
         }
       } catch (err) {
