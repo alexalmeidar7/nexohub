@@ -105,6 +105,7 @@ interface CenarioConfig {
   traffic: TrafficConfig;
   currency: CurrencyConfig;
   chat: ChatConfig;
+  enquete: { enabled: boolean; bgImage: string };
 }
 
 function buildHomeGradient(h: HomeConfig): string {
