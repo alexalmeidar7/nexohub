@@ -3092,13 +3092,16 @@ export default function CenarioInterativoPage() {
               {/* ═══ Chat ═══ */}
               <TabsContent value="chat" className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Ativar Chat YouTube Live</Label>
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">Habilitar Chat YouTube Live</Label>
+                    <p className="text-[10px]" style={{ color: mutedText }}>
+                      Identifica automaticamente se você tem uma live ativa no seu canal.
+                    </p>
+                  </div>
                   <Switch checked={config.chat.enabled} onCheckedChange={v => updateChat({ enabled: v })} />
                 </div>
                 {config.chat.enabled && (
                   <div className="space-y-3">
-                    <Label className="text-xs mb-1 block" style={{ color: mutedText }}>URL do vídeo/live do YouTube</Label>
-                    <Input placeholder="https://youtube.com/watch?v=..." value={config.chat.youtubeVideoUrl} onChange={e => updateChat({ youtubeVideoUrl: e.target.value })} className="text-sm" style={{ color: textColor, background: "var(--layout-page-bg, #ffffff)" }} />
                     <BgImageUpload value={config.chat.bgImage} onChange={v => updateChat({ bgImage: v })} mutedText={mutedText} userId={uid} category="chat" />
                   </div>
                 )}

@@ -251,15 +251,14 @@ export default function CenarioTela() {
     if (!effectiveUserId || activeTab !== "chat" || isUpdatingChat) return;
     setIsUpdatingChat(true);
     try {
-      const result = await fetchViaEdgeFunction(effectiveUserId, config.chat?.youtubeVideoUrl);
+      const result = await fetchViaEdgeFunction(effectiveUserId);
       if (result?.youtubeChatMessages && result.youtubeChatMessages.length > 0) {
         setChatMessages(prev => {
-          // Merge avoiding duplicates (based on text and user)
           const existingKeys = new Set(prev.map(m => `${m.user}:${m.text}`));
           const newOnes = result.youtubeChatMessages!.filter(m => !existingKeys.has(`${m.user}:${m.text}`));
           if (newOnes.length === 0) return prev;
           
-          const combined = [...prev, ...newOnes].slice(-50); // Keep last 50
+          const combined = [...prev, ...newOnes].slice(-50);
           return combined;
         });
       }
@@ -268,7 +267,7 @@ export default function CenarioTela() {
     } finally {
       setIsUpdatingChat(false);
     }
-  }, [effectiveUserId, activeTab, isUpdatingChat, config.chat?.youtubeVideoUrl, fetchViaEdgeFunction]);
+  }, [effectiveUserId, activeTab, isUpdatingChat, fetchViaEdgeFunction]);
 
   useEffect(() => {
     if (activeTab === "chat") {
