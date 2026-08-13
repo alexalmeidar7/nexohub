@@ -259,14 +259,20 @@ Deno.serve(async (req) => {
     if (channelId) {
       try {
         // Resolve current live video ID from channel
-        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
+        const r = await fetch(`https://www.youtube.com/channel/${channelId}/live?_t=${Date.now()}`, {
           headers: { "User-Agent": "Mozilla/5.0" },
           signal: AbortSignal.timeout(4000),
         });
         if (r.ok) {
           const text = await r.text();
           const m = text.match(/\"videoId\":\"([a-zA-Z0-9_-]{11})\"/);
-          if (m?.[1]) videoId = m[1];
+          if (m?.[1]) {
+            videoId = m[1];
+          } else {
+            // Secondary regex for videoId in case of different response structure
+            const m2 = text.match(/\\\"videoId\\\":\\\"([a-zA-Z0-9_-]{11})\\\"/);
+            if (m2?.[1]) videoId = m2[1];
+          }
         }
       } catch (err) {
         console.error("YouTube live ID discovery error:", err);
@@ -282,7 +288,7 @@ Deno.serve(async (req) => {
     if (videoId) {
       try {
         console.log(`Fetching YouTube chat for discovered videoId: ${videoId}`);
-        const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}`, {
+        const ytResp = await fetch(`https://www.youtube.com/live_chat?v=${videoId}&_t=${Date.now()}`, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
@@ -295,6 +301,20 @@ Deno.serve(async (req) => {
           const html = await ytResp.text();
           const actionsMatch = html.match(/\"addChatItemAction\":\{.*?\"text\":\"(.*?)\".*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
           
+          if (!actionsMatch) {
+            // Try another format for live chat actions
+            const moreActions = html.match(/\"addChatItemAction\":\{.*?\"runs\":\[\{.*?\"text\":\"(.*?)\".*?\].*?\"authorName\":\{.*?\"simpleText\":\"(.*?)\"/g);
+            if (moreActions) {
+              youtubeChatMessages = moreActions.map(act => {
+                const msgMatch = act.match(/\"runs\":\[\{.*?\"text\":\"(.*?)\"/);
+                const authorMatch = act.match(/\"simpleText\":\"(.*?)\"/);
+                const text = msgMatch ? msgMatch[1].replace(/\\u0026/gi, '&').replace(/\\"/g, '"') : "";
+                const user = authorMatch ? authorMatch[1].replace(/\\u0026/gi, '&').replace(/\\"/g, '"') : "Usuário";
+                return { user, text };
+              }).filter(m => m.text);
+            }
+          }
+
           if (actionsMatch) {
             youtubeChatMessages = actionsMatch.map(act => {
               const msgMatch = act.match(/\"text\":\"(.*?)\"/);
