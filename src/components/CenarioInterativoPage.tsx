@@ -3028,6 +3028,67 @@ export default function CenarioInterativoPage() {
                 )}
               </TabsContent>
 
+              <TabsContent value="enquete" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sm font-medium">Exibir Enquete no Cenário</Label>
+                  <Switch 
+                    checked={config.enquete?.enabled} 
+                    onCheckedChange={v => setConfig(prev => ({ ...prev, enquete: { ...prev.enquete, enabled: v } }))} 
+                  />
+                </div>
+                {config.enquete?.enabled && (
+                  <div className="space-y-4">
+                    <p className="text-xs" style={{ color: mutedText }}>
+                      A enquete configurada será exibida automaticamente quando estiver dentro do horário agendado.
+                    </p>
+                    
+                    {enquetes.length > 0 ? (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase tracking-wider font-bold" style={{ color: mutedText }}>Enquetes Agendadas</Label>
+                        <div className="grid gap-2">
+                          {enquetes.slice(0, 5).map(e => {
+                            const today = new Date().toISOString().split('T')[0];
+                            const isToday = e.data_enquete === today;
+                            return (
+                              <div key={e.id} className="p-3 rounded-xl border flex flex-col gap-1 transition-all" 
+                                   style={{ 
+                                     background: isToday ? "rgba(0,191,240,0.05)" : "white",
+                                     borderColor: isToday ? "#00BFF0" : "rgba(0,0,0,0.05)"
+                                   }}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full" 
+                                        style={{ 
+                                          background: isToday ? "#00BFF0" : "#64748B",
+                                          color: "white" 
+                                        }}>
+                                    {isToday ? "HOJE" : e.data_enquete.split('-').reverse().join('/')}
+                                  </span>
+                                  <span className="text-[10px] font-medium opacity-60">{e.horario_inicio} - {e.horario_fim}</span>
+                                </div>
+                                <p className="text-sm font-bold mt-1">{e.pergunta}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-black/5 rounded-xl border border-dashed border-black/10">
+                        <Tag className="mx-auto mb-2 opacity-20" size={32} />
+                        <p className="text-xs opacity-50">Nenhuma enquete agendada</p>
+                      </div>
+                    )}
+
+                    <BgImageUpload 
+                      value={config.enquete?.bgImage || ""} 
+                      onChange={v => setConfig(prev => ({ ...prev, enquete: { ...prev.enquete, bgImage: v } }))} 
+                      mutedText={mutedText} 
+                      userId={uid} 
+                      category="enquete" 
+                    />
+                  </div>
+                )}
+              </TabsContent>
+
               {/* ═══ Chat ═══ */}
               <TabsContent value="chat" className="space-y-4">
                 <div className="flex items-center justify-between">
