@@ -20,6 +20,20 @@ interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: strin
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; showMusicCover?: boolean; showProgramThumb?: boolean; colorButtonBgOff?: string; colorButtonBgOn?: string; colorButtonOff?: string; colorButtonOn?: string; colorClock?: string; colorDate?: string; colorMusicName?: string; colorMusicTitle?: string; colorASeguirLabel?: string; colorNextProgram?: string; colorProgressBar?: string; }
 interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; enquete: EnqueteConfig; chat: ChatConfig; }
 
+interface PublicCenarioPayload {
+  ok: boolean;
+  cenario_config: CenarioConfig;
+  currentProgram: any;
+  nextProgram: any;
+  sponsorLogos: any[];
+  musicData: any;
+  musicStartTime: number | null;
+  accentColor: string | null;
+  musicXmlUrl: string | null;
+  youtubeChatMessages: any[] | null;
+  enquetes?: any[];
+}
+
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
   const b = h.bgGradientColorB || "#16213e";
