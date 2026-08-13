@@ -356,7 +356,10 @@ export default function CenarioInterativoPage() {
   const [activeTab, setActiveTab] = useState("home");
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>([]);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    cenario1: true,
+    cenario2: true
+  });
   const [weatherSubTab, setWeatherSubTab] = useState("today");
   
   const [enquetes, setEnquetes] = useState<any[]>([]);
