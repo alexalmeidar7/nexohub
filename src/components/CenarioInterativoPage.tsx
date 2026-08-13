@@ -1785,6 +1785,12 @@ export default function CenarioInterativoPage() {
                 <TabsTrigger value="weather" className="text-xs gap-1 data-[state=active]:shadow-sm"><CloudSun size={14} /> Tempo</TabsTrigger>
                 <TabsTrigger value="traffic" className="text-xs gap-1 data-[state=active]:shadow-sm"><Car size={14} /> Trânsito</TabsTrigger>
                 <TabsTrigger value="currency" className="text-xs gap-1 data-[state=active]:shadow-sm"><DollarSign size={14} /> Cotação</TabsTrigger>
+                <TabsTrigger value="enquete" className="text-xs gap-1 data-[state=active]:shadow-sm relative">
+                  <Tag size={14} /> Enquete
+                  {enquetes.length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse" title="Enquetes disponíveis" />
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="chat" className="text-xs gap-1 data-[state=active]:shadow-sm"><MessageCircle size={14} /> Chat</TabsTrigger>
               </TabsList>
 
