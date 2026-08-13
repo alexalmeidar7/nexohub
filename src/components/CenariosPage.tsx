@@ -8,7 +8,7 @@ const CenariosEstudioPage = lazy(() => import("./CenariosEstudioTabs"));
 type Tab = "interativo" | "estudio";
 
 const TABS: { id: Tab; label: string; icon: typeof MonitorPlay }[] = [
-  { id: "interativo", label: "Cenário Interativo", icon: MonitorPlay },
+  { id: "interativo", label: "Cenário 1 e 2", icon: MonitorPlay },
   { id: "estudio", label: "Cenários Estúdio", icon: Tv },
 ];
 
