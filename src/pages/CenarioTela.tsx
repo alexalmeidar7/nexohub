@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CloudRain, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play, MapPin, Sun } from "lucide-react";
+import { Home, CloudSun, Car, DollarSign, MessageCircle, Thermometer, Droplets, CloudRain, CalendarDays, TrendingUp, TrendingDown, Minus, Loader2, ChevronUp, ChevronDown, Pen, Eraser, Clock, Music, Mic, Play, MapPin, Sun, Tag } from "lucide-react";
 import { WeatherIcon } from "@/components/WeatherIcons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,7 +18,7 @@ interface CurrencyConfig { enabled: boolean; currencies: string[]; bgImage: stri
 interface EnqueteConfig { enabled: boolean; bgImage: string; }
 interface ChatConfig { enabled: boolean; youtubeVideoUrl: string; bgImage: string; }
 interface HomeConfig { bgImage: string; bgGradient?: boolean; bgGradientColorA?: string; bgGradientColorB?: string; bgGradientType?: "linear" | "radial"; bgGradientAngle?: number; exceptionWords?: string; elementPositions?: Record<string, { x: number; y: number; scale: number }>; artistOverlayEnabled?: boolean; artistOverlayColor?: string; artistOverlayOpacity?: number; showMusicCover?: boolean; showProgramThumb?: boolean; colorButtonBgOff?: string; colorButtonBgOn?: string; colorButtonOff?: string; colorButtonOn?: string; colorClock?: string; colorDate?: string; colorMusicName?: string; colorMusicTitle?: string; colorASeguirLabel?: string; colorNextProgram?: string; colorProgressBar?: string; }
-interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; chat: ChatConfig; }
+interface CenarioConfig { city: string; useProgramThumbAsBg?: boolean; programThumbPosition?: string; thumbOverlayEnabled?: boolean; thumbOverlayColor?: string; thumbOverlayOpacity?: number; bgAlternateMode?: boolean; home: HomeConfig; weather: WeatherConfig; traffic: TrafficConfig; currency: CurrencyConfig; enquete: EnqueteConfig; chat: ChatConfig; }
 
 function buildHomeGradient(h: HomeConfig): string {
   const a = h.bgGradientColorA || "#1a1a2e";
@@ -34,6 +34,7 @@ const defaultConfig: CenarioConfig = {
   weather: { enabled: true, showCurrent: true, showForecast3Days: true, showSatellite: false, city: "", bgImage: "" },
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
+  enquete: { enabled: true, bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
 };
 
@@ -361,6 +362,7 @@ export default function CenarioTela() {
   const musicStartRef = useRef<number>(Date.now());
   const [musicElapsed, setMusicElapsed] = useState(0);
   const [nextProgram, setNextProgram] = useState<{ nome: string; selo?: string | null; horario_inicio: string; horario_fim: string } | null>(null);
+  const [enquetes, setEnquetes] = useState<any[]>([]);
 
   const musicXmlUrlRef = useRef<string | null>(null);
 
@@ -832,6 +834,7 @@ export default function CenarioTela() {
             setCurrentProgram(result.currentProgram);
             setSponsorLogos(result.sponsorLogos || []);
             setNextProgram(result.nextProgram || null);
+            if (result.enquetes) setEnquetes(result.enquetes);
           }
           if (result?.musicXmlUrl) musicXmlUrlRef.current = result.musicXmlUrl;
           if (result?.musicData?.titulo && result.musicData.titulo !== "Sem título") {
