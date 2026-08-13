@@ -156,18 +156,6 @@ interface LiveWeather {
   daily: { date: string; min: number; max: number; code: number; humidity: number; precip: number; rainMm: number; windMax: number }[];
 }
 
-type PublicCenarioPayload = {
-  ok: boolean;
-  cenario_config: any;
-  currentProgram: any;
-  nextProgram?: any;
-  sponsorLogos: any[];
-  musicData?: { titulo: string; artista: string; capa: string } | null;
-  musicStartTime?: number | null;
-  accentColor?: string | null;
-  musicXmlUrl?: string | null;
-  youtubeChatMessages?: { user: string; text: string; avatar?: string }[] | null;
-};
 
 const defaultMessages: { user: string; text: string; avatar?: string }[] = [];
 
