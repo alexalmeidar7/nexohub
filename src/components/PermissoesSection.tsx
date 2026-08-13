@@ -60,7 +60,7 @@ const MODULE_GROUPS = [
     items: [
       { key: "broadcast", label: "Broadcast" },
       { key: "logos", label: "Logos" },
-      { key: "cenario", label: "Cenário Interativo" },
+      { key: "cenario", label: "Cenário 1 e 2" },
       { key: "batalha", label: "Batalha Musical" },
       { key: "enquete", label: "Enquete" },
     ],

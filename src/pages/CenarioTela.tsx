@@ -163,7 +163,7 @@ export default function CenarioTela() {
   const [chatMessages, setChatMessages] = useState<{ user: string; text: string; avatar?: string }[]>(defaultMessages);
   const [isUpdatingChat, setIsUpdatingChat] = useState(false);
   const { user } = useAuth();
-  usePageTitle("NexoHub - Cenário Interativo");
+  usePageTitle("NexoHub - CENÁRIO 1");
   const uidFromUrl = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("uid") : null;
   const effectiveUserId = user?.id || uidFromUrl || null;
 
