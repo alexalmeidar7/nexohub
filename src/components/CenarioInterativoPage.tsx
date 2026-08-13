@@ -136,6 +136,7 @@ const defaultConfig: CenarioConfig = {
   traffic: { enabled: false, city: "", points: [], bgImage: "", lat: null, lon: null, zoom: 13 },
   currency: { enabled: true, currencies: ["USD", "EUR"], bgImage: "" },
   chat: { enabled: false, youtubeVideoUrl: "", bgImage: "" },
+  enquete: { enabled: true, bgImage: "" },
 };
 
 const CURRENCY_OPTIONS = [
