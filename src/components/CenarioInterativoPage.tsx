@@ -3144,18 +3144,19 @@ export default function CenarioInterativoPage() {
               <div className="flex items-center gap-2 ml-auto">
                 <button
                   type="button"
-                  title="Cenário interativo Externo"
-                  aria-label="Cenário interativo Externo"
+                  title="CENÁRIO 1"
+                  aria-label="CENÁRIO 1"
                   onClick={() => window.open(`/cenario-tela?tab=${activeTab}&weatherSubTab=${weatherSubTab}&uid=${user?.id || ""}`, "_blank")}
-                  className="h-9 w-9 rounded-full flex items-center justify-center transition-opacity hover:opacity-80 shadow-sm"
+                  className="h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-opacity hover:opacity-80 shadow-sm"
                   style={{ background: "var(--layout-header-bg, #0d0446)", color: "var(--layout-header-text, #fff)" }}
                 >
                   <ExternalLink size={15} />
+                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 1</span>
                 </button>
                 <button
                   type="button"
-                  title={`Cenário formato Full ${isFullWindowOpen ? "(aberto)" : ""}`}
-                  aria-label="Cenário formato Full"
+                  title="CENÁRIO 2"
+                  aria-label="CENÁRIO 2"
                   aria-pressed={isFullWindowOpen}
                   onClick={() => {
                     if (fullWindowRef.current && !fullWindowRef.current.closed) {
@@ -3168,13 +3169,14 @@ export default function CenarioInterativoPage() {
                       setIsFullWindowOpen(true);
                     }
                   }}
-                  className={`h-9 w-9 rounded-full flex items-center justify-center transition-all shadow-sm ${isFullWindowOpen ? "" : "hover:opacity-80"}`}
+                  className={`h-9 px-3 rounded-lg flex items-center justify-center gap-2 transition-all shadow-sm ${isFullWindowOpen ? "" : "hover:opacity-80"}`}
                   style={{
                     background: isFullWindowOpen ? "var(--layout-accent-color, #00BFF0)" : "var(--layout-header-bg, #0d0446)",
                     color: isFullWindowOpen ? "var(--layout-accent-color-foreground, #0d0446)" : "var(--layout-header-text, #fff)",
                   }}
                 >
                   <Maximize2 size={15} />
+                  <span className="text-xs font-bold whitespace-nowrap">CENÁRIO 2</span>
                 </button>
                 <button
                   type="button"
