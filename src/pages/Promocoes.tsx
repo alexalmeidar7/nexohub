@@ -1582,11 +1582,11 @@ export default function PromocoesKiosk() {
                     );
                   }
                   return (
-                    <div className="flex flex-col gap-4 w-full">
+                    <div className="flex flex-col w-full py-4">
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full mb-12 last:mb-0"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
