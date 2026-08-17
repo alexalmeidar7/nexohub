@@ -1290,7 +1290,7 @@ export default function PromocoesKiosk() {
 
             <div className="grid grid-cols-4 gap-4">
               {botoes.map(promo => {
-                const title = (promo.botao_url || "").toLowerCase();
+                const title = (promo.botao_url || promo.nome || "").toLowerCase();
                 const PromoIcon =
                   title.includes("prêmio") || title.includes("premio") ? Gift :
                   title.includes("pizza") ? Pizza :
