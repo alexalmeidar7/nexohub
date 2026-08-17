@@ -267,6 +267,18 @@ export default function PromocoesKiosk() {
       );
       setTestemunhais(activeTestemunhais);
 
+      // Add promotions to witness list for Locutor module if they are linked to the program
+      const activePromoTestemunhais = activePromos.map((p: any) => ({
+        id: `promo-${p.id}`,
+        programa_ids: p.programa_ids || [],
+        texto: `<p><strong>PROMOÇÃO: ${p.nome || p.botao_url || ""}</strong></p>${p.texto}${p.oferecimento ? `<p><small>Oferecimento: ${p.oferecimento}</small></p>` : ""}`,
+        data_inicio: p.data_inicio,
+        data_fim: p.data_fim,
+        imagem_url: p.imagem_url,
+        is_promo: true
+      }));
+      setTestemunhais(prev => [...prev, ...activePromoTestemunhais]);
+
       if (data.tela_promo_config) {
         setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
       }
@@ -339,6 +351,18 @@ export default function PromocoesKiosk() {
         t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
       );
       setTestemunhais(activeTestemunhais);
+
+      // Add promotions to witness list for Locutor module if they are linked to the program
+      const activePromoTestemunhais = activePromos.map((p: any) => ({
+        id: `promo-${p.id}`,
+        programa_ids: p.programa_ids || [],
+        texto: `<p><strong>PROMOÇÃO: ${p.nome || p.botao_url || ""}</strong></p>${p.texto}${p.oferecimento ? `<p><small>Oferecimento: ${p.oferecimento}</small></p>` : ""}`,
+        data_inicio: p.data_inicio,
+        data_fim: p.data_fim,
+        imagem_url: p.imagem_url,
+        is_promo: true
+      }));
+      setTestemunhais(prev => [...prev, ...activePromoTestemunhais]);
 
       const mapped = (progsData || []).map((p: any) => ({
         id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
