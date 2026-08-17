@@ -25,6 +25,7 @@ interface Promocao {
   oferecimento: string;
   data_inicio: string;
   data_fim: string;
+  nome?: string;
 }
 
 interface ProgramaGrade {
@@ -257,17 +258,13 @@ export default function PromocoesKiosk() {
         lon: data.weather_lon != null ? Number(data.weather_lon) : null,
       });
 
-      const today = new Date().toISOString().split("T")[0];
       const allPromos = data.promocoes || [];
       // If we need to filter by date in the future, we can do it here, but user wants them to appear "automatically"
       setPromocoes(allPromos);
-      const activeTestemunhais = (data.testemunhais || []).filter((t: any) => 
-        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
-      );
+      const activeTestemunhais = data.testemunhais || [];
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-      setTestemunhais(activeTestemunhais);
 
 
       if (data.tela_promo_config) {
@@ -333,16 +330,13 @@ export default function PromocoesKiosk() {
         }
       }
 
-      const today = new Date().toISOString().split("T")[0];
       const allPromos = promoData || [];
       setPromocoes(allPromos);
-      const activeTestemunhais = (testData || []).filter((t: any) => 
-        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
-      );
+      const activeTestemunhais = testData || [];
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-      setTestemunhais(activeTestemunhais);
+
 
 
       const mapped = (progsData || []).map((p: any) => ({
@@ -605,7 +599,8 @@ export default function PromocoesKiosk() {
 
   const allPromos = promocoes;
   const banners = allPromos.filter(p => p.imagem_url);
-  const botoes = allPromos.filter(p => p.botao_url);
+  // Se não tiver botão_url, usa o nome da promoção como fallback para exibir o botão
+  const botoes = allPromos.filter(p => p.botao_url || p.nome);
 
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -1288,7 +1283,7 @@ export default function PromocoesKiosk() {
 
             <div className="grid grid-cols-4 gap-4">
               {botoes.map(promo => {
-                const title = (promo.botao_url || "").toLowerCase();
+                const title = (promo.botao_url || promo.nome || "").toLowerCase();
                 const PromoIcon =
                   title.includes("prêmio") || title.includes("premio") ? Gift :
                   title.includes("pizza") ? Pizza :
@@ -1321,7 +1316,7 @@ export default function PromocoesKiosk() {
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
-                    <span className="truncate">{promo.botao_url}</span>
+                    <span className="truncate">{promo.botao_url || promo.nome}</span>
                   </div>
                 );
               })}
