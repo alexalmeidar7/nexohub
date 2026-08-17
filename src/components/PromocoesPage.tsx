@@ -300,55 +300,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             />
           </div>
 
-          <div className="relative">
-            <label style={labelStyle}>Programas (Selecione um ou mais)</label>
-            <button
-              type="button"
-              onClick={() => setShowProgramCombo(!showProgramCombo)}
-              style={{ ...pillInput, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <span className="truncate">
-                {form.programa_ids.length === 0 
-                  ? "Selecione os programas..." 
-                  : `${form.programa_ids.length} programa(s) selecionado(s)`}
-              </span>
-              <span className="text-[#00BFF0] ml-2">▼</span>
-            </button>
-            
-            {showProgramCombo && (
-              <>
-                <div 
-                  className="fixed inset-0 z-10" 
-                  onClick={() => setShowProgramCombo(false)}
-                />
-                <div className="absolute left-0 right-0 top-full mt-2 bg-white border-2 border-[#00BFF0] rounded-2xl p-2 z-20 max-h-60 overflow-y-auto shadow-xl">
-                  {programas.map(p => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        const next = form.programa_ids.includes(p.id) 
-                          ? form.programa_ids.filter(id => id !== p.id)
-                          : [...form.programa_ids, p.id];
-                        setForm({...form, programa_ids: next});
-                      }}
-                      className={`w-full text-left px-4 py-2 hover:bg-[#D6F4FB] rounded-xl flex items-center justify-between transition-colors group ${form.programa_ids.includes(p.id) ? 'bg-[#D6F4FB]/50 border-l-4 border-[#00BFF0]' : 'border-l-4 border-transparent'}`}
-                    >
-                      <span className={`text-xs font-semibold ${form.programa_ids.includes(p.id) ? 'text-[#00BFF0]' : 'text-[#0A2540]'}`}>
-                        {p.nome}
-                      </span>
-                      {form.programa_ids.includes(p.id) && <Check size={14} className="text-[#00BFF0]" />}
-                    </button>
-                  ))}
-                  {programas.length === 0 && (
-                    <div className="p-4 text-center text-gray-400 text-xs italic">
-                      Nenhum programa cadastrado
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
