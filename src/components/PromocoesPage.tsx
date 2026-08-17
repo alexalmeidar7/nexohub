@@ -399,9 +399,9 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold">Nome da Promoção</th>
-                  <th className="p-4 text-xs uppercase font-bold">Texto da Promoção</th>
-                  <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
+                  <th className="p-4 text-xs uppercase font-bold w-[25%]">Nome da Promoção</th>
+                  <th className="p-4 text-xs uppercase font-bold w-[20%]">Texto da Promoção</th>
+                  <th className="p-4 text-xs uppercase font-bold w-[15%]">Patrocínio</th>
                   <th className="p-4 text-xs uppercase font-bold">Validade</th>
                   <th className="p-4 text-xs uppercase font-bold text-center">Banner</th>
                   <th className="p-4 text-xs uppercase font-bold text-center">Banner L</th>
