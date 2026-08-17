@@ -1557,8 +1557,8 @@ export default function PromocoesKiosk() {
               </div>
 
 
-              {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-32 mr-[1px] flex flex-col items-center">
+              {/* Container principal sem scroll lateral, permitindo que os boxes individuais tenham scroll interno se necessário */}
+              <div className="flex-1 min-h-0 px-4 sm:px-8 pb-32 flex flex-col items-center">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
@@ -1572,17 +1572,17 @@ export default function PromocoesKiosk() {
                     );
                   }
                   return (
-                    <div className="flex flex-col w-full py-4">
+                    <div className="flex flex-col w-full py-4 h-full">
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full mb-12 last:mb-0"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full mb-12 last:mb-0 flex flex-col max-h-full"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
-                          <div className="h-1 w-full" style={{ backgroundColor: (t as any).is_promo ? "#00BFF0" : "var(--layout-accent-color, #a60101)" }} />
+                          <div className="h-1 w-full flex-shrink-0" style={{ backgroundColor: (t as any).is_promo ? "#00BFF0" : "var(--layout-accent-color, #a60101)" }} />
 
-                          <div className="p-6 sm:p-8">
+                          <div className="p-6 sm:p-8 overflow-y-auto promo-scroll min-h-0 flex-1">
                             {/* Imagem do testemunhal removida conforme solicitado */}
 
                             <div
