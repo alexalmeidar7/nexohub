@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return t;
     };
 
-    // Safety net: if loading is still true after 5s (reduced from 15s), force it off
+    // Safety net: if loading is still true after 5s, force it off
     addTimer(() => {
       if (mounted && loadingRef.current) {
         console.warn("Auth: safety timeout reached (5s), forcing load complete");
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
            updateAuth(lastGoodSessionRef.current);
         }
       }
-    }, 15000);
+    }, 5000);
 
     const fetchRole = async (userId: string): Promise<AppRole> => {
       try {
