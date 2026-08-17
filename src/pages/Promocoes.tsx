@@ -267,6 +267,19 @@ export default function PromocoesKiosk() {
       );
       setTestemunhais(activeTestemunhais);
 
+      // Add promotions to witness list for Locutor module if they are linked to the program
+      const activePromoTestemunhais = activePromos.map((p: any) => ({
+        id: `promo-${p.id}`,
+        programa_id: null,
+        programa_ids: p.programa_ids || [],
+        texto: `<p><strong>PROMOÇÃO: ${p.nome || p.botao_url || ""}</strong></p>${p.texto}${p.oferecimento ? `<p><small>Oferecimento: ${p.oferecimento}</small></p>` : ""}`,
+        data_inicio: p.data_inicio,
+        data_fim: p.data_fim,
+        imagem_url: p.imagem_url,
+        is_promo: true
+      }));
+      setTestemunhais(prev => [...prev, ...activePromoTestemunhais] as Testemunhal[]);
+
       if (data.tela_promo_config) {
         setTelaPromoConfig({ ...defaultTelaPromoConfig, ...data.tela_promo_config });
       }
@@ -339,6 +352,19 @@ export default function PromocoesKiosk() {
         t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
       );
       setTestemunhais(activeTestemunhais);
+
+      // Add promotions to witness list for Locutor module if they are linked to the program
+      const activePromoTestemunhais = activePromos.map((p: any) => ({
+        id: `promo-${p.id}`,
+        programa_id: null,
+        programa_ids: p.programa_ids || [],
+        texto: `<p><strong>PROMOÇÃO: ${p.nome || p.botao_url || ""}</strong></p>${p.texto}${p.oferecimento ? `<p><small>Oferecimento: ${p.oferecimento}</small></p>` : ""}`,
+        data_inicio: p.data_inicio,
+        data_fim: p.data_fim,
+        imagem_url: p.imagem_url,
+        is_promo: true
+      }));
+      setTestemunhais(prev => [...prev, ...activePromoTestemunhais] as Testemunhal[]);
 
       const mapped = (progsData || []).map((p: any) => ({
         id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
@@ -510,6 +536,9 @@ export default function PromocoesKiosk() {
     return Array.from(new Set(list));
   };
 
+
+  // Cada programa possui uma única citação vigente. Registros antigos duplicados
+  // não devem aparecer como novas citações: prevalece o texto atualizado por último.
   const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
     const today = new Date().toISOString().split("T")[0];
     const baseIds = new Set(prog.mergedIds || [prog.id]);
@@ -527,15 +556,18 @@ export default function PromocoesKiosk() {
       return matchesId && isWithinDate;
     });
 
-    // Cada programa possui uma única citação vigente. Registros antigos duplicados
-    // não devem aparecer como novas citações: prevalece o texto atualizado por último.
-    return matches
+    const standardTests = matches
+      .filter(t => !(t as any).is_promo)
       .sort((a, b) => {
         const aTime = Date.parse(a.updated_at || a.created_at || a.data_inicio || "") || 0;
         const bTime = Date.parse(b.updated_at || b.created_at || b.data_inicio || "") || 0;
         return bTime - aTime;
       })
       .slice(0, 1);
+
+    const promoTests = matches.filter(t => (t as any).is_promo);
+
+    return [...standardTests, ...promoTests];
   };
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
@@ -1540,9 +1572,14 @@ export default function PromocoesKiosk() {
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
-                          <div className="h-1 w-full" style={{ backgroundColor: "var(--layout-accent-color, #a60101)" }} />
+                          <div className="h-1 w-full" style={{ backgroundColor: (t as any).is_promo ? "#00BFF0" : "var(--layout-accent-color, #a60101)" }} />
 
                           <div className="p-6 sm:p-8">
+                            {(t as any).imagem_url && (
+                              <div className="mb-4 rounded-xl overflow-hidden border border-white/10">
+                                <img src={(t as any).imagem_url} alt="Banner" className="w-full object-contain max-h-[300px]" />
+                              </div>
+                            )}
                             <div
                               className="max-w-none [&_*]:!bg-transparent [&_p]:!my-0 [&_p+p]:!mt-[0.6em] [&_p:empty]:!min-h-[0.9em] [&_p>br:only-child]:!block [&_ul]:!my-[0.6em] [&_ol]:!my-[0.6em] [&_li]:!mb-[0.25em] ql-editor !p-0 whitespace-pre-wrap break-words"
                               style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white", wordBreak: "keep-all", overflowWrap: "anywhere", hyphens: "none" }}
