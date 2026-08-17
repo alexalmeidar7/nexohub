@@ -380,16 +380,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                 )}
               </div>
             </div>
-            <div>
-              <label style={labelStyle}>URL do Botão (Opcional)</label>
-              <input 
-                type="text" 
-                style={pillInput} 
-                value={form.botao_url} 
-                onChange={(e) => setForm({ ...form, botao_url: e.target.value })}
-                placeholder="Ex: https://wa.me/..."
-              />
-            </div>
           </div>
 
           <div className="flex gap-2 pt-2">
