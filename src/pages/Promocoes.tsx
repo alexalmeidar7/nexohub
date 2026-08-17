@@ -258,10 +258,9 @@ export default function PromocoesKiosk() {
       });
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (data.promocoes || []).filter((p: any) => 
-        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
-      );
-      setPromocoes(activePromos);
+      const allPromos = data.promocoes || [];
+      // If we need to filter by date in the future, we can do it here, but user wants them to appear "automatically"
+      setPromocoes(allPromos);
       const activeTestemunhais = (data.testemunhais || []).filter((t: any) => 
         t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
       );
@@ -335,10 +334,8 @@ export default function PromocoesKiosk() {
       }
 
       const today = new Date().toISOString().split("T")[0];
-      const activePromos = (promoData || []).filter((p: any) => 
-        p.data_inicio && p.data_fim && p.data_inicio <= today && p.data_fim >= today
-      );
-      setPromocoes(activePromos);
+      const allPromos = promoData || [];
+      setPromocoes(allPromos);
       const activeTestemunhais = (testData || []).filter((t: any) => 
         t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
       );
