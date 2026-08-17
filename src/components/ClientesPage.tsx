@@ -311,76 +311,164 @@ export default function ClientesPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead className="font-bold text-slate-700">Razão Social</TableHead>
-              <TableHead className="font-bold text-slate-700">CNPJ</TableHead>
-              <TableHead className="font-bold text-slate-700">Telefone</TableHead>
-              <TableHead className="font-bold text-slate-700">Executiva Resp.</TableHead>
-              <TableHead className="font-bold text-slate-700">Eventos Contratados</TableHead>
-              <TableHead className="text-right"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtrados.map((cliente, idx) => (
-              <TableRow key={cliente.id || idx} className="hover:bg-slate-50/50 transition-colors">
-                <TableCell className="font-medium text-slate-800">
-                  <div className="flex items-center gap-3">
-                    {cliente.logo_url ? (
-                      <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200">
-                        <img src={cliente.logo_url} alt={cliente.nome || ""} className="w-full h-full object-contain" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
-                        <Building2 size={16} />
-                      </div>
-                    )}
-                    {cliente.nome}
-                  </div>
-                </TableCell>
-                <TableCell className="text-slate-600 text-xs">{cliente.cnpj}</TableCell>
-                <TableCell className="text-slate-600 text-xs">{cliente.telefone_comercial}</TableCell>
-                <TableCell className="text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <UserCog size={14} className="text-slate-400" />
-                    {cliente.executiva_venda || "—"}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-700 text-[10px] font-bold uppercase">
-                    <Activity size={12} />
-                    {getEventosCliente(cliente.nome)} Blitz/Eventos
-                  </span>
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleEdit(cliente)}
-                      className="rounded-full text-slate-400 hover:text-cyan-600"
+      <section
+        style={{
+          background: "#D6F4FB",
+          borderRadius: 28,
+          padding: "20px 24px 28px",
+          border: "1px solid #E5F5FB",
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.04)",
+        }}
+      >
+        <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+          <div className="flex items-center gap-2" style={{ color: "#0A2540" }}>
+            <Building2 size={18} style={{ color: "#00BFF0" }} />
+            <h3 style={{ fontSize: 14, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+              Clientes Cadastrados
+            </h3>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: "#D6F4FB",
+                color: "#0A2540",
+                padding: "3px 12px",
+                borderRadius: 999,
+              }}
+            >
+              {filtrados.length}
+            </span>
+          </div>
+
+          <div style={{ position: "relative" }}>
+            <Search size={14} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#00BFF0" }} />
+            <input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder="Buscar razão social ou CNPJ..."
+              style={{
+                width: 360,
+                height: 40,
+                borderRadius: 999,
+                background: "#FFFFFF",
+                border: "2px solid #00BFF0",
+                padding: "0 20px 0 40px",
+                fontFamily: "'Montserrat', sans-serif",
+                fontSize: 12,
+                color: "#0A2540",
+                outline: "none",
+              }}
+            />
+          </div>
+        </div>
+
+        {filtrados.length === 0 ? (
+          <p style={{ fontSize: 13, color: "#64748B", textAlign: "center", padding: "40px 0", fontFamily: "'Montserrat', sans-serif" }}>
+            Nenhum cliente encontrado.
+          </p>
+        ) : (
+          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #D6F4FB" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+                  {["Razão Social", "CNPJ", "Telefone", "Executiva Resp.", "Blitz/Eventos", "Ações"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: h === "Ações" ? "right" : "left",
+                        fontWeight: 800,
+                        letterSpacing: 1.2,
+                        textTransform: "uppercase",
+                        fontSize: 10,
+                        whiteSpace: "nowrap",
+                        position: h === "Ações" ? "sticky" : undefined,
+                        right: h === "Ações" ? 0 : undefined,
+                        background: h === "Ações" ? "#00BFF0" : undefined,
+                        zIndex: h === "Ações" ? 2 : undefined,
+                      }}
                     >
-                      <UserCog size={16} />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="rounded-full text-slate-400 hover:text-red-500">
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filtrados.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-slate-400">
-                  Nenhum cliente encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtrados.map((cliente, idx) => (
+                  <tr
+                    key={cliente.id || idx}
+                    style={{
+                      background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                      color: "#0A2540",
+                    }}
+                  >
+                    <td style={{ padding: "12px 14px", minWidth: 200, fontWeight: 700, fontSize: 13 }}>
+                      {cliente.nome}
+                    </td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{cliente.cnpj}</td>
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>{cliente.telefone_comercial}</td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <div className="flex items-center gap-2">
+                        <UserCog size={14} className="text-slate-400" />
+                        {cliente.executiva_venda || "—"}
+                      </div>
+                    </td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 6,
+                          padding: "4px 10px",
+                          borderRadius: 999,
+                          background: "#D6F4FB",
+                          color: "#0A2540",
+                          fontSize: 10,
+                          fontWeight: 800,
+                          letterSpacing: 0.6,
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        <Activity size={12} />
+                        {getEventosCliente(cliente.nome)} Eventos
+                      </span>
+                    </td>
+                    <td
+                      style={{
+                        padding: "12px 14px",
+                        textAlign: "right",
+                        position: "sticky",
+                        right: 0,
+                        background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                        zIndex: 1,
+                      }}
+                    >
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleEdit(cliente)}
+                          className="rounded-full text-slate-400 hover:text-cyan-600 h-8 w-8"
+                        >
+                          <UserCog size={16} />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="rounded-full text-slate-400 hover:text-red-500 h-8 w-8"
+                        >
+                          <Trash2 size={16} />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
     </div>
   );
 }
