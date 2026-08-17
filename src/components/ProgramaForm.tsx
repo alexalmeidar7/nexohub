@@ -1021,23 +1021,16 @@ export default function ProgramaForm() {
         }}
       >
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => setFormOpen((v) => !v)}
-            style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
+          <div
+            style={{ display: "inline-flex", alignItems: "center", gap: 12, background: "transparent", border: "none", padding: 0 }}
           >
             <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 999, background: CYAN, color: "#FFFFFF" }}>
-              {formOpen ? <ChevronDown size={18} /> : <Plus size={18} />}
+              <Plus size={18} />
             </span>
             <h3 style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: DARK, textTransform: "uppercase", margin: 0 }}>
               {editingId ? "Editar Programa" : "Cadastro de Programa"}
             </h3>
-            {!formOpen && !editingId && (
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748B", letterSpacing: 1, textTransform: "uppercase" }}>
-                Clique para expandir
-              </span>
-            )}
-          </button>
+          </div>
           {formOpen && (
             <div className="flex items-center gap-3 flex-wrap">
               {/* Ativo Toggle */}
