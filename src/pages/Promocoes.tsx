@@ -1493,7 +1493,17 @@ export default function PromocoesKiosk() {
       </Dialog>
 
       {/* Modal de Programação */}
-      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
+      <Dialog open={!!selectedProgram} onOpenChange={(open) => { 
+        if (!open) closeProgramModal(); 
+        else {
+          // Reset scroll to top when opening the modal
+          setTimeout(() => {
+            if (programModalScrollRef.current) {
+              programModalScrollRef.current.scrollTop = 0;
+            }
+          }, 0);
+        }
+      }}>
         <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-12 [&>button]:h-12 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-[0_0_18px_rgba(255,255,255,0.35)] [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:hover:shadow-[0_0_22px_rgba(239,68,68,0.55)] [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button]:border-2 [&>button]:border-white/90 [&>button_svg]:w-6 [&>button_svg]:h-6" style={{ backgroundColor: "#111111" }}>
           {/* Botões de ajuste de fonte ao lado esquerdo do botão fechar */}
           <div className="absolute top-3 right-16 z-50 flex items-center gap-1.5">
