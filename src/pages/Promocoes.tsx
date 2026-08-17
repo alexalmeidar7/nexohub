@@ -1463,8 +1463,7 @@ export default function PromocoesKiosk() {
               style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
-                  .replace(/color:\s*rgb\(\s*0[\s,]+0[\s,]+0\s*\)/gi, "color: white")
-                  .replace(/color:\s*#000(?:000)?/gi, "color: white"), {
+                  .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white"), {
                   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
                   ALLOWED_ATTR: ['style', 'class']
                 }),
