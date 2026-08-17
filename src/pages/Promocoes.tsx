@@ -1568,7 +1568,7 @@ export default function PromocoesKiosk() {
 
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px] flex flex-col items-center">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-32 mr-[1px] flex flex-col items-center">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
@@ -1582,11 +1582,11 @@ export default function PromocoesKiosk() {
                     );
                   }
                   return (
-                    <div className="flex flex-col gap-4 w-full">
+                    <div className="flex flex-col w-full py-4">
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full mb-12 last:mb-0"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
