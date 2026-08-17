@@ -1597,6 +1597,8 @@ export default function PromocoesKiosk() {
                               }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
+                                  .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
+                                  .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
                                   .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
                                   .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
                                   .replace(/font-size\s*:\s*[^;\"]+;?/gi, ""), {
