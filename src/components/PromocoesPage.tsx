@@ -196,6 +196,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       return;
     }
 
+
     toast({ title: editingId ? "Promoção atualizada" : "Promoção cadastrada" });
     reset();
     loadData();

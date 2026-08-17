@@ -847,6 +847,8 @@ export default function PromocoesKiosk() {
   }
 
 
+
+
   return (
     <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
       <style>{`
