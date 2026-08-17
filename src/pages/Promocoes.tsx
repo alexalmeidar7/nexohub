@@ -1608,11 +1608,11 @@ export default function PromocoesKiosk() {
                 })()}
 
               </div>
+            </div>
           </div>
         </DialogContent>
-
-
       </Dialog>
     </div>
   );
 }
+
