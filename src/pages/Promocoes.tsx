@@ -1599,9 +1599,7 @@ export default function PromocoesKiosk() {
                                 __html: DOMPurify.sanitize(t.texto
                                   .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
                                   .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
-                                  .replace(/font-size\s*:\s*[^;\"]+;?/gi, "")
-                                  .replace(/line-height\s*:\s*[^;\"]+;?/gi, "")
-                                  .replace(/margin-(?:top|bottom)\s*:\s*[^;\"]+;?/gi, ""), {
+                                  .replace(/font-size\s*:\s*[^;\"]+;?/gi, ""), {
                                   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
                                   ALLOWED_ATTR: ['style', 'class']
                                 }),
