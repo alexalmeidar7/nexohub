@@ -1436,7 +1436,17 @@ export default function PromocoesKiosk() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => { 
+        if (!open) closePromoModal(); 
+        else {
+          // Reset scroll to top when opening the modal
+          setTimeout(() => {
+            if (modalScrollRef.current) {
+              modalScrollRef.current.scrollTop = 0;
+            }
+          }, 0);
+        }
+      }}>
         <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
@@ -1493,7 +1503,17 @@ export default function PromocoesKiosk() {
       </Dialog>
 
       {/* Modal de Programação */}
-      <Dialog open={!!selectedProgram} onOpenChange={(open) => { if (!open) closeProgramModal(); }}>
+      <Dialog open={!!selectedProgram} onOpenChange={(open) => { 
+        if (!open) closeProgramModal(); 
+        else {
+          // Reset scroll to top when opening the modal
+          setTimeout(() => {
+            if (programModalScrollRef.current) {
+              programModalScrollRef.current.scrollTop = 0;
+            }
+          }, 0);
+        }
+      }}>
         <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-12 [&>button]:h-12 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-[0_0_18px_rgba(255,255,255,0.35)] [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:hover:shadow-[0_0_22px_rgba(239,68,68,0.55)] [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button]:border-2 [&>button]:border-white/90 [&>button_svg]:w-6 [&>button_svg]:h-6" style={{ backgroundColor: "#111111" }}>
           {/* Botões de ajuste de fonte ao lado esquerdo do botão fechar */}
           <div className="absolute top-3 right-16 z-50 flex items-center gap-1.5">
@@ -1548,12 +1568,12 @@ export default function PromocoesKiosk() {
 
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px]">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px] flex flex-col items-center">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
                     return (
-                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center w-full">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
                           <MessageSquareQuote size={22} style={{ color: "rgba(255,255,255,0.3)" }} />
                         </div>
@@ -1562,11 +1582,11 @@ export default function PromocoesKiosk() {
                     );
                   }
                   return (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 w-full">
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
