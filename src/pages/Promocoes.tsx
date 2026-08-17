@@ -258,13 +258,10 @@ export default function PromocoesKiosk() {
         lon: data.weather_lon != null ? Number(data.weather_lon) : null,
       });
 
-      const today = new Date().toISOString().split("T")[0];
       const allPromos = data.promocoes || [];
       // If we need to filter by date in the future, we can do it here, but user wants them to appear "automatically"
       setPromocoes(allPromos);
-      const activeTestemunhais = (data.testemunhais || []).filter((t: any) => 
-        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
-      );
+      const activeTestemunhais = data.testemunhais || [];
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
