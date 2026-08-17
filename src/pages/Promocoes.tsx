@@ -1436,7 +1436,17 @@ export default function PromocoesKiosk() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!selectedPromo} onOpenChange={(open) => { if (!open) closePromoModal(); }}>
+      <Dialog open={!!selectedPromo} onOpenChange={(open) => { 
+        if (!open) closePromoModal(); 
+        else {
+          // Reset scroll to top when opening the modal
+          setTimeout(() => {
+            if (modalScrollRef.current) {
+              modalScrollRef.current.scrollTop = 0;
+            }
+          }, 0);
+        }
+      }}>
         <DialogContent className="promo-text-force-white border-zinc-800 text-white max-w-2xl w-[95vw] sm:w-full h-[85vh] sm:h-[80vh] overflow-hidden flex flex-col p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-9 [&>button]:h-9 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-lg [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button_svg]:w-5 [&>button_svg]:h-5" style={{ backgroundColor: "#111111" }}>
           {/* Banner fixo no topo com padding */}
           {selectedPromo?.imagem_url && (
