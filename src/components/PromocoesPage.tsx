@@ -204,31 +204,36 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     loadData();
   };
 
-  const handleEdit = (item: Promocao) => {
-    // Determine the program IDs, handling null/undefined correctly
-    const itemProgIds = Array.isArray(item.programa_ids) ? [...item.programa_ids] : [];
+  const handleEdit = async (item: Promocao) => {
+    // Re-read the selected row so consecutive edits never reuse stale list state.
+    const { data: freshItem, error } = await supabase
+      .from("promocoes")
+      .select("*")
+      .eq("id", item.id)
+      .eq("user_id", ownerId ?? "")
+      .maybeSingle();
+
+    if (error) {
+      toast({ title: "Erro ao carregar a promoção", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    const selectedItem = (freshItem ?? item) as Promocao;
+    const itemProgIds = Array.isArray(selectedItem.programa_ids) ? [...selectedItem.programa_ids] : [];
     
-    // Set editing ID first to switch form title
-    setEditingId(item.id);
-    
-    // Explicitly update the form state with the item data
+    setEditingId(selectedItem.id);
     setForm({
-      nome: item.nome || "",
-      texto: item.texto || "",
-      oferecimento: item.oferecimento || "",
-      data_inicio: item.data_inicio,
-      data_fim: item.data_fim,
-      imagem_url: item.imagem_url || "",
-      banner_l_url: item.banner_l_url || "",
+      nome: selectedItem.nome || "",
+      texto: selectedItem.texto || "",
+      oferecimento: selectedItem.oferecimento || "",
+      data_inicio: selectedItem.data_inicio,
+      data_fim: selectedItem.data_fim,
+      imagem_url: selectedItem.imagem_url || "",
+      banner_l_url: selectedItem.banner_l_url || "",
       programa_ids: itemProgIds,
     });
     
-    // Close program selector if it was open
     setShowProgramCombo(false);
-    
-    console.log("Editing promotion ID:", item.id);
-    console.log("Loaded program IDs:", itemProgIds);
-    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
