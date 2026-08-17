@@ -402,7 +402,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
               <thead>
                 <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold">Programa</th>
                   <th className="p-4 text-xs uppercase font-bold">Nome da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Texto da Promoção</th>
                   <th className="p-4 text-xs uppercase font-bold">Patrocínio</th>
@@ -415,22 +414,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
-                    <td className="p-4 text-xs text-[#0A2540]/70">
-                      <div className="flex flex-wrap gap-1">
-                        {item.programa_ids && item.programa_ids.length > 0 ? (
-                          item.programa_ids.map(pid => {
-                            const prog = programas.find(p => p.id === pid);
-                            return prog ? (
-                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full">
-                                {prog.nome}
-                              </span>
-                            ) : null;
-                          })
-                        ) : (
-                          <span className="text-gray-400 italic">Nenhum</span>
-                        )}
-                      </div>
-                    </td>
                     <td className="p-4 text-sm font-bold text-[#0A2540]">
                       {item.nome || "Sem Nome"}
                     </td>
