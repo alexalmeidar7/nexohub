@@ -283,14 +283,6 @@ export default function ClientesPage() {
               >
                 Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : new Date().toLocaleDateString("pt-BR")}</span>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => { setNovoOpen(false); setEditingId(null); }} 
-                className="rounded-full h-8 w-8 text-slate-400 hover:bg-white/50"
-              >
-                <X size={20} />
-              </Button>
             </div>
           </div>
 
