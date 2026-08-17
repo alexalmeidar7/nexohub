@@ -560,8 +560,40 @@ export default function PromocoesKiosk() {
         const aTime = Date.parse(a.updated_at || a.created_at || a.data_inicio || "") || 0;
         const bTime = Date.parse(b.updated_at || b.created_at || b.data_inicio || "") || 0;
         return bTime - aTime;
+      });
+  };
+
+  // Cada programa possui uma única citação vigente. Registros antigos duplicados
+  // não devem aparecer como novas citações: prevalece o texto atualizado por último.
+  const getTestemunhaisForProgram = (prog: ProgramaGrade) => {
+    const today = new Date().toISOString().split("T")[0];
+    const baseIds = new Set(prog.mergedIds || [prog.id]);
+    // Inclui todos os IDs de programas com o mesmo nome normalizado (grade duplicada)
+    const key = normalizeProgramName(prog.nome);
+    for (const p of programas) {
+      if (normalizeProgramName(p.nome) === key) baseIds.add(p.id);
+    }
+
+    const matches = testemunhais.filter(t => {
+      const tIds = getTestemunhalProgramIds(t);
+      if (tIds.length === 0) return false;
+      const matchesId = tIds.some(id => baseIds.has(id));
+      const isWithinDate = t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today;
+      return matchesId && isWithinDate;
+    });
+
+    const standardTests = matches
+      .filter(t => !(t as any).is_promo)
+      .sort((a, b) => {
+        const aTime = Date.parse(a.updated_at || a.created_at || a.data_inicio || "") || 0;
+        const bTime = Date.parse(b.updated_at || b.created_at || b.data_inicio || "") || 0;
+        return bTime - aTime;
       })
       .slice(0, 1);
+
+    const promoTests = matches.filter(t => (t as any).is_promo);
+
+    return [...standardTests, ...promoTests];
   };
 
   // Mapa global nome-normalizado -> capa preferida (primeira não-vazia encontrada em todos os programas)
