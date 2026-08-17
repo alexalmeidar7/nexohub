@@ -1548,12 +1548,12 @@ export default function PromocoesKiosk() {
 
 
               {/* Testemunhais com scroll, alinhado ao X */}
-              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px]">
+              <div ref={programModalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-8 pb-8 mr-[1px] flex flex-col items-center">
                 {(() => {
                   const tests = selectedProgram ? getTestemunhaisForProgram(selectedProgram) : [];
                   if (tests.length === 0) {
                     return (
-                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
+                      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center w-full">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: "rgba(255,255,255,0.06)" }}>
                           <MessageSquareQuote size={22} style={{ color: "rgba(255,255,255,0.3)" }} />
                         </div>
@@ -1562,11 +1562,11 @@ export default function PromocoesKiosk() {
                     );
                   }
                   return (
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 w-full">
                       {tests.map((t) => (
                         <div
                           key={t.id}
-                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl"
+                          className="relative rounded-2xl overflow-hidden border border-white/10 shadow-xl w-full"
                           style={{ backgroundColor: "#1a1a1a" }}
                         >
                           {/* Barra de destaque no topo */}
