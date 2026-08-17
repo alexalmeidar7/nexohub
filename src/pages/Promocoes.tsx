@@ -265,7 +265,6 @@ export default function PromocoesKiosk() {
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-      setTestemunhais(activeTestemunhais);
 
 
       if (data.tela_promo_config) {
