@@ -843,15 +843,9 @@ export default function PromocoesKiosk() {
     return <Navigate to="/telapromo" replace />;
   }
   if (loading) {
-    console.log("PromocoesPage (Locutor) loading state active...");
     return <PromoSkeleton />;
   }
 
-  console.log("PromocoesPage (Locutor) render:", { 
-    totalPromos: promocoes.length, 
-    banners: banners.length, 
-    botoes: botoes.length 
-  });
 
 
 
