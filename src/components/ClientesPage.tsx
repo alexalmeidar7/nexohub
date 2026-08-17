@@ -86,7 +86,7 @@ export default function ClientesPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [busca, setBusca] = useState("");
   const [criando, setCriando] = useState(false);
-  const [novoOpen, setNovoOpen] = useState(false);
+  const [novoOpen, setNovoOpen] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [novo, setNovo] = useState({
     nome: "",
