@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { 
   Building2, Search, Users, Mail, Phone, Calendar, 
   UserCog, Trash2, Plus, Loader2, X, MapPin, 
-  Briefcase, Activity 
+  Briefcase, Activity, Save 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -283,14 +283,6 @@ export default function ClientesPage() {
               >
                 Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : new Date().toLocaleDateString("pt-BR")}</span>
               </div>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => { setNovoOpen(false); setEditingId(null); }} 
-                className="rounded-full h-8 w-8 text-slate-400 hover:bg-white/50"
-              >
-                <X size={20} />
-              </Button>
             </div>
           </div>
 
@@ -351,34 +343,58 @@ export default function ClientesPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => { setNovoOpen(false); setEditingId(null); }} 
-              className="rounded-full px-8 border-cyan-500 text-cyan-500 hover:bg-cyan-50 font-bold uppercase tracking-wider text-[11px] h-11"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleSave} 
+          <div className="mt-8 flex items-center justify-end gap-3">
+            {editingId && (
+              <button
+                onClick={() => { setNovoOpen(false); setEditingId(null); }}
+                style={{
+                  height: 44,
+                  padding: "0 22px",
+                  borderRadius: 999,
+                  background: "#FFFFFF",
+                  border: `2px solid ${CYAN}`,
+                  color: DARK,
+                  fontWeight: 700,
+                  fontSize: 12,
+                  letterSpacing: 1.5,
+                  textTransform: "uppercase",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <X size={16} /> Cancelar
+              </button>
+            )}
+            <button
+              onClick={handleSave}
               disabled={criando}
               style={{
                 height: 44,
+                padding: "0 28px",
                 borderRadius: 999,
                 background: LIME,
+                border: "none",
                 color: DARK,
                 fontWeight: 800,
                 fontSize: 12,
-                letterSpacing: 1,
+                letterSpacing: 2,
                 textTransform: "uppercase",
-                padding: "0 32px",
-                border: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                cursor: "pointer",
               }}
-              className="hover:opacity-90 transition-opacity"
+              className="hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              {criando && <Loader2 className="animate-spin mr-2" size={18} />}
+              {criando ? (
+                <Loader2 className="animate-spin" size={18} />
+              ) : (
+                <Save size={18} />
+              )}
               {editingId ? "Atualizar Dados" : "Salvar Cliente"}
-            </Button>
+            </button>
           </div>
         </section>
       )}
