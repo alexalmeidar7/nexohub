@@ -263,14 +263,12 @@ function WeatherBox({ weatherCity, weatherLat, weatherLon }: Props) {
                 </div>
                 
                 {humidity != null && (
-                  <div className="bg-white/5 rounded-lg p-1.5 flex flex-col items-center justify-center border border-white/5">
-                    <span className="text-[8px] uppercase font-bold opacity-40 mb-0.5">Umidade</span>
+                  <div 
+                    className={`rounded-lg p-1.5 flex flex-col items-center justify-center border transition-all duration-500 ${humidity < 30 ? 'bg-[#8B0000] border-red-500/50 animate-pulse' : 'bg-white/5 border-white/5'}`}
+                  >
+                    <span className={`text-[8px] uppercase font-bold mb-0.5 ${humidity < 30 ? 'text-white/60' : 'opacity-40'}`}>Umidade</span>
                     <div 
-                      className="flex items-center gap-1 text-[10px] font-bold"
-                      style={{ 
-                        color: humidity < 40 ? "#FF4D4D" : "inherit",
-                        animation: humidity < 40 ? "promo-weather-blink 1s steps(2, start) infinite" : "none",
-                      }}
+                      className="flex items-center gap-1 text-[10px] font-bold text-white"
                     >
                       <Wind size={9} /> {humidity}%
                     </div>
