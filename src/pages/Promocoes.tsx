@@ -605,7 +605,8 @@ export default function PromocoesKiosk() {
 
   const allPromos = promocoes;
   const banners = allPromos.filter(p => p.imagem_url);
-  const botoes = allPromos.filter(p => p.botao_url);
+  // Se não tiver botão_url, usa o nome da promoção como fallback para exibir o botão
+  const botoes = allPromos.filter(p => p.botao_url || p.nome);
 
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
