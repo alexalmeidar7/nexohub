@@ -84,10 +84,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Promocao[]>([]);
-  const [programas, setProgramas] = useState<{ id: string; nome: string }[]>([]);
+  
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [showProgramCombo, setShowProgramCombo] = useState(false);
+  
   const [form, setForm] = useState({
     nome: "",
     texto: "",
@@ -106,12 +106,9 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const loadData = async () => {
     if (!ownerId) return;
     setLoading(true);
-    const [ { data: promosData }, { data: progsData } ] = await Promise.all([
-      supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
-      supabase.from("programas").select("id, nome").eq("user_id", ownerId).eq("ativo", true)
-    ]);
+    const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
     if (promosData) setItems(promosData as Promocao[]);
-    if (progsData) setProgramas(progsData);
+    
     setLoading(false);
   };
 
@@ -233,7 +230,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       programa_ids: itemProgIds,
     });
     
-    setShowProgramCombo(false);
+    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
