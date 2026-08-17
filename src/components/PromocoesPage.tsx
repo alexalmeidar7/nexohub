@@ -96,6 +96,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     imagem_url: "",
     banner_l_url: "",
+    botao_url: "",
     programa_ids: [] as string[],
   });
   const [uploading1, setUploading1] = useState(false);
@@ -125,6 +126,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: "",
       banner_l_url: "",
+      botao_url: "",
       programa_ids: [],
     });
     setEditingId(null);
@@ -181,6 +183,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: form.data_fim,
       imagem_url: form.imagem_url,
       banner_l_url: form.banner_l_url,
+      botao_url: form.botao_url,
       programa_ids: form.programa_ids,
     };
 
@@ -228,6 +231,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: selectedItem.data_fim,
       imagem_url: selectedItem.imagem_url || "",
       banner_l_url: selectedItem.banner_l_url || "",
+      botao_url: (selectedItem as any).botao_url || "",
       programa_ids: itemProgIds,
     });
     
@@ -375,6 +379,16 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
                   </div>
                 )}
               </div>
+            </div>
+            <div>
+              <label style={labelStyle}>URL do Botão (Opcional)</label>
+              <input 
+                type="text" 
+                style={pillInput} 
+                value={form.botao_url} 
+                onChange={(e) => setForm({ ...form, botao_url: e.target.value })}
+                placeholder="Ex: https://wa.me/..."
+              />
             </div>
           </div>
 
