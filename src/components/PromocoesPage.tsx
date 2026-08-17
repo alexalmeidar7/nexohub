@@ -188,13 +188,16 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       ? supabase.from("promocoes").update(payload).eq("id", editingId)
       : supabase.from("promocoes").insert(payload);
 
-    const { error } = await query;
+    const { data, error } = await query.select();
     setSaving(false);
 
     if (error) {
+      console.error("Erro ao salvar promoção:", error);
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
       return;
     }
+
+    console.log("Promoção salva com sucesso:", data);
 
     toast({ title: editingId ? "Promoção atualizada" : "Promoção cadastrada" });
     reset();
