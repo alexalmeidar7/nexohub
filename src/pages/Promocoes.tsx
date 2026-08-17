@@ -335,10 +335,9 @@ export default function PromocoesKiosk() {
       setPromocoes(allPromos);
       const activeTestemunhais = testData || [];
       setTestemunhais(activeTestemunhais);
-      setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
-      setTestemunhais(activeTestemunhais);
+
 
 
       const mapped = (progsData || []).map((p: any) => ({
