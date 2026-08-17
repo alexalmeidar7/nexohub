@@ -334,12 +334,10 @@ export default function PromocoesKiosk() {
         }
       }
 
-      const today = new Date().toISOString().split("T")[0];
       const allPromos = promoData || [];
       setPromocoes(allPromos);
-      const activeTestemunhais = (testData || []).filter((t: any) => 
-        t.data_inicio && t.data_fim && t.data_inicio <= today && t.data_fim >= today
-      );
+      const activeTestemunhais = testData || [];
+      setTestemunhais(activeTestemunhais);
       setTestemunhais(activeTestemunhais);
 
       // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
