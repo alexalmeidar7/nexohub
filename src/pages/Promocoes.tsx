@@ -603,13 +603,9 @@ export default function PromocoesKiosk() {
     programas.filter(p => programNamesWithTestemunhais.has(normalizeProgramName(p.nome)))
   );
 
-  const todayDateNow = new Date().toISOString().split("T")[0];
-  const banners = promocoes.filter(p => 
-    p.imagem_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
-  );
-  const botoes = promocoes.filter(p => 
-    p.botao_url && p.data_inicio && p.data_fim && p.data_inicio <= todayDateNow && p.data_fim >= todayDateNow
-  );
+  const allPromos = promocoes;
+  const banners = allPromos.filter(p => p.imagem_url);
+  const botoes = allPromos.filter(p => p.botao_url);
 
   const scrollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
