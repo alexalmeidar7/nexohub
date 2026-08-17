@@ -1586,8 +1586,15 @@ export default function PromocoesKiosk() {
                             {/* Imagem do testemunhal removida conforme solicitado */}
 
                             <div
-                              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 break-words"
-                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white" }}
+                              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
+                              style={{ 
+                                fontSize: `${fontSize}px`, 
+                                lineHeight: 1.5, 
+                                color: "white",
+                                wordBreak: "normal",
+                                overflowWrap: "anywhere",
+                                hyphens: "none"
+                              }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
                                   .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
