@@ -242,27 +242,6 @@ export default function ClientesPage() {
         Cadastro de Clientes
       </div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <p className="text-slate-500 text-sm">Gerencie os clientes e seus contratos.</p>
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-            <Input 
-              placeholder="Buscar cliente..." 
-              value={busca}
-              onChange={(e) => setBusca(e.target.value)}
-              className="pl-9 w-64 rounded-full border-slate-200"
-            />
-          </div>
-          <Button 
-            onClick={() => setNovoOpen(true)}
-            className="rounded-full bg-cyan-500 hover:bg-cyan-600 text-white gap-2"
-          >
-            <Plus size={18} /> Novo Cliente
-          </Button>
-        </div>
       </div>
 
       {novoOpen && (
