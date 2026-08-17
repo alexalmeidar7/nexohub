@@ -344,18 +344,9 @@ export default function PromocoesKiosk() {
       );
       setTestemunhais(activeTestemunhais);
 
-      // Add promotions to witness list for Locutor module if they are linked to the program
-      const activePromoTestemunhais = activePromos.map((p: any) => ({
-        id: `promo-${p.id}`,
-        programa_id: null,
-        programa_ids: p.programa_ids || [],
-        texto: `<p><strong>PROMOÇÃO: ${p.nome || p.botao_url || ""}</strong></p>${p.texto}${p.oferecimento ? `<p><small>Oferecimento: ${p.oferecimento}</small></p>` : ""}`,
-        data_inicio: p.data_inicio,
-        data_fim: p.data_fim,
-        imagem_url: p.imagem_url,
-        is_promo: true
-      }));
-      setTestemunhais(prev => [...prev, ...activePromoTestemunhais] as Testemunhal[]);
+      // Note: Promotion injection removed from witness list per user request ("tire a promoção no final do texto da citação")
+      setTestemunhais(activeTestemunhais);
+
 
       const mapped = (progsData || []).map((p: any) => ({
         id: p.id, mergedIds: [p.id], nome: p.nome, apresentadorId: p.apresentador_id || "", apresentadoresIds: p.apresentadores_ids || [], selo: p.selo || "",
