@@ -266,86 +266,144 @@ export default function ClientesPage() {
       </div>
 
       {novoOpen && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm animate-in fade-in slide-in-from-top-4 duration-300">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-slate-800">
-              {editingId ? "Editar Cliente" : "Novo Cliente"}
-            </h2>
-            <Button variant="ghost" size="icon" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full">
-              <X size={20} />
-            </Button>
+        <section
+          style={{
+            background: CARD_BG,
+            borderRadius: 28,
+            padding: "28px 32px 32px",
+            boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          }}
+          className="animate-in fade-in slide-in-from-top-4 duration-300"
+        >
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h3
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                letterSpacing: 2,
+                color: DARK,
+                textTransform: "uppercase",
+                margin: 0,
+              }}
+            >
+              {editingId ? "Editar Cliente" : "Cadastro de Cliente"}
+            </h3>
+            <div className="flex items-center gap-3">
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: DARK,
+                  background: "#FFFFFF",
+                  padding: "6px 16px",
+                  borderRadius: 999,
+                  border: `2px solid ${CYAN}`,
+                  letterSpacing: 1,
+                  textTransform: "uppercase",
+                }}
+              >
+                Data do cadastro: <span style={{ color: CYAN }}>{editingId ? "—" : new Date().toLocaleDateString("pt-BR")}</span>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => { setNovoOpen(false); setEditingId(null); }} 
+                className="rounded-full h-8 w-8 text-slate-400 hover:bg-white/50"
+              >
+                <X size={20} />
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Razão Social</label>
-              <Input 
-                value={novo.nome} 
-                onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
-                placeholder="Nome da Empresa"
-                className="rounded-xl border-slate-200"
-              />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-5">
+            <div className="lg:col-span-2">
+              <Field label="Razão Social">
+                <input 
+                  style={pillInput}
+                  value={novo.nome} 
+                  onChange={e => setNovo(n => ({...n, nome: e.target.value}))}
+                  placeholder="Nome da Empresa"
+                />
+              </Field>
             </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">CNPJ</label>
-              <Input 
+            <Field label="CNPJ">
+              <input 
+                style={pillInput}
                 value={novo.cnpj} 
                 onChange={e => setNovo(n => ({...n, cnpj: e.target.value}))}
                 placeholder="00.000.000/0000-00"
-                className="rounded-xl border-slate-200"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Telefone</label>
-              <Input 
+            </Field>
+            <Field label="Telefone">
+              <input 
+                style={pillInput}
                 value={novo.telefone} 
                 onChange={e => setNovo(n => ({...n, telefone: e.target.value}))}
                 placeholder="(00) 00000-0000"
-                className="rounded-xl border-slate-200"
               />
+            </Field>
+            <div className="lg:col-span-2">
+              <Field label="Endereço">
+                <input 
+                  style={pillInput}
+                  value={novo.endereco} 
+                  onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
+                  placeholder="Rua, Número, Bairro, Cidade - UF"
+                />
+              </Field>
             </div>
-            <div className="space-y-2 lg:col-span-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Endereço</label>
-              <Input 
-                value={novo.endereco} 
-                onChange={e => setNovo(n => ({...n, endereco: e.target.value}))}
-                placeholder="Rua, Número, Bairro, Cidade - UF"
-                className="rounded-xl border-slate-200"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Cliente Desde</label>
-              <Input 
+            <Field label="Cliente Desde">
+              <input 
                 type="date"
+                style={pillInput}
                 value={novo.cliente_desde} 
                 onChange={e => setNovo(n => ({...n, cliente_desde: e.target.value}))}
-                className="rounded-xl border-slate-200"
               />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Gerente Executiva Responsável</label>
-              <Input 
-                value={novo.executiva_venda} 
-                onChange={e => setNovo(n => ({...n, executiva_venda: e.target.value}))}
-                placeholder="Nome da gerente"
-                className="rounded-xl border-slate-200"
-              />
+            </Field>
+            <div className="lg:col-span-2">
+              <Field label="Gerente Executiva Responsável">
+                <input 
+                  style={pillInput}
+                  value={novo.executiva_venda} 
+                  onChange={e => setNovo(n => ({...n, executiva_venda: e.target.value}))}
+                  placeholder="Nome da gerente"
+                />
+              </Field>
             </div>
           </div>
 
           <div className="mt-8 flex justify-end gap-3">
-            <Button variant="outline" onClick={() => { setNovoOpen(false); setEditingId(null); }} className="rounded-full px-6">Cancelar</Button>
+            <Button 
+              variant="outline" 
+              onClick={() => { setNovoOpen(false); setEditingId(null); }} 
+              className="rounded-full px-8 border-cyan-500 text-cyan-500 hover:bg-cyan-50 font-bold uppercase tracking-wider text-[11px] h-11"
+            >
+              Cancelar
+            </Button>
             <Button 
               onClick={handleSave} 
               disabled={criando}
-              className="rounded-full px-8 bg-cyan-500 hover:bg-cyan-600 text-white"
+              style={{
+                height: 44,
+                borderRadius: 999,
+                background: LIME,
+                color: DARK,
+                fontWeight: 800,
+                fontSize: 12,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                padding: "0 32px",
+                border: "none",
+              }}
+              className="hover:opacity-90 transition-opacity"
             >
-              {criando ? <Loader2 className="animate-spin mr-2" size={18} /> : null}
+              {criando && <Loader2 className="animate-spin mr-2" size={18} />}
               {editingId ? "Atualizar Dados" : "Salvar Cliente"}
             </Button>
           </div>
-        </div>
+        </section>
       )}
+
 
       <section
         style={{
