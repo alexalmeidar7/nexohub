@@ -25,6 +25,7 @@ interface Promocao {
   oferecimento: string;
   data_inicio: string;
   data_fim: string;
+  nome?: string;
 }
 
 interface ProgramaGrade {
@@ -1322,7 +1323,7 @@ export default function PromocoesKiosk() {
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "rgba(255,255,255,0.25)" }}>
                       <PromoIcon size={18} />
                     </div>
-                    <span className="truncate">{promo.botao_url}</span>
+                    <span className="truncate">{promo.botao_url || promo.nome}</span>
                   </div>
                 );
               })}
