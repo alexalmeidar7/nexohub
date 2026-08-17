@@ -407,7 +407,7 @@ export default function ProgramaForm() {
   const [saving, setSaving] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(true);
 
   // Auto-open form when editing
   useEffect(() => {
