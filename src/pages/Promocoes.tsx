@@ -1496,7 +1496,15 @@ export default function PromocoesKiosk() {
           }, 0);
         }
       }}>
-        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:bg-white [&>button]:text-zinc-900 [&>button]:rounded-full [&>button]:w-12 [&>button]:h-12 [&>button]:flex [&>button]:items-center [&>button]:justify-center [&>button]:shadow-[0_0_18px_rgba(255,255,255,0.35)] [&>button]:hover:bg-red-500 [&>button]:hover:text-white [&>button]:hover:shadow-[0_0_22px_rgba(239,68,68,0.55)] [&>button]:transition-all [&>button]:top-3 [&>button]:right-3 [&>button]:border-2 [&>button]:border-white/90 [&>button_svg]:w-6 [&>button_svg]:h-6" style={{ backgroundColor: "#111111" }}>
+        <DialogContent className="border-zinc-800 text-white max-w-[1500px] w-[96vw] h-[88vh] sm:h-[86vh] overflow-hidden p-0 [&>button]:!w-10 [&>button]:!h-10 [&>button]:!rounded-full [&>button]:!flex [&>button]:!items-center [&>button]:!justify-center [&>button]:!text-white [&>button]:!font-bold [&>button]:!transition [&>button]:!shadow-[0_0_12px_rgba(0,0,0,0.4)] [&>button]:hover:!scale-110 [&>button]:!top-3 [&>button]:!right-3 [&>button_svg]:!w-[18px] [&>button_svg]:!h-[18px] [&>button]:!border-none" style={{ backgroundColor: "#111111", "--layout-accent-color": "var(--layout-accent-color, #a60101)" } as any}>
+          {/* Custom style to override shadcn close button colors to match theme */}
+          <style>{`
+            [data-state=open] .promo-dialog-close-theme button {
+              background-color: var(--layout-accent-color, #a60101) !important;
+            }
+          `}</style>
+          <div className="promo-dialog-close-theme h-full flex flex-col">
+
           {/* Botões de ajuste de fonte ao lado esquerdo do botão fechar */}
           <div className="absolute top-3 right-16 z-50 flex items-center gap-1.5">
             <button
@@ -1601,8 +1609,10 @@ export default function PromocoesKiosk() {
 
               </div>
             </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
