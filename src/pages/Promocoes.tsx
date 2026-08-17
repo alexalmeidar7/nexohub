@@ -1587,7 +1587,7 @@ export default function PromocoesKiosk() {
 
                             <div
                               className="max-w-none [&_*]:!bg-transparent [&_p]:!my-0 [&_p+p]:!mt-[0.6em] [&_p:empty]:!min-h-[0.9em] [&_p>br:only-child]:!block [&_ul]:!my-[0.6em] [&_ol]:!my-[0.6em] [&_li]:!mb-[0.25em] ql-editor !p-0 whitespace-pre-wrap break-words"
-                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white", wordBreak: "normal", overflowWrap: "anywhere", hyphens: "none" }}
+                              style={{ fontSize: `${fontSize}px`, lineHeight: 1.5, color: "white", wordBreak: "normal", overflowWrap: "break-word", hyphens: "none" }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
                                   .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
