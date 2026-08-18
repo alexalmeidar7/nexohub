@@ -1957,9 +1957,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 })()}
               </div>
             </div>
-
           </div>
         )}
+
 
         {/* ═══ UPLOAD HISTORY (Legacy position) ═══ */}
         {showConfig && uploadHistory.length > 0 && (
