@@ -389,7 +389,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(true);
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
