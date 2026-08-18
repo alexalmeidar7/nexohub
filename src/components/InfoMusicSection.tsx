@@ -586,7 +586,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         </div>
 
         {/* Coluna 3: MUSICAS SEM CURIOSIDADES */}
-        <div className="space-y-3 flex flex-col h-[600px]">
+        <div className="space-y-3 flex flex-col h-[500px]">
           <div className="flex flex-col gap-2 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
