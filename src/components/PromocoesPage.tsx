@@ -236,6 +236,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const itemProgIds = Array.isArray(selectedItem.programa_ids) ? [...selectedItem.programa_ids] : [];
     
     setEditingId(selectedItem.id);
+    
+    // Explicitly set the form state with full item data
     setForm({
       nome: selectedItem.nome || "",
       texto: selectedItem.texto || "",
