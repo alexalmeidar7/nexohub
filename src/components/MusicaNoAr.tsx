@@ -389,7 +389,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(false);
+  const [showConfig, setShowConfig] = useState(true);
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
@@ -1673,7 +1673,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         </div>
 
 
-        {showConfig && (
+        {true && (
           <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
