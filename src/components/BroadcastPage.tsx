@@ -934,12 +934,12 @@ export default function BroadcastPage() {
                 Broadcast
               </h2>
               {programaNome ? (
-                <div className="flex items-center gap-2 text-white/40">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <div className="flex items-center gap-2 text-white/70">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
                   <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
                 </div>
               ) : (
-                <span className="text-[9px] font-bold tracking-[0.2em] text-white/30 uppercase">vMix Control Hub</span>
+                <span className="text-[9px] font-bold tracking-[0.2em] text-white/50 uppercase">vMix Control Hub</span>
               )}
             </div>
           </div>
