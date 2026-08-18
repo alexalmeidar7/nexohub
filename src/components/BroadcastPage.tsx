@@ -946,8 +946,8 @@ export default function BroadcastPage() {
 
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 mb-0.5">Master Clock</span>
-              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
+              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/40 mb-0.5">Master Clock</span>
+              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif", textShadow: `0 0 10px ${LIME}30` }}>{clockStr}</span>
             </div>
             
             <div className="flex items-center bg-black/40 rounded-2xl p-1.5 border border-white/5">
