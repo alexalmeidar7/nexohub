@@ -2052,7 +2052,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       })()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">Aberto</p>
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">
+                        {mod === "musica" ? "XML ATIVO" : "Aberto"}
+                      </p>
                       <p className="text-xs font-bold truncate text-white group-hover:text-[#00BFF0] transition-colors">
                         {pageTitle[mod] || mod}
                       </p>
