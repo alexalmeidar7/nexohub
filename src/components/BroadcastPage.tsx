@@ -1128,7 +1128,7 @@ export default function BroadcastPage() {
               </div>
 
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Sincronização Ativa</span>
+                <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Sincronização Ativa</span>
                 <div className="flex gap-1">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="w-1 h-3 rounded-full bg-cyan-500/20" />
