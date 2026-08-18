@@ -206,11 +206,12 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       supabase.from("infomusic_excecoes").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase
         .from("infomusic")
-        .select("*")
+        .select("*", { count: 'exact' })
         .eq("user_id", user.id)
         .not("curiosidade", "is", null)
         .neq("curiosidade", "")
         .order("created_at", { ascending: false })
+        .limit(5000)
     ]);
     const exceptions = exceptionsRes.data || [];
     setExcecoes(exceptions);
