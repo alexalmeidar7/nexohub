@@ -1127,17 +1127,6 @@ export default function BroadcastPage() {
                   />
                 </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleSave()}
-                    disabled={saving}
-                    className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                    style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
-                  >
-                    {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                    Salvar Alterações
-                  </button>
-                </div>
 
                 <div className="relative">
                   <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
