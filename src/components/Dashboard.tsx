@@ -1795,7 +1795,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
 
               {currentPage === "admininfomusic" && <AdminInfoMusicPage />}
-              {currentPage === "noticias" && <RoteiroPrograma />}
               {(currentPage === "apresentadores" || (minimizedModules.includes("apresentadores") && currentPage === "dashboard")) && (
                 <div style={{ display: currentPage === "apresentadores" ? "block" : "none" }}>
                   <ApresentadorForm />

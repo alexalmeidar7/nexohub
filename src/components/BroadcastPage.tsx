@@ -934,7 +934,7 @@ export default function BroadcastPage() {
                 Broadcast
               </h2>
               {programaNome ? (
-                <div className="flex items-center gap-2 text-white/70">
+                <div className="flex items-center gap-2 text-white">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
                   <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
                 </div>
@@ -946,7 +946,7 @@ export default function BroadcastPage() {
 
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/40 mb-0.5">Master Clock</span>
+              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/70 mb-0.5">Master Clock</span>
               <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif", textShadow: `0 0 10px ${LIME}30` }}>{clockStr}</span>
             </div>
             
@@ -964,7 +964,7 @@ export default function BroadcastPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
                     style={{
                       backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffff60",
+                      color: active ? NAVY : "#ffffffcc",
                       fontFamily: "'Sora', sans-serif",
                     }}
                   >
@@ -1262,9 +1262,9 @@ export default function BroadcastPage() {
                   ) : (
                     <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl cursor-pointer border-2 border-dashed border-white/5 hover:border-[#00BFF0]30 hover:bg-[#00BFF0]05 transition-all">
                       <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/20" />}
+                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/70" />}
                       </div>
-                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{uploadingBg ? "Uploading..." : "Upload PNG 1920x200"}</span>
+                      <span className="text-[10px] font-bold text-white/80 uppercase tracking-widest">{uploadingBg ? "Enviando..." : "Enviar PNG 1920x200"}</span>
                       <input
                         type="file"
                         accept="image/png"
@@ -1298,7 +1298,7 @@ export default function BroadcastPage() {
 
               <div className="space-y-3">
                 {empresaSocials.length === 0 ? (
-                  <p className="text-[10px] text-white/20 italic">No social profiles configured.</p>
+                  <p className="text-[10px] text-white/70 italic">Nenhuma rede social configurada.</p>
                 ) : (
                   <div className="grid grid-cols-1 gap-2">
                     {empresaSocials.map((s, i) => (

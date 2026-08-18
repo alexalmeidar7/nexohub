@@ -96,7 +96,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     imagem_url: "",
     banner_l_url: "",
-    programa_ids: [] as string[],
   });
   const [uploading1, setUploading1] = useState(false);
   const [uploading2, setUploading2] = useState(false);
@@ -133,7 +132,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: "",
       banner_l_url: "",
-      programa_ids: [],
     });
     setEditingId(null);
     setSaving(false);
@@ -190,7 +188,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: form.data_fim,
       imagem_url: form.imagem_url,
       banner_l_url: form.banner_l_url,
-      programa_ids: form.programa_ids,
     };
 
     const query = editingId
@@ -230,8 +227,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const selectedItem = (freshItem ?? item) as any;
     console.log("Item carregado para edição:", selectedItem);
 
-    const itemProgIds = Array.isArray(selectedItem.programa_ids) ? [...selectedItem.programa_ids] : [];
-    
     setEditingId(selectedItem.id);
     
     // Explicitly set the form state with full item data
@@ -243,7 +238,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: selectedItem.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: selectedItem.imagem_url || "",
       banner_l_url: selectedItem.banner_l_url || "",
-      programa_ids: itemProgIds,
     });
     
     window.scrollTo({ top: 0, behavior: "smooth" });

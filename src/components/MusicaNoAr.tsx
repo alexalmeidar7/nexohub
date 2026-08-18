@@ -389,7 +389,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [lastSource, setLastSource] = useState<"online" | "pasta" | null>(null);
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
-  const [showConfig, setShowConfig] = useState(true);
+  const showConfig = true;
   const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
 
   useEffect(() => {
@@ -1563,9 +1563,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
                 <div className="space-y-1">
-                   <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: "#FFFFFF !important", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: "-0.02em" }}>
+                   <div className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 text-white" style={{ color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
                      {displayTitulo}
-                   </h2>
+                   </div>
                   <div className="flex items-center gap-2">
                     <span 
                       className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full transition-all duration-1000" 
@@ -1660,16 +1660,13 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               </span>
             </div>
           </div>
-          <button
-            onClick={() => setShowConfig(!showConfig)}
-            className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95"
-            style={{ 
-              backgroundColor: showConfig ? NEXO_CYAN : "#F1F5F9",
-              color: showConfig ? "#FFFFFF" : NEXO_DARK,
-            }}
-          >
-            {showConfig ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
-          </button>
+           <div
+             className="w-12 h-12 rounded-2xl flex items-center justify-center"
+             style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
+             title="Seção sempre visível"
+           >
+             <ChevronUp size={24} />
+           </div>
         </div>
 
 
@@ -1861,7 +1858,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
                 {/* Status indicators */}
-                {(() => {
+                {(localLastReadAt || localActivating || localError || localDelay) && (() => {
                   const st = buildStatus({ selected: isLocalSelected && localMonitoring, activating: localActivating, error: localError, lastReadAt: localLastReadAt, hasSource: !!localFileName, delayed: !!localDelay });
                   const ago = formatAgo(localLastReadAt);
                   return (
@@ -1981,17 +1978,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
       {/* XML MUSICA AGORA */}
-      {music && (
-        <section className="mt-8 mb-12">
-          <div className="rounded-[32px] p-8 space-y-6" style={{ background: "#0A2540", border: "1px solid #1E293B", boxShadow: "0 20px 40px -10px rgba(10, 37, 64, 0.3)" }}>
+      <section className="mt-8 mb-12">
+          <div className="rounded-2xl p-5 space-y-6" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)" }}>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white/10">
-                <Music size={18} className="text-cyan-400" />
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-cyan-50">
+                <Music size={18} style={{ color: NEXO_CYAN }} />
               </div>
-              <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-white">XML MUSICA NO AR</h4>
+              <h4 className="text-[13px] font-black uppercase tracking-[0.2em]" style={{ color: NEXO_CYAN }}>XML MUSICA NO AR</h4>
             </div>
             
-            <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
+            <div className="rounded-2xl p-6" style={{ backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 94%, transparent)", border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 12%, transparent)" }}>
               <XmlLinkRow 
                 label="XML MUSICA NO AR" 
                 scopeKey={dataUserId || undefined} 
@@ -2000,7 +1996,6 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             </div>
           </div>
         </section>
-      )}
 
       </div>
     </div>
