@@ -2029,7 +2029,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (mod === "sorteios") return <Gift size={16} color="#fff" />;
                         if (mod === "previsao") return <CloudRain size={16} color="#fff" />;
                         if (mod === "agenda") return <CalendarDays size={16} color="#fff" />;
-                        if (mod === "musica") return <Music size={16} color="#fff" />;
+                        if (mod === "musica") return (
+                          <div className="relative">
+                            <Music size={16} color="#fff" />
+                            <div className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-emerald-500 rounded-full border border-black/40 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" title="XML Ativo" />
+                          </div>
+                        );
                         if (mod === "blitz") return <Siren size={16} color="#fff" />;
                         if (mod === "noticias") return <FileText size={16} color="#fff" />;
                         if (mod === "broadcast") return <Radio size={16} color="#fff" />;
