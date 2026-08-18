@@ -1066,36 +1066,68 @@ export default function BroadcastPage() {
           </div>
 
 
-          {/* ── Right: settings column ── */}
+          {/* ── Right: Control Center ── */}
           <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
 
-            {/* Quick Actions / Control Center */}
-            <div className="p-5 rounded-2xl" style={{ ...cardStyle, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}>
-              <SectionHeader n="CTR" label="Control Center" color={CYAN} />
+            {/* Robust Control Bento */}
+            <div 
+              className="p-6 rounded-3xl flex flex-col gap-5" 
+              style={{ 
+                ...cardStyle, 
+                border: `1px solid ${CYAN}30`, 
+                background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
+                boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                    <TrendingUp size={16} style={{ color: CYAN }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                    Painel de Controle
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-[8px] font-black text-green-500 uppercase">Online</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-3">
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
+                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 12px 24px ${LIME}25` }}
                 >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Salvar Alterações
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  Salvar XML Broadcast
                 </button>
                 
                 {insertLiveArt && (
                   <button
                     onClick={handleInsertNow}
                     disabled={insertingNow}
-                    className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
+                    className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg"
+                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 12px 24px rgba(220,38,38,0.3)" }}
                   >
-                    <Youtube size={14} />
-                    {insertingNow ? "Inserindo Live (30s)..." : "Inserir Live Agora"}
+                    <Youtube size={16} />
+                    {insertingNow ? "Live Ativa (30s)" : "Acionar Insert Live"}
                   </button>
                 )}
               </div>
+
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Sincronização Ativa</span>
+                <div className="flex gap-1">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-1 h-3 rounded-full bg-cyan-500/20" />
+                  ))}
+                </div>
+              </div>
             </div>
+
 
             {/* Content & Identity */}
             <div className="p-5 rounded-2xl" style={cardStyle}>
