@@ -1512,27 +1512,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 zIndex: 0
               }} 
             />
-            {/* Gradient progress fill */}
+            {/* Background progress fill (discreet behind the content) */}
             <div
-              className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
+              className="absolute inset-y-0 left-0 pointer-events-none"
               style={{
                 width: `${progress}%`,
-                minWidth: progress > 0 ? "8px" : "0px",
-                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 50%, var(--layout-accent-color, #268ffa)) 60%, var(--layout-accent-color, #268ffa) 100%)`,
-                transition: sliderResetting
-                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
-                  : "width 0.5s linear",
-                opacity: sliderResetting ? 0.3 : 0.85,
-                zIndex: 2,
+                background: `rgba(255, 255, 255, 0.08)`,
+                transition: sliderResetting ? "opacity 0.6s ease" : "width 0.5s linear",
+                zIndex: 1,
               }}
             />
-            {/* Shimmer overlay on progress */}
-            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 3 }}>
-              <div className="absolute inset-0" style={{
-                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
-                animation: "player-shimmer 3s ease-in-out infinite",
-              }} />
-            </div>
+
 
             {/* Scrim adaptativo por luminância do gradiente */}
             {paletteContrast && (
@@ -1592,19 +1582,34 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 </div>
 
                 {music && music.duracao > 0 && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <div 
-                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner min-w-[130px] text-center transition-all duration-1000" 
-                      style={{ 
-                        backgroundColor: "rgba(0,0,0,0.3)", 
-                        color: musicTextColor,
-                        border: `1px solid ${musicTextColor}22`
-                      }}
-                    >
-                      {formatTime(elapsed)} / {formatTime(music.duracao)}
+                  <div className="space-y-2 mt-2 max-w-md">
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className="px-3 py-1 rounded-lg font-mono font-black text-xs shadow-inner min-w-[140px] text-center transition-all duration-1000" 
+                        style={{ 
+                          backgroundColor: "rgba(0,0,0,0.3)", 
+                          color: "#ffffff",
+                          backdropFilter: "blur(4px)",
+                          border: "1px solid rgba(255,255,255,0.1)"
+                        }}
+                      >
+                        {formatTime(elapsed)} / {formatTime(music.duracao)}
+                      </div>
+                    </div>
+                    
+                    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.2)" }}>
+                      <div 
+                        className="h-full rounded-full transition-all duration-500 linear"
+                        style={{ 
+                          width: `${progress}%`,
+                          background: "#ffffff",
+                          boxShadow: "0 0 8px rgba(255,255,255,0.3)"
+                        }}
+                      />
                     </div>
                   </div>
                 )}
+
               </div>
             </div>
           </div>
