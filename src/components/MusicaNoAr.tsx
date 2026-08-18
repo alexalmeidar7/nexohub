@@ -1578,13 +1578,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 {music && music.duracao > 0 && (
                   <div className="flex items-center gap-3 mt-1">
                     <div 
-                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner" 
-                      style={{ backgroundColor: "rgba(0,0,0,0.3)", color: "#FFFFFF" }}
+                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner min-w-[85px] text-center transition-all duration-1000" 
+                      style={{ 
+                        backgroundColor: "rgba(0,0,0,0.3)", 
+                        color: musicTextColor,
+                        border: `1px solid ${musicTextColor}22`
+                      }}
                     >
                       {formatTimeMs(elapsed)}
                     </div>
                     <div className="h-1 w-1 rounded-full bg-white/30" />
-                    <div className="text-sm font-mono font-bold opacity-60" style={{ color: "#FFFFFF" }}>
+                    <div className="text-sm font-mono font-bold opacity-60 transition-colors duration-1000" style={{ color: musicTextColor }}>
                       {formatTime(music.duracao)}
                     </div>
                   </div>
