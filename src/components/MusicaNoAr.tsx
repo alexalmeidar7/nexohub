@@ -1443,6 +1443,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           borderRadius: 28,
           padding: "28px 32px 32px",
           boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
         }}
       >
         {/* Header */}
