@@ -964,7 +964,7 @@ export default function BroadcastPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
                     style={{
                       backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffff40",
+                      color: active ? NAVY : "#ffffff60",
                       fontFamily: "'Sora', sans-serif",
                     }}
                   >
