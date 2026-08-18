@@ -1763,11 +1763,49 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   >
                     <FolderOpen size={24} style={{ color: NEXO_DARK }} />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
                       Origem Local
                     </h4>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
+                  </div>
+                  
+                  {/* Device Name inside Local Source Box */}
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-100 shadow-sm">
+                    <Monitor size={12} className="text-slate-400" />
+                    {editingDeviceName ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          value={deviceNameInput}
+                          onChange={e => setDeviceNameInput(e.target.value)}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-bold outline-none bg-slate-50"
+                          style={{ color: NEXO_DARK, width: 100 }}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              const v = deviceNameInput.trim() || deriveDeviceName();
+                              localStorage.setItem(DEVICE_NAME_KEY, v);
+                              setCurrentDeviceName(v);
+                              setEditingDeviceName(false);
+                            }
+                          }}
+                        />
+                        <button onClick={() => {
+                          const v = deviceNameInput.trim() || deriveDeviceName();
+                          localStorage.setItem(DEVICE_NAME_KEY, v);
+                          setCurrentDeviceName(v);
+                          setEditingDeviceName(false);
+                        }} className="text-green-600"><Check size={12} /></button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} 
+                        className="text-[10px] font-bold uppercase tracking-wider hover:text-cyan-500 transition-colors"
+                        style={{ color: NEXO_DARK }}
+                      >
+                        {currentDeviceName}
+                      </button>
+                    )}
                   </div>
                 </div>
 
