@@ -1151,7 +1151,7 @@ export default function BroadcastPage() {
               
               <div className="space-y-6">
                 <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                   <input
                     type="text"
                     value={data.assunto}
