@@ -138,6 +138,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       programa_ids: [],
     });
     setEditingId(null);
+    setSaving(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imagem_url' | 'banner_l_url') => {
