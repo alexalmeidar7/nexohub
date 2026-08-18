@@ -1228,7 +1228,7 @@ export default function BroadcastPage() {
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Custom Background (.png)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Custom Background (.png)</label>
                     {data.assuntoBgUrl && (
                       <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
                         <input
