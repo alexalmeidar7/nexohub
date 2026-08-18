@@ -988,13 +988,16 @@ export default function BroadcastPage() {
           <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
             {/* 16:9 preview stage with Tally Border */}
             <div 
-              className="w-full relative rounded-3xl overflow-hidden shadow-2xl group transition-all duration-500"
+              className="w-full relative rounded-[2.5rem] overflow-hidden group transition-all duration-500"
               style={{ 
                 backgroundColor: "#000",
-                border: `4px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
-                boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
+                border: `6px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
+                boxShadow: insertLiveArt 
+                  ? "0 0 60px rgba(220,38,38,0.25), 0 20px 80px rgba(0,0,0,0.8)" 
+                  : "0 30px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)"
               }}
             >
+
               <div 
                 className="relative overflow-hidden" 
                 style={{ 
