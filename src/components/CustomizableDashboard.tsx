@@ -602,51 +602,6 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
               )}
             </div>
 
-            {/* Música tocando */}
-            {currentMusic && (() => {
-              const startMs = currentMusic.startedAt || 0;
-              const startedDate = startMs > 0 ? new Date(startMs) : null;
-              const startedLabel = startedDate
-                ? startedDate.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-                : "";
-              const totalSec = currentMusic.duracao > 0 ? currentMusic.duracao : 0;
-              const elapsedSec = startMs > 0 ? Math.max(0, Math.floor((nowTick - startMs) / 1000)) : 0;
-              const clampedElapsed = totalSec > 0 ? Math.min(elapsedSec, totalSec) : elapsedSec;
-              const pct = totalSec > 0 ? Math.min(100, (clampedElapsed / totalSec) * 100) : 0;
-              const fmt = (s: number) => {
-                const m = Math.floor(s / 60);
-                const r = s % 60;
-                return `${m}:${String(r).padStart(2, "0")}`;
-              };
-              return (
-                <div className="inline-flex flex-col gap-1 px-2.5 py-1.5 rounded-lg" style={{ background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.08)", minWidth: 220, maxWidth: 320 }}>
-                  <div className="flex items-center gap-2">
-                    <Music size={12} className="flex-shrink-0" style={{ color: "var(--layout-icon-color, #888)" }} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[11px] font-medium truncate" style={{ color: "var(--layout-nav-text, #fff)" }}>
-                        <TypewriterText text={currentMusic.titulo?.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || ""} />
-                      </p>
-                      {currentMusic.artista && (
-                        <p className="text-[9px] truncate" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.5 }}>
-                          <TypewriterText text={currentMusic.artista.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ')} />
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {(startedLabel || totalSec > 0) && (
-                    <div className="flex items-center justify-between text-[8.5px] font-mono tabular-nums" style={{ color: "var(--layout-nav-text, #fff)", opacity: 0.55 }}>
-                      {startedLabel && <span>Iniciou {startedLabel}</span>}
-                      {totalSec > 0 ? <span>{fmt(clampedElapsed)} / {fmt(totalSec)}</span> : (startMs > 0 && <span>{fmt(elapsedSec)}</span>)}
-                    </div>
-                  )}
-                  {totalSec > 0 && (
-                    <div className="h-1 w-full rounded-full overflow-hidden" style={{ background: "rgba(0,0,0,0.12)" }}>
-                      <div className="h-full rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${pct}%`, background: "var(--layout-accent-color, #c8ff00)" }} />
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
             </div>
           </div>
         </div>
