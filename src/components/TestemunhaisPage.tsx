@@ -383,26 +383,30 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         {items.length === 0 ? (
           <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">Nenhuma citação cadastrada.</p></div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto rounded-[24px] border border-[#00BFF0]/30 shadow-sm">
+            <table className="w-full text-left border-collapse bg-white">
               <thead>
-                <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold">Programa</th>
-                  <th className="p-4 text-xs uppercase font-bold">Citação</th>
-                  <th className="p-4 text-xs uppercase font-bold">Validade</th>
-                  <th className="p-4 text-xs uppercase font-bold">Ações</th>
+                <tr style={{ backgroundColor: CYAN }}>
+                  <th className="p-4 text-[11px] uppercase font-black tracking-wider text-white border-r border-white/10">Programa</th>
+                  <th className="p-4 text-[11px] uppercase font-black tracking-wider text-white border-r border-white/10">Citação</th>
+                  <th className="p-4 text-[11px] uppercase font-black tracking-wider text-white border-r border-white/10">Validade</th>
+                  <th className="p-4 text-[11px] uppercase font-black tracking-wider text-white">Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
-                    <td className="p-4 text-xs text-[#0A2540]/70">
+                {items.map((item, idx) => (
+                  <tr 
+                    key={item.id} 
+                    className="transition-colors"
+                    style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
+                  >
+                    <td className="p-4 text-[11px] text-[#0A2540] border-r border-[#00BFF0]/10">
                       <div className="flex flex-wrap gap-1">
                         {getLinkedProgramIds(item).length > 0 ? (
                           getLinkedProgramIds(item).map(pid => {
                             const prog = programas.find(p => p.id === pid);
                             return prog ? (
-                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full">
+                              <span key={pid} className="bg-[#00BFF0]/10 text-[#00BFF0] px-2 py-0.5 rounded-full font-bold">
                                 {prog.nome}
                               </span>
                             ) : null;
@@ -412,18 +416,30 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-[#0A2540]">
+                    <td className="p-4 text-[13px] text-[#0A2540] border-r border-[#00BFF0]/10">
                       <div 
                         className="max-w-xs truncate line-clamp-2" 
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
                       />
                     </td>
-                    <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
+                    <td className="p-4 text-[11px] font-bold text-[#0A2540]/70 whitespace-nowrap border-r border-[#00BFF0]/10">
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
                     <td className="p-4 flex gap-2">
-                      <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center'}} onClick={() => handleEdit(item)}><Pencil size={14}/></button>
-                      <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderColor: '#ff4d4f', color: '#ff4d4f'}} onClick={() => handleDelete(item.id)}><Trash2 size={14}/></button>
+                      <button 
+                        style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderRadius: 8}} 
+                        onClick={() => handleEdit(item)}
+                        title="Editar"
+                      >
+                        <Pencil size={14}/>
+                      </button>
+                      <button 
+                        style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderColor: '#ff4d4f', color: '#ff4d4f', borderRadius: 8}} 
+                        onClick={() => handleDelete(item.id)}
+                        title="Excluir"
+                      >
+                        <Trash2 size={14}/>
+                      </button>
                     </td>
                   </tr>
                 ))}
