@@ -1450,7 +1450,7 @@ export default function PromocoesKiosk() {
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
             <div
               className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white", wordBreak: "normal", overflowWrap: "break-word" }}
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white", wordBreak: "break-word", overflowWrap: "anywhere" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
                   .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
