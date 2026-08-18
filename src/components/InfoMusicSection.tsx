@@ -600,81 +600,83 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             )}
             
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
+              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right invisible">
                 {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
               </span>
-              <Button
-                size="sm"
-                variant={aiEnabled ? "destructive" : "default"}
-                className={`h-7 px-3 text-[10px] font-bold rounded-full transition-all ${
-                  aiEnabled 
-                    ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20" 
-                    : "bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white shadow-lg shadow-[#00BFF0]/20"
-                }`}
-                onClick={async () => {
-                  if (!user) return;
-                  const newVal = !aiEnabled;
-                  setTogglingAi(true);
-                  try {
-                    const { error } = await supabase
-                      .from("user_settings")
-                      .update({ 
-                        infomusic_ai_enabled: newVal,
-                        updated_at: new Date().toISOString()
-                      })
-                      .eq("user_id", user.id);
-                    
-                    if (error) throw error;
-                    setAiEnabled(newVal);
-                    toast.success(newVal ? "Busca automática iniciada!" : "Busca automática pausada.");
-                  } catch (e) {
-                    toast.error("Erro ao atualizar configuração");
-                  } finally {
-                    setTogglingAi(false);
-                  }
-                }}
-                disabled={togglingAi}
-              >
-                {togglingAi ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : aiEnabled ? (
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                    PAUSAR
-                  </div>
-                ) : (
-                  "INICIAR AGORA"
-                )}
-              </Button>
+              <div className="invisible">
+                <Button
+                  size="sm"
+                  variant={aiEnabled ? "destructive" : "default"}
+                  className={`h-7 px-3 text-[10px] font-bold rounded-full transition-all ${
+                    aiEnabled 
+                      ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20" 
+                      : "bg-[#00BFF0] hover:bg-[#00BFF0]/90 text-white shadow-lg shadow-[#00BFF0]/20"
+                  }`}
+                  onClick={async () => {
+                    if (!user) return;
+                    const newVal = !aiEnabled;
+                    setTogglingAi(true);
+                    try {
+                      const { error } = await supabase
+                        .from("user_settings")
+                        .update({ 
+                          infomusic_ai_enabled: newVal,
+                          updated_at: new Date().toISOString()
+                        })
+                        .eq("user_id", user.id);
+                      
+                      if (error) throw error;
+                      setAiEnabled(newVal);
+                      toast.success(newVal ? "Busca automática iniciada!" : "Busca automática pausada.");
+                    } catch (e) {
+                      toast.error("Erro ao atualizar configuração");
+                    } finally {
+                      setTogglingAi(false);
+                    }
+                  }}
+                  disabled={togglingAi}
+                >
+                  {togglingAi ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : aiEnabled ? (
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                      PAUSAR
+                    </div>
+                  ) : (
+                    "INICIAR AGORA"
+                  )}
+                </Button>
 
-              <div className="flex gap-1 ml-1">
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  accept=".xlsx,.xls" 
-                  ref={importNoCuriosityRef}
-                  onChange={handleImportExcelNoCuriosity}
-                />
-                <Button 
-                  size="icon" 
-                  variant="outline" 
-                  className="h-7 w-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full"
-                  title="Exportar musicas sem curiosidades para Excel"
-                  onClick={exportSemCuriosidadesExcel}
-                  disabled={exportingXlsx}
-                >
-                  {exportingXlsx ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
-                </Button>
-                <Button 
-                  size="icon" 
-                  variant="outline" 
-                  className="h-7 w-7 text-[#00BFF0] border-[#00BFF0]/20 hover:bg-[#00BFF0]/5 rounded-full"
-                  title="Importar curiosidades de Excel"
-                  onClick={() => importNoCuriosityRef.current?.click()}
-                  disabled={readingExcel}
-                >
-                  {readingExcel ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                </Button>
+                <div className="flex gap-1 ml-1">
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept=".xlsx,.xls" 
+                    ref={importNoCuriosityRef}
+                    onChange={handleImportExcelNoCuriosity}
+                  />
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
+                    className="h-7 w-7 text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full"
+                    title="Exportar musicas sem curiosidades para Excel"
+                    onClick={exportSemCuriosidadesExcel}
+                    disabled={exportingXlsx}
+                  >
+                    {exportingXlsx ? <Loader2 size={12} className="animate-spin" /> : <Download size={12} />}
+                  </Button>
+                  <Button 
+                    size="icon" 
+                    variant="outline" 
+                    className="h-7 w-7 text-[#00BFF0] border-[#00BFF0]/20 hover:bg-[#00BFF0]/5 rounded-full"
+                    title="Importar curiosidades de Excel"
+                    onClick={() => importNoCuriosityRef.current?.click()}
+                    disabled={readingExcel}
+                  >
+                    {readingExcel ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
