@@ -600,7 +600,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             )}
             
             <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right">
+              <span className="text-[9px] font-bold text-red-500 max-w-[150px] leading-tight text-right invisible">
                 {aiEnabled ? "PAUSAR BUSCA AUTOMÁTICA" : "INICIAR BUSCA AUTOMÁTICA"}
               </span>
               <Button
