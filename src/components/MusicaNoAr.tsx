@@ -1533,7 +1533,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
             <div className="relative z-10 p-4 flex gap-4 items-center">
               {/* Cover image */}
-              <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden group shadow-2xl transition-all duration-700" style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
+              <div className="relative w-36 h-36 lg:w-44 lg:h-44 shrink-0 overflow-hidden group shadow-2xl transition-all duration-700 rounded-3xl" style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.5)" }}>
                 {loadingCover && !isBreak && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10 backdrop-blur-sm rounded-xl">
                     <Loader2 className="animate-spin" size={28} style={{ color: "var(--layout-accent-color, #2563eb)" }} />
@@ -1556,7 +1556,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
                 <div className="space-y-1">
-                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: "#ffffff", textShadow: musicTextShadow, letterSpacing: "-0.02em", transition: "color 1s ease" }}>
+                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: "#ffffff", textShadow: "0 2px 4px rgba(0,0,0,0.3)", letterSpacing: "-0.02em", transition: "color 1s ease" }}>
                     {displayTitulo}
                   </h2>
                   <div className="flex items-center gap-2">
