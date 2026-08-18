@@ -738,35 +738,57 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           </div>
           {loadingAllCuriosities && <Loader2 size={14} className="animate-spin text-emerald-500" />}
         </div>
-        <div className="rounded-xl overflow-hidden border border-black/5 bg-white/30 max-h-[400px] overflow-y-auto custom-scrollbar shadow-sm">
-          <table className="w-full text-[10px]">
-            <thead className="sticky top-0 z-10" style={{ backgroundColor: "#10B981" }}>
-              <tr>
-                <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Data</th>
-                <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Hora</th>
-                <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
-                <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Curiosidade</th>
-                <th className="text-center px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Ação</th>
+        <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB" }}>
+          <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+                {["Data", "Hora", "Música / Artista", "Curiosidade", "Ação"].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "12px 14px",
+                      textAlign: h === "Ação" ? "center" : "left",
+                      fontWeight: 800,
+                      letterSpacing: 1.2,
+                      textTransform: "uppercase",
+                      fontSize: 10,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-black/5">
-              {allCuriosities.length > 0 ? allCuriosities.map(r => (
-                <tr key={r.id} className="hover:bg-emerald-50/30">
-                  <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleDateString("pt-BR")}</td>
-                  <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
-
-                  <td className="px-3 py-2">
-                    <div className="font-bold truncate">{r.musica}</div>
-                    <div className="opacity-60 truncate">{r.artista}</div>
+            <tbody>
+              {allCuriosities.length > 0 ? allCuriosities.map((r, idx) => (
+                <tr 
+                  key={r.id} 
+                  style={{ 
+                    background: idx % 2 === 0 ? "#FFFFFF" : "#F7FCFE",
+                    color: "#0A2540"
+                  }}
+                >
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
+                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
                   </td>
-                  <td className="px-3 py-2">
-                    <div className="line-clamp-2 italic text-emerald-700">{r.curiosidade}</div>
+                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
+                    {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td style={{ padding: "12px 14px" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13 }}>{r.musica}</div>
+                    <div style={{ opacity: 0.6, fontSize: 11 }}>{r.artista}</div>
+                  </td>
+                  <td style={{ padding: "12px 14px" }}>
+                    <div className="line-clamp-2 italic" style={{ color: "#00BFF0", fontSize: 11 }}>
+                      {r.curiosidade}
+                    </div>
+                  </td>
+                  <td style={{ padding: "12px 14px", textAlign: "center" }}>
                     <Button 
                       size="sm" 
                       variant="ghost" 
-                      className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50"
+                      className="h-7 w-7 p-0 text-[#00BFF0] hover:bg-cyan-50"
                       onClick={() => {
                         setEditMusic(r);
                         setCuriosidadeText(r.curiosidade);
@@ -778,7 +800,9 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="px-3 py-10 text-center opacity-40 italic">Nenhuma curiosidade cadastrada</td>
+                  <td colSpan={5} style={{ padding: "40px 0", textAlign: "center", opacity: 0.4, fontStyle: "italic" }}>
+                    Nenhuma curiosidade cadastrada
+                  </td>
                 </tr>
               )}
             </tbody>
