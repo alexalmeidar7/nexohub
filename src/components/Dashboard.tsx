@@ -2029,7 +2029,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                         if (mod === "sorteios") return <Gift size={16} color="#fff" />;
                         if (mod === "previsao") return <CloudRain size={16} color="#fff" />;
                         if (mod === "agenda") return <CalendarDays size={16} color="#fff" />;
-                        if (mod === "musica") return <Music size={16} color="#fff" />;
+                        if (mod === "musica") return (
+                          <div className="relative">
+                            <Music size={16} color="#fff" />
+                            <div className="absolute -top-1.5 -right-1.5 w-2 h-2 bg-emerald-500 rounded-full border border-black/40 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" title="XML Ativo" />
+                          </div>
+                        );
                         if (mod === "blitz") return <Siren size={16} color="#fff" />;
                         if (mod === "noticias") return <FileText size={16} color="#fff" />;
                         if (mod === "broadcast") return <Radio size={16} color="#fff" />;
@@ -2047,7 +2052,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                       })()}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">Aberto</p>
+                      <p className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 leading-none mb-1 group-hover:text-white/60 transition-colors">
+                        {mod === "musica" ? "XML ATIVO" : "Aberto"}
+                      </p>
                       <p className="text-xs font-bold truncate text-white group-hover:text-[#00BFF0] transition-colors">
                         {pageTitle[mod] || mod}
                       </p>
