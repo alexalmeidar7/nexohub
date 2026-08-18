@@ -1293,11 +1293,18 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     music.artista.toUpperCase().trim() === "BREAK"
   ));
 
-  const hasCover = music?.capa && music.capa.length > 0;
+  const matchedException = matchesMusicException(allExceptions, music?.artista, music?.titulo);
+  const hasCover = (matchedException?.capa_url || music?.capa) && (matchedException?.capa_url || music?.capa || "").length > 0;
   const useFallback = !isBreak && !hasCover && presenterFallback;
+  
   const displayTitulo = isBreak ? "Intervalo" : (useFallback ? presenterFallback!.nome : (music?.titulo || "Aguardando leitura..."));
   const displayArtista = isBreak ? "" : (useFallback ? "no ar agora" : (music?.artista || "Interprete"));
-  const displayCover = isBreak ? null : (useFallback ? presenterFallback!.foto : (music?.capa || ""));
+  const displayCover = isBreak ? null : (matchedException?.artista_url || matchedException?.capa_url || displayCoverLegacy());
+
+  function displayCoverLegacy() {
+    if (useFallback) return presenterFallback!.foto;
+    return music?.capa || "";
+  }
 
   // Nexo Form palette
   const NEXO_DARK = "#0A2540";
