@@ -913,92 +913,70 @@ export default function BroadcastPage() {
           vMix — Broadcast
         </div>
 
-        {/* ── Top toolbar: brand lockup + status console ── */}
-        <div
-          className="flex items-center justify-between gap-4 px-6 py-4"
-          style={{
-            ...cardStyle,
+        {/* ── Header / Toolbar ── */}
+        <div 
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl"
+          style={{ 
             background: `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
-            borderBottom: `2px solid ${CYAN}20`,
-            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+            border: `1px solid ${NAVY_BORDER}`,
+            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
           }}
         >
-          <div className="flex items-center gap-6 min-w-0">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
-              >
-                <Code2 size={20} style={{ color: NAVY }} />
-              </div>
-              <div className="flex flex-col">
-                <h2
-                  className="text-white text-base uppercase tracking-widest leading-none mb-1"
-                  style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800 }}
-                >
-                  Broadcast
-                </h2>
-                <span className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">vMix Control System</span>
-              </div>
+          <div className="flex items-center gap-5 min-w-0 w-full sm:w-auto">
+            <div 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
+            >
+              <Code2 size={24} style={{ color: NAVY }} />
             </div>
-            
-            {programaNome && (
-              <div
-                className="hidden md:flex items-center gap-4 pl-6 min-w-0"
-                style={{ borderLeft: `1px solid ${NAVY_BORDER}` }}
-              >
-                <div className="relative group">
-                  {programaLogo ? (
-                    <img src={programaLogo} alt="" className="w-10 h-10 rounded-lg object-cover shadow-2xl transition-transform group-hover:scale-105" style={{ border: `1px solid ${NAVY_BORDER}` }} />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10">
-                      <ImageIcon size={16} className="text-white/20" />
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-[#0A2540] shadow-sm" />
+            <div className="min-w-0">
+              <h2 className="text-white text-lg font-black uppercase tracking-[0.2em] leading-none mb-1.5" style={{ fontFamily: "'Sora', sans-serif" }}>
+                Broadcast
+              </h2>
+              {programaNome ? (
+                <div className="flex items-center gap-2 text-white/40">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: CYAN }}>Active Session</div>
-                  <div className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>{programaNome}</div>
-                </div>
-              </div>
-            )}
+              ) : (
+                <span className="text-[9px] font-bold tracking-[0.2em] text-white/30 uppercase">vMix Control Hub</span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end mr-4 hidden sm:flex">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 mb-0.5">Master Clock</span>
-              <span className="text-sm font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex flex-col items-end mr-2">
+              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 mb-0.5">Master Clock</span>
+              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
             </div>
             
-            <div className="flex items-center bg-black/30 rounded-xl p-1 border border-white/5">
-              {([
-                { id: "preview", label: "Preview", icon: <ImageIcon size={12} /> },
-                { id: "assuntos", label: "Topics", icon: <MessageCircle size={12} /> },
-                { id: "ticker", label: "Ticker", icon: <TrendingUp size={12} /> },
-                { id: "aseguir", label: "Next", icon: <Clock size={12} /> },
-                { id: "xml", label: "XML", icon: <Code2 size={12} /> },
-              ] as const).map(t => {
-                const active = activeTab === t.id;
+            <div className="flex items-center bg-black/40 rounded-2xl p-1.5 border border-white/5">
+              {(["preview", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
+                const active = activeTab === tabId;
+                const labels: Record<string, string> = { preview: "Ao Vivo", assuntos: "Pauta", ticker: "Ticker", aseguir: "Próximo", xml: "XML" };
+                const Icons: Record<string, any> = { preview: ImageIcon, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
+                const Icon = Icons[tabId];
+                
                 return (
                   <button
-                    key={t.id}
-                    onClick={() => setActiveTab(t.id)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                    key={tabId}
+                    onClick={() => setActiveTab(tabId)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
                     style={{
                       backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffff50",
+                      color: active ? NAVY : "#ffffff40",
                       fontFamily: "'Sora', sans-serif",
                     }}
                   >
-                    {t.icon}
-                    <span className="hidden lg:inline">{t.label}</span>
+                    <Icon size={14} />
+                    <span className="hidden xl:inline">{labels[tabId]}</span>
                   </button>
                 );
               })}
             </div>
           </div>
         </div>
+
 
         {/* ── Tab panels ── */}
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
@@ -1010,13 +988,16 @@ export default function BroadcastPage() {
           <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
             {/* 16:9 preview stage with Tally Border */}
             <div 
-              className="w-full relative rounded-3xl overflow-hidden shadow-2xl group transition-all duration-500"
+              className="w-full relative rounded-[2.5rem] overflow-hidden group transition-all duration-500"
               style={{ 
                 backgroundColor: "#000",
-                border: `4px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
-                boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
+                border: `6px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
+                boxShadow: insertLiveArt 
+                  ? "0 0 60px rgba(220,38,38,0.25), 0 20px 80px rgba(0,0,0,0.8)" 
+                  : "0 30px 100px -20px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05)"
               }}
             >
+
               <div 
                 className="relative overflow-hidden" 
                 style={{ 
@@ -1073,75 +1054,122 @@ export default function BroadcastPage() {
               ].map((kpi, idx) => (
                 <div 
                   key={idx}
-                  className="p-4 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all hover:translate-y-[-2px]"
-                  style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)` }}
+                  className="p-5 rounded-3xl flex flex-col gap-3 relative overflow-hidden transition-all hover:translate-y-[-4px] group"
+                  style={{ 
+                    ...cardStyle, 
+                    background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
+                    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)"
+                  }}
+
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
                     <span style={{ color: kpi.color }}>{kpi.icon}</span>
                   </div>
-                  <span className="text-sm font-bold truncate" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
-                  <div className="absolute bottom-0 left-0 h-0.5 bg-white/5 w-full" />
+                  <span className="text-sm font-black truncate tracking-wide" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
+                  <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-0 group-hover:w-full transition-all duration-500" style={{ backgroundColor: `${kpi.color}40` }} />
+
                 </div>
               ))}
             </div>
           </div>
 
 
-          {/* ── Right: settings column ── */}
+          {/* ── Right: Control Center ── */}
           <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
 
-            {/* Quick Actions / Control Center */}
-            <div className="p-5 rounded-2xl" style={{ ...cardStyle, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}>
-              <SectionHeader n="CTR" label="Control Center" color={CYAN} />
+            {/* Robust Control Bento */}
+            <div 
+              className="p-6 rounded-3xl flex flex-col gap-5" 
+              style={{ 
+                ...cardStyle, 
+                border: `1px solid ${CYAN}30`, 
+                background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
+                boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                    <TrendingUp size={16} style={{ color: CYAN }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                    Painel de Controle
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-[8px] font-black text-green-500 uppercase">Online</span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 gap-3">
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
+                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 12px 24px ${LIME}25` }}
                 >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                  Salvar Alterações
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                  Salvar XML Broadcast
                 </button>
                 
                 {insertLiveArt && (
                   <button
                     onClick={handleInsertNow}
                     disabled={insertingNow}
-                    className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
+                    className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:brightness-110 active:scale-[0.98] shadow-lg"
+                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 12px 24px rgba(220,38,38,0.3)" }}
                   >
-                    <Youtube size={14} />
-                    {insertingNow ? "Inserindo Live (30s)..." : "Inserir Live Agora"}
+                    <Youtube size={16} />
+                    {insertingNow ? "Live Ativa (30s)" : "Acionar Insert Live"}
                   </button>
                 )}
               </div>
+
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between">
+                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Sincronização Ativa</span>
+                <div className="flex gap-1">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-1 h-3 rounded-full bg-cyan-500/20" />
+                  ))}
+                </div>
+              </div>
             </div>
 
-            {/* Content & Identity */}
-            <div className="p-5 rounded-2xl" style={cardStyle}>
-              <SectionHeader n="01" label="Content Identity" color={LIME} />
+
+            {/* Identidade visual e Conteúdo */}
+            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${LIME}20` }}>
+                  <ImageIcon size={16} style={{ color: LIME }} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                  Identidade do Bloco
+                </span>
+              </div>
               
-              <div className="space-y-5">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Topic / Assunto</label>
+              <div className="space-y-6">
+                <div className="relative group">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                   <input
                     type="text"
                     value={data.assunto}
                     onChange={e => setData({ ...data, assunto: e.target.value })}
                     onBlur={onFieldBlur}
-                    placeholder="Título do assunto atual..."
-                    className="w-full px-4 py-3 rounded-xl text-xs transition-all focus:ring-2 focus:ring-[#00BFF0]30"
+                    placeholder="Defina o assunto principal..."
+                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
                     style={inputStyle}
                   />
                 </div>
 
 
-                <div className="relative">
-                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
+
+
+                <div className="relative group">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
                   <div className="relative">
-                    <Search size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                     <input
                       type="text"
                       value={data.locutor_override}
@@ -1164,11 +1192,13 @@ export default function BroadcastPage() {
                       }}
                       onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
                       onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                      placeholder={locutorNome || "Override locutor..."}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-xs"
+                      placeholder={locutorNome || "Nome do locutor..."}
+                      className="w-full pl-12 pr-5 py-4 rounded-2xl text-[13px] font-medium border-none outline-none"
                       style={inputStyle}
                     />
                   </div>
+
+
                   {showLocutorDropdown && locutorSearchResults.length > 0 && (
                     <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
                       {locutorSearchResults.map((r, i) => (
@@ -1251,14 +1281,20 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Redes Sociais */}
-            <div className="p-5 rounded-2xl" style={cardStyle}>
-              <SectionHeader
-                n="02"
-                label="Social Engagement"
-                color={CYAN}
-                right={<span className="text-[9px] font-black uppercase tracking-widest text-white/30">{empresaSocials.length} Active</span>}
-              />
+            {/* Presença Social */}
+            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                    <Instagram size={16} style={{ color: CYAN }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                    Redes Sociais
+                  </span>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{empresaSocials.length} Canais</span>
+              </div>
+
 
               <div className="space-y-3">
                 {empresaSocials.length === 0 ? (
@@ -1275,11 +1311,12 @@ export default function BroadcastPage() {
                 )}
 
                 {whatsappNumber && (
-                  <label className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all border" 
+                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
                     style={{ 
                       backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
                       borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
                     }}>
+
                     <input
                       type="checkbox"
                       checked={data.showQrCode}
