@@ -1270,14 +1270,20 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-            {/* Redes Sociais */}
-            <div className="p-5 rounded-2xl" style={cardStyle}>
-              <SectionHeader
-                n="02"
-                label="Social Engagement"
-                color={CYAN}
-                right={<span className="text-[9px] font-black uppercase tracking-widest text-white/30">{empresaSocials.length} Active</span>}
-              />
+            {/* Presença Social */}
+            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
+                    <Instagram size={16} style={{ color: CYAN }} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                    Redes Sociais
+                  </span>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{empresaSocials.length} Canais</span>
+              </div>
+
 
               <div className="space-y-3">
                 {empresaSocials.length === 0 ? (
