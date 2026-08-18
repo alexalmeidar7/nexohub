@@ -59,6 +59,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
     instagram: a.instagram || "",
     whatsapp: (a as any).whatsapp || "",
     foto: a.foto || "",
+    background_url: (a as any).background_url || "",
     ativo: a.ativo ?? true,
   }));
 }
