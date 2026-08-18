@@ -390,6 +390,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
   const [sourceStats, setSourceStats] = useState<{ online: number; pasta: number }>({ online: 0, pasta: 0 });
   const lastSourceRef = useRef<"online" | "pasta" | null>(null);
   const [showConfig, setShowConfig] = useState(false);
+  const [allExceptions, setAllExceptions] = useState<MusicException[]>([]);
+
+  useEffect(() => {
+    if (!dataUserId) return;
+    getMusicExceptions(dataUserId).then(setAllExceptions);
+    // Poll exceptions every 60s
+    const iv = setInterval(() => getMusicExceptions(dataUserId).then(setAllExceptions), 60000);
+    return () => clearInterval(iv);
+  }, [dataUserId]);
 
   // Source health tracking — tracks last SUCCESSFUL response (not song change)
   const lastOnlineSuccessRef = useRef<number>(0);
