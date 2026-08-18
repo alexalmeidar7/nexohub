@@ -74,6 +74,7 @@ export default function ApresentadorForm() {
   const [whatsapp, setWhatsapp] = useState("+55");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
+  const [backgroundUrl, setBackgroundUrl] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [filterCategoria, setFilterCategoria] = useState("todos");
   const [searchNome, setSearchNome] = useState("");
