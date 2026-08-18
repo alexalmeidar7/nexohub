@@ -1556,17 +1556,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
                 <div className="space-y-1">
-                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: musicTextColor, textShadow: musicTextShadow, letterSpacing: "-0.02em" }}>
+                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: musicTextColor, textShadow: musicTextShadow, letterSpacing: "-0.02em", transition: "color 1s ease" }}>
                     {displayTitulo}
                   </h2>
                   <div className="flex items-center gap-2">
                     <span 
-                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full" 
+                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full transition-all duration-1000" 
                       style={{ 
-                        color: "#FFFFFF", 
-                        backgroundColor: "rgba(255,255,255,0.15)",
+                        color: musicTextColor, 
+                        backgroundColor: paletteContrast?.scrimBackground || "rgba(255,255,255,0.15)",
                         backdropFilter: "blur(4px)",
-                        border: "1px solid rgba(255,255,255,0.2)"
+                        border: `1px solid ${paletteContrast?.textColor}33` || "1px solid rgba(255,255,255,0.2)"
                       }}
                     >
                       <User size={14} className="opacity-80" />
@@ -1578,13 +1578,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 {music && music.duracao > 0 && (
                   <div className="flex items-center gap-3 mt-1">
                     <div 
-                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner" 
-                      style={{ backgroundColor: "rgba(0,0,0,0.3)", color: "#FFFFFF" }}
+                      className="px-3 py-1 rounded-lg font-mono font-black text-sm shadow-inner min-w-[85px] text-center transition-all duration-1000" 
+                      style={{ 
+                        backgroundColor: "rgba(0,0,0,0.3)", 
+                        color: musicTextColor,
+                        border: `1px solid ${musicTextColor}22`
+                      }}
                     >
                       {formatTimeMs(elapsed)}
                     </div>
                     <div className="h-1 w-1 rounded-full bg-white/30" />
-                    <div className="text-sm font-mono font-bold opacity-60" style={{ color: "#FFFFFF" }}>
+                    <div className="text-sm font-mono font-bold opacity-60 transition-colors duration-1000" style={{ color: musicTextColor }}>
                       {formatTime(music.duracao)}
                     </div>
                   </div>
