@@ -523,7 +523,7 @@ export default function RoteiroPrograma() {
             >
               <History size={14} style={{ color: CYAN }} />
               <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
-                Roteiros cadastrados
+                Roteiros Cadastrados
               </span>
               {historicoOpen
                 ? <ChevronUp size={14} style={{ color: CYAN }} />
@@ -819,7 +819,7 @@ export default function RoteiroPrograma() {
         </div>
       </div>
 
-      {historicoSlot}
+      
 
       {estudios.length > 0 && (
         <div className="px-6 pt-4 pb-2" style={MONT}>
@@ -863,6 +863,8 @@ export default function RoteiroPrograma() {
           </div>
         </div>
       )}
+
+      {historicoSlot}
 
       {/* Modal: Novo Roteiro */}
       <Suspense fallback={null}>
