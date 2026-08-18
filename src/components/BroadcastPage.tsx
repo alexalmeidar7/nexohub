@@ -1240,98 +1240,54 @@ export default function BroadcastPage() {
               </div>
             </div>
 
-              <button
-                onClick={() => handleSave()}
-                className="w-full py-2 rounded-full text-[10px] font-black uppercase tracking-widest"
-                style={{ backgroundColor: CYAN, color: NAVY, boxShadow: "0 4px 10px rgba(0,191,240,0.3)" }}
-              >
-                Atualizar GC
-              </button>
-            </div>
-          </div>
-
-          {/* Redes Sociais */}
-          <div className="p-4 rounded-2xl" style={cardStyle}>
-            <SectionHeader
-              n="02"
-              label="Redes Sociais"
-              color={LIME}
-              right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>}
-            />
-
-
-            {empresaSocials.length === 0 ? (
-              <p className="text-[10px]" style={{ color: "#ffffff60" }}>Nenhuma rede social cadastrada.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {empresaSocials.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                    <span style={{ color: CYAN }}>{s.icon}</span>
-                    <span className="text-[11px] text-white truncate">{s.valor}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {whatsappNumber && (
-              <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP, border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}` }}>
-                <input
-                  type="checkbox"
-                  checked={data.showQrCode}
-                  onChange={e => {
-                    const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                    setData(nextData);
-                    void handleSave(nextData);
-                  }}
-                  style={{ accentColor: CYAN }}
-                />
-                <MessageCircle size={12} style={{ color: data.showQrCode ? CYAN : "#ffffff60" }} />
-                <div>
-                  <span className="text-[11px] font-semibold text-white">QR Code WhatsApp</span>
-                  <p className="text-[9px]" style={{ color: "#ffffff60" }}>Exibir QR para enviar mensagem</p>
-                </div>
-              </label>
-            )}
-          </div>
-
-          {/* Insert Live */}
-          {insertLiveArt && (
-            <div className="p-4 rounded-2xl" style={cardStyle}>
+            {/* Redes Sociais */}
+            <div className="p-5 rounded-2xl" style={cardStyle}>
               <SectionHeader
-                n="03"
-                label="Insert Live · 30s"
-                color="#f97316"
-                right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>}
+                n="02"
+                label="Social Engagement"
+                color={CYAN}
+                right={<span className="text-[9px] font-black uppercase tracking-widest text-white/30">{empresaSocials.length} Active</span>}
               />
 
+              <div className="space-y-3">
+                {empresaSocials.length === 0 ? (
+                  <p className="text-[10px] text-white/20 italic">No social profiles configured.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {empresaSocials.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
+                        <span style={{ color: CYAN }}>{s.icon}</span>
+                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-              {insertLiveSchedule.length > 0 ? (
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {insertLiveSchedule.map((t, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg py-2 text-center font-mono font-bold text-[11px]"
-                      style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#f97316" }}
-                    >
-                      {t}
+                {whatsappNumber && (
+                  <label className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all border" 
+                    style={{ 
+                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
+                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
+                    }}>
+                    <input
+                      type="checkbox"
+                      checked={data.showQrCode}
+                      onChange={e => {
+                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                        setData(nextData);
+                        void handleSave(nextData);
+                      }}
+                      className="w-4 h-4"
+                      style={{ accentColor: CYAN }}
+                    />
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
+                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[10px] mb-3" style={{ color: "#ffffff60" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
-              )}
-
-              <button
-                onClick={handleInsertNow}
-                disabled={insertingNow}
-                className="w-full px-3 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60"
-                style={{ backgroundColor: "#f97316", color: "#fff", boxShadow: "0 4px 10px rgba(249,115,22,0.3)" }}
-              >
-                {insertingNow ? "Inserindo (30s)..." : "Inserir Agora"}
-              </button>
+                  </label>
+                )}
+              </div>
             </div>
-          )}
-
           </div>
         </div>
         )}
