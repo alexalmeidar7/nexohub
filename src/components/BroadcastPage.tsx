@@ -1292,7 +1292,7 @@ export default function BroadcastPage() {
                     Redes Sociais
                   </span>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{empresaSocials.length} Canais</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
               </div>
 
 
