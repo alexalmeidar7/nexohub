@@ -1596,7 +1596,7 @@ export default function PromocoesKiosk() {
                                 lineHeight: 1.5, 
                                 color: "white",
                                 wordBreak: "normal",
-                                overflowWrap: "anywhere",
+                                overflowWrap: "break-word",
                                 hyphens: "none"
                               }}
                               dangerouslySetInnerHTML={{
