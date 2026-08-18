@@ -450,12 +450,6 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
             </div>
             <div className="flex gap-1">
-              <input 
-                className="text-[9px] px-2 py-1 rounded border bg-white/50 w-24 outline-none focus:ring-1 focus:ring-[#00BFF0]" 
-                placeholder="Buscar..." 
-                value={search} 
-                onChange={e => setSearch(e.target.value)}
-              />
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
