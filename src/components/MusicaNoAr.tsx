@@ -1556,7 +1556,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
                 <div className="space-y-1">
-                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: "#ffffff", textShadow: musicTextShadow, letterSpacing: "-0.02em", transition: "color 1s ease" }}>
+                  <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0" style={{ color: "#ffffff", textShadow: "0 2px 4px rgba(0,0,0,0.3)", letterSpacing: "-0.02em", transition: "color 1s ease" }}>
                     {displayTitulo}
                   </h2>
                   <div className="flex items-center gap-2">
