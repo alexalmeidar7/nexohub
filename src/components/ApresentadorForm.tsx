@@ -125,7 +125,7 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp("+55"); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp("+55"); setFoto(""); setBackgroundUrl(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
