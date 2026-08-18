@@ -1516,18 +1516,7 @@ function MusicProgramWidget({ dataUserId }: { dataUserId?: string } = {}) {
         </div>
       )}
 
-      {/* Music */}
-      {music ? (
-        <div key={`music-${musicKey}`} className="flex items-center gap-3 animate-fade-in">
-          {(music.excecao?.capa_url || music.capa) && (
-            <img src={music.excecao?.capa_url || music.capa} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-          )}
-          <div className="min-w-0">
-            <p className="text-xs font-semibold truncate" style={{ color: "var(--layout-widget-text, #fff)" }}>{music.titulo}</p>
-            <p className="text-[10px] truncate" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.5 }}>{music.artista}</p>
-          </div>
-        </div>
-      ) : !currentProgram ? (
+      {!currentProgram ? (
         <p className="text-xs" style={{ color: "var(--layout-widget-text, #fff)", opacity: 0.3 }}>Sem programa no momento</p>
       ) : null}
     </div>
