@@ -1088,11 +1088,11 @@ export default function BroadcastPage() {
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                  style={{ backgroundColor: CYAN, color: NAVY, boxShadow: `0 8px 20px ${CYAN}25` }}
+                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
                 >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                  Atualizar GC Master
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Salvar Alterações
                 </button>
                 
                 {insertLiveArt && (
@@ -1103,7 +1103,7 @@ export default function BroadcastPage() {
                     style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
                   >
                     <Youtube size={14} />
-                    {insertingNow ? "Publicando Live (30s)..." : "Insert Live Now"}
+                    {insertingNow ? "Inserindo Live (30s)..." : "Inserir Live Agora"}
                   </button>
                 )}
               </div>
