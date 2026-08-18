@@ -85,7 +85,7 @@ export default function OnAirWidget() {
   const [nextPrograms, setNextPrograms] = useState<Programa[]>([]);
   const [nextApresentadores, setNextApresentadores] = useState<Record<string, ApresentadorInfo>>({});
   const [isHovered, setIsHovered] = useState(false);
-  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string } | null>(null);
+  const [musicData, setMusicData] = useState<{ titulo?: string; artista?: string; capa?: string; artista_url?: string }>({} as any);
   const [gradeOpen, setGradeOpen] = useState(false);
   const [isStereo, setIsStereo] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -235,12 +235,21 @@ export default function OnAirWidget() {
   useEffect(() => {
     if (!user?.id) return;
     const key = `masterview_music_data::${user.id}`;
-    const readMusic = () => {
+    const readMusic = async () => {
       try {
         const raw = localStorage.getItem(key);
         if (raw) {
           const parsed = JSON.parse(raw);
-          setMusicData({ titulo: parsed.titulo || parsed.title, artista: parsed.artista || parsed.artist });
+          const { matchesMusicException, getMusicExceptions } = await import("@/lib/musicExceptions");
+          const exceptions = await getMusicExceptions(user.id);
+          const matched = matchesMusicException(exceptions, parsed.artista || parsed.artist, parsed.titulo || parsed.title);
+          
+          setMusicData({ 
+            titulo: parsed.titulo || parsed.title, 
+            artista: parsed.artista || parsed.artist,
+            capa: matched?.capa_url || parsed.capa || "",
+            artista_url: matched?.artista_url || ""
+          });
         }
       } catch {}
     };
@@ -373,27 +382,43 @@ export default function OnAirWidget() {
         className="h-full relative flex flex-col transition-all duration-500"
         style={{ opacity: isHovered ? 0 : 1 }}
       >
-        {/* Presenter photo - anchored to bottom, larger. Animates on change. */}
-        {apresentadoresAtuais.map((ap, idx) => (
-          ap.foto && (
-            <img
-              key={`foto-${programa.id}-${ap.foto}-${idx}`}
-              src={ap.foto}
-              alt={ap.nome}
-              className={`absolute object-contain pointer-events-none transition-all duration-1000 ${
-                idx === apresentadorIndex ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-95 translate-x-4"
-              }`}
-              style={{ 
-                right: 0, 
-                bottom: 0, 
-                width: "60%", 
-                height: "100%", 
-                objectPosition: "right bottom",
-                zIndex: idx === apresentadorIndex ? 5 : 0
-              }}
-            />
-          )
-        ))}
+        {/* Presenter photo or Music Exception artist photo - anchored to bottom, larger. Animates on change. */}
+        {musicData?.artista_url ? (
+          <img
+            src={musicData.artista_url}
+            alt={musicData.artista}
+            className="absolute object-contain pointer-events-none transition-all duration-1000 opacity-100 scale-100 translate-x-0"
+            style={{ 
+              right: 0, 
+              bottom: 0, 
+              width: "60%", 
+              height: "100%", 
+              objectPosition: "right bottom",
+              zIndex: 10
+            }}
+          />
+        ) : (
+          apresentadoresAtuais.map((ap, idx) => (
+            ap.foto && (
+              <img
+                key={`foto-${programa.id}-${ap.foto}-${idx}`}
+                src={ap.foto}
+                alt={ap.nome}
+                className={`absolute object-contain pointer-events-none transition-all duration-1000 ${
+                  idx === apresentadorIndex ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-95 translate-x-4"
+                }`}
+                style={{ 
+                  right: 0, 
+                  bottom: 0, 
+                  width: "60%", 
+                  height: "100%", 
+                  objectPosition: "right bottom",
+                  zIndex: idx === apresentadorIndex ? 5 : 0
+                }}
+              />
+            )
+          ))
+        )}
 
         {/* Top right buttons */}
         <div className="absolute top-1 right-1 z-20 flex items-center gap-1">
