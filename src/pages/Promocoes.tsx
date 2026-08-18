@@ -281,7 +281,7 @@ export default function PromocoesKiosk() {
 
       const aprs = (data.apresentadores || []).map((a: any) => ({
         id: a.id, nome: a.nome, cargo: a.cargo || "", instagram: a.instagram || "",
-        foto: a.foto || "", ativo: a.ativo,
+        foto: a.foto || "", background_url: a.background_url || "", ativo: a.ativo,
       }));
       setApresentadores(aprs);
     };
