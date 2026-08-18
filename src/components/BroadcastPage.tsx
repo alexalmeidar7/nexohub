@@ -1059,7 +1059,7 @@ export default function BroadcastPage() {
                 { label: "Locutor", value: displayLocutor, color: LIME, icon: <Mic size={14} /> },
                 { label: "Current Topic", value: data.assunto || "NOT SET", color: "#fff", icon: <MessageCircle size={14} /> },
                 { label: "Sponsorships", value: `${sponsorLogos.length} ACTIVE`, color: CYAN, icon: <Save size={14} /> },
-                { label: "Social Link", value: whatsappNumber ? "CONNECTED" : "OFFLINE", color: whatsappNumber ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
+                { label: "Social Presence", value: empresaSocials.length > 0 ? `${empresaSocials.length} CHANNELS` : "OFFLINE", color: empresaSocials.length > 0 ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
               ].map((kpi, idx) => (
                 <div 
                   key={idx}
