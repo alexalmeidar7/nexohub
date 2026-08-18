@@ -243,7 +243,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: selectedItem.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: selectedItem.imagem_url || "",
       banner_l_url: selectedItem.banner_l_url || "",
-      botao_url: selectedItem.botao_url || "",
       programa_ids: itemProgIds,
     });
     
