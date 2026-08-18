@@ -1676,25 +1676,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
                 <div 
-                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl hover:-translate-y-1" 
+                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl" 
                   style={{ 
-                    background: "#FFFFFF", 
-                    border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#F1F5F9"}`,
-                    boxShadow: isOnlineSelected ? "0 20px 40px -20px rgba(0, 191, 240, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
+                    background: "#F8FAFC", 
+                    border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
                   }}
                 >
-                  {isOnlineSelected && (
-                    <div className="absolute top-0 right-0 p-4">
-                      <div className="w-3 h-3 rounded-full bg-cyan-500 animate-ping opacity-75" />
-                    </div>
-                  )}
-                  
                   <div className="flex items-center gap-4">
                     <div 
-                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source:rotate-6" 
+                      className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                       style={{ 
-                        background: isOnlineSelected ? NEXO_CYAN : "#F1F5F9",
-                        boxShadow: isOnlineSelected ? `0 8px 16px ${NEXO_CYAN}44` : "none"
+                        background: isOnlineSelected ? NEXO_CYAN : "#E2E8F0",
                       }}
                     >
                       <Globe size={24} style={{ color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK }} />
@@ -1703,17 +1695,14 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
                         Origem Online
                       </h4>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronização via XML</span>
-                      </div>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronização via XML</span>
                     </div>
                   </div>
-
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">URL do Feed XML</label>
-                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl bg-white border-2 border-slate-200">
                       <div className="pl-4">
                         <Globe size={16} className="text-slate-400" />
                       </div>
@@ -1732,7 +1721,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                       />
                       <button 
                         onClick={() => void saveUrl(xmlUrl)} 
-                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-cyan-500/20" 
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-md" 
                         style={{ backgroundColor: NEXO_CYAN, color: "#FFFFFF" }}
                       >
                         Salvar
@@ -1743,72 +1732,32 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     type="button"
                     onClick={toggleOnlineSource}
                     disabled={!hasValidOnlineUrl}
-                    aria-pressed={isOnlineSelected}
-                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:brightness-105"
                     style={{
                       backgroundColor: isOnlineSelected ? NEXO_DARK : "#FFFFFF",
                       color: isOnlineSelected ? "#FFFFFF" : NEXO_DARK,
                       border: `2px solid ${isOnlineSelected ? NEXO_DARK : "#E2E8F0"}`,
-                      boxShadow: isOnlineSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
                     {onlineActivating ? <Loader2 size={18} className="animate-spin" /> : isOnlineSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Conectado" : "Conectar Fonte"}
+                    {onlineActivating ? "Sincronizando..." : isOnlineSelected ? "Ativo" : "Ativar"}
                   </button>
-
                 </div>
-
-                {(() => {
-                  const st = buildStatus({ selected: isOnlineSelected, activating: onlineActivating, error: onlineError, lastReadAt: onlineLastReadAt, hasSource: hasValidOnlineUrl, delayed: !!onlineDelay });
-                  const ago = formatAgo(onlineLastReadAt);
-                  return (
-                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        {st.key === "ativando" || st.key === "atrasado" ? (
-                          <Loader2 size={12} className="animate-spin shrink-0" />
-                        ) : (
-                          <span className="relative flex h-2 w-2 shrink-0">
-                            {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
-                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
-                          </span>
-                        )}
-                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
-                      </div>
-                      {ago && st.key !== "inativa" && st.key !== "erro" && (
-                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
-                      )}
-                    </div>
-                  );
-                })()}
-                {onlineError && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <AlertTriangle size={11} />
-                    <span>{onlineError}</span>
-                  </div>
-                )}
               </div>
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl hover:-translate-y-1" 
+                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl" 
                 style={{ 
-                  background: "#FFFFFF", 
-                  border: `2px solid ${isLocalSelected ? NEXO_LIME : "#F1F5F9"}`,
-                  boxShadow: isLocalSelected ? "0 20px 40px -20px rgba(198, 240, 60, 0.2)" : "0 4px 12px rgba(0,0,0,0.03)"
+                  background: "#F8FAFC", 
+                  border: `2px solid ${isLocalSelected ? NEXO_LIME : "#E2E8F0"}`,
                 }}
               >
-                {isLocalSelected && (
-                  <div className="absolute top-0 right-0 p-4">
-                    <div className="w-3 h-3 rounded-full bg-lime-500 animate-ping opacity-75" />
-                  </div>
-                )}
-                
                 <div className="flex items-center gap-4">
                   <div 
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/source-local:rotate-6" 
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                     style={{ 
-                      background: isLocalSelected ? NEXO_LIME : "#F1F5F9",
-                      boxShadow: isLocalSelected ? `0 8px 16px ${NEXO_LIME}44` : "none"
+                      background: isLocalSelected ? NEXO_LIME : "#E2E8F0",
                     }}
                   >
                     <FolderOpen size={24} style={{ color: NEXO_DARK }} />
@@ -1817,21 +1766,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
                       Origem Local
                     </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
-                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Arquivo XML ou TXT</label>
-                    <div className="flex items-center gap-3 p-1 rounded-2xl transition-all" style={{ backgroundColor: "#F8FAFC", border: "2px solid #E2E8F0" }}>
+                    <div className="flex items-center gap-3 p-1 rounded-2xl bg-white border-2 border-slate-200">
                       <div className="pl-4">
                         <FolderOpen size={16} className="text-slate-400" />
                       </div>
                       <div className="flex-1 py-3 text-sm font-semibold truncate" style={{ color: NEXO_DARK }}>
-                        {localFileName || <span className="text-slate-400 font-medium italic">Selecione o arquivo do player...</span>}
+                        {localFileName || <span className="text-slate-400 font-medium italic">Selecione o arquivo...</span>}
                       </div>
                       <button
                         onClick={() => {
@@ -1841,7 +1788,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                             fileInputRef.current?.click();
                           }
                         }}
-                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 active:scale-95 shadow-md shadow-slate-200"
+                        className="h-12 px-6 rounded-xl flex items-center justify-center font-bold text-xs uppercase tracking-widest transition-all hover:brightness-110 shadow-md"
                         style={{ backgroundColor: NEXO_DARK, color: "#FFFFFF" }}
                       >
                         <Upload size={14} className="mr-2" />
@@ -1854,20 +1801,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     type="button"
                     onClick={toggleLocalSource}
                     disabled={!hasValidLocalSource}
-                    aria-pressed={isLocalSelected}
-                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl select-none font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="w-full h-14 flex items-center justify-center gap-3 px-6 rounded-2xl font-black text-[12px] uppercase tracking-[0.2em] transition-all hover:brightness-105"
                     style={{
                       backgroundColor: isLocalSelected ? NEXO_DARK : "#FFFFFF",
                       color: isLocalSelected ? "#FFFFFF" : NEXO_DARK,
                       border: `2px solid ${isLocalSelected ? NEXO_DARK : "#E2E8F0"}`,
-                      boxShadow: isLocalSelected ? "0 10px 30px -10px rgba(10, 37, 64, 0.4)" : "none",
                     }}
                   >
                     {localActivating ? <Loader2 size={18} className="animate-spin" /> : isLocalSelected ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Conectado" : "Conectar Fonte"}
+                    {localActivating ? "Sincronizando..." : isLocalSelected ? "Ativo" : "Ativar"}
                   </button>
-
                 </div>
+              </div>
+
 
                 <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
