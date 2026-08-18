@@ -2040,31 +2040,15 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       </section>
 
       {/* ═══ INFO MUSIC & CURIOSIDADES ═══ */}
-      <section style={{ background: "#FFFFFF", borderRadius: 28, padding: 32, boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)", border: "1px solid #E2E8F0", marginTop: 24 }}>
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg" style={{ background: NEXO_CYAN, boxShadow: `0 8px 20px ${NEXO_CYAN}44` }}>
-            <Sparkles size={22} className="text-white" />
-          </div>
-          <div>
-            <h3 style={{ color: NEXO_DARK, fontSize: 18, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
-              Música no Ar & Curiosidades
-            </h3>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", margin: 0 }}>
-              Gerencie curiosidades e acompanhe o histórico em tempo real
-            </p>
-          </div>
-        </div>
-        
-        <Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="animate-spin" size={40} style={{ color: NEXO_CYAN }} /></div>}>
-          <InfoMusicSection 
-            music={music} 
-            effectiveUserId={dataUserId}
-            curiosidade={curiosidade}
-            setCuriosidade={setCuriosidade}
-            manualCuriosityRef={manualCuriosityRef}
-          />
-        </Suspense>
-      </section>
+      <Suspense fallback={<div className="flex items-center justify-center p-20"><Loader2 className="animate-spin" size={40} style={{ color: NEXO_CYAN }} /></div>}>
+        <InfoMusicSection 
+          music={music} 
+          effectiveUserId={dataUserId}
+          curiosidade={curiosidade}
+          setCuriosidade={setCuriosidade}
+          manualCuriosityRef={manualCuriosityRef}
+        />
+      </Suspense>
 
 
       {/* XML MUSICA AGORA */}
