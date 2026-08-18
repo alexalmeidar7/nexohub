@@ -22,6 +22,7 @@ export interface Apresentador {
   instagram: string;
   whatsapp: string;
   foto: string;
+  background_url?: string | null;
   ativo: boolean;
 }
 
