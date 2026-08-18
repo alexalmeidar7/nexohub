@@ -17,6 +17,7 @@ export interface TelaPromoConfig {
   bg_type: BgType;
   bg_color: string;
   bg_image_url: string;
+  bg_opacity: number;
   gradient_color_a: string;
   gradient_color_b: string;
   gradient_angle: number;
@@ -32,6 +33,7 @@ export const defaultTelaPromoConfig: TelaPromoConfig = {
   bg_type: "cor",
   bg_color: "#000000",
   bg_image_url: "",
+  bg_opacity: 50,
   gradient_color_a: "#1a1a2e",
   gradient_color_b: "#16213e",
   gradient_angle: 135,
@@ -298,6 +300,23 @@ export default function ConfigTelaPromoPage({ effectiveUserId }: Props) {
                   onChangeAngle={v => update({ gradient_angle: v })}
                 />
               )}
+              
+              <div className="space-y-3 pt-2 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[11px] font-medium uppercase tracking-wider opacity-70" style={{ color: "var(--layout-text)" }}>Opacidade da sobreposição (Overlay)</Label>
+                  <span className="text-[10px] font-mono opacity-50">{config.bg_opacity}%</span>
+                </div>
+                <Slider
+                  value={[config.bg_opacity]}
+                  min={0}
+                  max={100}
+                  step={1}
+                  onValueChange={([v]) => update({ bg_opacity: v })}
+                  className="py-2"
+                />
+                <p className="text-[10px] opacity-40 leading-tight">Define quão escuro o fundo ficará para garantir a leitura dos textos.</p>
+              </div>
+
             </div>
           </SectionCard>
 

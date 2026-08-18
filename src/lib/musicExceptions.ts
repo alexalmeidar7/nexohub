@@ -4,6 +4,7 @@ export interface MusicException {
   id: string;
   termo: string;
   capa_url: string | null;
+  artista_url: string | null;
   background_url: string | null;
 }
 
@@ -23,15 +24,17 @@ export async function getMusicExceptions(userId: string | null | undefined): Pro
   try {
     const { data } = await supabase
       .from("infomusic_excecoes")
-      .select("id, termo, capa_url, background_url")
+      .select("*")
       .eq("user_id", userId);
     
-    const list: MusicException[] = (data || []).map(d => ({
+    const list: MusicException[] = (data || []).map((d: any) => ({
       id: d.id,
       termo: d.termo,
       capa_url: d.capa_url,
+      artista_url: d.artista_url,
       background_url: d.background_url
     }));
+
 
     cache.set(userId, { list, ts: now });
     return list;
@@ -55,7 +58,7 @@ export function matchesMusicException(
     const ww = term.trim().toLowerCase();
     if (!ww) continue;
     if ((a && a.includes(ww)) || (m && m.includes(ww))) {
-      return typeof ex === "string" ? { id: "", termo: ex, capa_url: null, background_url: null } : ex;
+      return typeof ex === "string" ? { id: "", termo: ex, capa_url: null, artista_url: null, background_url: null } : ex;
     }
   }
   return null;

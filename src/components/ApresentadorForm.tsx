@@ -22,6 +22,7 @@ export interface Apresentador {
   instagram: string;
   whatsapp: string;
   foto: string;
+  background_url?: string | null;
   ativo: boolean;
 }
 
@@ -58,6 +59,7 @@ export async function getApresentadores(): Promise<Apresentador[]> {
     instagram: a.instagram || "",
     whatsapp: (a as any).whatsapp || "",
     foto: a.foto || "",
+    background_url: (a as any).background_url || "",
     ativo: a.ativo ?? true,
   }));
 }
@@ -72,6 +74,7 @@ export default function ApresentadorForm() {
   const [whatsapp, setWhatsapp] = useState("+55");
   const [foto, setFoto] = useState("");
   const [ativo, setAtivo] = useState(true);
+  const [backgroundUrl, setBackgroundUrl] = useState("");
   const [apresentadores, setApresentadores] = useState<Apresentador[]>([]);
   const [filterCategoria, setFilterCategoria] = useState("todos");
   const [searchNome, setSearchNome] = useState("");
@@ -122,7 +125,7 @@ export default function ApresentadorForm() {
   };
 
   const resetForm = () => {
-    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp("+55"); setFoto(""); setAtivo(true); setEditingId(null);
+    setNome(""); setCategoria(""); setCargoConvidado(""); setInstagram(""); setWhatsapp("+55"); setFoto(""); setBackgroundUrl(""); setAtivo(true); setEditingId(null);
   };
 
   const handleSave = async () => {
@@ -143,12 +146,20 @@ export default function ApresentadorForm() {
       fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
     }
 
+    let finalBackgroundUrl = backgroundUrl;
+    if (finalBackgroundUrl && finalBackgroundUrl.startsWith("data:")) {
+      const targetId = editingId || crypto.randomUUID();
+      const path = `apresentadores/${user.id}/${targetId}-bg.webp`;
+      finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", path);
+    }
+
     const payload = {
       nome: nome.trim(),
       cargo: cargoValue,
       instagram: instagram.trim(),
       whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
       foto: fotoUrl,
+      background_url: finalBackgroundUrl,
       ativo,
     };
 
@@ -195,6 +206,7 @@ export default function ApresentadorForm() {
     setInstagram(a.instagram);
     setWhatsapp(a.whatsapp || "+55");
     setFoto(a.foto);
+    setBackgroundUrl(a.background_url || "");
     setAtivo(a.ativo);
     // Scroll suave até o formulário no topo
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
@@ -529,6 +541,68 @@ export default function ApresentadorForm() {
               </div>
             </div>
           )}
+
+          <div className="md:col-span-2 lg:col-span-3">
+            <label style={labelStyle}>Imagem de Fundo do Locutor (Modo TV / Player)</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <label
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 20,
+                  background: "#FFFFFF",
+                  border: `2px dashed ${CYAN}`,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  overflow: "hidden",
+                }}
+              >
+                {backgroundUrl ? (
+                  <img src={backgroundUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <>
+                    <Camera size={22} style={{ color: CYAN }} />
+                    <span style={{ fontSize: 9, color: DARK, marginTop: 4, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>Upload</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => setBackgroundUrl(reader.result as string);
+                    reader.readAsDataURL(file);
+                  }}
+                />
+              </label>
+              {backgroundUrl && (
+                <button
+                  onClick={() => setBackgroundUrl("")}
+                  style={{
+                    background: "#FEE2E2",
+                    color: "#DC2626",
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "8px 16px",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Remover fundo
+                </button>
+              )}
+            </div>
+          </div>
+
         </div>
 
         <div className="mt-8 flex items-center justify-end gap-3">

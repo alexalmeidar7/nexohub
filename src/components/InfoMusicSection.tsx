@@ -524,15 +524,64 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
         {/* Coluna 2: EXCEÇÕES */}
         <div className="space-y-3 flex flex-col h-[500px]">
-          <div className="flex items-center gap-2 flex-shrink-0 h-10">
-            <div className="w-1 h-4 bg-amber-500 rounded-full" />
-            <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
+          <div className="flex items-center justify-between flex-shrink-0 h-10">
+            <div className="flex items-center gap-2">
+              <div className="w-1 h-4 bg-amber-500 rounded-full" />
+              <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
+            </div>
+            <div className="flex gap-1">
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                id="upload-excecao-capa"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    toast.info("Upload de capa iniciado (mock)");
+                    // Logica de upload viria aqui
+                  }
+                }}
+              />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                className="h-6 w-6 text-amber-600 border-amber-200 hover:bg-amber-50 rounded-full bg-white/50"
+                title="Cadastrar imagem da capa para exceção"
+                onClick={() => document.getElementById("upload-excecao-capa")?.click()}
+              >
+                <ImagePlus size={10} />
+              </Button>
+
+              <input 
+                type="file" 
+                className="hidden" 
+                accept="image/*" 
+                id="upload-excecao-artista"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    toast.info("Upload de artista iniciado (mock)");
+                  }
+                }}
+              />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                className="h-6 w-6 text-blue-600 border-blue-200 hover:bg-blue-50 rounded-full bg-white/50"
+                title="Cadastrar imagem do artista para exceção"
+                onClick={() => document.getElementById("upload-excecao-artista")?.click()}
+              >
+                <Plus size={10} />
+              </Button>
+            </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: "#F59E0B", color: "#FFFFFF" }}>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Termo</th>
+                  <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Imagens</th>
                   <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Ação</th>
                 </tr>
               </thead>
@@ -546,6 +595,80 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     }}
                   >
                     <td style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>{exc.termo}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className={`h-6 w-6 rounded-full ${exc.capa_url ? "text-emerald-500 bg-emerald-50" : "text-gray-400 hover:text-amber-500 hover:bg-amber-50"}`}
+                          title="Cadastrar imagem da capa"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = async (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !user) return;
+                              try {
+                                const fileName = `excecao-capa-${exc.id}-${Date.now()}`;
+                                const { data: upData, error: upErr } = await supabase.storage
+                                  .from("xml-files")
+                                  .upload(`${user.id}/${fileName}`, file);
+                                if (upErr) throw upErr;
+                                
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from("xml-files")
+                                  .getPublicUrl(`${user.id}/${fileName}`);
+                                  
+                                await supabase.from("infomusic_excecoes").update({ capa_url: publicUrl } as any).eq("id", exc.id);
+                                loadExcecoes();
+                                toast.success("Capa atualizada!");
+                              } catch (err) {
+                                toast.error("Erro no upload");
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <ImagePlus size={12} />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className={`h-6 w-6 rounded-full ${(exc as any).artista_url ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"}`}
+                          title="Cadastrar imagem do artista"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = async (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !user) return;
+                              try {
+                                const fileName = `excecao-artista-${exc.id}-${Date.now()}`;
+                                const { data: upData, error: upErr } = await supabase.storage
+                                  .from("xml-files")
+                                  .upload(`${user.id}/${fileName}`, file);
+                                if (upErr) throw upErr;
+                                
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from("xml-files")
+                                  .getPublicUrl(`${user.id}/${fileName}`);
+                                  
+                                await supabase.from("infomusic_excecoes").update({ artista_url: publicUrl } as any).eq("id", exc.id);
+                                loadExcecoes();
+                                toast.success("Foto do artista atualizada!");
+                              } catch (err) {
+                                toast.error("Erro no upload");
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Plus size={12} />
+                        </Button>
+                      </div>
+                    </td>
                     <td style={{ padding: "12px 14px", textAlign: "center" }}>
                       <Button 
                         size="icon" 
