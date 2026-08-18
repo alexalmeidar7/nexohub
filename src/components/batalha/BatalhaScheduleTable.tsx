@@ -41,54 +41,116 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
 
   if (!batalhas.length) return null;
 
+  const CYAN = "#00BFF0";
+  const CARD_BG = "#D6F4FB";
+  const DARK = "#0A2540";
+  const FONT = "'Montserrat', sans-serif";
+
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: "#f5f5f5", border: "1px solid #e0e0e0" }}>
-      <div className="flex items-center gap-2 px-5 py-3" style={{ background: "#ebebeb", borderBottom: "1px solid #ddd" }}>
-        <CalendarClock className="h-4 w-4 text-gray-500" />
-        <h3 className="font-semibold text-xs uppercase tracking-wider text-gray-500">Batalhas Agendadas</h3>
+    <section
+      style={{
+        background: "#FFFFFF",
+        borderRadius: 24,
+        padding: 32,
+        boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+        fontFamily: FONT,
+      }}
+    >
+      <div className="flex items-center justify-between mb-8">
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 800,
+            letterSpacing: 2,
+            color: DARK,
+            textTransform: "uppercase",
+            margin: 0,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <CalendarClock size={24} style={{ color: CYAN }} />
+          Batalhas Agendadas
+        </h2>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            color: DARK,
+            background: CARD_BG,
+            padding: "6px 16px",
+            borderRadius: 999,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+          }}
+        >
+          Total: <span style={{ color: CYAN }}>{batalhas.length}</span>
+        </div>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+
+      <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid ${CYAN}22` }}>
+        <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-gray-400" style={{ borderBottom: "1px solid #e5e5e5" }}>
-              <th className="px-4 py-2.5 font-medium">Data</th>
-              <th className="px-4 py-2.5 font-medium">Horário</th>
-              <th className="px-4 py-2.5 font-medium">Artista 1</th>
-              <th className="px-4 py-2.5 font-medium">Artista 2</th>
-              <th className="px-4 py-2.5 font-medium text-right">Ações</th>
+            <tr style={{ background: CYAN }}>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Data</th>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Horário</th>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Artista 1</th>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Artista 2</th>
+              <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {batalhas.map((b) => (
-              <tr key={b.id} className="transition-colors hover:bg-gray-100" style={{ borderBottom: "1px solid #ececec" }}>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+            {batalhas.map((b, idx) => (
+              <tr
+                key={b.id}
+                style={{
+                  background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                  transition: "background 0.2s ease"
+                }}
+                className="hover:bg-[#F1F5F9]"
+              >
+                <td style={{ padding: "14px 20px", fontSize: 13, color: DARK, whiteSpace: "nowrap" }}>
                   {new Date(b.data_batalha + "T12:00:00").toLocaleDateString("pt-BR")}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600">
+                <td style={{ padding: "14px 20px", fontSize: 13, color: DARK, whiteSpace: "nowrap" }}>
                   {b.horario_inicio} — {b.horario_fim}
                 </td>
-                <td className="px-4 py-3 font-medium text-gray-700">
-                  {b.artista1_nome || "—"} <span className="font-normal text-gray-400">({b.artista1_porcentagem}%)</span>
+                <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 700, color: DARK }}>
+                  {b.artista1_nome || "—"} <span style={{ fontWeight: 500, color: CYAN, fontSize: 11 }}>({b.artista1_porcentagem}%)</span>
                 </td>
-                <td className="px-4 py-3 font-medium text-gray-700">
-                  {b.artista2_nome || "—"} <span className="font-normal text-gray-400">({b.artista2_porcentagem}%)</span>
+                <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 700, color: DARK }}>
+                  {b.artista2_nome || "—"} <span style={{ fontWeight: 500, color: CYAN, fontSize: 11 }}>({b.artista2_porcentagem}%)</span>
                 </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-2">
+                <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                  <div style={{ display: "inline-flex", gap: 8 }}>
                     <button
                       onClick={() => onEdit(b)}
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-gray-600 hover:bg-gray-200"
+                      style={{
+                        width: 32, height: 32, borderRadius: 12,
+                        background: CARD_BG, border: "none", cursor: "pointer",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        color: DARK, transition: "all 0.2s"
+                      }}
+                      className="hover:scale-110 active:scale-95"
                       title="Editar"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil size={14} />
                     </button>
                     <button
                       onClick={() => handleDelete(b.id)}
                       disabled={deleting === b.id}
-                      className="p-1.5 rounded-lg transition-colors text-gray-400 hover:text-red-500 hover:bg-gray-200 disabled:opacity-30"
+                      style={{
+                        width: 32, height: 32, borderRadius: 12,
+                        background: "#FEE2E2", border: "none", cursor: "pointer",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        color: "#DC2626", transition: "all 0.2s",
+                        opacity: deleting === b.id ? 0.5 : 1
+                      }}
+                      className="hover:scale-110 active:scale-95"
                       title="Excluir"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 </td>
@@ -97,6 +159,6 @@ export default function BatalhaScheduleTable({ batalhas, onEdit, onRefresh }: Pr
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 }
