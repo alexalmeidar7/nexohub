@@ -108,7 +108,15 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     if (!ownerId) return;
     setLoading(true);
     const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
-    if (promosData) setItems(promosData as Promocao[]);
+    if (promosData) {
+      setItems(promosData.map(p => ({
+        ...p,
+        texto: p.texto || "",
+        oferecimento: p.oferecimento || "",
+        imagem_url: p.imagem_url || "",
+        banner_l_url: p.banner_l_url || "",
+      })) as Promocao[]);
+    }
     
     setLoading(false);
   };
@@ -130,6 +138,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       programa_ids: [],
     });
     setEditingId(null);
+    setSaving(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, field: 'imagem_url' | 'banner_l_url') => {
@@ -227,6 +236,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     const itemProgIds = Array.isArray(selectedItem.programa_ids) ? [...selectedItem.programa_ids] : [];
     
     setEditingId(selectedItem.id);
+    
+    // Explicitly set the form state with full item data
     setForm({
       nome: selectedItem.nome || "",
       texto: selectedItem.texto || "",
