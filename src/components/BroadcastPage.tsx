@@ -913,92 +913,70 @@ export default function BroadcastPage() {
           vMix — Broadcast
         </div>
 
-        {/* ── Top toolbar: brand lockup + status console ── */}
-        <div
-          className="flex items-center justify-between gap-4 px-6 py-4"
-          style={{
-            ...cardStyle,
+        {/* ── Header / Toolbar ── */}
+        <div 
+          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl"
+          style={{ 
             background: `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
-            borderBottom: `2px solid ${CYAN}20`,
-            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+            border: `1px solid ${NAVY_BORDER}`,
+            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
           }}
         >
-          <div className="flex items-center gap-6 min-w-0">
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
-                style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
-              >
-                <Code2 size={20} style={{ color: NAVY }} />
-              </div>
-              <div className="flex flex-col">
-                <h2
-                  className="text-white text-base uppercase tracking-widest leading-none mb-1"
-                  style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800 }}
-                >
-                  Broadcast
-                </h2>
-                <span className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">vMix Control System</span>
-              </div>
+          <div className="flex items-center gap-5 min-w-0 w-full sm:w-auto">
+            <div 
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+              style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
+            >
+              <Code2 size={24} style={{ color: NAVY }} />
             </div>
-            
-            {programaNome && (
-              <div
-                className="hidden md:flex items-center gap-4 pl-6 min-w-0"
-                style={{ borderLeft: `1px solid ${NAVY_BORDER}` }}
-              >
-                <div className="relative group">
-                  {programaLogo ? (
-                    <img src={programaLogo} alt="" className="w-10 h-10 rounded-lg object-cover shadow-2xl transition-transform group-hover:scale-105" style={{ border: `1px solid ${NAVY_BORDER}` }} />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10">
-                      <ImageIcon size={16} className="text-white/20" />
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-[#0A2540] shadow-sm" />
+            <div className="min-w-0">
+              <h2 className="text-white text-lg font-black uppercase tracking-[0.2em] leading-none mb-1.5" style={{ fontFamily: "'Sora', sans-serif" }}>
+                Broadcast
+              </h2>
+              {programaNome ? (
+                <div className="flex items-center gap-2 text-white/40">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
                 </div>
-                <div className="min-w-0">
-                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: CYAN }}>Active Session</div>
-                  <div className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>{programaNome}</div>
-                </div>
-              </div>
-            )}
+              ) : (
+                <span className="text-[9px] font-bold tracking-[0.2em] text-white/30 uppercase">vMix Control Hub</span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex flex-col items-end mr-4 hidden sm:flex">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 mb-0.5">Master Clock</span>
-              <span className="text-sm font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex flex-col items-end mr-2">
+              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 mb-0.5">Master Clock</span>
+              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
             </div>
             
-            <div className="flex items-center bg-black/30 rounded-xl p-1 border border-white/5">
-              {([
-                { id: "preview", label: "Preview", icon: <ImageIcon size={12} /> },
-                { id: "assuntos", label: "Topics", icon: <MessageCircle size={12} /> },
-                { id: "ticker", label: "Ticker", icon: <TrendingUp size={12} /> },
-                { id: "aseguir", label: "Next", icon: <Clock size={12} /> },
-                { id: "xml", label: "XML", icon: <Code2 size={12} /> },
-              ] as const).map(t => {
-                const active = activeTab === t.id;
+            <div className="flex items-center bg-black/40 rounded-2xl p-1.5 border border-white/5">
+              {(["preview", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
+                const active = activeTab === tabId;
+                const labels: Record<string, string> = { preview: "Ao Vivo", assuntos: "Pauta", ticker: "Ticker", aseguir: "Próximo", xml: "XML" };
+                const Icons: Record<string, any> = { preview: ImageIcon, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
+                const Icon = Icons[tabId];
+                
                 return (
                   <button
-                    key={t.id}
-                    onClick={() => setActiveTab(t.id)}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                    key={tabId}
+                    onClick={() => setActiveTab(tabId)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
                     style={{
                       backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffff50",
+                      color: active ? NAVY : "#ffffff40",
                       fontFamily: "'Sora', sans-serif",
                     }}
                   >
-                    {t.icon}
-                    <span className="hidden lg:inline">{t.label}</span>
+                    <Icon size={14} />
+                    <span className="hidden xl:inline">{labels[tabId]}</span>
                   </button>
                 );
               })}
             </div>
           </div>
         </div>
+
 
         {/* ── Tab panels ── */}
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
