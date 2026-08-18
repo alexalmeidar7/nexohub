@@ -489,15 +489,6 @@ export default function OnAirWidget() {
           </button>
         </div>
 
-        {(musicData?.titulo || musicData?.artista) && (
-          <div className="z-10 mb-3 flex items-center gap-1.5 max-w-[55%]">
-            <Music size={11} style={{ color: "var(--layout-accent-color)" }} className="shrink-0" />
-            <p className="text-white/70 text-[10px] truncate">
-              <span className="font-semibold">{musicData.artista || "—"}</span>
-              {musicData.titulo ? <span className="text-white/50"> · {musicData.titulo}</span> : null}
-            </p>
-          </div>
-        )}
 
         <div className="absolute bottom-0 left-0 right-0 z-10">
           <div className="w-full h-1 bg-white/20 overflow-hidden">
