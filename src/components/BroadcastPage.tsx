@@ -1780,24 +1780,23 @@ export default function BroadcastPage() {
             </div>
 
             <div
-              className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+              className="mt-4 p-5 rounded-2xl flex flex-col gap-4"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}
             >
-
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-white">Envio manual</div>
+                <div className="text-[12px] font-black text-white uppercase tracking-widest mb-1">Manual Force</div>
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>
-                  Força o envio das informações do próximo programa ao XML pelo tempo de permanência configurado, fora da janela automática.
+                  Força o envio das informações do próximo programa ao XML pelo tempo configurado, ignorando a janela automática.
                 </p>
                 {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
-                  <p className="text-[10px] mt-1" style={{ color: CYAN }}>
-                    Ativo até {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  <p className="text-[10px] mt-2 font-bold" style={{ color: LIME }}>
+                    STATUS: ATIVO ATÉ {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </p>
                 )}
               </div>
               <button
                 type="button"
-                disabled={!data.aSeguirEnabled}
+                disabled={!data.aSeguirEnabled || saving}
                 onClick={() => {
                   const dur = Number(latestDataRef.current.aSeguirDurationSeconds) > 0
                     ? Number(latestDataRef.current.aSeguirDurationSeconds)
@@ -1806,16 +1805,18 @@ export default function BroadcastPage() {
                   const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
                   setData(nextData);
                   void handleSave(nextData);
-                  toast.success(`A Seguir enviado ao XML por ${Math.round(dur / 60 * 10) / 10} min`);
+                  toast.success(`Módulo A Seguir forçado por ${Math.round(dur / 60 * 10) / 10} min`);
                 }}
-                className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider"
+                className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
                 style={{
-                  backgroundColor: data.aSeguirEnabled ? CYAN : NAVY_BORDER,
-                  color: data.aSeguirEnabled ? "#04121b" : "#ffffff50",
+                  backgroundColor: data.aSeguirEnabled ? LIME : "rgba(255,255,255,0.05)",
+                  color: data.aSeguirEnabled ? NAVY : "#ffffff30",
                   cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
+                  boxShadow: data.aSeguirEnabled ? `0 8px 14px ${LIME}25` : "none"
                 }}
               >
-                Enviar agora
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                Forçar Envio Manual
               </button>
             </div>
 
