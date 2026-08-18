@@ -1079,176 +1079,166 @@ export default function BroadcastPage() {
 
 
           {/* ── Right: settings column ── */}
-          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1" style={{ maxHeight: "100%" }}>
+          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
 
+            {/* Quick Actions / Control Center */}
+            <div className="p-5 rounded-2xl" style={{ ...cardStyle, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}>
+              <SectionHeader n="CTR" label="Control Center" color={CYAN} />
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => handleSave()}
+                  disabled={saving}
+                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                  style={{ backgroundColor: CYAN, color: NAVY, boxShadow: `0 8px 20px ${CYAN}25` }}
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  Atualizar GC Master
+                </button>
+                
+                {insertLiveArt && (
+                  <button
+                    onClick={handleInsertNow}
+                    disabled={insertingNow}
+                    className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
+                  >
+                    <Youtube size={14} />
+                    {insertingNow ? "Publicando Live (30s)..." : "Insert Live Now"}
+                  </button>
+                )}
+              </div>
+            </div>
 
-          {/* Identidade */}
-          <div className="p-4 rounded-2xl" style={cardStyle}>
-            <SectionHeader n="01" label="Identidade" color={CYAN} />
-
-
-            <div className="space-y-3">
-
-
-
-
-              <div className="relative">
-                <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Locutor (override)</label>
-                <div className="relative">
-                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "#ffffff60" }} />
+            {/* Content & Identity */}
+            <div className="p-5 rounded-2xl" style={cardStyle}>
+              <SectionHeader n="01" label="Content Identity" color={LIME} />
+              
+              <div className="space-y-5">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Topic / Assunto</label>
                   <input
                     type="text"
-                    value={data.locutor_override}
-                    onChange={async e => {
-                      const val = e.target.value;
-                      setData({ ...data, locutor_override: val });
-                      if (val.trim().length >= 2 && user) {
-                        const { data: results } = await supabase
-                          .from("apresentadores")
-                          .select("nome, instagram, foto")
-                          .eq("user_id", user.id)
-                          .ilike("nome", `%${val.trim()}%`)
-                          .limit(5);
-                        setLocutorSearchResults(results || []);
-                        setShowLocutorDropdown(true);
-                      } else {
-                        setLocutorSearchResults([]);
-                        setShowLocutorDropdown(false);
-                      }
-                    }}
-                    onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-                    onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                    placeholder={locutorNome || "Buscar locutor..."}
-                    className="w-full pl-7 pr-3 py-2 rounded-lg text-xs"
+                    value={data.assunto}
+                    onChange={e => setData({ ...data, assunto: e.target.value })}
+                    onBlur={onFieldBlur}
+                    placeholder="Título do assunto atual..."
+                    className="w-full px-4 py-3 rounded-xl text-xs transition-all focus:ring-2 focus:ring-[#00BFF0]30"
                     style={inputStyle}
                   />
                 </div>
-                {showLocutorDropdown && locutorSearchResults.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                    {locutorSearchResults.map((r, i) => (
-                      <button
-                        key={i}
-                        onMouseDown={e => {
-                          e.preventDefault();
-                          setData({ ...data, locutor_override: r.nome });
-                          if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
-                          if (r.foto) setLocutorFoto(r.foto);
-                          setShowLocutorDropdown(false);
-                          setLocutorSearchResults([]);
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 text-white hover:bg-white/5"
-                        style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
-                      >
-                        {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
-                        <span className="font-semibold flex-1 truncate">{r.nome}</span>
-                        {r.instagram && <span className="text-[10px]" style={{ color: CYAN }}>@{r.instagram.replace("@", "")}</span>}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
-              {/* Fundo do Assunto */}
-              <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center justify-between" style={{ color: "#ffffff80" }}>
-                  <span>Fundo do Assunto (.png)</span>
-                  {data.assuntoBgUrl && (
-                    <label className="flex items-center gap-1 cursor-pointer normal-case tracking-normal text-[9px]" style={{ color: "#fff" }}>
-                      <input
-                        type="checkbox"
-                        checked={data.useCustomAssuntoBg}
-                        onChange={e => {
-                          const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
-                          setData(next);
-                          void handleSave(next);
-                        }}
-                        style={{ accentColor: CYAN }}
-                      />
-                      Usar
-                    </label>
-                  )}
-                </label>
-                {data.assuntoBgUrl ? (
-                  <div className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#000", aspectRatio: "16/4" }}>
-                    <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
-                    <button
-                      onClick={removeBgImage}
-                      className="absolute top-1 right-1 p-1 rounded-full"
-                      style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
-                      title="Remover"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg cursor-pointer text-[11px] font-medium border-2 border-dashed" style={{ borderColor: NAVY_BORDER, color: "#ffffff80" }}>
-                    {uploadingBg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                    <span>{uploadingBg ? "Enviando..." : "Enviar PNG"}</span>
+                <div className="relative">
+                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
                     <input
-                      type="file"
-                      accept="image/png"
-                      className="hidden"
-                      onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) handleBgUpload(f);
-                        e.target.value = "";
+                      type="text"
+                      value={data.locutor_override}
+                      onChange={async e => {
+                        const val = e.target.value;
+                        setData({ ...data, locutor_override: val });
+                        if (val.trim().length >= 2 && user) {
+                          const { data: results } = await supabase
+                            .from("apresentadores")
+                            .select("nome, instagram, foto")
+                            .eq("user_id", user.id)
+                            .ilike("nome", `%${val.trim()}%`)
+                            .limit(5);
+                          setLocutorSearchResults(results || []);
+                          setShowLocutorDropdown(true);
+                        } else {
+                          setLocutorSearchResults([]);
+                          setShowLocutorDropdown(false);
+                        }
                       }}
-                    />
-                  </label>
-                )}
-                <p className="text-[9px] mt-1" style={{ color: "#ffffff50" }}>
-                  Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
-                </p>
-
-                {data.assuntoBgUrl && (
-                  <div className="pt-2 relative">
-                    <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>
-                      Vincular a programas
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowProgramDropdown(v => !v)}
-                      className="w-full px-3 py-2 rounded-lg text-[11px] text-left flex items-center justify-between text-white"
+                      onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
+                      onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
+                      placeholder={locutorNome || "Override locutor..."}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-xs"
                       style={inputStyle}
-                    >
-                      <span className="truncate">
-                        {data.assuntoBgProgramaIds.length === 0
-                          ? "Todos os programas (global)"
-                          : `${data.assuntoBgProgramaIds.length} programa(s)`}
-                      </span>
-                      <span className="text-[9px]" style={{ color: "#ffffff60" }}>{showProgramDropdown ? "▲" : "▼"}</span>
-                    </button>
-                    {showProgramDropdown && (
-                      <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-y-auto max-h-48" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                        {allProgramas.length === 0 ? (
-                          <div className="px-3 py-2 text-[10px]" style={{ color: "#ffffff60" }}>Nenhum programa cadastrado</div>
-                        ) : (
-                          allProgramas.map(p => {
-                            const checked = data.assuntoBgProgramaIds.includes(p.id);
-                            return (
-                              <label key={p.id} className="flex items-center gap-2 px-3 py-2 cursor-pointer text-white hover:bg-white/5">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={e => {
-                                    const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
-                                    if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
-                                    const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
-                                    setData(next);
-                                    void handleSave(next);
-                                  }}
-                                  style={{ accentColor: CYAN }}
-                                />
-                                <span className="text-[11px] flex-1 truncate">{p.nome}</span>
-                              </label>
-                            );
-                          })
-                        )}
-                      </div>
+                    />
+                  </div>
+                  {showLocutorDropdown && locutorSearchResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
+                      {locutorSearchResults.map((r, i) => (
+                        <button
+                          key={i}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            setData({ ...data, locutor_override: r.nome });
+                            if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
+                            if (r.foto) setLocutorFoto(r.foto);
+                            setShowLocutorDropdown(false);
+                            setLocutorSearchResults([]);
+                          }}
+                          className="w-full text-left px-4 py-3 text-xs flex items-center gap-3 text-white hover:bg-white/5 transition-colors"
+                          style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
+                        >
+                          {r.foto && <img src={r.foto} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" />}
+                          <div className="flex-1 min-w-0">
+                            <span className="font-bold block truncate">{r.nome}</span>
+                            {r.instagram && <span className="text-[9px] text-[#00BFF0]">@{r.instagram.replace("@", "")}</span>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Custom Background (.png)</label>
+                    {data.assuntoBgUrl && (
+                      <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={data.useCustomAssuntoBg}
+                          onChange={e => {
+                            const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
+                            setData(next);
+                            void handleSave(next);
+                          }}
+                          className="w-3 h-3"
+                          style={{ accentColor: CYAN }}
+                        />
+                        <span className="text-[9px] font-bold text-white/70">ACTIVE</span>
+                      </label>
                     )}
                   </div>
-                )}
+                  
+                  {data.assuntoBgUrl ? (
+                    <div className="group relative rounded-xl overflow-hidden border border-white/5 bg-black/40">
+                      <div className="p-2 aspect-[16/4]">
+                        <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
+                      </div>
+                      <button
+                        onClick={removeBgImage}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl cursor-pointer border-2 border-dashed border-white/5 hover:border-[#00BFF0]30 hover:bg-[#00BFF0]05 transition-all">
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/20" />}
+                      </div>
+                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{uploadingBg ? "Uploading..." : "Upload PNG 1920x200"}</span>
+                      <input
+                        type="file"
+                        accept="image/png"
+                        className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0];
+                          if (f) handleBgUpload(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
+            </div>
 
               <button
                 onClick={() => handleSave()}
