@@ -234,21 +234,36 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         }
       `}</style>
 
-      <div style={cardStyle}>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <MessageSquareQuote className="text-[#00BFF0]" /> 
-          {editingId ? (
-            <span>
-              Editar Citação
-              {form.programa_ids.length > 0 && (
-                <span className="text-[#00BFF0] italic ml-2">
-                  {form.programa_ids.map(id => programas.find(p => p.id === id)?.nome).filter(Boolean).join(", ")}
-                </span>
-              )}
-            </span>
-          ) : "Nova Citação"}
-
-        </h2>
+      <div style={cardStyle} className="mb-6">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+          <h3
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: DARK,
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            {editingId ? "Editar Citação" : "Cadastro de Citação"}
+          </h3>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: "#FFFFFF",
+              padding: "6px 16px",
+              borderRadius: 999,
+              border: `2px solid ${CYAN}`,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            ID: <span style={{ color: CYAN }}>{editingId ? editingId.slice(0, 8) : "—"}</span>
+          </div>
+        </div>
         
         <div className="space-y-4">
           <div>

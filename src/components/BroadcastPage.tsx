@@ -1017,7 +1017,16 @@ export default function BroadcastPage() {
                 boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
               }}
             >
-              <div className="relative" style={{ width: "100%", aspectRatio: "16/9" }}>
+              <div 
+                className="relative overflow-hidden" 
+                style={{ 
+                  width: "100%", 
+                  aspectRatio: "16/9",
+                  border: `4px solid ${insertingNow ? '#ef4444' : '#ffffff08'}`,
+                  transition: 'border-color 0.3s ease',
+                  boxShadow: insertingNow ? '0 0 40px rgba(239, 68, 68, 0.2)' : 'none'
+                }}
+              >
                 <MockupPreview
                   empresaLogo={empresaLogo}
                   programaNome={programaNome}
@@ -1044,9 +1053,10 @@ export default function BroadcastPage() {
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">Master</span>
                   </div>
-                  {insertLiveArt && (
-                    <div className="px-3 py-1.5 rounded-lg bg-[#dc2626]/80 backdrop-blur-md border border-white/10 flex items-center gap-2">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Insert Active</span>
+                  {insertingNow && (
+                    <div className="px-3 py-1.5 rounded-lg bg-[#ef4444]/90 backdrop-blur-md border border-white/20 flex items-center gap-2 shadow-lg">
+                      <Youtube size={12} className="text-white" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">LIVE ACTIVE</span>
                     </div>
                   )}
                 </div>
@@ -1059,7 +1069,7 @@ export default function BroadcastPage() {
                 { label: "Locutor", value: displayLocutor, color: LIME, icon: <Mic size={14} /> },
                 { label: "Current Topic", value: data.assunto || "NOT SET", color: "#fff", icon: <MessageCircle size={14} /> },
                 { label: "Sponsorships", value: `${sponsorLogos.length} ACTIVE`, color: CYAN, icon: <Save size={14} /> },
-                { label: "Social Link", value: whatsappNumber ? "CONNECTED" : "OFFLINE", color: whatsappNumber ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
+                { label: "Social Presence", value: empresaSocials.length > 0 ? `${empresaSocials.length} CHANNELS` : "OFFLINE", color: empresaSocials.length > 0 ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
               ].map((kpi, idx) => (
                 <div 
                   key={idx}
@@ -1088,11 +1098,11 @@ export default function BroadcastPage() {
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
-                  style={{ backgroundColor: CYAN, color: NAVY, boxShadow: `0 8px 20px ${CYAN}25` }}
+                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
                 >
-                  {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                  Atualizar GC Master
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Salvar Alterações
                 </button>
                 
                 {insertLiveArt && (
@@ -1103,7 +1113,7 @@ export default function BroadcastPage() {
                     style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
                   >
                     <Youtube size={14} />
-                    {insertingNow ? "Publicando Live (30s)..." : "Insert Live Now"}
+                    {insertingNow ? "Inserindo Live (30s)..." : "Inserir Live Agora"}
                   </button>
                 )}
               </div>
@@ -1126,6 +1136,7 @@ export default function BroadcastPage() {
                     style={inputStyle}
                   />
                 </div>
+
 
                 <div className="relative">
                   <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
@@ -1344,6 +1355,18 @@ export default function BroadcastPage() {
                 className="w-full px-3 py-2 rounded-lg text-[12px]"
                 style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
               />
+
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => handleSave()}
+                  disabled={saving}
+                  className="flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+                  style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 8px 14px ${LIME}25` }}
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  Salvar Ticker
+                </button>
+              </div>
 
               {data.tickerRssEnabled && data.tickerRssUrl && (
                 <div className="mt-3">
@@ -1757,24 +1780,23 @@ export default function BroadcastPage() {
             </div>
 
             <div
-              className="mt-4 p-4 rounded-xl flex items-center justify-between gap-4 flex-wrap"
-              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
+              className="mt-4 p-5 rounded-2xl flex flex-col gap-4"
+              style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}
             >
-
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold text-white">Envio manual</div>
+                <div className="text-[12px] font-black text-white uppercase tracking-widest mb-1">Manual Force</div>
                 <p className="text-[10px]" style={{ color: "#ffffff60" }}>
-                  Força o envio das informações do próximo programa ao XML pelo tempo de permanência configurado, fora da janela automática.
+                  Força o envio das informações do próximo programa ao XML pelo tempo configurado, ignorando a janela automática.
                 </p>
                 {data.aSeguirForceUntil && new Date(data.aSeguirForceUntil).getTime() > Date.now() && (
-                  <p className="text-[10px] mt-1" style={{ color: CYAN }}>
-                    Ativo até {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  <p className="text-[10px] mt-2 font-bold" style={{ color: LIME }}>
+                    STATUS: ATIVO ATÉ {new Date(data.aSeguirForceUntil).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                   </p>
                 )}
               </div>
               <button
                 type="button"
-                disabled={!data.aSeguirEnabled}
+                disabled={!data.aSeguirEnabled || saving}
                 onClick={() => {
                   const dur = Number(latestDataRef.current.aSeguirDurationSeconds) > 0
                     ? Number(latestDataRef.current.aSeguirDurationSeconds)
@@ -1783,16 +1805,18 @@ export default function BroadcastPage() {
                   const nextData = { ...latestDataRef.current, aSeguirForceUntil: until };
                   setData(nextData);
                   void handleSave(nextData);
-                  toast.success(`A Seguir enviado ao XML por ${Math.round(dur / 60 * 10) / 10} min`);
+                  toast.success(`Módulo A Seguir forçado por ${Math.round(dur / 60 * 10) / 10} min`);
                 }}
-                className="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider"
+                className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
                 style={{
-                  backgroundColor: data.aSeguirEnabled ? CYAN : NAVY_BORDER,
-                  color: data.aSeguirEnabled ? "#04121b" : "#ffffff50",
+                  backgroundColor: data.aSeguirEnabled ? LIME : "rgba(255,255,255,0.05)",
+                  color: data.aSeguirEnabled ? NAVY : "#ffffff30",
                   cursor: data.aSeguirEnabled ? "pointer" : "not-allowed",
+                  boxShadow: data.aSeguirEnabled ? `0 8px 14px ${LIME}25` : "none"
                 }}
               >
-                Enviar agora
+                {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                Forçar Envio Manual
               </button>
             </div>
 
@@ -1914,9 +1938,10 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full h-full"
+      className="relative w-full h-full rounded-2xl overflow-hidden"
       style={{
         backgroundColor: "#000000",
+        boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
       {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
