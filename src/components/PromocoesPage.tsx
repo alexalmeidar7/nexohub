@@ -133,7 +133,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: "",
       banner_l_url: "",
-      botao_url: "",
       programa_ids: [],
     });
     setEditingId(null);
