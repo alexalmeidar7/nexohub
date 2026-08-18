@@ -33,6 +33,7 @@ export const defaultTelaPromoConfig: TelaPromoConfig = {
   bg_type: "cor",
   bg_color: "#000000",
   bg_image_url: "",
+  bg_opacity: 50,
   gradient_color_a: "#1a1a2e",
   gradient_color_b: "#16213e",
   gradient_angle: 135,
