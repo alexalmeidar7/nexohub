@@ -1635,7 +1635,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           style={{ 
             padding: "24px 32px", 
             borderBottom: showConfig ? `1px solid ${NEXO_CYAN}22` : "none",
-            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, #FFFFFF)` : "transparent"
+            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, transparent)` : "transparent"
           }}
         >
           <div className="flex items-center gap-4">
