@@ -2080,12 +2080,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white/10">
                 <Music size={18} className="text-cyan-400" />
               </div>
-              <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-white">XML Feed de Transmissão</h4>
+              <h4 className="text-[13px] font-black uppercase tracking-[0.2em] text-white">XML MUSICA NO AR</h4>
             </div>
             
             <div className="bg-black/20 rounded-2xl p-6 border border-white/5">
               <XmlLinkRow 
-                label="Feed de Integração vMix" 
+                label="XML MUSICA NO AR" 
                 scopeKey={dataUserId || undefined} 
                 xmlContent={`<?xml version="1.0" encoding="UTF-8"?>\n<musica_agora>\n  <titulo>${displayTitulo}</titulo>\n  <interprete>${displayArtista}</interprete>\n  <capa>${displayCover || ""}</capa>\n  <curiosidade>${xmlCuriosidade}</curiosidade>\n</musica_agora>`} 
               />
@@ -2093,6 +2093,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           </div>
         </section>
       )}
+
       </div>
     </div>
   );
