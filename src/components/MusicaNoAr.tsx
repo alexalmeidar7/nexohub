@@ -1478,13 +1478,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         <div className="px-4 pb-4">
           <div
             key={`${displayTitulo}-${displayArtista}`}
-            className="rounded-2xl overflow-hidden relative animate-fade-in group"
+            className="rounded-2xl overflow-hidden relative group"
             style={{ 
-              background: coverPalette?.primary && coverPalette?.secondary 
-                ? `linear-gradient(135deg, ${coverPalette.primary} 0%, ${coverPalette.secondary} 100%)`
-                : musicBoxBg,
+              background: musicBoxBg,
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
-              transition: "background 1500ms cubic-bezier(0.4, 0, 0.2, 1)",
+              transition: "background 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
               minHeight: "180px"
             }}
           >
