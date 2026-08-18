@@ -1129,23 +1129,31 @@ export default function BroadcastPage() {
             </div>
 
 
-            {/* Content & Identity */}
-            <div className="p-5 rounded-2xl" style={cardStyle}>
-              <SectionHeader n="01" label="Content Identity" color={LIME} />
+            {/* Identidade visual e Conteúdo */}
+            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${LIME}20` }}>
+                  <ImageIcon size={16} style={{ color: LIME }} />
+                </div>
+                <span className="text-[11px] font-black uppercase tracking-[0.2em] text-white" style={{ fontFamily: "'Sora', sans-serif" }}>
+                  Identidade do Bloco
+                </span>
+              </div>
               
-              <div className="space-y-5">
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Topic / Assunto</label>
+              <div className="space-y-6">
+                <div className="relative group">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                   <input
                     type="text"
                     value={data.assunto}
                     onChange={e => setData({ ...data, assunto: e.target.value })}
                     onBlur={onFieldBlur}
-                    placeholder="Título do assunto atual..."
-                    className="w-full px-4 py-3 rounded-xl text-xs transition-all focus:ring-2 focus:ring-[#00BFF0]30"
+                    placeholder="Defina o assunto principal..."
+                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none"
                     style={inputStyle}
                   />
                 </div>
+
 
 
                 <div className="relative">
