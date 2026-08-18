@@ -1063,8 +1063,8 @@ export default function BroadcastPage() {
 
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
-                    <span style={{ color: kpi.color }}>{kpi.icon}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">{kpi.label}</span>
+                    <span style={{ color: kpi.color, filter: "drop-shadow(0 0 5px rgba(255,255,255,0.1))" }}>{kpi.icon}</span>
                   </div>
                   <span className="text-sm font-black truncate tracking-wide" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
                   <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-0 group-hover:w-full transition-all duration-500" style={{ backgroundColor: `${kpi.color}40` }} />
