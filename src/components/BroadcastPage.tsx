@@ -1193,10 +1193,11 @@ export default function BroadcastPage() {
                       onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
                       onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
                       placeholder={locutorNome || "Nome do locutor..."}
-                      className="w-full pl-12 pr-5 py-4 rounded-2xl text-[13px] font-medium border-none"
+                      className="w-full pl-12 pr-5 py-4 rounded-2xl text-[13px] font-medium border-none outline-none"
                       style={inputStyle}
                     />
                   </div>
+
 
                   {showLocutorDropdown && locutorSearchResults.length > 0 && (
                     <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
