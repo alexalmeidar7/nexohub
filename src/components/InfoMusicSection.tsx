@@ -583,6 +583,41 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-red-500 rounded-full" />
               <h4 className="text-xs font-black uppercase tracking-wider">MUSICAS SEM CURIOSIDADES ({rows.filter(r => !r.curiosidade || !r.curiosidade.trim()).length})</h4>
+              <div className="flex gap-1 ml-auto">
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept=".xlsx,.xls" 
+                  ref={importNoCuriosityRef}
+                  onChange={handleImportExcelNoCuriosity}
+                />
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-6 w-6 text-emerald-600 border-emerald-200 hover:bg-emerald-50 rounded-full bg-white/50"
+                  title="Exportar musicas sem curiosidades para Excel"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportSemCuriosidadesExcel();
+                  }}
+                  disabled={exportingXlsx}
+                >
+                  {exportingXlsx ? <Loader2 size={10} className="animate-spin" /> : <Download size={10} />}
+                </Button>
+                <Button 
+                  size="icon" 
+                  variant="outline" 
+                  className="h-6 w-6 text-[#00BFF0] border-[#00BFF0]/20 hover:bg-[#00BFF0]/5 rounded-full bg-white/50"
+                  title="Importar curiosidades de Excel"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    importNoCuriosityRef.current?.click();
+                  }}
+                  disabled={readingExcel}
+                >
+                  {readingExcel ? <Loader2 size={10} className="animate-spin" /> : <Upload size={10} />}
+                </Button>
+              </div>
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
