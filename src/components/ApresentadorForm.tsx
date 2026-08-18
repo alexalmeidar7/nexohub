@@ -685,12 +685,12 @@ export default function ApresentadorForm() {
               alignItems: "center",
               gap: 10,
               cursor: saving ? "wait" : "pointer",
-              opacity: saving || !nome.trim() || !categoria ? 0.6 : 1,
-              boxShadow: "0 4px 14px rgba(198, 240, 60, 0.35)",
+              boxShadow: `0 8px 14px ${LIME}25`
             }}
+            className="hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle size={16} />}
-            {editingId ? "Atualizar" : "Salvar"}
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {editingId ? "Atualizar Dados" : "Salvar Participante"}
           </button>
         </div>
       </section>
