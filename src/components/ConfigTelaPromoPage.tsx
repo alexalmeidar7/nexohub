@@ -17,6 +17,7 @@ export interface TelaPromoConfig {
   bg_type: BgType;
   bg_color: string;
   bg_image_url: string;
+  bg_opacity: number;
   gradient_color_a: string;
   gradient_color_b: string;
   gradient_angle: number;
