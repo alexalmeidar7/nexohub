@@ -1158,10 +1158,11 @@ export default function BroadcastPage() {
                     onChange={e => setData({ ...data, assunto: e.target.value })}
                     onBlur={onFieldBlur}
                     placeholder="Defina o assunto principal..."
-                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none"
+                    className="w-full px-5 py-4 rounded-2xl text-[13px] font-medium transition-all focus:ring-2 focus:ring-[#00BFF0]30 border-none outline-none"
                     style={inputStyle}
                   />
                 </div>
+
 
 
 
