@@ -511,12 +511,25 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
 
 
   const [resolvedMusicCover, setResolvedMusicCover] = useState<string>(musicData?.capa || "");
+  const [musicExceptionCapa, setMusicExceptionCapa] = useState<string | null>(null);
+  const [musicExceptionArtist, setMusicExceptionArtist] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ownerId = radioUserId || effectiveUserId;
+    if (!ownerId || !musicData?.titulo) return;
+    
+    getMusicExceptions(ownerId).then(excs => {
+      const matched = matchesMusicException(excs, musicData.artista, musicData.titulo);
+      setMusicExceptionCapa(matched?.capa_url || null);
+      setMusicExceptionArtist(matched?.artista_url || null);
+    });
+  }, [musicData?.titulo, musicData?.artista, radioUserId, effectiveUserId]);
 
   // ---- Background dinâmico ----
-  // Preferência: capa da música (Deezer/artista).
+  // Preferência: capa da música (Exceção -> Deezer/artista).
   // Fallback: paleta derivada da imagem do "NO AR" (foto do apresentador / capa do programa).
-  const musicCover: string | null = musicData?.capa || resolvedMusicCover || null;
-  const onAirImage: string | null = apresentador?.foto || currentProg?.thumb || currentProg?.capa || null;
+  const musicCover: string | null = musicExceptionCapa || musicData?.capa || resolvedMusicCover || null;
+  const onAirImage: string | null = musicExceptionArtist || apresentador?.foto || currentProg?.thumb || currentProg?.capa || null;
   const musicPalette = useCoverPalette(musicCover);
   const onAirPalette = useCoverPalette(!musicCover ? onAirImage : null);
   const activePalette = musicCover ? musicPalette : onAirPalette;
