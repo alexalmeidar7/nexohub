@@ -1621,11 +1621,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       <section 
         className="group/config"
         style={{ 
-          background: "#FFFFFF", 
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", 
           borderRadius: 28, 
           overflow: "hidden", 
           boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)",
-          border: `1px solid ${showConfig ? NEXO_CYAN : "#E2E8F0"}`,
+          border: `1px solid ${showConfig ? NEXO_CYAN : "color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)"}`,
           transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
         }}
       >
