@@ -108,7 +108,15 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     if (!ownerId) return;
     setLoading(true);
     const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
-    if (promosData) setItems(promosData as Promocao[]);
+    if (promosData) {
+      setItems(promosData.map(p => ({
+        ...p,
+        texto: p.texto || "",
+        oferecimento: p.oferecimento || "",
+        imagem_url: p.imagem_url || "",
+        banner_l_url: p.banner_l_url || "",
+      })) as Promocao[]);
+    }
     
     setLoading(false);
   };
