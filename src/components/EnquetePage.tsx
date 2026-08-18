@@ -283,69 +283,118 @@ export default function EnquetePage() {
         </div>
       )}
 
-      <div className="animate-fade-in p-6 bg-white/50 backdrop-blur-md rounded-3xl border border-white/20">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <CalendarPlus className="text-[#00BFF0]" /> Próximas Enquetes
-        </h2>
-        
-        <div className="overflow-hidden bg-white rounded-3xl border border-[#00BFF0]/10 shadow-sm">
+      <section
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 24,
+          padding: 32,
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          fontFamily: "'Montserrat', sans-serif",
+        }}
+      >
+        <div className="flex items-center justify-between mb-8">
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: "#0A2540",
+              textTransform: "uppercase",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <CalendarPlus size={24} style={{ color: "#00BFF0" }} />
+            Próximas Enquetes
+          </h2>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#0A2540",
+              background: "#D6F4FB",
+              padding: "6px 16px",
+              borderRadius: 999,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Total: <span style={{ color: "#00BFF0" }}>{enquetes.length}</span>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid #00BFF022` }}>
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-bottom border-gray-100">
-                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Data / Horário</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Pergunta</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider">Opções</th>
-                <th className="px-6 py-4 text-[10px] font-bold uppercase text-[#00BFF0] tracking-wider w-20 text-right">Ações</th>
+              <tr style={{ background: "#00BFF0" }}>
+                <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Data / Horário</th>
+                <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Pergunta</th>
+                <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Opções</th>
+                <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
-              {enquetes.length > 0 ? enquetes.map(e => (
-                <tr key={e.id} className="group hover:bg-[#00BFF0]/5 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
+            <tbody>
+              {enquetes.length > 0 ? enquetes.map((e, idx) => (
+                <tr
+                  key={e.id}
+                  style={{
+                    background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                    transition: "background 0.2s ease"
+                  }}
+                  className="hover:bg-[#F1F5F9]"
+                >
+                  <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
                     <div className="flex flex-col">
-                      <span className="font-bold text-sm text-[#0A2540]">
+                      <span style={{ fontWeight: 700 }}>
                         {new Date(e.data_enquete + 'T12:00:00').toLocaleDateString('pt-BR')}
                       </span>
-                      <span className="text-[10px] opacity-60">
+                      <span style={{ fontSize: 10, opacity: 0.6 }}>
                         {e.horario_inicio} - {e.horario_fim}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <p className="font-medium text-sm text-[#0A2540]">{e.pergunta}</p>
+                  <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 500, color: "#0A2540" }}>
+                    {e.pergunta}
                   </td>
-                  <td className="px-6 py-4">
+                  <td style={{ padding: "14px 20px", fontSize: 13, color: "#0A2540" }}>
                     <div className="flex flex-wrap gap-2">
                       {[e.resposta1, e.resposta2, e.resposta3, e.resposta4].filter(Boolean).map((resp, i) => (
-                        <span key={i} className="px-2 py-0.5 bg-gray-100 rounded-full text-[10px] text-gray-600">
+                        <span key={i} style={{ padding: "2px 8px", background: "#D6F4FB", borderRadius: 999, fontSize: 10, color: "#0A2540", fontWeight: 600 }}>
                           {resp}
                         </span>
                       ))}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
+                  <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                    <button
                       onClick={() => handleDelete(e.id)}
-                      className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full h-8 w-8"
+                      style={{
+                        width: 32, height: 32, borderRadius: 12,
+                        background: "#FEE2E2", border: "none", cursor: "pointer",
+                        display: "inline-flex", alignItems: "center", justifyContent: "center",
+                        color: "#DC2626", transition: "all 0.2s"
+                      }}
+                      className="hover:scale-110 active:scale-95"
+                      title="Excluir"
                     >
                       <Trash2 size={16} />
-                    </Button>
+                    </button>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-gray-400">
+                  <td colSpan={4} style={{ padding: "48px 0", textAlign: "center", color: "#64748B" }}>
                     <HelpCircle size={48} className="mx-auto mb-3 opacity-20" />
-                    <p>Nenhuma enquete agendada no momento.</p>
+                    <p style={{ fontSize: 14, fontWeight: 500 }}>Nenhuma enquete agendada no momento.</p>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
 
       {user && xmlUrl && (
         <XmlSection title="Integração vMix">
