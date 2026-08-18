@@ -1004,14 +1004,20 @@ export default function BroadcastPage() {
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
 
         {activeTab === "preview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
 
           {/* ── Left: Preview stage + status strip ── */}
-          <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-hidden">
-            {/* 16:9 preview stage */}
-            <div className="w-full flex items-center justify-center min-h-0">
-              <div className="relative" style={{ width: "100%", aspectRatio: "16/9", maxHeight: "100%" }}>
+          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
+            {/* 16:9 preview stage with Tally Border */}
+            <div 
+              className="w-full relative rounded-3xl overflow-hidden shadow-2xl group transition-all duration-500"
+              style={{ 
+                backgroundColor: "#000",
+                border: `4px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
+                boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
+              }}
+            >
+              <div className="relative" style={{ width: "100%", aspectRatio: "16/9" }}>
                 <MockupPreview
                   empresaLogo={empresaLogo}
                   programaNome={programaNome}
@@ -1031,37 +1037,43 @@ export default function BroadcastPage() {
                   programaAssuntos={programaAssuntos}
                   programaAssuntoRotation={programaAssuntoRotation}
                 />
+                
+                {/* Floating Status HUD */}
+                <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Master</span>
+                  </div>
+                  {insertLiveArt && (
+                    <div className="px-3 py-1.5 rounded-lg bg-[#dc2626]/80 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Insert Active</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Status strip — 4 KPI tiles (clean, no duplicated toggles) */}
-            <div className="grid grid-cols-4 gap-3 flex-none">
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Locutor</span>
-                <span className="text-[13px] font-bold truncate" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{displayLocutor}</span>
-              </div>
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Assunto</span>
-                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }} title={data.assunto}>{data.assunto || "—"}</span>
-              </div>
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Patrocínios</span>
-                <span className="text-[13px] font-bold" style={{ color: CYAN, fontFamily: "'Sora', sans-serif" }}>
-                  {sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}
-                </span>
-              </div>
-              <div
-                className="p-3.5 rounded-2xl flex flex-col gap-1"
-                style={{
-                  ...cardStyle,
-                  boxShadow: insertLiveArt ? `inset 0 -3px 0 ${LIME}` : undefined,
-                }}
-              >
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Insert Live</span>
-                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  {insertLiveArt ? `${insertLiveSchedule.length || 0} slots` : "off"}
-                </span>
-              </div>
+            {/* Robust Status Console */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Locutor", value: displayLocutor, color: LIME, icon: <Mic size={14} /> },
+                { label: "Current Topic", value: data.assunto || "NOT SET", color: "#fff", icon: <MessageCircle size={14} /> },
+                { label: "Sponsorships", value: `${sponsorLogos.length} ACTIVE`, color: CYAN, icon: <Save size={14} /> },
+                { label: "Social Link", value: whatsappNumber ? "CONNECTED" : "OFFLINE", color: whatsappNumber ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
+              ].map((kpi, idx) => (
+                <div 
+                  key={idx}
+                  className="p-4 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all hover:translate-y-[-2px]"
+                  style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
+                    <span style={{ color: kpi.color }}>{kpi.icon}</span>
+                  </div>
+                  <span className="text-sm font-bold truncate" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
+                  <div className="absolute bottom-0 left-0 h-0.5 bg-white/5 w-full" />
+                </div>
+              ))}
             </div>
           </div>
 
