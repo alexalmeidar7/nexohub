@@ -58,7 +58,7 @@ export function matchesMusicException(
     const ww = term.trim().toLowerCase();
     if (!ww) continue;
     if ((a && a.includes(ww)) || (m && m.includes(ww))) {
-      return typeof ex === "string" ? { id: "", termo: ex, capa_url: null, background_url: null } : ex;
+      return typeof ex === "string" ? { id: "", termo: ex, capa_url: null, artista_url: null, background_url: null } : ex;
     }
   }
   return null;
