@@ -1053,9 +1053,10 @@ export default function BroadcastPage() {
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                     <span className="text-[10px] font-black text-white uppercase tracking-widest">Master</span>
                   </div>
-                  {insertLiveArt && (
-                    <div className="px-3 py-1.5 rounded-lg bg-[#dc2626]/80 backdrop-blur-md border border-white/10 flex items-center gap-2">
-                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Insert Active</span>
+                  {insertingNow && (
+                    <div className="px-3 py-1.5 rounded-lg bg-[#ef4444]/90 backdrop-blur-md border border-white/20 flex items-center gap-2 shadow-lg">
+                      <Youtube size={12} className="text-white" />
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">LIVE ACTIVE</span>
                     </div>
                   )}
                 </div>
