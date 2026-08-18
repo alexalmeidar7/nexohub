@@ -458,34 +458,40 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               />
             </div>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
-            <table className="w-full text-[10px]">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#00BFF0" }}>
-                <tr>
-                  <th className="text-left px-3 py-3 w-16 text-white font-black uppercase tracking-wider">Hora</th>
-                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Música / Artista</th>
-                  <th className="text-center px-3 py-3 w-10 text-white font-black uppercase tracking-wider">Exc</th>
+          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Hora</th>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Música / Artista</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
-                {filteredRows.map(r => (
+              <tbody>
+                {filteredRows.map((r, idx) => (
                   <tr 
                     key={r.id} 
-                    className="transition-all group relative" 
-                    style={{ backgroundColor: r.curiosidade ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)" }}
+                    className="group relative"
+                    style={{ 
+                      background: r.curiosidade ? "rgba(16,185,129,0.08)" : (idx % 2 === 0 ? "transparent" : "#F7FCFE"),
+                      color: "#0A2540"
+                    }}
                   >
-                    <td className="px-3 py-2 whitespace-nowrap opacity-50 font-medium">
+                    <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
                       {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="px-3 py-2">
+                    <td style={{ padding: "12px 14px" }}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
-                          <div className="font-bold text-[#1a1a1a] truncate">{r.musica}</div>
-                          <div className="opacity-60 truncate">{r.artista}</div>
+                          <div style={{ fontWeight: 700, fontSize: 13 }}>{r.musica}</div>
+                          <div style={{ opacity: 0.6, fontSize: 11 }}>{r.artista}</div>
+                          {r.curiosidade && (
+                            <div className="mt-1 text-[10px] italic line-clamp-2" style={{ color: "#059669" }}>
+                              {r.curiosidade}
+                            </div>
+                          )}
                         </div>
                         
-                        {/* Botão de Exceção: visível apenas no hover */}
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity z-20">
                           <Button 
                             size="icon" 
                             variant="ghost" 
@@ -511,17 +517,12 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                           </Button>
                         </div>
                       </div>
-                      {r.curiosidade && (
-                        <div className="mt-1 text-[9px] italic text-[#059669] bg-emerald-500/5 p-1 rounded border-l border-emerald-500 line-clamp-2">
-                          {r.curiosidade}
-                        </div>
-                      )}
                     </td>
                   </tr>
                 ))}
                 {filteredRows.length === 0 && (
                   <tr>
-                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Nenhum registro encontrado</td>
+                    <td colSpan={2} style={{ padding: "40px 0", textAlign: "center", opacity: 0.4, fontStyle: "italic" }}>Nenhum registro encontrado</td>
                   </tr>
                 )}
               </tbody>
@@ -535,19 +536,25 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
             <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
-            <table className="w-full text-[10px]">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F59E0B" }}>
-                <tr>
-                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Termo</th>
-                  <th className="text-center px-3 py-3 w-12 text-white font-black uppercase tracking-wider"></th>
+          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: "#F59E0B", color: "#FFFFFF" }}>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Termo</th>
+                  <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
-                {excecoes.map(exc => (
-                  <tr key={exc.id} className="hover:bg-amber-50/50">
-                    <td className="px-3 py-2 font-medium">{exc.termo}</td>
-                    <td className="px-3 py-2 text-center">
+              <tbody>
+                {excecoes.map((exc, idx) => (
+                  <tr 
+                    key={exc.id} 
+                    style={{ 
+                      background: idx % 2 === 0 ? "transparent" : "rgba(245, 158, 11, 0.03)",
+                      color: "#0A2540"
+                    }}
+                  >
+                    <td style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>{exc.termo}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "center" }}>
                       <Button 
                         size="icon" 
                         variant="ghost" 
@@ -570,7 +577,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 ))}
                 {excecoes.length === 0 && (
                   <tr>
-                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Nenhuma exceção</td>
+                    <td colSpan={2} style={{ padding: "40px 0", textAlign: "center", opacity: 0.4, fontStyle: "italic" }}>Nenhuma exceção</td>
                   </tr>
                 )}
               </tbody>
