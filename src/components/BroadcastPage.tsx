@@ -1054,8 +1054,13 @@ export default function BroadcastPage() {
               ].map((kpi, idx) => (
                 <div 
                   key={idx}
-                  className="p-4 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all hover:translate-y-[-2px]"
-                  style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)` }}
+                  className="p-5 rounded-3xl flex flex-col gap-3 relative overflow-hidden transition-all hover:translate-y-[-4px] group"
+                  style={{ 
+                    ...cardStyle, 
+                    background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
+                    boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)"
+                  }}
+
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
