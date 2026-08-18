@@ -1512,27 +1512,17 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 zIndex: 0
               }} 
             />
-            {/* Gradient progress fill */}
+            {/* Background progress fill (discreet behind the content) */}
             <div
-              className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
+              className="absolute inset-y-0 left-0 pointer-events-none"
               style={{
                 width: `${progress}%`,
-                minWidth: progress > 0 ? "8px" : "0px",
-                background: `linear-gradient(90deg, var(--layout-slider-bg, #0d0d0d) 0%, color-mix(in srgb, var(--layout-slider-bg, #0d0d0d) 50%, var(--layout-accent-color, #268ffa)) 60%, var(--layout-accent-color, #268ffa) 100%)`,
-                transition: sliderResetting
-                  ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
-                  : "width 0.5s linear",
-                opacity: sliderResetting ? 0.3 : 0.85,
-                zIndex: 2,
+                background: `rgba(255, 255, 255, 0.08)`,
+                transition: sliderResetting ? "opacity 0.6s ease" : "width 0.5s linear",
+                zIndex: 1,
               }}
             />
-            {/* Shimmer overlay on progress */}
-            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 3 }}>
-              <div className="absolute inset-0" style={{
-                background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
-                animation: "player-shimmer 3s ease-in-out infinite",
-              }} />
-            </div>
+
 
             {/* Scrim adaptativo por luminância do gradiente */}
             {paletteContrast && (
