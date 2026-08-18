@@ -581,6 +581,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               <thead>
                 <tr style={{ background: "#F59E0B", color: "#FFFFFF" }}>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Termo</th>
+                  <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Imagens</th>
                   <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Ação</th>
                 </tr>
               </thead>
