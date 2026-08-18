@@ -206,6 +206,7 @@ export default function ApresentadorForm() {
     setInstagram(a.instagram);
     setWhatsapp(a.whatsapp || "+55");
     setFoto(a.foto);
+    setBackgroundUrl(a.background_url || "");
     setAtivo(a.ativo);
     // Scroll suave até o formulário no topo
     try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch {}
