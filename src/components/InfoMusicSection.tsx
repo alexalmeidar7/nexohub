@@ -596,6 +596,80 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   >
                     <td style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>{exc.termo}</td>
                     <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className={`h-6 w-6 rounded-full ${exc.capa_url ? "text-emerald-500 bg-emerald-50" : "text-gray-400 hover:text-amber-500 hover:bg-amber-50"}`}
+                          title="Cadastrar imagem da capa"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = async (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !user) return;
+                              try {
+                                const fileName = `excecao-capa-${exc.id}-${Date.now()}`;
+                                const { data: upData, error: upErr } = await supabase.storage
+                                  .from("xml-files")
+                                  .upload(`${user.id}/${fileName}`, file);
+                                if (upErr) throw upErr;
+                                
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from("xml-files")
+                                  .getPublicUrl(`${user.id}/${fileName}`);
+                                  
+                                await supabase.from("infomusic_excecoes").update({ capa_url: publicUrl }).eq("id", exc.id);
+                                loadExcecoes();
+                                toast.success("Capa atualizada!");
+                              } catch (err) {
+                                toast.error("Erro no upload");
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <ImagePlus size={12} />
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className={`h-6 w-6 rounded-full ${exc.artista_url ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"}`}
+                          title="Cadastrar imagem do artista"
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = async (e: any) => {
+                              const file = e.target.files?.[0];
+                              if (!file || !user) return;
+                              try {
+                                const fileName = `excecao-artista-${exc.id}-${Date.now()}`;
+                                const { data: upData, error: upErr } = await supabase.storage
+                                  .from("xml-files")
+                                  .upload(`${user.id}/${fileName}`, file);
+                                if (upErr) throw upErr;
+                                
+                                const { data: { publicUrl } } = supabase.storage
+                                  .from("xml-files")
+                                  .getPublicUrl(`${user.id}/${fileName}`);
+                                  
+                                await supabase.from("infomusic_excecoes").update({ artista_url: publicUrl }).eq("id", exc.id);
+                                loadExcecoes();
+                                toast.success("Foto do artista atualizada!");
+                              } catch (err) {
+                                toast.error("Erro no upload");
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          <Plus size={12} />
+                        </Button>
+                      </div>
+                    </td>
+                    <td style={{ padding: "12px 14px", textAlign: "center" }}>
                       <Button 
                         size="icon" 
                         variant="ghost" 
