@@ -1604,7 +1604,7 @@ export default function PromocoesKiosk() {
                                   .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
                                   .replace(/<p><\/p>/g, '<p>&nbsp;</p>')
                                   .replace(/color:\s*(?:rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "color: white")
-                                  .replace(/background-color:\s*(?:transparent|rgb\(\s*\d+[\s,]+\d+[\s,]+\d+\s*\)|#[0-9a-f]+)/gi, "background-color: transparent")
+                                  .replace(/background-color:\s*[^;"]+;?/gi, "background-color: transparent")
                                   .replace(/font-size\s*:\s*[^;\"]+;?/gi, ""), {
                                   ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li'],
                                   ALLOWED_ATTR: ['style', 'class']
