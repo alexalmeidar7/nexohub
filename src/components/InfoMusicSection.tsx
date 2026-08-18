@@ -441,9 +441,9 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* Coluna 1: ULTIMAS TOCADAS */}
-        <div className="space-y-3 flex flex-col h-[600px]">
+        <div className="space-y-3 flex flex-col h-[500px]">
           <div className="flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
@@ -531,7 +531,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         </div>
 
         {/* Coluna 2: EXCEÇÕES */}
-        <div className="space-y-3 flex flex-col h-[600px]">
+        <div className="space-y-3 flex flex-col h-[500px]">
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
             <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
@@ -586,7 +586,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
         </div>
 
         {/* Coluna 3: MUSICAS SEM CURIOSIDADES */}
-        <div className="space-y-3 flex flex-col h-[600px]">
+        <div className="space-y-3 flex flex-col h-[500px]">
           <div className="flex flex-col gap-2 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
