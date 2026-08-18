@@ -523,7 +523,7 @@ export default function RoteiroPrograma() {
             >
               <History size={14} style={{ color: CYAN }} />
               <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
-                Roteiros cadastrados
+                Roteiros Cadastrados
               </span>
               {historicoOpen
                 ? <ChevronUp size={14} style={{ color: CYAN }} />
