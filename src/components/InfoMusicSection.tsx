@@ -620,7 +620,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                                   .from("xml-files")
                                   .getPublicUrl(`${user.id}/${fileName}`);
                                   
-                                await supabase.from("infomusic_excecoes").update({ capa_url: publicUrl }).eq("id", exc.id);
+                                await supabase.from("infomusic_excecoes").update({ capa_url: publicUrl } as any).eq("id", exc.id);
                                 loadExcecoes();
                                 toast.success("Capa atualizada!");
                               } catch (err) {
@@ -635,7 +635,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                         <Button 
                           size="icon" 
                           variant="ghost" 
-                          className={`h-6 w-6 rounded-full ${exc.artista_url ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"}`}
+                          className={`h-6 w-6 rounded-full ${(exc as any).artista_url ? "text-blue-500 bg-blue-50" : "text-gray-400 hover:text-blue-500 hover:bg-blue-50"}`}
                           title="Cadastrar imagem do artista"
                           onClick={() => {
                             const input = document.createElement("input");
@@ -655,7 +655,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                                   .from("xml-files")
                                   .getPublicUrl(`${user.id}/${fileName}`);
                                   
-                                await supabase.from("infomusic_excecoes").update({ artista_url: publicUrl }).eq("id", exc.id);
+                                await supabase.from("infomusic_excecoes").update({ artista_url: publicUrl } as any).eq("id", exc.id);
                                 loadExcecoes();
                                 toast.success("Foto do artista atualizada!");
                               } catch (err) {
