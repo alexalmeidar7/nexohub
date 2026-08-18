@@ -1066,8 +1066,9 @@ export default function BroadcastPage() {
                     <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
                     <span style={{ color: kpi.color }}>{kpi.icon}</span>
                   </div>
-                  <span className="text-sm font-bold truncate" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
-                  <div className="absolute bottom-0 left-0 h-0.5 bg-white/5 w-full" />
+                  <span className="text-sm font-black truncate tracking-wide" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
+                  <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-0 group-hover:w-full transition-all duration-500" style={{ backgroundColor: `${kpi.color}40` }} />
+
                 </div>
               ))}
             </div>
