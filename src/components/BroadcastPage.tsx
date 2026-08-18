@@ -934,20 +934,20 @@ export default function BroadcastPage() {
                 Broadcast
               </h2>
               {programaNome ? (
-                <div className="flex items-center gap-2 text-white/40">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                <div className="flex items-center gap-2 text-white/70">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
                   <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
                 </div>
               ) : (
-                <span className="text-[9px] font-bold tracking-[0.2em] text-white/30 uppercase">vMix Control Hub</span>
+                <span className="text-[9px] font-bold tracking-[0.2em] text-white/50 uppercase">vMix Control Hub</span>
               )}
             </div>
           </div>
 
           <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex flex-col items-end mr-2">
-              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/20 mb-0.5">Master Clock</span>
-              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
+              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/40 mb-0.5">Master Clock</span>
+              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif", textShadow: `0 0 10px ${LIME}30` }}>{clockStr}</span>
             </div>
             
             <div className="flex items-center bg-black/40 rounded-2xl p-1.5 border border-white/5">
@@ -964,7 +964,7 @@ export default function BroadcastPage() {
                     className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
                     style={{
                       backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffff40",
+                      color: active ? NAVY : "#ffffff60",
                       fontFamily: "'Sora', sans-serif",
                     }}
                   >
@@ -1063,8 +1063,8 @@ export default function BroadcastPage() {
 
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
-                    <span style={{ color: kpi.color }}>{kpi.icon}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60">{kpi.label}</span>
+                    <span style={{ color: kpi.color, filter: "drop-shadow(0 0 5px rgba(255,255,255,0.1))" }}>{kpi.icon}</span>
                   </div>
                   <span className="text-sm font-black truncate tracking-wide" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
                   <div className="absolute bottom-0 left-0 h-1 bg-white/5 w-0 group-hover:w-full transition-all duration-500" style={{ backgroundColor: `${kpi.color}40` }} />
@@ -1128,7 +1128,7 @@ export default function BroadcastPage() {
               </div>
 
               <div className="pt-2 border-t border-white/5 flex items-center justify-between">
-                <span className="text-[9px] font-bold text-white/30 uppercase tracking-widest">Sincronização Ativa</span>
+                <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Sincronização Ativa</span>
                 <div className="flex gap-1">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="w-1 h-3 rounded-full bg-cyan-500/20" />
@@ -1151,7 +1151,7 @@ export default function BroadcastPage() {
               
               <div className="space-y-6">
                 <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Assunto / Título</label>
                   <input
                     type="text"
                     value={data.assunto}
@@ -1167,9 +1167,9 @@ export default function BroadcastPage() {
 
 
                 <div className="relative group">
-                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
                   <div className="relative">
-                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
                     <input
                       type="text"
                       value={data.locutor_override}
@@ -1228,7 +1228,7 @@ export default function BroadcastPage() {
 
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Custom Background (.png)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/60">Custom Background (.png)</label>
                     {data.assuntoBgUrl && (
                       <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
                         <input
@@ -1292,7 +1292,7 @@ export default function BroadcastPage() {
                     Redes Sociais
                   </span>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20">{empresaSocials.length} Canais</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/50">{empresaSocials.length} Canais</span>
               </div>
 
 
