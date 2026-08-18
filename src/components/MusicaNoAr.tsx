@@ -1483,9 +1483,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               background: musicBoxBg,
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
               transition: "background 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
-              minHeight: "180px"
+              minHeight: "180px",
+              position: "relative"
             }}
           >
+            {/* Background Gradient Layer (The one the user is referring to) */}
+            <div 
+              className="absolute inset-0 transition-opacity duration-1000"
+              style={{ 
+                background: musicBoxBg,
+                opacity: 1,
+                zIndex: 0
+              }} 
+            />
             {/* Gradient progress fill */}
             <div
               className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
@@ -1497,11 +1507,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   ? "width 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease"
                   : "width 0.5s linear",
                 opacity: sliderResetting ? 0.3 : 0.85,
-                zIndex: 1,
+                zIndex: 2,
               }}
             />
             {/* Shimmer overlay on progress */}
-            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 2 }}>
+            <div className="absolute inset-y-0 left-0 rounded-2xl overflow-hidden pointer-events-none" style={{ width: `${progress}%`, zIndex: 3 }}>
               <div className="absolute inset-0" style={{
                 background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)",
                 animation: "player-shimmer 3s ease-in-out infinite",
@@ -1514,7 +1524,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 className="absolute inset-0 pointer-events-none rounded-2xl" 
                 style={{ 
                   background: paletteContrast.scrimBackground, 
-                  zIndex: 2,
+                  zIndex: 1,
                   mixBlendMode: "multiply",
                   opacity: 0.4
                 }} 
