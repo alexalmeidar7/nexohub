@@ -841,11 +841,19 @@ export default function PromocoesKiosk() {
     return <PromoSkeleton />;
   }
 
-
-
+  const presenter = apresentadores.find(a => a.id === onAirProgram?.apresentadorId);
+  const bgUrl = presenter?.background_url || config.backgroundUrl || "";
+  const customBgStyle = bgUrl ? {
+    backgroundImage: `linear-gradient(rgba(0,0,0,${telaPromoConfig.bg_opacity / 100}), rgba(0,0,0,${telaPromoConfig.bg_opacity / 100})), url(${bgUrl})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
+    backgroundAttachment: "fixed",
+    transition: "background-image 1000ms ease-in-out"
+  } : buildTelaPromoBgStyle(telaPromoConfig);
 
   return (
-    <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...buildTelaPromoBgStyle(telaPromoConfig), ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
+    <div className="text-white min-h-screen p-8 flex flex-col items-center animate-fade-in" style={{ ...customBgStyle, ...promoThemeVars, color: telaPromoConfig.header_text_color }}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar{display:none}
         .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
