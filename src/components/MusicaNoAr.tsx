@@ -1483,9 +1483,19 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               background: musicBoxBg,
               boxShadow: "0 4px 20px rgba(0,0,0,0.2)", 
               transition: "background 1.5s cubic-bezier(0.4, 0, 0.2, 1)",
-              minHeight: "180px"
+              minHeight: "180px",
+              position: "relative"
             }}
           >
+            {/* Background Gradient Layer (The one the user is referring to) */}
+            <div 
+              className="absolute inset-0 transition-opacity duration-1000"
+              style={{ 
+                background: musicBoxBg,
+                opacity: 1,
+                zIndex: 0
+              }} 
+            />
             {/* Gradient progress fill */}
             <div
               className="absolute inset-y-0 left-0 rounded-2xl pointer-events-none"
