@@ -146,12 +146,20 @@ export default function ApresentadorForm() {
       fotoUrl = await uploadImageToStorage(fotoUrl, "empresa-assets", path);
     }
 
+    let finalBackgroundUrl = backgroundUrl;
+    if (finalBackgroundUrl && finalBackgroundUrl.startsWith("data:")) {
+      const targetId = editingId || crypto.randomUUID();
+      const path = `apresentadores/${user.id}/${targetId}-bg.webp`;
+      finalBackgroundUrl = await uploadImageToStorage(finalBackgroundUrl, "empresa-assets", path);
+    }
+
     const payload = {
       nome: nome.trim(),
       cargo: cargoValue,
       instagram: instagram.trim(),
       whatsapp: whatsapp.replace(/\D/g, "").length >= 10 ? whatsapp.trim() : "",
       foto: fotoUrl,
+      background_url: finalBackgroundUrl,
       ativo,
     };
 
