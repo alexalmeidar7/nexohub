@@ -24,13 +24,14 @@ export async function getMusicExceptions(userId: string | null | undefined): Pro
   try {
     const { data } = await supabase
       .from("infomusic_excecoes")
-      .select("id, termo, capa_url, background_url")
+      .select("id, termo, capa_url, artista_url, background_url")
       .eq("user_id", userId);
     
     const list: MusicException[] = (data || []).map(d => ({
       id: d.id,
       termo: d.termo,
       capa_url: d.capa_url,
+      artista_url: (d as any).artista_url,
       background_url: d.background_url
     }));
 
