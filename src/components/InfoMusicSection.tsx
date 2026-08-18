@@ -444,12 +444,10 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
         {/* Coluna 1: ULTIMAS TOCADAS */}
         <div className="space-y-3 flex flex-col h-[500px]">
-          <div className="flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
               <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
-            </div>
-            <div className="flex gap-1">
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
