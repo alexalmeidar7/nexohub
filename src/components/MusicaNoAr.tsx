@@ -10,7 +10,7 @@ import { getApresentadores } from "./ApresentadorForm";
 import { normalizeMusicText } from "@/lib/textEncoding";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
 import { useCoverPalette, getPaletteContrast } from "@/lib/coverPalette";
-import { matchesMusicException } from "@/lib/musicExceptions";
+import { matchesMusicException, getMusicExceptions, MusicException } from "@/lib/musicExceptions";
 
 interface MusicData {
   titulo: string;
