@@ -819,7 +819,7 @@ export default function RoteiroPrograma() {
         </div>
       </div>
 
-      {historicoSlot}
+      
 
       {estudios.length > 0 && (
         <div className="px-6 pt-4 pb-2" style={MONT}>
