@@ -789,33 +789,35 @@ export default function RoteiroPrograma() {
       </div>
       <div className="px-6 pt-4 pb-2">
         <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-          <button
-            onClick={() => { setAutomacaoOpen(false); setExpressEditData(null); setNovoRoteiroOpen(true); }}
-            style={{
-              ...MONT,
-              height: 64,
-              padding: "0 22px",
-              borderRadius: 20,
-              background: CYAN,
-              color: "#FFFFFF",
-              border: `2px solid ${CYAN}`,
-              fontSize: 13,
-              fontWeight: 800,
-              letterSpacing: 1.5,
-              textTransform: "uppercase",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 10,
-              cursor: "pointer",
-              boxShadow: "0 6px 20px rgba(0, 191, 240, 0.35)",
-              transition: "all 0.2s ease",
-            }}
-            title="Abrir formulário de novo roteiro"
-          >
-            <Zap size={16} />
-            Novo Roteiro
-          </button>
+          {!novoRoteiroOpen && (
+            <button
+              onClick={() => { setAutomacaoOpen(false); setExpressEditData(null); setNovoRoteiroOpen(true); }}
+              style={{
+                ...MONT,
+                height: 64,
+                padding: "0 22px",
+                borderRadius: 20,
+                background: CYAN,
+                color: "#FFFFFF",
+                border: `2px solid ${CYAN}`,
+                fontSize: 13,
+                fontWeight: 800,
+                letterSpacing: 1.5,
+                textTransform: "uppercase",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 10,
+                cursor: "pointer",
+                boxShadow: "0 6px 20px rgba(0, 191, 240, 0.35)",
+                transition: "all 0.2s ease",
+              }}
+              title="Abrir formulário de novo roteiro"
+            >
+              <Zap size={16} />
+              Novo Roteiro
+            </button>
+          )}
         </div>
       </div>
 
