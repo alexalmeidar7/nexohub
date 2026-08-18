@@ -1561,12 +1561,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   </h2>
                   <div className="flex items-center gap-2">
                     <span 
-                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full" 
+                      className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full transition-all duration-1000" 
                       style={{ 
-                        color: "#FFFFFF", 
-                        backgroundColor: "rgba(255,255,255,0.15)",
+                        color: musicTextColor, 
+                        backgroundColor: paletteContrast?.scrimBackground || "rgba(255,255,255,0.15)",
                         backdropFilter: "blur(4px)",
-                        border: "1px solid rgba(255,255,255,0.2)"
+                        border: `1px solid ${paletteContrast?.textColor}33` || "1px solid rgba(255,255,255,0.2)"
                       }}
                     >
                       <User size={14} className="opacity-80" />
