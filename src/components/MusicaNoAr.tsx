@@ -1439,7 +1439,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
       <section
         style={{
-          background: NEXO_CARD_BG,
+          background: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
           borderRadius: 28,
           padding: "28px 32px 32px",
           boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
