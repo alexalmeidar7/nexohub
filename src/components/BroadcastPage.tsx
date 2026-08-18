@@ -1300,11 +1300,12 @@ export default function BroadcastPage() {
                 )}
 
                 {whatsappNumber && (
-                  <label className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all border" 
+                  <label className="flex items-center gap-4 px-5 py-4 rounded-2xl cursor-pointer transition-all border-2" 
                     style={{ 
                       backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
                       borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
                     }}>
+
                     <input
                       type="checkbox"
                       checked={data.showQrCode}
