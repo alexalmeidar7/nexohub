@@ -4,6 +4,7 @@ export interface MusicException {
   id: string;
   termo: string;
   capa_url: string | null;
+  artista_url: string | null;
   background_url: string | null;
 }
 
