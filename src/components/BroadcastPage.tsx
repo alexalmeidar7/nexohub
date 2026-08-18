@@ -1169,7 +1169,7 @@ export default function BroadcastPage() {
                 <div className="relative group">
                   <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/60 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
                   <div className="relative">
-                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
                     <input
                       type="text"
                       value={data.locutor_override}
