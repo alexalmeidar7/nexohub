@@ -1439,10 +1439,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       {/* ═══ MAIN MUSIC CARD (Nexo Form style) ═══ */}
       <section
         style={{
-          background: NEXO_CARD_BG,
+          background: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)",
           borderRadius: 28,
           padding: "28px 32px 32px",
           boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          border: "1px solid color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)",
         }}
       >
         {/* Header */}
@@ -1621,11 +1622,11 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       <section 
         className="group/config"
         style={{ 
-          background: "#FFFFFF", 
+          backgroundColor: "color-mix(in srgb, var(--layout-page-bg, #fff) 88%, transparent)", 
           borderRadius: 28, 
           overflow: "hidden", 
           boxShadow: "0 10px 40px -10px rgba(10, 37, 64, 0.08)",
-          border: `1px solid ${showConfig ? NEXO_CYAN : "#E2E8F0"}`,
+          border: `1px solid ${showConfig ? NEXO_CYAN : "color-mix(in srgb, var(--layout-border-color, #333) 14%, transparent)"}`,
           transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
         }}
       >
@@ -1635,7 +1636,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           style={{ 
             padding: "24px 32px", 
             borderBottom: showConfig ? `1px solid ${NEXO_CYAN}22` : "none",
-            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, #FFFFFF)` : "transparent"
+            background: showConfig ? `linear-gradient(to right, ${NEXO_LIGHT_BLUE}33, transparent)` : "transparent"
           }}
         >
           <div className="flex items-center gap-4">
