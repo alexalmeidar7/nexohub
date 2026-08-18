@@ -536,19 +536,25 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             <div className="w-1 h-4 bg-amber-500 rounded-full" />
             <h4 className="text-xs font-black uppercase tracking-wider">EXCEÇÕES ({excecoes.length})</h4>
           </div>
-          <div className="flex-1 rounded-xl overflow-hidden border border-black/5 bg-white/30 overflow-y-auto custom-scrollbar shadow-sm">
-            <table className="w-full text-[10px]">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: "#F59E0B" }}>
-                <tr>
-                  <th className="text-left px-3 py-3 text-white font-black uppercase tracking-wider">Termo</th>
-                  <th className="text-center px-3 py-3 w-12 text-white font-black uppercase tracking-wider"></th>
+          <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
+            <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: "#F59E0B", color: "#FFFFFF" }}>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Termo</th>
+                  <th style={{ padding: "12px 14px", textAlign: "center", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap", width: 60 }}>Ação</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/5">
-                {excecoes.map(exc => (
-                  <tr key={exc.id} className="hover:bg-amber-50/50">
-                    <td className="px-3 py-2 font-medium">{exc.termo}</td>
-                    <td className="px-3 py-2 text-center">
+              <tbody>
+                {excecoes.map((exc, idx) => (
+                  <tr 
+                    key={exc.id} 
+                    style={{ 
+                      background: idx % 2 === 0 ? "transparent" : "rgba(245, 158, 11, 0.03)",
+                      color: "#0A2540"
+                    }}
+                  >
+                    <td style={{ padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>{exc.termo}</td>
+                    <td style={{ padding: "12px 14px", textAlign: "center" }}>
                       <Button 
                         size="icon" 
                         variant="ghost" 
@@ -571,7 +577,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 ))}
                 {excecoes.length === 0 && (
                   <tr>
-                    <td colSpan={2} className="px-3 py-10 text-center opacity-40 italic">Nenhuma exceção</td>
+                    <td colSpan={2} style={{ padding: "40px 0", textAlign: "center", opacity: 0.4, fontStyle: "italic" }}>Nenhuma exceção</td>
                   </tr>
                 )}
               </tbody>
