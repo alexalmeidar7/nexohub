@@ -1450,7 +1450,7 @@ export default function PromocoesKiosk() {
           <div ref={modalScrollRef} className="overflow-y-auto flex-1 min-h-0 promo-scroll px-4 sm:px-6 pb-6 mr-[1px]">
             <div
               className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
-              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white", wordBreak: "normal", overflowWrap: "break-word" }}
+              style={{ fontSize: `${fontSize}px`, lineHeight: 1.4, color: "white", wordBreak: "break-word", overflowWrap: "anywhere" }}
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((selectedPromo?.texto || "")
                   .replace(/<p><br><\/p>/g, '<p>&nbsp;</p>')
@@ -1469,7 +1469,7 @@ export default function PromocoesKiosk() {
                 <span className="text-sm uppercase tracking-wider" style={{ color: "rgba(255, 255, 255, 0.5)" }}>Oferecimento</span>
                 <div
                   className="text-lg sm:text-xl font-bold mt-2 promo-html-content whitespace-pre-wrap [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
-                  style={{ color: "white", lineHeight: 1.4, wordBreak: "normal", overflowWrap: "break-word" }}
+                  style={{ color: "white", lineHeight: 1.4, wordBreak: "break-word", overflowWrap: "anywhere" }}
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(selectedPromo.oferecimento
                       .replace(/\/\//g, "<br/>")
@@ -1595,9 +1595,9 @@ export default function PromocoesKiosk() {
                                 fontSize: `${fontSize}px`, 
                                 lineHeight: 1.5, 
                                 color: "white",
-                                wordBreak: "normal",
-                                overflowWrap: "break-word",
-                                hyphens: "none",
+                                wordBreak: "break-word",
+                                overflowWrap: "anywhere",
+                                hyphens: "auto",
                                 display: "block"
                               }}
                               dangerouslySetInnerHTML={{
