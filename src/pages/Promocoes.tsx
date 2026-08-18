@@ -844,7 +844,7 @@ export default function PromocoesKiosk() {
   const presenter = apresentadores.find(a => a.id === onAirProgram?.apresentadorId);
   const bgUrl = presenter?.background_url || config.backgroundUrl || "";
   const customBgStyle = bgUrl ? {
-    backgroundImage: `linear-gradient(rgba(0,0,0,${telaPromoConfig.bg_opacity / 100}), rgba(0,0,0,${telaPromoConfig.bg_opacity / 100})), url(${bgUrl})`,
+    backgroundImage: `linear-gradient(rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100}), rgba(0,0,0,${(telaPromoConfig.bg_opacity ?? 50) / 100})), url(${bgUrl})`,
     backgroundSize: "cover",
     backgroundPosition: "center",
     backgroundRepeat: "no-repeat",
