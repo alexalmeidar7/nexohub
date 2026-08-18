@@ -192,7 +192,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       data_fim: form.data_fim,
       imagem_url: form.imagem_url,
       banner_l_url: form.banner_l_url,
-      botao_url: form.botao_url,
       programa_ids: form.programa_ids,
     };
 
