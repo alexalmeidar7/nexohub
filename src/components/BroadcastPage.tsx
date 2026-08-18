@@ -2179,12 +2179,12 @@ function MockupPreview({
                 paddingLeft: "100%",
               }}
             >
-              <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#fff" }}>
+              <span className="text-[11px] font-black uppercase tracking-widest" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.8)" }}>
                 {composedTicker.split(/(\s[▲▼]\s[+−]\d+[.,]\d{2}%)/g).map((seg, i) => {
                   const m = seg.match(/^\s([▲▼])\s([+−]\d+[.,]\d{2}%)$/);
                   if (m) {
-                    const color = m[1] === "▲" ? "#22c55e" : "#ef4444";
-                    return <span key={i} style={{ color }}>{seg}</span>;
+                    const color = m[1] === "▲" ? "#4ade80" : "#f87171";
+                    return <span key={i} style={{ color, textShadow: `0 0 10px ${color}40` }}>{seg}</span>;
                   }
                   return <span key={i}>{seg}</span>;
                 })}
