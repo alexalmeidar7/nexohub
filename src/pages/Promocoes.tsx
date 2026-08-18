@@ -1590,14 +1590,15 @@ export default function PromocoesKiosk() {
                             {/* Imagem do testemunhal removida conforme solicitado */}
 
                             <div
-                              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent"
+                              className="font-bold promo-html-content whitespace-pre-wrap ql-editor !p-0 [&_*]:!bg-transparent [&_p]:!bg-transparent [&_span]:!bg-transparent [&_div]:!bg-transparent [&_ul]:!bg-transparent [&_ol]:!bg-transparent [&_li]:!bg-transparent max-w-full"
                               style={{ 
                                 fontSize: `${fontSize}px`, 
                                 lineHeight: 1.5, 
                                 color: "white",
                                 wordBreak: "normal",
                                 overflowWrap: "break-word",
-                                hyphens: "none"
+                                hyphens: "none",
+                                display: "block"
                               }}
                               dangerouslySetInnerHTML={{
                                 __html: DOMPurify.sanitize(t.texto
