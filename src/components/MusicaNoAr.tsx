@@ -1763,11 +1763,49 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                   >
                     <FolderOpen size={24} style={{ color: NEXO_DARK }} />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
                       Origem Local
                     </h4>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Leitura de Arquivo Local</span>
+                  </div>
+                  
+                  {/* Device Name inside Local Source Box */}
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-100 shadow-sm">
+                    <Monitor size={12} className="text-slate-400" />
+                    {editingDeviceName ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          value={deviceNameInput}
+                          onChange={e => setDeviceNameInput(e.target.value)}
+                          className="px-1.5 py-0.5 rounded text-[10px] font-bold outline-none bg-slate-50"
+                          style={{ color: NEXO_DARK, width: 100 }}
+                          autoFocus
+                          onKeyDown={e => {
+                            if (e.key === "Enter") {
+                              const v = deviceNameInput.trim() || deriveDeviceName();
+                              localStorage.setItem(DEVICE_NAME_KEY, v);
+                              setCurrentDeviceName(v);
+                              setEditingDeviceName(false);
+                            }
+                          }}
+                        />
+                        <button onClick={() => {
+                          const v = deviceNameInput.trim() || deriveDeviceName();
+                          localStorage.setItem(DEVICE_NAME_KEY, v);
+                          setCurrentDeviceName(v);
+                          setEditingDeviceName(false);
+                        }} className="text-green-600"><Check size={12} /></button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} 
+                        className="text-[10px] font-bold uppercase tracking-wider hover:text-cyan-500 transition-colors"
+                        style={{ color: NEXO_DARK }}
+                      >
+                        {currentDeviceName}
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1821,117 +1859,36 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 <input ref={fileInputRef} type="file" accept={dataUserId === JORNAL_FM_USER_ID ? ".xml,.txt,application/xml,text/xml,text/plain" : ".xml,application/xml,text/xml"} onChange={handleFileSelect} className="hidden" />
 
 
-                {/* Device name — editable */}
-                {localMonitoring && (
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl" style={{ backgroundColor: "#F1F5F9" }}>
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      <Monitor size={14} />
-                      Dispositivo:
-                    </div>
-                    {editingDeviceName ? (
-                      <span className="flex items-center gap-1">
-                        <input
-                          value={deviceNameInput}
-                          onChange={e => setDeviceNameInput(e.target.value)}
-                          className="px-1.5 py-0.5 rounded text-[10px] font-mono outline-none"
-                          style={{ backgroundColor: "var(--layout-page-bg, #ffffff)", border: "1px solid color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "var(--layout-page-text, #0d0446)", width: 140 }}
-                          autoFocus
-                          onKeyDown={e => {
-                            if (e.key === "Enter") {
-                              const v = deviceNameInput.trim() || deriveDeviceName();
-                              localStorage.setItem(DEVICE_NAME_KEY, v);
-                              setCurrentDeviceName(v);
-                              setEditingDeviceName(false);
-                            }
-                          }}
-                        />
-                        <button onClick={() => {
-                          const v = deviceNameInput.trim() || deriveDeviceName();
-                          localStorage.setItem(DEVICE_NAME_KEY, v);
-                          setCurrentDeviceName(v);
-                          setEditingDeviceName(false);
-                        }} className="text-green-600"><Check size={12} /></button>
-                      </span>
-                    ) : (
-                      <button onClick={() => { setDeviceNameInput(currentDeviceName); setEditingDeviceName(true); }} className="font-mono underline" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 50%, transparent)" }}>
-                        {currentDeviceName}
-                      </button>
-                    )}
-                  </div>
-                )}
-
+                {/* Status indicators */}
                 {(() => {
                   const st = buildStatus({ selected: isLocalSelected && localMonitoring, activating: localActivating, error: localError, lastReadAt: localLastReadAt, hasSource: !!localFileName, delayed: !!localDelay });
                   const ago = formatAgo(localLastReadAt);
                   return (
-                    <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
+                    <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-2xl" style={{ background: st.bg, color: st.fg, border: `1px solid ${st.border}` }}>
                       <div className="flex items-center gap-2 min-w-0">
                         {st.key === "ativando" || st.key === "atrasado" ? (
-                          <Loader2 size={12} className="animate-spin shrink-0" />
+                          <Loader2 size={14} className="animate-spin shrink-0" />
                         ) : (
-                          <span className="relative flex h-2 w-2 shrink-0">
+                          <span className="relative flex h-2.5 w-2.5 shrink-0">
                             {st.pulse && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: st.fg }} />}
-                            <span className="relative inline-flex rounded-full h-2 w-2" style={{ backgroundColor: st.fg }} />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: st.fg }} />
                           </span>
                         )}
-                        <span className="text-[11px] font-black tracking-wide truncate">{st.label}</span>
+                        <span className="text-[12px] font-black tracking-widest uppercase truncate">{st.label}</span>
                       </div>
                       {ago && st.key !== "inativa" && st.key !== "erro" && (
-                        <span className="text-[10px] font-semibold opacity-80 shrink-0">{ago}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 shrink-0">{ago}</span>
                       )}
                     </div>
                   );
                 })()}
+
                 {localError && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <AlertTriangle size={11} />
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-2xl text-[11px] font-bold uppercase tracking-wider" style={{ backgroundColor: "rgba(239,68,68,0.08)", color: "#dc2626", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <AlertTriangle size={14} />
                     <span>{localError}</span>
                   </div>
                 )}
-
-                {/* Live parse preview — shows what Title/Artist were extracted
-                    from the current file BEFORE it enters the music pipeline. */}
-                {localFileContent && (() => {
-                  const preview = parseXmlString(localFileContent);
-                  const stopped = !preview && isStoppedXmlPayload(localFileContent);
-                  return (
-                    <div className="rounded-2xl p-4" style={{ backgroundColor: "#F8FAFC", border: "1px dashed #CBD5E1" }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Prévia da leitura</span>
-                        <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: preview ? "rgba(34,197,94,0.12)" : "rgba(234,179,8,0.15)", color: preview ? "#16a34a" : "#a16207" }}>
-                          {preview ? "OK" : stopped ? "STANDBY" : "SEM DADOS"}
-                        </span>
-                      </div>
-                      {preview ? (
-                        <div className="space-y-1">
-                          <div className="flex gap-2 text-[11px]">
-                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Música</span>
-                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.titulo || "—"}</span>
-                          </div>
-                          <div className="flex gap-2 text-[11px]">
-                            <span className="font-bold w-14 shrink-0" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>Artista</span>
-                            <span className="font-mono truncate" style={{ color: "var(--layout-page-text, #0d0446)" }}>{preview.artista || "—"}</span>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-[10px]" style={{ color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
-                          {stopped ? "Automação sem música no ar." : "Não foi possível extrair Título/Artista deste arquivo."}
-                        </p>
-                      )}
-                      {dataUserId === CULTURA_FM_USER_ID && (
-                        <div className="mt-2 pt-2 flex items-center justify-between text-[9px] font-semibold" style={{ borderTop: "1px dashed color-mix(in srgb, var(--layout-page-text, #0d0446) 15%, transparent)", color: "color-mix(in srgb, var(--layout-page-text, #0d0446) 55%, transparent)" }}>
-                          <span className="uppercase tracking-wider">Última sincronia Cultura FM</span>
-                          <span className="font-mono" style={{ color: culturaLastSync ? "#16a34a" : "#a16207" }}>
-                            {culturaLastSync
-                              ? `${new Date(culturaLastSync).toLocaleTimeString("pt-BR")} · ${formatAgo(culturaLastSync) || "agora"}`
-                              : "nunca"}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                  );
-                })()}
 
                 {/* Local monitor indicator inside the box for visual feedback */}
                 {localMonitoring && (
