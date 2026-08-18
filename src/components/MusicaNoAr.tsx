@@ -1563,9 +1563,9 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
                 <div className="space-y-1">
-                   <h2 className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 !text-white" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
+                   <div className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 text-white" style={{ color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
                      {displayTitulo}
-                   </h2>
+                   </div>
                   <div className="flex items-center gap-2">
                     <span 
                       className="inline-flex items-center gap-2 text-xs lg:text-sm font-bold px-3 py-1 rounded-full transition-all duration-1000" 
@@ -1858,7 +1858,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
 
                 {/* Status indicators */}
-                {(() => {
+                {(localLastReadAt || localActivating || localError || localDelay) && (() => {
                   const st = buildStatus({ selected: isLocalSelected && localMonitoring, activating: localActivating, error: localError, lastReadAt: localLastReadAt, hasSource: !!localFileName, delayed: !!localDelay });
                   const ago = formatAgo(localLastReadAt);
                   return (
