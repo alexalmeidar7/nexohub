@@ -1156,10 +1156,10 @@ export default function BroadcastPage() {
 
 
 
-                <div className="relative">
-                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
+                <div className="relative group">
+                  <label className="text-[9px] font-black uppercase tracking-[0.2em] mb-2.5 block text-white/30 transition-colors group-focus-within:text-[#00BFF0]">Apresentador (Substituir)</label>
                   <div className="relative">
-                    <Search size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+                    <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
                     <input
                       type="text"
                       value={data.locutor_override}
@@ -1182,11 +1182,12 @@ export default function BroadcastPage() {
                       }}
                       onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
                       onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                      placeholder={locutorNome || "Override locutor..."}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl text-xs"
+                      placeholder={locutorNome || "Nome do locutor..."}
+                      className="w-full pl-12 pr-5 py-4 rounded-2xl text-[13px] font-medium border-none"
                       style={inputStyle}
                     />
                   </div>
+
                   {showLocutorDropdown && locutorSearchResults.length > 0 && (
                     <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
                       {locutorSearchResults.map((r, i) => (
