@@ -3,7 +3,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp } from "lucide-react";
+import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phone, Newspaper, CloudSun, Search, Copy, Check, Code2, RefreshCw, Upload, X, Image as ImageIcon, TrendingUp, Clock, Mic } from "lucide-react";
 import XmlLinkRow from "@/components/XmlLinkRow";
 import XmlSection from "@/components/XmlSection";
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
@@ -915,114 +915,109 @@ export default function BroadcastPage() {
 
         {/* ── Top toolbar: brand lockup + status console ── */}
         <div
-          className="flex items-center justify-between gap-4 px-4 py-3"
+          className="flex items-center justify-between gap-4 px-6 py-4"
           style={{
             ...cardStyle,
-            background: `linear-gradient(90deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
+            background: `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
+            borderBottom: `2px solid ${CYAN}20`,
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
           }}
         >
-          <div className="flex items-center gap-4 min-w-0">
-            <div className="flex items-center gap-2">
-              <span
-                className="text-white text-[10px] font-black tracking-widest px-2 py-1 rounded"
-                style={{ backgroundColor: CYAN, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+          <div className="flex items-center gap-6 min-w-0">
+            <div className="flex items-center gap-3">
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
               >
-                VMIX
-              </span>
-              <span className="text-white/50 text-[10px] font-bold tracking-widest">/</span>
-              <h2
-                className="text-white text-sm uppercase tracking-tight"
-                style={{ fontFamily: "'Sora', sans-serif", fontWeight: 700 }}
-              >
-                Broadcast
-              </h2>
+                <Code2 size={20} style={{ color: NAVY }} />
+              </div>
+              <div className="flex flex-col">
+                <h2
+                  className="text-white text-base uppercase tracking-widest leading-none mb-1"
+                  style={{ fontFamily: "'Sora', sans-serif", fontWeight: 800 }}
+                >
+                  Broadcast
+                </h2>
+                <span className="text-[9px] font-bold tracking-[0.2em] text-white/40 uppercase">vMix Control System</span>
+              </div>
             </div>
+            
             {programaNome && (
               <div
-                className="hidden md:flex items-center gap-2 pl-4 min-w-0"
+                className="hidden md:flex items-center gap-4 pl-6 min-w-0"
                 style={{ borderLeft: `1px solid ${NAVY_BORDER}` }}
               >
-                {programaLogo && (
-                  <img src={programaLogo} alt="" className="w-7 h-7 rounded-md object-cover" style={{ border: `1px solid ${NAVY_BORDER}` }} />
-                )}
+                <div className="relative group">
+                  {programaLogo ? (
+                    <img src={programaLogo} alt="" className="w-10 h-10 rounded-lg object-cover shadow-2xl transition-transform group-hover:scale-105" style={{ border: `1px solid ${NAVY_BORDER}` }} />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-white/5 border border-white/10">
+                      <ImageIcon size={16} className="text-white/20" />
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-[#0A2540] shadow-sm" />
+                </div>
                 <div className="min-w-0">
-                  <div className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60" }}>Programa no ar</div>
-                  <div className="text-[12px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>{programaNome}</div>
+                  <div className="text-[9px] uppercase tracking-[0.15em] font-bold mb-0.5" style={{ color: CYAN }}>Active Session</div>
+                  <div className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>{programaNome}</div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {saving && (
-              <span className="flex items-center gap-1.5 text-[10px] font-semibold" style={{ color: "#ffffff70" }}>
-                <Loader2 size={11} className="animate-spin" /> Salvando
-              </span>
-            )}
-            <span
-              className="hidden sm:inline-block px-3 py-1.5 text-[11px] font-bold rounded-md font-mono"
-              style={{ backgroundColor: NAVY_DEEP, color: LIME, border: `1px solid ${NAVY_BORDER}` }}
-            >
-              {clockStr}
-            </span>
-            <span
-              className="px-3 py-1.5 text-[10px] font-black rounded-md flex items-center gap-1.5 uppercase tracking-widest"
-              style={{ backgroundColor: "#dc2626", color: "#fff", fontFamily: "'Sora', sans-serif" }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: "#fff" }} /> LIVE
-            </span>
-            <span
-              className="px-3 py-1.5 text-[10px] font-black rounded-md uppercase tracking-widest"
-              style={{ backgroundColor: CYAN, color: NAVY, fontFamily: "'Sora', sans-serif" }}
-            >
-              vMix · ON
-            </span>
+          <div className="flex items-center gap-3">
+            <div className="flex flex-col items-end mr-4 hidden sm:flex">
+              <span className="text-[9px] uppercase font-bold tracking-widest text-white/30 mb-0.5">Master Clock</span>
+              <span className="text-sm font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{clockStr}</span>
+            </div>
+            
+            <div className="flex items-center bg-black/30 rounded-xl p-1 border border-white/5">
+              {([
+                { id: "preview", label: "Preview", icon: <ImageIcon size={12} /> },
+                { id: "assuntos", label: "Topics", icon: <MessageCircle size={12} /> },
+                { id: "ticker", label: "Ticker", icon: <TrendingUp size={12} /> },
+                { id: "aseguir", label: "Next", icon: <Clock size={12} /> },
+                { id: "xml", label: "XML", icon: <Code2 size={12} /> },
+              ] as const).map(t => {
+                const active = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setActiveTab(t.id)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: active ? CYAN : "transparent",
+                      color: active ? NAVY : "#ffffff50",
+                      fontFamily: "'Sora', sans-serif",
+                    }}
+                  >
+                    {t.icon}
+                    <span className="hidden lg:inline">{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-
-        {/* ── Tab bar ── */}
-        <div
-          className="flex flex-wrap items-center gap-1 p-1 rounded-2xl flex-none"
-          style={cardStyle}
-        >
-          {([
-            { id: "preview", label: "Preview" },
-            { id: "assuntos", label: "Assuntos" },
-            { id: "ticker", label: "Ticker" },
-            { id: "aseguir", label: "A Seguir" },
-            { id: "xml", label: "XML" },
-          ] as const).map(t => {
-            const active = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className="px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all"
-                style={{
-                  backgroundColor: active ? CYAN : "transparent",
-                  color: active ? NAVY : "#ffffff70",
-                  fontFamily: "'Sora', sans-serif",
-                  boxShadow: active ? "0 4px 10px rgba(0,191,240,0.25)" : "none",
-                }}
-              >
-                {t.label}
-              </button>
-            );
-          })}
         </div>
 
         {/* ── Tab panels ── */}
         <div className="flex-1 min-h-0 overflow-y-auto pr-1">
 
         {activeTab === "preview" && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
 
           {/* ── Left: Preview stage + status strip ── */}
-          <div className="lg:col-span-8 flex flex-col gap-4 min-h-0 overflow-hidden">
-            {/* 16:9 preview stage */}
-            <div className="w-full flex items-center justify-center min-h-0">
-              <div className="relative" style={{ width: "100%", aspectRatio: "16/9", maxHeight: "100%" }}>
+          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
+            {/* 16:9 preview stage with Tally Border */}
+            <div 
+              className="w-full relative rounded-3xl overflow-hidden shadow-2xl group transition-all duration-500"
+              style={{ 
+                backgroundColor: "#000",
+                border: `4px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
+                boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
+              }}
+            >
+              <div className="relative" style={{ width: "100%", aspectRatio: "16/9" }}>
                 <MockupPreview
                   empresaLogo={empresaLogo}
                   programaNome={programaNome}
@@ -1042,305 +1037,257 @@ export default function BroadcastPage() {
                   programaAssuntos={programaAssuntos}
                   programaAssuntoRotation={programaAssuntoRotation}
                 />
+                
+                {/* Floating Status HUD */}
+                <div className="absolute top-4 left-4 flex gap-2 pointer-events-none">
+                  <div className="px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Master</span>
+                  </div>
+                  {insertLiveArt && (
+                    <div className="px-3 py-1.5 rounded-lg bg-[#dc2626]/80 backdrop-blur-md border border-white/10 flex items-center gap-2">
+                      <span className="text-[10px] font-black text-white uppercase tracking-widest">Insert Active</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Status strip — 4 KPI tiles (clean, no duplicated toggles) */}
-            <div className="grid grid-cols-4 gap-3 flex-none">
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Locutor</span>
-                <span className="text-[13px] font-bold truncate" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>{displayLocutor}</span>
-              </div>
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Assunto</span>
-                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }} title={data.assunto}>{data.assunto || "—"}</span>
-              </div>
-              <div className="p-3.5 rounded-2xl flex flex-col gap-1" style={cardStyle}>
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Patrocínios</span>
-                <span className="text-[13px] font-bold" style={{ color: CYAN, fontFamily: "'Sora', sans-serif" }}>
-                  {sponsorLogos.length} {sponsorLogos.length === 1 ? "ativo" : "ativos"}
-                </span>
-              </div>
-              <div
-                className="p-3.5 rounded-2xl flex flex-col gap-1"
-                style={{
-                  ...cardStyle,
-                  boxShadow: insertLiveArt ? `inset 0 -3px 0 ${LIME}` : undefined,
-                }}
-              >
-                <span className="text-[9px] uppercase tracking-widest" style={{ color: "#ffffff60", ...sectionHeaderStyle, letterSpacing: "0.18em" }}>Insert Live</span>
-                <span className="text-[13px] font-bold text-white truncate" style={{ fontFamily: "'Sora', sans-serif" }}>
-                  {insertLiveArt ? `${insertLiveSchedule.length || 0} slots` : "off"}
-                </span>
-              </div>
+            {/* Robust Status Console */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { label: "Locutor", value: displayLocutor, color: LIME, icon: <Mic size={14} /> },
+                { label: "Current Topic", value: data.assunto || "NOT SET", color: "#fff", icon: <MessageCircle size={14} /> },
+                { label: "Sponsorships", value: `${sponsorLogos.length} ACTIVE`, color: CYAN, icon: <Save size={14} /> },
+                { label: "Social Link", value: whatsappNumber ? "CONNECTED" : "OFFLINE", color: whatsappNumber ? LIME : "#ffffff40", icon: <Instagram size={14} /> },
+              ].map((kpi, idx) => (
+                <div 
+                  key={idx}
+                  className="p-4 rounded-2xl flex flex-col gap-2 relative overflow-hidden transition-all hover:translate-y-[-2px]"
+                  style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)` }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-white/40">{kpi.label}</span>
+                    <span style={{ color: kpi.color }}>{kpi.icon}</span>
+                  </div>
+                  <span className="text-sm font-bold truncate" style={{ color: kpi.color, fontFamily: "'Sora', sans-serif" }}>{kpi.value}</span>
+                  <div className="absolute bottom-0 left-0 h-0.5 bg-white/5 w-full" />
+                </div>
+              ))}
             </div>
           </div>
 
 
           {/* ── Right: settings column ── */}
-          <div className="lg:col-span-4 flex flex-col gap-4 min-h-0 overflow-y-auto pr-1" style={{ maxHeight: "100%" }}>
+          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-1">
 
+            {/* Quick Actions / Control Center */}
+            <div className="p-5 rounded-2xl" style={{ ...cardStyle, border: `1px solid ${CYAN}30`, background: `${CYAN}05` }}>
+              <SectionHeader n="CTR" label="Control Center" color={CYAN} />
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  onClick={() => handleSave()}
+                  disabled={saving}
+                  className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                  style={{ backgroundColor: CYAN, color: NAVY, boxShadow: `0 8px 20px ${CYAN}25` }}
+                >
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  Atualizar GC Master
+                </button>
+                
+                {insertLiveArt && (
+                  <button
+                    onClick={handleInsertNow}
+                    disabled={insertingNow}
+                    className="w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+                    style={{ backgroundColor: "#dc2626", color: "#fff", boxShadow: "0 8px 20px rgba(220,38,38,0.25)" }}
+                  >
+                    <Youtube size={14} />
+                    {insertingNow ? "Publicando Live (30s)..." : "Insert Live Now"}
+                  </button>
+                )}
+              </div>
+            </div>
 
-          {/* Identidade */}
-          <div className="p-4 rounded-2xl" style={cardStyle}>
-            <SectionHeader n="01" label="Identidade" color={CYAN} />
-
-
-            <div className="space-y-3">
-
-
-
-
-              <div className="relative">
-                <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>Locutor (override)</label>
-                <div className="relative">
-                  <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: "#ffffff60" }} />
+            {/* Content & Identity */}
+            <div className="p-5 rounded-2xl" style={cardStyle}>
+              <SectionHeader n="01" label="Content Identity" color={LIME} />
+              
+              <div className="space-y-5">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Topic / Assunto</label>
                   <input
                     type="text"
-                    value={data.locutor_override}
-                    onChange={async e => {
-                      const val = e.target.value;
-                      setData({ ...data, locutor_override: val });
-                      if (val.trim().length >= 2 && user) {
-                        const { data: results } = await supabase
-                          .from("apresentadores")
-                          .select("nome, instagram, foto")
-                          .eq("user_id", user.id)
-                          .ilike("nome", `%${val.trim()}%`)
-                          .limit(5);
-                        setLocutorSearchResults(results || []);
-                        setShowLocutorDropdown(true);
-                      } else {
-                        setLocutorSearchResults([]);
-                        setShowLocutorDropdown(false);
-                      }
-                    }}
-                    onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
-                    onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
-                    placeholder={locutorNome || "Buscar locutor..."}
-                    className="w-full pl-7 pr-3 py-2 rounded-lg text-xs"
+                    value={data.assunto}
+                    onChange={e => setData({ ...data, assunto: e.target.value })}
+                    onBlur={onFieldBlur}
+                    placeholder="Título do assunto atual..."
+                    className="w-full px-4 py-3 rounded-xl text-xs transition-all focus:ring-2 focus:ring-[#00BFF0]30"
                     style={inputStyle}
                   />
                 </div>
-                {showLocutorDropdown && locutorSearchResults.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-hidden" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                    {locutorSearchResults.map((r, i) => (
-                      <button
-                        key={i}
-                        onMouseDown={e => {
-                          e.preventDefault();
-                          setData({ ...data, locutor_override: r.nome });
-                          if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
-                          if (r.foto) setLocutorFoto(r.foto);
-                          setShowLocutorDropdown(false);
+
+                <div className="relative">
+                  <label className="text-[10px] font-black uppercase tracking-widest mb-2 block text-white/40">Locutor (Override)</label>
+                  <div className="relative">
+                    <Search size={12} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/20" />
+                    <input
+                      type="text"
+                      value={data.locutor_override}
+                      onChange={async e => {
+                        const val = e.target.value;
+                        setData({ ...data, locutor_override: val });
+                        if (val.trim().length >= 2 && user) {
+                          const { data: results } = await supabase
+                            .from("apresentadores")
+                            .select("nome, instagram, foto")
+                            .eq("user_id", user.id)
+                            .ilike("nome", `%${val.trim()}%`)
+                            .limit(5);
+                          setLocutorSearchResults(results || []);
+                          setShowLocutorDropdown(true);
+                        } else {
                           setLocutorSearchResults([]);
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs flex items-center gap-2 text-white hover:bg-white/5"
-                        style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
+                          setShowLocutorDropdown(false);
+                        }
+                      }}
+                      onFocus={() => { if (locutorSearchResults.length > 0) setShowLocutorDropdown(true); }}
+                      onBlur={() => { setTimeout(() => setShowLocutorDropdown(false), 200); setTimeout(onFieldBlur, 300); }}
+                      placeholder={locutorNome || "Override locutor..."}
+                      className="w-full pl-10 pr-4 py-3 rounded-xl text-xs"
+                      style={inputStyle}
+                    />
+                  </div>
+                  {showLocutorDropdown && locutorSearchResults.length > 0 && (
+                    <div className="absolute z-50 w-full mt-2 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl" style={{ backgroundColor: "rgba(10,37,64,0.95)", border: `1px solid ${NAVY_BORDER}` }}>
+                      {locutorSearchResults.map((r, i) => (
+                        <button
+                          key={i}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            setData({ ...data, locutor_override: r.nome });
+                            if (r.instagram) setLocutorInstagram(r.instagram.startsWith("@") ? r.instagram : `@${r.instagram}`);
+                            if (r.foto) setLocutorFoto(r.foto);
+                            setShowLocutorDropdown(false);
+                            setLocutorSearchResults([]);
+                          }}
+                          className="w-full text-left px-4 py-3 text-xs flex items-center gap-3 text-white hover:bg-white/5 transition-colors"
+                          style={{ borderBottom: i < locutorSearchResults.length - 1 ? `1px solid ${NAVY_BORDER}` : "none" }}
+                        >
+                          {r.foto && <img src={r.foto} alt="" className="w-8 h-8 rounded-full object-cover border border-white/10" />}
+                          <div className="flex-1 min-w-0">
+                            <span className="font-bold block truncate">{r.nome}</span>
+                            {r.instagram && <span className="text-[9px] text-[#00BFF0]">@{r.instagram.replace("@", "")}</span>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Custom Background (.png)</label>
+                    {data.assuntoBgUrl && (
+                      <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-2 py-1 rounded-lg">
+                        <input
+                          type="checkbox"
+                          checked={data.useCustomAssuntoBg}
+                          onChange={e => {
+                            const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
+                            setData(next);
+                            void handleSave(next);
+                          }}
+                          className="w-3 h-3"
+                          style={{ accentColor: CYAN }}
+                        />
+                        <span className="text-[9px] font-bold text-white/70">ACTIVE</span>
+                      </label>
+                    )}
+                  </div>
+                  
+                  {data.assuntoBgUrl ? (
+                    <div className="group relative rounded-xl overflow-hidden border border-white/5 bg-black/40">
+                      <div className="p-2 aspect-[16/4]">
+                        <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
+                      </div>
+                      <button
+                        onClick={removeBgImage}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white/60 hover:text-white transition-all opacity-0 group-hover:opacity-100"
                       >
-                        {r.foto && <img src={r.foto} alt="" className="w-6 h-6 rounded-full object-cover" />}
-                        <span className="font-semibold flex-1 truncate">{r.nome}</span>
-                        {r.instagram && <span className="text-[10px]" style={{ color: CYAN }}>@{r.instagram.replace("@", "")}</span>}
+                        <X size={12} />
                       </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl cursor-pointer border-2 border-dashed border-white/5 hover:border-[#00BFF0]30 hover:bg-[#00BFF0]05 transition-all">
+                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
+                        {uploadingBg ? <Loader2 size={16} className="animate-spin text-[#00BFF0]" /> : <Upload size={16} className="text-white/20" />}
+                      </div>
+                      <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">{uploadingBg ? "Uploading..." : "Upload PNG 1920x200"}</span>
+                      <input
+                        type="file"
+                        accept="image/png"
+                        className="hidden"
+                        onChange={e => {
+                          const f = e.target.files?.[0];
+                          if (f) handleBgUpload(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Redes Sociais */}
+            <div className="p-5 rounded-2xl" style={cardStyle}>
+              <SectionHeader
+                n="02"
+                label="Social Engagement"
+                color={CYAN}
+                right={<span className="text-[9px] font-black uppercase tracking-widest text-white/30">{empresaSocials.length} Active</span>}
+              />
+
+              <div className="space-y-3">
+                {empresaSocials.length === 0 ? (
+                  <p className="text-[10px] text-white/20 italic">No social profiles configured.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-2">
+                    {empresaSocials.map((s, i) => (
+                      <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-white/5 border border-white/5">
+                        <span style={{ color: CYAN }}>{s.icon}</span>
+                        <span className="text-[10px] font-bold text-white/80 truncate">{s.valor}</span>
+                      </div>
                     ))}
                   </div>
                 )}
-              </div>
 
-              {/* Fundo do Assunto */}
-              <div className="pt-2" style={{ borderTop: `1px solid ${NAVY_BORDER}` }}>
-                <label className="text-[10px] font-bold uppercase mb-1 flex items-center justify-between" style={{ color: "#ffffff80" }}>
-                  <span>Fundo do Assunto (.png)</span>
-                  {data.assuntoBgUrl && (
-                    <label className="flex items-center gap-1 cursor-pointer normal-case tracking-normal text-[9px]" style={{ color: "#fff" }}>
-                      <input
-                        type="checkbox"
-                        checked={data.useCustomAssuntoBg}
-                        onChange={e => {
-                          const next = { ...latestDataRef.current, useCustomAssuntoBg: e.target.checked };
-                          setData(next);
-                          void handleSave(next);
-                        }}
-                        style={{ accentColor: CYAN }}
-                      />
-                      Usar
-                    </label>
-                  )}
-                </label>
-                {data.assuntoBgUrl ? (
-                  <div className="relative rounded-lg overflow-hidden" style={{ backgroundColor: "#000", aspectRatio: "16/4" }}>
-                    <img src={data.assuntoBgUrl} alt="Fundo assunto" className="w-full h-full object-contain" />
-                    <button
-                      onClick={removeBgImage}
-                      className="absolute top-1 right-1 p-1 rounded-full"
-                      style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#fff" }}
-                      title="Remover"
-                    >
-                      <X size={11} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex items-center justify-center gap-2 px-3 py-3 rounded-lg cursor-pointer text-[11px] font-medium border-2 border-dashed" style={{ borderColor: NAVY_BORDER, color: "#ffffff80" }}>
-                    {uploadingBg ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
-                    <span>{uploadingBg ? "Enviando..." : "Enviar PNG"}</span>
+                {whatsappNumber && (
+                  <label className="flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all border" 
+                    style={{ 
+                      backgroundColor: data.showQrCode ? `${CYAN}10` : "transparent", 
+                      borderColor: data.showQrCode ? CYAN : "rgba(255,255,255,0.05)" 
+                    }}>
                     <input
-                      type="file"
-                      accept="image/png"
-                      className="hidden"
+                      type="checkbox"
+                      checked={data.showQrCode}
                       onChange={e => {
-                        const f = e.target.files?.[0];
-                        if (f) handleBgUpload(f);
-                        e.target.value = "";
+                        const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
+                        setData(nextData);
+                        void handleSave(nextData);
                       }}
+                      className="w-4 h-4"
+                      style={{ accentColor: CYAN }}
                     />
+                    <div className="min-w-0">
+                      <span className="text-[11px] font-black uppercase tracking-widest text-white block">WhatsApp QR Code</span>
+                      <p className="text-[9px] text-white/40">Exibir QR para interação ao vivo</p>
+                    </div>
                   </label>
                 )}
-                <p className="text-[9px] mt-1" style={{ color: "#ffffff50" }}>
-                  Padrão: apenas o texto. Imagem opcional substituirá o fundo da tarja.
-                </p>
-
-                {data.assuntoBgUrl && (
-                  <div className="pt-2 relative">
-                    <label className="text-[10px] font-bold uppercase mb-1 block" style={{ color: "#ffffff80" }}>
-                      Vincular a programas
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setShowProgramDropdown(v => !v)}
-                      className="w-full px-3 py-2 rounded-lg text-[11px] text-left flex items-center justify-between text-white"
-                      style={inputStyle}
-                    >
-                      <span className="truncate">
-                        {data.assuntoBgProgramaIds.length === 0
-                          ? "Todos os programas (global)"
-                          : `${data.assuntoBgProgramaIds.length} programa(s)`}
-                      </span>
-                      <span className="text-[9px]" style={{ color: "#ffffff60" }}>{showProgramDropdown ? "▲" : "▼"}</span>
-                    </button>
-                    {showProgramDropdown && (
-                      <div className="absolute z-50 w-full mt-1 rounded-lg shadow-lg overflow-y-auto max-h-48" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                        {allProgramas.length === 0 ? (
-                          <div className="px-3 py-2 text-[10px]" style={{ color: "#ffffff60" }}>Nenhum programa cadastrado</div>
-                        ) : (
-                          allProgramas.map(p => {
-                            const checked = data.assuntoBgProgramaIds.includes(p.id);
-                            return (
-                              <label key={p.id} className="flex items-center gap-2 px-3 py-2 cursor-pointer text-white hover:bg-white/5">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={e => {
-                                    const ids = new Set(latestDataRef.current.assuntoBgProgramaIds || []);
-                                    if (e.target.checked) ids.add(p.id); else ids.delete(p.id);
-                                    const next = { ...latestDataRef.current, assuntoBgProgramaIds: Array.from(ids) };
-                                    setData(next);
-                                    void handleSave(next);
-                                  }}
-                                  style={{ accentColor: CYAN }}
-                                />
-                                <span className="text-[11px] flex-1 truncate">{p.nome}</span>
-                              </label>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
-
-              <button
-                onClick={() => handleSave()}
-                className="w-full py-2 rounded-full text-[10px] font-black uppercase tracking-widest"
-                style={{ backgroundColor: CYAN, color: NAVY, boxShadow: "0 4px 10px rgba(0,191,240,0.3)" }}
-              >
-                Atualizar GC
-              </button>
             </div>
-          </div>
-
-          {/* Redes Sociais */}
-          <div className="p-4 rounded-2xl" style={cardStyle}>
-            <SectionHeader
-              n="02"
-              label="Redes Sociais"
-              color={LIME}
-              right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{empresaSocials.length} ativas</span>}
-            />
-
-
-            {empresaSocials.length === 0 ? (
-              <p className="text-[10px]" style={{ color: "#ffffff60" }}>Nenhuma rede social cadastrada.</p>
-            ) : (
-              <div className="space-y-1.5">
-                {empresaSocials.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
-                    <span style={{ color: CYAN }}>{s.icon}</span>
-                    <span className="text-[11px] text-white truncate">{s.valor}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {whatsappNumber && (
-              <label className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer mt-2" style={{ backgroundColor: data.showQrCode ? "rgba(0,191,240,0.12)" : NAVY_DEEP, border: `1px solid ${data.showQrCode ? CYAN : NAVY_BORDER}` }}>
-                <input
-                  type="checkbox"
-                  checked={data.showQrCode}
-                  onChange={e => {
-                    const nextData = { ...latestDataRef.current, showQrCode: e.target.checked };
-                    setData(nextData);
-                    void handleSave(nextData);
-                  }}
-                  style={{ accentColor: CYAN }}
-                />
-                <MessageCircle size={12} style={{ color: data.showQrCode ? CYAN : "#ffffff60" }} />
-                <div>
-                  <span className="text-[11px] font-semibold text-white">QR Code WhatsApp</span>
-                  <p className="text-[9px]" style={{ color: "#ffffff60" }}>Exibir QR para enviar mensagem</p>
-                </div>
-              </label>
-            )}
-          </div>
-
-          {/* Insert Live */}
-          {insertLiveArt && (
-            <div className="p-4 rounded-2xl" style={cardStyle}>
-              <SectionHeader
-                n="03"
-                label="Insert Live · 30s"
-                color="#f97316"
-                right={<span className="text-[9px] font-bold uppercase" style={{ color: "#ffffff60" }}>{insertLiveSchedule.length} slots</span>}
-              />
-
-
-              {insertLiveSchedule.length > 0 ? (
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {insertLiveSchedule.map((t, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg py-2 text-center font-mono font-bold text-[11px]"
-                      style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}`, color: "#f97316" }}
-                    >
-                      {t}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[10px] mb-3" style={{ color: "#ffffff60" }}>Sem agendamento (evento já iniciou ou antes das 07:00).</p>
-              )}
-
-              <button
-                onClick={handleInsertNow}
-                disabled={insertingNow}
-                className="w-full px-3 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-60"
-                style={{ backgroundColor: "#f97316", color: "#fff", boxShadow: "0 4px 10px rgba(249,115,22,0.3)" }}
-              >
-                {insertingNow ? "Inserindo (30s)..." : "Inserir Agora"}
-              </button>
-            </div>
-          )}
-
           </div>
         </div>
         )}
@@ -1967,10 +1914,9 @@ function MockupPreview({
 
   return (
     <div
-      className="relative w-full h-full rounded-2xl overflow-hidden"
+      className="relative w-full h-full"
       style={{
         backgroundColor: "#000000",
-        boxShadow: "0 24px 80px -20px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06)",
       }}
     >
       {/* Safe area guides (invisible but layout-based on 1920x1080 proportions) */}
