@@ -188,8 +188,8 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     };
 
     const query = editingId
-      ? supabase.from("promocoes").update(payload).eq("id", editingId)
-      : supabase.from("promocoes").insert(payload);
+      ? supabase.from("promocoes").update(payload).eq("id", editingId).eq("user_id", ownerId)
+      : supabase.from("promocoes").insert([payload]);
 
     const { error } = await query;
     setSaving(false);
@@ -206,6 +206,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   };
 
   const handleEdit = async (item: Promocao) => {
+    console.log("Editando item:", item);
     // Re-read the selected row so consecutive edits never reuse stale list state.
     const { data: freshItem, error } = await supabase
       .from("promocoes")
@@ -215,11 +216,14 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       .maybeSingle();
 
     if (error) {
+      console.error("Erro ao carregar item fresco:", error);
       toast({ title: "Erro ao carregar a promoção", description: error.message, variant: "destructive" });
       return;
     }
 
-    const selectedItem = (freshItem ?? item) as Promocao;
+    const selectedItem = (freshItem ?? item) as any;
+    console.log("Item carregado para edição:", selectedItem);
+
     const itemProgIds = Array.isArray(selectedItem.programa_ids) ? [...selectedItem.programa_ids] : [];
     
     setEditingId(selectedItem.id);
@@ -227,14 +231,13 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       nome: selectedItem.nome || "",
       texto: selectedItem.texto || "",
       oferecimento: selectedItem.oferecimento || "",
-      data_inicio: selectedItem.data_inicio,
-      data_fim: selectedItem.data_fim,
+      data_inicio: selectedItem.data_inicio || new Date().toISOString().split("T")[0],
+      data_fim: selectedItem.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       imagem_url: selectedItem.imagem_url || "",
       banner_l_url: selectedItem.banner_l_url || "",
-      botao_url: (selectedItem as any).botao_url || "",
+      botao_url: selectedItem.botao_url || "",
       programa_ids: itemProgIds,
     });
-    
     
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
