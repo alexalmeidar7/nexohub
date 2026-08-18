@@ -392,57 +392,127 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
         </div>
       </div>
 
-      <div style={cardStyle}>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Calendar className="text-[#00BFF0]" /> Promoções Cadastradas ({items.length})
-        </h2>
-        
+      <section
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 24,
+          padding: 32,
+          boxShadow: "0 2px 12px rgba(10, 37, 64, 0.05)",
+          fontFamily: FONT,
+        }}
+      >
+        <div className="flex items-center justify-between mb-8">
+          <h2
+            style={{
+              fontSize: 18,
+              fontWeight: 800,
+              letterSpacing: 2,
+              color: DARK,
+              textTransform: "uppercase",
+              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <Calendar size={24} style={{ color: CYAN }} /> 
+            Promoções Cadastradas
+          </h2>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: DARK,
+              background: CARD_BG,
+              padding: "6px 16px",
+              borderRadius: 999,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
+            Total: <span style={{ color: CYAN }}>{items.length}</span>
+          </div>
+        </div>
+
         {items.length === 0 ? (
-          <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">Nenhuma promoção cadastrada.</p></div>
+          <div className="p-12 text-center bg-[#F8FAFC] rounded-2xl border-2 border-dashed border-[#E2E8F0]">
+            <p className="text-sm text-[#64748B] font-medium">Nenhuma promoção cadastrada.</p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse bg-white rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid ${CYAN}22` }}>
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#00BFF0]/20 text-[#00BFF0]">
-                  <th className="p-4 text-xs uppercase font-bold w-[25%]">Nome da Promoção</th>
-                  <th className="p-4 text-xs uppercase font-bold w-[20%]">Texto da Promoção</th>
-                  <th className="p-4 text-xs uppercase font-bold w-[15%]">Patrocínio</th>
-                  <th className="p-4 text-xs uppercase font-bold">Validade</th>
-                  <th className="p-4 text-xs uppercase font-bold text-center">Banner</th>
-                  <th className="p-4 text-xs uppercase font-bold text-center">Banner L</th>
-                  <th className="p-4 text-xs uppercase font-bold">Ações</th>
+                <tr style={{ background: CYAN }}>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Nome da Promoção</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Texto</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Patrocínio</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none" }}>Validade</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "center" }}>Banner</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "center" }}>Banner L</th>
+                  <th style={{ padding: "16px 20px", color: "#FFFFFF", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", border: "none", textAlign: "right" }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#0A2540]/5 hover:bg-[#00BFF0]/5 transition-colors">
-                    <td className="p-4 text-sm font-bold text-[#0A2540]">
+                {items.map((item, idx) => (
+                  <tr 
+                    key={item.id} 
+                    style={{ 
+                      background: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC",
+                      transition: "background 0.2s ease"
+                    }}
+                    className="hover:bg-[#F1F5F9]"
+                  >
+                    <td style={{ padding: "14px 20px", fontSize: 13, fontWeight: 700, color: DARK }}>
                       {item.nome || "Sem Nome"}
                     </td>
-                    <td className="p-4 text-sm text-[#0A2540]">
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: DARK }}>
                       <div 
                         className="max-w-xs truncate line-clamp-2" 
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.texto) }}
                       />
                     </td>
-                    <td className="p-4 text-sm text-[#0A2540]/70 italic">
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: DARK, fontStyle: "italic" }}>
                       <div 
                         className="max-w-xs truncate line-clamp-1" 
                         dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item.oferecimento) }}
                       />
                     </td>
-                    <td className="p-4 text-xs text-[#0A2540]/70 whitespace-nowrap">
+                    <td style={{ padding: "14px 20px", fontSize: 12, color: DARK, whiteSpace: "nowrap", fontWeight: 600 }}>
                       {new Date(item.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}
                     </td>
-                    <td className="p-4 text-center">
-                      {item.imagem_url ? <Check size={18} className="text-green-500 mx-auto" /> : <X size={18} className="text-red-500 mx-auto" />}
+                    <td style={{ padding: "14px 20px", textAlign: "center" }}>
+                      {item.imagem_url ? <Check size={18} style={{ color: "#22C55E", margin: "auto" }} /> : <X size={18} style={{ color: "#EF4444", margin: "auto" }} />}
                     </td>
-                    <td className="p-4 text-center">
-                      {item.banner_l_url ? <Check size={18} className="text-green-500 mx-auto" /> : <X size={18} className="text-red-500 mx-auto" />}
+                    <td style={{ padding: "14px 20px", textAlign: "center" }}>
+                      {item.banner_l_url ? <Check size={18} style={{ color: "#22C55E", margin: "auto" }} /> : <X size={18} style={{ color: "#EF4444", margin: "auto" }} />}
                     </td>
-                    <td className="p-4 flex gap-2">
-                      <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center'}} onClick={() => handleEdit(item)}><Pencil size={14}/></button>
-                      <button style={{...ghostBtn, width: 32, height: 32, padding: 0, justifyContent: 'center', borderColor: '#ff4d4f', color: '#ff4d4f'}} onClick={() => handleDelete(item.id)}><Trash2 size={14}/></button>
+                    <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                      <div style={{ display: "inline-flex", gap: 8 }}>
+                        <button
+                          onClick={() => handleEdit(item)}
+                          style={{
+                            width: 32, height: 32, borderRadius: 12,
+                            background: CARD_BG, border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: DARK, transition: "all 0.2s"
+                          }}
+                          className="hover:scale-110 active:scale-95"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          style={{
+                            width: 32, height: 32, borderRadius: 12,
+                            background: "#FEE2E2", border: "none", cursor: "pointer",
+                            display: "inline-flex", alignItems: "center", justifyContent: "center",
+                            color: "#DC2626", transition: "all 0.2s"
+                          }}
+                          className="hover:scale-110 active:scale-95"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -450,7 +520,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
