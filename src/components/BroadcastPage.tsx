@@ -1345,6 +1345,17 @@ export default function BroadcastPage() {
                 style={{ ...inputStyle, opacity: data.tickerRssEnabled ? 1 : 0.5 }}
               />
 
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={() => handleSave()}
+                  className="flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2"
+                  style={{ backgroundColor: CYAN, color: NAVY }}
+                >
+                  <Save size={12} />
+                  Salvar
+                </button>
+              </div>
+
               {data.tickerRssEnabled && data.tickerRssUrl && (
                 <div className="mt-3">
                   <div className="flex items-center justify-between gap-2 mb-1.5">
