@@ -3443,38 +3443,27 @@ function PollDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-end p-8 pointer-events-none"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-8 pointer-events-none"
       style={{
-        background: "transparent",
+        background: visible ? "rgba(0,0,0,0.5)" : "transparent",
         transition: "background 300ms ease",
         opacity: visible ? 1 : 0,
       }}
     >
-      <div 
-        className="fixed inset-y-0 right-0 w-[500px] pointer-events-none transition-opacity duration-700 ease-in-out"
-        style={{
-          background: "linear-gradient(to left, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
-          zIndex: -1,
-          opacity: visible ? 1 : 0
-        }}
-      />
-
       <div
         role="dialog"
         aria-modal="true"
-        className="w-[360px] flex flex-col gap-6 pointer-events-auto animate-in fade-in slide-in-from-bottom-8 duration-300"
+        className="w-[420px] flex flex-col gap-6 pointer-events-auto animate-in fade-in zoom-in-95 duration-300"
         style={{
-          padding: "28px 26px 24px",
-          borderRadius: 32,
-          background: "rgba(35,35,38,0.85)",
+          padding: "32px",
+          borderRadius: 40,
+          background: "rgba(35,35,38,0.95)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 40px 100px -20px rgba(0,0,0,0.95)",
           opacity: visible ? 1 : 0,
-          marginBottom: "140px",
-          marginRight: "20px",
-          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(20px)",
+          transform: visible ? "scale(1)" : "scale(0.95)",
           transition: "opacity 300ms ease-out, transform 300ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
       >
@@ -3487,16 +3476,17 @@ function PollDialog({
               </span>
               <span className="text-[10px] uppercase tracking-[0.24em] font-bold text-white/50">Participar da conversa</span>
             </div>
-            <h3 className="text-white font-bold text-xl leading-tight tracking-tight pr-4">
+            <h3 className="text-white font-bold text-2xl leading-tight tracking-tight pr-4">
               {poll.pergunta}
             </h3>
           </div>
-          <PlayerBackButton
+          <button
             onClick={requestClose}
-            className="w-9 h-9 focus-visible:ring-offset-2"
-            iconSize={16}
-            aria-label="Voltar"
-          />
+            className="w-10 h-10 rounded-full flex items-center justify-center bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Fechar"
+          >
+            <X size={20} className="text-white" />
+          </button>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -3507,7 +3497,7 @@ function PollDialog({
                 key={i}
                 onClick={() => submit(i)}
                 disabled={submitted}
-                className="w-full relative py-4 px-5 rounded-2xl text-left transition-all overflow-hidden group"
+                className="w-full relative py-4 px-6 rounded-2xl text-left transition-all overflow-hidden group"
                 style={{
                   background: isSelected
                     ? "rgba(255,255,255,1)"
@@ -3521,14 +3511,14 @@ function PollDialog({
               >
                 <div className="flex items-center justify-between relative z-10">
                   <span
-                    className="text-sm font-semibold tracking-tight transition-colors"
+                    className="text-base font-semibold tracking-tight transition-colors"
                     style={{ color: isSelected ? "#000" : "rgba(255,255,255,0.9)" }}
                   >
                     {opt}
                   </span>
                   {isSelected && (
-                    <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center animate-scale-in">
-                      <Check size={12} className="text-white" strokeWidth={3} />
+                    <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center animate-scale-in">
+                      <Check size={14} className="text-white" strokeWidth={3} />
                     </div>
                   )}
                 </div>
@@ -3540,7 +3530,7 @@ function PollDialog({
           })}
         </div>
 
-        <p className="text-[11px] text-white/40 text-center leading-relaxed font-medium">
+        <p className="text-[12px] text-white/40 text-center leading-relaxed font-medium">
           {submitted ? "Obrigado por participar!" : "Selecione uma opção para votar"}
         </p>
       </div>
@@ -3548,5 +3538,6 @@ function PollDialog({
     document.body
   );
 }
+
 
 
