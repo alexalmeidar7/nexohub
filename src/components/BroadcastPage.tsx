@@ -1017,7 +1017,16 @@ export default function BroadcastPage() {
                 boxShadow: insertLiveArt ? "0 0 40px rgba(220,38,38,0.2)" : "0 20px 50px rgba(0,0,0,0.5)"
               }}
             >
-              <div className="relative" style={{ width: "100%", aspectRatio: "16/9" }}>
+              <div 
+                className="relative overflow-hidden" 
+                style={{ 
+                  width: "100%", 
+                  aspectRatio: "16/9",
+                  border: `4px solid ${insertingNow ? '#ef4444' : '#ffffff08'}`,
+                  transition: 'border-color 0.3s ease',
+                  boxShadow: insertingNow ? '0 0 40px rgba(239, 68, 68, 0.2)' : 'none'
+                }}
+              >
                 <MockupPreview
                   empresaLogo={empresaLogo}
                   programaNome={programaNome}
