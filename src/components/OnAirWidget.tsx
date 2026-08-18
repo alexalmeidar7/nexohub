@@ -174,9 +174,9 @@ export default function OnAirWidget() {
         
         const list = ids
           .map(id => apresentadoresData.find(a => a.id === id))
-          .filter(Boolean) as ApresentadorInfo[];
+          .filter(Boolean) as any[];
         
-        setApresentadoresAtuais(list.length > 0 ? list : [{ nome: "—", foto: "" }]);
+        setApresentadoresAtuais(list.length > 0 ? list : [{ nome: "—", foto: "", background_url: "" }]);
         setApresentadorIndex(0);
       }
       const nexts = findNextPrograms(filteredProgramas, 3);
