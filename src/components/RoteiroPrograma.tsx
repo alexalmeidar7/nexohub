@@ -866,7 +866,7 @@ export default function RoteiroPrograma() {
         </div>
       )}
 
-      {historicoSlot}
+      {!novoRoteiroOpen && historicoSlot}
 
       {/* Modal: Novo Roteiro */}
       <Suspense fallback={null}>
