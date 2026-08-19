@@ -559,66 +559,68 @@ export default function ApresentadorForm() {
             </div>
           )}
 
-          <div className="md:col-span-2 lg:col-span-3">
-            <label style={labelStyle}>Imagem de Fundo do Locutor (Modo TV / Player)</label>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <label
-                style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: 20,
-                  background: "#FFFFFF",
-                  border: `2px dashed ${CYAN}`,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  overflow: "hidden",
-                }}
-              >
-                {backgroundUrl ? (
-                  <img src={backgroundUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                ) : (
-                  <>
-                    <Camera size={22} style={{ color: CYAN }} />
-                    <span style={{ fontSize: 9, color: DARK, marginTop: 4, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>Upload</span>
-                  </>
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = () => setBackgroundUrl(reader.result as string);
-                    reader.readAsDataURL(file);
-                  }}
-                />
-              </label>
-              {backgroundUrl && (
-                <button
-                  onClick={() => setBackgroundUrl("")}
+          {categoria !== "Convidado" && (
+            <div className="md:col-span-2 lg:col-span-3">
+              <label style={labelStyle}>Imagem de Fundo do Locutor (Modo TV / Player)</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <label
                   style={{
-                    background: "#FEE2E2",
-                    color: "#DC2626",
-                    border: "none",
-                    borderRadius: 999,
-                    padding: "8px 16px",
-                    fontSize: 11,
-                    fontWeight: 700,
+                    width: 88,
+                    height: 88,
+                    borderRadius: 20,
+                    background: "#FFFFFF",
+                    border: `2px dashed ${CYAN}`,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
                     cursor: "pointer",
-                    letterSpacing: 1,
-                    textTransform: "uppercase",
+                    overflow: "hidden",
                   }}
                 >
-                  Remover fundo
-                </button>
-              )}
+                  {backgroundUrl ? (
+                    <img src={backgroundUrl} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <>
+                      <Camera size={22} style={{ color: CYAN }} />
+                      <span style={{ fontSize: 9, color: DARK, marginTop: 4, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase" }}>Upload</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => setBackgroundUrl(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </label>
+                {backgroundUrl && (
+                  <button
+                    onClick={() => setBackgroundUrl("")}
+                    style={{
+                      background: "#FEE2E2",
+                      color: "#DC2626",
+                      border: "none",
+                      borderRadius: 999,
+                      padding: "8px 16px",
+                      fontSize: 11,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      letterSpacing: 1,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Remover fundo
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
