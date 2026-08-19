@@ -327,9 +327,6 @@ serve(async (req) => {
     const pathParts = url.pathname.split("/").filter(Boolean);
     let userId = url.searchParams.get("user_id");
 
-    console.log("Request path:", url.pathname);
-    console.log("Path parts:", JSON.stringify(pathParts));
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
@@ -337,9 +334,7 @@ serve(async (req) => {
     // Support for /serve-json-broadcast/:userSlug/vmix.json routing
     if (!userId && pathParts.length >= 2) {
       const slug = pathParts[pathParts.length - 2].toLowerCase();
-      console.log("Extracted slug:", slug);
       if (slug && slug !== "serve-json-broadcast") {
-        // Find by fuzzy match in empresa_config (e.g. "positivafm991" -> "Positiva FM 99.1")
         const { data: allEmps } = await supabase
           .from("empresa_config")
           .select("user_id, nome");
@@ -349,7 +344,6 @@ serve(async (req) => {
           return cleanName.includes(slug) || slug.includes(cleanName);
         });
 
-        console.log("Fuzzy match result:", JSON.stringify(match));
         if (match?.user_id) {
           userId = match.user_id;
         }
