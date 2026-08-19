@@ -168,6 +168,7 @@ export type Database = {
       apresentadores: {
         Row: {
           ativo: boolean | null
+          background_url: string | null
           cargo: string | null
           created_at: string
           foto: string | null
@@ -179,6 +180,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          background_url?: string | null
           cargo?: string | null
           created_at?: string
           foto?: string | null
@@ -190,6 +192,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          background_url?: string | null
           cargo?: string | null
           created_at?: string
           foto?: string | null
