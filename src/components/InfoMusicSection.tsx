@@ -512,7 +512,10 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     }}
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
-                      {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex flex-col">
+                        <span className="text-[10px]">{new Date(r.created_at).toLocaleDateString("pt-BR")}</span>
+                        <span>{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </td>
                     <td style={{ padding: "12px 14px" }}>
                       <div className="flex items-start justify-between gap-2">
