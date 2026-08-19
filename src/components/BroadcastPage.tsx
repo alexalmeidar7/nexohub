@@ -1891,7 +1891,7 @@ export default function BroadcastPage() {
               <XmlLinkRow
                 label="Broadcast JSON"
                 kicker="JSON"
-                permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-json-broadcast/${userSlug || user?.id}/vmix.json`}
+                permanentUrl={`https://nexohub.lovable.app/functions/v1/serve-json-broadcast/${userSlug || user?.id}/vmix.json`}
               />
               <XmlLinkRow
                 label="TClock Shows"
