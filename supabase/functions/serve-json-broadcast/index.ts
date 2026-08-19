@@ -931,6 +931,19 @@ serve(async (req) => {
       );
     }
 
+    // ── Music timing (tempo) ──
+    const fmtClock = (totalSec: number) => {
+      const s = Math.max(0, Math.floor(totalSec));
+      return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    };
+    const musicStartMs = Number(dashboard.music_start_time) || 0;
+    const musicDuracaoSeg = Math.max(0, Math.round(Number(musicData.duracao ?? dashboard.music_current_duration) || 0));
+    let musicDecorridoSeg = musicStartMs > 0 ? Math.floor((Date.now() - musicStartMs) / 1000) : 0;
+    if (musicDecorridoSeg < 0) musicDecorridoSeg = 0;
+    if (musicDuracaoSeg > 0 && musicDecorridoSeg > musicDuracaoSeg) musicDecorridoSeg = musicDuracaoSeg;
+    const musicRestanteSeg = musicDuracaoSeg > 0 ? Math.max(0, musicDuracaoSeg - musicDecorridoSeg) : 0;
+    const musicProgresso = musicDuracaoSeg > 0 ? Math.round((musicDecorridoSeg / musicDuracaoSeg) * 100) : 0;
+
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let logoPatrocinador = BLANK_LOGO_URL;
