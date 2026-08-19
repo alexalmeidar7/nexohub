@@ -336,22 +336,16 @@ serve(async (req) => {
     if (!userId && pathParts.length >= 2) {
       const slug = pathParts[pathParts.length - 2];
       if (slug && slug !== "serve-json-broadcast") {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("slug", slug)
+        // Try exact name match or fuzzy match in empresa_config
+        const { data: emp } = await supabase
+          .from("empresa_config")
+          .select("user_id")
+          .or(`nome.ilike.%${slug}%,nome.ilike.%${slug.replace("fm", " fm ")}%,nome.ilike.%${slug.replace("fm", " fm").replace(/(\d+)/, " $1")}%`)
+          .limit(1)
           .maybeSingle();
-
-        if (profile?.id) {
-          userId = profile.id;
-        } else {
-          // Fallback to searching by name in empresa_config if slug not found
-          const { data: emp } = await supabase
-            .from("empresa_config")
-            .select("user_id")
-            .or(`nome.ilike.%${slug}%,nome.ilike.%${slug.replace(/(\d+)/, " $1")}%`)
-            .maybeSingle();
-          if (emp?.user_id) userId = emp.user_id;
+        
+        if (emp?.user_id) {
+          userId = emp.user_id;
         }
       }
     }
