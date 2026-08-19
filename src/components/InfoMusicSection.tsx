@@ -858,17 +858,43 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     </div>
                   </td>
                   <td style={{ padding: "12px 14px", textAlign: "center" }}>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="h-7 w-7 p-0 text-[#00BFF0] hover:bg-cyan-50"
-                      onClick={() => {
-                        setEditMusic(r);
-                        setCuriosidadeText(r.curiosidade);
-                      }}
-                    >
-                      <Plus size={14} />
-                    </Button>
+                    <div className="flex items-center justify-center gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-7 px-2 text-[10px] font-bold text-[#00BFF0] hover:bg-cyan-50 border border-[#00BFF0]/20"
+                        onClick={async () => {
+                          if (!user) return;
+                          try {
+                            const { error } = await supabase.from("user_settings").update({
+                              dashboard_items: {
+                                ...nowPlaying,
+                                music_current_curiosity: r.curiosidade
+                              } as any
+                            }).eq("user_id", user.id);
+                            
+                            if (error) throw error;
+                            toast.success("Curiosidade enviada ao XML!");
+                          } catch (e) {
+                            toast.error("Erro ao enviar");
+                          }
+                        }}
+                      >
+                        <Send size={12} className="mr-1" />
+                        ENVIAR AGORA
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-7 w-7 p-0 text-[#00BFF0] hover:bg-cyan-50"
+                        onClick={() => {
+                          setEditMusic(r);
+                          setCuriosidadeText(r.curiosidade);
+                        }}
+                      >
+                        <Plus size={14} />
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               )) : (
