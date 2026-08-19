@@ -7,6 +7,8 @@ import { Loader2, Save, Instagram, Globe, MessageCircle, Facebook, Youtube, Phon
 import XmlLinkRow from "@/components/XmlLinkRow";
 import XmlSection from "@/components/XmlSection";
 import ProgramaAssuntosPanel from "@/components/broadcast/ProgramaAssuntosPanel";
+import { useUserSlug } from "@/hooks/useUserSlug";
+
 
 
 /** Extract @username from a URL or handle string */
@@ -208,6 +210,8 @@ interface SocialItem {
 
 export default function BroadcastPage() {
   const { user } = useAuth();
+  const userSlug = useUserSlug(user?.id);
+
 
   const [data, setData] = useState<BroadcastData>(defaultBroadcast);
   const [saving, setSaving] = useState(false);
@@ -1885,10 +1889,16 @@ export default function BroadcastPage() {
                 permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-broadcast?user_id=${user?.id}`}
               />
               <XmlLinkRow
+                label="Broadcast JSON"
+                kicker="JSON"
+                permanentUrl={`https://housemix.nexobrasil.net/${userSlug || user?.id?.slice(0, 8) || "radio"}/vmix.jason`}
+              />
+              <XmlLinkRow
                 label="TClock Shows"
                 kicker="XML"
                 permanentUrl={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-tclock-shows?user_id=${user?.id}`}
               />
+
             </XmlSection>
           </div>
         )}
