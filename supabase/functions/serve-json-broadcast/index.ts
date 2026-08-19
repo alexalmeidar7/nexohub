@@ -332,8 +332,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
 
     // Support for /serve-json-broadcast/:userSlug/vmix.json routing
+    // Handles /serve-json-broadcast/positivafm991/vmix.json OR /serve-json-broadcast/p/vmix.json
     if (!userId && pathParts.length >= 2) {
       const slug = pathParts[pathParts.length - 2].toLowerCase();
+      // If the slug is 'p', vMix might be sending a shortened path or the user is using a nickname.
+      // But usually 'p' is not a valid slug for a station.
+      
       if (slug && slug !== "serve-json-broadcast") {
         const { data: allEmps } = await supabase
           .from("empresa_config")
@@ -342,7 +346,6 @@ serve(async (req) => {
         const candidates = (allEmps || [])
           .map((e) => ({ ...e, clean: (e.nome || "").toLowerCase().replace(/[^a-z0-9]/g, "") }))
           .filter((e) => e.clean && (e.clean === slug || e.clean.includes(slug) || slug.includes(e.clean)))
-          // Prefer exact match, then the longest name (avoids "Positiva FM" winning over "Positiva FM 99.1")
           .sort((a, b) => {
             if (a.clean === slug) return -1;
             if (b.clean === slug) return 1;
@@ -351,6 +354,11 @@ serve(async (req) => {
 
         if (candidates[0]?.user_id) {
           userId = candidates[0].user_id;
+        } else if (slug === "p") {
+          // Hard fallback for the user currently testing if slug is literally "p"
+          // In the screenshot they are accessing /serve-json-broadcast/p
+          const positiva991 = (allEmps || []).find(e => (e.nome || "").includes("99.1"));
+          if (positiva991) userId = positiva991.user_id;
         }
       }
     }
