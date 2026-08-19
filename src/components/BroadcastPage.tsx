@@ -1891,7 +1891,7 @@ export default function BroadcastPage() {
               <XmlLinkRow
                 label="Broadcast JSON"
                 kicker="JSON"
-                permanentUrl={`https://housemix.nexobrasil.net/${userSlug || user?.id?.slice(0, 8) || "radio"}/vmix.jason`}
+                permanentUrl={`https://housemix.nexobrasil.net/${userSlug || user?.id?.slice(0, 8) || "radio"}/vmix.json`}
               />
               <XmlLinkRow
                 label="TClock Shows"
