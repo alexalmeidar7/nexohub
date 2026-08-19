@@ -237,6 +237,39 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   useEffect(() => {
     load();
     loadExcecoes();
+
+    if (!user) return;
+
+    // Listen for real-time updates to user_settings to update "Now Playing" and "Last Played"
+    const channel = supabase
+      .channel(`info-music-sync-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_settings',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const di = (payload.new as any).dashboard_items;
+          if (di?.music_current_title || di?.music_current_artist) {
+            setNowPlaying({
+              musica: di.music_current_title || "Sem título",
+              artista: di.music_current_artist || "Desconhecido",
+              capa: di.music_current_cover || "",
+              curiosity: di.music_current_curiosity || "",
+            });
+            // Also reload the rows list to get the latest 100 songs
+            load();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const filteredRows = useMemo(() => {
@@ -457,14 +490,14 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({filteredRows.length})</h4>
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
-                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Hora</th>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Data / Hora</th>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Música / Artista</th>
                 </tr>
               </thead>
@@ -479,7 +512,10 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     }}
                   >
                     <td style={{ padding: "12px 14px", whiteSpace: "nowrap", opacity: 0.7, fontWeight: 500 }}>
-                      {new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <div className="flex flex-col">
+                        <span className="text-[10px]">{new Date(r.created_at).toLocaleDateString("pt-BR")}</span>
+                        <span>{new Date(r.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
                     </td>
                     <td style={{ padding: "12px 14px" }}>
                       <div className="flex items-start justify-between gap-2">
