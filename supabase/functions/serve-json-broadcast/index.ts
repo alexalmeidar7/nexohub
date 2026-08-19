@@ -1326,8 +1326,8 @@ serve(async (req) => {
       empresa: {
         logo: empresaLogo,
         socials: {
-          instagram: locutorInstagram, // ou da empresa, dependendo da necessidade
-          whatsapp: whatsappNumber
+          instagram: emp?.instagram || "",
+          whatsapp: emp?.telefone_participacao || ""
         }
       },
       programa: {
