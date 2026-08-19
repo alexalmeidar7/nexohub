@@ -359,13 +359,14 @@ Deno.serve(async (req) => {
     if (ytChannelId || ytChannelUrl) {
       if (ytApiKey) {
         const ref = ytChannelId ? ytChannelId : ytChannelUrl!;
-        ytLive = await fetchYouTubeApiLiveViewers(ref, ytApiKey);
+        ytLive = await withDeadline(fetchYouTubeApiLiveViewers(ref, ytApiKey));
         debug.push(`youtube_api ${ref} -> ${ytLive}`);
       } else if (ytChannelId) {
         // ID-only fallback (scrape-based) when no API key is provided
-        ytLive = await fetchYouTubeChannelLiveScrape(ytChannelId);
+        ytLive = await withDeadline(fetchYouTubeChannelLiveScrape(ytChannelId));
         debug.push(`youtube_scrape ${ytChannelId} -> ${ytLive}`);
       }
+
     }
 
     const streamTotal = counts.reduce((a, n) => a + (n ?? 0), 0);
