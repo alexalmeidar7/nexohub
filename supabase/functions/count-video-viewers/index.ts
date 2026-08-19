@@ -268,8 +268,18 @@ async function raceStrategies(url: string, xpath: string | null): Promise<number
 // ---- Cache layer ---------------------------------------------------------
 // TTL cache + in-flight dedupe. Keyed by URL+xpath. Shared across warm invocations.
 const CACHE_TTL_MS = 20_000;
+// Hard deadline so a stalled probe (or an in-flight promise inherited from a
+// frozen isolate) can never hold the request open until the 150s idle timeout.
+const HARD_DEADLINE_MS = 12_000;
 const cache = new Map<string, { value: number | null; expires: number }>();
-const inflight = new Map<string, Promise<number | null>>();
+const inflight = new Map<string, { promise: Promise<number | null>; startedAt: number }>();
+
+function withDeadline(p: Promise<number | null>, ms = HARD_DEADLINE_MS): Promise<number | null> {
+  return new Promise((resolve) => {
+    const t = setTimeout(() => resolve(null), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); }, () => { clearTimeout(t); resolve(null); });
+  });
+}
 
 async function resolveCached(url: string, xpath: string | null): Promise<number | null> {
   const key = `${url}\u0000${xpath ?? ""}`;
@@ -277,16 +287,23 @@ async function resolveCached(url: string, xpath: string | null): Promise<number 
   const hit = cache.get(key);
   if (hit && hit.expires > now) return hit.value;
   const pending = inflight.get(key);
-  if (pending) return pending;
+  // Only reuse a fresh in-flight probe; stale ones may never settle.
+  if (pending && now - pending.startedAt < HARD_DEADLINE_MS) {
+    return withDeadline(pending.promise);
+  }
   const p = (async () => {
-    const value = await raceStrategies(url, xpath);
-    cache.set(key, { value, expires: Date.now() + (value == null ? 5_000 : CACHE_TTL_MS) });
-    inflight.delete(key);
-    return value;
+    try {
+      const value = await raceStrategies(url, xpath);
+      cache.set(key, { value, expires: Date.now() + (value == null ? 5_000 : CACHE_TTL_MS) });
+      return value;
+    } finally {
+      inflight.delete(key);
+    }
   })();
-  inflight.set(key, p);
-  return p;
+  inflight.set(key, { promise: p, startedAt: now });
+  return withDeadline(p);
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
