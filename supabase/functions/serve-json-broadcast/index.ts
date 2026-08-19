@@ -1295,17 +1295,66 @@ serve(async (req) => {
     lines.push("</items>");
 
 
-    return new Response(lines.join("\n"), {
+    const jsonData = {
+      empresa: {
+        logo: empresaLogo,
+        socials: {
+          instagram: locutorInstagram, // ou da empresa, dependendo da necessidade
+          whatsapp: whatsappNumber
+        }
+      },
+      programa: {
+        id: programaId,
+        nome: programaNome,
+        logo: programaLogo,
+        thumb: programaThumb,
+      },
+      locutor: {
+        nome: locutorNome,
+        foto: locutorFoto,
+        instagram: locutorInstagram
+      },
+      conteudo: {
+        titulo: assunto,
+        fundo: fundoAssunto,
+        qrcode: qrLink,
+        ticker: ticker,
+        musica: {
+          texto: musicaTexto,
+          capa: musicaCapa,
+          deezer_artist: deezerArtistImg
+        }
+      },
+      clima: {
+        temperatura: currentTempStr,
+        icone: currentTempIcon,
+        detalhes_canto: {
+          titulo: infoCantoTitulo,
+          descricao: infoCantoDescricao,
+          ico_categoria: infoCantoIcoCategoria,
+          temp: infoCantoTempAtual,
+          ico_temp: infoCantoIcoTemp
+        }
+      },
+      a_seguir: {
+        ativo: aSeguirEnabled,
+        programa: aSeguirNome,
+        logo: aSeguirLogo,
+        locutor: aSeguirLocutorNome,
+        foto: aSeguirLocutorFoto,
+        horario: aSeguirHorario,
+        texto: aSeguirTexto
+      }
+    };
+
+    return new Response(JSON.stringify(jsonData), {
       headers: {
         ...corsHeaders,
-        "Content-Type": "application/xml; charset=utf-8",
+        "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        "CDN-Cache-Control": "no-store",
-        "Surrogate-Control": "no-store",
-        "Pragma": "no-cache",
-        "Expires": "0",
       },
     });
+
   } catch (err) {
     return new Response(
       `<?xml version="1.0" encoding="UTF-8"?><error>${err.message}</error>`,
