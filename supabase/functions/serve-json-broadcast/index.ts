@@ -338,14 +338,19 @@ serve(async (req) => {
         const { data: allEmps } = await supabase
           .from("empresa_config")
           .select("user_id, nome");
-        
-        const match = (allEmps || []).find(e => {
-          const cleanName = e.nome.toLowerCase().replace(/[^a-z0-9]/g, "");
-          return cleanName.includes(slug) || slug.includes(cleanName);
-        });
 
-        if (match?.user_id) {
-          userId = match.user_id;
+        const candidates = (allEmps || [])
+          .map((e) => ({ ...e, clean: (e.nome || "").toLowerCase().replace(/[^a-z0-9]/g, "") }))
+          .filter((e) => e.clean && (e.clean === slug || e.clean.includes(slug) || slug.includes(e.clean)))
+          // Prefer exact match, then the longest name (avoids "Positiva FM" winning over "Positiva FM 99.1")
+          .sort((a, b) => {
+            if (a.clean === slug) return -1;
+            if (b.clean === slug) return 1;
+            return b.clean.length - a.clean.length;
+          });
+
+        if (candidates[0]?.user_id) {
+          userId = candidates[0].user_id;
         }
       }
     }
