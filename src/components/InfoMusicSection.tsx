@@ -490,7 +490,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({rows.length})</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({filteredRows.length})</h4>
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
