@@ -338,14 +338,19 @@ serve(async (req) => {
         const { data: allEmps } = await supabase
           .from("empresa_config")
           .select("user_id, nome");
-        
-        const match = (allEmps || []).find(e => {
-          const cleanName = e.nome.toLowerCase().replace(/[^a-z0-9]/g, "");
-          return cleanName.includes(slug) || slug.includes(cleanName);
-        });
 
-        if (match?.user_id) {
-          userId = match.user_id;
+        const candidates = (allEmps || [])
+          .map((e) => ({ ...e, clean: (e.nome || "").toLowerCase().replace(/[^a-z0-9]/g, "") }))
+          .filter((e) => e.clean && (e.clean === slug || e.clean.includes(slug) || slug.includes(e.clean)))
+          // Prefer exact match, then the longest name (avoids "Positiva FM" winning over "Positiva FM 99.1")
+          .sort((a, b) => {
+            if (a.clean === slug) return -1;
+            if (b.clean === slug) return 1;
+            return b.clean.length - a.clean.length;
+          });
+
+        if (candidates[0]?.user_id) {
+          userId = candidates[0].user_id;
         }
       }
     }
@@ -926,6 +931,19 @@ serve(async (req) => {
       );
     }
 
+    // ── Music timing (tempo) ──
+    const fmtClock = (totalSec: number) => {
+      const s = Math.max(0, Math.floor(totalSec));
+      return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    };
+    const musicStartMs = Number(dashboard.music_start_time) || 0;
+    const musicDuracaoSeg = Math.max(0, Math.round(Number(musicData.duracao ?? dashboard.music_current_duration) || 0));
+    let musicDecorridoSeg = musicStartMs > 0 ? Math.floor((Date.now() - musicStartMs) / 1000) : 0;
+    if (musicDecorridoSeg < 0) musicDecorridoSeg = 0;
+    if (musicDuracaoSeg > 0 && musicDecorridoSeg > musicDuracaoSeg) musicDecorridoSeg = musicDuracaoSeg;
+    const musicRestanteSeg = musicDuracaoSeg > 0 ? Math.max(0, musicDuracaoSeg - musicDecorridoSeg) : 0;
+    const musicProgresso = musicDuracaoSeg > 0 ? Math.round((musicDecorridoSeg / musicDuracaoSeg) * 100) : 0;
+
 
     const BLANK_LOGO_URL = "https://zzjfzxxvxbspbdkodoix.supabase.co/storage/v1/object/public/xml-files/IMGBLANCK.png";
     let logoPatrocinador = BLANK_LOGO_URL;
@@ -1341,9 +1359,22 @@ serve(async (req) => {
         qrcode: qrLink,
         ticker: ticker,
         musica: {
+          titulo: musicaAtual,
+          artista: artistaAtual,
           texto: musicaTexto,
           capa: musicaCapa,
-          deezer_artist: deezerArtistImg
+          deezer_artist: deezerArtistImg,
+          tempo: {
+            decorrido: fmtClock(musicDecorridoSeg),
+            duracao: fmtClock(musicDuracaoSeg),
+            restante: fmtClock(musicRestanteSeg),
+            decorrido_seg: musicDecorridoSeg,
+            duracao_seg: musicDuracaoSeg,
+            restante_seg: musicRestanteSeg,
+            progresso: musicProgresso,
+            display: musicDuracaoSeg > 0 ? `${fmtClock(musicDecorridoSeg)} / ${fmtClock(musicDuracaoSeg)}` : fmtClock(musicDecorridoSeg),
+            iniciou_em: musicStartMs > 0 ? new Date(musicStartMs).toISOString() : ""
+          }
         }
       },
       clima: {

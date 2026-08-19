@@ -719,6 +719,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               music_current_title: data.titulo,
               music_current_artist: data.artista,
               music_current_cover: data.capa || "",
+              music_current_duration: Math.round(data.duracao || 0),
               music_current_curiosity: "",
             };
             await mergeUserDashboardItems(dataUserId, basePatch);
