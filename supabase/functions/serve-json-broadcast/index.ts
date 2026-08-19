@@ -336,19 +336,22 @@ serve(async (req) => {
 
     // Support for /serve-json-broadcast/:userSlug/vmix.json routing
     if (!userId && pathParts.length >= 2) {
-      const slug = pathParts[pathParts.length - 2];
+      const slug = pathParts[pathParts.length - 2].toLowerCase();
       console.log("Extracted slug:", slug);
       if (slug && slug !== "serve-json-broadcast") {
-        const { data: emp, error: empErr } = await supabase
+        // Find by fuzzy match in empresa_config (e.g. "positivafm991" -> "Positiva FM 99.1")
+        const { data: allEmps } = await supabase
           .from("empresa_config")
-          .select("user_id, nome")
-          .or(`nome.ilike.%${slug}%,nome.ilike.%${slug.replace("fm", " fm ")}%,nome.ilike.%${slug.replace("fm", " fm").replace(/(\d+)/, " $1")}%`)
-          .limit(1)
-          .maybeSingle();
+          .select("user_id, nome");
         
-        console.log("DB lookup result:", JSON.stringify(emp), "Error:", JSON.stringify(empErr));
-        if (emp?.user_id) {
-          userId = emp.user_id;
+        const match = (allEmps || []).find(e => {
+          const cleanName = e.nome.toLowerCase().replace(/[^a-z0-9]/g, "");
+          return cleanName.includes(slug) || slug.includes(cleanName);
+        });
+
+        console.log("Fuzzy match result:", JSON.stringify(match));
+        if (match?.user_id) {
+          userId = match.user_id;
         }
       }
     }
