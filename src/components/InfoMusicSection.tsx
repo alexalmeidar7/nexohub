@@ -469,18 +469,43 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               "{nowPlaying.curiosity}"
             </div>
           )}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex-shrink-0 text-[#00BFF0] hover:bg-[#00BFF0]/10"
-            onClick={() => {
-              setEditMusic({ musica: nowPlaying.musica, artista: nowPlaying.artista, id: "now-playing" });
-              setCuriosidadeText(nowPlaying.curiosity || "");
-            }}
-          >
-            <Plus size={16} className="mr-2" />
-            CADASTRAR CURIOSIDADE
-          </Button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-amber-500 hover:bg-amber-100 hover:text-amber-600 border border-amber-200"
+              onClick={async () => {
+                if (!user || !nowPlaying) return;
+                try {
+                  const { error } = await supabase.from("infomusic_excecoes").insert({
+                    user_id: user.id,
+                    termo: nowPlaying.artista
+                  });
+                  if (error) throw error;
+                  loadExcecoes();
+                  toast.success(`"${nowPlaying.artista}" inserido na lista de EXCEÇÕES`);
+                } catch (e) {
+                  toast.error("Erro ao adicionar exceção");
+                }
+              }}
+            >
+              <Ban size={16} className="mr-2" />
+              inserir essa musica na lista de EXCEÇÕES
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-[#00BFF0] hover:bg-[#00BFF0]/10"
+              onClick={() => {
+                setEditMusic({ musica: nowPlaying.musica, artista: nowPlaying.artista, id: "now-playing" });
+                setCuriosidadeText(nowPlaying.curiosity || "");
+              }}
+            >
+              <Plus size={16} className="mr-2" />
+              CADASTRAR CURIOSIDADE
+            </Button>
+          </div>
         </div>
       )}
 
