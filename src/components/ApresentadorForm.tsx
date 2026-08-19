@@ -559,7 +559,7 @@ export default function ApresentadorForm() {
             </div>
           )}
 
-          {categoria !== "Convidado" && (
+          {categoria === "Jornalista" && (
             <div className="md:col-span-2 lg:col-span-3">
               <label style={labelStyle}>Imagem de Fundo do Locutor (Modo TV / Player)</label>
               <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
