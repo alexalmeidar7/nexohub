@@ -331,27 +331,21 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Support for /:userSlug/vmix.json routing
-    // URL structure: .../serve-json-broadcast/:userSlug/vmix.json
+    // Support for /serve-json-broadcast/:userSlug/vmix.json routing
     if (!userId && pathParts.length >= 2) {
-      const slug = pathParts[pathParts.length - 2];
+      const slug = pathParts[pathParts.length - 2].toLowerCase();
       if (slug && slug !== "serve-json-broadcast") {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("slug", slug)
-          .maybeSingle();
+        const { data: allEmps } = await supabase
+          .from("empresa_config")
+          .select("user_id, nome");
+        
+        const match = (allEmps || []).find(e => {
+          const cleanName = e.nome.toLowerCase().replace(/[^a-z0-9]/g, "");
+          return cleanName.includes(slug) || slug.includes(cleanName);
+        });
 
-        if (profile?.id) {
-          userId = profile.id;
-        } else {
-          // Fallback to searching by name in empresa_config if slug not found
-          const { data: emp } = await supabase
-            .from("empresa_config")
-            .select("user_id")
-            .ilike("nome", slug)
-            .maybeSingle();
-          if (emp?.user_id) userId = emp.user_id;
+        if (match?.user_id) {
+          userId = match.user_id;
         }
       }
     }
@@ -1326,8 +1320,8 @@ serve(async (req) => {
       empresa: {
         logo: empresaLogo,
         socials: {
-          instagram: locutorInstagram, // ou da empresa, dependendo da necessidade
-          whatsapp: whatsappNumber
+          instagram: emp?.instagram || "",
+          whatsapp: emp?.telefone_participacao || ""
         }
       },
       programa: {
