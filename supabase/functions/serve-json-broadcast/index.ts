@@ -1359,9 +1359,22 @@ serve(async (req) => {
         qrcode: qrLink,
         ticker: ticker,
         musica: {
+          titulo: musicaAtual,
+          artista: artistaAtual,
           texto: musicaTexto,
           capa: musicaCapa,
-          deezer_artist: deezerArtistImg
+          deezer_artist: deezerArtistImg,
+          tempo: {
+            decorrido: fmtClock(musicDecorridoSeg),
+            duracao: fmtClock(musicDuracaoSeg),
+            restante: fmtClock(musicRestanteSeg),
+            decorrido_seg: musicDecorridoSeg,
+            duracao_seg: musicDuracaoSeg,
+            restante_seg: musicRestanteSeg,
+            progresso: musicProgresso,
+            display: musicDuracaoSeg > 0 ? `${fmtClock(musicDecorridoSeg)} / ${fmtClock(musicDuracaoSeg)}` : fmtClock(musicDecorridoSeg),
+            iniciou_em: musicStartMs > 0 ? new Date(musicStartMs).toISOString() : ""
+          }
         }
       },
       clima: {
