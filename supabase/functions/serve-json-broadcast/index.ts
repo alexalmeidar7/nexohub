@@ -324,20 +324,47 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const userId = url.searchParams.get("user_id");
-
-    if (!userId) {
-      return new Response(
-        '<?xml version="1.0" encoding="UTF-8"?><error>user_id is required</error>',
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
-      );
-    }
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    let userId = url.searchParams.get("user_id");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Support for /:userSlug/vmix.json routing
+    // URL structure: .../serve-json-broadcast/:userSlug/vmix.json
+    if (!userId && pathParts.length >= 2) {
+      const slug = pathParts[pathParts.length - 2];
+      if (slug && slug !== "serve-json-broadcast") {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("slug", slug)
+          .maybeSingle();
+
+        if (profile?.id) {
+          userId = profile.id;
+        } else {
+          // Fallback to searching by name in empresa_config if slug not found
+          const { data: emp } = await supabase
+            .from("empresa_config")
+            .select("user_id")
+            .ilike("nome", slug)
+            .maybeSingle();
+          if (emp?.user_id) userId = emp.user_id;
+        }
+      }
+    }
+
+    if (!userId) {
+      return new Response(
+        JSON.stringify({ error: "user_id or valid slug is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" } }
+      );
+    }
+
     const dataOwnerId = await resolveDataOwnerId(supabase, userId);
+
 
     // Use the station's configured timezone so the on-air program is computed
     // against the local clock of the broadcaster, not the server's default.
@@ -1357,8 +1384,9 @@ serve(async (req) => {
 
   } catch (err) {
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><error>${err.message}</error>`,
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/xml; charset=utf-8" } }
+      JSON.stringify({ error: err.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" } }
     );
+
   }
 });
