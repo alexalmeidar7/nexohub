@@ -349,7 +349,7 @@ serve(async (req) => {
           const { data: emp } = await supabase
             .from("empresa_config")
             .select("user_id")
-            .ilike("nome", slug)
+            .or(`nome.ilike.%${slug}%,nome.ilike.%${slug.replace(/(\d+)/, " $1")}%`)
             .maybeSingle();
           if (emp?.user_id) userId = emp.user_id;
         }
