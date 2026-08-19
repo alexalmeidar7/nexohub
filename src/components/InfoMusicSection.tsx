@@ -99,7 +99,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       return () => clearTimeout(timer);
     }
 
-    const exceptionsArray = excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean);
+    const exceptionsArray = [...excecoes.map(e => e.termo?.toLowerCase()).filter(Boolean), "break"];
     
     const noCuriosity = rows
       .filter(r => !r.curiosidade || !r.curiosidade.trim())

@@ -74,10 +74,14 @@ Deno.serve(async (req) => {
       .map((s) => s.trim().toLowerCase())
       .filter((s) => s.length > 0);
 
-    if (excecoes.length > 0) {
+    // Filtro fixo de sistema
+    const systemExceptions = ["break"];
+    const allExceptions = [...excecoes, ...systemExceptions];
+
+    if (allExceptions.length > 0) {
       const artistaLower = artistaTrim.toLowerCase();
       const musicaLower = musicaTrim.toLowerCase();
-      const matched = excecoes.some(
+      const matched = allExceptions.some(
         (palavra) => artistaLower.includes(palavra) || musicaLower.includes(palavra),
       );
       if (matched) {
