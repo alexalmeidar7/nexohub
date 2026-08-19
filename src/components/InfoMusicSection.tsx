@@ -394,6 +394,16 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             <RefreshCw size={14} className={loading ? "animate-spin mr-2" : "mr-2"} />
             Atualizar
           </Button>
+          {isOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-black/40 hover:text-black/70 hover:bg-black/5"
+              onClick={() => setIsOpen(false)}
+            >
+              <X size={16} />
+            </Button>
+          )}
         </div>
       </div>
 
