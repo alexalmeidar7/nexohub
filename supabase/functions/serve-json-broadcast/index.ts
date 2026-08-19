@@ -327,23 +327,26 @@ serve(async (req) => {
     const pathParts = url.pathname.split("/").filter(Boolean);
     let userId = url.searchParams.get("user_id");
 
+    console.log("Request path:", url.pathname);
+    console.log("Path parts:", JSON.stringify(pathParts));
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Support for /:userSlug/vmix.json routing
-    // URL structure: .../serve-json-broadcast/:userSlug/vmix.json
+    // Support for /serve-json-broadcast/:userSlug/vmix.json routing
     if (!userId && pathParts.length >= 2) {
       const slug = pathParts[pathParts.length - 2];
+      console.log("Extracted slug:", slug);
       if (slug && slug !== "serve-json-broadcast") {
-        // Try exact name match or fuzzy match in empresa_config
-        const { data: emp } = await supabase
+        const { data: emp, error: empErr } = await supabase
           .from("empresa_config")
-          .select("user_id")
+          .select("user_id, nome")
           .or(`nome.ilike.%${slug}%,nome.ilike.%${slug.replace("fm", " fm ")}%,nome.ilike.%${slug.replace("fm", " fm").replace(/(\d+)/, " $1")}%`)
           .limit(1)
           .maybeSingle();
         
+        console.log("DB lookup result:", JSON.stringify(emp), "Error:", JSON.stringify(empErr));
         if (emp?.user_id) {
           userId = emp.user_id;
         }
