@@ -497,7 +497,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
               <thead>
                 <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
-                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Hora</th>
+                  <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Data / Hora</th>
                   <th style={{ padding: "12px 14px", textAlign: "left", fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", fontSize: 10, whiteSpace: "nowrap" }}>Música / Artista</th>
                 </tr>
               </thead>
