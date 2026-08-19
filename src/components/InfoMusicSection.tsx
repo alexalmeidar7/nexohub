@@ -811,9 +811,9 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           </div>
           {loadingAllCuriosities && <Loader2 size={14} className="animate-spin text-emerald-500" />}
         </div>
-        <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB" }}>
+        <div style={{ maxHeight: "400px", overflowY: "auto", borderRadius: 16, border: "1px solid #E5F5FB" }}>
           <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: 0, fontSize: 12 }}>
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr style={{ background: "#00BFF0", color: "#FFFFFF" }}>
                 {["Data", "Hora", "Música / Artista", "Curiosidade", "Ação"].map((h) => (
                   <th
