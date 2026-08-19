@@ -237,6 +237,39 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   useEffect(() => {
     load();
     loadExcecoes();
+
+    if (!user) return;
+
+    // Listen for real-time updates to user_settings to update "Now Playing" and "Last Played"
+    const channel = supabase
+      .channel(`info-music-sync-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'user_settings',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const di = (payload.new as any).dashboard_items;
+          if (di?.music_current_title || di?.music_current_artist) {
+            setNowPlaying({
+              musica: di.music_current_title || "Sem título",
+              artista: di.music_current_artist || "Desconhecido",
+              capa: di.music_current_cover || "",
+              curiosity: di.music_current_curiosity || "",
+            });
+            // Also reload the rows list to get the latest 100 songs
+            load();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const filteredRows = useMemo(() => {
