@@ -382,7 +382,7 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
         </h2>
         
         {items.length === 0 ? (
-          <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">em comercial/promoções - EM PRMOÇÕES CADASTRADAS - EU NAO PEDI PARA POR O TEXTO 'AINDA N ESTA MOSTRAND AS PROMOÇÕES QUE JA FORAM CADASTRADAS' EM NEMHM MOMENTO SOLICITEI ISSO; QUERO QUE MOSTRE AS PROMO</p></div>
+          <div className="p-8 text-center bg-white/50 rounded-2xl border border-dashed border-[#00BFF0]/30"><p className="text-sm text-[#0A2540]/60">POR EXEMPLO NO USUÁRO opec ou positiva estou edtando a promoção cadastradas BUTECO GL e ao clicar no lapis para editar o texto da edição e nome da da promoção nao esta aparecendo no formulário para ed</p></div>
         ) : (
           <div className="overflow-x-auto rounded-[24px] border border-[#00BFF0]/30 shadow-sm">
             <table className="w-full text-left border-collapse bg-white">

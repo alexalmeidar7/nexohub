@@ -424,7 +424,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
         {items.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-2xl border-2 border-dashed border-[#E2E8F0]">
-            <p className="text-sm text-[#64748B] font-medium">em comercial/promoções - EM PRMOÇÕES CADASTRADAS - EU NAO PEDI PARA POR O TEXTO 'AINDA N ESTA MOSTRAND AS PROMOÇÕES QUE JA FORAM CADASTRADAS' EM NEMHM MOMENTO SOLICITEI ISSO; QUERO QUE MOSTRE AS PROMO</p>
+            <p className="text-sm text-[#64748B] font-medium">POR EXEMPLO NO USUÁRO opec ou positiva estou edtando a promoção cadastradas BUTECO GL e ao clicar no lapis para editar o texto da edição e nome da da promoção nao esta aparecendo no formulário para ed</p>
           </div>
         ) : (
           <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid ${CYAN}22` }}>
