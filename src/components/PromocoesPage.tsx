@@ -191,7 +191,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     };
 
     const query = editingId
-      ? supabase.from("promocoes").update(payload).eq("id", editingId).eq("user_id", ownerId)
+      ? supabase.from("promocoes").update(payload).eq("id", editingId)
       : supabase.from("promocoes").insert([payload]);
 
     const { error } = await query;
@@ -215,7 +215,6 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
       .from("promocoes")
       .select("*")
       .eq("id", item.id)
-      .eq("user_id", ownerId ?? "")
       .maybeSingle();
 
     if (error) {

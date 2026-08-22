@@ -175,7 +175,6 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       .from("testemunhais")
       .select("id, texto, data_inicio, data_fim, programa_id, programa_ids")
       .eq("id", item.id)
-      .eq("user_id", ownerId ?? "")
       .maybeSingle();
 
     if (error) {
