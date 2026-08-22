@@ -175,7 +175,14 @@ export default function VmixAssunto() {
         _user_id: userId,
         _programa_id: programaId || null,
       });
-      const data: any = Array.isArray(rows) ? rows[0] : rows;
+      let data: any = Array.isArray(rows) ? rows[0] : rows;
+      if (!data && programaId) {
+        const { data: fbRows } = await supabase.rpc("get_public_broadcast_assuntos" as any, {
+          _user_id: userId,
+          _programa_id: null,
+        });
+        data = Array.isArray(fbRows) ? fbRows[0] : fbRows;
+      }
       if (cancelled) return;
       const raw = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       const en = Array.isArray((data as any)?.mensagens_enabled)
