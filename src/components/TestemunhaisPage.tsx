@@ -169,27 +169,14 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
     loadData();
   };
 
-  const handleEdit = async (item: Testemunhal) => {
-    // Re-read the selected row so consecutive edits never reuse stale list state.
-    const { data: freshItem, error } = await supabase
-      .from("testemunhais")
-      .select("id, texto, data_inicio, data_fim, programa_id, programa_ids")
-      .eq("id", item.id)
-      .maybeSingle();
+  const handleEdit = (item: Testemunhal) => {
+    const itemProgIds = getLinkedProgramIds(item);
 
-    if (error) {
-      toast({ title: "Erro ao carregar a citação", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    const selectedItem = (freshItem ?? item) as Testemunhal;
-    const itemProgIds = getLinkedProgramIds(selectedItem);
-
-    setEditingId(selectedItem.id);
+    setEditingId(item.id);
     setForm({
-      texto: selectedItem.texto || "",
-      data_inicio: selectedItem.data_inicio,
-      data_fim: selectedItem.data_fim,
+      texto: item.texto || "",
+      data_inicio: item.data_inicio,
+      data_fim: item.data_fim,
       programa_ids: itemProgIds,
     });
     setShowProgramCombo(false);
