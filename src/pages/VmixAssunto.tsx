@@ -171,13 +171,18 @@ export default function VmixAssunto() {
     let cancelled = false;
     const load = async () => {
       const programaId = await loadActiveProgramId(userId);
-      let query = supabase
-        .from("broadcast_assuntos")
-        .select("mensagens, mensagens_enabled, font_family, rotation_seconds, bg_color, text_color, updated_at")
-        .eq("user_id", userId);
-      const { data } = programaId
-        ? await query.eq("programa_id", programaId).maybeSingle()
-        : await query.order("updated_at", { ascending: false }).limit(1).maybeSingle();
+      const { data: rows } = await supabase.rpc("get_public_broadcast_assuntos" as any, {
+        _user_id: userId,
+        _programa_id: programaId || null,
+      });
+      let data: any = Array.isArray(rows) ? rows[0] : rows;
+      if (!data && programaId) {
+        const { data: fbRows } = await supabase.rpc("get_public_broadcast_assuntos" as any, {
+          _user_id: userId,
+          _programa_id: null,
+        });
+        data = Array.isArray(fbRows) ? fbRows[0] : fbRows;
+      }
       if (cancelled) return;
       const raw = Array.isArray(data?.mensagens) ? (data!.mensagens as string[]) : [];
       const en = Array.isArray((data as any)?.mensagens_enabled)

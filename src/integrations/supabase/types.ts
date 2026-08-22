@@ -3282,6 +3282,37 @@ export type Database = {
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
       expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
+      get_public_broadcast_assuntos: {
+        Args: { _programa_id?: string; _user_id: string }
+        Returns: {
+          bg_color: string
+          font_family: string
+          mensagens: Json
+          mensagens_enabled: boolean[]
+          rotation_seconds: number
+          text_color: string
+          updated_at: string
+        }[]
+      }
+      get_public_cenario_estudio_web: {
+        Args: { _id: string }
+        Returns: {
+          content: Json
+          created_at: string
+          id: string
+          nome: string
+          orientation: string
+          tv_count: number
+          updated_at: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "cenario_estudio_web"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_roteiro_by_share_token: {
         Args: { _token: string }
         Returns: {
