@@ -103,28 +103,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
   const ownerId = effectiveUserId || user?.id;
 
   const loadData = async () => {
-    if (!ownerId) {
-      console.warn("PromocoesPage: ownerId not available for loadData");
-      setLoading(false);
-      return;
-    }
-    
+    if (!ownerId) return;
     setLoading(true);
-    console.log("PromocoesPage: loading data for user_id:", ownerId);
-    
-    const { data: promosData, error } = await supabase
-      .from("promocoes")
-      .select("*")
-      .eq("user_id", ownerId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("PromocoesPage: error loading promos:", error);
-      toast({ title: "Erro ao carregar promoções", description: error.message, variant: "destructive" });
-    }
-
+    const { data: promosData } = await supabase.from("promocoes").select("*").eq("user_id", ownerId).order("created_at", { ascending: false });
     if (promosData) {
-      console.log(`PromocoesPage: found ${promosData.length} items`);
       setItems(promosData.map(p => ({
         ...p,
         texto: p.texto || "",

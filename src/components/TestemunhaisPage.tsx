@@ -110,27 +110,13 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
   const ownerId = effectiveUserId || user?.id;
 
   const loadData = async () => {
-    if (!ownerId) {
-      console.warn("TestemunhaisPage: ownerId not available for loadData");
-      setLoading(false);
-      return;
-    }
-    
+    if (!ownerId) return;
     setLoading(true);
-    console.log("TestemunhaisPage: loading data for user_id:", ownerId);
-    
-    const [ { data: tData, error: tError }, { data: pData, error: pError } ] = await Promise.all([
+    const [ { data: tData }, { data: pData } ] = await Promise.all([
       supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome")
     ]);
-
-    if (tError) console.error("TestemunhaisPage: error loading testemunhais:", tError);
-    if (pError) console.error("TestemunhaisPage: error loading programas:", pError);
-
-    if (tData) {
-      console.log(`TestemunhaisPage: found ${tData.length} items`);
-      setItems(tData as Testemunhal[]);
-    }
+    if (tData) setItems(tData as Testemunhal[]);
     if (pData) setProgramas(pData);
     setLoading(false);
   };
