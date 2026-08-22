@@ -60,11 +60,9 @@ export default function CenarioEstudioWebTela() {
     if (!id) return;
     let alive = true;
     const load = async () => {
-      const { data: row, error: err } = await supabase
-        .from("cenario_estudio_web" as any)
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data: rows, error: err } = await supabase
+        .rpc("get_public_cenario_estudio_web" as any, { _id: id });
+      const row = Array.isArray(rows) ? rows[0] : rows;
       if (!alive) return;
       if (err || !row) {
         setError("Cenário não encontrado");
