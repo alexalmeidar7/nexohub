@@ -208,35 +208,20 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     loadData();
   };
 
-  const handleEdit = async (item: Promocao) => {
+  const handleEdit = (item: Promocao) => {
     console.log("Editando item:", item);
-    // Re-read the selected row so consecutive edits never reuse stale list state.
-    const { data: freshItem, error } = await supabase
-      .from("promocoes")
-      .select("*")
-      .eq("id", item.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Erro ao carregar item fresco:", error);
-      toast({ title: "Erro ao carregar a promoção", description: error.message, variant: "destructive" });
-      return;
-    }
-
-    const selectedItem = (freshItem ?? item) as any;
-    console.log("Item carregado para edição:", selectedItem);
-
-    setEditingId(selectedItem.id);
     
-    // Explicitly set the form state with full item data
+    setEditingId(item.id);
+    
+    // Set the form state directly from the item passed from the list
     setForm({
-      nome: selectedItem.nome || "",
-      texto: selectedItem.texto || "",
-      oferecimento: selectedItem.oferecimento || "",
-      data_inicio: selectedItem.data_inicio || new Date().toISOString().split("T")[0],
-      data_fim: selectedItem.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      imagem_url: selectedItem.imagem_url || "",
-      banner_l_url: selectedItem.banner_l_url || "",
+      nome: item.nome || "",
+      texto: item.texto || "",
+      oferecimento: item.oferecimento || "",
+      data_inicio: item.data_inicio || new Date().toISOString().split("T")[0],
+      data_fim: item.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      imagem_url: item.imagem_url || "",
+      banner_l_url: item.banner_l_url || "",
     });
     
     window.scrollTo({ top: 0, behavior: "smooth" });
