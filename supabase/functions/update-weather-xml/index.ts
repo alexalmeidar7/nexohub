@@ -180,6 +180,14 @@ serve(async (req) => {
         );
         const d = await wxRes.json();
 
+        if (!d?.current || !d?.daily?.time?.length) {
+          console.error(
+            `Weather API returned no data for user ${s.user_id}:`,
+            typeof d?.reason === "string" ? d.reason : JSON.stringify(d)?.slice(0, 300),
+          );
+          continue;
+        }
+
         // Reliable day/night via Open-Meteo's is_day flag (1 = day, 0 = night)
         const isNight = d.current?.is_day === 0;
 
