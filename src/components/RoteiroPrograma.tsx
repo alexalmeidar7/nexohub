@@ -834,10 +834,27 @@ export default function RoteiroPrograma() {
                       <Clock size={20} />
                     </div>
                     <div className="flex-1">
-                      <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
-                        {prog?.nome || 'Programa'}
-                      </h4>
-                      <p style={{ ...MONT, fontSize: 11, color: "#64748B" }}>
+                      <div className="flex flex-col">
+                        <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
+                          {r.programa_nome || 'Programa'}
+                        </h4>
+                        {(() => {
+                          let pNames = "";
+                          try {
+                            const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || {};
+                            const pList = parsed.participantes || (Array.isArray(parsed) ? parsed : []);
+                            pNames = pList.map((p: any) => p.nome).filter(Boolean).join(", ");
+                          } catch (e) {
+                            console.error("Erro ao processar participantes agendados:", e);
+                          }
+                          return pNames ? (
+                            <span style={{ ...MONT, fontSize: 10, color: CYAN, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5 }}>
+                              {pNames}
+                            </span>
+                          ) : null;
+                        })()}
+                      </div>
+                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2 }}>
                         Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
                       </p>
                     </div>
