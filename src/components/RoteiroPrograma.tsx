@@ -835,9 +835,16 @@ export default function RoteiroPrograma() {
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-col">
-                        <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
-                          {r.programa_nome || 'Programa'}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK, margin: 0 }}>
+                            {r.programa_nome || 'Programa'}
+                          </h4>
+                          {r.titulo && r.titulo !== `PROGRAMA EXPRESS — ${r.programa_nome}` && (
+                            <span style={{ ...MONT, fontSize: 10, color: "#64748B", fontWeight: 600 }}>
+                              • {r.titulo.replace("PROGRAMA EXPRESS — ", "")}
+                            </span>
+                          )}
+                        </div>
                         {(() => {
                           let pNames = "";
                           try {
@@ -854,11 +861,33 @@ export default function RoteiroPrograma() {
                           ) : null;
                         })()}
                       </div>
-                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2, margin: 0 }}>
                         Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button 
+                        onClick={async () => {
+                          toast.info("Enviando para o vMix...");
+                          const ok = await regenerateXmlForRoteiro(r);
+                          if (ok) {
+                            const now = new Date().toISOString();
+                            await supabase.from("roteiros").update({ 
+                              xml_pushed_at: now,
+                              agendado_para_envio: null,
+                              enviado_agendamento: true 
+                            }).eq("id", r.id);
+                            toast.success("Roteiro enviado para o vMix com sucesso!");
+                            fetchHistorico();
+                          } else {
+                            toast.error("Falha ao enviar para o vMix");
+                          }
+                        }} 
+                        className="p-2 hover:bg-cyan-50 rounded-lg text-cyan-500 transition-colors" 
+                        title="Enviar para o vMix agora"
+                      >
+                        <Send size={16} />
+                      </button>
                       <button onClick={() => {
                         let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                         try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
