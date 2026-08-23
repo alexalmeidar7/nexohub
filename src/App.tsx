@@ -113,23 +113,29 @@ interface ErrorBoundaryState {
 class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, retryCount: 0 };
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastError: Error | null = null;
 
   static getDerivedStateFromError() {
     return { hasError: true };
   }
 
   componentDidCatch(error: Error) {
+    this.lastError = error;
     const isChunkError =
       error.message?.includes("Failed to fetch dynamically imported module") ||
       error.message?.includes("Loading chunk") ||
       error.message?.includes("Loading CSS chunk") ||
       error.message?.includes("dynamically imported module");
 
-    // Auto-retry chunk errors up to 3 times with faster logic
+    // Only transient chunk-download failures can recover by remounting here.
+    // Runtime/render errors must surface immediately instead of leaving the
+    // whole app indefinitely on "Sincronizando ambiente".
     if (isChunkError && this.state.retryCount < 3) {
       this.retryTimer = setTimeout(() => {
         this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
       }, 400); // Reduced delay from 800ms to 400ms
+    } else if (!isChunkError) {
+      this.setState({ retryCount: 3 });
     }
   }
 
@@ -138,6 +144,7 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 
   handleRetry = () => {
+    this.lastError = null;
     this.setState({ hasError: false, retryCount: 0 });
   };
 

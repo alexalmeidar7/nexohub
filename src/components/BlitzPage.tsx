@@ -491,8 +491,6 @@ export default function BlitzPage() {
     pendentes: items.filter(i => !i.realizada).length,
   }), [items]);
 
-  if (loading) return <ModulePageSkeleton />;
-
   const fmtDate = (d: string) => {
     const [y, m, day] = d.split("-");
     return `${day}/${m}/${y}`;
@@ -513,6 +511,8 @@ export default function BlitzPage() {
     return true;
   };
   const liveBlitz = useMemo(() => items.find(b => isAcontecendo(b)), [items, isAcontecendo]);
+
+  if (loading) return <ModulePageSkeleton />;
 
   const secondsToEnd = (b: Blitz) => {
     void nowTick;
