@@ -858,13 +858,33 @@ export default function RoteiroPrograma() {
                         Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
                       </p>
                     </div>
-                    <button 
-                      onClick={() => cancelAgendamento(r.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
-                      title="Cancelar Agendamento"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => {
+                        let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
+                        try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
+                        const prog = programas.find(p => p.id === r.programa_id);
+                        let existingXmlPath: string | undefined;
+                        if (r.subtitulo?.startsWith("express_xml::")) {
+                          try {
+                            const xmlUrl = r.subtitulo.replace("express_xml::", "");
+                            const urlObj = new URL(xmlUrl);
+                            const pathMatch = urlObj.pathname.match(/\/object\/public\/empresa-assets\/(.+)$/);
+                            if (pathMatch) existingXmlPath = pathMatch[1];
+                          } catch {}
+                        }
+                        setExpressEditData({ roteiroId: r.id, estudio: r.estudio || "", programaId: prog?.id || "", blocos, participantes: editParticipantes, escaladaList: editEscaladaList, existingXmlPath, podcastData: editPodcastData });
+                        setNovoRoteiroOpen(true);
+                      }} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors" title="Editar Agendamento">
+                        <Pencil size={16} />
+                      </button>
+                      <button 
+                        onClick={() => cancelAgendamento(r.id)}
+                        className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                        title="Cancelar Agendamento"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
