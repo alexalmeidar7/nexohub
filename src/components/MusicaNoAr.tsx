@@ -944,6 +944,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         ? (culturaXmlToPseudoXml(rawText) ?? rawText)
         : rawText;
 
+
       // Success — reset health trackers
       localFailCountRef.current = 0;
       lastLocalSuccessRef.current = Date.now();
