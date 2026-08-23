@@ -408,7 +408,7 @@ export default function RoteiroPrograma() {
       return;
     }
 
-    setHistorico(data.filter((r: any) => !r.agendado_para_envio).slice(0, 10));
+    setHistorico(data.filter((r: any) => !r.agendado_para_envio));
     setAgendados(data.filter((r: any) => r.agendado_para_envio));
 
 
@@ -438,7 +438,7 @@ export default function RoteiroPrograma() {
         }
       }
     }
-    setHistorico(data);
+    
   };
 
   useEffect(() => { if (user) fetchHistorico(); }, [user]);
@@ -810,7 +810,7 @@ export default function RoteiroPrograma() {
           {agendados.length === 0 ? (
             <div className="text-center py-8" style={{ background: "#F8FAFC", borderRadius: 16 }}>
               <span style={{ ...MONT, fontSize: 11, color: "#94A3B8" }}>
-                em roteiro de programa - ao cadastrar ou editar um programa -  ao lado do botão 'finalizar edição' coloque um botão 'agendar roteiro' ao clicar nesse botão abre um pop up para o usuário colocar a data
+                Nenhum roteiro agendado
               </span>
             </div>
           ) : (
