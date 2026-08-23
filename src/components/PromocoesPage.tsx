@@ -209,22 +209,36 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     loadData();
   };
 
-  const handleEdit = (item: Promocao) => {
-    console.log("Editando item:", item);
-    
-    setEditingId(item.id);
-    
-    // Set the form state directly from the item passed from the list
+  const handleEdit = async (item: Promocao) => {
+    if (!ownerId) return;
+
+    const { data, error } = await supabase
+      .from("promocoes")
+      .select("id, nome, texto, oferecimento, data_inicio, data_fim, imagem_url, banner_l_url")
+      .eq("id", item.id)
+      .eq("user_id", ownerId)
+      .maybeSingle();
+
+    if (error || !data) {
+      toast({
+        title: "Erro ao abrir promoção",
+        description: error?.message || "A promoção selecionada não foi encontrada.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setEditingId(data.id);
     setForm({
-      nome: item.nome || "",
-      texto: item.texto || "",
-      oferecimento: item.oferecimento || "",
-      data_inicio: item.data_inicio || new Date().toISOString().split("T")[0],
-      data_fim: item.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      imagem_url: item.imagem_url || "",
-      banner_l_url: item.banner_l_url || "",
+      nome: data.nome || "",
+      texto: data.texto || "",
+      oferecimento: data.oferecimento || "",
+      data_inicio: data.data_inicio || new Date().toISOString().split("T")[0],
+      data_fim: data.data_fim || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+      imagem_url: data.imagem_url || "",
+      banner_l_url: data.banner_l_url || "",
     });
-    
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -289,9 +303,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <label style={labelStyle}>Texto da Promoção</label>
               <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
                 <ReactQuill
+                  key={`texto-${editingId || "novo"}`}
                   theme="snow"
                   value={form.texto}
-                  onChange={(content) => setForm({ ...form, texto: content })}
+                  onChange={(content) => setForm(current => ({ ...current, texto: content }))}
                   modules={{
                     toolbar: [
                       ['bold', 'italic'],
@@ -307,9 +322,10 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
               <label style={labelStyle}>Oferecimento / Patrocínio</label>
               <div className="nexo-quill-editor overflow-hidden rounded-[24px] border-2 border-[#00BFF0]">
                 <ReactQuill
+                  key={`oferecimento-${editingId || "novo"}`}
                   theme="snow"
                   value={form.oferecimento}
-                  onChange={(content) => setForm({ ...form, oferecimento: content })}
+                  onChange={(content) => setForm(current => ({ ...current, oferecimento: content }))}
                   modules={{
                     toolbar: [
                       ['bold', 'italic'],
