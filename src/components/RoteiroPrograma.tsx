@@ -437,7 +437,7 @@ export default function RoteiroPrograma() {
       for (const id of toMarkFeito) {
         const rot = data.find(r => r.id === id);
         if (!rot) continue;
-        const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", user.id).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
+        const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", effectiveUserId).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
         if (eventos && eventos.length > 0) {
           for (const ev of eventos) {
             if (!ev.descricao?.includes("[VENCIDO]")) {
