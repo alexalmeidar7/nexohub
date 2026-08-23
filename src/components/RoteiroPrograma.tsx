@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot, Send } from "lucide-react";
+import { History, Trash2, Pencil, Code2, Copy, MessageSquare, FileText, X, Check, RefreshCw, ChevronDown, ChevronUp, Zap, Bot, Send, Calendar, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import ModulePageSkeleton from "./skeletons/ModulePageSkeleton";
 
@@ -69,6 +69,7 @@ export default function RoteiroPrograma() {
   const [historicoOpen, setHistoricoOpen] = useState(true);
   const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
   const [automacaoOpen, setAutomacaoOpen] = useState(false);
+  const [agendados, setAgendados] = useState<any[]>([]);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
@@ -399,10 +400,18 @@ export default function RoteiroPrograma() {
       .from("roteiros")
       .select("*")
       .eq("user_id", user.id)
-      .order("data_programa", { ascending: false })
-      .order("horario", { ascending: false, nullsFirst: false })
-      .limit(10);
-    if (!data) { setHistorico([]); return; }
+      .order("created_at", { ascending: false });
+
+    if (!data) {
+      setHistorico([]);
+      setAgendados([]);
+      return;
+    }
+
+    setHistorico(data.filter((r: any) => !r.agendado_para_envio).slice(0, 10));
+    setAgendados(data.filter((r: any) => r.agendado_para_envio));
+
+
 
     const now = new Date();
     const toMarkFeito: string[] = [];
@@ -447,7 +456,22 @@ export default function RoteiroPrograma() {
     }
   };
 
+  const cancelAgendamento = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("roteiros")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Agendamento cancelado");
+      fetchHistorico();
+    } catch (e) {
+      toast.error("Erro ao cancelar agendamento");
+    }
+  };
+
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 
   const regenerateXmlForRoteiro = async (r: any): Promise<boolean> => {
     try {
@@ -768,14 +792,103 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
-          })()
-          )}
-          </>)}
-        </div>
+          })
+        )}
 
+
+
+
+
+
+
+          <div className="mt-8 mb-4 flex items-center gap-3">
+            <Calendar size={14} style={{ color: CYAN }} />
+            <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
+              Roteiros Agendados
+            </span>
+          </div>
+          {agendados.length === 0 ? (
+            <div className="text-center py-8" style={{ background: "#F8FAFC", borderRadius: 16 }}>
+              <span style={{ ...MONT, fontSize: 11, color: "#94A3B8" }}>
+                em roteiro de programa - ao cadastrar ou editar um programa -  ao lado do botão 'finalizar edição' coloque um botão 'agendar roteiro' ao clicar nesse botão abre um pop up para o usuário colocar a data
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {agendados.map((r) => {
+                const prog = programas.find(p => p.id === r.programa_id);
+                return (
+                  <div key={r.id} className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-slate-100 hover:border-cyan-100 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
+                      <Clock size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
+                        {prog?.nome || 'Programa'}
+                      </h4>
+                      <p style={{ ...MONT, fontSize: 11, color: "#64748B" }}>
+                        Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => cancelAgendamento(r.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                      title="Cancelar Agendamento"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>)}
       </div>
-    );
-  }, [historico, programas, activeTab, regenerating]);
+    </div>
+  );
+}, [historico, agendados, programas, activeTab, regenerating, historicoOpen, cancelAgendamento]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   if (loading) return <ModulePageSkeleton />;
 
@@ -835,6 +948,10 @@ export default function RoteiroPrograma() {
                 {estudios.length}
               </span>
             </div>
+            
+            {/* scheduled roteiros list removed from here as it is now in the drawer */}
+
+
             <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
               {estudios.map(est => {
                 const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
@@ -862,6 +979,8 @@ export default function RoteiroPrograma() {
                 );
               })}
             </div>
+
+
           </div>
         </div>
       )}

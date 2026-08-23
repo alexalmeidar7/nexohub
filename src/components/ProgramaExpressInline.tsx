@@ -1,14 +1,17 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List, RefreshCw, Megaphone, Newspaper } from "lucide-react";
+import { Zap, Plus, Trash2, Link2, Loader2, Image, Type, Check, X as XIcon, ChevronDown, ChevronUp, Pencil, Users, Search, UserPlus, ClipboardPaste, ArrowUp, ArrowDown, CheckCircle2, MessageSquare, FileText, HelpCircle, Video, ImagePlus, Upload, Bot, Save, List, RefreshCw, Megaphone, Newspaper, Calendar } from "lucide-react";
 import NoticiasFontesPopup from "./NoticiasFontesPopup";
 import { decodeHtmlEntities } from "@/lib/textEncoding";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+
+const AgendarRoteiroPopup = lazy(() => import("./AgendarRoteiroPopup"));
+
 
 /* ── Podcast-specific types ── */
 interface PodcastData {
@@ -60,6 +63,13 @@ const nexoPillPrimary: React.CSSProperties = {
   color: "#FFFFFF",
   border: `2px solid ${NEXO_CYAN}`,
 };
+const nexoPillSecondary: React.CSSProperties = {
+  ...nexoPillGhost,
+  background: NEXO_LIME,
+  color: NEXO_DARK,
+  border: `2px solid ${NEXO_LIME}`,
+};
+
 
 interface NewsItem {
   titulo: string;
@@ -261,6 +271,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [programaId, setProgramaId] = useState("");
   const [blocos, setBlocos] = useState<Bloco[]>([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
   const [fetchingLink, setFetchingLink] = useState<string | null>(null);
+  const [showSchedulePopup, setShowSchedulePopup] = useState(false);
+  const [scheduledRoteiros, setScheduledRoteiros] = useState<any[]>([]);
+
+
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -294,6 +308,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   };
   useEffect(() => { if (editData) setNovoRoteiroOpen(true); }, [editData]);
   useEffect(() => { if (externalPasteText) setNovoRoteiroOpen(true); }, [externalPasteText]);
+
+  const fetchScheduledRoteiros = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("roteiros")
+      .select("id, programa_nome, estudio, agendado_para_envio, enviado_agendamento")
+      .eq("user_id", user.id)
+      .not("agendado_para_envio", "is", null)
+      .order("agendado_para_envio", { ascending: true });
+    
+    if (data) setScheduledRoteiros(data);
+  }, [user]);
+
+  useEffect(() => {
+    fetchScheduledRoteiros();
+  }, [fetchScheduledRoteiros]);
+
 
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
@@ -1892,18 +1923,44 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </>
         )}
 
-        {/* Save / Finish editing */}
-        {editingId ? (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-            {saving ? "Finalizando..." : "Finalizar Edição"}
+        {/* Save / Finish editing / Schedule */}
+        <div className="flex gap-3 w-full">
+          <button 
+            onClick={() => setShowSchedulePopup(true)} 
+            disabled={saving || !programaId} 
+            className="flex-1 flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
+            style={{ ...nexoPillSecondary, padding: "14px 24px", fontSize: 13, backgroundColor: "#C6F03C", color: "#0A2540" }}
+          >
+            <Calendar size={16} />
+            Agendar Roteiro
           </button>
-        ) : (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-            {saving ? "Salvando..." : "Finalizar Programa Express"}
+          
+          <button 
+            onClick={handleSave} 
+            disabled={saving || !programaId} 
+            className="flex-[2] flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
+            style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13 }}
+          >
+            {saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              editingId ? <Check size={16} /> : <Zap size={16} />
+            )}
+            {saving 
+              ? (editingId ? "Finalizando..." : "Salvando...") 
+              : (editingId ? "Finalizar Edição" : "Finalizar Programa Express")}
           </button>
-        )}
+        </div>
+
+        <Suspense fallback={null}>
+          <AgendarRoteiroPopup 
+            open={showSchedulePopup} 
+            onOpenChange={setShowSchedulePopup} 
+            roteiroId={editingId} 
+            onScheduled={fetchScheduledRoteiros} 
+          />
+        </Suspense>
+
       </div>
       )}
     </div>
