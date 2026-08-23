@@ -2276,7 +2276,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={(profileAvatar && !profileAvatar.includes("usr-default")) ? profileAvatar : (googlePhoto || profileAvatar)}
-                      userName={googleName || userName}
+                      userName={googleName || userName || profileName}
                       userEmail={googleEmail}
                       googleAvatarUrl={googlePhoto}
                       showLogout={!!user}
