@@ -396,10 +396,19 @@ export default function RoteiroPrograma() {
 
   const fetchHistorico = async () => {
     if (!user) return;
+
+    // Resolve effective user id: sub-users inherit parent's data
+    const { data: sub } = await supabase
+      .from("sub_users")
+      .select("parent_user_id, ativo")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+
     const { data } = await supabase
       .from("roteiros")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .order("created_at", { ascending: false });
 
     if (!data) {
