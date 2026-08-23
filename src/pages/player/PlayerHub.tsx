@@ -226,21 +226,11 @@ export default function PlayerHub() {
   }, []);
 
   useEffect(() => {
-    if (!splashDone) return;
-    if (!tvGuestMode && (loading || !dataReady)) return;
-    // A WelcomeScreen agora cobre AMBOS os estados (logado e deslogado),
-    // mostrando os botões "entrar com google" / "cadastre-se" quando não há
-    // usuário. Assim, após o logout o usuário permanece na welcome.
-    // Home continua protegido: se não estiver logado, cai na welcome.
-    const target: Step = user && skipToHome ? "home" : !user && !tvGuestMode ? "login" : "welcome";
-    if (step === "login" && !user) return; // Stay on login if no user
-    if (step === "splash" && !splashDone) return; // Wait for splash to finish
-    setStep((current) => {
-      if (current === target) return current;
-      transitionTo(target);
-      return current;
-    });
-  }, [splashDone, loading, dataReady, user, skipToHome, transitionTo, tvGuestMode]);
+    // Re-check auth state to skip steps if needed
+    if (!loading && user && step === "login") {
+      transitionTo("splash");
+    }
+  }, [loading, user, step, transitionTo]);
 
 
   const onLoginSuccess = useCallback(() => {
