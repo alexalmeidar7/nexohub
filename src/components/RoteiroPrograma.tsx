@@ -400,10 +400,17 @@ export default function RoteiroPrograma() {
       .from("roteiros")
       .select("*")
       .eq("user_id", user.id)
-      .order("data_programa", { ascending: false })
-      .order("horario", { ascending: false, nullsFirst: false })
-      .limit(10);
-    if (!data) { setHistorico([]); return; }
+      .order("created_at", { ascending: false });
+
+    if (!data) {
+      setHistorico([]);
+      setAgendados([]);
+      return;
+    }
+
+    setHistorico(data.filter(r => !r.agendado_para_envio).slice(0, 10));
+    setAgendados(data.filter(r => r.agendado_para_envio));
+
 
     const now = new Date();
     const toMarkFeito: string[] = [];
