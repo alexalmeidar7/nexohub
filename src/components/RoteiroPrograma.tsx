@@ -69,6 +69,7 @@ export default function RoteiroPrograma() {
   const [historicoOpen, setHistoricoOpen] = useState(true);
   const [novoRoteiroOpen, setNovoRoteiroOpen] = useState(false);
   const [automacaoOpen, setAutomacaoOpen] = useState(false);
+  const [agendados, setAgendados] = useState<any[]>([]);
 
   const roteiroToPlainText = (r: any): string => {
     let parts: any = null;
