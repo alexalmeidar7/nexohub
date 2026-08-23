@@ -2122,8 +2122,14 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
     { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
     { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
-    
   ];
+
+  const streamingChannelsRow = streamingChannels;
+  const onDemandChannelsRow = Object.entries(catalogGroups).map(([groupName, items]) => ({
+    id: groupName,
+    name: groupName,
+    items
+  }));
 
   // Presenter photo of currently on-air program
   const currentPresenterFoto = useMemo(() => {
