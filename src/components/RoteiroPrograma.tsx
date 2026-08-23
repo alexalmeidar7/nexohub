@@ -770,11 +770,6 @@ export default function RoteiroPrograma() {
             );
           })()}
 
-        </>
-      )}
-    </div>
-  );
-}, [historico, programas, activeTab, regenerating, historicoOpen]);
 
 
 
