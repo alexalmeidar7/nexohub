@@ -803,7 +803,7 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
-          })
+          })()
         )}
 
 
