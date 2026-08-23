@@ -113,14 +113,12 @@ interface ErrorBoundaryState {
 class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, retryCount: 0 };
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastError: Error | null = null;
 
   static getDerivedStateFromError() {
     return { hasError: true };
   }
 
   componentDidCatch(error: Error) {
-    this.lastError = error;
     const isChunkError =
       error.message?.includes("Failed to fetch dynamically imported module") ||
       error.message?.includes("Loading chunk") ||
@@ -144,7 +142,6 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
   }
 
   handleRetry = () => {
-    this.lastError = null;
     this.setState({ hasError: false, retryCount: 0 });
   };
 
