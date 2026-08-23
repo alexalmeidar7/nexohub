@@ -835,6 +835,44 @@ export default function RoteiroPrograma() {
                 {estudios.length}
               </span>
             </div>
+            
+            {/* scheduled roteiros list */}
+            <div className="mt-8 border-t border-[#00BFF0] pt-6 pb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Calendar size={14} style={{ color: CYAN }} />
+                <p style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK, margin: 0 }}>
+                  Roteiros Agendados
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                {historico.filter(r => r.agendado_para_envio).length === 0 ? (
+                  <div className="p-4 rounded-xl text-center italic text-xs opacity-60" style={{ backgroundColor: "#FFFFFF", border: `1px dashed ${CYAN}` }}>
+                    em roteiro de programa - ao cadastrar ou editar um programa - ao lado do botão 'finalizar edição' coloque um botão 'agendar roteiro' ao clicar nesse botão abre um pop up para o usuário colocar a data
+                  </div>
+                ) : (
+                  historico.filter(r => r.agendado_para_envio).map(r => (
+                    <div 
+                      key={r.id} 
+                      className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#00BFF0]33"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: r.enviado_agendamento ? "#22c55e" : "#f59e0b" }} />
+                        <div>
+                          <p className="text-xs font-bold" style={{ color: DARK }}>{r.programa_nome || "Sem nome"}</p>
+                          <p className="text-[10px] opacity-60">
+                            {r.enviado_agendamento ? "Enviado em: " : "Agendado para: "}
+                            {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
+                          </p>
+                        </div>
+                      </div>
+                      {r.enviado_agendamento && <CheckCircle2 size={14} className="text-[#22c55e]" />}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
               {estudios.map(est => {
                 const xmlUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/serve-xml-roteiro-estudio?user_id=${user?.id || ""}&estudio=${encodeURIComponent(est)}`;
