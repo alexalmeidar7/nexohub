@@ -63,6 +63,13 @@ const nexoPillPrimary: React.CSSProperties = {
   color: "#FFFFFF",
   border: `2px solid ${NEXO_CYAN}`,
 };
+const nexoPillSecondary: React.CSSProperties = {
+  ...nexoPillGhost,
+  background: NEXO_LIME,
+  color: NEXO_DARK,
+  border: `2px solid ${NEXO_LIME}`,
+};
+
 
 interface NewsItem {
   titulo: string;
