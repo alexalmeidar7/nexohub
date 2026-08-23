@@ -1755,6 +1755,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
         supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
       ]);
+      setLoadProgress(65);
 
       if (cancelled) return;
 
