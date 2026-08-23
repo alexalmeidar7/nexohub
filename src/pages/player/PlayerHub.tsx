@@ -36,7 +36,7 @@ function preloadAsLinkTag(url: string) {
   document.head.appendChild(link);
 }
 
-type Step = "splash" | "access" | "welcome" | "home";
+type Step = "login" | "splash" | "welcome" | "home";
 
 export default function PlayerHub() {
   usePageTitle("Player");
@@ -52,7 +52,7 @@ export default function PlayerHub() {
     !tvGuestMode &&
     (searchParams.get("step") === "home" ||
       (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1"));
-  const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
+  const [step, setStep] = useState<Step>(skipToHome ? "home" : "login");
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
   useEffect(() => {
@@ -234,7 +234,7 @@ export default function PlayerHub() {
     // mostrando os botões "entrar com google" / "cadastre-se" quando não há
     // usuário. Assim, após o logout o usuário permanece na welcome.
     // Home continua protegido: se não estiver logado, cai na welcome.
-    const target: Step = user && skipToHome ? "home" : "welcome";
+    const target: Step = user && skipToHome ? "home" : !user && !tvGuestMode ? "login" : "welcome";
     setStep((current) => {
       if (current === target) return current;
       transitionTo(target);
@@ -274,6 +274,17 @@ export default function PlayerHub() {
   // containing block for descendants with `position: fixed` (like SplashScreen),
   // which then collapse to the wrapper's 0px height and become invisible.
   const wrapperClass = `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
+
+  if (step === "login") {
+    return (
+      <div className={wrapperClass}>
+        <AccessScreen
+          logoUrl={logoUrl}
+          onLoginSuccess={() => transitionTo("splash")}
+        />
+      </div>
+    );
+  }
 
   if (step === "splash") {
     return (
