@@ -285,25 +285,50 @@ export default function CustomizableDashboard({ onNavigate, effectiveUserId }: P
 
   // Poll music from per-user localStorage (scoped to prevent cross-tenant leak)
   useEffect(() => {
+    if (!dataUserId) return;
+    const targetKey = musicDataKey(dataUserId);
+    
     const pollMusic = () => {
       try {
         const parsed = readMusicData(dataUserId);
         if (parsed && parsed.titulo) {
           const startedAt = readMusicStart(dataUserId);
-          setCurrentMusic({
-            titulo: parsed.titulo,
-            artista: parsed.artista || "",
-            startedAt: startedAt || 0,
-            duracao: typeof parsed.duracao === "number" ? parsed.duracao : 0,
+          setCurrentMusic(prev => {
+            if (prev?.titulo === parsed.titulo && prev?.artista === (parsed.artista || "") && prev?.startedAt === (startedAt || 0)) return prev;
+            return {
+              titulo: parsed.titulo,
+              artista: parsed.artista || "",
+              startedAt: startedAt || 0,
+              duracao: typeof parsed.duracao === "number" ? parsed.duracao : 0,
+            };
           });
           return;
         }
       } catch {}
       setCurrentMusic(null);
     };
+
     pollMusic();
+    
+    // Cross-tab updates
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === targetKey || e.key === musicStartKey(dataUserId)) pollMusic();
+    };
+    // Same-tab updates via writeMusicData helper
+    const onCustom = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || detail.userId === dataUserId) pollMusic();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
     const interval = setInterval(pollMusic, 2000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(MUSIC_DATA_EVENT, onCustom as EventListener);
+      clearInterval(interval);
+    };
   }, [dataUserId]);
 
   // Tick every second to update elapsed time / progress bar for the current song
