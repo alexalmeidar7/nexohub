@@ -768,6 +768,10 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
+          })()}
+        </div>
+      )}
+
           
           {/* Roteiros Agendados Section */}
           <div className="mt-8 border-t border-[#00BFF0] pt-6 pb-6" style={MONT}>
