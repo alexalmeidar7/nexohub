@@ -768,13 +768,8 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
-            );
           })()}
-        </>)}
-      </div>
-    </div>
-  );
-}, [historico, programas, activeTab, regenerating, historicoOpen]);
+
 
 
 
