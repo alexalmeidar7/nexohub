@@ -191,16 +191,40 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
       setTotalCount(count || 0);
 
-      const query = supabase
-        .from("infomusic")
+      // 1) Fetch playback history
+      const { data: historyData, error: historyError } = await supabase
+        .from("musicas_tocadas")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setRows(data || []);
+      if (historyError) throw historyError;
+
+      // 2) Fetch curiosity records to map to history
+      const { data: infoData, error: infoError } = await supabase
+        .from("infomusic")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1000); // Higher limit to ensure we match most recent history
+
+      if (infoError) throw infoError;
+
+      setRows(infoData || []);
+
+      const historyWithCuriosities = (historyData || []).map(h => {
+        const match = (infoData || []).find(i => 
+          i.artista.toLowerCase() === h.artista.toLowerCase() && 
+          i.musica.toLowerCase() === h.musica.toLowerCase()
+        );
+        return {
+          ...h,
+          curiosidade: match?.curiosidade || ""
+        };
+      });
+
+      setHistoryRows(historyWithCuriosities);
     } catch (e) {
       toast.error("Erro ao carregar dados");
     } finally {
