@@ -768,7 +768,9 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
+            );
           })()}
+
 
 
           <div className="mt-8 mb-4 flex items-center gap-3">
