@@ -859,6 +859,28 @@ export default function RoteiroPrograma() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
+                      <button 
+                        onClick={async () => {
+                          toast.info("Enviando para o vMix...");
+                          const ok = await regenerateXmlForRoteiro(r);
+                          if (ok) {
+                            const now = new Date().toISOString();
+                            await supabase.from("roteiros").update({ 
+                              xml_pushed_at: now,
+                              agendado_para_envio: null,
+                              enviado_agendamento: true 
+                            }).eq("id", r.id);
+                            toast.success("Roteiro enviado para o vMix com sucesso!");
+                            fetchHistorico();
+                          } else {
+                            toast.error("Falha ao enviar para o vMix");
+                          }
+                        }} 
+                        className="p-2 hover:bg-cyan-50 rounded-lg text-cyan-500 transition-colors" 
+                        title="Enviar para o vMix agora"
+                      >
+                        <Send size={16} />
+                      </button>
                       <button onClick={() => {
                         let blocos = []; let editParticipantes: any[] = []; let editEscaladaList: any[] = []; let editPodcastData: any = undefined;
                         try { const parsed = typeof r.participantes === "string" ? JSON.parse(r.participantes) : r.participantes || []; if (parsed && parsed.blocos) { blocos = parsed.blocos; editParticipantes = parsed.participantes || []; editEscaladaList = parsed.escaladaList || []; editPodcastData = parsed.podcastData || undefined; } else { blocos = Array.isArray(parsed) ? parsed : []; } } catch { blocos = []; }
