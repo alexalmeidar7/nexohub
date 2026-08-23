@@ -2193,7 +2193,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     >
       <PlayerLoadingOverlay 
         isLoading={!dataLoaded || fadeOut} 
-        minDurationMs={3000}
+        minDurationMs={2500}
       />
       {/* Top loading bar */}
       {!dataLoaded && (
