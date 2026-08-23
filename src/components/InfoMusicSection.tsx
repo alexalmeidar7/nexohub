@@ -562,12 +562,12 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   loadExcecoes();
                   toast.success(`"${nowPlaying.artista}" inserido na lista de EXCEÇÕES`);
                 } catch (e) {
-                  toast.error("Erro ao adicionar exceção");
+                   toast.error("Erro ao adicionar exceção");
                 }
               }}
             >
               <Ban size={16} className="mr-2" />
-              inserir essa musica na lista de EXCEÇÕES
+              inserir essa música na lista de EXCEÇÕES
             </Button>
 
             <Button 
