@@ -52,7 +52,7 @@ export default function AgendarRoteiroPopup({ open, onOpenChange, roteiroId, onS
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-2xl border-none shadow-2xl z-[9999]" style={{ backgroundColor: "#D6F4FB", fontFamily: "'Montserrat', sans-serif" }}>
+      <DialogContent className="max-w-md rounded-2xl border-none shadow-2xl !z-[9999]" style={{ backgroundColor: "#D6F4FB", fontFamily: "'Montserrat', sans-serif" }}>
         <DialogHeader>
           <DialogTitle className="text-lg font-bold uppercase tracking-wider flex items-center gap-2" style={{ color: "#0A2540" }}>
             <Calendar className="w-5 h-5 text-[#00BFF0]" />
