@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { mergeUserDashboardItems } from "@/lib/userSettings";
-import { readMusicData, readMusicStart, musicDataKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
+import { readMusicData, readMusicStart, musicDataKey, musicStartKey, MUSIC_DATA_EVENT } from "@/lib/musicStorageKeys";
 import { resolveEffectiveOnAir, getZonedNow } from "@/lib/onAirResolver";
 import AudioSpectrum from "@/components/AudioSpectrum";
 import AutoScrollText from "@/components/player/AutoScrollText";
