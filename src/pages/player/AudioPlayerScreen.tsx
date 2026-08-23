@@ -3531,7 +3531,7 @@ function PollDialog({
         </div>
 
         <p className="text-[12px] text-white/40 text-center leading-relaxed font-medium">
-          {submitted ? "Obrigado por participar!" : "Selecione uma opção para votar"}
+          {submitted ? "Obrigado por participar!" : "Exibir informações do programa em tempo real ao lado do player quando eu selecionar um canal."}
         </p>
       </div>
     </div>,
