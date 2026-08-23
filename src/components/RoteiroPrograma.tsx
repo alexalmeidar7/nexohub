@@ -448,7 +448,22 @@ export default function RoteiroPrograma() {
     }
   };
 
+  const cancelAgendamento = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("roteiros")
+        .delete()
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Agendamento cancelado");
+      fetchHistorico();
+    } catch (e) {
+      toast.error("Erro ao cancelar agendamento");
+    }
+  };
+
   const escXml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 
   const regenerateXmlForRoteiro = async (r: any): Promise<boolean> => {
     try {
