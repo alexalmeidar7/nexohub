@@ -562,7 +562,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                   loadExcecoes();
                   toast.success(`"${nowPlaying.artista}" inserido na lista de EXCEÇÕES`);
                 } catch (e) {
-                  toast.error("Erro ao adicionar exceção");
+                   toast.error("Erro ao adicionar exceção");
                 }
               }}
             >
