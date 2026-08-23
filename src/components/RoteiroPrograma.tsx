@@ -396,10 +396,19 @@ export default function RoteiroPrograma() {
 
   const fetchHistorico = async () => {
     if (!user) return;
+
+    // Resolve effective user id: sub-users inherit parent's data
+    const { data: sub } = await supabase
+      .from("sub_users")
+      .select("parent_user_id, ativo")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+    const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+
     const { data } = await supabase
       .from("roteiros")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", effectiveUserId)
       .order("created_at", { ascending: false });
 
     if (!data) {
@@ -428,7 +437,7 @@ export default function RoteiroPrograma() {
       for (const id of toMarkFeito) {
         const rot = data.find(r => r.id === id);
         if (!rot) continue;
-        const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", user.id).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
+        const { data: eventos } = await supabase.from("agenda_eventos").select("id, descricao").eq("user_id", effectiveUserId).ilike("descricao", `%Roteiro: ${rot.programa_nome}%`).eq("data", rot.horario ? `${rot.data_programa}T${rot.horario}:00` : rot.data_programa);
         if (eventos && eventos.length > 0) {
           for (const ev of eventos) {
             if (!ev.descricao?.includes("[VENCIDO]")) {
@@ -449,7 +458,9 @@ export default function RoteiroPrograma() {
     if (error) { toast.error("Erro ao excluir roteiro"); }
     else {
       if (roteiro && user) {
-        await supabase.from("agenda_eventos").delete().eq("user_id", user.id).eq("data", roteiro.data_programa).like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
+        const { data: sub } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
+        const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+        await supabase.from("agenda_eventos").delete().eq("user_id", effectiveUserId).eq("data", roteiro.data_programa).like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
       }
       toast.success("Roteiro excluído");
       fetchHistorico();
