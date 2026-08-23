@@ -554,15 +554,30 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
               onClick={async () => {
                 if (!user || !nowPlaying) return;
                 try {
-                  const { error } = await supabase.from("infomusic_excecoes").insert({
+                  const { error } = await supabase.from("infomusic_excecoes").upsert({
                     user_id: user.id,
                     termo: nowPlaying.artista
-                  });
+                  }, { onConflict: 'user_id,termo' });
+                  
                   if (error) throw error;
+                  
+                  // Import e chamada para invalidar cache global se existir
+                  try {
+                    const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+                    invalidateMusicExceptionsCache(user.id);
+                  } catch (e) {
+                    console.warn("Could not invalidate music exceptions cache", e);
+                  }
+
                   loadExcecoes();
                   toast.success(`"${nowPlaying.artista}" inserido na lista de EXCEÇÕES`);
-                } catch (e) {
-                   toast.error("Erro ao adicionar exceção");
+                } catch (e: any) {
+                  console.error("Erro ao adicionar exceção:", e);
+                  if (e.code === '23505') {
+                    toast.error(`"${nowPlaying.artista}" já está na lista de exceções`);
+                  } else {
+                    toast.error("Erro ao adicionar exceção");
+                  }
                 }
               }}
             >
@@ -641,15 +656,29 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                               e.stopPropagation();
                               if (!user) return;
                               try {
-                                const { error } = await supabase.from("infomusic_excecoes").insert({
+                                const { error } = await supabase.from("infomusic_excecoes").upsert({
                                   user_id: user.id,
                                   termo: r.artista
-                                });
+                                }, { onConflict: 'user_id,termo' });
+                                
                                 if (error) throw error;
+
+                                try {
+                                  const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+                                  invalidateMusicExceptionsCache(user.id);
+                                } catch (e) {
+                                  console.warn("Could not invalidate music exceptions cache", e);
+                                }
+
                                 loadExcecoes();
                                 toast.success(`"${r.artista}" adicionado às exceções`);
-                              } catch (e) {
-                                toast.error("Erro ao adicionar exceção");
+                              } catch (e: any) {
+                                console.error("Erro ao adicionar exceção:", e);
+                                if (e.code === '23505') {
+                                  toast.error(`"${r.artista}" já está na lista de exceções`);
+                                } else {
+                                  toast.error("Erro ao adicionar exceção");
+                                }
                               }
                             }}
                           >
