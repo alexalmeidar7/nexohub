@@ -937,6 +937,7 @@ export default function WelcomeScreen({
                     className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
                     aria-label="Entrar no player"
                     data-ws-focusable="true"
+                    data-ws-profile-main="true"
                   >
                     <div
                       className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
@@ -1045,6 +1046,7 @@ export default function WelcomeScreen({
                     <div key={sp.id} className="flex items-center gap-4 shrink-0">
                       <button
                         data-ws-focusable="true"
+                        data-ws-profile-sub={sp.id}
                         onClick={() => {
                           cancelAutoAdvance();
                           setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));
