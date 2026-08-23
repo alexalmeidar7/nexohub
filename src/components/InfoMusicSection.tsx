@@ -18,6 +18,16 @@ interface InfoMusicRow {
   expires_at: string;
 }
 
+interface HistoryRow {
+  id: string;
+  artista: string;
+  musica: string;
+  created_at: string;
+  dia: string;
+  horario: string;
+  curiosidade?: string;
+}
+
 const PAGE_SIZE = 50;
 const HARD_CAP = 50;
 
@@ -43,6 +53,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false); // Forced closed by default per user request
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
+  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
@@ -180,16 +191,40 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       const { count } = await supabase.from("infomusic").select("*", { count: "exact", head: true }).eq("user_id", user.id);
       setTotalCount(count || 0);
 
-      const query = supabase
-        .from("infomusic")
+      // 1) Fetch playback history
+      const { data: historyData, error: historyError } = await supabase
+        .from("musicas_tocadas")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(100);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setRows(data || []);
+      if (historyError) throw historyError;
+
+      // 2) Fetch curiosity records to map to history
+      const { data: infoData, error: infoError } = await supabase
+        .from("infomusic")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1000); // Higher limit to ensure we match most recent history
+
+      if (infoError) throw infoError;
+
+      setRows(infoData || []);
+
+      const historyWithCuriosities = (historyData || []).map(h => {
+        const match = (infoData || []).find(i => 
+          i.artista.toLowerCase() === h.artista.toLowerCase() && 
+          i.musica.toLowerCase() === h.musica.toLowerCase()
+        );
+        return {
+          ...h,
+          curiosidade: match?.curiosidade || ""
+        };
+      });
+
+      setHistoryRows(historyWithCuriosities);
     } catch (e) {
       toast.error("Erro ao carregar dados");
     } finally {
@@ -271,6 +306,22 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  const filteredHistoryRows = useMemo(() => {
+    let list = historyRows;
+    if (filterField === "sem_curiosidade") {
+      list = list.filter(r => !r.curiosidade || !r.curiosidade.trim());
+    } else if (filterField === "artista") {
+      list = list.filter(r => r.curiosidade && r.curiosidade.trim());
+    }
+    if (!search.trim()) return list;
+    const s = search.toLowerCase();
+    return list.filter(r => 
+      r.artista.toLowerCase().includes(s) || 
+      r.musica.toLowerCase().includes(s) || 
+      (r.curiosidade || "").toLowerCase().includes(s)
+    );
+  }, [historyRows, search, filterField]);
 
   const filteredRows = useMemo(() => {
     let list = rows;
@@ -515,7 +566,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">ULTIMAS TOCADAS ({filteredRows.length})</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">em musica no ar - info music - a tabela ULTIMAS TOCADAS - precisa refletir as ultimas musicas tocadas e toda vez que muda a musica essa musica entra nessa tabela, veja que a ultima musica inserida nessa tabela foi dia 13/08/26 hje é 23/08/26 - nao esta atualizando essa tabela ({filteredHistoryRows.length})</h4>
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
@@ -527,7 +578,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                 </tr>
               </thead>
               <tbody>
-                {filteredRows.map((r, idx) => (
+                {filteredHistoryRows.map((r, idx) => (
                   <tr 
                     key={r.id} 
                     className="group relative"
@@ -583,7 +634,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
                     </td>
                   </tr>
                 ))}
-                {filteredRows.length === 0 && (
+                {filteredHistoryRows.length === 0 && (
                   <tr>
                     <td colSpan={2} style={{ padding: "40px 0", textAlign: "center", opacity: 0.4, fontStyle: "italic" }}>Nenhum registro encontrado</td>
                   </tr>
