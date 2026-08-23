@@ -646,6 +646,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       setMusic(data);
       setStartTime(now);
       setElapsed(0);
+      
       // Log to history with real artist/music (never null — use fallback text so column is always populated)
       if (dataUserId && source) {
         const logArtist = (data.artista && data.artista.trim()) || "Desconhecido";
@@ -654,6 +655,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           .then(setUploadHistory)
           .catch((e) => console.warn("[MusicaNoAr] history log failed:", e));
       }
+
+      // Force immediate storage sync for Local Source to prevent loss
+      if (source === "pasta") {
+        syncToStorage(text);
+      }
+
       // Persist to musicas_tocadas (history table). This runs even when the
       // Storage-based syncer (useGlobalMusicSync) is stale, so the local file
       // reader alone is enough to keep the play history up to date.
@@ -956,9 +963,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             processMusicRef.current(parsed, "pasta");
           }
         }
-        if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
+        if (Date.now() - lastStorageSyncAttemptRef.current > 5_000) {
           syncToStorage(text);
         }
+
         readingRef.current = false;
         return;
       }
@@ -974,8 +982,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
         clearMusicRef.current("pasta");
       }
 
-      // Background sync (non-blocking)
-      syncToStorage(text);
+      // Background sync (non-blocking) - already handled above in processMusic if it changed
+      // or here if it's a periodic sync
+      if (Date.now() - lastStorageSyncAttemptRef.current > 10_000) {
+        syncToStorage(text);
+      }
+
 
     } catch { }
     readingRef.current = false;
@@ -1514,6 +1526,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                 zIndex: 0
               }} 
             />
+
             {/* Background progress fill (discreet behind the content) */}
             <div
               className="absolute inset-y-0 left-0 pointer-events-none"
