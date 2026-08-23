@@ -697,8 +697,9 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
       if (cancelled) return;
       if (!cover) return;
       
-      // Atualiza o estado e o histórico com a capa confirmada
-      setResolvedMusicCover(cover);
+      // Atualiza o estado e o histórico com a capa confirmada.
+      // A comparação de prev === cover evita re-renders desnecessários se a capa for a mesma.
+      setResolvedMusicCover((prev) => (prev === cover ? prev : cover));
       setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
 
