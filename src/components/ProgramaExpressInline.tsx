@@ -302,6 +302,23 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   useEffect(() => { if (editData) setNovoRoteiroOpen(true); }, [editData]);
   useEffect(() => { if (externalPasteText) setNovoRoteiroOpen(true); }, [externalPasteText]);
 
+  const fetchScheduledRoteiros = useCallback(async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("roteiros")
+      .select("id, programa_nome, estudio, agendado_para_envio, enviado_agendamento")
+      .eq("user_id", user.id)
+      .not("agendado_para_envio", "is", null)
+      .order("agendado_para_envio", { ascending: true });
+    
+    if (data) setScheduledRoteiros(data);
+  }, [user]);
+
+  useEffect(() => {
+    fetchScheduledRoteiros();
+  }, [fetchScheduledRoteiros]);
+
+
   // Podcast-specific state
   const [podcastData, setPodcastData] = useState<PodcastData>({
     tituloTarja: "", introducao: "", agendamentoData: "", agendamentoHorario: "", perguntas: [""], concluindo: "", apoioImagens: [""], apoioVideos: [""],
