@@ -768,7 +768,55 @@ export default function RoteiroPrograma() {
                 ))}
               </div>
             );
+            );
           })()}
+          <div className="mt-8 mb-4 flex items-center gap-3">
+            <Calendar size={14} style={{ color: CYAN }} />
+            <span style={{ ...MONT, fontSize: 13, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", color: DARK }}>
+              Roteiros Agendados
+            </span>
+          </div>
+          {agendados.length === 0 ? (
+            <div className="text-center py-8" style={{ background: "#F8FAFC", borderRadius: 16 }}>
+              <span style={{ ...MONT, fontSize: 11, color: "#94A3B8" }}>
+                em roteiro de programa - ao cadastrar ou editar um programa -  ao lado do botão 'finalizar edição' coloque um botão 'agendar roteiro' ao clicar nesse botão abre um pop up para o usuário colocar a data
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {agendados.map((r) => {
+                const prog = programas.find(p => p.id === r.programa_id);
+                return (
+                  <div key={r.id} className="flex items-center gap-4 p-4 rounded-xl border-2 border-dashed border-slate-100 hover:border-cyan-100 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
+                      <Clock size={20} />
+                    </div>
+                    <div className="flex-1">
+                      <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
+                        {prog?.nome || 'Programa'}
+                      </h4>
+                      <p style={{ ...MONT, fontSize: 11, color: "#64748B" }}>
+                        Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => cancelAgendamento(r.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                      title="Cancelar Agendamento"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>)}
+      </div>
+    </div>
+  );
+}, [historico, agendados, programas, activeTab, regenerating, historicoOpen]);
+
 
 
 
