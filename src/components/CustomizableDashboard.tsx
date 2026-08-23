@@ -934,8 +934,15 @@ function AgendaPreview() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split("T")[0];
-    supabase.from("agenda_eventos").select("data, descricao").eq("user_id", user.id).gte("data", today).order("data").limit(3)
-      .then(({ data }) => { if (data) setEvents(data); });
+    const load = async () => {
+      let targetUserId = user.id;
+      const { data: subUser } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
+      if (subUser?.ativo && subUser.parent_user_id) targetUserId = subUser.parent_user_id;
+
+      supabase.from("agenda_eventos").select("data, descricao").eq("user_id", targetUserId).gte("data", today).order("data").limit(3)
+        .then(({ data }) => { if (data) setEvents(data); });
+    };
+    load();
   }, [user]);
 
   const today = new Date();

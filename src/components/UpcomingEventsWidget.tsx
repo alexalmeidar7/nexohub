@@ -98,9 +98,21 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
     if (!user) return;
     let cancelled = false;
     const load = async () => {
+      // For sub-users, we load events from the master user (parent_user_id)
+      let targetUserId = user.id;
+      const { data: subUser } = await supabase
+        .from("sub_users")
+        .select("parent_user_id, ativo")
+        .eq("auth_user_id", user.id)
+        .maybeSingle();
+      
+      if (subUser?.ativo && subUser.parent_user_id) {
+        targetUserId = subUser.parent_user_id;
+      }
+
       const [evtsRes, progsRes] = await Promise.all([
-        supabase.from("agenda_eventos").select("*").eq("user_id", user.id).order("data"),
-        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", user.id),
+        supabase.from("agenda_eventos").select("*").eq("user_id", targetUserId).order("data"),
+        supabase.from("programas").select("id, nome, horario_inicio, horario_fim, dias_semana, ativo").eq("user_id", targetUserId),
       ]);
       if (cancelled) return;
       const evts = evtsRes.data || [];
@@ -121,12 +133,23 @@ export default function UpcomingEventsWidget({ onNavigate }: { onNavigate?: (p: 
       setLoading(false);
     };
     load();
-    const ch = supabase
-      .channel(`upcoming-events-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${user.id}` }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${user.id}` }, load)
-      .subscribe();
-    return () => { cancelled = true; supabase.removeChannel(ch); };
+    // Use targetUserId for realtime subscription as well
+    const getTargetId = async () => {
+      const { data } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
+      return (data?.ativo && data.parent_user_id) ? data.parent_user_id : user.id;
+    };
+    
+    let ch: any;
+    getTargetId().then(tid => {
+      if (cancelled) return;
+      ch = supabase
+        .channel(`upcoming-events-${tid}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "agenda_eventos", filter: `user_id=eq.${tid}` }, load)
+        .on("postgres_changes", { event: "*", schema: "public", table: "programas", filter: `user_id=eq.${tid}` }, load)
+        .subscribe();
+    });
+    
+    return () => { cancelled = true; if (ch) supabase.removeChannel(ch); };
   }, [user]);
 
 
