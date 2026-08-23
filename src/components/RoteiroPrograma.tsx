@@ -813,7 +813,6 @@ export default function RoteiroPrograma() {
   );
 }, [historico, programas, activeTab, regenerating, historicoOpen]);
 
-  }, [historico, programas, activeTab, regenerating]);
 
   if (loading) return <ModulePageSkeleton />;
 
