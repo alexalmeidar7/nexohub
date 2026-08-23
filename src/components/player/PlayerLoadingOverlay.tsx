@@ -5,6 +5,7 @@ interface LoadingOverlayProps {
   isLoading: boolean;
   onFinished?: () => void;
   minDurationMs?: number;
+  progress?: number;
 }
 
 /**
@@ -15,7 +16,8 @@ interface LoadingOverlayProps {
 export default function PlayerLoadingOverlay({ 
   isLoading, 
   onFinished,
-  minDurationMs = 3000 
+  minDurationMs = 3000,
+  progress
 }: LoadingOverlayProps) {
   const [show, setShow] = useState(true);
   const [shouldFadeOut, setShouldFadeOut] = useState(false);
@@ -49,8 +51,10 @@ export default function PlayerLoadingOverlay({
       }`}
     >
       <div className="flex flex-col items-center gap-6 animate-fade-in">
-        <ElegantLoader size={44} />
-        <p className="text-white/60 text-xs lowercase tracking-[0.2em] font-light">sincronizando backend...</p>
+        <ElegantLoader size={44} progress={progress} />
+        <p className="text-white/60 text-[10px] lowercase tracking-[0.2em] font-light">
+          {progress !== undefined ? `sincronizando ${Math.round(progress)}%` : "sincronizando backend..."}
+        </p>
       </div>
 
     </div>

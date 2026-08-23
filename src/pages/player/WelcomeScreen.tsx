@@ -248,6 +248,48 @@ export default function WelcomeScreen({
 
     const onKey = (e: KeyboardEvent) => {
       if (!["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"," "].includes(e.key)) return;
+      
+      const isProfileStep = document.querySelector('[data-ws-profile-main="true"]');
+      if (isProfileStep && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+        const nodes = getNodes();
+        const active = document.activeElement as HTMLElement | null;
+        if (active && nodes.includes(active)) {
+          const isMain = active.hasAttribute("data-ws-profile-main");
+          const subId = active.getAttribute("data-ws-profile-sub");
+          
+          if (e.key === "ArrowDown") {
+            if (isMain && subProfiles.length > 0) {
+              e.preventDefault();
+              const firstSub = document.querySelector<HTMLElement>('[data-ws-profile-sub]');
+              firstSub?.focus();
+              return;
+            }
+            if (subId) {
+              const currentSubs = Array.from(document.querySelectorAll<HTMLElement>('[data-ws-profile-sub]'));
+              const idx = currentSubs.indexOf(active);
+              if (idx < currentSubs.length - 1) {
+                e.preventDefault();
+                currentSubs[idx + 1].focus();
+                return;
+              }
+            }
+          } else if (e.key === "ArrowUp") {
+            if (subId) {
+              const currentSubs = Array.from(document.querySelectorAll<HTMLElement>('[data-ws-profile-sub]'));
+              const idx = currentSubs.indexOf(active);
+              e.preventDefault();
+              if (idx === 0) {
+                const main = document.querySelector<HTMLElement>('[data-ws-profile-main="true"]');
+                main?.focus();
+              } else {
+                currentSubs[idx - 1].focus();
+              }
+              return;
+            }
+          }
+        }
+      }
+
       const nodes = getNodes();
       if (nodes.length === 0) return;
       const active = document.activeElement as HTMLElement | null;
@@ -937,6 +979,7 @@ export default function WelcomeScreen({
                     className="group relative shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-white/70 rounded-[28px]"
                     aria-label="Entrar no player"
                     data-ws-focusable="true"
+                    data-ws-profile-main="true"
                   >
                     <div
                       className="relative rounded-[28px] overflow-hidden transition-all duration-500 ease-out group-hover:scale-[1.04]"
@@ -1045,6 +1088,7 @@ export default function WelcomeScreen({
                     <div key={sp.id} className="flex items-center gap-4 shrink-0">
                       <button
                         data-ws-focusable="true"
+                        data-ws-profile-sub={sp.id}
                         onClick={() => {
                           cancelAutoAdvance();
                           setProfile(p => ({ ...p, nome: sp.name, avatar_url: sp.avatar_url }));

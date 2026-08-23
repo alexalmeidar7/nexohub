@@ -16,9 +16,10 @@ interface SplashScreenProps {
   onFinish: () => void;
   ready?: boolean;
   maxDurationMs?: number;
+  progress?: number;
 }
 
-export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 5000 }: SplashScreenProps) {
+export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 5000, progress = 0 }: SplashScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -223,7 +224,12 @@ export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 5
             : `opacity 500ms ease-out, transform 700ms ${easing}`,
         }}
       >
-        <ElegantLoader size={42} />
+        <div className="flex flex-col items-center gap-4">
+          <ElegantLoader size={48} progress={progress} />
+          <p className="text-white/40 text-[10px] uppercase tracking-widest font-tv-medium">
+            {progress < 100 ? `sincronizando ${Math.round(progress)}%` : "pronto"}
+          </p>
+        </div>
       </div>
     </div>
   );

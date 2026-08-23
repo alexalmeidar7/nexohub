@@ -1644,6 +1644,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [programas, setProgramas] = useState<Programa[]>(() => cached?.programas ?? []);
   const [dataLoaded, setDataLoaded] = useState(() => !!cached);
+  const [loadProgress, setLoadProgress] = useState(cached ? 100 : 0);
   const [watchHistory, setWatchHistory] = useState<any[]>([]);
   const [playlistVideos, setPlaylistVideos] = useState<Record<string, PlaylistVideo[]>>({});
   const [nowPlaying, setNowPlaying] = useState<{ musica: string; artista: string; capa?: string } | null>(null);
@@ -1740,6 +1741,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     };
 
     const fetchAuthenticatedData = async (attempt = 0) => {
+      setLoadProgress(prev => Math.max(prev, 15));
       const userId = user?.id;
       if (!userId || cancelled) return;
 
@@ -1753,6 +1755,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
         supabase.from("apresentadores").select("id, nome, foto").eq("user_id", userId).eq("ativo", true),
         supabase.from("profiles").select("nome, avatar_url, email, cidade, estado").eq("user_id", userId).single(),
       ]);
+      setLoadProgress(65);
 
       if (cancelled) return;
 
@@ -1799,6 +1802,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       if (settingsRes.data && typeof (settingsRes.data as any).shopping_active === "boolean") {
         setShopActive((settingsRes.data as any).shopping_active);
       }
+      setLoadProgress(100);
       setDataLoaded(true);
       // Write to local cache for instant next load
       writeCache(cacheId, {
@@ -1815,6 +1819,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     };
 
     const fetchPublicData = async (slug: string, attempt = 0) => {
+      setLoadProgress(prev => Math.max(prev, 20));
       if (cancelled) return;
       const { data, error } = await supabase.functions.invoke("public-player-data", { body: { slug } });
       if (cancelled) return;
@@ -1828,6 +1833,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       setApresentadores((data?.apresentadores ?? []) as Apresentador[]);
       setShopProducts((data?.shopProducts ?? []) as any);
       if (typeof data?.shopActive === "boolean") setShopActive(data.shopActive);
+      setLoadProgress(100);
       setDataLoaded(true);
       // Cache public data
       writeCache(cacheId, {
@@ -2194,6 +2200,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
       <PlayerLoadingOverlay 
         isLoading={!dataLoaded || fadeOut} 
         minDurationMs={2500}
+        progress={loadProgress}
       />
       {/* Top loading bar */}
       {!dataLoaded && (
@@ -2269,7 +2276,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
                       items={sidebarItems.map(s => ({ label: s.label, key: s.key, action: s.action }))}
                       activeKey={activeSection}
                       avatarUrl={(profileAvatar && !profileAvatar.includes("usr-default")) ? profileAvatar : (googlePhoto || profileAvatar)}
-                      userName={googleName || userName}
+                      userName={googleName || userName || profileName}
                       userEmail={googleEmail}
                       googleAvatarUrl={googlePhoto}
                       showLogout={!!user}
