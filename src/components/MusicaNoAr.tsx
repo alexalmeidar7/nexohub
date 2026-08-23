@@ -593,7 +593,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     }
   }, [MUSIC_DATA_KEY, MUSIC_START_KEY, dataUserId, music]);
 
-  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta") => {
+  const processMusic = useCallback(async (data: MusicData, source?: "online" | "pasta", rawXml?: string) => {
     const prevRaw = localStorage.getItem(MUSIC_DATA_KEY);
     const prev: MusicData | null = prevRaw ? JSON.parse(prevRaw) : null;
     const incomingIsPlaceholder = (!data.titulo || data.titulo.toLowerCase() === "sem titulo" || data.titulo.toLowerCase() === "sem título")
@@ -657,9 +657,10 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
 
       // Force immediate storage sync for Local Source to prevent loss
-      if (source === "pasta") {
-        syncToStorage(text);
+      if (source === "pasta" && rawXml) {
+        syncToStorage(rawXml);
       }
+
 
       // Persist to musicas_tocadas (history table). This runs even when the
       // Storage-based syncer (useGlobalMusicSync) is stale, so the local file
@@ -807,7 +808,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       onlineStoppedRef.current = false;
       // Only defer to local source when online is NOT stopped
       if (isLocalSourceHealthy()) return;
-      await processMusic(parsed, "online");
+      await processMusic(parsed, "online", data.content);
     } catch (err: any) {
       onlineFailCountRef.current++;
       if (onlineFailCountRef.current >= 3) {
@@ -815,6 +816,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
       }
     }
   }, [isLocalSourceHealthy, isOnlineSelected, xmlUrl, processMusic, clearMusic]);
+
 
   // Sync component state from localStorage (useGlobalMusicSync may update it)
   useEffect(() => {
@@ -957,11 +959,12 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
             const currentRaw = localStorage.getItem(MUSIC_DATA_KEY);
             const current = currentRaw ? JSON.parse(currentRaw) : null;
             if (!current || current.titulo !== parsed.titulo || current.artista !== parsed.artista) {
-              processMusicRef.current(parsed, "pasta");
+              processMusicRef.current(parsed, "pasta", text);
             }
           } catch {
-            processMusicRef.current(parsed, "pasta");
+            processMusicRef.current(parsed, "pasta", text);
           }
+
         }
         if (Date.now() - lastStorageSyncAttemptRef.current > 5_000) {
           syncToStorage(text);
@@ -975,7 +978,8 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
       if (parsed) {
         // Fire-and-forget: don't block polling with iTunes cover fetch
-        processMusicRef.current(parsed, "pasta");
+        processMusicRef.current(parsed, "pasta", text);
+
       } else if (isStoppedXmlPayload(text)) {
         // Automação sem música tocando — limpa o card em vez de manter
         // a última música travada.
@@ -1038,7 +1042,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
     setLocalFileContent(text);
 
     const parsed = parseXmlString(text);
-    if (parsed) await processMusic(parsed, "pasta");
+    if (parsed) await processMusic(parsed, "pasta", text);
 
     syncToStorage(text);
     setLocalMonitoring(true);
@@ -1121,7 +1125,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
           setLocalError(null);
           setLocalActivating(false);
           const parsed = parseXmlString(text);
-          if (parsed) processMusicRef.current(parsed, "pasta");
+          if (parsed) processMusicRef.current(parsed, "pasta", text);
           else if (isStoppedXmlPayload(text)) clearMusicRef.current("pasta");
           return;
         }
