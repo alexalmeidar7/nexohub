@@ -566,7 +566,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
           <div className="flex items-center justify-between flex-shrink-0 h-10">
             <div className="flex items-center gap-2">
               <div className="w-1 h-4 bg-[#00BFF0] rounded-full" />
-              <h4 className="text-xs font-black uppercase tracking-wider">em musica no ar - info music - a tabela ULTIMAS TOCADAS - precisa refletir as ultimas musicas tocadas e toda vez que muda a musica essa musica entra nessa tabela, veja que a ultima musica inserida nes ({filteredHistoryRows.length})</h4>
+              <h4 className="text-xs font-black uppercase tracking-wider">em musica no ar - info music - a tabela ULTIMAS TOCADAS - precisa refletir as ultimas musicas tocadas e toda vez que muda a musica essa musica entra nessa tabela, veja que a ultima musica inserida nessa tabela foi dia 13/08/26 hje é 23/08/26 - nao esta atualizando essa tabela ({filteredHistoryRows.length})</h4>
             </div>
           </div>
           <div style={{ overflowX: "auto", borderRadius: 16, border: "1px solid #E5F5FB", flex: 1, backgroundColor: "rgba(255, 255, 255, 0.3)" }}>
