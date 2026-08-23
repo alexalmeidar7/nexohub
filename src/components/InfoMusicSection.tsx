@@ -401,26 +401,52 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
 
           let processed = 0;
           for (const item of data) {
-            const artista = item.ARTISTA || item.Artista || item.artista;
-            const musica = item.MUSICA || item.Musica || item.musica;
-            const curiosidade = item.CURIOSIDADE || item.Curiosidade || item.curiosidade;
+            const artista = item.ARTISTA || item.Artista || item.artista || item["ARTISTA"];
+            const musica = item.MUSICA || item.Musica || item.musica || item["MUSICA"];
+            const curiosidade = item.CURIOSIDADE || item.Curiosidade || item.curiosidade || item["CURIOSIDADE"];
 
             if (artista && musica && curiosidade && String(curiosidade).trim()) {
               const expiresAt = new Date();
               expiresAt.setMonth(expiresAt.getMonth() + 6);
 
-              // Update in DB
-              const { error } = await supabase
+              const { data: existing, error: findError } = await supabase
                 .from("infomusic")
-                .update({ 
-                  curiosidade: String(curiosidade).trim(), 
-                  expires_at: expiresAt.toISOString() 
-                })
+                .select("id")
                 .eq("user_id", user.id)
-                .ilike("artista", artista.trim())
-                .ilike("musica", musica.trim());
+                .ilike("artista", String(artista).trim())
+                .ilike("musica", String(musica).trim())
+                .maybeSingle();
 
-              if (!error) processed++;
+              if (findError) {
+                console.error("Error finding record:", findError);
+                continue;
+              }
+
+              if (existing) {
+                const { error: updateError } = await supabase
+                  .from("infomusic")
+                  .update({ 
+                    curiosidade: String(curiosidade).trim(), 
+                    expires_at: expiresAt.toISOString() 
+                  })
+                  .eq("id", existing.id);
+
+                if (!updateError) processed++;
+                else console.error("Update error:", updateError);
+              } else {
+                const { error: insertError } = await supabase
+                  .from("infomusic")
+                  .insert({
+                    user_id: user.id,
+                    artista: String(artista).trim(),
+                    musica: String(musica).trim(),
+                    curiosidade: String(curiosidade).trim(),
+                    expires_at: expiresAt.toISOString()
+                  });
+
+                if (!insertError) processed++;
+                else console.error("Insert error:", insertError);
+              }
             }
           }
 
