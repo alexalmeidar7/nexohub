@@ -109,6 +109,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
     if (promosData) {
       setItems(promosData.map(p => ({
         ...p,
+        nome: p.nome || "",
         texto: p.texto || "",
         oferecimento: p.oferecimento || "",
         imagem_url: p.imagem_url || "",
