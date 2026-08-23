@@ -53,6 +53,7 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false); // Forced closed by default per user request
   const [rows, setRows] = useState<InfoMusicRow[]>([]);
+  const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [testArtista, setTestArtista] = useState("");
   const [testMusica, setTestMusica] = useState("");
