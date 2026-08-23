@@ -116,7 +116,12 @@ export default function TestemunhaisPage({ effectiveUserId }: { effectiveUserId?
       supabase.from("testemunhais").select("*").eq("user_id", ownerId).order("created_at", { ascending: false }),
       supabase.from("programas").select("id, nome").eq("user_id", ownerId).order("nome")
     ]);
-    if (tData) setItems(tData as Testemunhal[]);
+    if (tData) {
+      setItems(tData.map(t => ({
+        ...t,
+        texto: t.texto || "",
+      })) as Testemunhal[]);
+    }
     if (pData) setProgramas(pData);
     setLoading(false);
   };
