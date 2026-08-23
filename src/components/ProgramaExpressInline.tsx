@@ -263,8 +263,10 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
   const [estudio, setEstudio] = useState("");
   const [programaId, setProgramaId] = useState("");
   const [blocos, setBlocos] = useState<Bloco[]>([{ noticias: [{ titulo: "", imagemUrl: "", escalada: false }] }]);
+  const [fetchingLink, setFetchingLink] = useState<string | null>(null);
   const [showSchedulePopup, setShowSchedulePopup] = useState(false);
   const [scheduledRoteiros, setScheduledRoteiros] = useState<any[]>([]);
+
 
   const [saving, setSaving] = useState(false);
   const [collapsedBlocos, setCollapsedBlocos] = useState<Set<number>>(new Set());
