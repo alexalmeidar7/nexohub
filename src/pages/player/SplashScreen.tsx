@@ -225,15 +225,9 @@ export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 5
         }}
       >
         <div className="flex flex-col items-center gap-4">
-          <ElegantLoader size={42} />
-          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-white transition-all duration-300 ease-out"
-              style={{ width: `${Math.min(100, progress)}%` }}
-            />
-          </div>
+          <ElegantLoader size={48} progress={progress} />
           <p className="text-white/40 text-[10px] uppercase tracking-widest font-tv-medium">
-            {progress < 100 ? `carregando ${Math.round(progress)}%` : "pronto"}
+            {progress < 100 ? `sincronizando ${Math.round(progress)}%` : "pronto"}
           </p>
         </div>
       </div>
