@@ -458,7 +458,9 @@ export default function RoteiroPrograma() {
     if (error) { toast.error("Erro ao excluir roteiro"); }
     else {
       if (roteiro && user) {
-        await supabase.from("agenda_eventos").delete().eq("user_id", user.id).eq("data", roteiro.data_programa).like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
+        const { data: sub } = await supabase.from("sub_users").select("parent_user_id, ativo").eq("auth_user_id", user.id).maybeSingle();
+        const effectiveUserId = sub?.ativo && sub.parent_user_id ? sub.parent_user_id : user.id;
+        await supabase.from("agenda_eventos").delete().eq("user_id", effectiveUserId).eq("data", roteiro.data_programa).like("descricao", `Roteiro: ${roteiro.programa_nome}%`);
       }
       toast.success("Roteiro excluído");
       fetchHistorico();
