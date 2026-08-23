@@ -809,9 +809,6 @@ export default function RoteiroPrograma() {
             </div>
           </div>
 
-          })()
-          )}
-          </>)}
         </div>
 
       </div>
