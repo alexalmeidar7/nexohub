@@ -213,9 +213,7 @@ export default function PlayerHub() {
     }
   }, [searchParams, setSearchParams]);
 
-  const onSplashFinish = useCallback(() => {
-    setSplashDone(true);
-  }, []);
+  // onSplashFinish moved to use transitionTo below
 
   const transitionTo = useCallback((target: Step) => {
     setFadeOut(true);
@@ -235,6 +233,8 @@ export default function PlayerHub() {
     // usuário. Assim, após o logout o usuário permanece na welcome.
     // Home continua protegido: se não estiver logado, cai na welcome.
     const target: Step = user && skipToHome ? "home" : !user && !tvGuestMode ? "login" : "welcome";
+    if (step === "login" && !user) return; // Stay on login if no user
+    if (step === "splash" && !splashDone) return; // Wait for splash to finish
     setStep((current) => {
       if (current === target) return current;
       transitionTo(target);
@@ -244,19 +244,15 @@ export default function PlayerHub() {
 
 
   const onLoginSuccess = useCallback(() => {
-    // Após login bem-sucedido, o usuário deve entrar no player — nunca voltar
-    // para a tela de login. Persiste a preferência de "home" no slug atual
-    // para que reloads/redirects do OAuth não caiam de novo na welcome.
-    if (!tvGuestMode) {
-      try { window.localStorage.setItem(storageKey, "1"); } catch {}
-      const next = new URLSearchParams(searchParams);
-      if (next.get("step") !== "home") {
-        next.set("step", "home");
-        setSearchParams(next, { replace: true });
-      }
-    }
-    transitionTo("home");
-  }, [transitionTo, tvGuestMode, storageKey, searchParams, setSearchParams]);
+    // Sequence: Login -> Splash
+    transitionTo("splash");
+  }, [transitionTo]);
+
+  const onSplashFinish = useCallback(() => {
+    setSplashDone(true);
+    // After Splash -> Profiles (Welcome)
+    transitionTo("welcome");
+  }, [transitionTo]);
 
   const onWelcomeContinue = useCallback(() => {
     if (!tvGuestMode) {
@@ -280,7 +276,7 @@ export default function PlayerHub() {
       <div className={wrapperClass}>
         <AccessScreen
           logoUrl={logoUrl}
-          onLoginSuccess={() => transitionTo("splash")}
+          onLoginSuccess={onLoginSuccess}
         />
       </div>
     );
