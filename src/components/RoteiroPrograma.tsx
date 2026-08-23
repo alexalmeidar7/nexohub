@@ -408,8 +408,9 @@ export default function RoteiroPrograma() {
       return;
     }
 
-    setHistorico(data.filter(r => !r.agendado_para_envio).slice(0, 10));
-    setAgendados(data.filter(r => r.agendado_para_envio));
+    setHistorico(data.filter((r: any) => !r.agendado_para_envio).slice(0, 10));
+    setAgendados(data.filter((r: any) => r.agendado_para_envio));
+
 
 
     const now = new Date();
