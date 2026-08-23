@@ -294,7 +294,7 @@ export default function PlayerHub() {
           channelName={channelName}
           onFinish={onSplashFinish}
           ready={tvGuestMode ? true : !loading && dataReady}
-          maxDurationMs={tvGuestMode ? 4200 : 12000}
+          maxDurationMs={tvGuestMode ? 4200 : 5000}
         />
       </div>
     );
