@@ -125,11 +125,15 @@ class ChunkErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundar
       error.message?.includes("Loading CSS chunk") ||
       error.message?.includes("dynamically imported module");
 
-    // Auto-retry chunk errors up to 3 times with faster logic
+    // Only transient chunk-download failures can recover by remounting here.
+    // Runtime/render errors must surface immediately instead of leaving the
+    // whole app indefinitely on "Sincronizando ambiente".
     if (isChunkError && this.state.retryCount < 3) {
       this.retryTimer = setTimeout(() => {
         this.setState((prev) => ({ hasError: false, retryCount: prev.retryCount + 1 }));
       }, 400); // Reduced delay from 800ms to 400ms
+    } else if (!isChunkError) {
+      this.setState({ retryCount: 3 });
     }
   }
 

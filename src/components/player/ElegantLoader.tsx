@@ -1,3 +1,5 @@
+import { forwardRef } from "react";
+
 interface ElegantLoaderProps {
   size?: number;
   color?: string;
@@ -9,7 +11,7 @@ interface ElegantLoaderProps {
  * Uses SVG instead of CSS borders to avoid rendering glitches (truncated
  * lines / corner artifacts) that appeared at some zoom levels on Chromium.
  */
-export default function ElegantLoader({ size = 42, color = "#ffffff", className }: ElegantLoaderProps) {
+const ElegantLoader = forwardRef<HTMLDivElement, ElegantLoaderProps>(function ElegantLoader({ size = 42, color = "#ffffff", className }, ref) {
   const stroke = Math.max(1.5, size / 12);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
@@ -17,6 +19,7 @@ export default function ElegantLoader({ size = 42, color = "#ffffff", className 
 
   return (
     <div
+      ref={ref}
       className={className}
       style={{
         width: size,
@@ -51,4 +54,6 @@ export default function ElegantLoader({ size = 42, color = "#ffffff", className 
       <style>{`@keyframes elegant-loader-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
-}
+});
+
+export default ElegantLoader;
