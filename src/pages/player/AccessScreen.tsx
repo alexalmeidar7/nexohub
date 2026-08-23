@@ -51,7 +51,7 @@ export default function AccessScreen({ logoUrl, onLoginSuccess }: AccessScreenPr
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-player"
       style={{ background: "var(--player-glow)" }}
     >
-      <h1 className="text-player-foreground text-2xl font-semibold mb-12">Quem vai acessar?</h1>
+      <h1 className="text-player-foreground text-2xl font-semibold mb-12 lowercase">login</h1>
 
       <div className="flex items-start gap-8">
         {/* Login/Signup with Google */}

@@ -18,7 +18,7 @@ interface SplashScreenProps {
   maxDurationMs?: number;
 }
 
-export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 12000 }: SplashScreenProps) {
+export default function SplashScreen({ onFinish, ready = true, maxDurationMs = 5000 }: SplashScreenProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);

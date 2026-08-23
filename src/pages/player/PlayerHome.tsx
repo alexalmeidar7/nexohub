@@ -2119,9 +2119,9 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
 
   const sidebarItems = [
-    { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
-    { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
-    { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
+    { icon: Home, label: "tela home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
+    { icon: Radio, label: "canais streamings ao vivo", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
+    { icon: Film, label: "canais on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
   ];
 
   const streamingChannelsRow = streamingChannels;
