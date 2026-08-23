@@ -1916,18 +1916,44 @@ export default function ProgramaExpressInline({ programas, estudios, onFinish, e
           </>
         )}
 
-        {/* Save / Finish editing */}
-        {editingId ? (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-            {saving ? "Finalizando..." : "Finalizar Edição"}
+        {/* Save / Finish editing / Schedule */}
+        <div className="flex gap-3 w-full">
+          <button 
+            onClick={() => setShowSchedulePopup(true)} 
+            disabled={saving || !programaId} 
+            className="flex-1 flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
+            style={{ ...nexoPillSecondary, padding: "14px 24px", fontSize: 13, backgroundColor: "#C6F03C", color: "#0A2540" }}
+          >
+            <Calendar size={16} />
+            Agendar Roteiro
           </button>
-        ) : (
-          <button onClick={handleSave} disabled={saving || !programaId} className="w-full flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90" style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13, width: "100%" }}>
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-            {saving ? "Salvando..." : "Finalizar Programa Express"}
+          
+          <button 
+            onClick={handleSave} 
+            disabled={saving || !programaId} 
+            className="flex-[2] flex items-center justify-center gap-2 disabled:opacity-40 hover:opacity-90 transition-transform active:scale-95" 
+            style={{ ...nexoPillPrimary, padding: "14px 24px", fontSize: 13 }}
+          >
+            {saving ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : (
+              editingId ? <Check size={16} /> : <Zap size={16} />
+            )}
+            {saving 
+              ? (editingId ? "Finalizando..." : "Salvando...") 
+              : (editingId ? "Finalizar Edição" : "Finalizar Programa Express")}
           </button>
-        )}
+        </div>
+
+        <Suspense fallback={null}>
+          <AgendarRoteiroPopup 
+            open={showSchedulePopup} 
+            onOpenChange={setShowSchedulePopup} 
+            roteiroId={editingId} 
+            onScheduled={fetchScheduledRoteiros} 
+          />
+        </Suspense>
+
       </div>
       )}
     </div>
