@@ -3287,6 +3287,7 @@ export type Database = {
       cleanup_comercial: { Args: never; Returns: undefined }
       cleanup_musicas_tocadas: { Args: never; Returns: undefined }
       cleanup_old_chat_messages: { Args: never; Returns: undefined }
+      current_parent_user_id: { Args: never; Returns: string }
       expire_overdue_sorteios: { Args: { _user_id: string }; Returns: number }
       get_public_broadcast_assuntos: {
         Args: { _programa_id?: string; _user_id: string }
