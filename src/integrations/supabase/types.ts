@@ -1923,12 +1923,14 @@ export type Database = {
       }
       roteiros: {
         Row: {
+          agendado_para_envio: string | null
           apresentador_editado: boolean | null
           configuracoes: Json | null
           conteudo_html: string
           created_at: string
           data_programa: string
           editado_at: string | null
+          enviado_agendamento: boolean | null
           estudio: string
           horario: string
           id: string
@@ -1947,12 +1949,14 @@ export type Database = {
           xml_pushed_at: string | null
         }
         Insert: {
+          agendado_para_envio?: string | null
           apresentador_editado?: boolean | null
           configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
           editado_at?: string | null
+          enviado_agendamento?: boolean | null
           estudio?: string
           horario?: string
           id?: string
@@ -1971,12 +1975,14 @@ export type Database = {
           xml_pushed_at?: string | null
         }
         Update: {
+          agendado_para_envio?: string | null
           apresentador_editado?: boolean | null
           configuracoes?: Json | null
           conteudo_html?: string
           created_at?: string
           data_programa?: string
           editado_at?: string | null
+          enviado_agendamento?: boolean | null
           estudio?: string
           horario?: string
           id?: string
@@ -3316,12 +3322,14 @@ export type Database = {
       get_roteiro_by_share_token: {
         Args: { _token: string }
         Returns: {
+          agendado_para_envio: string | null
           apresentador_editado: boolean | null
           configuracoes: Json | null
           conteudo_html: string
           created_at: string
           data_programa: string
           editado_at: string | null
+          enviado_agendamento: boolean | null
           estudio: string
           horario: string
           id: string
@@ -3360,12 +3368,14 @@ export type Database = {
       list_roteiros_historico_by_share_token: {
         Args: { _limit?: number; _token: string }
         Returns: {
+          agendado_para_envio: string | null
           apresentador_editado: boolean | null
           configuracoes: Json | null
           conteudo_html: string
           created_at: string
           data_programa: string
           editado_at: string | null
+          enviado_agendamento: boolean | null
           estudio: string
           horario: string
           id: string
