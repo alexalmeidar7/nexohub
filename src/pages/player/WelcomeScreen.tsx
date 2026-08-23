@@ -160,10 +160,10 @@ export default function WelcomeScreen({
         }
         // Recarrega a lista de perfis do usuário logado após o login com Google.
         setProfilesReloadKey((k) => k + 1);
-
+        if (onLoginSuccess) onLoginSuccess();
       } catch { /* silencioso: não bloqueia o login */ }
     })();
-  }, [user?.email, radioUserId, userSlug]);
+  }, [user?.email, radioUserId, userSlug, onLoginSuccess]);
 
 
   const persistSubProfiles = async (next: Array<{ id: string; name: string; avatar_url: string }>) => {
