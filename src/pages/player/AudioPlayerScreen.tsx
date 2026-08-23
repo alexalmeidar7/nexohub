@@ -679,36 +679,26 @@ export default function AudioPlayerScreen(props: AudioPlayerScreenProps) {
     const key = `${artista.toLowerCase()}|${musica.toLowerCase()}`;
 
     // FIX (bug capa travada no canal de áudio):
-    // Antes: quando `musicData.capa` vinha preenchido pelo XML, confiávamos nele
-    // como autoritativo (setávamos resolvedMusicCover, gravávamos no
-    // coverCacheRef e pulávamos o fetchCover). Muitos XMLs de rádio, porém,
-    // repetem a MESMA URL de capa a cada faixa (ou mantêm a URL antiga por
-    // segundos após a troca), então a capa "tocando agora" ficava travada em
-    // uma imagem só. Agora tratamos `musicData.capa` apenas como *placeholder*
-    // visual imediato e SEMPRE disparamos o fetchCover (iTunes/Deezer) na
-    // troca de música — o resultado do fetch sobrescreve o placeholder assim
-    // que chega. Também não gravamos mais o placeholder em coverCacheRef para
-    // evitar poluir o cache com URLs stale.
+    // Forçamos o recarregamento da capa sempre que o artista ou título mudar.
+    // Se o XML enviar uma capa (musicData.capa), usamos como placeholder, 
+    // mas o fetchCover (iTunes/Deezer) sempre tem prioridade e sobrescreve 
+    // para garantir que a imagem corresponda à música atual, corrigindo o bug 
+    // onde a capa ficava travada na música anterior.
     const cached = coverCacheRef.current.get(key);
-    if (cached) {
-      setResolvedMusicCover(cached);
-      warmCover(cached);
-      setHistory((prev) => ensureCurrentAtFront(prev, cached));
-    } else if (musicData?.capa) {
-      // placeholder imediato — NÃO cacheado como autoritativo
-      setResolvedMusicCover(musicData.capa);
-      warmCover(musicData.capa);
-      setHistory((prev) => ensureCurrentAtFront(prev, musicData.capa));
-    } else {
-      setResolvedMusicCover("");
-      setHistory((prev) => ensureCurrentAtFront(prev, undefined));
-    }
+    
+    // Se temos no cache, usamos; se não, usamos o que veio no musicData (se vier)
+    const initialCover = cached || musicData?.capa || "";
+    setResolvedMusicCover(initialCover);
+    if (initialCover) warmCover(initialCover);
+    setHistory((prev) => ensureCurrentAtFront(prev, initialCover || undefined));
 
+    // Busca a capa oficial (iTunes/Deezer) de forma assíncrona
     fetchCover(artista, musica).then((cover) => {
       if (cancelled) return;
       if (!cover) return;
-      // Só atualiza se ainda estamos na mesma música e o cover é diferente
-      // do que já está exibido (evita crossfade desnecessário).
+      
+      // Atualiza o estado e o histórico com a capa confirmada.
+      // A comparação de prev === cover evita re-renders desnecessários se a capa for a mesma.
       setResolvedMusicCover((prev) => (prev === cover ? prev : cover));
       setHistory((prev) => ensureCurrentAtFront(prev, cover));
     });
