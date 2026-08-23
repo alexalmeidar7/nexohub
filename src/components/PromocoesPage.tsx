@@ -425,7 +425,7 @@ export default function PromocoesPage({ effectiveUserId }: { effectiveUserId?: s
 
         {items.length === 0 ? (
           <div className="p-12 text-center bg-[#F8FAFC] rounded-2xl border-2 border-dashed border-[#E2E8F0]">
-            <p className="text-sm text-[#64748B] font-medium">POR EXEMPLO NO USUÁRO opec ou positiva estou edtando a promoção cadastradas BUTECO GL e ao clicar no lapis para editar o texto da edição e nome da da promoção nao esta aparecendo no formulário para ed</p>
+            <p className="text-sm text-[#64748B] font-medium">em comercial/promoções  - ao editar a promoção; só abre as informações da primieira promoção da tabela de promoções cadastradas - e nao abre a edição das demais. corrija de uma vez pr todas a edição d</p>
           </div>
         ) : (
           <div className="overflow-x-auto" style={{ borderRadius: 24, border: `1px solid ${CYAN}22` }}>
