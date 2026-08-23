@@ -769,13 +769,6 @@ export default function RoteiroPrograma() {
               </div>
             );
           })()}
-        </div>
-      )}
-    </div>
-  );
-}, [historico, programas, activeTab, regenerating, historicoOpen]);
-
-
           
           {/* Roteiros Agendados Section */}
           <div className="mt-8 border-t border-[#00BFF0] pt-6 pb-6" style={MONT}>
@@ -815,9 +808,11 @@ export default function RoteiroPrograma() {
           </div>
 
         </div>
+      )}
+    </div>
+  );
+}, [historico, programas, activeTab, regenerating, historicoOpen]);
 
-      </div>
-    );
   }, [historico, programas, activeTab, regenerating]);
 
   if (loading) return <ModulePageSkeleton />;
