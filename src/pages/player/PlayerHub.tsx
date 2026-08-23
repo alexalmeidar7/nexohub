@@ -310,11 +310,11 @@ export default function PlayerHub() {
   // Se o usuário estiver deslogado, sempre renderiza a WelcomeScreen (que possui
   // os botões entrar/cadastre-se). Nunca redireciona para AccessScreen.
   if (step === "welcome" || (user && step !== "home")) {
-    const userName = user?.email?.split("@")[0] || "Visitante";
+    const userNameDisplay = user?.email?.split("@")[0] || "visitante";
     return (
       <div className={wrapperClass}>
         <WelcomeScreen
-          userName={userName}
+          userName={userNameDisplay}
           avatarUrl={null}
           backgroundUrl={channelBg}
           channelName={channelName}
