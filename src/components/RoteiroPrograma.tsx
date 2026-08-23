@@ -835,9 +835,16 @@ export default function RoteiroPrograma() {
                     </div>
                     <div className="flex-1">
                       <div className="flex flex-col">
-                        <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK }}>
-                          {r.programa_nome || 'Programa'}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                          <h4 style={{ ...MONT, fontSize: 13, fontWeight: 700, color: DARK, margin: 0 }}>
+                            {r.programa_nome || 'Programa'}
+                          </h4>
+                          {r.titulo && r.titulo !== `PROGRAMA EXPRESS — ${r.programa_nome}` && (
+                            <span style={{ ...MONT, fontSize: 10, color: "#64748B", fontWeight: 600 }}>
+                              • {r.titulo.replace("PROGRAMA EXPRESS — ", "")}
+                            </span>
+                          )}
+                        </div>
                         {(() => {
                           let pNames = "";
                           try {
@@ -854,7 +861,7 @@ export default function RoteiroPrograma() {
                           ) : null;
                         })()}
                       </div>
-                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2 }}>
+                      <p style={{ ...MONT, fontSize: 11, color: "#64748B", marginTop: 2, margin: 0 }}>
                         Agendado para: {new Date(r.agendado_para_envio).toLocaleString('pt-BR')}
                       </p>
                     </div>
