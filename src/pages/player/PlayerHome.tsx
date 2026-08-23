@@ -2119,11 +2119,17 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
 
 
   const sidebarItems = [
-    { icon: Home, label: "home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
-    { icon: Radio, label: "streamings", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
-    { icon: Film, label: "on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
-    
+    { icon: Home, label: "tela home", key: "home", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("home"); } },
+    { icon: Radio, label: "canais streamings ao vivo", key: "streaming", action: () => { setActiveCatalog(null); setActiveRow(0); handleSectionChange("streaming"); } },
+    { icon: Film, label: "canais on demand", key: "content", action: () => { setActiveCatalog(null); setActiveRow(1); handleSectionChange("content"); } },
   ];
+
+  const streamingChannelsRow = streamingChannels;
+  const onDemandChannelsRow = Object.entries(catalogGroups).map(([groupName, items]) => ({
+    id: groupName,
+    name: groupName,
+    items
+  }));
 
   // Presenter photo of currently on-air program
   const currentPresenterFoto = useMemo(() => {
@@ -2187,7 +2193,7 @@ export default function PlayerHome({ onBackToAccess }: PlayerHomeProps = {}) {
     >
       <PlayerLoadingOverlay 
         isLoading={!dataLoaded || fadeOut} 
-        minDurationMs={3000}
+        minDurationMs={2500}
       />
       {/* Top loading bar */}
       {!dataLoaded && (

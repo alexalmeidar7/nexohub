@@ -36,7 +36,7 @@ function preloadAsLinkTag(url: string) {
   document.head.appendChild(link);
 }
 
-type Step = "splash" | "access" | "welcome" | "home";
+type Step = "login" | "splash" | "welcome" | "home";
 
 export default function PlayerHub() {
   usePageTitle("Player");
@@ -52,7 +52,7 @@ export default function PlayerHub() {
     !tvGuestMode &&
     (searchParams.get("step") === "home" ||
       (typeof window !== "undefined" && window.localStorage.getItem(storageKey) === "1"));
-  const [step, setStep] = useState<Step>(skipToHome ? "home" : "splash");
+  const [step, setStep] = useState<Step>(skipToHome ? "home" : "login");
 
   // Se chegou com ?step=home, grava a preferência e reflete na URL de forma estável.
   useEffect(() => {
@@ -213,9 +213,7 @@ export default function PlayerHub() {
     }
   }, [searchParams, setSearchParams]);
 
-  const onSplashFinish = useCallback(() => {
-    setSplashDone(true);
-  }, []);
+  // onSplashFinish moved to use transitionTo below
 
   const transitionTo = useCallback((target: Step) => {
     setFadeOut(true);
@@ -228,35 +226,23 @@ export default function PlayerHub() {
   }, []);
 
   useEffect(() => {
-    if (!splashDone) return;
-    if (!tvGuestMode && (loading || !dataReady)) return;
-    // A WelcomeScreen agora cobre AMBOS os estados (logado e deslogado),
-    // mostrando os botões "entrar com google" / "cadastre-se" quando não há
-    // usuário. Assim, após o logout o usuário permanece na welcome.
-    // Home continua protegido: se não estiver logado, cai na welcome.
-    const target: Step = user && skipToHome ? "home" : "welcome";
-    setStep((current) => {
-      if (current === target) return current;
-      transitionTo(target);
-      return current;
-    });
-  }, [splashDone, loading, dataReady, user, skipToHome, transitionTo, tvGuestMode]);
+    // Re-check auth state to skip steps if needed
+    if (!loading && user && step === "login") {
+      transitionTo("splash");
+    }
+  }, [loading, user, step, transitionTo]);
 
 
   const onLoginSuccess = useCallback(() => {
-    // Após login bem-sucedido, o usuário deve entrar no player — nunca voltar
-    // para a tela de login. Persiste a preferência de "home" no slug atual
-    // para que reloads/redirects do OAuth não caiam de novo na welcome.
-    if (!tvGuestMode) {
-      try { window.localStorage.setItem(storageKey, "1"); } catch {}
-      const next = new URLSearchParams(searchParams);
-      if (next.get("step") !== "home") {
-        next.set("step", "home");
-        setSearchParams(next, { replace: true });
-      }
-    }
-    transitionTo("home");
-  }, [transitionTo, tvGuestMode, storageKey, searchParams, setSearchParams]);
+    // Sequence: Login -> Splash
+    transitionTo("splash");
+  }, [transitionTo]);
+
+  const onSplashFinish = useCallback(() => {
+    setSplashDone(true);
+    // After Splash -> Profiles (Welcome)
+    transitionTo("welcome");
+  }, [transitionTo]);
 
   const onWelcomeContinue = useCallback(() => {
     if (!tvGuestMode) {
@@ -275,6 +261,17 @@ export default function PlayerHub() {
   // which then collapse to the wrapper's 0px height and become invisible.
   const wrapperClass = `player-scope transition-opacity duration-700 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] ${fadeOut ? "opacity-0" : "opacity-100"}`;
 
+  if (step === "login") {
+    return (
+      <div className={wrapperClass}>
+        <AccessScreen
+          logoUrl={logoUrl}
+          onLoginSuccess={onLoginSuccess}
+        />
+      </div>
+    );
+  }
+
   if (step === "splash") {
     return (
       <div className={wrapperClass}>
@@ -283,7 +280,7 @@ export default function PlayerHub() {
           channelName={channelName}
           onFinish={onSplashFinish}
           ready={tvGuestMode ? true : !loading && dataReady}
-          maxDurationMs={tvGuestMode ? 4200 : 12000}
+          maxDurationMs={tvGuestMode ? 4200 : 5000}
         />
       </div>
     );
@@ -291,7 +288,7 @@ export default function PlayerHub() {
 
   // Se o usuário estiver deslogado, sempre renderiza a WelcomeScreen (que possui
   // os botões entrar/cadastre-se). Nunca redireciona para AccessScreen.
-  if (step === "welcome" || (!user && !tvGuestMode)) {
+  if (step === "welcome" || (user && step !== "home")) {
     const userName = user?.email?.split("@")[0] || "Visitante";
     return (
       <div className={wrapperClass}>

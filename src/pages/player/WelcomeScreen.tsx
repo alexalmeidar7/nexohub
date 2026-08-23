@@ -922,7 +922,7 @@ export default function WelcomeScreen({
             textAlign: user ? "left" : "center",
           }}
         >
-          {user ? "bem vindo de volta" : "bem vindo"}
+          {user ? "tela de perfis" : "bem vindo"}
         </h1>
 
         {/* Avatar + info row (or centered login buttons for guests) */}

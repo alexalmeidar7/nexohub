@@ -48,7 +48,10 @@ export default function PlayerLoadingOverlay({
         shouldFadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      <ElegantLoader size={44} />
+      <div className="flex flex-col items-center gap-6 animate-fade-in">
+        <ElegantLoader size={44} />
+        <p className="text-white/60 text-xs lowercase tracking-[0.2em] font-light">sincronizando backend...</p>
+      </div>
 
     </div>
   );
