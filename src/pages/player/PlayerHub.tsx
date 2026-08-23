@@ -74,6 +74,7 @@ export default function PlayerHub() {
   const [pendingStep, setPendingStep] = useState<Step | null>(null);
   const [publicUserId, setPublicUserId] = useState<string | null>(null);
   const [dataReady, setDataReady] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
   const { colors: playerColors, bgConfigs: playerBgConfigs } = usePlayerColors(publicUserId);
 
   // Real-time "connected on player" heartbeat (20s ping).
@@ -139,13 +140,16 @@ export default function PlayerHub() {
     };
 
     const fetchLogo = async () => {
+      setLoadProgress(10);
       const userId = user?.id;
       if (userId) {
+        setLoadProgress(25);
         const [empRes, chRes, progRes] = await Promise.all([
           supabase.from("empresa_config").select("logo, nome, timezone").eq("user_id", userId).single(),
           supabase.from("streaming_channels").select("logo_url, cover_url, background_url, type, active, numero_canal").eq("user_id", userId).eq("active", true).order("numero_canal"),
           supabase.from("programas").select("nome, horario_inicio, horario_fim, dias_semana, thumb, capa, ativo, estudio").eq("user_id", userId).eq("ativo", true).ilike("estudio", "%fm%"),
         ]);
+        setLoadProgress(60);
         if (progRes.error) console.warn("[WelcomeBG:auth] erro ao buscar programas:", progRes.error);
         const tz: string | null = (empRes.data as any)?.timezone || null;
         if (empRes.data) {
@@ -156,20 +160,27 @@ export default function PlayerHub() {
         const channelThumb = pickChannelThumb(chRes.data as any[] | null);
         const bg = programThumb || channelThumb;
         console.log("[WelcomeBG:auth] resultado final →", { programThumb, channelThumb, escolhido: bg });
+        setLoadProgress(85);
         if (bg) {
           preloadAsLinkTag(bg);
-          preloadImage(bg).finally(() => setChannelBg(bg));
+          preloadImage(bg).finally(() => {
+            setChannelBg(bg);
+            setLoadProgress(100);
+          });
         } else {
           setChannelBg(null);
+          setLoadProgress(100);
         }
         setDataReady(true);
         return;
       }
       if (userSlug && userSlug !== ":userSlug") {
+        setLoadProgress(30);
         try {
           const { data, error } = await supabase.functions.invoke("public-player-data", {
             body: { slug: userSlug },
           });
+          setLoadProgress(75);
           if (!error && data && !data.error) {
             if (data.userId) setPublicUserId(data.userId);
             if (data.empresa?.logo) setLogoUrl(data.empresa.logo);
@@ -183,14 +194,23 @@ export default function PlayerHub() {
             console.log("[WelcomeBG:public] resultado final →", { programThumb, channelThumb, escolhido: bg });
             if (bg) {
               preloadAsLinkTag(bg);
-              preloadImage(bg).finally(() => setChannelBg(bg));
+              preloadImage(bg).finally(() => {
+                setChannelBg(bg);
+                setLoadProgress(100);
+              });
+            } else {
+              setLoadProgress(100);
             }
           } else {
             console.warn("public-player-data error:", error || data?.error);
+            setLoadProgress(100);
           }
         } catch (e) {
           console.warn("Failed to fetch player data:", e);
+          setLoadProgress(100);
         }
+      } else {
+        setLoadProgress(100);
       }
       setDataReady(true);
     };
@@ -281,6 +301,7 @@ export default function PlayerHub() {
           onFinish={onSplashFinish}
           ready={tvGuestMode ? true : !loading && dataReady}
           maxDurationMs={tvGuestMode ? 4200 : 5000}
+          progress={loadProgress}
         />
       </div>
     );
