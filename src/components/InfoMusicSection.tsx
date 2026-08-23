@@ -18,6 +18,16 @@ interface InfoMusicRow {
   expires_at: string;
 }
 
+interface HistoryRow {
+  id: string;
+  artista: string;
+  musica: string;
+  created_at: string;
+  dia: string;
+  horario: string;
+  curiosidade?: string;
+}
+
 const PAGE_SIZE = 50;
 const HARD_CAP = 50;
 
