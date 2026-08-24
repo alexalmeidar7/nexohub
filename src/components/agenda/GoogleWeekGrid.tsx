@@ -21,6 +21,14 @@ export interface GridEvent {
   endMin: number;
   color: string;
   subtitle?: string;
+  local?: string;
+  recorrencia?: string;
+  recorrenciaLabel?: string;
+  status?: string;
+  statusLabel?: string;
+  statusColor?: string;
+  participantes?: string[];
+  tipoEvento?: string;
   raw: any;
 }
 
@@ -108,54 +116,55 @@ export default function GoogleWeekGrid<T>({
   const todayIdx = weekDays.findIndex((d) => isSameDay(d.date, now));
 
   return (
-    <div className="flex flex-col h-full" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-      {/* Day header */}
-      <div
-        className="grid sticky top-0 z-20 shrink-0"
-        style={{
-          gridTemplateColumns: `56px repeat(7, minmax(0, 1fr))`,
-          background: "#FFFFFF",
-          borderBottom: "1px solid #E5F5FB",
-        }}
-      >
-        <div />
-        {weekDays.map(({ date, dateStr }) => {
-          const isToday = isSameDay(date, now);
-          const isSel = selectedDate && isSameDay(date, selectedDate);
-          const feriado = getFeriadoNome?.(date);
-          return (
-            <button
-              key={dateStr}
-              type="button"
-              onClick={() => onSelectDate(date)}
-              className="flex flex-col items-center gap-1 py-2 transition-colors"
-              style={{ borderLeft: "1px solid #EEF6FA", background: isSel ? "#F4FCFF" : "transparent" }}
-              title={feriado || undefined}
-            >
-              <span
-                className="text-[10px] font-bold uppercase tracking-widest"
-                style={{ color: isToday ? NEXO_CYAN : feriado ? "#EF4444" : "rgba(10,37,64,0.5)" }}
+    <div className="flex flex-col h-full overflow-hidden" style={{ fontFamily: "'Montserrat', sans-serif" }}>
+      {/* Single scrollable surface: sticky header stays fixed while body scrolls */}
+      <div ref={scrollRef} data-testid="week-grid-scroll" className="relative overflow-y-auto flex-1" style={{ minHeight: 0, maxHeight: "min(70vh, 640px)" }}>
+        {/* Day header */}
+        <div
+          className="grid sticky top-0 z-20 shrink-0"
+          style={{
+            gridTemplateColumns: `56px repeat(7, minmax(0, 1fr))`,
+            background: "#FFFFFF",
+            borderBottom: "1px solid #E5F5FB",
+          }}
+        >
+          <div />
+          {weekDays.map(({ date, dateStr }) => {
+            const isToday = isSameDay(date, now);
+            const isSel = selectedDate && isSameDay(date, selectedDate);
+            const feriado = getFeriadoNome?.(date);
+            return (
+              <button
+                key={dateStr}
+                type="button"
+                onClick={() => onSelectDate(date)}
+                className="flex flex-col items-center gap-1 py-2 transition-colors"
+                style={{ borderLeft: "1px solid #EEF6FA", background: isSel ? "#F4FCFF" : "transparent" }}
+                title={feriado || undefined}
               >
-                {format(date, "EEE", { locale: ptBR }).replace(".", "").slice(0, 3)}
-              </span>
-              <span
-                className="flex items-center justify-center rounded-full text-[17px] font-semibold"
-                style={{
-                  width: 34,
-                  height: 34,
-                  background: isToday ? NEXO_CYAN : "transparent",
-                  color: isToday ? "#FFFFFF" : NEXO_DARK,
-                }}
-              >
-                {format(date, "dd")}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                <span
+                  className="text-[10px] font-bold uppercase tracking-widest"
+                  style={{ color: isToday ? NEXO_CYAN : feriado ? "#EF4444" : "rgba(10,37,64,0.5)" }}
+                >
+                  {format(date, "EEE", { locale: ptBR }).replace(".", "").slice(0, 3)}
+                </span>
+                <span
+                  className="flex items-center justify-center rounded-full text-[17px] font-semibold"
+                  style={{
+                    width: 34,
+                    height: 34,
+                    background: isToday ? NEXO_CYAN : "transparent",
+                    color: isToday ? "#FFFFFF" : NEXO_DARK,
+                  }}
+                >
+                  {format(date, "dd")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
-      {/* Time grid */}
-      <div ref={scrollRef} className="relative overflow-y-auto flex-1" style={{ minHeight: 0 }}>
+        {/* Time grid */}
         <div
           className="grid relative"
           style={{ gridTemplateColumns: `56px repeat(7, minmax(0, 1fr))` }}
@@ -222,6 +231,9 @@ export default function GoogleWeekGrid<T>({
                   const top = ((ev.startMin - START_HOUR * 60) / 60) * HOUR_H;
                   const height = Math.max(20, ((ev.endMin - ev.startMin) / 60) * HOUR_H - 2);
                   const widthPct = 100 / cols;
+                  const hasDetails = height > 34;
+                  const hasBadges = height > 54;
+                  const hasPeople = height > 74;
                   return (
                     <button
                       key={ev.key}
@@ -233,18 +245,48 @@ export default function GoogleWeekGrid<T>({
                         height,
                         left: `calc(${col * widthPct}% + 2px)`,
                         width: `calc(${widthPct}% - 4px)`,
-                        borderRadius: 6,
+                        borderRadius: 0,
                         padding: "3px 6px",
-                        background: `color-mix(in srgb, ${ev.color} 20%, #FFFFFF)`,
+                        background: `color-mix(in srgb, ${ev.color} 14%, #FFFFFF)`,
                         borderLeft: `3px solid ${ev.color}`,
                         color: NEXO_DARK,
-                        lineHeight: 1.15,
+                        lineHeight: 1.2,
                       }}
                       title={`${ev.title}${ev.subtitle ? ` — ${ev.subtitle}` : ""}`}
                     >
                       <span className="block text-[11px] font-semibold truncate">{ev.title}</span>
-                      {height > 30 && ev.subtitle && (
+                      {hasDetails && ev.subtitle && (
                         <span className="block text-[10px] opacity-70 truncate">{ev.subtitle}</span>
+                      )}
+                      {hasDetails && ev.local && (
+                        <span className="block text-[9px] opacity-60 truncate mt-0.5">📍 {ev.local}</span>
+                      )}
+                      {hasBadges && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {ev.recorrencia && ev.recorrencia !== "unico" && (
+                            <span
+                              className="text-[8px] font-bold px-1 py-0.5 rounded-sm"
+                              style={{ backgroundColor: `${ev.color}22`, color: ev.color }}
+                            >
+                              🔁 {ev.recorrenciaLabel}
+                            </span>
+                          )}
+                          {ev.status && ev.status !== "ativo" && ev.statusLabel && ev.statusColor && (
+                            <span
+                              className="text-[8px] font-bold px-1 py-0.5 rounded-sm"
+                              style={{ backgroundColor: `${ev.statusColor}22`, color: ev.statusColor }}
+                            >
+                              {ev.statusLabel}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {hasPeople && ev.participantes && ev.participantes.length > 0 && (
+                        <div className="flex items-center gap-1 mt-1 text-[9px] opacity-70 truncate">
+                          <span>👤</span>
+                          {ev.participantes.slice(0, 3).join(", ")}
+                          {ev.participantes.length > 3 && ` +${ev.participantes.length - 3}`}
+                        </div>
                       )}
                     </button>
                   );
