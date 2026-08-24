@@ -1570,7 +1570,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     <span className="text-white font-black text-lg tracking-wider uppercase animate-pulse">Intervalo</span>
                   </div>
                 ) : displayCover ? (
-                  <img src={displayCover} alt="Capa" className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                  <img key={displayCover} src={displayCover} alt="Capa" className="nexo-cover-anim object-cover w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ backgroundColor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }}>
                     <Music size={36} />
@@ -1581,7 +1581,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* Song Info */}
               <div className="flex-1 flex flex-col justify-center min-w-0 gap-3">
-                <div className="space-y-1">
+                <div key={`${displayTitulo}|${displayArtista}`} className="nexo-track-anim space-y-1">
                    <div className="text-xl lg:text-3xl font-black tracking-tight truncate m-0 text-white" style={{ color: "#FFFFFF", textShadow: "0 2px 4px rgba(0,0,0,0.5)", letterSpacing: 0 }}>
                      {displayTitulo}
                    </div>
@@ -1600,6 +1600,7 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
                     </span>
                   </div>
                 </div>
+
 
                 {music && music.duracao > 0 && (
                   <div className="space-y-2 mt-2 max-w-md">
