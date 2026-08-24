@@ -1694,12 +1694,16 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch relative">
                 {/* ── ONLINE SOURCE ── */}
                 <div 
-                  className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl" 
+                  className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source hover:shadow-2xl ${isOnlineSelected ? "nexo-source-active" : ""}`}
                   style={{ 
-                    background: "#F8FAFC", 
+                    background: isOnlineSelected ? NEXO_CYAN : "#F8FAFC", 
                     border: `2px solid ${isOnlineSelected ? NEXO_CYAN : "#E2E8F0"}`,
+                    boxShadow: isOnlineSelected ? `0 12px 40px ${NEXO_CYAN}55` : undefined,
+                    ["--nexo-source-tint" as string]: "rgba(255,255,255,0.14)",
+                    ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.35)",
                   }}
                 >
+
                   <div className="flex items-center gap-4">
                     <div 
                       className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
