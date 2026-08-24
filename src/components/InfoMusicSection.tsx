@@ -256,8 +256,11 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     setAllCuriosities(curiositiesRes.data || []);
     setLoadingAllCuriosities(false);
 
-    const data = settingsRes.data;
+    const data = settingsRes.data as any;
+    setDefaultCapaUrl(data?.infomusic_excecoes_capa_url || null);
+    setDefaultArtistaUrl(data?.infomusic_excecoes_artista_url || null);
     setAiEnabled(data?.infomusic_ai_enabled !== false);
+
     setMonthlyQuota(prev => ({ ...prev, count: data?.infomusic_ai_monthly_count || 0 }));
     setLastManualId(data?.last_manual_curiosity_id || null);
     
