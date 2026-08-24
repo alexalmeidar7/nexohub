@@ -1425,9 +1425,14 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
                     {s.data_entrega && <div style={{ fontSize: 10, color: "#64748B" }}>{new Date(s.data_entrega).toLocaleString("pt-BR")}</div>}
                     <div className="flex gap-1">
                       {s.foto_entrega_url && (
-                        <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => verFoto(s)}>
-                          <ImageIcon size={12} /> Foto
-                        </button>
+                        <>
+                          <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => verFoto(s)}>
+                            <ImageIcon size={12} /> Foto
+                          </button>
+                          <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => baixarFoto(s)} title="Baixar foto da entrega">
+                            <Download size={12} /> Baixar
+                          </button>
+                        </>
                       )}
                       <button style={{ ...ghostBtn, height: 30, padding: "0 10px", fontSize: 10 }} onClick={() => marcarEntregue(s, false)}>Reverter</button>
                     </div>
