@@ -917,69 +917,76 @@ export default function BroadcastPage() {
           vMix — Broadcast
         </div>
 
-        {/* ── Header / Toolbar ── */}
-        <div 
-          className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-3xl"
-          style={{ 
-            background: `linear-gradient(135deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)`,
-            border: `1px solid ${NAVY_BORDER}`,
-            boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)"
-          }}
+        {/* ── Command bar (slim, clean) ── */}
+        <div
+          className="flex items-center justify-between gap-4 px-4 h-14 rounded-xl shrink-0"
+          style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}
         >
-          <div className="flex items-center gap-5 min-w-0 w-full sm:w-auto">
-            <div 
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-              style={{ backgroundColor: CYAN, boxShadow: `0 0 20px ${CYAN}30` }}
-            >
-              <Code2 size={24} style={{ color: NAVY }} />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: CYAN }}>
+              <Code2 size={16} style={{ color: NAVY }} />
             </div>
-            <div className="min-w-0">
-              <h2 className="text-white text-lg font-black uppercase tracking-[0.2em] leading-none mb-1.5" style={{ fontFamily: "'Sora', sans-serif" }}>
+            <div className="min-w-0 leading-tight">
+              <div className="text-white text-[13px] font-bold tracking-[0.12em] uppercase" style={{ fontFamily: "'Sora', sans-serif" }}>
                 Broadcast
-              </h2>
-              {programaNome ? (
-                <div className="flex items-center gap-2 text-white">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest truncate">{programaNome}</span>
-                </div>
-              ) : (
-                <span className="text-[9px] font-bold tracking-[0.2em] text-white/50 uppercase">vMix Control Hub</span>
-              )}
+              </div>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: programaNome ? "#4ade80" : "#64748b" }}
+                />
+                <span className="text-[10px] font-medium uppercase tracking-wider truncate text-white/60">
+                  {programaNome || "Sem programa no ar"}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-            <div className="flex flex-col items-end mr-2">
-              <span className="text-[9px] uppercase font-bold tracking-[0.2em] text-white/70 mb-0.5">Master Clock</span>
-              <span className="text-base font-black tracking-wider" style={{ color: LIME, fontFamily: "'Sora', sans-serif", textShadow: `0 0 10px ${LIME}30` }}>{clockStr}</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden md:flex items-baseline gap-2">
+              <span className="text-[9px] uppercase font-semibold tracking-[0.2em] text-white/40">Clock</span>
+              <span className="text-[15px] font-bold tabular-nums" style={{ color: LIME, fontFamily: "'Sora', sans-serif" }}>
+                {clockStr}
+              </span>
             </div>
-            
-            <div className="flex items-center bg-black/40 rounded-2xl p-1.5 border border-white/5">
-              {(["preview", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
-                const active = activeTab === tabId;
-                const labels: Record<string, string> = { preview: "Ao Vivo", assuntos: "Pauta", ticker: "Ticker", aseguir: "Próximo", xml: "XML" };
-                const Icons: Record<string, any> = { preview: ImageIcon, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
-                const Icon = Icons[tabId];
-                
-                return (
-                  <button
-                    key={tabId}
-                    onClick={() => setActiveTab(tabId)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all"
-                    style={{
-                      backgroundColor: active ? CYAN : "transparent",
-                      color: active ? NAVY : "#ffffffcc",
-                      fontFamily: "'Sora', sans-serif",
-                    }}
-                  >
-                    <Icon size={14} />
-                    <span className="hidden xl:inline">{labels[tabId]}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <button
+              onClick={() => handleSave()}
+              disabled={saving}
+              className="flex items-center gap-2 h-9 px-4 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundColor: LIME, color: NAVY, fontFamily: "'Sora', sans-serif" }}
+            >
+              {saving ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />}
+              Salvar
+            </button>
           </div>
         </div>
+
+        {/* ── Navigation (segmented, always labelled) ── */}
+        <div className="flex items-center gap-1 p-1 rounded-xl shrink-0 overflow-x-auto" style={{ backgroundColor: NAVY_DEEP, border: `1px solid ${NAVY_BORDER}` }}>
+          {(["preview", "assuntos", "ticker", "aseguir", "xml"] as const).map(tabId => {
+            const active = activeTab === tabId;
+            const labels: Record<string, string> = { preview: "Ao Vivo", assuntos: "Pauta", ticker: "Ticker", aseguir: "A Seguir", xml: "XML" };
+            const Icons: Record<string, any> = { preview: ImageIcon, assuntos: MessageCircle, ticker: TrendingUp, aseguir: Clock, xml: Code2 };
+            const Icon = Icons[tabId];
+            return (
+              <button
+                key={tabId}
+                onClick={() => setActiveTab(tabId)}
+                className="flex items-center justify-center gap-2 flex-1 min-w-[104px] h-9 rounded-lg text-[10px] font-bold uppercase tracking-[0.14em] transition-colors"
+                style={{
+                  backgroundColor: active ? CYAN : "transparent",
+                  color: active ? NAVY : "rgba(255,255,255,0.55)",
+                  fontFamily: "'Sora', sans-serif",
+                }}
+              >
+                <Icon size={13} />
+                {labels[tabId]}
+              </button>
+            );
+          })}
+        </div>
+
+
 
 
         {/* ── Tab panels ── */}
