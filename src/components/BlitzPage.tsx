@@ -709,7 +709,7 @@ export default function BlitzPage() {
         <div className="flex gap-2 mt-5">
           <button style={limeBtn} onClick={save} disabled={saving}>
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {editingId ? "Salvar alterações" : "Cadastrar blitz"}
+            {editingId ? "Salvar alterações" : "Agendar blitz"}
           </button>
           {editingId && <button style={ghostBtn} onClick={reset}><X size={14} /> Cancelar</button>}
         </div>
