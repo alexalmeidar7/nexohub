@@ -1317,6 +1317,26 @@ function EntregaTab({ sorteios, premios, onReload }: { sorteios: Sorteio[]; prem
     setFotoUrl(data.signedUrl);
   };
 
+  const baixarFoto = async (s: Sorteio) => {
+    if (!s.foto_entrega_url) return;
+    try {
+      const { data, error } = await supabase.storage.from("entregas").download(s.foto_entrega_url);
+      if (error || !data) throw error || new Error("Foto indisponível");
+      const ext = (s.foto_entrega_url.split(".").pop() || "jpg").split("?")[0];
+      const safeName = (s.nome_ganhador || "entrega").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `entrega-${safeName}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    } catch (e: any) {
+      toast({ title: "Erro ao baixar foto", description: e?.message || "Tente novamente", variant: "destructive" });
+    }
+  };
+
 
   const premioMap = useMemo(() => Object.fromEntries(premios.map(p => [p.id, p])), [premios]);
 
