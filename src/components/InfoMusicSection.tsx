@@ -59,6 +59,9 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
   const [testMusica, setTestMusica] = useState("");
   const [testing, setTesting] = useState(false);
   const [excecoes, setExcecoes] = useState<any[]>([]);
+  const [defaultCapaUrl, setDefaultCapaUrl] = useState<string | null>(null);
+  const [defaultArtistaUrl, setDefaultArtistaUrl] = useState<string | null>(null);
+
   const [savingExcecoes, setSavingExcecoes] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(true);
   const [togglingAi, setTogglingAi] = useState(false);
