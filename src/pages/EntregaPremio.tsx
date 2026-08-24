@@ -125,11 +125,12 @@ export default function EntregaPremio() {
   const confirmar = async () => {
     if (!photo) return;
     setSaving(true);
-    const r = await call({ action: "confirm", token, photoBase64: photo });
+    const r = await call({ action: "confirm", token, pin: pinOk, photoBase64: photo });
     setSaving(false);
     if (r?.ok) setInfo(r.info);
     else setErro(r?.error || "Erro ao salvar a foto");
   };
+
 
   const card: React.CSSProperties = {
     background: "#fff", borderRadius: 20, padding: 18, border: `1px solid ${CYAN}33`,
