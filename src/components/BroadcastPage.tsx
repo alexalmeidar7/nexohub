@@ -802,7 +802,7 @@ export default function BroadcastPage() {
   const cardStyle: React.CSSProperties = {
     backgroundColor: NAVY_DEEP,
     border: `1px solid ${NAVY_BORDER}`,
-    borderRadius: 16,
+    borderRadius: 14,
   };
 
   const sectionHeaderStyle: React.CSSProperties = {
@@ -999,7 +999,7 @@ export default function BroadcastPage() {
           <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
             {/* 16:9 preview stage with Tally Border */}
             <div 
-              className="w-full relative rounded-[2.5rem] overflow-hidden group transition-all duration-500"
+              className="w-full relative rounded-2xl overflow-hidden group transition-all duration-500"
               style={{ 
                 backgroundColor: "#000",
                 border: `6px solid ${insertLiveArt ? "#dc2626" : NAVY_BORDER}`,
@@ -1065,7 +1065,7 @@ export default function BroadcastPage() {
               ].map((kpi, idx) => (
                 <div 
                   key={idx}
-                  className="p-5 rounded-3xl flex flex-col gap-3 relative overflow-hidden transition-all hover:translate-y-[-4px] group"
+                  className="p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden transition-all group"
                   style={{ 
                     ...cardStyle, 
                     background: `linear-gradient(180deg, ${NAVY_SOFT} 0%, ${NAVY_DEEP} 100%)`,
@@ -1091,7 +1091,7 @@ export default function BroadcastPage() {
 
             {/* Robust Control Bento */}
             <div 
-              className="p-6 rounded-3xl flex flex-col gap-5" 
+              className="p-6 rounded-2xl flex flex-col gap-5" 
               style={{ 
                 ...cardStyle, 
                 border: `1px solid ${CYAN}30`, 
@@ -1118,7 +1118,7 @@ export default function BroadcastPage() {
                 <button
                   onClick={() => handleSave()}
                   disabled={saving}
-                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg"
+                  className="w-full py-4 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all active:scale-[0.98] shadow-lg"
                   style={{ backgroundColor: LIME, color: NAVY, boxShadow: `0 12px 24px ${LIME}25` }}
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -1150,7 +1150,7 @@ export default function BroadcastPage() {
 
 
             {/* Identidade visual e Conteúdo */}
-            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${LIME}20` }}>
                   <ImageIcon size={16} style={{ color: LIME }} />
@@ -1293,7 +1293,7 @@ export default function BroadcastPage() {
             </div>
 
             {/* Presença Social */}
-            <div className="p-6 rounded-3xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
+            <div className="p-6 rounded-2xl" style={{ ...cardStyle, background: `linear-gradient(180deg, ${NAVY_DEEP} 0%, ${NAVY_SOFT} 100%)` }}>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${CYAN}20` }}>
