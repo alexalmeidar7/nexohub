@@ -21,6 +21,7 @@ export interface GridEvent {
   endMin: number;
   color: string;
   subtitle?: string;
+  note?: string;
   local?: string;
   recorrencia?: string;
   recorrenciaLabel?: string;
