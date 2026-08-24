@@ -1770,20 +1770,24 @@ export default function MusicaNoAr({ effectiveUserId }: { effectiveUserId?: stri
 
               {/* ── LOCAL SOURCE (Pasta) ── */}
               <div 
-                className="rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl" 
+                className={`rounded-[32px] p-8 space-y-6 relative overflow-hidden transition-all duration-500 group/source-local hover:shadow-2xl ${isLocalSelected ? "nexo-source-active" : ""}`}
                 style={{ 
-                  background: "#F8FAFC", 
+                  background: isLocalSelected ? NEXO_LIME : "#F8FAFC", 
                   border: `2px solid ${isLocalSelected ? NEXO_LIME : "#E2E8F0"}`,
+                  boxShadow: isLocalSelected ? `0 12px 40px ${NEXO_LIME}66` : undefined,
+                  ["--nexo-source-tint" as string]: "rgba(255,255,255,0.18)",
+                  ["--nexo-source-sweep" as string]: "rgba(255,255,255,0.6)",
                 }}
               >
                 <div className="flex items-center gap-4">
                   <div 
                     className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500" 
                     style={{ 
-                      background: isLocalSelected ? NEXO_LIME : "#E2E8F0",
+                      background: isLocalSelected ? "#FFFFFF" : "#E2E8F0",
                     }}
                   >
                     <FolderOpen size={24} style={{ color: NEXO_DARK }} />
+
                   </div>
                   <div className="flex-1">
                     <h4 className="text-[14px] font-black uppercase tracking-[0.2em] m-0" style={{ color: NEXO_DARK }}>
