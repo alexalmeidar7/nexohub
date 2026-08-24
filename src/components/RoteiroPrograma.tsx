@@ -994,6 +994,7 @@ export default function RoteiroPrograma() {
                         <Trash2 size={16} />
                       </button>
                     </div>
+                    </div>
                   </div>
                 );
               })}
