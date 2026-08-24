@@ -417,12 +417,23 @@ export default function RoteiroPrograma() {
       return;
     }
 
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+
+    // Roteiros agendados vencidos (mais de 1h após o horário agendado) saem da lista de agendados
+    const expiredAgendados = data.filter(
+      (r: any) => r.agendado_para_envio && new Date(r.agendado_para_envio) <= oneHourAgo
+    );
+    if (expiredAgendados.length > 0) {
+      const expiredIds = expiredAgendados.map((r: any) => r.id);
+      await supabase.from("roteiros").update({ agendado_para_envio: null }).in("id", expiredIds);
+      for (const r of data) {
+        if (expiredIds.includes(r.id)) r.agendado_para_envio = null;
+      }
+    }
+
     setHistorico(data.filter((r: any) => !r.agendado_para_envio));
     setAgendados(data.filter((r: any) => r.agendado_para_envio));
-
-
-
-    const now = new Date();
     const toMarkFeito: string[] = [];
     for (const r of data) {
       if (r.status === "feito" || r.status === "rascunho") continue;
