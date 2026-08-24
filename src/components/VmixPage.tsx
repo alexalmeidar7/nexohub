@@ -2508,6 +2508,33 @@ function SwitcherUI({
     });
   }, [programas]);
 
+  // Próximo programa da grade (mesmo dia)
+  const nextProgram = useMemo(() => {
+    if (!programas || programas.length === 0) return null;
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const dayMap: Record<number, string> = {
+      0: "domingo", 1: "segunda", 2: "terça", 3: "quarta",
+      4: "quinta", 5: "sexta", 6: "sábado"
+    };
+    const dayName = dayMap[now.getDay()];
+    const matchesToday = (p: any) => {
+      if (!p.dias_semana || p.dias_semana.length === 0) return true;
+      return p.dias_semana.some((d: string) => d?.toLowerCase()?.startsWith(dayName.slice(0, 3)));
+    };
+    const list = programas
+      .filter((p: any) => p.horario_inicio && matchesToday(p) && p.id !== currentProgram?.id)
+      .map((p: any) => {
+        const [h, m] = p.horario_inicio.split(":").map(Number);
+        return { p, start: h * 60 + m };
+      })
+      .filter((x: any) => x.start > nowMin)
+      .sort((a: any, b: any) => a.start - b.start);
+    return list[0]?.p || null;
+  }, [programas, currentProgram]);
+
+
+
   const tabs = [
     { key: "controls" as const, label: "Switcher", icon: <Layers size={13} /> },
     { key: "scenes" as const, label: "Automação", icon: <Wand2 size={13} /> },
