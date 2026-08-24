@@ -13,19 +13,28 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { action, token, photoBase64 } = body as { action?: string; token?: string; photoBase64?: string };
+    const { action, token, pin, photoBase64 } = body as {
+      action?: string; token?: string; pin?: string; photoBase64?: string;
+    };
     if (!token) return json({ ok: false, error: "token obrigatório" });
 
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     const { data: sorteio, error } = await supabase
       .from("sorteio_sorteios")
-      .select("id, user_id, premio_id, nome_ganhador, telefone_ganhador, programa_nome, apresentador_nome, data_sorteio, entregue, data_entrega, expirado, data_expiracao, foto_entrega_url")
+      .select("id, user_id, premio_id, nome_ganhador, telefone_ganhador, programa_nome, apresentador_nome, data_sorteio, entregue, data_entrega, expirado, data_expiracao, foto_entrega_url, entrega_pin")
       .eq("entrega_token", token)
       .maybeSingle();
 
     if (error) return json({ ok: false, error: error.message });
     if (!sorteio) return json({ ok: false, error: "Registro não encontrado" });
+
+    // PIN de 4 dígitos obrigatório para qualquer dado sensível
+    const cleanPin = String(pin ?? "").replace(/\D/g, "");
+    if (!cleanPin) return json({ ok: true, locked: true });
+    if (cleanPin !== String(sorteio.entrega_pin ?? "")) {
+      return json({ ok: false, locked: true, error: "Código inválido" });
+    }
 
     const { data: premio } = await supabase
       .from("sorteio_premios")
