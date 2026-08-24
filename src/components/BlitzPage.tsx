@@ -340,10 +340,14 @@ export default function BlitzPage() {
       
       if (error) throw error;
       
-      toast({ title: "Cliente cadastrado com sucesso!" });
+      toast({ title: `Cliente ${cleanNome} cadastrado com sucesso!`, description: "Já vinculado a esta blitz." });
       setCadastroOpen(false);
-      await loadClientes();
+      setConfirmCadastroOpen(false);
+      setShowSugestoes(false);
+      setSugestoesClientes([]);
+      setClientesDisponiveis(prev => [...prev, { id: "novo", nome: cleanNome }]);
       setForm(prev => ({ ...prev, cliente: cleanNome }));
+      await loadClientes();
     } catch (e: any) {
       toast({ title: "Erro ao cadastrar cliente", description: e.message, variant: "destructive" });
     } finally {
