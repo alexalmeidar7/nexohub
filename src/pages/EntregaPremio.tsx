@@ -239,10 +239,11 @@ export default function EntregaPremio() {
                 ) : photo ? (
                   <>
                     <button style={{ ...btn, background: LIME, color: DARK }} disabled={saving} onClick={confirmar}>
-                      <Check size={18} /> {saving ? "Salvando..." : "Confirmar entrega"}
+                      <Check size={18} /> {saving ? "Salvando..." : "Salvar foto"}
                     </button>
                     <button style={{ ...btn, background: "#fff", color: DARK, border: `2px solid ${CYAN}`, height: 46 }} onClick={startCam}>
-                      <RefreshCw size={16} /> Tirar outra foto
+                      <RefreshCw size={16} /> Refazer a foto
+
                     </button>
                   </>
                 ) : (
