@@ -254,6 +254,7 @@ const App = () => (
             <Route path="/:userSlug/player/tv" element={<SlugGuard><PlayerTvWelcome /></SlugGuard>} />
             <Route path="/player/tv" element={<Navigate to="/" replace />} />
             <Route path="/:userSlug/pair" element={<PairPage />} />
+            <Route path="/entrega/:token" element={<EntregaPremio />} />
             <Route path="/google-check" element={<GoogleCheckPage />} />
             <Route path="/:userSlug/google-check" element={<GoogleCheckPage />} />
             <Route path="/tv-pairing-events" element={<TvPairingEventsPage />} />
