@@ -275,6 +275,68 @@ export default function InfoMusicSection({ music, effectiveUserId, curiosidade, 
     }
   };
 
+  /** Faz upload de uma imagem e devolve a URL pública */
+  const uploadExcecaoImage = async (file: File, prefix: string): Promise<string | null> => {
+    if (!user) return null;
+    const ext = (file.name.split(".").pop() || "png").toLowerCase();
+    const path = `${user.id}/${prefix}-${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("xml-files").upload(path, file, { upsert: true });
+    if (upErr) throw upErr;
+    const { data } = supabase.storage.from("xml-files").getPublicUrl(path);
+    return data.publicUrl;
+  };
+
+  const pickImage = (onPick: (file: File) => void) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) onPick(file);
+    };
+    input.click();
+  };
+
+  /** Salva a imagem geral da lista de EXCEÇÕES (vale para todos os termos sem imagem própria) */
+  const saveDefaultExcecaoImage = async (kind: "capa" | "artista", file: File) => {
+    if (!user) return;
+    try {
+      const url = await uploadExcecaoImage(file, `excecao-geral-${kind}`);
+      if (!url) return;
+      const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
+      const { error } = await supabase
+        .from("user_settings")
+        .upsert({ user_id: user.id, [column]: url } as any, { onConflict: "user_id" });
+      if (error) throw error;
+      if (kind === "capa") setDefaultCapaUrl(url); else setDefaultArtistaUrl(url);
+      try {
+        const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+        invalidateMusicExceptionsCache(user.id);
+      } catch {}
+      toast.success(kind === "capa" ? "Capa geral das exceções salva!" : "Foto geral do artista salva!");
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro no upload da imagem geral");
+    }
+  };
+
+  const clearDefaultExcecaoImage = async (kind: "capa" | "artista") => {
+    if (!user) return;
+    const column = kind === "capa" ? "infomusic_excecoes_capa_url" : "infomusic_excecoes_artista_url";
+    const { error } = await supabase
+      .from("user_settings")
+      .upsert({ user_id: user.id, [column]: null } as any, { onConflict: "user_id" });
+    if (error) { toast.error("Erro ao remover imagem"); return; }
+    if (kind === "capa") setDefaultCapaUrl(null); else setDefaultArtistaUrl(null);
+    try {
+      const { invalidateMusicExceptionsCache } = await import("@/lib/musicExceptions");
+      invalidateMusicExceptionsCache(user.id);
+    } catch {}
+    toast.success("Imagem geral removida");
+  };
+
+
+
   useEffect(() => {
     load();
     loadExcecoes();
