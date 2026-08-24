@@ -111,6 +111,9 @@ interface Sorteio {
   observacoes: string | null;
   expirado?: boolean;
   data_expiracao?: string | null;
+  entrega_token?: string | null;
+  foto_entrega_url?: string | null;
+  programa_nome?: string | null;
 }
 
 interface Ouvinte {
