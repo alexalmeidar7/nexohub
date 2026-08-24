@@ -2109,9 +2109,9 @@ export default function VmixPage({ forcedConnected = false }: { forcedConnected?
         <div className="flex flex-col items-center gap-16 w-full">
           
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 items-start justify-center w-full">
+          <div className="flex flex-wrap items-start justify-center gap-8 w-full">
             {/* NEW CONNECTION BUTTON */}
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6 w-full max-w-[260px]">
               <p className="text-[11px] font-black uppercase tracking-[0.3em] text-white/20 ml-1">Nova Conexão</p>
               <button
                 onClick={() => {
